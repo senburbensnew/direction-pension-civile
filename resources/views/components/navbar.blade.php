@@ -7,8 +7,8 @@
         </a>
         <!-- Navigation Links -->
         <a href="{{ route('home') }}" class="font-semibold text-white hover:text-white flex flex-col">
-            <span class="text-sm md:text-lg">Direction de la Pension Civile</span>
-            <span class="text-xs md:text-sm">République d'Haïti</span>
+            <span class="text-sm md:text-lg">{{ __('messages.direction') }}</span>
+            <span class="text-xs md:text-sm">{{ __('messages.republic') }}</span>
         </a>
     </div>
 
@@ -18,16 +18,15 @@
         <div class="hidden md:flex space-x-2 md:space-x-4">
             <a href="{{ route('liens-utiles') }}"
                 class="text-white hover:text-orange-500 cursor-pointer text-sm md:text-base">
-                Liens Utiles
+                {{ __('messages.useful_links') }}
             </a>
             <a href="#" class="text-white hover:text-orange-500 cursor-pointer text-sm md:text-base">
-                Contact
+                {{ __('messages.contact') }}
             </a>
             <a href="{{ route('login') }}" class="text-white hover:text-orange-500 cursor-pointer text-sm md:text-base">
-                Connexion
+                {{ __('messages.login') }}
             </a>
         </div>
-
 
         <!-- Search Icon -->
         <span class="text-white hover:text-gray-200 ml-2 hover:cursor-pointer" onclick="toggleSearch()">
@@ -47,6 +46,20 @@
                 </path>
             </svg>
         </span>
+        <!-- Language Switcher - Mobile -->
+        <div class="flex items-center space-x-4 py-2">
+            @if (App::getLocale() !== 'fr')
+                <a href="{{ route('locale', 'fr') }}" class="hover:opacity-75 transition-opacity" title="Français">
+                    <img src="{{ asset('images/fr-flag.svg') }}" alt="French Flag" class="w-6 h-6 rounded-sm">
+                </a>
+            @endif
+
+            @if (App::getLocale() !== 'en')
+                <a href="{{ route('locale', 'en') }}" class="hover:opacity-75 transition-opacity" title="English">
+                    <img src="{{ asset('images/us-flag.svg') }}" alt="English Flag" class="w-6 h-6 rounded-sm">
+                </a>
+            @endif
+        </div>
     </div>
 </div>
 
@@ -61,32 +74,46 @@
     </button>
 
     <div class="flex items-center space-x-4">
-        <img src="{{ asset('images/setting-logo-1-M13oPLiYoM.png') }}" alt="Logo MEF" class="w-12 h-12 md:w-16 md:h-16">
+        <img src="{{ asset('images/setting-logo-1-M13oPLiYoM.png') }}" alt="Logo MEF"
+            class="w-12 h-12 md:w-16 md:h-16">
         <div>
             <h2 class="text-xs md:text-sm font-bold text-gray-800">
-                DIRECTION DE LA PENSION CIVILE
+                {{ __('messages.direction') }}
             </h2>
-            <p class="text-gray-600 text-xs md:text-sm">République d’Haïti</p>
+            <p class="text-gray-600 text-xs md:text-sm">{{ __('messages.republic') }}</p>
         </div>
     </div>
 
     <!-- Mobile navigation links -->
     <div class="mt-4 md:hidden space-y-2">
+        <!-- Language Switcher - Mobile -->
+        <div class="flex items-center space-x-4 py-2">
+            @if (App::getLocale() !== 'fr')
+                <a href="{{ route('locale', 'fr') }}" class="hover:opacity-75 transition-opacity" title="Français">
+                    <img src="{{ asset('images/fr-flag.svg') }}" alt="French Flag" class="w-6 h-6 rounded-sm">
+                </a>
+            @endif
+
+            @if (App::getLocale() !== 'en')
+                <a href="{{ route('locale', 'en') }}" class="hover:opacity-75 transition-opacity" title="English">
+                    <img src="{{ asset('images/us-flag.svg') }}" alt="English Flag" class="w-6 h-6 rounded-sm">
+                </a>
+            @endif
+        </div>
+
         <a href="{{ route('liens-utiles') }}" class="block text-gray-700 hover:text-orange-500 p-2">
-            Liens Utiles
+            {{ __('messages.useful_links') }}
         </a>
         <a href="#" class="block text-gray-700 hover:text-orange-500 p-2">
-            Contact
+            {{ __('messages.contact') }}
         </a>
         <a href="{{ route('login') }}" class="block text-gray-700 hover:text-orange-500 p-2">
-            Connexion
+            {{ __('messages.login') }}
         </a>
     </div>
 
     <p class="text-gray-700 text-xs md:text-sm mt-4">
-        Créé par le décret du 13 mars 1987, la Direction de la Pension Civile a pour mission fondamentale de formuler et
-        de conduire la politique économique, financière et monétaire de l'État haïtien pour favoriser la croissance
-        ainsi que le développement socio-économique du pays sur une base durable.
+        {{ __('messages.description') }}
     </p>
 
     <div class="mt-4 space-y-2">
@@ -104,7 +131,6 @@
         </div>
     </div>
 </div>
-
 
 <script>
     function toggleSearch() {

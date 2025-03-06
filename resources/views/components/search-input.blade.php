@@ -1,6 +1,6 @@
 <div class="w-full flex flex-col items-center justify-center p-2 hidden search-icon">
     <div class="relative w-3/4">
-        <input type="text" placeholder="Rechercher"
+        <input type="text" placeholder="{{ __('messages.search') }}"
             class="w-full p-3 pr-12 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" />
         <button type="button" class="absolute top-4 right-3">
             <svg class="w-5 h-5 text-gray-400 hover:text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"

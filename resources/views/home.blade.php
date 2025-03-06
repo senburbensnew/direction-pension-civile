@@ -122,7 +122,6 @@
         <!-- Background Image -->
         <div class="absolute inset-0 bg-cover bg-center opacity-20" style="background-image: url('assets/image.png');">
         </div>
-
         <!-- Content -->
         <div class="relative z-10 max-w-5xl mx-auto px-4 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             <!-- Statistics Section -->
@@ -171,6 +170,7 @@
             </div>
         </div>
     </div>
+    <x-mediatheque />
 @endsection
 
 @section('scripts')

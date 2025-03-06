@@ -80,6 +80,9 @@ Route::get('/liens-utiles', function () {
     return view('liens-utiles.index', compact('links'));
 })->name('liens-utiles');
 
+Route::get('/locale/{locale}', [App\Http\Controllers\LocaleController::class, 'switch'])
+    ->name('locale');
+
 Route::get('/dashboard', function () {
     return view('dashboard');
 })->middleware(['auth', 'verified'])->name('dashboard');
