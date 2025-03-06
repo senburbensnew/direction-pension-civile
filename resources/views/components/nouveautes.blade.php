@@ -1,5 +1,5 @@
 <div class="border-gray-300 md:w-1/5 w-full mt-4 md:mt-0">
-    <div class="text-center text-white" style="background-color: #173152;">NOUVEAUTES</div>
+    <div class="text-center text-white" style="background-color: #173152;">{{ __('messages.new_feeds') }}</div>
     <x-nouveaute>
         Avis de recrutement pour les postes suivants : Gardien, Agent de Sécurité, Messager (ère) et Ménager
         (ère).

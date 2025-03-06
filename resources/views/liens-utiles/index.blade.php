@@ -6,7 +6,7 @@
     <!-- Main Template -->
     <div class="w-full bg-blue-900 text-white py-3 md:py-4 text-center font-bold text-xl md:text-2xl"
         style="background-color: #074482;">
-        Liens Utiles
+        {{ __('messages.useful_links') }}
     </div>
 
     <div class="mx-auto p-4 md:p-6 max-w-2xl">

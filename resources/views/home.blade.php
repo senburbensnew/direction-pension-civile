@@ -170,7 +170,7 @@
             </div>
         </div>
     </div>
-    <x-mediatheque />
+    {{-- <x-mediatheque /> --}}
 @endsection
 
 @section('scripts')

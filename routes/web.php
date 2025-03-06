@@ -1,6 +1,9 @@
 <?php
 
+use App\Http\Controllers\FonctionnaireController;
+use App\Http\Controllers\PensionnaireController;
 use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\QuiSommesNousController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -19,7 +22,7 @@ Route::get('/', function () {
 })->name('home');
 
 Route::get('/liens-utiles', function () {
-    $links = [
+    $links_fr = [
         [
             'name' => "Ministère de l'Economie et des Finances",
             'abbr' => "MEF",
@@ -77,11 +80,121 @@ Route::get('/liens-utiles', function () {
         ],
     ];
 
+    $links_en = [
+        [
+            'name' => "Ministry of Economy and Finance",
+            'abbr' => "MEF",
+            'link' => "https://mef.gouv.ht/"
+        ],
+        [
+            'name' => "General Directorate of Budget",
+            'abbr' => "DGB",
+            'link' => "https://budget.gouv.ht/"
+        ],
+        [
+            'name' => "General Administration of Customs",
+            'abbr' => "AGD",
+            'link' => "https://www.douane.gouv.ht/"
+        ],
+        [
+            'name' => "Bank of the Republic of Haiti",
+            'abbr' => "BRH",
+            'link' => "https://www.brh.ht/"
+        ],
+        [
+            'name' => "Office of Monetization of Development Aid Programs",
+            'abbr' => "BMPAD",
+            'link' => "https://bmpad.gouv.ht/"
+        ],
+        [
+            'name' => "General Directorate of Taxes",
+            'abbr' => "DGI",
+            'link' => "https://dgi.gouv.ht/"
+        ],
+        [
+            'name' => "General Inspectorate of Finance",
+            'abbr' => "IGF",
+            'link' => "https://igf.gouv.ht/"
+        ],
+        [
+            'name' => "Haitian Institute of Statistics and Informatics",
+            'abbr' => "IHSI",
+            'link' => "https://ihsi.gouv.ht/"
+        ],
+        [
+            'name' => "Office of Vehicle Insurance Against Third Parties",
+            'abbr' => "OAVCT",
+            'link' => "https://oavct.gouv.ht/"
+        ],
+        [
+            'name' => "National Society of Industrial Parks",
+            'abbr' => "SONAPI",
+            'link' => "https://sonapi.gouv.ht/"
+        ],
+        [
+            'name' => "National Credit Bank",
+            'abbr' => "BNC",
+            'link' => "https://www.bnconline.com/"
+        ],
+    ];
+
+    // Check the current language
+    if (App::getLocale() == 'fr') {
+        $links = $links_fr;
+    } else {
+        $links = $links_en;
+    }
+
     return view('liens-utiles.index', compact('links'));
 })->name('liens-utiles');
 
+
 Route::get('/locale/{locale}', [App\Http\Controllers\LocaleController::class, 'switch'])
     ->name('locale');
+
+
+Route::prefix('fonctionnaire')->name('fonctionnaire.')->group(function () {
+    // Get routes
+    Route::get('/demande-etat-de-carriere', [FonctionnaireController::class, 'demandeEtatCarriere'])->name('career-state-form');
+    Route::get('/simulation-retraite', [FonctionnaireController::class, 'retirementSimulation'])->name('retirement-simulation-form');
+    Route::get('/demande-pension', [FonctionnaireController::class, 'demandePension'])->name('pension-request-form');
+
+    // Post routes
+    Route::post('/demande-etat-de-carriere', [FonctionnaireController::class, 'processCareerStateRequest'])->name('process-career-state-request');
+    Route::post('/simulation-retraite', [FonctionnaireController::class, 'processRetirementSimulation'])->name('process-retirement-simulation');
+    Route::post('/demande-pension', [FonctionnaireController::class, 'processPensionRequest'])->name('process-pension-request');
+});
+
+// Pensionnaire Routes
+Route::prefix('pensionnaire')->name('pensionnaire.')->group(function () {
+    // Get routes
+    Route::get('/demande-virement', [PensionnaireController::class, 'demandeVirement'])->name('virement-request-form');
+    Route::get('/demande-attestation', [PensionnaireController::class, 'demandeAttestation'])->name('attestation-request-form');
+    Route::get('/demande-transfert-cheque', [PensionnaireController::class, 'demandeTransfertCheque'])->name('check-transfer-request-form');
+    Route::get('/demande-arret-paiement', [PensionnaireController::class, 'demandeArretPaiement'])->name('payment-stop-request-form');
+    Route::get('/demande-reinsertion', [PensionnaireController::class, 'demandeReinsertion'])->name('reinstatement-request-form');
+    Route::get('/demande-arret-virement', [PensionnaireController::class, 'demandeArretVirement'])->name('transfer-stop-request-form');
+
+    // Post routes
+    Route::post('/demande-virement', [PensionnaireController::class, 'processVirementRequest'])->name('process-virement-request');
+    Route::post('/demande-attestation', [PensionnaireController::class, 'processAttestationRequest'])->name('process-attestation-request');
+    Route::post('/demande-transfert-cheque', [PensionnaireController::class, 'processCheckTransferRequest'])->name('process-check-transfer-request');
+    Route::post('/demande-arret-paiement', [PensionnaireController::class, 'processPaymentStopRequest'])->name('process-payment-stop-request');
+    Route::post('/demande-reinsertion', [PensionnaireController::class, 'processReinstatementRequest'])->name('process-reinstatement-request');
+    Route::post('/demande-arret-virement', [PensionnaireController::class, 'processTransferStopRequest'])->name('process-transfer-stop-request');
+});
+
+// Pensionnaire Routes
+Route::prefix('quisommesnous')->name('quisommesnous.')->group(function () {
+    // Get routes
+    Route::get('/mots', [QuiSommesNousController::class, 'mots'])->name('mots');
+    Route::get('/demande-attestation', [QuiSommesNousController::class, 'demandeAttestation'])->name('attestation-request-form');
+    Route::get('/demande-transfert-cheque', [QuiSommesNousController::class, 'demandeTransfertCheque'])->name('check-transfer-request-form');
+    Route::get('/demande-arret-paiement', [QuiSommesNousController::class, 'demandeArretPaiement'])->name('payment-stop-request-form');
+    Route::get('/demande-reinsertion', [QuiSommesNousController::class, 'demandeReinsertion'])->name('reinstatement-request-form');
+    Route::get('/demande-arret-virement', [QuiSommesNousController::class, 'demandeArretVirement'])->name('transfer-stop-request-form');
+});
+
 
 Route::get('/dashboard', function () {
     return view('dashboard');
@@ -93,4 +206,4 @@ Route::middleware('auth')->group(function () {
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 });
 
-require __DIR__.'/auth.php';
+require __DIR__ . '/auth.php';

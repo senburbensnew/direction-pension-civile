@@ -70,7 +70,7 @@
         <!-- Main Navigation Menu -->
         <ul id="mobile-menu"
             class="hidden md:flex md:justify-center md:items-center md:space-x-2 p-0 m-0 
-                   max-h-[80vh] overflow-y-auto md:max-h-none md:overflow-visible 
+                    overflow-y-auto md:max-h-none md:overflow-visible 
                    transition-all duration-300 w-full"
             aria-label="Menu de Navigation">
             <!-- Home -->
@@ -79,7 +79,7 @@
                     class="block px-4 py-3 text-slate-600 hover:text-blue-600 
                            text-base md:text-sm truncate-text
                            focus:outline-none focus:ring-2 focus:ring-blue-500">
-                    Accueil
+                    {{ __('messages.home') }}
                 </a>
             </li>
 
@@ -89,7 +89,7 @@
                     class="dropdown-toggle flex w-full items-center justify-between px-4 py-3 
                            text-slate-600 hover:text-blue-600 text-base md:text-sm 
                            focus:outline-none focus:ring-2 focus:ring-blue-500">
-                    <span class="truncate-text">Qui sommes nous ?</span>
+                    <span class="truncate-text">{{ __('messages.who_are_we') }}</span>
                     <svg class="dropdown-icon ml-2 w-4 h-4 transform transition-transform duration-300" fill="none"
                         stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
@@ -99,11 +99,11 @@
                 <ul class="dropdown-content bg-white md:shadow-lg md:border md:rounded-md"
                     aria-label="Sous-menu Qui sommes nous">
                     <li>
-                        <a href="#"
+                        <a href="{{ route('quisommesnous.mots') }}"
                             class="text-slate-600 block px-4 py-3 hover:bg-gray-100 
                                    transition-colors text-sm truncate-text
                                    focus:outline-none focus:ring-2 focus:ring-blue-500">
-                            Mots de la directrice
+                            {{ __('messages.words_from_the_director') }}
                         </a>
                     </li>
                     <li>
@@ -111,7 +111,31 @@
                             class="text-slate-600 block px-4 py-3 hover:bg-gray-100 
                                    transition-colors text-sm truncate-text
                                    focus:outline-none focus:ring-2 focus:ring-blue-500">
-                            Mission et Attributions
+                            {{ __('messages.mission_and_responsibilities') }}
+                        </a>
+                    </li>
+                    <li>
+                        <a href="#"
+                            class="text-slate-600 block px-4 py-3 hover:bg-gray-100 
+                                   transition-colors text-sm truncate-text
+                                   focus:outline-none focus:ring-2 focus:ring-blue-500">
+                            {{ __('messages.history') }}
+                        </a>
+                    </li>
+                    <li>
+                        <a href="#"
+                            class="text-slate-600 block px-4 py-3 hover:bg-gray-100 
+                                   transition-colors text-sm truncate-text
+                                   focus:outline-none focus:ring-2 focus:ring-blue-500">
+                            {{ __('messages.organizational_structure') }}
+                        </a>
+                    </li>
+                    <li>
+                        <a href="#"
+                            class="text-slate-600 block px-4 py-3 hover:bg-gray-100 
+                                   transition-colors text-sm truncate-text
+                                   focus:outline-none focus:ring-2 focus:ring-blue-500">
+                            {{ __('messages.funding') }}
                         </a>
                     </li>
                 </ul>
@@ -123,7 +147,115 @@
                     class="dropdown-toggle flex w-full items-center justify-between px-4 py-3 
                            text-slate-600 hover:text-blue-600 text-base md:text-sm 
                            focus:outline-none focus:ring-2 focus:ring-blue-500">
-                    <span class="truncate-text">Pensionaire</span>
+                    <span class="truncate-text">{{ __('messages.pensioner') }}</span>
+                    <svg class="dropdown-icon ml-2 w-4 h-4 transform transition-transform duration-300" fill="none"
+                        stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                    </svg>
+                </button>
+
+                <ul class="dropdown-content bg-white md:shadow-lg md:border md:rounded-md"
+                    aria-label="Sous-menu Pensionaire">
+                    <li>
+                        <a href="{{ route('pensionnaire.virement-request-form') }}"
+                            class="text-slate-600 block px-4 py-3 hover:bg-gray-100 
+                                   transition-colors text-sm truncate-text
+                                   focus:outline-none focus:ring-2 focus:ring-blue-500">
+                            {{ __('messages.transfer_request') }}
+                        </a>
+                    </li>
+                    <li>
+                        <a href="{{ route('pensionnaire.attestation-request-form') }}"
+                            class="text-slate-600 block px-4 py-3 hover:bg-gray-100 
+                                   transition-colors text-sm truncate-text
+                                   focus:outline-none focus:ring-2 focus:ring-blue-500">
+                            {{ __('messages.certificate_request') }}
+                        </a>
+                    </li>
+                    <li>
+                        <a href="{{ route('pensionnaire.check-transfer-request-form') }}"
+                            class="text-slate-600 block px-4 py-3 hover:bg-gray-100 
+                                   transition-colors text-sm truncate-text
+                                   focus:outline-none focus:ring-2 focus:ring-blue-500">
+                            {{ __('messages.check_transfer_request') }}
+                        </a>
+                    </li>
+                    <li>
+                        <a href="{{ route('pensionnaire.payment-stop-request-form') }}"
+                            class="text-slate-600 block px-4 py-3 hover:bg-gray-100 
+                                   transition-colors text-sm truncate-text
+                                   focus:outline-none focus:ring-2 focus:ring-blue-500">
+                            {{ __('messages.payment_stop_request') }}
+                        </a>
+                    </li>
+                    <li>
+                        <a href="{{ route('pensionnaire.reinstatement-request-form') }}"
+                            class="text-slate-600 block px-4 py-3 hover:bg-gray-100 
+                                   transition-colors text-sm truncate-text
+                                   focus:outline-none focus:ring-2 focus:ring-blue-500">
+                            {{ __('messages.reinstatement_request') }}
+                        </a>
+                    </li>
+                    <li>
+                        <a href="{{ route('pensionnaire.transfer-stop-request-form') }}"
+                            class="text-slate-600 block px-4 py-3 hover:bg-gray-100 
+                                   transition-colors text-sm truncate-text
+                                   focus:outline-none focus:ring-2 focus:ring-blue-500">
+                            {{ __('messages.transfer_stop_request') }}
+                        </a>
+                    </li>
+                </ul>
+            </li>
+
+            <!-- Fonctionnaire Dropdown -->
+            <li class="relative w-full md:w-auto border-b md:border-none group">
+                <button
+                    class="dropdown-toggle flex w-full items-center justify-between px-4 py-3 
+                                       text-slate-600 hover:text-blue-600 text-base md:text-sm 
+                                       focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    <span class="truncate-text">{{ __('messages.civil_servant') }}</span>
+                    <svg class="dropdown-icon ml-2 w-4 h-4 transform transition-transform duration-300" fill="none"
+                        stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                    </svg>
+                </button>
+
+                <ul class="dropdown-content bg-white md:shadow-lg md:border md:rounded-md"
+                    aria-label="Sous-menu Pensionaire">
+                    <li>
+                        <a href="{{ route('fonctionnaire.career-state-form') }}"
+                            class="text-slate-600 block px-4 py-3 hover:bg-gray-100 
+                                               transition-colors text-sm truncate-text
+                                               focus:outline-none focus:ring-2 focus:ring-blue-500">
+                            {{ __('messages.career_status_request') }}
+                        </a>
+                    </li>
+                    <li>
+                        <a href="{{ route('fonctionnaire.retirement-simulation-form') }}"
+                            class="text-slate-600 block px-4 py-3 hover:bg-gray-100 
+                                               transition-colors text-sm truncate-text
+                                               focus:outline-none focus:ring-2 focus:ring-blue-500">
+                            {{ __('messages.retirement_simulation') }}
+                        </a>
+                    </li>
+                    <li>
+                        <a href="{{ route('fonctionnaire.pension-request-form') }}"
+                            class="text-slate-600 block px-4 py-3 hover:bg-gray-100 
+                                               transition-colors text-sm truncate-text
+                                               focus:outline-none focus:ring-2 focus:ring-blue-500">
+                            {{ __('messages.pension_request') }}
+                        </a>
+                    </li>
+                </ul>
+            </li>
+
+            <!-- Pensionaire Dropdown -->
+            <li class="relative w-full md:w-auto border-b md:border-none group">
+                <button
+                    class="dropdown-toggle flex w-full items-center justify-between px-4 py-3 
+                           text-slate-600 hover:text-blue-600 text-base md:text-sm 
+                           focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    <span class="truncate-text">{{ __('messages.institutions') }}</span>
                     <svg class="dropdown-icon ml-2 w-4 h-4 transform transition-transform duration-300" fill="none"
                         stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
@@ -137,7 +269,7 @@
                             class="text-slate-600 block px-4 py-3 hover:bg-gray-100 
                                    transition-colors text-sm truncate-text
                                    focus:outline-none focus:ring-2 focus:ring-blue-500">
-                            Demande de virement
+                            {{ __('messages.pension_request_transmission') }}
                         </a>
                     </li>
                     <li>
@@ -145,7 +277,7 @@
                             class="text-slate-600 block px-4 py-3 hover:bg-gray-100 
                                    transition-colors text-sm truncate-text
                                    focus:outline-none focus:ring-2 focus:ring-blue-500">
-                            Demande d'attestation
+                            {{ __('messages.membership_request') }}
                         </a>
                     </li>
                 </ul>
@@ -157,10 +289,11 @@
                     class="dropdown-toggle flex w-full items-center justify-between px-4 py-3 
                                        text-slate-600 hover:text-blue-600 text-base md:text-sm 
                                        focus:outline-none focus:ring-2 focus:ring-blue-500">
-                    <span class="truncate-text">Pensionaire</span>
+                    <span class="truncate-text">{{ __('messages.communications') }}</span>
                     <svg class="dropdown-icon ml-2 w-4 h-4 transform transition-transform duration-300" fill="none"
                         stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7">
+                        </path>
                     </svg>
                 </button>
 
@@ -171,7 +304,7 @@
                             class="text-slate-600 block px-4 py-3 hover:bg-gray-100 
                                                transition-colors text-sm truncate-text
                                                focus:outline-none focus:ring-2 focus:ring-blue-500">
-                            Demande de virement
+                            {{ __('messages.texts_and_publications') }}
                         </a>
                     </li>
                     <li>
@@ -179,7 +312,15 @@
                             class="text-slate-600 block px-4 py-3 hover:bg-gray-100 
                                                transition-colors text-sm truncate-text
                                                focus:outline-none focus:ring-2 focus:ring-blue-500">
-                            Demande d'attestation
+                            {{ __('messages.media_libraries') }}
+                        </a>
+                    </li>
+                    <li>
+                        <a href="#"
+                            class="text-slate-600 block px-4 py-3 hover:bg-gray-100 
+                                               transition-colors text-sm truncate-text
+                                               focus:outline-none focus:ring-2 focus:ring-blue-500">
+                            {{ __('messages.success_stories') }}
                         </a>
                     </li>
                 </ul>
@@ -191,75 +332,7 @@
                     class="dropdown-toggle flex w-full items-center justify-between px-4 py-3 
                            text-slate-600 hover:text-blue-600 text-base md:text-sm 
                            focus:outline-none focus:ring-2 focus:ring-blue-500">
-                    <span class="truncate-text">Pensionaire</span>
-                    <svg class="dropdown-icon ml-2 w-4 h-4 transform transition-transform duration-300" fill="none"
-                        stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
-                    </svg>
-                </button>
-
-                <ul class="dropdown-content bg-white md:shadow-lg md:border md:rounded-md"
-                    aria-label="Sous-menu Pensionaire">
-                    <li>
-                        <a href="#"
-                            class="text-slate-600 block px-4 py-3 hover:bg-gray-100 
-                                   transition-colors text-sm truncate-text
-                                   focus:outline-none focus:ring-2 focus:ring-blue-500">
-                            Demande de virement
-                        </a>
-                    </li>
-                    <li>
-                        <a href="#"
-                            class="text-slate-600 block px-4 py-3 hover:bg-gray-100 
-                                   transition-colors text-sm truncate-text
-                                   focus:outline-none focus:ring-2 focus:ring-blue-500">
-                            Demande d'attestation
-                        </a>
-                    </li>
-                </ul>
-            </li>
-
-            <!-- Pensionaire Dropdown -->
-            <li class="relative w-full md:w-auto border-b md:border-none group">
-                <button
-                    class="dropdown-toggle flex w-full items-center justify-between px-4 py-3 
-                                       text-slate-600 hover:text-blue-600 text-base md:text-sm 
-                                       focus:outline-none focus:ring-2 focus:ring-blue-500">
-                    <span class="truncate-text">Pensionaire</span>
-                    <svg class="dropdown-icon ml-2 w-4 h-4 transform transition-transform duration-300" fill="none"
-                        stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
-                    </svg>
-                </button>
-
-                <ul class="dropdown-content bg-white md:shadow-lg md:border md:rounded-md"
-                    aria-label="Sous-menu Pensionaire">
-                    <li>
-                        <a href="#"
-                            class="text-slate-600 block px-4 py-3 hover:bg-gray-100 
-                                               transition-colors text-sm truncate-text
-                                               focus:outline-none focus:ring-2 focus:ring-blue-500">
-                            Demande de virement
-                        </a>
-                    </li>
-                    <li>
-                        <a href="#"
-                            class="text-slate-600 block px-4 py-3 hover:bg-gray-100 
-                                               transition-colors text-sm truncate-text
-                                               focus:outline-none focus:ring-2 focus:ring-blue-500">
-                            Demande d'attestation
-                        </a>
-                    </li>
-                </ul>
-            </li>
-
-            <!-- Pensionaire Dropdown -->
-            <li class="relative w-full md:w-auto border-b md:border-none group">
-                <button
-                    class="dropdown-toggle flex w-full items-center justify-between px-4 py-3 
-                           text-slate-600 hover:text-blue-600 text-base md:text-sm 
-                           focus:outline-none focus:ring-2 focus:ring-blue-500">
-                    <span class="truncate-text">Pensionaire</span>
+                    <span class="truncate-text">{{ __('messages.portals') }}</span>
                     <svg class="dropdown-icon ml-2 w-4 h-4 transform transition-transform duration-300" fill="none"
                         stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7">
@@ -274,7 +347,7 @@
                             class="text-slate-600 block px-4 py-3 hover:bg-gray-100 
                                    transition-colors text-sm truncate-text
                                    focus:outline-none focus:ring-2 focus:ring-blue-500">
-                            Demande de virement
+                            {{ __('messages.civil_servant') }}
                         </a>
                     </li>
                     <li>
@@ -282,42 +355,15 @@
                             class="text-slate-600 block px-4 py-3 hover:bg-gray-100 
                                    transition-colors text-sm truncate-text
                                    focus:outline-none focus:ring-2 focus:ring-blue-500">
-                            Demande d'attestation
-                        </a>
-                    </li>
-                </ul>
-            </li>
-
-            <!-- Pensionaire Dropdown -->
-            <li class="relative w-full md:w-auto border-b md:border-none group">
-                <button
-                    class="dropdown-toggle flex w-full items-center justify-between px-4 py-3 
-                                       text-slate-600 hover:text-blue-600 text-base md:text-sm 
-                                       focus:outline-none focus:ring-2 focus:ring-blue-500">
-                    <span class="truncate-text">Pensionaire</span>
-                    <svg class="dropdown-icon ml-2 w-4 h-4 transform transition-transform duration-300" fill="none"
-                        stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7">
-                        </path>
-                    </svg>
-                </button>
-
-                <ul class="dropdown-content bg-white md:shadow-lg md:border md:rounded-md"
-                    aria-label="Sous-menu Pensionaire">
-                    <li>
-                        <a href="#"
-                            class="text-slate-600 block px-4 py-3 hover:bg-gray-100 
-                                               transition-colors text-sm truncate-text
-                                               focus:outline-none focus:ring-2 focus:ring-blue-500">
-                            Demande de virement
+                            {{ __('messages.employee') }}
                         </a>
                     </li>
                     <li>
                         <a href="#"
                             class="text-slate-600 block px-4 py-3 hover:bg-gray-100 
-                                               transition-colors text-sm truncate-text
-                                               focus:outline-none focus:ring-2 focus:ring-blue-500">
-                            Demande d'attestation
+                                   transition-colors text-sm truncate-text
+                                   focus:outline-none focus:ring-2 focus:ring-blue-500">
+                            {{ __('messages.institutions') }}
                         </a>
                     </li>
                 </ul>
