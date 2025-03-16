@@ -1,5 +1,6 @@
 <!DOCTYPE html>
-<html lang="en">
+
+<html lang="{{ app()->getLocale() }}">
 
 <head>
     <meta charset="UTF-8">
@@ -22,16 +23,16 @@
 
             <!-- 404 Text -->
             <h1 class="text-6xl md:text-8xl lg:text-9xl font-bold text-[#173152] mt-6">404</h1>
-            <p class="text-xl md:text-2xl lg:text-3xl text-[#FFD700] mt-4">Oups ! Page non trouvée.</p>
+            <p class="text-xl md:text-2xl lg:text-3xl text-[#FFD700] mt-4">{{ __('errors.page_not_found') }}</p>
             <p class="text-base md:text-lg lg:text-xl text-gray-300 mt-2">
-                La page que vous recherchez n'existe pas ou a été déplacée.
+                {{ __('errors.page_not_found_description') }}
             </p>
 
             <!-- Go Back Home Button -->
-            <a href="{{ route('home') }}"
+            {{--             <a href="{{ route('home') }}"
                 class="mt-6 inline-block px-6 py-3 bg-[#FFD700] text-[#173152] rounded-lg hover:bg-[#FFC107] transition duration-300 font-semibold hover:scale-105">
-                Retour à l'accueil
-            </a>
+                {{ __('errors.back_to_home') }}
+            </a> --}}
         </div>
     </div>
     @vite(['resources/js/app.js'])

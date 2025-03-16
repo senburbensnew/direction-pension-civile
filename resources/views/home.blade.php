@@ -2,48 +2,23 @@
 
 @section('title', 'Accueil')
 
-@section('css')
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.css">
-    <style>
-        .swiper {
-            width: 100%;
-            height: 500px;
-            /* Adjust the height as needed */
-        }
-
-        .swiper-slide {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            overflow: hidden;
-        }
-
-        .swiper-slide img {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-            /* Ensures the image covers the slide without distortion */
-        }
-    </style>
-@endsection
-
 @section('content')
-    <div class="swiper mySwiper">
+    {{--     <div class="swiper mySwiper">
         <div class="swiper-wrapper">
             <div class="swiper-slide">
-                <img src="https://picsum.photos/1000/500" alt="Slide 1">
+                <img src="{{ asset('images/carousel/slide1.jpg') }}" alt="Slide 1">
             </div>
             <div class="swiper-slide">
-                <img src="https://picsum.photos/1000/500" alt="Slide 2">
+                <img src="{{ asset('images/carousel/slide2.jpg') }}" alt="Slide 2">
             </div>
             <div class="swiper-slide">
-                <img src="https://picsum.photos/1000/500" alt="Slide 3">
+                <img src="{{ asset('images/carousel/slide3.jpg') }}" alt="Slide 3">
             </div>
             <div class="swiper-slide">
-                <img src="https://picsum.photos/1000/500" alt="Slide 3">
+                <img src="{{ asset('images/carousel/slide4.jpg') }}" alt="Slide 3">
             </div>
             <div class="swiper-slide">
-                <img src="https://picsum.photos/1000/500" alt="Slide 3">
+                <img src="{{ asset('images/carousel/slide5.jpg') }}" alt="Slide 3">
             </div>
         </div>
 
@@ -53,7 +28,24 @@
         <!-- Navigation -->
         <div class="swiper-button-prev"></div>
         <div class="swiper-button-next"></div>
-    </div>
+    </div> --}}
+    <x-carousel>
+        <div class="swiper-slide">
+            <img src="{{ asset('images/carousel/slide1.jpg') }}" alt="Slide 1">
+        </div>
+        <div class="swiper-slide">
+            <img src="{{ asset('images/carousel/slide2.jpg') }}" alt="Slide 2">
+        </div>
+        <div class="swiper-slide">
+            <img src="{{ asset('images/carousel/slide3.jpg') }}" alt="Slide 3">
+        </div>
+        <div class="swiper-slide">
+            <img src="{{ asset('images/carousel/slide4.jpg') }}" alt="Slide 3">
+        </div>
+        <div class="swiper-slide">
+            <img src="{{ asset('images/carousel/slide5.jpg') }}" alt="Slide 3">
+        </div>
+    </x-carousel>
     <div class="flex flex-col md:flex-row p-2 pt-4">
         <div class="md:w-4/5 w-full p-2">
             <div class="flex flex-col md:flex-row items-stretch">
@@ -171,27 +163,4 @@
         </div>
     </div>
     {{-- <x-mediatheque /> --}}
-@endsection
-
-@section('scripts')
-    <script src="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.js"></script>
-    <script>
-        document.addEventListener("DOMContentLoaded", function() {
-            var swiper = new Swiper(".mySwiper", {
-                loop: true,
-                autoplay: {
-                    delay: 3000, // Change slides every 3 seconds
-                    disableOnInteraction: false // Keeps autoplay even when user interacts
-                },
-                pagination: {
-                    el: ".swiper-pagination",
-                    clickable: true,
-                },
-                navigation: {
-                    nextEl: ".swiper-button-next",
-                    prevEl: ".swiper-button-prev",
-                }
-            });
-        });
-    </script>
 @endsection

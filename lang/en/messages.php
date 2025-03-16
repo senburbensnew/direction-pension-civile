@@ -59,7 +59,7 @@ return [
     // Footer
     'director' => 'The Director',
     'all_rights_reserved' => 'ALL RIGHTS RESERVED',
-    'contact_us' => 'CONTACT US',
+    'contact_us' => 'Contact us',
     'follow_us' => 'Follow us on social media',
 
     'MEF' => "Ministry of Economy and Finance",
@@ -84,5 +84,5 @@ return [
     'speech' => 'Speech',
 
     // Nouveautes
-    'new_feeds' => 'News'
+    'new_feeds' => 'News',
 ];

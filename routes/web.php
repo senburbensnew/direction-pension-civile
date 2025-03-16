@@ -1,9 +1,12 @@
 <?php
 
+use App\Http\Controllers\AdminController;
 use App\Http\Controllers\FonctionnaireController;
 use App\Http\Controllers\PensionnaireController;
+use App\Http\Controllers\PostController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\QuiSommesNousController;
+use App\Http\Controllers\UserController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -16,6 +19,8 @@ use Illuminate\Support\Facades\Route;
 | be assigned to the "web" middleware group. Make something great!
 |
 */
+
+
 
 Route::get('/', function () {
     return view('home');
@@ -165,6 +170,13 @@ Route::prefix('fonctionnaire')->name('fonctionnaire.')->group(function () {
     Route::post('/demande-pension', [FonctionnaireController::class, 'processPensionRequest'])->name('process-pension-request');
 });
 
+Route::prefix('admin')->name('admin.')->group(function () {
+    Route::get('/dashboard', [AdminController::class, 'dashboard'])->name('dashboard');
+    Route::resource('users', UserController::class);
+    Route::resource('posts', PostController::class);
+    Route::get('/settings', [AdminController::class, 'settings'])->name('settings');
+});
+
 // Pensionnaire Routes
 Route::prefix('pensionnaire')->name('pensionnaire.')->group(function () {
     // Get routes
@@ -184,15 +196,15 @@ Route::prefix('pensionnaire')->name('pensionnaire.')->group(function () {
     Route::post('/demande-arret-virement', [PensionnaireController::class, 'processTransferStopRequest'])->name('process-transfer-stop-request');
 });
 
-// Pensionnaire Routes
+
+// Qui sommes nous Routes
 Route::prefix('quisommesnous')->name('quisommesnous.')->group(function () {
     // Get routes
     Route::get('/mots', [QuiSommesNousController::class, 'mots'])->name('mots');
-    Route::get('/demande-attestation', [QuiSommesNousController::class, 'demandeAttestation'])->name('attestation-request-form');
-    Route::get('/demande-transfert-cheque', [QuiSommesNousController::class, 'demandeTransfertCheque'])->name('check-transfer-request-form');
-    Route::get('/demande-arret-paiement', [QuiSommesNousController::class, 'demandeArretPaiement'])->name('payment-stop-request-form');
-    Route::get('/demande-reinsertion', [QuiSommesNousController::class, 'demandeReinsertion'])->name('reinstatement-request-form');
-    Route::get('/demande-arret-virement', [QuiSommesNousController::class, 'demandeArretVirement'])->name('transfer-stop-request-form');
+    Route::get('/missions', [QuiSommesNousController::class, 'missions'])->name('missions');
+    Route::get('/historique', [QuiSommesNousController::class, 'historique'])->name('historique');
+    Route::get('/structure-organique', [QuiSommesNousController::class, 'structureOrganique'])->name('structure-organique');
+    Route::get('/financement', [QuiSommesNousController::class, 'financement'])->name('financement');
 });
 
 

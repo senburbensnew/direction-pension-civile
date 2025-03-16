@@ -50,21 +50,38 @@
         <div class="flex items-center space-x-4 py-2">
             @if (App::getLocale() !== 'fr')
                 <a href="{{ route('locale', 'fr') }}" class="hover:opacity-75 transition-opacity" title="Français">
-                    <img src="{{ asset('images/fr-flag.svg') }}" alt="French Flag" class="w-6 h-6 rounded-sm">
+                    <img src="{{ asset('images/fr-flag.svg') }}" alt="French Flag" class="w-4 h-4 rounded-sm">
                 </a>
             @endif
 
             @if (App::getLocale() !== 'en')
                 <a href="{{ route('locale', 'en') }}" class="hover:opacity-75 transition-opacity" title="English">
-                    <img src="{{ asset('images/us-flag.svg') }}" alt="English Flag" class="w-6 h-6 rounded-sm">
+                    <img src="{{ asset('images/us-flag.svg') }}" alt="English Flag" class="w-4 h-4 rounded-sm">
                 </a>
             @endif
         </div>
+        <!-- Language Switcher - Mobile -->
+        {{--         <div class="flex items-center space-x-4 py-2">
+            @if (App::getLocale() !== 'fr')
+                <a href="{{ route('locale', 'fr') }}" class="hover:opacity-75 transition-opacity text-orange-500"
+                    title="Français">
+                    fr
+                </a>
+            @endif
+
+            @if (App::getLocale() !== 'en')
+                <a href="{{ route('locale', 'en') }}" class="hover:opacity-75 transition-opacity text-orange-500"
+                    title="English">
+                    en
+                </a>
+            @endif
+        </div> --}}
     </div>
 </div>
 
 <!-- Right Panel Overlay -->
-<div class="fixed inset-0 bg-black bg-opacity-50 z-40 hidden" id="rightPanelOverlay" onclick="closeRightPanel()"></div>
+<div class="fixed inset-0 bg-black bg-opacity-50 z-[1001] hidden" id="rightPanelOverlay" onclick="closeRightPanel()">
+</div>
 
 <!-- Right Panel -->
 <div class="fixed top-0 right-0 w-full md:w-80 h-screen bg-white shadow-lg p-4 md:p-6 max-w-full z-[1001] hidden"
@@ -127,7 +144,7 @@
         </div>
         <div class="flex items-center space-x-2 text-gray-700 text-xs md:text-sm">
             <span class="text-blue-600">📍</span>
-            <span>5, Ave. Charles Summer, Port-au-Prince, Haïti</span>
+            <span>5, 16, Ave Charles Sumner et 104, Rue Oswald Durand, Port-au-Prince, Haiti</span>
         </div>
     </div>
 </div>

@@ -10,15 +10,13 @@
         crossorigin="anonymous" referrerpolicy="no-referrer" />
     <!-- Scripts -->
     @vite(['resources/css/app.css'])
-    @yield('css')
 </head>
 
 <body>
-    <main>
+    <main class="container mx-auto">
         <x-header></x-header>
         @yield('content')
         <x-footer></x-footer>
     </main>
-    @yield('scripts')
     @vite(['resources/js/app.js'])
 </body>
