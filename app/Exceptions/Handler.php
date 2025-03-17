@@ -32,7 +32,14 @@ class Handler extends ExceptionHandler
 
     public function render($request, Throwable $exception)
     {
-        app()->setLocale('en'); // Force French
+        $locale = $request->cookie('locale', config('app.locale'));
+        App::setLocale($locale);
+
+        // Optional: Sync session if available (only for web requests)
+        if ($request->hasSession()) {
+            Session::put('locale', $locale);
+        }
+
         return parent::render($request, $exception);
     }
 }

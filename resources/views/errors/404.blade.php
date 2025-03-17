@@ -29,10 +29,10 @@
             </p>
 
             <!-- Go Back Home Button -->
-            {{--             <a href="{{ route('home') }}"
+            <a href="{{ route('home') }}"
                 class="mt-6 inline-block px-6 py-3 bg-[#FFD700] text-[#173152] rounded-lg hover:bg-[#FFC107] transition duration-300 font-semibold hover:scale-105">
                 {{ __('errors.back_to_home') }}
-            </a> --}}
+            </a>
         </div>
     </div>
     @vite(['resources/js/app.js'])
