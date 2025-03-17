@@ -8,12 +8,14 @@
             <h3 class="font-bold text-lg md:text-xl mb-3 border-b-2 border-white pb-2">{{ __('messages.who_are_we') }}
             </h3>
             <ul class="space-y-2">
-                <li><a href="#" class="hover:text-orange-500 transition">{{ __('messages.director') }}</a></li>
-                <li><a href="#"
+                <li><a href="{{ route('quisommesnous.mots') }}"
+                        class="hover:text-orange-500 transition">{{ __('messages.director') }}</a></li>
+                <li><a href="{{ route('quisommesnous.missions') }}"
                         class="hover:text-orange-500 transition">{{ __('messages.mission_and_responsibilities') }}</a>
                 </li>
-                <li><a href="#" class="hover:text-orange-500 transition">{{ __('messages.history') }}</a></li>
-                <li><a href="#"
+                <li><a href="{{ route('quisommesnous.historique') }}"
+                        class="hover:text-orange-500 transition">{{ __('messages.history') }}</a></li>
+                <li><a href="{{ route('quisommesnous.structure-organique') }}"
                         class="hover:text-orange-500 transition">{{ __('messages.organizational_structure') }}</a></li>
             </ul>
         </div>
@@ -23,7 +25,8 @@
             <h3 class="font-bold text-lg md:text-xl mb-3 border-b-2 border-white pb-2">{{ __('messages.useful_links') }}
             </h3>
             <ul class="space-y-2">
-                <li><a href="https://mef.gouv.ht/" class="hover:text-orange-500 transition">{{ __('messages.MEF') }}</a>
+                <li><a href="https://mef.gouv.ht/"
+                        class="hover:text-orange-500 transition">{{ __('messages.MEF') }}</a>
                 </li>
                 <li><a href="https://budget.gouv.ht/"
                         class="hover:text-orange-500 transition">{{ __('messages.DGB') }}</a></li>
