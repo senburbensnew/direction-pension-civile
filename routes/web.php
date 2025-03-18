@@ -8,6 +8,7 @@ use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\QuiSommesNousController;
 use App\Http\Controllers\UserController;
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\CarouselController;
 
 /*
 |--------------------------------------------------------------------------
@@ -157,6 +158,10 @@ Route::get('/liens-utiles', function () {
 Route::get('/locale/{locale}', [App\Http\Controllers\LocaleController::class, 'switch'])
     ->name('locale');
 
+// Carousels
+Route::middleware(['auth'])->group(function () {
+    Route::resource('carousels', CarouselController::class);
+});
 
 Route::prefix('fonctionnaire')->name('fonctionnaire.')->group(function () {
     // Get routes

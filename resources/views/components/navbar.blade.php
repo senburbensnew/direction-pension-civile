@@ -49,6 +49,10 @@
                             {{ __('Profile') }}
                         </x-dropdown-link> --}}
 
+                        <x-dropdown-link :href="route('carousels.index')">
+                            {{ __('messages.admin_panel') }}
+                        </x-dropdown-link>
+
                         <!-- Authentication -->
                         <form method="POST" action="{{ route('logout') }}">
                             @csrf

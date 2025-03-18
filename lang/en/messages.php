@@ -17,6 +17,7 @@ return [
     'description' => 'Created by the decree of March 13, 1987, the Civil Pension Directorate has the fundamental mission to formulate and conduct the economic, financial and monetary policy of the Haitian State to promote growth and socio-economic development of the country on a sustainable basis.',
     'phone' => 'Phone',
     'address' => 'Address',
+    'admin_panel' => 'Admin Panel',
 
     // Search
     'search' => 'Search',

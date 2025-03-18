@@ -17,6 +17,7 @@ return [
     'description' => 'Créé par le décret du 13 mars 1987, la Direction de la Pension Civile a pour mission fondamentale de formuler et de conduire la politique économique, financière et monétaire de l\'État haïtien pour favoriser la croissance ainsi que le développement socio-économique du pays sur une base durable.',
     'phone' => 'Téléphone',
     'address' => 'Adresse',
+    'admin_panel' => 'Administration',
 
     // Search
     'search' => 'Rechercher',
