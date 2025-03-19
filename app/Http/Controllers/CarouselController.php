@@ -40,7 +40,7 @@ class CarouselController extends Controller
             'order' => $request->order ?? Carousel::max('order') + 1
         ]);
     
-        return redirect()->route('carousels.index')->with('success', 'Carousel slide added successfully.');
+        return redirect()->route('admin.carousels.index')->with('success', 'Carousel slide added successfully.');
     }    
 
     public function edit(Carousel $carousel)
@@ -71,7 +71,7 @@ class CarouselController extends Controller
             'order' => $request->order ?? $carousel->order
         ]);
     
-        return redirect()->route('carousels.index')->with('success', 'Carousel slide updated successfully.');
+        return redirect()->route('admin.carousels.index')->with('success', 'Carousel slide updated successfully.');
     }
     
 

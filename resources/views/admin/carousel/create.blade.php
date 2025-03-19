@@ -1,7 +1,7 @@
 @extends('layouts.admin')
 
 @section('content')
-    <form action="{{ route('carousels.store') }}" method="POST" enctype="multipart/form-data"
+    <form action="{{ route('admin.carousels.store') }}" method="POST" enctype="multipart/form-data"
         class="max-w-4xl mx-auto p-6 bg-white shadow-lg rounded-lg">
         @csrf
         <div class="mb-6">

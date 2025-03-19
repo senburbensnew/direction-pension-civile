@@ -4,7 +4,7 @@
     <div class="container mx-auto p-6 bg-white shadow-md rounded-lg">
         <div class="flex justify-between items-center mb-4">
             <h2 class="text-xl font-bold">Carousel Slides</h2>
-            <a href="{{ route('carousels.create') }}"
+            <a href="{{ route('admin.carousels.create') }}"
                 class="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600">Add Slide</a>
         </div>
 
@@ -36,9 +36,9 @@
                                 </span>
                             </td>
                             <td class="border p-3 flex gap-2">
-                                <a href="{{ route('carousels.edit', $carousel->id) }}"
+                                <a href="{{ route('admin.carousels.edit', $carousel->id) }}"
                                     class="bg-yellow-500 text-white px-3 py-1 rounded-lg hover:bg-yellow-600">Edit</a>
-                                <form action="{{ route('carousels.destroy', $carousel->id) }}" method="POST"
+                                <form action="{{ route('admin.carousels.destroy', $carousel->id) }}" method="POST"
                                     onsubmit="return confirm('Delete this slide?')">
                                     @csrf @method('DELETE')
                                     <button type="submit"

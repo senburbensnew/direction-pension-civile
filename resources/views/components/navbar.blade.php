@@ -49,9 +49,11 @@
                             {{ __('Profile') }}
                         </x-dropdown-link> --}}
 
-                        <x-dropdown-link :href="route('carousels.index')">
-                            {{ __('messages.admin_panel') }}
-                        </x-dropdown-link>
+                        @role('admin')
+                            <x-dropdown-link :href="route('admin.carousels.index')">
+                                {{ __('messages.admin_panel') }}
+                            </x-dropdown-link>
+                        @endrole
 
                         <!-- Authentication -->
                         <form method="POST" action="{{ route('logout') }}">

@@ -29,7 +29,7 @@
                     </svg>
                     Dashboard
                 </a> --}}
-                {{--                 <a href="{{ route('admin.users.index') }}"
+                <a href="{{ route('admin.users.index') }}"
                     class="flex items-center px-4 py-2 text-gray-300 hover:bg-gray-700 {{ request()->routeIs('admin.users.index') ? 'bg-gray-700' : '' }}"
                     aria-label="Manage Users">
                     <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -37,15 +37,28 @@
                             d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                     </svg>
                     Users
-                </a> --}}
-                <a href="{{ route('carousels.index') }}"
+                </a>
+                <a href="{{ route('admin.carousels.index') }}"
                     class="flex items-center px-4 py-2 text-gray-300 hover:bg-gray-700 {{ request()->routeIs('admin.posts.index') ? 'bg-gray-700' : '' }}"
                     aria-label="Manage Posts">
+                    <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"
+                        xmlns="http://www.w3.org/2000/svg">
+                        <rect x="2" y="2" width="20" height="20" rx="3" stroke="currentColor"
+                            stroke-width="2" fill="none" />
+                        <circle cx="8" cy="8" r="2" stroke="currentColor" stroke-width="2"
+                            fill="none" />
+                        <path d="M2 18L8 12L12 16L18 10L22 14" stroke="currentColor" stroke-width="2" fill="none" />
+                    </svg>
+                    Carousel
+                </a>
+                <a href="{{ route('admin.documents.upload') }}"
+                    class="flex items-center px-4 py-2 text-gray-300 hover:bg-gray-700 {{ request()->routeIs('admin.users.index') ? 'bg-gray-700' : '' }}"
+                    aria-label="Manage Users">
                     <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                             d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v1m2 13a2 2 0 01-2-2V7m2 13a2 2 0 002-2V9a2 2 0 00-2-2h-2m-4-3H9M7 16h6M7 8h6v4H7V8z" />
                     </svg>
-                    Carousel
+                    Documents
                 </a>
                 {{--                 <a href="{{ route('admin.settings') }}"
                     class="flex items-center px-4 py-2 text-gray-300 hover:bg-gray-700 {{ request()->routeIs('admin.settings') ? 'bg-gray-700' : '' }}"
@@ -100,7 +113,7 @@
                             </x-slot>
 
                             <x-slot name="content">
-                                <a href="#" class="block px-4 py-2 text-sm text-gray-700">Profile</a>
+                                {{-- <a href="#" class="block px-4 py-2 text-sm text-gray-700">Profile</a> --}}
                                 <form method="POST" action="{{ route('logout') }}">
                                     @csrf
                                     <x-dropdown-link :href="route('logout')"

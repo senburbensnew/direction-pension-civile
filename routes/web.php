@@ -9,6 +9,7 @@ use App\Http\Controllers\QuiSommesNousController;
 use App\Http\Controllers\UserController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\CarouselController;
+use App\Http\Controllers\DocumentController;
 
 /*
 |--------------------------------------------------------------------------
@@ -158,11 +159,6 @@ Route::get('/liens-utiles', function () {
 Route::get('/locale/{locale}', [App\Http\Controllers\LocaleController::class, 'switch'])
     ->name('locale');
 
-// Carousels
-Route::middleware(['auth'])->group(function () {
-    Route::resource('carousels', CarouselController::class);
-});
-
 Route::prefix('fonctionnaire')->name('fonctionnaire.')->group(function () {
     // Get routes
     Route::get('/demande-etat-de-carriere', [FonctionnaireController::class, 'demandeEtatCarriere'])->name('career-state-form');
@@ -176,6 +172,16 @@ Route::prefix('fonctionnaire')->name('fonctionnaire.')->group(function () {
 });
 
 Route::prefix('admin')->name('admin.')->group(function () {
+    // Carousels
+    Route::middleware(['auth'])->group(function () {
+        Route::resource('carousels', CarouselController::class);
+    });
+
+    Route::controller(DocumentController::class)->group(function () {
+        Route::get('/documents/upload', 'index')->name('documents.index');
+        Route::post('/documents/upload', 'upload')->name('documents.upload');
+    });
+
     Route::get('/dashboard', [AdminController::class, 'dashboard'])->name('dashboard');
     Route::resource('users', UserController::class);
     Route::resource('posts', PostController::class);
@@ -213,9 +219,9 @@ Route::prefix('quisommesnous')->name('quisommesnous.')->group(function () {
 });
 
 
-Route::get('/dashboard', function () {
+/* Route::get('/dashboard', function () {
     return view('dashboard');
-})->middleware(['auth', 'verified'])->name('dashboard');
+})->middleware(['auth', 'verified'])->name('dashboard'); */
 
 Route::middleware('auth')->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
