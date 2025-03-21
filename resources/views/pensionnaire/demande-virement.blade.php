@@ -23,7 +23,7 @@
 </style>
 
 @section('content')
-    <div class="max-w-7xl mx-auto p-6 bg-white rounded-lg shadow-md">
+    <div class="max-w-6xl mx-auto p-6 m-2 bg-white">
         <!-- Breadcrumb -->
         <nav class="text-sm text-gray-600 mb-4">
             <span class="text-gray-800">Pensionnaire</span>
@@ -67,7 +67,8 @@
                     class="w-24 h-24 object-cover">
                 <h1 class="text-2xl font-bold text-center flex-1">MINISTERE DE L’ECONOMIE ET DES FINANCES <br /> <span
                         class="underline">PENSION CIVILE</span><br /> <span>PAIEMENT PAR VIREMENT BANCAIRE</span>
-                    <br /><span class="underline font-normal">Formulaire de souscription</span></h1>
+                    <br /><span class="underline font-normal">Formulaire de souscription</span>
+                </h1>
                 <div class="flex flex-col items-center relative">
                     <label class="block font-semibold">Photo</label>
                     <input type="file" id="photoUpload" accept="image/*" class="hidden" onchange="previewPhoto(event)">

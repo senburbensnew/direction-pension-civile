@@ -20,7 +20,8 @@
                 class="text-white hover:text-orange-500 cursor-pointer text-sm md:text-base">
                 {{ __('messages.useful_links') }}
             </a>
-            <a href="#" class="text-white hover:text-orange-500 cursor-pointer text-sm md:text-base">
+            <a href="{{ route('contact') }}"
+                class="text-white hover:text-orange-500 cursor-pointer text-sm md:text-base">
                 {{ __('messages.contact') }}
             </a>
             @guest
@@ -162,7 +163,7 @@
         <a href="{{ route('liens-utiles') }}" class="block text-gray-700 hover:text-orange-500 p-2 pl-0">
             {{ __('messages.useful_links') }}
         </a>
-        <a href="" class="block text-gray-700 hover:text-orange-500 p-2 pl-0">
+        <a href="{{ route('contact') }}" class="block text-gray-700 hover:text-orange-500 p-2 pl-0">
             {{ __('messages.contact') }}
         </a>
 
@@ -199,7 +200,7 @@
     <div class="mt-4 space-y-2">
         <div class="flex items-center space-x-2 text-gray-700 text-xs md:text-sm">
             <span class="text-blue-600">📞</span>
-            <span>+ (509) 2992 1067 / 2992 1028</span>
+            <span>+(509) 29 92 1007</span>
         </div>
         <div class="flex items-center space-x-2 text-gray-700 text-xs md:text-sm">
             <span class="text-blue-600">✉️</span>
@@ -207,7 +208,7 @@
         </div>
         <div class="flex items-center space-x-2 text-gray-700 text-xs md:text-sm">
             <span class="text-blue-600">📍</span>
-            <span>5, 16, Ave Charles Sumner et 104, Rue Oswald Durand, Port-au-Prince, Haiti</span>
+            <span>5, Avenue Charles Sumner Port-au-Prince, Haïti (W.I)</span>
         </div>
     </div>
 </div>

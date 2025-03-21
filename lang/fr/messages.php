@@ -14,7 +14,7 @@ return [
     'republic' => 'République d\'Haïti',
     'useful_links' => 'Liens Utiles',
     'contact' => 'Contact',
-    'description' => 'Créé par le décret du 13 mars 1987, la Direction de la Pension Civile a pour mission fondamentale de formuler et de conduire la politique économique, financière et monétaire de l\'État haïtien pour favoriser la croissance ainsi que le développement socio-économique du pays sur une base durable.',
+    'description' => 'La Direction de la Pension Civile est responsable de la gestion et du suivi des pensions des fonctionnaires de l\'État haïtien. Sa mission principale consiste à assurer une administration efficace, équitable et transparente des prestations de retraite, tout en garantissant le respect des droits des pensionnés et en veillant à la soutenabilité à long terme du système de pension publique. En tant qu\'organe du Ministère de l\'Économie et des Finances (MEF), elle détient la compétence exclusive pour la gestion du système de retraite des fonctionnaires, employés publics et assimilés, conformément au décret publié au Moniteur le 17 janvier 2005.',   
     'phone' => 'Téléphone',
     'address' => 'Adresse',
     'admin_panel' => 'Administration',

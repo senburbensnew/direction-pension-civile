@@ -14,7 +14,7 @@ return [
     'republic' => 'Republic of Haiti',
     'useful_links' => 'Useful Links',
     'contact' => 'Contact',
-    'description' => 'Created by the decree of March 13, 1987, the Civil Pension Directorate has the fundamental mission to formulate and conduct the economic, financial and monetary policy of the Haitian State to promote growth and socio-economic development of the country on a sustainable basis.',
+    'description' => 'The Civil Pension Directorate is responsible for the management and oversight of pensions for Haitian government employees. Its main mission is to ensure the efficient, fair, and transparent administration of retirement benefits, while guaranteeing the protection of pensioners\' rights and ensuring the long-term sustainability of the public pension system. As an organ of the Ministry of Economy and Finance (MEF), it holds exclusive authority over the management of the retirement system for civil servants, public employees, and their equivalents, in accordance with the decree published in the Moniteur on January 17, 2005.',
     'phone' => 'Phone',
     'address' => 'Address',
     'admin_panel' => 'Admin Panel',

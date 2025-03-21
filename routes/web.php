@@ -155,6 +155,10 @@ Route::get('/liens-utiles', function () {
     return view('liens-utiles.index', compact('links'));
 })->name('liens-utiles');
 
+Route::get('/contact', function () {
+    return view('contact.index');
+})->name('contact');
+
 
 Route::get('/locale/{locale}', [App\Http\Controllers\LocaleController::class, 'switch'])
     ->name('locale');

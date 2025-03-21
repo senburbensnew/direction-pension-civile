@@ -10,7 +10,7 @@
     </div>
 
     <div class="mx-auto p-4 md:p-6 max-w-2xl">
-        <ul class="text-[#5156be]">
+        <ul class="text-[#074482]">
             @foreach ($links as $link)
                 <li class="border-b border-gray-200 pb-2 md:pb-3 last:border-b-0 last:pb-0">
                     <x-tooltip :text="$link['abbr']">
