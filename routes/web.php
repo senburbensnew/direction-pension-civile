@@ -10,6 +10,7 @@ use App\Http\Controllers\UserController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\CarouselController;
 use App\Http\Controllers\DocumentController;
+use App\Http\Controllers\PersonalController;
 
 /*
 |--------------------------------------------------------------------------
@@ -163,17 +164,21 @@ Route::get('/contact', function () {
 Route::get('/locale/{locale}', [App\Http\Controllers\LocaleController::class, 'switch'])
     ->name('locale');
 
-Route::prefix('fonctionnaire')->name('fonctionnaire.')->group(function () {
-    // Get routes
-    Route::get('/demande-etat-de-carriere', [FonctionnaireController::class, 'demandeEtatCarriere'])->name('career-state-form');
-    Route::get('/simulation-retraite', [FonctionnaireController::class, 'retirementSimulation'])->name('retirement-simulation-form');
-    Route::get('/demande-pension', [FonctionnaireController::class, 'demandePension'])->name('pension-request-form');
-
-    // Post routes
-    Route::post('/demande-etat-de-carriere', [FonctionnaireController::class, 'processCareerStateRequest'])->name('process-career-state-request');
-    Route::post('/simulation-retraite', [FonctionnaireController::class, 'processRetirementSimulation'])->name('process-retirement-simulation');
-    Route::post('/demande-pension', [FonctionnaireController::class, 'processPensionRequest'])->name('process-pension-request');
+Route::prefix('personal')->middleware('auth')->group(function () {
+    // Route personnelle
+    Route::get('/', [PersonalController::class, 'index'])->name('personal.index');
+        
+    // Routes pour pensionnaire
+    Route::get('/dashboard', [PersonalController::class, 'dashboard'])->name('personal.dashboard');
+            
+    // Gestion des demandes
+    Route::prefix('requests')->group(function () {
+        Route::get('/{id}', [PersonalController::class, 'showRequest'])->name('personal.request.show');
+        Route::put('/{id}', [PersonalController::class, 'updateRequest'])->name('personal.request.update');
+        Route::delete('/{id}/cancel', action: [PersonalController::class, 'cancelRequest'])->name('personal.request.cancel');
+    });
 });
+
 
 Route::prefix('admin')->name('admin.')->group(function () {
     // Carousels
@@ -193,23 +198,38 @@ Route::prefix('admin')->name('admin.')->group(function () {
 });
 
 // Pensionnaire Routes
-Route::prefix('pensionnaire')->name('pensionnaire.')->group(function () {
-    // Get routes
-    Route::get('/demande-virement', [PensionnaireController::class, 'demandeVirement'])->name('virement-request-form');
-    Route::get('/demande-attestation', [PensionnaireController::class, 'demandeAttestation'])->name('attestation-request-form');
-    Route::get('/demande-transfert-cheque', [PensionnaireController::class, 'demandeTransfertCheque'])->name('check-transfer-request-form');
-    Route::get('/demande-arret-paiement', [PensionnaireController::class, 'demandeArretPaiement'])->name('payment-stop-request-form');
-    Route::get('/demande-reinsertion', [PensionnaireController::class, 'demandeReinsertion'])->name('reinstatement-request-form');
-    Route::get('/demande-arret-virement', [PensionnaireController::class, 'demandeArretVirement'])->name('transfer-stop-request-form');
+Route::prefix('pensionnaire')
+    ->name('pensionnaire.')
+    ->middleware('auth') // Ensure user is logged in
+    ->group(function () {
+        // Get routes
+        Route::get('/demande-virement', [PensionnaireController::class, 'demandeVirement'])->name('virement-request-form');
+        Route::get('/demande-attestation', [PensionnaireController::class, 'demandeAttestation'])->name('attestation-request-form');
+        Route::get('/demande-transfert-cheque', [PensionnaireController::class, 'demandeTransfertCheque'])->name('check-transfer-request-form');
+        Route::get('/demande-arret-paiement', [PensionnaireController::class, 'demandeArretPaiement'])->name('payment-stop-request-form');
+        Route::get('/demande-reinsertion', [PensionnaireController::class, 'demandeReinsertion'])->name('reinstatement-request-form');
+        Route::get('/demande-arret-virement', [PensionnaireController::class, 'demandeArretVirement'])->name('transfer-stop-request-form');
 
-    // Post routes
-    Route::post('/demande-virement', [PensionnaireController::class, 'processVirementRequest'])->name('process-virement-request');
-    Route::post('/demande-attestation', [PensionnaireController::class, 'processAttestationRequest'])->name('process-attestation-request');
-    Route::post('/demande-transfert-cheque', [PensionnaireController::class, 'processCheckTransferRequest'])->name('process-check-transfer-request');
-    Route::post('/demande-arret-paiement', [PensionnaireController::class, 'processPaymentStopRequest'])->name('process-payment-stop-request');
-    Route::post('/demande-reinsertion', [PensionnaireController::class, 'processReinstatementRequest'])->name('process-reinstatement-request');
-    Route::post('/demande-arret-virement', [PensionnaireController::class, 'processTransferStopRequest'])->name('process-transfer-stop-request');
-});
+        // Post routes
+        Route::post('/demande-virement', [PensionnaireController::class, 'processVirementRequest'])->name('process-virement-request');
+        Route::post('/demande-attestation', [PensionnaireController::class, 'processAttestationRequest'])->name('process-attestation-request');
+        Route::post('/demande-transfert-cheque', [PensionnaireController::class, 'processCheckTransferRequest'])->name('process-check-transfer-request');
+        Route::post('/demande-arret-paiement', [PensionnaireController::class, 'processPaymentStopRequest'])->name('process-payment-stop-request');
+        Route::post('/demande-reinsertion', [PensionnaireController::class, 'processReinstatementRequest'])->name('process-reinstatement-request');
+        Route::post('/demande-arret-virement', [PensionnaireController::class, 'processTransferStopRequest'])->name('process-transfer-stop-request');
+    });
+
+    Route::prefix('fonctionnaire')->name('fonctionnaire.')->middleware('auth')->group(function () {
+        // Get routes
+        Route::get('/demande-etat-de-carriere', [FonctionnaireController::class, 'demandeEtatCarriere'])->name('career-state-form');
+        Route::get('/simulation-retraite', [FonctionnaireController::class, 'retirementSimulation'])->name('retirement-simulation-form');
+        Route::get('/demande-pension', [FonctionnaireController::class, 'demandePension'])->name('pension-request-form');
+    
+        // Post routes
+        Route::post('/demande-etat-de-carriere', [FonctionnaireController::class, 'processCareerStateRequest'])->name('process-career-state-request');
+        Route::post('/simulation-retraite', [FonctionnaireController::class, 'processRetirementSimulation'])->name('process-retirement-simulation');
+        Route::post('/demande-pension', [FonctionnaireController::class, 'processPensionRequest'])->name('process-pension-request');
+    });
 
 
 // Qui sommes nous Routes
@@ -223,9 +243,9 @@ Route::prefix('quisommesnous')->name('quisommesnous.')->group(function () {
 });
 
 
-/* Route::get('/dashboard', function () {
+Route::get('/dashboard', function () {
     return view('dashboard');
-})->middleware(['auth', 'verified'])->name('dashboard'); */
+})->middleware(['auth', 'verified'])->name('dashboard');
 
 Route::middleware('auth')->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');

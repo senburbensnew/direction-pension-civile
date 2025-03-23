@@ -5,20 +5,28 @@
             visibility: hidden;
         }
 
-        #myForm,
-        #myForm * {
+        #form-section,
+        #form-section * {
             visibility: visible;
         }
 
-        #myForm {
+        #form-section {
             position: absolute;
             left: 0;
             top: 0;
         }
 
-        #myForm button {
+        #form-section button {
             visibility: hidden;
         }
+    }
+
+    .input-error {
+        @apply border-red-500 focus:border-red-500 focus:ring-red-500;
+    }
+
+    .error-message {
+        @apply mt-1 text-sm text-red-600;
     }
 </style>
 
@@ -28,251 +36,329 @@
         <nav class="text-sm text-gray-600 mb-4">
             <span class="text-gray-800">Pensionnaire</span>
             <span class="mx-2">></span>
-            <span class="text-gray-800">Demande de transfert de cheques</span>
+            <span class="text-gray-800">Demande de transfert de chèques</span>
         </nav>
-        <h1 class="text-2xl font-semibold text-gray-800">Demande de transfert de cheques</h1>
 
-        <ul class="mt-3 flex flex-wrap justify-center text-sm font-medium text-center text-gray-500 dark:text-gray-400">
-            <li class="me-2">
-                <a href="#" class="tab-link inline-block px-4 py-3 text-white bg-blue-600 rounded-lg active"
-                    data-target="pdf">
-                    PDF
-                </a>
-            </li>
-            <li class="me-2">
-                <a href="#" class="tab-link inline-block px-4 py-3 rounded-lg" data-target="html_form">
-                    HTML
-                </a>
-            </li>
-        </ul>
+        <!-- Form Section -->
+        <div id="form-section" class="max-w-7xl mx-auto bg-white p-6 shadow-md rounded-lg relative m-2">
+            <div class="flex flex-col md:flex-row justify-between items-center mb-12 gap-8">
+                <!-- Logo -->
+                {{--                 <div class="order-1">
+                    <img src="{{ asset('images/setting-logo-1-M13oPLiYoM.png') }}" alt="Logo"
+                        class="w-24 h-24 object-cover">
+                </div> --}}
 
-        <div id="pdf" class="tab-content max-w-7xl mx-auto p-6 bg-white rounded-lg shadow-md">
-            <!-- Page Title & Download Button -->
-            <div class="flex justify-between items-center mb-4">
-                <a href="{{ asset('documents/virement_bancaire_forme.pdf') }}" download
-                    class="ml-auto inline-block px-4 py-2 bg-blue-600 text-white font-medium text-sm rounded hover:bg-blue-700 focus:outline-none focus:ring focus:ring-blue-300">
-                    Télécharger
-                </a>
-            </div>
-            <!-- PDF Viewer -->
-            <div class="border border-gray-300 rounded-lg overflow-hidden">
-                <embed src="{{ asset('documents/virement_bancaire_forme.pdf') }}" type="application/pdf" width="100%"
-                    height="600px" class="block">
-            </div>
-        </div>
+                <!-- Title Section -->
+                {{--                 <div class="order-2 mx-4 md:mx-12 text-center flex-grow">
+                    <h1 class="text-xl md:text-2xl font-bold">
+                        MINISTERE DE L’ECONOMIE ET DES FINANCES <br />
+                        <span class="underline">PENSION CIVILE</span><br />
+                        <span>DEMANDE DE TRANSFERT DE CHÈQUES</span><br />
+                        <span class="underline font-normal text-base md:text-lg">Formulaire de doléances / Demande de
+                            Transfert</span>
+                    </h1>
+                </div> --}}
 
-        <div id="html_form" class="hidden tab-content max-w-7xl mx-auto bg-white p-6 shadow-md rounded-lg relative m-2">
-            <div class="flex justify-between items-center mb-6">
-                <img src="{{ asset('images/setting-logo-1-M13oPLiYoM.png') }}" alt="Logo"
-                    class="w-24 h-24 object-cover">
-                <h1 class="text-2xl font-bold text-center flex-1">MINISTERE DE L’ECONOMIE ET DES FINANCES <br /> <span
-                        class="underline">PENSION CIVILE</span><br /> <span>PAIEMENT PAR VIREMENT BANCAIRE</span>
-                    <br /><span class="underline font-normal">Formulaire de souscription</span>
-                </h1>
-                <div class="flex flex-col items-center relative">
-                    <label class="block font-semibold">Photo</label>
-                    <input type="file" id="photoUpload" accept="image/*" class="hidden" onchange="previewPhoto(event)">
-                    <label for="photoUpload"
-                        class="cursor-pointer border rounded-lg w-24 h-24 flex items-center justify-center bg-gray-200 text-gray-500 text-sm">Choisir</label>
-                    <img id="photoPreview" class="absolute top-0 left-0 w-24 h-24 object-cover rounded-lg hidden" />
+                <div class="text-center mb-6 flex items-center justify-center w-full gap-4">
+                    <img src="{{ asset('images/setting-logo-1-M13oPLiYoM.png') }}" alt="Logo"
+                        class="w-24 h-24 object-cover shrink-0">
+
+                    <div class="px-4">
+                        <h2 class="text-xl font-bold mb-1">Direction de la Pension Civile (DPC)</h2>
+                        <h3 class="text-lg font-semibold mb-2">Formulaire de doléances / Demande de Transfert</h3>
+                        <p class="text-gray-600">Service de Comptabilité</p>
+                        <p class="text-gray-600 mt-1">Exercice : 20... / 20...</p>
+                    </div>
+
+                    <img src="{{ asset('images/setting-logo-1-M13oPLiYoM.png') }}" alt="Logo"
+                        class="w-24 h-24 object-cover shrink-0">
                 </div>
+
+                <!-- Logo -->
+                {{--                 <div class="order-3">
+                    <img src="{{ asset('images/setting-logo-1-M13oPLiYoM.png') }}" alt="Logo"
+                        class="w-24 h-24 object-cover">
+                </div> --}}
             </div>
 
-            <form>
-                <div class="grid grid-cols-2 gap-4 mb-4 items-center">
-                    <div>
-                        <label class="block font-semibold">Code du pensionné</label>
-                        <input type="text" class="w-full border rounded p-2">
-                    </div>
-                    <div>
-                        <div class="flex flex-col space-y-2 mt-2">
-                            <label class="flex items-center">
-                                <input type="radio" class="mr-2" name="pension_type" value="carriere"> Pension de
-                                carrière
-                            </label>
-                            <label class="flex items-center">
-                                <input type="radio" class="mr-2" name="pension_type" value="reversibilite"> Pension de
-                                réversibilité (veuf(ve))
-                            </label>
-                        </div>
-                    </div>
+            @if (session('success'))
+                <div class="mb-4 p-4 bg-green-50 border border-green-200 text-green-700 rounded">
+                    {{ session('success') }}
                 </div>
-                <fieldset class="shadow-md rounded-lg p-5">
-                    <div class="grid grid-cols-2 gap-4 mb-4">
-                        <div>
-                            <label class="block font-semibold">NIF</label>
-                            <input type="text" class="w-full border rounded p-2">
-                        </div>
-                    </div>
+            @endif
 
-                    <div class="grid grid-cols-2 gap-4 mb-4">
-                        <div>
-                            <label class="block font-semibold">Nom et Prénom(s)</label>
-                            <input type="text" class="w-full border rounded p-2">
-                        </div>
-                        <div>
-                            <label class="block font-semibold">Adresse Ville</label>
-                            <input type="text" class="w-full border rounded p-2">
-                        </div>
-                    </div>
+            @if (session('error'))
+                <div class="mb-4 p-4 bg-red-50 border border-red-200 text-red-700 rounded">
+                    {{ session('error') }}
+                </div>
+            @endif
 
-                    <div class="grid grid-cols-3 gap-4 mb-4">
-                        <div>
-                            <label class="block font-semibold">Date de naissance</label>
-                            <input type="date" class="w-full border rounded p-2">
-                        </div>
-                        <div>
-                            <label class="block font-semibold">État civil</label>
-                            <select class="w-full border rounded p-2">
-                                <option value="">Sélectionner</option>
-                                <option value="célibataire">Célibataire</option>
-                                <option value="marié(e)">Marié(e)</option>
-                                <option value="divorcé(e)">Divorcé(e)</option>
-                                <option value="veuf(ve)">Veuf(ve)</option>
-                            </select>
-                        </div>
-                        <div>
-                            <label class="block font-semibold">Sexe (M/F)</label>
-                            <select class="w-full border rounded p-2">
-                                <option value="">Sélectionner</option>
-                                <option value="M">M</option>
-                                <option value="F">F</option>
-                            </select>
-                        </div>
-                        <div>
-                            <label class="block font-semibold">Montant allocation</label>
-                            <input type="text" class="w-full border rounded p-2">
-                        </div>
-                    </div>
+            <form method="POST" action="#">
+                @csrf
 
-                    <div class="grid grid-cols-2 gap-4 mb-4">
+                <!-- General Errors -->
+                @if ($errors->any())
+                    <div class="p-4 bg-red-50 border border-red-200 text-red-700 rounded mb-4">
+                        <ul class="list-disc pl-5 space-y-1">
+                            @foreach ($errors->all() as $error)
+                                <li>{{ $error }}</li>
+                            @endforeach
+                        </ul>
+                    </div>
+                @endif
+
+                <!-- Date & Month Section -->
+                <fieldset class="shadow-md rounded-lg p-5 border mb-6">
+                    <legend class="text-sm font-medium text-gray-700 mb-2">Période de transfert</legend>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div>
-                            <label class="block font-semibold">Nom et Prénom(s) de la mère</label>
-                            <input type="text" class="w-full border rounded p-2">
+                            <label for="start_month" class="block text-sm font-medium text-gray-700 mb-1">
+                                À partir du mois de *
+                            </label>
+                            <input type="month" name="start_month" id="start_month" value="{{ old('start_month') }}"
+                                class="w-full rounded-md @error('start_month') border-red-500 @else border-gray-300 @enderror focus:border-blue-500 focus:ring-blue-500">
+                            @error('start_month')
+                                <p class="error-message">{{ $message }}</p>
+                            @enderror
                         </div>
                         <div>
-                            <label class="block font-semibold">Portable</label>
-                            <input type="text" class="w-full border rounded p-2">
+                            <label for="request_date" class="block text-sm font-medium text-gray-700 mb-1">
+                                Date de demande *
+                            </label>
+                            <input type="date" name="request_date" id="request_date" value="{{ old('request_date') }}"
+                                class="w-full rounded-md @error('request_date') border-red-500 @else border-gray-300 @enderror focus:border-blue-500 focus:ring-blue-500">
+                            @error('request_date')
+                                <p class="error-message">{{ $message }}</p>
+                            @enderror
                         </div>
                     </div>
                 </fieldset>
-                <div class="flex justify-between p-2">
-                    <label class="flex items-center">
-                        <input type="radio" class="mr-2" name="categorie_pension" value="civile"> <span
-                            class="text-sm">PENSION CIVILE</span>
-                    </label>
-                    <label class="flex items-center">
-                        <input type="radio" class="mr-2" name="categorie_pension" value="militaire"> <span
-                            class="text-sm">PENSION MILITAIRE</span>
-                    </label>
-                    <label class="flex items-center">
-                        <input type="radio" class="mr-2" name="categorie_pension" value="bndai"> <span
-                            class="text-sm">BNDAI</span>
-                    </label>
-                    <label class="flex items-center">
-                        <input type="radio" class="mr-2" name="categorie_pension" value="minoterie"> <span
-                            class="text-sm">MINOTERIE</span>
-                    </label>
-                    <label class="flex items-center">
-                        <input type="radio" class="mr-2" name="categorie_pension" value="selection_nationale"> <span
-                            class="text-sm">SELECTION
-                            NATIONALE</span>
-                    </label>
-                </div>
 
-                <fieldset class="shadow-md rounded-lg p-5">
-                    <div class="mb-4">
-                        <label class="block font-semibold">Banque du pensionné (Banque locale)</label>
-                        <input type="text" class="w-full border rounded p-2">
-                    </div>
-
-                    <div class="grid grid-cols-2 gap-4 mb-4">
-                        <div>
-                            <label class="block font-semibold">Numéro de compte du pensionné</label>
-                            <input type="text" class="w-full border rounded p-2">
+                <!-- Pension Regime Section -->
+                <fieldset class="shadow-md rounded-lg p-5 border mb-6">
+                    <legend class="text-sm font-medium text-gray-700 mb-2">Régime de Pension *</legend>
+                    <div class="flex space-x-4">
+                        <div class="flex items-center">
+                            <input type="radio" id="regime_civile" name="regime_pension" value="civile"
+                                class="h-4 w-4 text-blue-600 border-gray-300 focus:ring-blue-500"
+                                @checked(old('regime_pension') === 'civile')>
+                            <label for="regime_civile" class="ml-2 text-sm text-gray-700">
+                                Civile
+                            </label>
                         </div>
-                        <div>
-                            <label class="block font-semibold">Nom du compte du pensionné</label>
-                            <input type="text" class="w-full border rounded p-2">
+                        <div class="flex items-center">
+                            <input type="radio" id="regime_militaire" name="regime_pension" value="militaire"
+                                class="h-4 w-4 text-blue-600 border-gray-300 focus:ring-blue-500"
+                                @checked(old('regime_pension') === 'militaire')>
+                            <label for="regime_militaire" class="ml-2 text-sm text-gray-700">
+                                Militaire
+                            </label>
                         </div>
                     </div>
+                    @error('regime_pension')
+                        <p class="error-message">{{ $message }}</p>
+                    @enderror
+                </fieldset>
 
-                    <div class="mt-6">
-                        <p class="text-sm text-gray-600">Seul le numéro de compte personnel du pensionné est autorisé pour
-                            cette
-                            opération.</p>
+                <!-- Pension Information -->
+                <fieldset class="shadow-md rounded-lg p-5 border mb-6">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label for="pension_code" class="block text-sm font-medium text-gray-700 mb-1">
+                                Code pension *
+                            </label>
+                            <input type="text" name="pension_code" id="pension_code" value="{{ old('pension_code') }}"
+                                class="w-full rounded-md @error('pension_code') border-red-500 @else border-gray-300 @enderror focus:border-blue-500 focus:ring-blue-500">
+                            @error('pension_code')
+                                <p class="error-message">{{ $message }}</p>
+                            @enderror
+                        </div>
+                        <div>
+                            <label for="montant" class="block text-sm font-medium text-gray-700 mb-1">
+                                Montant (en Gdes) *
+                            </label>
+                            <input type="number" name="montant" id="montant" value="{{ old('montant') }}"
+                                class="w-full rounded-md @error('montant') border-red-500 @else border-gray-300 @enderror focus:border-blue-500 focus:ring-blue-500"
+                                step="0.01" min="0">
+                            @error('montant')
+                                <p class="error-message">{{ $message }}</p>
+                            @enderror
+                        </div>
                     </div>
                 </fieldset>
 
-                <div class="mt-8 text-sm">
-                    <p>Par la présente, je demande à la Direction du Trésor de virer sur mon compte personnel le montant net
-                        de
-                        mes prestations mensuelles et je l’autorise à déduire toutes valeurs indûment versées sur mon
-                        compte, en
-                        l’absence d’un règlement à l’amiable.</p>
-                    <p class="mt-4 font-semibold">Le ...../...../20.....</p>
-                    <div class="mt-6 flex justify-between">
+                <!-- Personal Information -->
+                <fieldset class="shadow-md rounded-lg p-5 border mb-6">
+                    <legend class="text-sm font-medium text-gray-700 mb-2">Informations personnelles</legend>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                         <div>
-                            <hr class="border-t-2 border-black w-64">
-                            <p class="font-semibold">Chef de Service de la Comptabilité</p>
+                            <label for="nom" class="block text-sm font-medium text-gray-700 mb-1">
+                                Nom *
+                            </label>
+                            <input type="text" name="nom" id="nom" value="{{ old('nom') }}"
+                                class="w-full rounded-md @error('nom') border-red-500 @else border-gray-300 @enderror focus:border-blue-500 focus:ring-blue-500">
+                            @error('nom')
+                                <p class="error-message">{{ $message }}</p>
+                            @enderror
                         </div>
                         <div>
-                            <hr class="border-t-2 border-black w-64">
-                            <p class="font-semibold">Signature du Pensionné</p>
+                            <label for="prenom" class="block text-sm font-medium text-gray-700 mb-1">
+                                Prénom *
+                            </label>
+                            <input type="text" name="prenom" id="prenom" value="{{ old('prenom') }}"
+                                class="w-full rounded-md @error('prenom') border-red-500 @else border-gray-300 @enderror focus:border-blue-500 focus:ring-blue-500">
+                            @error('prenom')
+                                <p class="error-message">{{ $message }}</p>
+                            @enderror
+                        </div>
+                        <div>
+                            <label for="nom_jeune_fille" class="block text-sm font-medium text-gray-700 mb-1">
+                                Nom de Jeune Fille
+                            </label>
+                            <input type="text" name="nom_jeune_fille" id="nom_jeune_fille"
+                                value="{{ old('nom_jeune_fille') }}"
+                                class="w-full rounded-md border-gray-300 focus:border-blue-500 focus:ring-blue-500">
                         </div>
                     </div>
-                    <p class="mt-6 text-xs text-center">dpc/sicp/jr</p>
-                    <p class="mt-2 font-semibold text-center">5, 16, Ave Charles Sumner et 104, Rue Oswald Durand,
-                        Port-au-Prince, Haiti
-                    </p>
-                </div>
+                </fieldset>
 
-                <div class="mt-6 text-right">
-                    <button class="bg-blue-600 text-white px-6 py-2 rounded">Soumettre</button>
-                    <button onclick="window.print()"
-                        class="mt-6 bg-blue-600 text-white px-6 py-2 rounded">Imprimer</button>
+                <!-- Contact Information -->
+                <fieldset class="shadow-md rounded-lg p-5 border mb-6">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label for="nif" class="block text-sm font-medium text-gray-700 mb-1">
+                                NIF *
+                            </label>
+                            <input type="text" name="nif" id="nif" value="{{ old('nif') }}"
+                                class="w-full rounded-md @error('nif') border-red-500 @else border-gray-300 @enderror focus:border-blue-500 focus:ring-blue-500">
+                            @error('nif')
+                                <p class="error-message">{{ $message }}</p>
+                            @enderror
+                        </div>
+                        <div>
+                            <label for="ninu" class="block text-sm font-medium text-gray-700 mb-1">
+                                NINU *
+                            </label>
+                            <input type="text" name="ninu" id="ninu" value="{{ old('ninu') }}"
+                                class="w-full rounded-md @error('ninu') border-red-500 @else border-gray-300 @enderror focus:border-blue-500 focus:ring-blue-500">
+                            @error('ninu')
+                                <p class="error-message">{{ $message }}</p>
+                            @enderror
+                        </div>
+                        <div>
+                            <label for="adresse" class="block text-sm font-medium text-gray-700 mb-1">
+                                Adresse *
+                            </label>
+                            <input type="text" name="adresse" id="adresse" value="{{ old('adresse') }}"
+                                class="w-full rounded-md @error('adresse') border-red-500 @else border-gray-300 @enderror focus:border-blue-500 focus:ring-blue-500">
+                            @error('adresse')
+                                <p class="error-message">{{ $message }}</p>
+                            @enderror
+                        </div>
+                        <div>
+                            <label for="telephone" class="block text-sm font-medium text-gray-700 mb-1">
+                                Téléphone *
+                            </label>
+                            <input type="tel" name="telephone" id="telephone" value="{{ old('telephone') }}"
+                                class="w-full rounded-md @error('telephone') border-red-500 @else border-gray-300 @enderror focus:border-blue-500 focus:ring-blue-500"
+                                pattern="[0-9]{10}">
+                            @error('telephone')
+                                <p class="error-message">{{ $message }}</p>
+                            @enderror
+                        </div>
+                        <div>
+                            <label for="courriel" class="block text-sm font-medium text-gray-700 mb-1">
+                                Courriel
+                            </label>
+                            <input type="email" name="courriel" id="courriel" value="{{ old('courriel') }}"
+                                class="w-full rounded-md border-gray-300 focus:border-blue-500 focus:ring-blue-500">
+                        </div>
+                    </div>
+                </fieldset>
+
+                <!-- Transfer Details -->
+                <fieldset class="shadow-md rounded-lg p-5 border mb-6">
+                    <legend class="text-sm font-medium text-gray-700 mb-2">Détails du transfert</legend>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label for="de" class="block text-sm font-medium text-gray-700 mb-1">
+                                De *
+                            </label>
+                            <input type="text" name="de" id="de" value="{{ old('de') }}"
+                                class="w-full rounded-md @error('de') border-red-500 @else border-gray-300 @enderror focus:border-blue-500 focus:ring-blue-500">
+                            @error('de')
+                                <p class="error-message">{{ $message }}</p>
+                            @enderror
+                        </div>
+                        <div>
+                            <label for="a" class="block text-sm font-medium text-gray-700 mb-1">
+                                À *
+                            </label>
+                            <input type="text" name="a" id="a" value="{{ old('a') }}"
+                                class="w-full rounded-md @error('a') border-red-500 @else border-gray-300 @enderror focus:border-blue-500 focus:ring-blue-500">
+                            @error('a')
+                                <p class="error-message">{{ $message }}</p>
+                            @enderror
+                        </div>
+                    </div>
+                    <div class="mt-4">
+                        <label for="cheque_motif" class="block text-sm font-medium text-gray-700 mb-1">
+                            Motif du transfert *
+                        </label>
+                        <textarea name="cheque_motif" id="cheque_motif" rows="3"
+                            class="w-full rounded-md @error('cheque_motif') border-red-500 @else border-gray-300 @enderror focus:border-blue-500 focus:ring-blue-500">{{ old('cheque_motif') }}</textarea>
+                        @error('cheque_motif')
+                            <p class="error-message">{{ $message }}</p>
+                        @enderror
+                    </div>
+                </fieldset>
+
+                <!-- Signature Section -->
+                <fieldset class="shadow-md rounded-lg p-5 border mb-6">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label for="fait_a" class="block text-sm font-medium text-gray-700 mb-1">
+                                Fait à *
+                            </label>
+                            <input type="text" name="fait_a" id="fait_a" value="{{ old('fait_a') }}"
+                                class="w-full rounded-md @error('fait_a') border-red-500 @else border-gray-300 @enderror focus:border-blue-500 focus:ring-blue-500">
+                            @error('fait_a')
+                                <p class="error-message">{{ $message }}</p>
+                            @enderror
+                        </div>
+                        <div>
+                            <label for="signature_date" class="block text-sm font-medium text-gray-700 mb-1">
+                                Date de signature *
+                            </label>
+                            <input type="date" name="signature_date" id="signature_date"
+                                value="{{ old('signature_date') }}"
+                                class="w-full rounded-md @error('signature_date') border-red-500 @else border-gray-300 @enderror focus:border-blue-500 focus:ring-blue-500">
+                            @error('signature_date')
+                                <p class="error-message">{{ $message }}</p>
+                            @enderror
+                        </div>
+                    </div>
+                    <div class="mt-4">
+                        <label for="signature" class="block text-sm font-medium text-gray-700 mb-1">
+                            Signature *
+                        </label>
+                        <input type="text" name="signature" id="signature" value="{{ old('signature') }}"
+                            class="w-full rounded-md @error('signature') border-red-500 @else border-gray-300 @enderror focus:border-blue-500 focus:ring-blue-500"
+                            placeholder="Signature">
+                        @error('signature')
+                            <p class="error-message">{{ $message }}</p>
+                        @enderror
+                    </div>
+                </fieldset>
+
+                <!-- Submit Section -->
+                <div class="mt-8 text-right">
+                    <button type="submit"
+                        class="bg-blue-600 text-white px-6 py-2 rounded hover:bg-blue-700 transition-colors">
+                        Soumettre
+                    </button>
                 </div>
             </form>
         </div>
     </div>
-
-    <script>
-        function previewPhoto(event) {
-            const file = event.target.files[0];
-            if (file) {
-                const reader = new FileReader();
-                reader.onload = function(e) {
-                    const img = document.getElementById("photoPreview");
-                    img.src = e.target.result;
-                    img.classList.remove("hidden");
-                }
-                reader.readAsDataURL(file);
-            }
-        }
-    </script>
-
-    <script>
-        document.querySelectorAll('.tab-link').forEach(tab => {
-            tab.addEventListener('click', function(e) {
-                e.preventDefault(); // Prevent the default link behavior
-
-                // Remove active class from all tabs
-                document.querySelectorAll('.tab-link').forEach(t => {
-                    t.classList.remove('text-white', 'bg-blue-600', 'active');
-                });
-
-                // Add active class to the clicked tab
-                this.classList.add('text-white', 'bg-blue-600', 'active');
-
-                // Hide all content divs
-                document.querySelectorAll('.tab-content').forEach(content => {
-                    content.classList.add('hidden');
-                });
-
-                // Show the corresponding content
-                const targetId = this.getAttribute('data-target');
-                document.getElementById(targetId).classList.remove('hidden');
-            });
-        });
-    </script>
 @endsection

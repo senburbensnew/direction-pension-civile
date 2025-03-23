@@ -11,6 +11,5 @@
     <div>
         <h1 class="hover:underline text-sm text-blue-900 font-bold">Lorem ipsum</h1>
         <p class="text-xs text-gray-600">Lorem ipsum dolor sit amet</p>
-        
     </div>
 </div>

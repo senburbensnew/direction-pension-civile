@@ -3,32 +3,6 @@
 @section('title', 'Accueil')
 
 @section('content')
-    {{--     <div class="swiper mySwiper">
-        <div class="swiper-wrapper">
-            <div class="swiper-slide">
-                <img src="{{ asset('images/carousel/slide1.jpg') }}" alt="Slide 1">
-            </div>
-            <div class="swiper-slide">
-                <img src="{{ asset('images/carousel/slide2.jpg') }}" alt="Slide 2">
-            </div>
-            <div class="swiper-slide">
-                <img src="{{ asset('images/carousel/slide3.jpg') }}" alt="Slide 3">
-            </div>
-            <div class="swiper-slide">
-                <img src="{{ asset('images/carousel/slide4.jpg') }}" alt="Slide 3">
-            </div>
-            <div class="swiper-slide">
-                <img src="{{ asset('images/carousel/slide5.jpg') }}" alt="Slide 3">
-            </div>
-        </div>
-
-        <!-- Pagination -->
-        <div class="swiper-pagination"></div>
-
-        <!-- Navigation -->
-        <div class="swiper-button-prev"></div>
-        <div class="swiper-button-next"></div>
-    </div> --}}
     <x-carousel>
         <div class="swiper-slide">
             <img src="{{ asset('images/carousel/slide1.jpg') }}" alt="Slide 1">

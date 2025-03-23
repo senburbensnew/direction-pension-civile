@@ -55,6 +55,11 @@
                                 {{ __('messages.admin_panel') }}
                             </x-dropdown-link>
                         @endrole
+                        @auth
+                            <x-dropdown-link :href="route('personal.index')">
+                                Dashboard
+                            </x-dropdown-link>
+                        @endauth
 
                         <!-- Authentication -->
                         <form method="POST" action="{{ route('logout') }}">
@@ -213,21 +218,23 @@
     </div>
 </div>
 
-<script>
-    function toggleSearch() {
-        document.querySelectorAll('.search-icon, .close-icon').forEach(icon => {
-            icon.classList.toggle('hidden');
-        });
-        // Add your search toggle logic here
-    }
+@push('scripts')
+    <script>
+        function toggleSearch() {
+            document.querySelectorAll('.search-icon, .close-icon').forEach(icon => {
+                icon.classList.toggle('hidden');
+            });
+            // Add your search toggle logic here
+        }
 
-    function toggleHamburgerMenu() {
-        document.getElementById('rightPanelOverlay').classList.remove('hidden');
-        document.getElementById('rightPanel').classList.remove('hidden');
-    }
+        function toggleHamburgerMenu() {
+            document.getElementById('rightPanelOverlay').classList.remove('hidden');
+            document.getElementById('rightPanel').classList.remove('hidden');
+        }
 
-    function closeRightPanel() {
-        document.getElementById('rightPanelOverlay').classList.add('hidden');
-        document.getElementById('rightPanel').classList.add('hidden');
-    }
-</script>
+        function closeRightPanel() {
+            document.getElementById('rightPanelOverlay').classList.add('hidden');
+            document.getElementById('rightPanel').classList.add('hidden');
+        }
+    </script>
+@endpush

@@ -1,8 +1,12 @@
 @extends('layouts.admin')
 
 @section('content')
-    <div class="max-w-4xl mx-auto bg-white p-5 shadow rounded">
-        <h2 class="text-xl font-semibold mb-4">Users List</h2>
+    <div class="container mx-auto bg-white p-5 shadow rounded">
+        <nav class="text-sm text-gray-600 mb-4">
+            <span class="text-gray-800">Users</span>
+            <span class="mx-2">></span>
+            <span class="text-gray-800">List</span>
+        </nav>
         <a href="{{ route('admin.users.create') }}" class="bg-blue-500 text-white px-4 py-2 rounded">+ Add User</a>
 
         @if (session('success'))

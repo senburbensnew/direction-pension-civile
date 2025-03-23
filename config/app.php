@@ -70,7 +70,8 @@ return [
     |
     */
 
-    'timezone' => 'UTC',
+    # 'timezone' => 'UTC',
+    'timezone' => 'America/Port-au-Prince',
 
     /*
     |--------------------------------------------------------------------------
