@@ -32,30 +32,52 @@ class RegisteredUserController extends Controller
      */
     public function store(Request $request): RedirectResponse
     {
-        // dd($request->all());
-
         $request->validate([
             'name' => ['required', 'string', 'max:255'],
             'email' => ['required', 'string', 'lowercase', 'email', 'max:255', 'unique:' . User::class],
             'password' => ['required', 'confirmed', Rules\Password::defaults()],
-            'nif' => ['required', 'string', 'min:10', 'max:15', 'unique:' . User::class],  // Adjust the NIF validation rules as per your requirements
-            'user_type' => ['required', 'exists:user_type,id'], // Ensure user_type exists in the user_type table
+            'nif' => ['required', 'string', 'min:10', 'max:15', 'unique:' . User::class],  
+            'user_type' => ['required', 'exists:user_type,id'], 
         ]);
-        
+    
+        // Create the user
         $user = User::create([
             'name' => $request->name,
             'email' => $request->email,
             'password' => Hash::make($request->password),
-            'nif' => $request->nif, // Store the nif
-            'user_type_id' => $request->user_type, // Store the user_type_id (which should be the user type id)
+            'nif' => $request->nif,
+            'user_type_id' => $request->user_type, // Store the user_type_id
         ]);
-
+    
+        // Determine role based on user type
+        $userType = $user->userType->name; // Assuming `userType` is a relationship to the `UserType` model
+        
+        switch ($userType) {
+            case 'fonctionnaire':
+                $user->assignRole('fonctionnaire');
+                break;
+    
+            case 'pensionnaire':
+                $user->assignRole('pensionnaire');
+                break;
+    
+            case 'institution':
+                $user->assignRole('institution');
+                break;
+    
+            default:
+                // Optionally handle unknown user types
+                $user->assignRole('pensionnaire');
+                break;
+        }
+    
+        // Trigger the registration event
         event(new Registered($user));
-
+    
+        // Log the user in
         Auth::login($user);
-
-        // return redirect(RouteServiceProvider::HOME);
-
+    
+        // Redirect after registration
         return redirect('/');
-    }
+    }    
 }

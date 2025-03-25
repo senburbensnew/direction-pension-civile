@@ -23,9 +23,9 @@ class RolesAndPermissionsSeeder extends Seeder
         // $role->givePermissionTo($permission2);
 
         $adminRole = Role::firstOrCreate(['name' => 'admin']);
-        $adminRole = Role::firstOrCreate(['name' => 'pensionnaire']);
-        $adminRole = Role::firstOrCreate(['name' => 'fonctionnaire']);
-        $adminRole = Role::firstOrCreate(['name' => 'institution']);
+        $pensionnaireRole = Role::firstOrCreate(['name' => 'pensionnaire']);
+        $fonctionnaireRole = Role::firstOrCreate(['name' => 'fonctionnaire']);
+        $institutionRole = Role::firstOrCreate(['name' => 'institution']);
 
         // Check if the user type exists
         $userType = UserType::firstOrCreate(

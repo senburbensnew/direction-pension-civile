@@ -25,7 +25,7 @@ return [
     // menubar
     'home' => 'Accueil',
 
-    'who_are_we' => 'Qui sommes-nous ?',
+    'who_are_we' => 'Qui sommes-nous',
     'words_from_the_director' => 'Mots de la directrice',
     'mission_and_responsibilities' => 'Mission et Attributions',
     'history' => 'Historique',

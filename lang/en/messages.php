@@ -25,7 +25,7 @@ return [
     // menubar
     'home' => 'Home',
 
-    'who_are_we' => 'Who are we ?',
+    'who_are_we' => 'Who are we',
     'words_from_the_director' => 'Words from the Director',
     'mission_and_responsibilities' => 'Mission and Responsibilities',
     'history' => 'History',

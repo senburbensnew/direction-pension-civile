@@ -13,6 +13,7 @@ class PensionnaireController extends Controller
     // Display the request for virement form
     public function demandeVirement()
     {
+        dd('PensionnaireController.demandeVirement');
         return view('pensionnaire.demande-virement');
     }
 

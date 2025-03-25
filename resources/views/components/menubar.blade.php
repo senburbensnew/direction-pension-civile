@@ -140,157 +140,163 @@
             </li>
 
             <!-- Pensionaire Dropdown -->
-            <li class="relative w-full md:w-auto border-b md:border-none group">
-                <button
-                    class="dropdown-toggle flex w-full items-center justify-between px-4 py-3 
+            @if (auth()->guest() || auth()->user()->hasRole('admin') || auth()->user()->hasRole('pensionnaire'))
+                <li class="relative w-full md:w-auto border-b md:border-none group">
+                    <button
+                        class="dropdown-toggle flex w-full items-center justify-between px-4 py-3 
                            text-slate-600 hover:text-blue-600 text-base md:text-sm 
                            focus:outline-none focus:ring-2 ">
-                    <span class="truncate-text">{{ __('messages.pensioner') }}</span>
-                    <svg class="dropdown-icon ml-2 w-4 h-4 transform transition-transform duration-300" fill="none"
-                        stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7">
-                        </path>
-                    </svg>
-                </button>
+                        <span class="truncate-text">{{ __('messages.pensioner') }}</span>
+                        <svg class="dropdown-icon ml-2 w-4 h-4 transform transition-transform duration-300"
+                            fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7">
+                            </path>
+                        </svg>
+                    </button>
 
-                <ul class="dropdown-content bg-white md:shadow-lg md:border md:rounded-md"
-                    aria-label="Sous-menu Pensionaire">
-                    <li>
-                        <a href="{{ route('pensionnaire.virement-request-form') }}"
-                            class="text-slate-600 block px-4 py-3 hover:bg-gray-100 
+                    <ul class="dropdown-content bg-white md:shadow-lg md:border md:rounded-md"
+                        aria-label="Sous-menu Pensionaire">
+                        <li>
+                            <a href="{{ route('pensionnaire.virement-request-form') }}"
+                                class="text-slate-600 block px-4 py-3 hover:bg-gray-100 
                                    transition-colors text-sm truncate-text
                                    focus:outline-none focus:ring-2 ">
-                            {{ __('messages.transfer_request') }}
-                        </a>
-                    </li>
-                    <li>
-                        <a href="{{ route('pensionnaire.attestation-request-form') }}"
-                            class="text-slate-600 block px-4 py-3 hover:bg-gray-100 
+                                {{ __('messages.transfer_request') }}
+                            </a>
+                        </li>
+                        <li>
+                            <a href="{{ route('pensionnaire.attestation-request-form') }}"
+                                class="text-slate-600 block px-4 py-3 hover:bg-gray-100 
                                    transition-colors text-sm truncate-text
                                    focus:outline-none focus:ring-2 ">
-                            {{ __('messages.certificate_request') }}
-                        </a>
-                    </li>
-                    <li>
-                        <a href="{{ route('pensionnaire.check-transfer-request-form') }}"
-                            class="text-slate-600 block px-4 py-3 hover:bg-gray-100 
+                                {{ __('messages.certificate_request') }}
+                            </a>
+                        </li>
+                        <li>
+                            <a href="{{ route('pensionnaire.check-transfer-request-form') }}"
+                                class="text-slate-600 block px-4 py-3 hover:bg-gray-100 
                                    transition-colors text-sm truncate-text
                                    focus:outline-none focus:ring-2 ">
-                            {{ __('messages.check_transfer_request') }}
-                        </a>
-                    </li>
-                    <li>
-                        <a href="{{ route('pensionnaire.payment-stop-request-form') }}"
-                            class="text-slate-600 block px-4 py-3 hover:bg-gray-100 
+                                {{ __('messages.check_transfer_request') }}
+                            </a>
+                        </li>
+                        <li>
+                            <a href="{{ route('pensionnaire.payment-stop-request-form') }}"
+                                class="text-slate-600 block px-4 py-3 hover:bg-gray-100 
                                    transition-colors text-sm truncate-text
                                    focus:outline-none focus:ring-2 ">
-                            {{ __('messages.payment_stop_request') }}
-                        </a>
-                    </li>
-                    <li>
-                        <a href="{{ route('pensionnaire.reinstatement-request-form') }}"
-                            class="text-slate-600 block px-4 py-3 hover:bg-gray-100 
+                                {{ __('messages.payment_stop_request') }}
+                            </a>
+                        </li>
+                        <li>
+                            <a href="{{ route('pensionnaire.reinstatement-request-form') }}"
+                                class="text-slate-600 block px-4 py-3 hover:bg-gray-100 
                                    transition-colors text-sm truncate-text
                                    focus:outline-none focus:ring-2 ">
-                            {{ __('messages.reinstatement_request') }}
-                        </a>
-                    </li>
-                    <li>
-                        <a href="{{ route('pensionnaire.transfer-stop-request-form') }}"
-                            class="text-slate-600 block px-4 py-3 hover:bg-gray-100 
+                                {{ __('messages.reinstatement_request') }}
+                            </a>
+                        </li>
+                        <li>
+                            <a href="{{ route('pensionnaire.transfer-stop-request-form') }}"
+                                class="text-slate-600 block px-4 py-3 hover:bg-gray-100 
                                    transition-colors text-sm truncate-text
                                    focus:outline-none focus:ring-2 ">
-                            {{ __('messages.transfer_stop_request') }}
-                        </a>
-                    </li>
-                    <li>
-                        <a href="#"
-                            class="text-slate-600 block px-4 py-3 hover:bg-gray-100 
+                                {{ __('messages.transfer_stop_request') }}
+                            </a>
+                        </li>
+                        <li>
+                            <a href="#"
+                                class="text-slate-600 block px-4 py-3 hover:bg-gray-100 
                                    transition-colors text-sm truncate-text
                                    focus:outline-none focus:ring-2 ">
-                            {{ __('messages.proof_of_existence') }}
-                        </a>
-                    </li>
-                </ul>
-            </li>
+                                {{ __('messages.proof_of_existence') }}
+                            </a>
+                        </li>
+                    </ul>
+                </li>
+            @endif
 
             <!-- Fonctionnaire Dropdown -->
-            <li class="relative w-full md:w-auto border-b md:border-none group">
-                <button
-                    class="dropdown-toggle flex w-full items-center justify-between px-4 py-3 
+            @if (auth()->guest() || auth()->user()->hasRole('admin') || auth()->user()->hasRole('fonctionnaire'))
+                <li class="relative w-full md:w-auto border-b md:border-none group">
+                    <button
+                        class="dropdown-toggle flex w-full items-center justify-between px-4 py-3 
                                        text-slate-600 hover:text-blue-600 text-base md:text-sm 
                                        focus:outline-none focus:ring-2 ">
-                    <span class="truncate-text">{{ __('messages.civil_servant') }}</span>
-                    <svg class="dropdown-icon ml-2 w-4 h-4 transform transition-transform duration-300" fill="none"
-                        stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7">
-                        </path>
-                    </svg>
-                </button>
+                        <span class="truncate-text">{{ __('messages.civil_servant') }}</span>
+                        <svg class="dropdown-icon ml-2 w-4 h-4 transform transition-transform duration-300"
+                            fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7">
+                            </path>
+                        </svg>
+                    </button>
 
-                <ul class="dropdown-content bg-white md:shadow-lg md:border md:rounded-md"
-                    aria-label="Sous-menu Pensionaire">
-                    <li>
-                        <a href="{{ route('fonctionnaire.career-state-form') }}"
-                            class="text-slate-600 block px-4 py-3 hover:bg-gray-100 
+                    <ul class="dropdown-content bg-white md:shadow-lg md:border md:rounded-md"
+                        aria-label="Sous-menu Pensionaire">
+                        <li>
+                            <a href="{{ route('fonctionnaire.career-state-form') }}"
+                                class="text-slate-600 block px-4 py-3 hover:bg-gray-100 
                                                transition-colors text-sm truncate-text
                                                focus:outline-none focus:ring-2 ">
-                            {{ __('messages.career_status_request') }}
-                        </a>
-                    </li>
-                    <li>
-                        <a href="{{ route('fonctionnaire.retirement-simulation-form') }}"
-                            class="text-slate-600 block px-4 py-3 hover:bg-gray-100 
+                                {{ __('messages.career_status_request') }}
+                            </a>
+                        </li>
+                        <li>
+                            <a href="{{ route('fonctionnaire.retirement-simulation-form') }}"
+                                class="text-slate-600 block px-4 py-3 hover:bg-gray-100 
                                                transition-colors text-sm truncate-text
                                                focus:outline-none focus:ring-2 ">
-                            {{ __('messages.retirement_simulation') }}
-                        </a>
-                    </li>
-                    <li>
-                        <a href="{{ route('fonctionnaire.pension-request-form') }}"
-                            class="text-slate-600 block px-4 py-3 hover:bg-gray-100 
+                                {{ __('messages.retirement_simulation') }}
+                            </a>
+                        </li>
+                        <li>
+                            <a href="{{ route('fonctionnaire.pension-request-form') }}"
+                                class="text-slate-600 block px-4 py-3 hover:bg-gray-100 
                                                transition-colors text-sm truncate-text
                                                focus:outline-none focus:ring-2 ">
-                            {{ __('messages.pension_request') }}
-                        </a>
-                    </li>
-                </ul>
-            </li>
+                                {{ __('messages.pension_request') }}
+                            </a>
+                        </li>
+                    </ul>
+                </li>
+            @endif
 
-            <!-- Pensionaire Dropdown -->
-            <li class="relative w-full md:w-auto border-b md:border-none group">
-                <button
-                    class="dropdown-toggle flex w-full items-center justify-between px-4 py-3 
+            <!-- Institution Dropdown -->
+            @if (auth()->guest() || auth()->user()->hasRole('admin') || auth()->user()->hasRole('institution'))
+                <li class="relative w-full md:w-auto border-b md:border-none group">
+                    <button
+                        class="dropdown-toggle flex w-full items-center justify-between px-4 py-3 
                            text-slate-600 hover:text-blue-600 text-base md:text-sm 
                            focus:outline-none focus:ring-2 ">
-                    <span class="truncate-text">{{ __('messages.institutions') }}</span>
-                    <svg class="dropdown-icon ml-2 w-4 h-4 transform transition-transform duration-300" fill="none"
-                        stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7">
-                        </path>
-                    </svg>
-                </button>
+                        <span class="truncate-text">{{ __('messages.institutions') }}</span>
+                        <svg class="dropdown-icon ml-2 w-4 h-4 transform transition-transform duration-300"
+                            fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7">
+                            </path>
+                        </svg>
+                    </button>
 
-                <ul class="dropdown-content bg-white md:shadow-lg md:border md:rounded-md"
-                    aria-label="Sous-menu Pensionaire">
-                    <li>
-                        <a href="#"
-                            class="text-slate-600 block px-4 py-3 hover:bg-gray-100 
+                    <ul class="dropdown-content bg-white md:shadow-lg md:border md:rounded-md"
+                        aria-label="Sous-menu Pensionaire">
+                        <li>
+                            <a href="#"
+                                class="text-slate-600 block px-4 py-3 hover:bg-gray-100 
                                    transition-colors text-sm truncate-text
                                    focus:outline-none focus:ring-2 ">
-                            {{ __('messages.pension_request_transmission') }}
-                        </a>
-                    </li>
-                    <li>
-                        <a href="#"
-                            class="text-slate-600 block px-4 py-3 hover:bg-gray-100 
+                                {{ __('messages.pension_request_transmission') }}
+                            </a>
+                        </li>
+                        <li>
+                            <a href="#"
+                                class="text-slate-600 block px-4 py-3 hover:bg-gray-100 
                                    transition-colors text-sm truncate-text
                                    focus:outline-none focus:ring-2 ">
-                            {{ __('messages.membership_request') }}
-                        </a>
-                    </li>
-                </ul>
-            </li>
+                                {{ __('messages.membership_request') }}
+                            </a>
+                        </li>
+                    </ul>
+                </li>
+            @endif
 
             <li class="relative w-full md:w-auto border-b md:border-none group">
                 <button
