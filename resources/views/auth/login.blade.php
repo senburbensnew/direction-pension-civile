@@ -24,26 +24,26 @@
         </div>
 
         <!-- Remember Me -->
-        <div class="block mt-4">
+        {{--         <div class="block mt-4">
             <label for="remember_me" class="inline-flex items-center">
                 <input id="remember_me" type="checkbox"
                     class="rounded border-gray-300 text-indigo-600 shadow-sm focus:ring-indigo-500" name="remember">
                 <span class="ms-2 text-sm text-gray-600">{{ __('messages.remember_me') }}</span>
             </label>
-        </div>
+        </div> --}}
 
         <div class="flex items-center justify-end mt-4">
             <a class="underline text-sm text-gray-600 hover:text-gray-900 rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 me-3"
                 href="{{ route('register') }}">
                 {{ __('messages.register') }}
             </a>
-
+            {{-- 
             @if (Route::has('password.request'))
                 <a class="underline text-sm text-gray-600 hover:text-gray-900 rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
                     href="{{ route('password.request') }}">
                     {{ __('messages.forgot_password') }}
                 </a>
-            @endif
+            @endif --}}
 
             <x-primary-button class="ms-3">
                 {{ __('messages.login') }}

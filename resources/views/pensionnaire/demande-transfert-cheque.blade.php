@@ -42,43 +42,23 @@
         <!-- Form Section -->
         <div id="form-section" class="max-w-7xl mx-auto bg-white p-6 shadow-md rounded-lg relative m-2">
             <div class="flex flex-col md:flex-row justify-between items-center mb-12 gap-8">
-                <!-- Logo -->
-                {{--                 <div class="order-1">
+                <div class="text-center mb-6 flex flex-col md:flex-row items-center justify-center w-full gap-4 md:gap-8">
+                    <!-- Visible on all screens -->
                     <img src="{{ asset('images/setting-logo-1-M13oPLiYoM.png') }}" alt="Logo"
-                        class="w-24 h-24 object-cover">
-                </div> --}}
+                        class="w-16 h-16 md:w-24 md:h-24 object-cover shrink-0 order-1 md:order-none">
 
-                <!-- Title Section -->
-                {{--                 <div class="order-2 mx-4 md:mx-12 text-center flex-grow">
-                    <h1 class="text-xl md:text-2xl font-bold">
-                        MINISTERE DE L’ECONOMIE ET DES FINANCES <br />
-                        <span class="underline">PENSION CIVILE</span><br />
-                        <span>DEMANDE DE TRANSFERT DE CHÈQUES</span><br />
-                        <span class="underline font-normal text-base md:text-lg">Formulaire de doléances / Demande de
-                            Transfert</span>
-                    </h1>
-                </div> --}}
-
-                <div class="text-center mb-6 flex items-center justify-center w-full gap-4">
-                    <img src="{{ asset('images/setting-logo-1-M13oPLiYoM.png') }}" alt="Logo"
-                        class="w-24 h-24 object-cover shrink-0">
-
-                    <div class="px-4">
-                        <h2 class="text-xl font-bold mb-1">Direction de la Pension Civile (DPC)</h2>
-                        <h3 class="text-lg font-semibold mb-2">Formulaire de doléances / Demande de Transfert</h3>
-                        <p class="text-gray-600">Service de Comptabilité</p>
-                        <p class="text-gray-600 mt-1">Exercice : 20... / 20...</p>
+                    <div class="px-4 order-2 md:order-none">
+                        <h2 class="text-lg md:text-xl font-bold mb-1">Direction de la Pension Civile (DPC)</h2>
+                        <h3 class="text-base md:text-lg font-semibold mb-2">Formulaire de doléances / Demande de Transfert
+                        </h3>
+                        <p class="text-sm md:text-gray-600">Service de Comptabilité</p>
+                        <p class="text-sm md:text-gray-600 mt-1">Exercice : 20... / 20...</p>
                     </div>
 
+                    <!-- Hidden on mobile, visible on md+ screens -->
                     <img src="{{ asset('images/setting-logo-1-M13oPLiYoM.png') }}" alt="Logo"
-                        class="w-24 h-24 object-cover shrink-0">
+                        class="w-16 h-16 md:w-24 md:h-24 object-cover shrink-0 order-1 md:order-none hidden md:block">
                 </div>
-
-                <!-- Logo -->
-                {{--                 <div class="order-3">
-                    <img src="{{ asset('images/setting-logo-1-M13oPLiYoM.png') }}" alt="Logo"
-                        class="w-24 h-24 object-cover">
-                </div> --}}
             </div>
 
             @if (session('success'))

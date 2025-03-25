@@ -26,13 +26,13 @@ return new class extends Migration
             $table->decimal('allocation_amount', 10, 2);
             $table->string('mother_name');
             $table->string('phone');
-            $table->enum('pension_category', ['civile', 'militaire', 'bndai', 'minoterie', 'selection_nationale']);
+            $table->enum('pension_category', ['civile', 'militaire', 'bndai', 'minoterie', 'sélection nationale']);
             $table->string('bank_name');
             $table->string('account_number');
             $table->string('account_name');
             $table->string('status')
             ->default('en_attente')
-            ->checkIn(['en_attente', 'approuvé', 'en_cours', 'rejeté', 'traité']);
+            ->checkIn(['en attente', 'approuvé(e)', 'en cours', 'rejeté(e)', 'traité(e)', 'annulé(e)']);
             $table->string('photo_path')->nullable();
             $table->foreignId('created_by')
                     ->constrained('users')

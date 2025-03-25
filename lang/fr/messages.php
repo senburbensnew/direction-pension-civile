@@ -39,6 +39,7 @@ return [
     'payment_stop_request' => 'Demande d’arrêt de paiement',
     'reinstatement_request' => 'Demande de réinsertion',
     'transfer_stop_request' => 'Demande d’arrêt de virement',
+    'proof_of_existence' => 'Preuve d\'existence',
 
     'civil_servant' => 'Fonctionnaire',
     'career_status_request' => 'Demande d’état de carrière',

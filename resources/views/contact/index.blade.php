@@ -14,69 +14,66 @@
         <div class="max-w-7xl mx-auto px-6">
             <div class="grid grid-cols-1 lg:grid-cols-2 gap-12 bg-white rounded-2xl p-8 md:p-12 transform -translate-y-12">
                 <!-- Informations de contact -->
-                <div class="space-y-8 border-r-2 border-gray-100 pr-8">
-                    <div class="space-y-4">
-                        <h2 class="text-3xl font-bold text-blue-900 mb-6">Connectez-vous avec nous</h2>
-                        <div class="flex items-start space-x-4 group">
-                            <div class="p-3 rounded-lg transition-colors">
-                                📍
-                            </div>
-                            <div>
+                <div class="grid grid-cols-1 gap-12 border-r-2 border-gray-100 pr-8">
+                    <!-- Contact Information Section -->
+                    <div class="grid grid-cols-1 gap-8">
+                        <h2 class="text-3xl font-bold text-blue-900">Connectez-vous avec nous</h2>
+
+                        <!-- Contact Items Grid -->
+                        <div class="grid grid-cols-[auto_1fr] items-start gap-4">
+                            <!-- Address -->
+                            <div class="p-3 rounded-lg transition-colors row-span-1">📍</div>
+                            <div class="grid gap-1">
                                 <h3 class="text-lg font-semibold text-gray-800">Notre siège social</h3>
-                                <p class="text-gray-600">Port-au-Prince, Haïti</p>
+                                <p class="text-gray-600">5, Avenue Charles Sumner Port-au-Prince, Haïti (W.I)</p>
                             </div>
-                        </div>
 
-                        <div class="flex items-start space-x-4 group">
-                            <div class="p-3 rounded-lg transition-colors">
-                                📞
-                            </div>
-                            <div>
+                            <!-- Phone -->
+                            <div class="p-3 rounded-lg transition-colors row-span-1">📞</div>
+                            <div class="grid gap-1">
                                 <h3 class="text-lg font-semibold text-gray-800">Numéro de contact</h3>
-                                <p class="text-gray-600">+509 1234-5678</p>
-                                <p class="text-gray-600">Lun-Ven : 8h00 - 17h00</p>
+                                <p class="text-gray-600">+(509) 29 92 1007</p>
+                                <p class="text-gray-600">Lun-Ven : 8h00 - 16h00</p>
                             </div>
-                        </div>
 
-                        <div class="flex items-start space-x-4 group">
-                            <div class="p-3 rounded-lg transition-colors">
-                                ✉️
-                            </div>
-                            <div>
+                            <!-- Email -->
+                            <div class="p-3 rounded-lg transition-colors row-span-1">✉️</div>
+                            <div class="grid gap-1">
                                 <h3 class="text-lg font-semibold text-gray-800">Adresse e-mail</h3>
                                 <p class="text-blue-600 hover:text-blue-800 transition-colors">
-                                    <a href="mailto:contact@mef.gouv.ht">contact@mef.gouv.ht</a>
+                                    <a href="mailto:contact@mef.gouv.ht">info@mef.gouv.ht</a>
                                 </p>
                             </div>
                         </div>
                     </div>
 
-                    <div class="mt-12 pt-8 border-t border-gray-100">
-                        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-                            <h3 class="text-xl font-semibold text-gray-800">Rejoignez notre communauté</h3>
-                            <div class="flex space-x-3">
-                                <a href="#"
-                                    class="w-12 h-12 flex items-center justify-center rounded-xl bg-gray-100 text-gray-600 
-                                          hover:bg-blue-900 hover:text-white transition-all duration-300
-                                          transform hover:-translate-y-1 hover:shadow-lg hover:shadow-blue-200/50"
-                                    aria-label="Page Facebook">
-                                    <i class="fab fa-facebook-f text-xl"></i>
-                                </a>
-                                <a href="#"
-                                    class="w-12 h-12 flex items-center justify-center rounded-xl bg-gray-100 text-gray-600 
-                                          hover:bg-blue-400 hover:text-white transition-all duration-300
-                                          transform hover:-translate-y-1 hover:shadow-lg hover:shadow-blue-200/50"
-                                    aria-label="Profil Twitter">
-                                    <i class="fab fa-twitter text-xl"></i>
-                                </a>
-                                <a href="#"
-                                    class="w-12 h-12 flex items-center justify-center rounded-xl bg-gray-100 text-gray-600 
-                                          hover:bg-blue-700 hover:text-white transition-all duration-300
-                                          transform hover:-translate-y-1 hover:shadow-lg hover:shadow-blue-200/50"
-                                    aria-label="Profil LinkedIn">
-                                    <i class="fab fa-linkedin-in text-xl"></i>
-                                </a>
-                            </div>
+                    <!-- Social Media Section -->
+                    <div class="grid grid-cols-1 sm:grid-cols-[1fr_auto] gap-6 pt-8 border-t border-gray-100">
+                        <h3 class="text-xl font-semibold text-gray-800 self-center">Rejoignez notre communauté</h3>
+
+                        <div class="flex justify-end gap-3">
+                            <!-- Social Icons -->
+                            <a href="#"
+                                class="w-12 h-12 grid place-items-center rounded-xl bg-gray-100 text-gray-600 
+                                hover:bg-blue-900 hover:text-white transition-all duration-300
+                                hover:-translate-y-1 hover:shadow-lg hover:shadow-blue-200/50"
+                                aria-label="Page Facebook">
+                                <i class="fab fa-facebook-f text-xl"></i>
+                            </a>
+                            <a href="#"
+                                class="w-12 h-12 grid place-items-center rounded-xl bg-gray-100 text-gray-600 
+                                hover:bg-blue-400 hover:text-white transition-all duration-300
+                                hover:-translate-y-1 hover:shadow-lg hover:shadow-blue-200/50"
+                                aria-label="Profil Twitter">
+                                <i class="fab fa-twitter text-xl"></i>
+                            </a>
+                            <a href="#"
+                                class="w-12 h-12 grid place-items-center rounded-xl bg-gray-100 text-gray-600 
+                                hover:bg-blue-700 hover:text-white transition-all duration-300
+                                hover:-translate-y-1 hover:shadow-lg hover:shadow-blue-200/50"
+                                aria-label="Profil LinkedIn">
+                                <i class="fab fa-linkedin-in text-xl"></i>
+                            </a>
                         </div>
                     </div>
                 </div>
@@ -87,61 +84,33 @@
                     <form class="space-y-6">
                         @csrf
                         <div class="grid grid-cols-1 gap-6 md:grid-cols-2">
-                            <div class="relative">
-                                <input type="text" id="first-name" required
-                                    class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent peer"
-                                    placeholder=" ">
-                                <label for="first-name"
-                                    class="absolute left-4 text-gray-500 transition-all pointer-events-none
-                                           peer-placeholder-shown:text-base peer-placeholder-shown:top-3
-                                           peer-focus:-top-2 peer-focus:text-sm peer-focus:text-blue-600
-                                           -top-2 text-sm bg-white px-1">
-                                    Prénom
-                                </label>
+                            <div>
+                                <label for="first-name" class="block text-sm font-medium text-gray-700 mb-2">Prénom</label>
+                                <input type="text" id="first-name" name="first-name" required
+                                    class="w-full px-4 py-2.5 border border-gray-300 rounded-md focus:border-blue-500 focus:ring-blue-500">
                             </div>
-                            <div class="relative">
-                                <input type="text" id="last-name" required
-                                    class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent peer"
-                                    placeholder=" ">
-                                <label for="last-name"
-                                    class="absolute left-4 text-gray-500 transition-all pointer-events-none
-                                           peer-placeholder-shown:text-base peer-placeholder-shown:top-3
-                                           peer-focus:-top-2 peer-focus:text-sm peer-focus:text-blue-600
-                                           -top-2 text-sm bg-white px-1">
-                                    Nom
-                                </label>
+                            <div>
+                                <label for="last-name" class="block text-sm font-medium text-gray-700 mb-2">Nom</label>
+                                <input type="text" id="last-name" name="last-name" required
+                                    class="w-full px-4 py-2.5 border border-gray-300 rounded-md focus:border-blue-500 focus:ring-blue-500">
                             </div>
                         </div>
 
-                        <div class="relative">
-                            <input type="email" id="email" required
-                                class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent peer"
-                                placeholder=" ">
-                            <label for="email"
-                                class="absolute left-4 text-gray-500 transition-all pointer-events-none
-                                       peer-placeholder-shown:text-base peer-placeholder-shown:top-3
-                                       peer-focus:-top-2 peer-focus:text-sm peer-focus:text-blue-600
-                                       -top-2 text-sm bg-white px-1">
-                                Adresse e-mail
-                            </label>
+                        <div>
+                            <label for="email" class="block text-sm font-medium text-gray-700 mb-2">Adresse
+                                e-mail</label>
+                            <input type="email" id="email" name="email" required
+                                class="w-full px-4 py-2.5 border border-gray-300 rounded-md focus:border-blue-500 focus:ring-blue-500">
                         </div>
 
-                        <div class="relative">
-                            <textarea id="message" rows="4" required
-                                class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent peer"
-                                placeholder=" "></textarea>
-                            <label for="message"
-                                class="absolute left-4 text-gray-500 transition-all pointer-events-none
-                                       peer-placeholder-shown:text-base peer-placeholder-shown:top-3
-                                       peer-focus:-top-2 peer-focus:text-sm peer-focus:text-blue-600
-                                       -top-2 text-sm bg-white px-1">
-                                Votre message
-                            </label>
+                        <div>
+                            <label for="message" class="block text-sm font-medium text-gray-700 mb-2">Votre message</label>
+                            <textarea id="message" name="message" rows="4" required
+                                class="w-full px-4 py-2.5 border border-gray-300 rounded-md focus:border-blue-500 focus:ring-blue-500"></textarea>
                         </div>
 
                         <button type="submit"
-                            class="w-full py-3.5 bg-blue-900 text-white font-semibold rounded-lg hover:bg-blue-800 
-                                   transition-all transform hover:scale-[1.02] shadow-lg hover:shadow-blue-200">
+                            class="w-full py-3 bg-blue-600 text-white font-medium rounded-md hover:bg-blue-700 transition-colors">
                             Envoyer le message →
                         </button>
                     </form>

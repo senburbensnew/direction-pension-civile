@@ -6,6 +6,7 @@ use Illuminate\Database\Seeder;
 use Spatie\Permission\Models\Role;
 use Spatie\Permission\Models\Permission;
 use App\Models\User;
+use App\Models\UserType;
 
 class RolesAndPermissionsSeeder extends Seeder
 {
@@ -21,13 +22,27 @@ class RolesAndPermissionsSeeder extends Seeder
         // $role->givePermissionTo($permission);
         // $role->givePermissionTo($permission2);
 
-        // Ensure the 'admin' role exists (create it if necessary)
         $adminRole = Role::firstOrCreate(['name' => 'admin']);
+        $adminRole = Role::firstOrCreate(['name' => 'pensionnaire']);
+        $adminRole = Role::firstOrCreate(['name' => 'fonctionnaire']);
+        $adminRole = Role::firstOrCreate(['name' => 'institution']);
+
+        // Check if the user type exists
+        $userType = UserType::firstOrCreate(
+            ['name' => 'fonctionnaire'], // Look for the 'fonctionnaire' user type
+            ['name' => 'fonctionnaire']  // If it doesn't exist, create it with this value
+        );
 
         // Find the user by email or create it if it doesn't exist
         $user = User::firstOrCreate(
             ['email' => 'admin@example.com'], 
-            ['name' => 'Rubens', 'password' => bcrypt('password123')] // Customize fields as needed
+            [
+                'name' => 'Admin User',
+                'email' => 'admin@example.com',
+                'password' => bcrypt('password123'),
+                'nif' => '1234567890',
+                'user_type_id' => $userType->id, // Use the user_type_id from the found or created user type
+            ]
         );
 
         // Assign the 'admin' role to the user
@@ -39,7 +54,5 @@ class RolesAndPermissionsSeeder extends Seeder
 
         // You can also assign permissions to multiple roles at once
         // $role->syncPermissions([$permission, $permission2, $permission3]);
-
-
     }
 }

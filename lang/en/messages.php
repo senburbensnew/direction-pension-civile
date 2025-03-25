@@ -39,6 +39,7 @@ return [
     'payment_stop_request' => 'Payment Stop Request',
     'reinstatement_request' => 'Reinstatement Request',
     'transfer_stop_request' => 'Transfer Stop Request',
+    'proof_of_existence' => 'Proof of existence',
 
     'civil_servant' => 'Civil Servant',
     'career_status_request' => 'Career Status Request',

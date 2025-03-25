@@ -40,7 +40,7 @@
 
                 <!-- Enhanced Photo Upload Component -->
                 <div class="order-3 flex flex-col items-center space-y-3">
-                    <label class="block font-semibold text-gray-700 mb-1">Profile Photo</label>
+                    <label class="block font-semibold text-gray-700 mb-1">Photo de profil</label>
 
                     <div class="relative group" id="dropzone">
                         <!-- Hidden file input -->

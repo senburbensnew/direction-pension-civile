@@ -2,7 +2,7 @@
 
 namespace Database\Seeders;
 
-// use Illuminate\Database\Console\Seeds\WithoutModelEvents;
+use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 
 class DatabaseSeeder extends Seeder
@@ -19,7 +19,13 @@ class DatabaseSeeder extends Seeder
         //     'email' => 'test@example.com',
         // ]);
 
+        $this->call(GenderSeeder::class);
+        $this->call(UserTypeSeeder::class);
         $this->call(DefaultUserSeeder::class);
         $this->call(RolesAndPermissionsSeeder::class);
+        $this->call(StatusSeeder::class);
+        $this->call(CivilStatusSeeder::class);
+        $this->call(PensionTypeSeeder::class);
+        $this->call(PensionCategorySeeder::class);
     }
 }
