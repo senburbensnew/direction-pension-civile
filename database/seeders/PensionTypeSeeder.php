@@ -16,8 +16,8 @@ class PensionTypeSeeder extends Seeder
     {
         // Inserting some example pension types into the table
         DB::table('pension_type')->insert([
-            ['name' => 'carrière', 'description' => ''],
-            ['name' => 'reversibilité', 'description' => ''],
+            ['name' => 'Pension de carrière', 'description' => ''],
+            ['name' => 'Pension de réversibilité (veuf(ve))', 'description' => ''],
         ]);
     }
 }

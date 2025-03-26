@@ -1,4 +1,5 @@
 @extends('layouts.main')
+
 <style>
     .input-error {
         @apply border-red-500 focus:border-red-500 focus:ring-red-500;
@@ -43,9 +44,9 @@
                     <label class="block font-semibold text-gray-700 mb-1">Photo de profil</label>
 
                     <div class="relative group" id="dropzone">
-                        <!-- Hidden file input -->
+                        {{--                 <!-- Hidden file input -->
                         <input type="file" id="photoUpload" accept="image/*" class="hidden"
-                            onchange="previewPhoto(event)">
+                            onchange="previewPhoto(event)" name="profile_photo"> --}}
 
                         <!-- Drop zone container -->
                         <label for="photoUpload"
@@ -61,7 +62,8 @@
                             </svg>
 
                             <!-- Upload text -->
-                            <span class="text-sm text-gray-500 group-hover:text-blue-600">Cliquez ou glissez-déposez</span>
+                            <span class="text-sm text-gray-500 group-hover:text-blue-600 text-center">Cliquez ou
+                                glissez-déposez</span>
                         </label>
 
                         <!-- Preview image with remove button -->
@@ -110,6 +112,9 @@
                         </ul>
                     </div>
                 @endif
+                <!-- Hidden file input -->
+                <input type="file" id="photoUpload" accept="image/*" class="hidden" onchange="previewPhoto(event)"
+                    name="profile_photo">
                 <fieldset class="mt-2 mb-2 shadow-md rounded-lg p-5 border">
                     <div class="grid grid-cols-2 gap-4 mb-4 items-center">
                         <div>
@@ -125,40 +130,22 @@
                         </div>
                         <div>
                             <div class="flex flex-col space-y-2 mt-2">
-                                {{--                                 <label class="flex items-center">
-                                    <input type="radio" class="mr-2" name="pension_type" value="carriere"> Pension de
-                                    carrière
-                                </label>
-                                <label class="flex items-center">
-                                    <input type="radio" class="mr-2" name="pension_type" value="reversibilite"> Pension
-                                    de réversibilité (veuf(ve))
-                                </label> --}}
-
                                 <div class="space-y-2">
                                     <label class="block text-sm font-medium text-gray-700 mb-2">Type de Pension *</label>
-
                                     <div
                                         class="space-y-2 @error('pension_type') border-red-200 @enderror p-4 rounded-lg border">
-                                        <div class="flex items-center">
-                                            <input type="radio" id="pension_type_carriere" name="pension_type"
-                                                value="carriere"
-                                                class="h-4 w-4 text-blue-600 border-gray-300 focus:ring-blue-500"
-                                                @checked(old('pension_type') === 'carriere')>
-                                            <label for="pension_type_carriere" class="ml-3 block text-sm text-gray-700">
-                                                Pension de carrière
-                                            </label>
-                                        </div>
-
-                                        <div class="flex items-center">
-                                            <input type="radio" id="pension_type_reversibilite" name="pension_type"
-                                                value="reversibilite"
-                                                class="h-4 w-4 text-blue-600 border-gray-300 focus:ring-blue-500"
-                                                @checked(old('pension_type') === 'reversibilite')>
-                                            <label for="pension_type_reversibilite"
-                                                class="ml-3 block text-sm text-gray-700">
-                                                Pension de réversibilité (veuf(ve))
-                                            </label>
-                                        </div>
+                                        @foreach ($pensionTypes as $type)
+                                            <div class="flex items-center">
+                                                <input type="radio" id="pension_type_{{ $type['id'] }}"
+                                                    name="pension_type" value="{{ $type['id'] }}"
+                                                    class="h-4 w-4 text-blue-600 border-gray-300 focus:ring-blue-500"
+                                                    @checked(old('pension_type') === $type['id'])>
+                                                <label for="pension_type_{{ $type['id'] }}"
+                                                    class="ml-3 block text-sm text-gray-700">
+                                                    {{ $type['name'] }}
+                                                </label>
+                                            </div>
+                                        @endforeach
                                     </div>
 
                                     @error('pension_type')
@@ -173,9 +160,6 @@
                 <fieldset class="shadow-md rounded-lg p-5 border">
                     <div class="grid grid-cols-2 gap-4 mb-4">
                         <div>
-                            {{--                             <label class="block font-semibold">NIF</label>
-                            <input type="text" class="w-full border rounded p-2" name="nif"> --}}
-
                             <label for="nif" class="block text-sm font-medium text-gray-700">
                                 NIF *
                             </label>
@@ -247,9 +231,10 @@
                             <select id="civil_status" name="civil_status"
                                 class="w-full rounded-md @error('civil_status') border-red-500 @else border-gray-300 @enderror focus:border-blue-500 focus:ring-blue-500">
                                 <option value="">Sélectionner</option>
-                                @foreach (['célibataire', 'marié(e)', 'divorcé(e)', 'veuf(ve)'] as $status)
-                                    <option value="{{ $status }}" @selected(old('civil_status') == $status)>
-                                        {{ ucfirst($status) }}
+                                {{-- @foreach (['célibataire', 'marié(e)', 'divorcé(e)', 'veuf(ve)'] as $status) --}}
+                                @foreach ($civilStatus as $status)
+                                    <option value="{{ $status['id'] }}" @selected(old('civil_status') == $status['id'])>
+                                        {{ ucfirst($status['name']) }}
                                     </option>
                                 @endforeach
                             </select>
@@ -265,10 +250,16 @@
                             </label>
                             <select id="gender" name="gender"
                                 class="w-full rounded-md @error('gender') border-red-500 @else border-gray-300 @enderror focus:border-blue-500 focus:ring-blue-500">
-                                <option value="">Sélectionner</option>
+                                {{--                                 <option value="">Sélectionner</option>
                                 <option value="M" @selected(old('gender') == 'M')>Masculin</option>
                                 <option value="F" @selected(old('gender') == 'F')>Féminin</option>
-                                <option value="A" @selected(old('gender') == 'A')>Autre</option>
+                                <option value="A" @selected(old('gender') == 'A')>Autre</option> --}}
+                                <option value="">Sélectionner</option>
+                                @foreach ($genders as $gender)
+                                    <option value="{{ $gender['id'] }}" @selected(old('gender') == $gender['id'])>
+                                        {{ $gender['name'] }}
+                                    </option>
+                                @endforeach
                             </select>
                             @error('gender')
                                 <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
@@ -324,7 +315,7 @@
                         <legend class="text-sm font-medium text-gray-700 mb-2">Catégorie de Pension *</legend>
 
                         <div class="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-4">
-                            <!-- Civile -->
+                            {{--   <!-- Civile -->
                             <div class="flex items-center">
                                 <input type="radio" id="pension_civile" name="pension_category" value="civile"
                                     class="h-4 w-4 text-blue-600 border-gray-300 focus:ring-blue-500"
@@ -373,7 +364,19 @@
                                 <label for="pension_selection_nationale" class="ml-2 text-sm text-gray-700">
                                     SELECTION NATIONALE
                                 </label>
-                            </div>
+                            </div> --}}
+
+                            @foreach ($pensionCategories as $category)
+                                <div class="flex items-center">
+                                    <input type="radio" id="pension_{{ $category->slug }}" name="pension_category"
+                                        value="{{ $category->id }}"
+                                        class="h-4 w-4 text-blue-600 border-gray-300 focus:ring-blue-500"
+                                        @checked(old('pension_category') == $category->id)>
+                                    <label for="pension_{{ $category->slug }}" class="ml-2 text-sm text-gray-700">
+                                        {{ $category->name }}
+                                    </label>
+                                </div>
+                            @endforeach
                         </div>
 
                         @error('pension_category')
@@ -459,21 +462,25 @@
                     </div>
 
                     <!-- Signatures -->
-                    <div class="mt-24 flex flex-col md:flex-row justify-between gap-8 mb-16"> <!-- Added margin-bottom -->
+                    <div class="mt-5 flex flex-col md:flex-row justify-between gap-8 mb-16"> <!-- Added margin-bottom -->
                         <!-- Chef de Service -->
                         <div class="flex-1">
-                            <div class="h-2 border-t-2 border-gray-700"></div>
                             <p class="text-xs font-semibold text-gray-600 uppercase tracking-wide">
                                 Chef de Service de la Comptabilité
                             </p>
+                            <div class="h-2 border-t-2 border-gray-700"></div>
                         </div>
 
                         <!-- Pensionné Signature -->
                         <div class="flex-1">
-                            <div class="h-2 border-t-2 border-gray-700"></div>
+                            {{--                             <canvas id="signature-pad" class="border border-black w-full"
+                                style="height: 200px;"></canvas>
+                            <input type="hidden" id="signature-data" name="signature"> --}}
                             <p class="text-xs font-semibold text-gray-600 uppercase tracking-wide">
                                 Signature du Pensionné
                             </p>
+                            <div class="h-2 border-t-2 border-gray-700"></div>
+                            <x-signature-pad />
                         </div>
                     </div>
 
@@ -496,21 +503,6 @@
             </form>
         </div>
     </div>
-
-    {{--     <script>
-        function previewPhoto(event) {
-            const file = event.target.files[0];
-            if (file) {
-                const reader = new FileReader();
-                reader.onload = function(e) {
-                    const img = document.getElementById("photoPreview");
-                    img.src = e.target.result;
-                    img.classList.remove("hidden");
-                }
-                reader.readAsDataURL(file);
-            }
-        }
-    </script> --}}
 
     <script>
         function handleDragOver(e) {
@@ -571,4 +563,27 @@
             document.getElementById('uploadError').classList.add('hidden');
         }
     </script>
+
+    {{--     <script>
+        const canvas = document.getElementById('signature-pad');
+        const signaturePad = new SignaturePad(canvas);
+        const clearButton = document.getElementById('clear-button');
+        const signatureData = document.getElementById('signature-data');
+        const form = document.getElementById('signature-form');
+
+        // Clear the signature
+        clearButton.addEventListener('click', function() {
+            signaturePad.clear();
+        });
+
+        // Handle form submission
+        form.addEventListener('submit', function(event) {
+            if (!signaturePad.isEmpty()) {
+                signatureData.value = signaturePad.toDataURL(); // Save as base64 image
+            } else {
+                alert("Please sign before submitting.");
+                event.preventDefault();
+            }
+        });
+    </script> --}}
 @endsection

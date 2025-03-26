@@ -2,6 +2,11 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Gender;
+use App\Models\PensionCategory;
+use App\Models\PensionType;
+use App\Models\Status;
+use App\Models\CivilStatus;
 use Illuminate\Http\Request;
 use App\Models\BankTransferRequests;
 use App\Models\ErrorLog;
@@ -13,13 +18,20 @@ class PensionnaireController extends Controller
     // Display the request for virement form
     public function demandeVirement()
     {
-        dd('PensionnaireController.demandeVirement');
-        return view('pensionnaire.demande-virement');
+        $genders = Gender::orderBy('name', 'asc')->get();
+        $civilStatus = CivilStatus::orderBy('name', 'asc')->get();
+        $status = Status::orderBy('name', 'asc')->get();
+        $pensionTypes = PensionType::orderBy('name', 'asc')->get();
+        $pensionCategories = PensionCategory::orderBy('name', 'asc')->get();
+    
+        return view('pensionnaire.demande-virement', compact('genders', 'civilStatus', 'status', 'pensionTypes', 'pensionCategories'));
     }
 
     // Process the virement request form
     public function processVirementRequest(Request $request)
     {
+        dd($request->all());
+
         // Custom validation attributes
         $attributes = [
             'pensioner_code' => 'code du pensionné',
@@ -127,8 +139,7 @@ class PensionnaireController extends Controller
                 ->with('error', $errorMessage)
                 ->withInput();
         }
-    }
-    
+    }    
 
     // Display the request for attestation form
     public function demandeAttestation()
