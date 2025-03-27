@@ -137,9 +137,9 @@
                                         @foreach ($pensionTypes as $type)
                                             <div class="flex items-center">
                                                 <input type="radio" id="pension_type_{{ $type['id'] }}"
-                                                    name="pension_type" value="{{ $type['id'] }}"
+                                                    name="pension_type_id" value="{{ $type['id'] }}"
                                                     class="h-4 w-4 text-blue-600 border-gray-300 focus:ring-blue-500"
-                                                    @checked(old('pension_type') === $type['id'])>
+                                                    @checked(old('pension_type_id') == $type['id'])>
                                                 <label for="pension_type_{{ $type['id'] }}"
                                                     class="ml-3 block text-sm text-gray-700">
                                                     {{ $type['name'] }}
@@ -228,12 +228,11 @@
                             <label for="civil_status" class="block text-sm font-medium text-gray-700 mb-1">
                                 État civil *
                             </label>
-                            <select id="civil_status" name="civil_status"
+                            <select id="civil_status" name="civil_status_id"
                                 class="w-full rounded-md @error('civil_status') border-red-500 @else border-gray-300 @enderror focus:border-blue-500 focus:ring-blue-500">
                                 <option value="">Sélectionner</option>
-                                {{-- @foreach (['célibataire', 'marié(e)', 'divorcé(e)', 'veuf(ve)'] as $status) --}}
-                                @foreach ($civilStatus as $status)
-                                    <option value="{{ $status['id'] }}" @selected(old('civil_status') == $status['id'])>
+                                @foreach ($civilStatuses as $status)
+                                    <option value="{{ $status['id'] }}" @selected(old('civil_status_id') == $status['id'])>
                                         {{ ucfirst($status['name']) }}
                                     </option>
                                 @endforeach
@@ -248,15 +247,11 @@
                             <label for="gender" class="block text-sm font-medium text-gray-700 mb-1">
                                 Sexe *
                             </label>
-                            <select id="gender" name="gender"
+                            <select id="gender" name="gender_id"
                                 class="w-full rounded-md @error('gender') border-red-500 @else border-gray-300 @enderror focus:border-blue-500 focus:ring-blue-500">
-                                {{--                                 <option value="">Sélectionner</option>
-                                <option value="M" @selected(old('gender') == 'M')>Masculin</option>
-                                <option value="F" @selected(old('gender') == 'F')>Féminin</option>
-                                <option value="A" @selected(old('gender') == 'A')>Autre</option> --}}
                                 <option value="">Sélectionner</option>
                                 @foreach ($genders as $gender)
-                                    <option value="{{ $gender['id'] }}" @selected(old('gender') == $gender['id'])>
+                                    <option value="{{ $gender['id'] }}" @selected(old('gender_id') == $gender['id'])>
                                         {{ $gender['name'] }}
                                     </option>
                                 @endforeach
@@ -315,63 +310,12 @@
                         <legend class="text-sm font-medium text-gray-700 mb-2">Catégorie de Pension *</legend>
 
                         <div class="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-4">
-                            {{--   <!-- Civile -->
-                            <div class="flex items-center">
-                                <input type="radio" id="pension_civile" name="pension_category" value="civile"
-                                    class="h-4 w-4 text-blue-600 border-gray-300 focus:ring-blue-500"
-                                    @checked(old('pension_category') === 'civile')>
-                                <label for="pension_civile" class="ml-2 text-sm text-gray-700">
-                                    PENSION CIVILE
-                                </label>
-                            </div>
-
-                            <!-- Militaire -->
-                            <div class="flex items-center">
-                                <input type="radio" id="pension_militaire" name="pension_category" value="militaire"
-                                    class="h-4 w-4 text-blue-600 border-gray-300 focus:ring-blue-500"
-                                    @checked(old('pension_category') === 'militaire')>
-                                <label for="pension_militaire" class="ml-2 text-sm text-gray-700">
-                                    PENSION MILITAIRE
-                                </label>
-                            </div>
-
-                            <!-- BNDAI -->
-                            <div class="flex items-center">
-                                <input type="radio" id="pension_bndai" name="pension_category" value="bndai"
-                                    class="h-4 w-4 text-blue-600 border-gray-300 focus:ring-blue-500"
-                                    @checked(old('pension_category') === 'bndai')>
-                                <label for="pension_bndai" class="ml-2 text-sm text-gray-700">
-                                    BNDAI
-                                </label>
-                            </div>
-
-                            <!-- Minoterie -->
-                            <div class="flex items-center">
-                                <input type="radio" id="pension_minoterie" name="pension_category" value="minoterie"
-                                    class="h-4 w-4 text-blue-600 border-gray-300 focus:ring-blue-500"
-                                    @checked(old('pension_category') === 'minoterie')>
-                                <label for="pension_minoterie" class="ml-2 text-sm text-gray-700">
-                                    MINOTERIE
-                                </label>
-                            </div>
-
-                            <!-- Sélection Nationale -->
-                            <div class="flex items-center">
-                                <input type="radio" id="pension_selection_nationale" name="pension_category"
-                                    value="selection_nationale"
-                                    class="h-4 w-4 text-blue-600 border-gray-300 focus:ring-blue-500"
-                                    @checked(old('pension_category') === 'selection_nationale')>
-                                <label for="pension_selection_nationale" class="ml-2 text-sm text-gray-700">
-                                    SELECTION NATIONALE
-                                </label>
-                            </div> --}}
-
                             @foreach ($pensionCategories as $category)
                                 <div class="flex items-center">
-                                    <input type="radio" id="pension_{{ $category->slug }}" name="pension_category"
+                                    <input type="radio" id="pension_{{ $category->slug }}" name="pension_category_id"
                                         value="{{ $category->id }}"
                                         class="h-4 w-4 text-blue-600 border-gray-300 focus:ring-blue-500"
-                                        @checked(old('pension_category') == $category->id)>
+                                        @checked(old('pension_category_id') == $category->id)>
                                     <label for="pension_{{ $category->slug }}" class="ml-2 text-sm text-gray-700">
                                         {{ $category->name }}
                                     </label>

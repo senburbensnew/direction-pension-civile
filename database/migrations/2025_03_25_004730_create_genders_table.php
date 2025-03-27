@@ -13,7 +13,7 @@ class CreateGendersTable extends Migration
      */
     public function up()
     {
-        Schema::create('gender', function (Blueprint $table) {
+        Schema::create('genders', function (Blueprint $table) {
             $table->id(); // Auto-incrementing primary key
             $table->string('name')->unique(); // Name of the gender (e.g., Male, Female, Other)
             $table->timestamps(); // Created at & Updated at timestamps
@@ -27,6 +27,6 @@ class CreateGendersTable extends Migration
      */
     public function down()
     {
-        Schema::dropIfExists('gender');
+        Schema::dropIfExists('genders');
     }
 }

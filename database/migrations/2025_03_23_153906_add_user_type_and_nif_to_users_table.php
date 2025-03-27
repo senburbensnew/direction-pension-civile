@@ -17,7 +17,7 @@ class AddUserTypeAndNifToUsersTable extends Migration
             // Add user_type as an enum with the new values
             $table->enum('user_type', ['institution', 'fonctionnaire', 'pensionnaire'])->default('pensionnaire');
             // Add NIF as non-nullable
-            $table->string('NIF')->unique(); // Assuming NIF should be unique
+            $table->string('nif')->unique(); // Assuming NIF should be unique
         });
     }
 

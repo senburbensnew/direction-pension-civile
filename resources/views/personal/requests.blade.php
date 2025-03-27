@@ -7,12 +7,17 @@
 
     <div class="py-12">
         <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
+            <nav class="text-sm text-gray-500 flex items-center mb-5">
+                <a href="{{ route('personal.dashboard') }}" class="hover:underline">Dashboard</a>
+                <span class="mx-2">/</span>
+                <span class="text-gray-700 font-semibold">{{ $type }}</span>
+            </nav>
             <!-- Statistiques -->
             <div class="grid grid-cols-1 md:grid-cols-5 gap-4 mb-8"> <!-- Changé à 5 colonnes -->
                 <!-- En attente -->
                 <div class="bg-white p-6 rounded-lg shadow">
                     <div class="text-gray-500">
-                        {{ App\Models\BankTransferRequests::getStatusLabels()[App\Models\BankTransferRequests::STATUS_PENDING] }}
+                        {{ App\Models\Status::STATUS_PENDING }}
                     </div>
                     <div class="text-3xl font-bold text-yellow-600">{{ $stats['pending'] }}</div>
                 </div>
@@ -20,7 +25,7 @@
                 <!-- En cours -->
                 <div class="bg-white p-6 rounded-lg shadow">
                     <div class="text-gray-500">
-                        {{ App\Models\BankTransferRequests::getStatusLabels()[App\Models\BankTransferRequests::STATUS_IN_PROGRESS] }}
+                        {{ App\Models\Status::STATUS_IN_PROGRESS }}
                     </div>
                     <div class="text-3xl font-bold text-purple-600">{{ $stats['in_progress'] }}</div>
                 </div>
@@ -28,15 +33,23 @@
                 <!-- Rejeté -->
                 <div class="bg-white p-6 rounded-lg shadow">
                     <div class="text-gray-500">
-                        {{ App\Models\BankTransferRequests::getStatusLabels()[App\Models\BankTransferRequests::STATUS_REJECTED] }}
+                        {{ App\Models\Status::STATUS_REJECTED }}
                     </div>
                     <div class="text-3xl font-bold text-red-600">{{ $stats['rejected'] }}</div>
+                </div>
+
+                <!-- Annulé -->
+                <div class="bg-white p-6 rounded-lg shadow">
+                    <div class="text-gray-500">
+                        {{ App\Models\Status::STATUS_CANCELED }}
+                    </div>
+                    <div class="text-3xl font-bold text-red-600">{{ $stats['canceled'] }}</div>
                 </div>
 
                 <!-- Approuvé -->
                 <div class="bg-white p-6 rounded-lg shadow">
                     <div class="text-gray-500">
-                        {{ App\Models\BankTransferRequests::getStatusLabels()[App\Models\BankTransferRequests::STATUS_APPROVED] }}
+                        {{ App\Models\Status::STATUS_APPROVED }}
                     </div>
                     <div class="text-3xl font-bold text-blue-600">{{ $stats['approved'] }}</div>
                 </div>
@@ -44,12 +57,11 @@
                 <!-- Traité -->
                 <div class="bg-white p-6 rounded-lg shadow">
                     <div class="text-gray-500">
-                        {{ App\Models\BankTransferRequests::getStatusLabels()[App\Models\BankTransferRequests::STATUS_COMPLETED] }}
+                        {{ App\Models\Status::STATUS_COMPLETED }}
                     </div>
                     <div class="text-3xl font-bold text-green-600">{{ $stats['completed'] }}</div>
                 </div>
             </div>
-
             <!-- Liste des demandes -->
             <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
                 <div class="p-6 bg-white border-b border-gray-200">
@@ -65,9 +77,46 @@
                             </tr>
                         </thead>
                         <tbody class="bg-white divide-y divide-gray-200">
-                            @forelse ($bankTransferRequests as $request)
+                            @forelse ($requests as $request)
                                 <tr>
-                                    <!-- Existing row content -->
+                                    <td class="px-6 py-4">{{ $request->code }}</td>
+                                    <td class="px-6 py-4">{{ $type }}</td>
+                                    <td class="px-6 py-4">{{ $request->created_at->format('d/m/Y H:i') }}</td>
+                                    <td class="px-6 py-4">
+                                        <span
+                                            class="px-2 py-1 text-sm rounded-full 
+                                    @switch($request->status->name)
+                                        @case('pending')
+                                            bg-yellow-100 text-yellow-800
+                                            @break
+                                        @case('in_progress')
+                                            bg-blue-100 text-blue-800
+                                            @break
+                                            @case('completed')
+                                                 bg-green-100 text-green-800
+                                                 @break
+                                             @default
+                                                 bg-gray-100 text-gray-800
+                                         @endswitch">
+                                            {{ ucfirst(str_replace('_', ' ', $request->status->name)) }}
+                                        </span>
+                                    </td>
+                                    <td class="px-6 py-4">
+                                        <a href="{{ route('personal.request.show', $request->id) }}"
+                                            class="text-blue-600 hover:text-blue-900 mr-2">
+                                            Détails
+                                        </a>
+                                        @if ($request->status === 'pending')
+                                            <form action="{{ route('personal.request.cancel', $request->id) }}"
+                                                method="POST" class="inline">
+                                                @csrf
+                                                @method('DELETE')
+                                                <button type="submit" class="text-red-600 hover:text-red-900">
+                                                    Annuler
+                                                </button>
+                                            </form>
+                                        @endif
+                                    </td>
                                 </tr>
                             @empty
                                 <tr>
@@ -91,9 +140,9 @@
                     </table>
 
                     <!-- Show pagination only if there are results -->
-                    @if ($bankTransferRequests->isNotEmpty())
+                    @if ($requests->isNotEmpty())
                         <div class="mt-4">
-                            {{ $bankTransferRequests->links() }}
+                            {{ $requests->links() }}
                         </div>
                     @endif
                 </div>

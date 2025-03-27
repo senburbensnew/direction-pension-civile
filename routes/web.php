@@ -165,13 +165,9 @@ Route::get('/locale/{locale}', [App\Http\Controllers\LocaleController::class, 's
     ->name('locale');
 
 Route::prefix('personal')->middleware('auth')->group(function () {
-    // Route personnelle
     Route::get('/', [PersonalController::class, 'index'])->name('personal.index');
-        
-    // Routes pour pensionnaire
     Route::get('/dashboard', [PersonalController::class, 'dashboard'])->name('personal.dashboard');
-            
-    // Gestion des demandes
+    Route::get('/requestsDashboard', [PersonalController::class, 'requestsDashboard'])->name('personal.requests-dashboard');
     Route::prefix('requests')->group(function () {
         Route::get('/{id}', [PersonalController::class, 'showRequest'])->name('personal.request.show');
         Route::put('/{id}', [PersonalController::class, 'updateRequest'])->name('personal.request.update');

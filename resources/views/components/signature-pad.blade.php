@@ -38,11 +38,8 @@
 
         .button-container span {
             width: 40px;
-            /* Même largeur */
             height: 40px;
-            /* Même hauteur */
             cursor: pointer;
-            color: white;
             border: none;
             border-radius: 5px;
             transition: all 0.3s ease;
@@ -50,40 +47,51 @@
             align-items: center;
             justify-content: center;
             padding: 8px;
-            /* Padding réduit */
+            background-color: #f0f0f0;
+            /* Added base background */
         }
 
+        /* Clear button styling */
         #clear {
-            background-color: #e74c3c;
+            background-color: #ffe6e6;
+            /* Light red background */
+            color: #e74c3c;
+            /* Red text color */
         }
 
         #clear:hover {
-            background-color: #c0392b;
+            // background-color: #f8d7d9;
+            /* Darker red background */
             transform: translateY(-1px);
         }
 
         #clear svg {
             width: 20px;
             height: 20px;
-            fill: white;
-            display: block;
-            /* Centrage parfait */
-            margin: 0 auto;
+            fill: #e74c3c;
+            /* Matching red color */
         }
 
+        /* Confirm button styling */
         #confirm {
-            background-color: #2ecc71;
+            background-color: #e6f6e6;
+            /* Light green background */
+            color: #2ecc71;
+            /* Green text color */
         }
 
         #confirm:hover {
-            background-color: #27ae60;
+            background-color: #d4efdf;
+            /* Darker green background */
             transform: translateY(-1px);
         }
 
         #confirm svg {
-            width: 24px;
-            height: 24px;
-            fill: white;
+            width: 20px;
+            /* Unified icon size */
+            height: 20px;
+            fill: #2ecc71;
+            /* Matching green color */
         }
     </style>
 @endpush
@@ -174,7 +182,7 @@
 
             document.getElementById('confirm').addEventListener('click', () => {
                 if (canvas.toDataURL() === blankCanvas.toDataURL()) {
-                    alert('Please provide a signature first');
+                    alert('Fournir une signature d\'abord !');
                     return;
                 }
 
@@ -207,7 +215,7 @@
                 signatureInput.value = imageData;
 
                 // Optional: Submit form or show confirmation
-                alert('Signature saved successfully!');
+                alert('Signature enregistrée avec succès !');
             });
         });
     </script>

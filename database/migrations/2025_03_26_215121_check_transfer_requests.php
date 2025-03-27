@@ -9,12 +9,14 @@ return new class extends Migration
     /**
      * Run the migrations.
      */
-    public function up()
+    public function up(): void
     {
-        Schema::create('pension_type', function (Blueprint $table) {
+        Schema::create('check_transfer_requests', function (Blueprint $table) {
             $table->id();
-            $table->string('name')->unique(); // Name of the pension type
-            $table->text('description')->nullable(); // Description of the pension type
+            $table->foreignId('created_by')
+                ->constrained('users')
+                ->restrictOnDelete()
+                ->nullable(false);
             $table->timestamps();
         });
     }
@@ -24,6 +26,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('pension_type');
+        //
     }
 };

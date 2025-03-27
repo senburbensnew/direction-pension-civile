@@ -19,7 +19,7 @@ return new class extends Migration
             $table->unsignedBigInteger('user_type_id')->nullable();
 
             // Ajouter la contrainte de clé étrangère pointant vers `user_types`
-            $table->foreign('user_type_id')->references('id')->on('user_type')->onDelete('set null');
+            $table->foreign('user_type_id')->references('id')->on('user_types')->onDelete('set null');
         });
     }
 

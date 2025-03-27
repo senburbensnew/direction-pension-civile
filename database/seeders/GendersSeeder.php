@@ -6,7 +6,7 @@ use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
 
-class GenderSeeder extends Seeder
+class GendersSeeder extends Seeder
 {
     /**
      * Run the database seeds.
@@ -14,7 +14,7 @@ class GenderSeeder extends Seeder
     public function run()
     {
         // Insert default gender values
-        DB::table('gender')->insert([
+        DB::table('genders')->insert([
             ['name' => 'Masculin'],
             ['name' => 'Féminin'],
             ['name' => 'Autre'],

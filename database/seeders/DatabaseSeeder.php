@@ -19,13 +19,14 @@ class DatabaseSeeder extends Seeder
         //     'email' => 'test@example.com',
         // ]);
 
-        $this->call(GenderSeeder::class);
-        $this->call(UserTypeSeeder::class);
+        $this->call(GendersSeeder::class);
+        $this->call(UserTypesSeeder::class);
         $this->call(DefaultUserSeeder::class);
         $this->call(RolesAndPermissionsSeeder::class);
-        $this->call(StatusSeeder::class);
-        $this->call(CivilStatusSeeder::class);
-        $this->call(PensionTypeSeeder::class);
-        $this->call(PensionCategorySeeder::class);
+        $this->call(StatusesSeeder::class);
+        $this->call(CivilStatusesSeeder::class);
+        $this->call(PensionTypesSeeder::class);
+        $this->call(PensionCategoriesSeeder::class);
+        $this->call(RequestTypeSeeder::class);
     }
 }

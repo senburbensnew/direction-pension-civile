@@ -19,34 +19,32 @@ class PensionnaireController extends Controller
     public function demandeVirement()
     {
         $genders = Gender::orderBy('name', 'asc')->get();
-        $civilStatus = CivilStatus::orderBy('name', 'asc')->get();
-        $status = Status::orderBy('name', 'asc')->get();
+        $civilStatuses = CivilStatus::orderBy('name', 'asc')->get();
         $pensionTypes = PensionType::orderBy('name', 'asc')->get();
         $pensionCategories = PensionCategory::orderBy('name', 'asc')->get();
     
-        return view('pensionnaire.demande-virement', compact('genders', 'civilStatus', 'status', 'pensionTypes', 'pensionCategories'));
+        return view('pensionnaire.demande-virement', compact('genders', 'civilStatuses', 'pensionTypes', 'pensionCategories'));
     }
 
     // Process the virement request form
     public function processVirementRequest(Request $request)
     {
-        dd($request->all());
-
         // Custom validation attributes
         $attributes = [
+            'profile_photo' => "photo de profil",
             'pensioner_code' => 'code du pensionné',
-            'pension_type' => 'type de pension',
+            'pension_type_id' => 'type de pension',
             'nif' => 'NIF',
             'full_name' => 'nom complet',
             'address' => 'adresse',
             'city' => 'ville',
             'birth_date' => 'date de naissance',
-            'civil_status' => 'état civil',
-            'gender' => 'genre',
+            'civil_status_id' => 'état civil',
+            'gender_id' => 'genre',
             'allocation_amount' => 'montant d\'allocation',
             'mother_name' => 'nom de la mère',
             'phone' => 'téléphone',
-            'pension_category' => 'catégorie de pension',
+            'pension_category_id' => 'catégorie de pension',
             'bank_name' => 'nom de la banque',
             'account_number' => 'numéro de compte',
             'account_name' => 'nom du compte',
@@ -78,31 +76,38 @@ class PensionnaireController extends Controller
         ];
     
         try {
+            $validPensionTypes = PensionType::pluck('id')->toArray();
+            $validGenders = Gender::pluck('id')->toArray();
+            $validPensionCategories = PensionCategory::pluck('id')->toArray();
+            $validCivilSatuses = CivilStatus::pluck('id')->toArray();
+            $validSatuses = Status::pluck('id')->toArray();
+
             $validated = $request->validate([
                 'pensioner_code' => 'required',
-                'pension_type' => 'required|in:carriere,reversibilite',
+                'pension_type_id' => 'required|in:' . implode(',', $validPensionTypes),
                 'nif' => 'required|digits:10',
                 'full_name' => 'required|string|max:255',
                 'address' => 'required|string|max:255',
                 'city' => 'required|string|max:255',
                 'birth_date' => 'required|date',
-                'civil_status' => 'required|in:célibataire,marié(e),divorcé(e),veuf(ve)',
-                'gender' => 'required|in:M,F,A',
+                'civil_status_id' => 'required|in:' . implode(',', $validCivilSatuses),
+                'gender_id' => 'required|in:' . implode(',', $validGenders),
                 'allocation_amount' => 'required|numeric',
                 'mother_name' => 'required|string|max:255',
                 'phone' => 'required|digits:10',
-                'pension_category' => 'required|in:militaire,civile,bndai,minoterie,selection_nationale',
+                'pension_category_id' => 'required|in:' . implode(',', $validPensionCategories),
                 'bank_name' => 'required|string|max:255',
                 'account_number' => 'required|digits_between:5,20',
                 'account_name' => 'required|string|max:255',
-                'status' => 'sometimes|in:'.implode(',', BankTransferRequests::getStatusOptions()),
+                'status_id' => 'sometimes|in:' . implode(',', $validSatuses),
                 // 'photo' => 'required|image|max:2048',
+                // 'signature' => 'required',
             ], $messages, $attributes);
     
             // Generate unique request code
             $validated['code'] = CodeGeneratorService::generateUniqueRequestCode();
-            $validated['status'] = BankTransferRequests::STATUS_PENDING;
-    
+            $validated['status_id'] = Status::getStatusPending()->id;
+
             // Handle file upload
             if ($request->hasFile('photo')) {
                 $path = $request->file('photo')->store('photos', 'public');

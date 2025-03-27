@@ -5,7 +5,7 @@ namespace Database\Seeders;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
 
-class CivilStatusSeeder extends Seeder
+class CivilStatusesSeeder extends Seeder
 {
     public function run()
     {
@@ -16,6 +16,6 @@ class CivilStatusSeeder extends Seeder
             ['name' => 'veuf(ve)', 'description' => ''],
         ];
 
-        DB::table('civil_status')->insert($statuses);
+        DB::table('civil_statuses')->insert($statuses);
     }
 }

@@ -11,7 +11,7 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('pension_category', function (Blueprint $table) {
+        Schema::create('pension_categories', function (Blueprint $table) {
             $table->id();
             $table->string('name')->unique(); // Name of the pension category
             $table->text('description')->nullable(); // Description of the pension category
@@ -24,6 +24,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('pension_category');
+        Schema::dropIfExists('pension_categories');
     }
 };

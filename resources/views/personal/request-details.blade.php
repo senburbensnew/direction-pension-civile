@@ -28,16 +28,24 @@
 
     <div class="py-8">
         <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
+            <nav class="text-sm text-gray-500 flex items-center mb-5">
+
+
+                <a href="{{ route('personal.dashboard') }}" class="hover:underline">Dashboard</a>
+                <span class="mx-2">/</span>
+                <a href="{{ url()->previous() }}"><span class="hover:underline">Page
+                        précédente</span></a>
+                <span class="mx-2">/</span>
+                <span class="text-gray-700 font-semibold">Détails de la demande</span>
+            </nav>
             <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
                 <div class="p-6 bg-white border-b border-gray-200">
-
                     <!-- Status Banner -->
-                    <div
-                        class="mb-6 p-4 rounded-lg {{ App\Models\BankTransferRequests::getStatusStyle($request->status) }}">
+                    <div class="mb-6 p-4 rounded-lg {{ App\Models\Status::getStatusStyle($request->status) }}">
                         <div class="flex items-center justify-between">
                             <div>
                                 <span class="font-semibold">Statut actuel :</span>
-                                {{ App\Models\BankTransferRequests::getStatusLabels()[$request->status] }}
+                                {{ $request->status->name }}
                             </div>
                             <span class="text-sm">
                                 Dernière mise à jour : {{ $request->updated_at->format('d/m/Y H:i') }}
@@ -83,7 +91,7 @@
                     </div>
 
                     <!-- Timeline -->
-                    <div class="mt-8">
+                    {{--                     <div class="mt-8">
                         <h3 class="text-lg font-semibold text-gray-700 mb-4">Historique du dossier</h3>
                         <div class="border-l-2 border-gray-200 pl-4 space-y-4">
                             @foreach ($request->history as $event)
@@ -98,7 +106,7 @@
                                 </div>
                             @endforeach
                         </div>
-                    </div>
+                    </div> --}}
 
                 </div>
             </div>
