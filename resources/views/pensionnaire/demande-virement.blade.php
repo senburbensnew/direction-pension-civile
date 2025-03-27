@@ -40,15 +40,10 @@
                 </div>
 
                 <!-- Enhanced Photo Upload Component -->
-                <div class="order-3 flex flex-col items-center space-y-3">
+                {{--                 <div class="order-3 flex flex-col items-center space-y-3">
                     <label class="block font-semibold text-gray-700 mb-1">Photo de profil</label>
 
                     <div class="relative group" id="dropzone">
-                        {{--                 <!-- Hidden file input -->
-                        <input type="file" id="photoUpload" accept="image/*" class="hidden"
-                            onchange="previewPhoto(event)" name="profile_photo"> --}}
-
-                        <!-- Drop zone container -->
                         <label for="photoUpload"
                             class="cursor-pointer flex flex-col items-center justify-center border-2 border-dashed border-gray-300 rounded-xl w-32 h-32 hover:border-blue-500 hover:bg-blue-50 transition-all duration-200 ease-in-out group-hover:scale-102"
                             ondragover="handleDragOver(event)" ondragleave="handleDragLeave(event)"
@@ -85,7 +80,8 @@
 
                     <!-- Error message -->
                     <p id="uploadError" class="text-red-500 text-sm hidden"></p>
-                </div>
+                </div> --}}
+                <x-profile-picture />
             </div>
 
             @if (session('success'))
@@ -417,9 +413,6 @@
 
                         <!-- Pensionné Signature -->
                         <div class="flex-1">
-                            {{--                             <canvas id="signature-pad" class="border border-black w-full"
-                                style="height: 200px;"></canvas>
-                            <input type="hidden" id="signature-data" name="signature"> --}}
                             <p class="text-xs font-semibold text-gray-600 uppercase tracking-wide">
                                 Signature du Pensionné
                             </p>
@@ -442,71 +435,10 @@
 
                 <div class="mt-6 text-right">
                     <button class="bg-blue-600 text-white px-6 py-2 rounded">Soumettre</button>
-                    {{-- <button onclick="window.print()" class="mt-6 bg-blue-600 text-white px-6 py-2 rounded">Imprimer</button> --}}
                 </div>
             </form>
         </div>
     </div>
-
-    <script>
-        function handleDragOver(e) {
-            e.preventDefault();
-            e.stopPropagation();
-            e.target.classList.add('border-blue-500', 'bg-blue-50');
-        }
-
-        function handleDragLeave(e) {
-            e.preventDefault();
-            e.stopPropagation();
-            e.target.classList.remove('border-blue-500', 'bg-blue-50');
-        }
-
-        function handleDrop(e) {
-            e.preventDefault();
-            e.stopPropagation();
-            const files = e.dataTransfer.files;
-            if (files.length > 0) {
-                previewPhoto({
-                    target: {
-                        files
-                    }
-                });
-            }
-        }
-
-        function previewPhoto(event) {
-            const file = event.target.files[0];
-            const errorElement = document.getElementById('uploadError');
-
-            if (file && file.type.startsWith('image/')) {
-                if (file.size > 5 * 1024 * 1024) { // 5MB limit
-                    errorElement.textContent = 'File size exceeds 5MB limit';
-                    errorElement.classList.remove('hidden');
-                    return;
-                }
-
-                const reader = new FileReader();
-                reader.onload = (e) => {
-                    document.getElementById('photoPreview').src = e.target.result;
-                    document.getElementById('photoPreviewContainer').classList.remove('hidden');
-                    document.getElementById('dropzone').classList.add('border-solid');
-                    errorElement.classList.add('hidden');
-                };
-                reader.readAsDataURL(file);
-            } else {
-                errorElement.textContent = 'Please upload a valid image file';
-                errorElement.classList.remove('hidden');
-            }
-        }
-
-        function removePhoto() {
-            document.getElementById('photoUpload').value = '';
-            document.getElementById('photoPreview').src = '';
-            document.getElementById('photoPreviewContainer').classList.add('hidden');
-            document.getElementById('dropzone').classList.remove('border-solid');
-            document.getElementById('uploadError').classList.add('hidden');
-        }
-    </script>
 
     {{--     <script>
         const canvas = document.getElementById('signature-pad');

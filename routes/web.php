@@ -196,17 +196,15 @@ Route::prefix('admin')->name('admin.')->group(function () {
 // Pensionnaire Routes
 Route::prefix('pensionnaire')
     ->name('pensionnaire.')
-    ->middleware('auth') // Ensure user is logged in
+    ->middleware('auth')
     ->group(function () {
-        // Get routes
         Route::get('/demande-virement', [PensionnaireController::class, 'demandeVirement'])->name('virement-request-form');
         Route::get('/demande-attestation', [PensionnaireController::class, 'demandeAttestation'])->name('attestation-request-form');
         Route::get('/demande-transfert-cheque', [PensionnaireController::class, 'demandeTransfertCheque'])->name('check-transfer-request-form');
         Route::get('/demande-arret-paiement', [PensionnaireController::class, 'demandeArretPaiement'])->name('payment-stop-request-form');
         Route::get('/demande-reinsertion', [PensionnaireController::class, 'demandeReinsertion'])->name('reinstatement-request-form');
         Route::get('/demande-arret-virement', [PensionnaireController::class, 'demandeArretVirement'])->name('transfer-stop-request-form');
-
-        // Post routes
+        Route::get('/preuve-existence', [PensionnaireController::class, 'preuveExistence'])->name('preuve-existence');
         Route::post('/demande-virement', [PensionnaireController::class, 'processVirementRequest'])->name('process-virement-request');
         Route::post('/demande-attestation', [PensionnaireController::class, 'processAttestationRequest'])->name('process-attestation-request');
         Route::post('/demande-transfert-cheque', [PensionnaireController::class, 'processCheckTransferRequest'])->name('process-check-transfer-request');

@@ -172,7 +172,7 @@
 
                 <!-- Signature Section -->
                 <fieldset class="shadow-md rounded-lg p-5 border mb-6">
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {{--                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div>
                             <label for="fait_a" class="block text-sm font-medium text-gray-700 mb-1">
                                 Fait à *
@@ -195,7 +195,7 @@
                             @enderror
                         </div>
                     </div>
-                    <div class="mt-4">
+                    <div class="mt-4 mb-4">
                         <label for="signature" class="block text-sm font-medium text-gray-700 mb-1">
                             Signature *
                         </label>
@@ -205,6 +205,15 @@
                         @error('signature')
                             <p class="error-message">{{ $message }}</p>
                         @enderror
+                    </div> --}}
+                    <div class="text-left mb-8"> <!-- Added margin-bottom -->
+                        <p class="font-semibold text-gray-600 pt-5">
+                            Fait à Port-au-Prince, le
+                            <span class="inline-block mx-2 px-2 bg-gray-100 rounded">{{ now()->format('d/m/Y') }}</span>
+                        </p>
+                    </div>
+                    <div class="w-1/2">
+                        <x-signature-pad />
                     </div>
                 </fieldset>
 

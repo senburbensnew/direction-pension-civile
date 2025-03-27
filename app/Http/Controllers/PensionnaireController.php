@@ -26,6 +26,11 @@ class PensionnaireController extends Controller
         return view('pensionnaire.demande-virement', compact('genders', 'civilStatuses', 'pensionTypes', 'pensionCategories'));
     }
 
+    public function preuveExistence()
+    {    
+        return view('pensionnaire.preuve-existence');
+    }
+
     // Process the virement request form
     public function processVirementRequest(Request $request)
     {

@@ -205,11 +205,19 @@
                             </a>
                         </li>
                         <li>
-                            <a href="#"
+                            <a href="{{ route('pensionnaire.preuve-existence') }}"
                                 class="text-slate-600 block px-4 py-3 hover:bg-gray-100 
                                    transition-colors text-sm truncate-text
                                    focus:outline-none focus:ring-2 ">
                                 {{ __('messages.proof_of_existence') }}
+                            </a>
+                        </li>
+                        <li>
+                            <a href="#"
+                                class="text-slate-600 block px-4 py-3 hover:bg-gray-100 
+                                   transition-colors text-sm truncate-text
+                                   focus:outline-none focus:ring-2 ">
+                                Demande de pension de reversion
                             </a>
                         </li>
                     </ul>
