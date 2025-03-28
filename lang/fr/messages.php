@@ -55,9 +55,6 @@ return [
     'media_libraries' => 'Médiathèques',
     'success_stories' => 'Success stories',
 
-    'portals' => 'Portails',
-    'employee' => 'Employé',
-
     // Footer
     'director' => 'La Directrice',
     'all_rights_reserved' => 'TOUS DROITS RESERVES',

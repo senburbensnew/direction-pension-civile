@@ -20,16 +20,10 @@ class PensionnaireController extends Controller
 
     public function __construct()
     {
-        $this->middleware('auth'); // Ensure user is authenticated
         $this->middleware(function ($request, $next) {
-            // Convert roles collection to an array of role names
-            $userRoles = Auth::user()->roles->pluck('name')->toArray();
-    
-            // Check if 'pensionnaire' exists in the array
-            if (!in_array('pensionnaire', $userRoles)) {
-                abort(403, 'Unauthorized access');
+            if (!$request->user() || !$request->user()->can('viewPensionnaireMenu')) {
+                abort(403, 'Unauthorized action.');
             }
-    
             return $next($request);
         });
     }

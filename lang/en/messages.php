@@ -55,9 +55,6 @@ return [
     'media_libraries' => 'Media Libraries',
     'success_stories' => 'Success Stories',
 
-    'portals' => 'Portals',
-    'employee' => 'Employee',
-
     // Footer
     'director' => 'The Director',
     'all_rights_reserved' => 'ALL RIGHTS RESERVED',
