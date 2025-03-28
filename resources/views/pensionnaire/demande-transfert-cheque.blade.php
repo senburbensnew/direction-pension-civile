@@ -52,7 +52,8 @@
                         <h3 class="text-base md:text-lg font-semibold mb-2">Formulaire de doléances / Demande de Transfert
                         </h3>
                         <p class="text-sm md:text-gray-600">Service de Comptabilité</p>
-                        <p class="text-sm md:text-gray-600 mt-1">Exercice : 20... / 20...</p>
+                        <p class="text-sm md:text-gray-600 mt-1">Exercice : <span id="editableText"
+                                contenteditable="true">20.../20...</span></p>
                     </div>
 
                     <!-- Hidden on mobile, visible on md+ screens -->
@@ -73,9 +74,10 @@
                 </div>
             @endif
 
-            <form method="POST" action="#">
+            <form method="POST" action="{{ route('pensionnaire.process-check-transfer-request') }}"
+                id="check-transfert-form">
                 @csrf
-
+                <input type="hidden" name="fiscal_year" id="hiddenInput">
                 <!-- General Errors -->
                 @if ($errors->any())
                     <div class="p-4 bg-red-50 border border-red-200 text-red-700 rounded mb-4">
@@ -147,8 +149,10 @@
                             <label for="pension_code" class="block text-sm font-medium text-gray-700 mb-1">
                                 Code pension *
                             </label>
-                            <input type="text" name="pension_code" id="pension_code" value="{{ old('pension_code') }}"
-                                class="w-full rounded-md @error('pension_code') border-red-500 @else border-gray-300 @enderror focus:border-blue-500 focus:ring-blue-500">
+                            <input type="text" name="pension_code" id="pension_code"
+                                value="{{ auth()->user()->pension_code }}"
+                                class="w-full rounded-md @error('pension_code') border-red-500 @else border-gray-300 @enderror focus:border-blue-500 focus:ring-blue-500 bg-gray-100"
+                                readonly>
                             @error('pension_code')
                                 <p class="error-message">{{ $message }}</p>
                             @enderror
@@ -209,8 +213,9 @@
                             <label for="nif" class="block text-sm font-medium text-gray-700 mb-1">
                                 NIF *
                             </label>
-                            <input type="text" name="nif" id="nif" value="{{ old('nif') }}"
-                                class="w-full rounded-md @error('nif') border-red-500 @else border-gray-300 @enderror focus:border-blue-500 focus:ring-blue-500">
+                            <input type="text" name="nif" id="nif" value="{{ auth()->user()->nif }}"
+                                class="w-full rounded-md @error('nif') border-red-500 @else border-gray-300 @enderror focus:border-blue-500 focus:ring-blue-500 bg-gray-100"
+                                readonly>
                             @error('nif')
                                 <p class="error-message">{{ $message }}</p>
                             @enderror
@@ -329,13 +334,17 @@
                             <p class="error-message">{{ $message }}</p>
                         @enderror
                     </div> --}}
-                    <div class="text-left mb-8"> <!-- Added margin-bottom -->
+                    <div class="text-left mb-4"> <!-- Added margin-bottom -->
                         <p class="font-semibold text-gray-600 pt-5">
                             Fait à Port-au-Prince, le
                             <span class="inline-block mx-2 px-2 bg-gray-100 rounded">{{ now()->format('d/m/Y') }}</span>
                         </p>
                     </div>
                     <div class="w-1/2">
+                        <p class="text-xs font-semibold text-gray-600 uppercase tracking-wide">
+                            Signature du Pensionné
+                        </p>
+                        <div class="h-2 border-t-2 border-gray-700"></div>
                         <x-signature-pad />
                     </div>
                 </fieldset>
@@ -351,3 +360,14 @@
         </div>
     </div>
 @endsection
+
+@push('scripts')
+    <script>
+        document.addEventListener("DOMContentLoaded", function() {
+            document.getElementById("check-transfert-form").addEventListener("submit", function(event) {
+                let editableText = document.getElementById("editableText").innerText.trim();
+                document.getElementById("hiddenInput").value = editableText;
+            });
+        });
+    </script>
+@endpush

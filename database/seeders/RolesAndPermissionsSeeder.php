@@ -22,10 +22,23 @@ class RolesAndPermissionsSeeder extends Seeder
         // $role->givePermissionTo($permission);
         // $role->givePermissionTo($permission2);
 
+        // $adminRole->givePermissionTo($permission);
+        // $adminRole->givePermissionTo($permission2);
+        // $adminRole->givePermissionTo($permission3);
+
+        // You can also assign permissions to multiple roles at once
+        // $role->syncPermissions([$permission, $permission2, $permission3]);
+
         $adminRole = Role::firstOrCreate(['name' => 'admin']);
         $pensionnaireRole = Role::firstOrCreate(['name' => 'pensionnaire']);
         $fonctionnaireRole = Role::firstOrCreate(['name' => 'fonctionnaire']);
         $institutionRole = Role::firstOrCreate(['name' => 'institution']);
+        $liquidationRole = Role::firstOrCreate(['name' => 'liquidation']);
+        $serviceFormaliteRole = Role::firstOrCreate(['name' => 'service_formalite']);
+        $assuranceRole = Role::firstOrCreate(['name' => 'assurance']);
+        $comptabiliteRole = Role::firstOrCreate(['name' => 'comptabilite']);
+        $secretariatRole = Role::firstOrCreate(['name' => 'secretariat']);
+        $administrationRole = Role::firstOrCreate(['name' => 'administration']);
 
         // Check if the user type exists
         $userType = UserType::firstOrCreate(
@@ -47,12 +60,5 @@ class RolesAndPermissionsSeeder extends Seeder
 
         // Assign the 'admin' role to the user
         $user->assignRole($adminRole);
-        
-        // $adminRole->givePermissionTo($permission);
-        // $adminRole->givePermissionTo($permission2);
-        // $adminRole->givePermissionTo($permission3);
-
-        // You can also assign permissions to multiple roles at once
-        // $role->syncPermissions([$permission, $permission2, $permission3]);
     }
 }

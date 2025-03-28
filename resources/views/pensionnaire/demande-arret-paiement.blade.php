@@ -103,8 +103,9 @@
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div>
                             <label for="code">Code *</label>
-                            <input type="text" name="code" id="code"
-                                class="w-full rounded-md border-gray-300 focus:border-blue-500 focus:ring-blue-500">
+                            <input type="text" name="code" id="code" value="{{ auth()->user()->pension_code }}"
+                                class="w-full rounded-md border-gray-300 focus:border-blue-500 focus:ring-blue-500 bg-gray-100"
+                                readonly>
                         </div>
                         <div>
                             <label for="montant">Montant (htg)*</label>
@@ -128,8 +129,9 @@
                         </div>
                         <div>
                             <label for="nif">NIF *</label>
-                            <input type="text" name="nif" id="nif"
-                                class="w-full rounded-md border-gray-300 focus:border-blue-500 focus:ring-blue-500">
+                            <input type="text" name="nif" id="nif" value="{{ auth()->user()->nif }}"
+                                class="w-full rounded-md border-gray-300 focus:border-blue-500 focus:ring-blue-500 bg-gray-100"
+                                readonly>
                         </div>
                         <div>
                             <label for="ninu">NINU *</label>
@@ -206,13 +208,17 @@
                             <p class="error-message">{{ $message }}</p>
                         @enderror
                     </div> --}}
-                    <div class="text-left mb-8"> <!-- Added margin-bottom -->
+                    <div class="text-left mb-4"> <!-- Added margin-bottom -->
                         <p class="font-semibold text-gray-600 pt-5">
                             Fait à Port-au-Prince, le
                             <span class="inline-block mx-2 px-2 bg-gray-100 rounded">{{ now()->format('d/m/Y') }}</span>
                         </p>
                     </div>
                     <div class="w-1/2">
+                        <p class="text-xs font-semibold text-gray-600 uppercase tracking-wide">
+                            Signature du Pensionné
+                        </p>
+                        <div class="h-2 border-t-2 border-gray-700"></div>
                         <x-signature-pad />
                     </div>
                 </fieldset>

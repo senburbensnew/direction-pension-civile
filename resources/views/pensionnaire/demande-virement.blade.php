@@ -117,9 +117,10 @@
                             <label for="pensioner_code" class="block text-sm font-medium text-gray-700">
                                 Code du pensionné *
                             </label>
-                            <input type="text" name="pensioner_code" id="pensioner_code"
-                                value="{{ old('pensioner_code') }}"
-                                class="mt-1 block w-full rounded-md @error('pensioner_code') border-red-500 @else border-gray-300 @enderror shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                            <input type="text" name="pensioner_code" id="pensioner_code" {{-- value="{{ old('pensioner_code') }}" --}}
+                                value="{{ auth()->user()->pension_code }}"
+                                class="mt-1 block w-full rounded-md @error('pensioner_code') border-red-500 @else border-gray-300 @enderror shadow-sm focus:border-blue-500 focus:ring-blue-500 bg-gray-100"
+                                readonly>
                             @error('pensioner_code')
                                 <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
                             @enderror
@@ -159,8 +160,10 @@
                             <label for="nif" class="block text-sm font-medium text-gray-700">
                                 NIF *
                             </label>
-                            <input type="text" name="nif" id="nif" value="{{ old('nif') }}"
-                                class="mt-1 block w-full rounded-md @error('nif') border-red-500 @else border-gray-300 @enderror shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                            <input type="text" name="nif" id="nif" {{-- value="{{ old('nif') }}"  --}}
+                                value="{{ auth()->user()->nif }}"
+                                class="mt-1 block w-full rounded-md @error('nif') border-red-500 @else border-gray-300 @enderror shadow-sm focus:border-blue-500 focus:ring-blue-500 bg-gray-100"
+                                readonly>
                             @error('nif')
                                 <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
                             @enderror

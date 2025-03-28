@@ -9,6 +9,13 @@
             </svg>
         </span>
         <span id="confirm">&check;</span>
+        <!-- New button to save the canvas as an image -->
+        <span id="save-as-image">
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24">
+                <path fill="currentColor"
+                    d="M12 3v9.26c-.61-.37-1.3-.63-2-.74V5.5h-4V9h2.5c.28 0 .5-.22.5-.5s-.22-.5-.5-.5H8V4.5c0-.28-.22-.5-.5-.5s-.5.22-.5.5V9H4V3h8zm6.7 7.3L12 21l-6.7-10.7L8 9h4V4h4v5h4l-2.3 3.3z" />
+            </svg>
+        </span>
     </div>
 </div>
 
@@ -24,7 +31,7 @@
         .signature-container canvas {
             width: 100%;
             height: 150px;
-            border: 2px dotted lightgray;
+            border: 2px dotted #e74c3c;
             background-color: #fff;
             cursor: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"><path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/></svg>') 0 16, auto;
             touch-action: none;
@@ -48,20 +55,14 @@
             justify-content: center;
             padding: 8px;
             background-color: #f0f0f0;
-            /* Added base background */
         }
 
-        /* Clear button styling */
         #clear {
             background-color: #ffe6e6;
-            /* Light red background */
             color: #e74c3c;
-            /* Red text color */
         }
 
         #clear:hover {
-            // background-color: #f8d7d9;
-            /* Darker red background */
             transform: translateY(-1px);
         }
 
@@ -69,29 +70,38 @@
             width: 20px;
             height: 20px;
             fill: #e74c3c;
-            /* Matching red color */
         }
 
-        /* Confirm button styling */
         #confirm {
             background-color: #e6f6e6;
-            /* Light green background */
             color: #2ecc71;
-            /* Green text color */
         }
 
         #confirm:hover {
             background-color: #d4efdf;
-            /* Darker green background */
             transform: translateY(-1px);
         }
 
         #confirm svg {
             width: 20px;
-            /* Unified icon size */
             height: 20px;
             fill: #2ecc71;
-            /* Matching green color */
+        }
+
+        /* Save button styling */
+        #save-as-image {
+            background-color: #d6e8f3;
+            color: #3498db;
+        }
+
+        #save-as-image:hover {
+            transform: translateY(-1px);
+        }
+
+        #save-as-image svg {
+            width: 20px;
+            height: 20px;
+            fill: #3498db;
         }
     </style>
 @endpush
@@ -103,7 +113,6 @@
             const ctx = canvas.getContext('2d');
             let drawing = false;
 
-            // Handle high-DPI displays
             const rect = canvas.getBoundingClientRect();
             const dpr = window.devicePixelRatio || 1;
             canvas.width = rect.width * dpr;
@@ -166,14 +175,12 @@
             canvas.addEventListener('touchend', stopDrawing);
 
             document.getElementById('clear').addEventListener('click', () => {
-                // Clear canvas
                 ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-                // Clear input value
                 const signatureInput = document.getElementById('signature-input');
                 if (signatureInput) {
                     signatureInput.value = '';
                 }
+                canvas.style.borderColor = '#e74c3c';
             });
 
             const blankCanvas = document.createElement('canvas');
@@ -186,22 +193,18 @@
                     return;
                 }
 
-                // Create temporary canvas with white background
                 const tempCanvas = document.createElement('canvas');
                 const tempCtx = tempCanvas.getContext('2d');
 
                 tempCanvas.width = canvas.width;
                 tempCanvas.height = canvas.height;
 
-                // Fill with white background
                 tempCtx.fillStyle = '#ffffff';
                 tempCtx.fillRect(0, 0, tempCanvas.width, tempCanvas.height);
                 tempCtx.drawImage(canvas, 0, 0);
 
-                // Convert to JPEG with 80% quality
                 const imageData = tempCanvas.toDataURL('image/jpeg', 0.8);
 
-                // Create hidden input if it doesn't exist
                 let signatureInput = document.getElementById('signature-input');
                 if (!signatureInput) {
                     signatureInput = document.createElement('input');
@@ -211,11 +214,22 @@
                     document.querySelector('.signature-container').appendChild(signatureInput);
                 }
 
-                // Set the input value
                 signatureInput.value = imageData;
 
-                // Optional: Submit form or show confirmation
                 alert('Signature enregistrée avec succès !');
+                canvas.style.borderColor = '#2ecc71';
+            });
+
+            document.getElementById('save-as-image').addEventListener('click', () => {
+                if (canvas.toDataURL() === blankCanvas.toDataURL()) {
+                    alert('Aucune signature à enregistrer !');
+                    return;
+                }
+
+                const link = document.createElement('a');
+                link.href = canvas.toDataURL('image/png');
+                link.download = 'signature.png';
+                link.click();
             });
         });
     </script>

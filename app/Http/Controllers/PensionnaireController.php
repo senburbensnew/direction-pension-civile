@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\CheckTransferRequests;
 use App\Models\Gender;
 use App\Models\PensionCategory;
 use App\Models\PensionType;
@@ -34,6 +35,7 @@ class PensionnaireController extends Controller
     // Process the virement request form
     public function processVirementRequest(Request $request)
     {
+        // dd($request->all());
         // Custom validation attributes
         $attributes = [
             'profile_photo' => "photo de profil",
@@ -110,7 +112,7 @@ class PensionnaireController extends Controller
             ], $messages, $attributes);
     
             // Generate unique request code
-            $validated['code'] = CodeGeneratorService::generateUniqueRequestCode();
+            $validated['code'] = CodeGeneratorService::generateUniqueRequestCode('VIR_BANC', (new BankTransferRequests())->getTable());
             $validated['status_id'] = Status::getStatusPending()->id;
 
             // Handle file upload
@@ -181,15 +183,32 @@ class PensionnaireController extends Controller
     // Process the check transfer request form
     public function processCheckTransferRequest(Request $request)
     {
+        dd($request->all());
         // Validation logic
         $validatedData = $request->validate([
-            'firstname' => 'required|string|max:255',
+            'fiscal_year' => 'required|string|max:255',
+            'start_month' => 'required|string|size:7',  // Ensures the month is in the format YYYY-MM
+            'request_date' => 'required|date',
+            'pension_category_id' => 'required|exists:pension_categories,id', // Ensures that the pension_category_id exists in the pension_categories table
+            'pensioner_code' => 'required|string|max:255',
+            'amount' => 'required|numeric',  // Validates the allocation amount as numeric
             'lastname' => 'required|string|max:255',
-            'amount' => 'required|numeric',
-            // Add more fields as needed
+            'firstname' => 'required|string|max:255',
+            'maiden_name' => 'required|string|max:255',
+            'nif' => 'required|string|max:255',
+            'ninu' => 'required|string|max:255',
+            'address' => 'required|string|max:255',
+            'phone' => 'required|string|max:255',
+            'from' => 'required|string|max:255',
+            'to' => 'required|string|max:255',
+            'transfer_reason' => 'required|string|max:1000',  // Assumes the transfer reason might be a longer text
         ]);
 
-        // Handle the check transfer logic here
+        $validated['code'] = CodeGeneratorService::generateUniqueRequestCode('TRANSF_CHEQ', (new CheckTransferRequests())->getTable());
+        $validated['status_id'] = Status::getStatusPending()->id;
+        $validated['created_by'] = auth()->id();
+
+        CheckTransferRequests::create($validated);
 
         return redirect()->route('pensionnaire.check-transfer-request-form')->with('success', 'Check transfer request submitted successfully.');
     }

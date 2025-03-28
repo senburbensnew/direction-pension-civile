@@ -140,7 +140,7 @@
             </li>
 
             <!-- Pensionaire Dropdown -->
-            @if (auth()->guest() || auth()->user()->hasRole('admin') || auth()->user()->hasRole('pensionnaire'))
+            @if (auth()->guest() || auth()->user()->hasRole('pensionnaire'))
                 <li class="relative w-full md:w-auto border-b md:border-none group">
                     <button
                         class="dropdown-toggle flex w-full items-center justify-between px-4 py-3 
@@ -225,7 +225,8 @@
             @endif
 
             <!-- Fonctionnaire Dropdown -->
-            @if (auth()->guest() || auth()->user()->hasRole('admin') || auth()->user()->hasRole('fonctionnaire'))
+            @if (auth()->guest() ||
+                    auth()->user()->hasRole(['fonctionnaire', 'admin']))
                 <li class="relative w-full md:w-auto border-b md:border-none group">
                     <button
                         class="dropdown-toggle flex w-full items-center justify-between px-4 py-3 
@@ -270,7 +271,7 @@
             @endif
 
             <!-- Institution Dropdown -->
-            @if (auth()->guest() || auth()->user()->hasRole('admin') || auth()->user()->hasRole('institution'))
+            @if (auth()->guest() || auth()->user()->hasRole('institution'))
                 <li class="relative w-full md:w-auto border-b md:border-none group">
                     <button
                         class="dropdown-toggle flex w-full items-center justify-between px-4 py-3 

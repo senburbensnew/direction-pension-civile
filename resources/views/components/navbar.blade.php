@@ -46,9 +46,9 @@
                     </x-slot>
 
                     <x-slot name="content">
-                        {{--                         <x-dropdown-link :href="route('profile.edit')">
+                        <x-dropdown-link :href="route('profile.edit')">
                             {{ __('Profile') }}
-                        </x-dropdown-link> --}}
+                        </x-dropdown-link>
 
                         @role('admin')
                             <x-dropdown-link :href="route('admin.carousels.index')">
@@ -184,9 +184,9 @@
                 <div class="px-2 py-3 text-orange-500 font-medium pl-0 underline">
                     {{ Auth::user()->name }}
                 </div>
-                {{--                 <a href="{{ route('profile.edit') }}" class="block text-gray-700 hover:text-orange-500 p-2">
+                <a href="{{ route('profile.edit') }}" class="block text-gray-700 hover:text-orange-500 p-2">
                     {{ __('Profile') }}
-                </a> --}}
+                </a>
                 <form method="POST" action="{{ route('logout') }}">
                     @csrf
                     <a href="{{ route('logout') }}" class="block text-gray-700 hover:text-orange-500 p-2"

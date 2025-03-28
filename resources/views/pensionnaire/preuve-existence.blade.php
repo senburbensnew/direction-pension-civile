@@ -66,8 +66,9 @@
                 <div class="grid grid-cols-2 gap-4 mb-4 items-center">
                     <div>
                         <label for="nif" class="block text-sm font-medium text-gray-700">NIF *</label>
-                        <input type="text" name="nif" id="nif"
-                            class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                        <input type="text" name="nif" id="nif" value="{{ auth()->user()->nif }}"
+                            class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 bg-gray-100"
+                            readonly>
                     </div>
                     <div>
                         <label for="nom" class="block text-sm font-medium text-gray-700">NOM *</label>
