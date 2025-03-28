@@ -12,23 +12,15 @@ class RolesAndPermissionsSeeder extends Seeder
 {
     public function run()
     {
-        // Create permissions
-        // $permission = Permission::create(['name' => 'edit articles']);
-        // $permission2 = Permission::create(['name' => 'delete articles']);
-        // $permission3 = Permission::create(['name' => 'publish articles']);
+        // Create permissions  ex : $permission = Permission::create(['name' => 'edit articles']);
+        $viewPensionnaireSection = Permission::create(['name' => 'viewPensionnaireSection']);
+        $viewFonctionnaireSection = Permission::create(['name' => 'viewFonctionnaireSection']);
+        $viewInstitutionSection = Permission::create(['name' => 'viewInstitutionSection']);
+        $viewPensionnaireMenu = Permission::create(['name' => 'viewPensionnaireMenu']);
+        $viewFonctionnaireMenu = Permission::create(['name' => 'viewFonctionnaireMenu']);
+        $viewInstitutionMenu = Permission::create(['name' => 'viewInstitutionMenu']);
 
-        // Create roles and assign permissions
-        // $role = Role::create(['name' => 'editor']);
-        // $role->givePermissionTo($permission);
-        // $role->givePermissionTo($permission2);
-
-        // $adminRole->givePermissionTo($permission);
-        // $adminRole->givePermissionTo($permission2);
-        // $adminRole->givePermissionTo($permission3);
-
-        // You can also assign permissions to multiple roles at once
-        // $role->syncPermissions([$permission, $permission2, $permission3]);
-
+        // Create roles
         $adminRole = Role::firstOrCreate(['name' => 'admin']);
         $pensionnaireRole = Role::firstOrCreate(['name' => 'pensionnaire']);
         $fonctionnaireRole = Role::firstOrCreate(['name' => 'fonctionnaire']);
@@ -40,6 +32,17 @@ class RolesAndPermissionsSeeder extends Seeder
         $secretariatRole = Role::firstOrCreate(['name' => 'secretariat']);
         $administrationRole = Role::firstOrCreate(['name' => 'administration']);
 
+        // Assign permissions to roles
+        $pensionnaireRole->givePermissionTo($viewPensionnaireSection);    
+        $pensionnaireRole->givePermissionTo($viewPensionnaireMenu);     
+        $fonctionnaireRole->givePermissionTo($viewFonctionnaireSection); 
+        $fonctionnaireRole->givePermissionTo($viewFonctionnaireMenu); 
+        $institutionRole->givePermissionTo($viewInstitutionSection); 
+        $institutionRole->givePermissionTo($viewInstitutionMenu); 
+
+        // You can also assign permissions to multiple roles at once
+        // $role->syncPermissions([$permission, $permission2, $permission3]);
+
         // Check if the user type exists
         $userType = UserType::firstOrCreate(
             ['name' => 'fonctionnaire'], // Look for the 'fonctionnaire' user type
@@ -47,7 +50,7 @@ class RolesAndPermissionsSeeder extends Seeder
         );
 
         // Find the user by email or create it if it doesn't exist
-        $user = User::firstOrCreate(
+        $adminUser = User::firstOrCreate(
             ['email' => 'admin@example.com'], 
             [
                 'name' => 'Admin User',
@@ -58,7 +61,8 @@ class RolesAndPermissionsSeeder extends Seeder
             ]
         );
 
-        // Assign the 'admin' role to the user
-        $user->assignRole($adminRole);
+        // Assign roles role to the user
+        $adminUser->assignRole($adminRole);
+        $adminUser->assignRole($fonctionnaireRole);
     }
 }
