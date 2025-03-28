@@ -11,7 +11,6 @@
 
     <form method="POST" action="{{ route('register') }}">
         @csrf
-
         <!-- Name -->
         <div>
             <x-input-label for="name" :value="__('Name')" />
@@ -31,36 +30,42 @@
         <!-- Password -->
         <div class="mt-4">
             <x-input-label for="password" :value="__('Password')" />
-
             <x-text-input id="password" class="block mt-1 w-full" type="password" name="password" required
                 autocomplete="new-password" />
-
             <x-input-error :messages="$errors->get('password')" class="mt-2" />
         </div>
 
         <!-- Confirm Password -->
         <div class="mt-4">
             <x-input-label for="password_confirmation" :value="__('Confirm Password')" />
-
             <x-text-input id="password_confirmation" class="block mt-1 w-full" type="password"
                 name="password_confirmation" required autocomplete="new-password" />
-
             <x-input-error :messages="$errors->get('password_confirmation')" class="mt-2" />
         </div>
 
-        <!-- User Type -->
+        <!-- User Type (Radio Buttons) -->
         <div class="mt-4">
-            <x-input-label for="user_type" :value="__('Type')" />
-            <select id="user_type" name="user_type"
-                class="block mt-1 w-full border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-md shadow-sm"
-                required>
-                @foreach ($userTypes as $userType)
-                    <option value="{{ $userType->id }}" {{ old('user_type') == $userType->id ? 'selected' : '' }}>
-                        {{ $userType->name }}
-                    </option>
+            <x-input-label for="user_type" :value="__('Qui êtes-vous ?')" />
+            <!-- Radio buttons for user types -->
+            <div class="flex justify-between">
+                @foreach ($userTypes as $type)
+                    <label for="user_type_{{ $type->name }}" class="{{ $loop->last ? 'ml-4' : '' }}">
+                        <input type="radio" id="user_type_{{ $type->name }}" name="user_type"
+                            value="{{ $type->id }}" {{ old('user_type') == $type->id ? 'checked' : '' }}
+                            {{ old('user_type', request()->isMethod('get') ? 'pensionnaire' : null) == $type->name ? 'checked' : '' }} />
+                        {{ ucfirst($type->name) }}
+                    </label>
                 @endforeach
-            </select>
+            </div>
             <x-input-error :messages="$errors->get('user_type')" class="mt-2" />
+        </div>
+
+        <!-- Pension Code (only visible when "Pensionnaire" is selected) -->
+        <div id="pension_code_container" class="mt-4 hidden">
+            <x-input-label for="pension_code" :value="__('Code de pension')" />
+            <x-text-input id="pension_code" class="block mt-1 w-full" type="text" name="pension_code"
+                :value="old('pension_code')" required />
+            <x-input-error :messages="$errors->get('pension_code')" class="mt-2" />
         </div>
 
         <!-- NIF -->
@@ -82,4 +87,25 @@
             </x-primary-button>
         </div>
     </form>
+
+    <script>
+        // Show or hide pension code field based on selected user type (radio buttons)
+        document.querySelectorAll('input[name="user_type"]').forEach(function(radio) {
+            radio.addEventListener('change', function() {
+                var pensionCodeContainer = document.getElementById('pension_code_container');
+                var pensionCodeInput = document.getElementById('pension_code');
+
+                if (document.getElementById('user_type_pensionnaire').checked) {
+                    pensionCodeContainer.classList.remove('hidden');
+                    pensionCodeInput.setAttribute('required', 'required');
+                } else {
+                    pensionCodeContainer.classList.add('hidden');
+                    pensionCodeInput.removeAttribute('required');
+                }
+            });
+        });
+
+        // Trigger change event on page load to set the initial visibility state
+        document.querySelector('input[name="user_type"]:checked')?.dispatchEvent(new Event('change'));
+    </script>
 </x-guest-layout>

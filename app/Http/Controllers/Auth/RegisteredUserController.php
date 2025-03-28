@@ -13,6 +13,7 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rules;
 use Illuminate\View\View;
 use App\Models\UserType;
+use Illuminate\Support\Facades\DB;
 
 class RegisteredUserController extends Controller
 {
@@ -32,13 +33,23 @@ class RegisteredUserController extends Controller
      */
     public function store(Request $request): RedirectResponse
     {
-        $request->validate([
+        $userType = DB::table('user_types')->where('id', $request->user_type)->value('name');
+
+        $rules = [
             'name' => ['required', 'string', 'max:255'],
             'email' => ['required', 'string', 'lowercase', 'email', 'max:255', 'unique:' . User::class],
             'password' => ['required', 'confirmed', Rules\Password::defaults()],
-            'nif' => ['required', 'string', 'min:10', 'max:15', 'unique:' . User::class],  
-            'user_type' => ['required', 'exists:user_type,id'], 
-        ]);
+            'nif' => ['required', 'string', 'min:10', 'max:15', 'unique:' . User::class],
+            'user_type' => ['required', 'exists:user_types,id'],
+            'pension_code' => ['nullable', 'string', 'max:255']
+        ];
+        
+        // Add pension_code validation dynamically
+        if ($userType === 'pensionnaire') {
+            $rules['pension_code'][] = 'required';
+        }
+        
+        $request->validate($rules);
     
         // Create the user
         $user = User::create([
@@ -47,6 +58,7 @@ class RegisteredUserController extends Controller
             'password' => Hash::make($request->password),
             'nif' => $request->nif,
             'user_type_id' => $request->user_type, // Store the user_type_id
+            'pension_code' => $request->pension_code
         ]);
     
         // Determine role based on user type

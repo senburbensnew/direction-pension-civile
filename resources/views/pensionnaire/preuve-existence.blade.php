@@ -337,6 +337,9 @@
                 </div>
             </fieldset>
 
+            <fieldset class="mt-2 mb-2 shadow-md rounded-lg p-5 border flex justify-between">
+            </fieldset>
+
             <div class="mt-8 text-sm text-gray-700">
                 <button type="submit"
                     class="px-4 py-2 bg-blue-600 text-white rounded-lg shadow hover:bg-blue-700">Soumettre</button>

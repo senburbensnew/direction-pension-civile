@@ -24,6 +24,7 @@ class User extends Authenticatable
         'password',
         'nif',
         'user_type_id',
+        'pension_code',
     ];
 
     /**
