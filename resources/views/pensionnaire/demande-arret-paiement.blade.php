@@ -46,7 +46,7 @@
                 <h2 class="text-lg md:text-xl font-bold">Direction de la Pension Civile (DPC)</h2>
                 <h3 class="text-base md:text-lg font-semibold">Formulaire de Demande de Cessation pour motif de Contrat</h3>
                 <p class="text-sm md:text-gray-600">Service de Comptabilité</p>
-                <p class="text-sm md:text-gray-600 mt-1">Exercice : 20... / 20...</p>
+                <p class="text-sm md:text-gray-600 mt-1">Exercice : <span contenteditable="true">20... / 20...</span></p>
             </div>
 
             @if (session('success'))

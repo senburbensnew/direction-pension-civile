@@ -102,8 +102,8 @@
                                         </span>
                                     </td>
                                     <td class="px-6 py-4">
-                                        <a href="{{ route('personal.request.show', $request->id) }}"
-                                            class="text-blue-600 hover:text-blue-900 mr-2">
+                                        <a class="text-blue-600 hover:text-blue-900 mr-2"
+                                            href="{{ route('personal.request.show', ['id' => $request->id, 'requestType' => $requestType]) }}">
                                             Détails
                                         </a>
                                         @if ($request->status === 'pending')

@@ -14,7 +14,7 @@ return new class extends Migration
         Schema::create('check_transfer_requests', function (Blueprint $table) {
             $table->id();
             $table->string('code')->unique()->comment('Unique request code');
-            $table->string('fiscal_year');
+            $table->string('fiscal_year')->nullable();
             $table->string('start_month', 7);
             $table->date('request_date');
             $table->foreignId('pension_category_id')->constrained('pension_categories')->onDelete('cascade');
@@ -26,6 +26,7 @@ return new class extends Migration
             $table->string('nif');            
             $table->string('ninu');
             $table->string('address');
+            $table->string('email');
             $table->string('phone');
             $table->string('from');
             $table->string('to');

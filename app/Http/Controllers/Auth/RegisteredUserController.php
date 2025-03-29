@@ -39,7 +39,7 @@ class RegisteredUserController extends Controller
             'name' => ['required', 'string', 'max:255'],
             'email' => ['required', 'string', 'lowercase', 'email', 'max:255', 'unique:' . User::class],
             'password' => ['required', 'confirmed', Rules\Password::defaults()],
-            'nif' => ['required', 'string', 'min:10', 'max:15', 'unique:' . User::class],
+            'nif' => ['required', 'string', 'size:10', 'regex:/^\d{10}$/', 'unique:' . User::class],
             'user_type' => ['required', 'exists:user_types,id'],
             'pension_code' => ['nullable', 'string', 'max:255']
         ];

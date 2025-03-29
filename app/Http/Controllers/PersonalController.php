@@ -20,6 +20,7 @@ class PersonalController extends Controller
         $bankTransferRequestCounts = BankTransferRequests::where('created_by', auth()->id())->count();
         $checkTransferRequestCounts = CheckTransferRequests::where('created_by', auth()->id())->count();
         $paymentStopRequestCounts = PaymentStopRequests::where('created_by', auth()->id())->count();
+        // dd($checkTransferRequestCounts);
 
         $stats = [
             'pensionnaire' => [
@@ -72,21 +73,43 @@ class PersonalController extends Controller
                 $type = 'Demande de virement';
                 break;
             case 'checkTransferRequest' :
-                $requests = CheckTransferRequests::where('created_by', auth()->id())->orderBy('created_at', 'desc');          
+                $requests = CheckTransferRequests::where('created_by', auth()->id())
+                ->orderBy('created_at', 'desc')
+                ->paginate(10);;          
+                $stats['pending'] = CheckTransferRequests::forUser()->pending()->count();
+                $stats['approved'] = CheckTransferRequests::forUser()->approved()->count();
+                $stats['in_progress'] = CheckTransferRequests::forUser()->inProgress()->count();
+                $stats['rejected'] = CheckTransferRequests::forUser()->rejected()->count();
+                $stats['completed'] = CheckTransferRequests::forUser()->completed()->count();
+                $type = 'Demande de transfert de cheques';
                 break;
             case 'paymentStopRequest' :
                 $requests = PaymentStopRequests::where('created_by', auth()->id())->orderBy('created_at', 'desc');
+                $type = '';
                 break;
         }
 
-        return view('personal.requests', compact('requests', 'stats', 'type')); 
+        return view('personal.requests', compact('requests', 'stats', 'requestType','type')); 
     }
 
     // Afficher les détails d'une demande
-    public function showRequest($id)
+    public function showRequest(Request $request, $id)
     {
-        $request = BankTransferRequests::where('created_by', auth()->id())->findOrFail($id);
-        return view('personal.request-details', compact('request'));
+        $requestType = $request->query('requestType');
+
+        switch($requestType){
+            case 'bankTransferRequest' :
+                $request = BankTransferRequests::where('created_by', auth()->id())->findOrFail($id);
+                break;
+            case 'checkTransferRequest' :
+                $request = CheckTransferRequests::where('created_by', auth()->id())->findOrFail($id);
+                break;
+            case 'paymentStopRequest' :
+                // $request = BankTransferRequests::where('created_by', auth()->id())->findOrFail($id);
+                break;
+        }
+
+        return view('personal.request-details', compact('request', 'requestType'));
     }
 
     /**
@@ -108,10 +131,10 @@ class PersonalController extends Controller
     /**
      * Display the specified resource.
      */
-    public function show($id)
+/*     public function show($id)
     {
         return view('personal.show', compact('id'));
-    }
+    } */
 
     /**
      * Show the form for editing the specified resource.

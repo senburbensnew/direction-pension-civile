@@ -26,8 +26,7 @@ class PensionnaireController extends Controller
             }
             return $next($request);
         });
-    }
-    
+    }    
 
     // Display the request for virement form
     public function demandeVirement()
@@ -40,15 +39,9 @@ class PensionnaireController extends Controller
         return view('pensionnaire.demande-virement', compact('genders', 'civilStatuses', 'pensionTypes', 'pensionCategories'));
     }
 
-    public function preuveExistence()
-    {    
-        return view('pensionnaire.preuve-existence');
-    }
-
     // Process the virement request form
     public function processVirementRequest(Request $request)
     {
-        // dd($request->all());
         // Custom validation attributes
         $attributes = [
             'profile_photo' => "photo de profil",
@@ -151,8 +144,6 @@ class PensionnaireController extends Controller
             \Log::error('Erreur soumission formulaire: ' . $e->getMessage() . ' - ' . $e->getTraceAsString());
             ErrorLoggerService::logError($e, $request);
 
-            dd($e->getMessage());
-
             $errorMessage = "Une erreur inattendue est survenue. Veuillez réessayer.";
     
             // Specific error for file upload issues
@@ -190,19 +181,21 @@ class PensionnaireController extends Controller
     // Display the request for check transfer form
     public function demandeTransfertCheque()
     {
-        return view('pensionnaire.demande-transfert-cheque');
+        $pensionCategories = PensionCategory::orderBy('name', 'asc')->get();
+        return view('pensionnaire.demande-transfert-cheque', compact('pensionCategories'));
     }
 
     // Process the check transfer request form
     public function processCheckTransferRequest(Request $request)
     {
-        dd($request->all());
+        $validPensionCategories = PensionCategory::pluck('id')->toArray();
+
         // Validation logic
         $validatedData = $request->validate([
-            'fiscal_year' => 'required|string|max:255',
+            // 'fiscal_year' => 'required|string|max:255',
             'start_month' => 'required|string|size:7',  // Ensures the month is in the format YYYY-MM
             'request_date' => 'required|date',
-            'pension_category_id' => 'required|exists:pension_categories,id', // Ensures that the pension_category_id exists in the pension_categories table
+            'pension_category_id' => 'required|in:' . implode(',', $validPensionCategories), // Ensures that the pension_category_id exists in the pension_categories table
             'pensioner_code' => 'required|string|max:255',
             'amount' => 'required|numeric',  // Validates the allocation amount as numeric
             'lastname' => 'required|string|max:255',
@@ -212,18 +205,19 @@ class PensionnaireController extends Controller
             'ninu' => 'required|string|max:255',
             'address' => 'required|string|max:255',
             'phone' => 'required|string|max:255',
+            'email' => 'required|string|email|max:255',
             'from' => 'required|string|max:255',
             'to' => 'required|string|max:255',
             'transfer_reason' => 'required|string|max:1000',  // Assumes the transfer reason might be a longer text
         ]);
 
-        $validated['code'] = CodeGeneratorService::generateUniqueRequestCode('TRANSF_CHEQ', (new CheckTransferRequests())->getTable());
-        $validated['status_id'] = Status::getStatusPending()->id;
-        $validated['created_by'] = auth()->id();
+        $validatedData['code'] = CodeGeneratorService::generateUniqueRequestCode('TRANSF_CHEQ', (new CheckTransferRequests())->getTable());
+        $validatedData['status_id'] = Status::getStatusPending()->id;
+        $validatedData['created_by'] = auth()->id();
 
-        CheckTransferRequests::create($validated);
+        CheckTransferRequests::create($validatedData);
 
-        return redirect()->route('pensionnaire.check-transfer-request-form')->with('success', 'Check transfer request submitted successfully.');
+        return redirect()->route('pensionnaire.check-transfer-request-form')->with('success', 'La demande de transfert a été soumise avec succès.');
     }
 
     // Display the request for payment stop form
@@ -287,5 +281,10 @@ class PensionnaireController extends Controller
         // Handle the transfer stop logic here
 
         return redirect()->route('pensionnaire.transfer-stop-request-form')->with('success', 'Transfer stop request submitted successfully.');
+    }
+
+    public function preuveExistence()
+    {    
+        return view('pensionnaire.preuve-existence');
     }
 }

@@ -120,7 +120,18 @@
                 <fieldset class="shadow-md rounded-lg p-5 border mb-6">
                     <legend class="text-sm font-medium text-gray-700 mb-2">Régime de Pension *</legend>
                     <div class="flex space-x-4">
-                        <div class="flex items-center">
+                        @foreach ($pensionCategories as $type)
+                            <div class="flex items-center">
+                                <input type="radio" id="regime_civile" name="pension_category_id"
+                                    value="{{ $type['id'] }}"
+                                    class="h-4 w-4 text-blue-600 border-gray-300 focus:ring-blue-500"
+                                    @checked(old('pension_category_id') == $type['id'])>
+                                <label for="regime_civile" class="ml-2 text-sm text-gray-700">
+                                    {{ $type['name'] }}
+                                </label>
+                            </div>
+                        @endforeach
+                        {{--                         <div class="flex items-center">
                             <input type="radio" id="regime_civile" name="regime_pension" value="civile"
                                 class="h-4 w-4 text-blue-600 border-gray-300 focus:ring-blue-500"
                                 @checked(old('regime_pension') === 'civile')>
@@ -135,9 +146,9 @@
                             <label for="regime_militaire" class="ml-2 text-sm text-gray-700">
                                 Militaire
                             </label>
-                        </div>
+                        </div> --}}
                     </div>
-                    @error('regime_pension')
+                    @error('pension_category_id')
                         <p class="error-message">{{ $message }}</p>
                     @enderror
                 </fieldset>
@@ -149,22 +160,22 @@
                             <label for="pension_code" class="block text-sm font-medium text-gray-700 mb-1">
                                 Code pension *
                             </label>
-                            <input type="text" name="pension_code" id="pension_code"
+                            <input type="text" name="pensioner_code" id="pension_code"
                                 value="{{ auth()->user()->pension_code }}"
                                 class="w-full rounded-md @error('pension_code') border-red-500 @else border-gray-300 @enderror focus:border-blue-500 focus:ring-blue-500 bg-gray-100"
                                 readonly>
-                            @error('pension_code')
+                            @error('pensioner_code')
                                 <p class="error-message">{{ $message }}</p>
                             @enderror
                         </div>
                         <div>
-                            <label for="montant" class="block text-sm font-medium text-gray-700 mb-1">
+                            <label for="amount" class="block text-sm font-medium text-gray-700 mb-1">
                                 Montant (en Gdes) *
                             </label>
-                            <input type="number" name="montant" id="montant" value="{{ old('montant') }}"
-                                class="w-full rounded-md @error('montant') border-red-500 @else border-gray-300 @enderror focus:border-blue-500 focus:ring-blue-500"
+                            <input type="number" name="amount" id="amount" value="{{ old('amount') }}"
+                                class="w-full rounded-md @error('amount') border-red-500 @else border-gray-300 @enderror focus:border-blue-500 focus:ring-blue-500"
                                 step="0.01" min="0">
-                            @error('montant')
+                            @error('amount')
                                 <p class="error-message">{{ $message }}</p>
                             @enderror
                         </div>
@@ -179,9 +190,9 @@
                             <label for="nom" class="block text-sm font-medium text-gray-700 mb-1">
                                 Nom *
                             </label>
-                            <input type="text" name="nom" id="nom" value="{{ old('nom') }}"
-                                class="w-full rounded-md @error('nom') border-red-500 @else border-gray-300 @enderror focus:border-blue-500 focus:ring-blue-500">
-                            @error('nom')
+                            <input type="text" name="lastname" id="nom" value="{{ old('lastname') }}"
+                                class="w-full rounded-md @error('lastname') border-red-500 @else border-gray-300 @enderror focus:border-blue-500 focus:ring-blue-500">
+                            @error('lastname')
                                 <p class="error-message">{{ $message }}</p>
                             @enderror
                         </div>
@@ -189,9 +200,9 @@
                             <label for="prenom" class="block text-sm font-medium text-gray-700 mb-1">
                                 Prénom *
                             </label>
-                            <input type="text" name="prenom" id="prenom" value="{{ old('prenom') }}"
-                                class="w-full rounded-md @error('prenom') border-red-500 @else border-gray-300 @enderror focus:border-blue-500 focus:ring-blue-500">
-                            @error('prenom')
+                            <input type="text" name="firstname" id="prenom" value="{{ old('firstname') }}"
+                                class="w-full rounded-md @error('firstname') border-red-500 @else border-gray-300 @enderror focus:border-blue-500 focus:ring-blue-500">
+                            @error('firstname')
                                 <p class="error-message">{{ $message }}</p>
                             @enderror
                         </div>
@@ -199,8 +210,8 @@
                             <label for="nom_jeune_fille" class="block text-sm font-medium text-gray-700 mb-1">
                                 Nom de Jeune Fille
                             </label>
-                            <input type="text" name="nom_jeune_fille" id="nom_jeune_fille"
-                                value="{{ old('nom_jeune_fille') }}"
+                            <input type="text" name="maiden_name" id="nom_jeune_fille"
+                                value="{{ old('maiden_name') }}"
                                 class="w-full rounded-md border-gray-300 focus:border-blue-500 focus:ring-blue-500">
                         </div>
                     </div>
@@ -234,9 +245,9 @@
                             <label for="adresse" class="block text-sm font-medium text-gray-700 mb-1">
                                 Adresse *
                             </label>
-                            <input type="text" name="adresse" id="adresse" value="{{ old('adresse') }}"
-                                class="w-full rounded-md @error('adresse') border-red-500 @else border-gray-300 @enderror focus:border-blue-500 focus:ring-blue-500">
-                            @error('adresse')
+                            <input type="text" name="address" id="adresse" value="{{ old('address') }}"
+                                class="w-full rounded-md @error('address') border-red-500 @else border-gray-300 @enderror focus:border-blue-500 focus:ring-blue-500">
+                            @error('address')
                                 <p class="error-message">{{ $message }}</p>
                             @enderror
                         </div>
@@ -244,18 +255,18 @@
                             <label for="telephone" class="block text-sm font-medium text-gray-700 mb-1">
                                 Téléphone *
                             </label>
-                            <input type="tel" name="telephone" id="telephone" value="{{ old('telephone') }}"
-                                class="w-full rounded-md @error('telephone') border-red-500 @else border-gray-300 @enderror focus:border-blue-500 focus:ring-blue-500"
+                            <input type="tel" name="phone" id="telephone" value="{{ old('phone') }}"
+                                class="w-full rounded-md @error('phone') border-red-500 @else border-gray-300 @enderror focus:border-blue-500 focus:ring-blue-500"
                                 pattern="[0-9]{10}">
-                            @error('telephone')
+                            @error('phone')
                                 <p class="error-message">{{ $message }}</p>
                             @enderror
                         </div>
                         <div>
-                            <label for="courriel" class="block text-sm font-medium text-gray-700 mb-1">
+                            <label for="email" class="block text-sm font-medium text-gray-700 mb-1">
                                 Courriel
                             </label>
-                            <input type="email" name="courriel" id="courriel" value="{{ old('courriel') }}"
+                            <input type="email" name="email" id="email" value="{{ old('email') }}"
                                 class="w-full rounded-md border-gray-300 focus:border-blue-500 focus:ring-blue-500">
                         </div>
                     </div>
@@ -266,33 +277,33 @@
                     <legend class="text-sm font-medium text-gray-700 mb-2">Détails du transfert</legend>
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div>
-                            <label for="de" class="block text-sm font-medium text-gray-700 mb-1">
+                            <label for="from" class="block text-sm font-medium text-gray-700 mb-1">
                                 De *
                             </label>
-                            <input type="text" name="de" id="de" value="{{ old('de') }}"
-                                class="w-full rounded-md @error('de') border-red-500 @else border-gray-300 @enderror focus:border-blue-500 focus:ring-blue-500">
-                            @error('de')
+                            <input type="text" name="from" id="from" value="{{ old('from') }}"
+                                class="w-full rounded-md @error('from') border-red-500 @else border-gray-300 @enderror focus:border-blue-500 focus:ring-blue-500">
+                            @error('from')
                                 <p class="error-message">{{ $message }}</p>
                             @enderror
                         </div>
                         <div>
-                            <label for="a" class="block text-sm font-medium text-gray-700 mb-1">
+                            <label for="to" class="block text-sm font-medium text-gray-700 mb-1">
                                 À *
                             </label>
-                            <input type="text" name="a" id="a" value="{{ old('a') }}"
-                                class="w-full rounded-md @error('a') border-red-500 @else border-gray-300 @enderror focus:border-blue-500 focus:ring-blue-500">
-                            @error('a')
+                            <input type="text" name="to" id="to" value="{{ old('to') }}"
+                                class="w-full rounded-md @error('to') border-red-500 @else border-gray-300 @enderror focus:border-blue-500 focus:ring-blue-500">
+                            @error('to')
                                 <p class="error-message">{{ $message }}</p>
                             @enderror
                         </div>
                     </div>
                     <div class="mt-4">
-                        <label for="cheque_motif" class="block text-sm font-medium text-gray-700 mb-1">
+                        <label for="transfer_reason" class="block text-sm font-medium text-gray-700 mb-1">
                             Motif du transfert *
                         </label>
-                        <textarea name="cheque_motif" id="cheque_motif" rows="3"
-                            class="w-full rounded-md @error('cheque_motif') border-red-500 @else border-gray-300 @enderror focus:border-blue-500 focus:ring-blue-500">{{ old('cheque_motif') }}</textarea>
-                        @error('cheque_motif')
+                        <textarea name="transfer_reason" id="transfer_reason" rows="3"
+                            class="w-full rounded-md @error('transfer_reason') border-red-500 @else border-gray-300 @enderror focus:border-blue-500 focus:ring-blue-500">{{ old('transfer_reason') }}</textarea>
+                        @error('transfer_reason')
                             <p class="error-message">{{ $message }}</p>
                         @enderror
                     </div>
@@ -300,40 +311,6 @@
 
                 <!-- Signature Section -->
                 <fieldset class="shadow-md rounded-lg p-5 border mb-6">
-                    {{--                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div>
-                            <label for="fait_a" class="block text-sm font-medium text-gray-700 mb-1">
-                                Fait à *
-                            </label>
-                            <input type="text" name="fait_a" id="fait_a" value="{{ old('fait_a') }}"
-                                class="w-full rounded-md @error('fait_a') border-red-500 @else border-gray-300 @enderror focus:border-blue-500 focus:ring-blue-500">
-                            @error('fait_a')
-                                <p class="error-message">{{ $message }}</p>
-                            @enderror
-                        </div>
-                        <div>
-                            <label for="signature_date" class="block text-sm font-medium text-gray-700 mb-1">
-                                Date de signature *
-                            </label>
-                            <input type="date" name="signature_date" id="signature_date"
-                                value="{{ old('signature_date') }}"
-                                class="w-full rounded-md @error('signature_date') border-red-500 @else border-gray-300 @enderror focus:border-blue-500 focus:ring-blue-500">
-                            @error('signature_date')
-                                <p class="error-message">{{ $message }}</p>
-                            @enderror
-                        </div>
-                    </div>
-                    <div class="mt-4 mb-4">
-                        <label for="signature" class="block text-sm font-medium text-gray-700 mb-1">
-                            Signature *
-                        </label>
-                        <input type="text" name="signature" id="signature" value="{{ old('signature') }}"
-                            class="w-full rounded-md @error('signature') border-red-500 @else border-gray-300 @enderror focus:border-blue-500 focus:ring-blue-500"
-                            placeholder="Signature">
-                        @error('signature')
-                            <p class="error-message">{{ $message }}</p>
-                        @enderror
-                    </div> --}}
                     <div class="text-left mb-4"> <!-- Added margin-bottom -->
                         <p class="font-semibold text-gray-600 pt-5">
                             Fait à <span contenteditable="true">Port-au-Prince</span>, le

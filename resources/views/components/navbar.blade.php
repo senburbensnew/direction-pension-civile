@@ -56,7 +56,7 @@
                             </x-dropdown-link>
                         @endrole
                         @auth
-                            @can('view Dashboard')
+                            @can('viewDashboard')
                                 <x-dropdown-link :href="route('personal.index')">
                                     Dashboard
                                 </x-dropdown-link>
