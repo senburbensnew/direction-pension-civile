@@ -3,14 +3,16 @@
     <canvas id="signature-pad"></canvas>
     <div class="button-container">
         <span id="clear" aria-label="Supprimer">
+            effacer
             <svg viewBox="0 0 24 24" width="20" height="20">
                 <path fill="currentColor"
                     d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12 19 6.41z" />
             </svg>
         </span>
-        <span id="confirm">&check;</span>
+        <span id="confirm">valider &check;</span>
         <!-- New button to save the canvas as an image -->
         <span id="save-as-image">
+            télécharger
             <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24">
                 <path fill="currentColor"
                     d="M12 3v9.26c-.61-.37-1.3-.63-2-.74V5.5h-4V9h2.5c.28 0 .5-.22.5-.5s-.22-.5-.5-.5H8V4.5c0-.28-.22-.5-.5-.5s-.5.22-.5.5V9H4V3h8zm6.7 7.3L12 21l-6.7-10.7L8 9h4V4h4v5h4l-2.3 3.3z" />
@@ -31,7 +33,7 @@
         .signature-container canvas {
             width: 100%;
             height: 150px;
-            border: 2px dotted #e74c3c;
+            border: 2px dotted #d3d3d3;
             background-color: #fff;
             cursor: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"><path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/></svg>') 0 16, auto;
             touch-action: none;
@@ -44,7 +46,10 @@
         }
 
         .button-container span {
-            width: 40px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            // width: 40px;
             height: 40px;
             cursor: pointer;
             border: none;
@@ -180,7 +185,7 @@
                 if (signatureInput) {
                     signatureInput.value = '';
                 }
-                canvas.style.borderColor = '#e74c3c';
+                canvas.style.borderColor = '#d3d3d3';
             });
 
             const blankCanvas = document.createElement('canvas');

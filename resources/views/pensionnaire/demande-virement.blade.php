@@ -399,7 +399,7 @@
                     <!-- Date Section -->
                     <div class="text-left mb-8"> <!-- Added margin-bottom -->
                         <p class="font-semibold text-gray-600 pt-5">
-                            Fait à Port-au-Prince, le
+                            Fait à <span contenteditable="true">Port-au-Prince</span>, le
                             <span class="inline-block mx-2 px-2 bg-gray-100 rounded">{{ now()->format('d/m/Y') }}</span>
                         </p>
                     </div>

@@ -46,9 +46,9 @@
                     </x-slot>
 
                     <x-slot name="content">
-                        <x-dropdown-link :href="route('profile.edit')">
+                        {{--                         <x-dropdown-link :href="route('profile.edit')">
                             {{ __('Profile') }}
-                        </x-dropdown-link>
+                        </x-dropdown-link> --}}
 
                         @role('admin')
                             <x-dropdown-link :href="route('admin.carousels.index')">
@@ -56,9 +56,11 @@
                             </x-dropdown-link>
                         @endrole
                         @auth
-                            <x-dropdown-link :href="route('personal.index')">
-                                Dashboard
-                            </x-dropdown-link>
+                            @can('view Dashboard')
+                                <x-dropdown-link :href="route('personal.index')">
+                                    Dashboard
+                                </x-dropdown-link>
+                            @endcan
                         @endauth
 
                         <!-- Authentication -->
@@ -107,22 +109,6 @@
                 </a>
             @endif
         </div>
-        <!-- Language Switcher - Mobile -->
-        {{--         <div class="flex items-center space-x-4 py-2">
-            @if (App::getLocale() !== 'fr')
-                <a href="{{ route('locale', 'fr') }}" class="hover:opacity-75 transition-opacity text-orange-500"
-                    title="Français">
-                    fr
-                </a>
-            @endif
-
-            @if (App::getLocale() !== 'en')
-                <a href="{{ route('locale', 'en') }}" class="hover:opacity-75 transition-opacity text-orange-500"
-                    title="English">
-                    en
-                </a>
-            @endif
-        </div> --}}
     </div>
 </div>
 
@@ -184,9 +170,21 @@
                 <div class="px-2 py-3 text-orange-500 font-medium pl-0 underline">
                     {{ Auth::user()->name }}
                 </div>
-                <a href="{{ route('profile.edit') }}" class="block text-gray-700 hover:text-orange-500 p-2">
+                {{--                 <a href="{{ route('profile.edit') }}" class="block text-gray-700 hover:text-orange-500 p-2">
                     {{ __('Profile') }}
-                </a>
+                </a> --}}
+                @role('admin')
+                    <a href="{{ route('admin.carousels.index') }}" class="block text-gray-700 hover:text-orange-500 p-2">
+                        {{ __('messages.admin_panel') }}
+                    </a>
+                @endrole
+                @auth
+                    @can('viewDashboard')
+                        <a href="{{ route('personal.index') }}" class="block text-gray-700 hover:text-orange-500 p-2">
+                            {{ __('Dashboard') }}
+                        </a>
+                    @endcan
+                @endauth
                 <form method="POST" action="{{ route('logout') }}">
                     @csrf
                     <a href="{{ route('logout') }}" class="block text-gray-700 hover:text-orange-500 p-2"
@@ -218,23 +216,23 @@
     </div>
 </div>
 
-@push('scripts')
-    <script>
-        function toggleSearch() {
-            document.querySelectorAll('.search-icon, .close-icon').forEach(icon => {
-                icon.classList.toggle('hidden');
-            });
-            // Add your search toggle logic here
-        }
+{{-- @push('scripts') --}}
+<script>
+    function toggleSearch() {
+        document.querySelectorAll('.search-icon, .close-icon').forEach(icon => {
+            icon.classList.toggle('hidden');
+        });
+        // Add your search toggle logic here
+    }
 
-        function toggleHamburgerMenu() {
-            document.getElementById('rightPanelOverlay').classList.remove('hidden');
-            document.getElementById('rightPanel').classList.remove('hidden');
-        }
+    function toggleHamburgerMenu() {
+        document.getElementById('rightPanelOverlay').classList.remove('hidden');
+        document.getElementById('rightPanel').classList.remove('hidden');
+    }
 
-        function closeRightPanel() {
-            document.getElementById('rightPanelOverlay').classList.add('hidden');
-            document.getElementById('rightPanel').classList.add('hidden');
-        }
-    </script>
-@endpush
+    function closeRightPanel() {
+        document.getElementById('rightPanelOverlay').classList.add('hidden');
+        document.getElementById('rightPanel').classList.add('hidden');
+    }
+</script>
+{{-- @endpush --}}
