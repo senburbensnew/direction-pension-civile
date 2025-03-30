@@ -10,14 +10,6 @@
             </svg>
         </span>
         <span id="confirm">valider &check;</span>
-        <!-- New button to save the canvas as an image -->
-        {{--         <span id="save-as-image">
-            télécharger
-            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24">
-                <path fill="currentColor"
-                    d="M12 3v9.26c-.61-.37-1.3-.63-2-.74V5.5h-4V9h2.5c.28 0 .5-.22.5-.5s-.22-.5-.5-.5H8V4.5c0-.28-.22-.5-.5-.5s-.5.22-.5.5V9H4V3h8zm6.7 7.3L12 21l-6.7-10.7L8 9h4V4h4v5h4l-2.3 3.3z" />
-            </svg>
-        </span> --}}
     </div>
 </div>
 

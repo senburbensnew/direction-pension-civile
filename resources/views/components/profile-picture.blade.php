@@ -1,5 +1,5 @@
 <div class="order-3 flex flex-col items-center space-y-3">
-    <label class="block font-semibold text-gray-700 mb-1">Photo de profil</label>
+    <label class="block font-semibold text-gray-700 mb-1">Photo</label>
 
     <div class="relative group" id="dropzone">
         <input type="file" id="photoUpload" accept="image/*" class="hidden" onchange="previewPhoto(event)"

@@ -14,8 +14,8 @@
         <!-- Name -->
         <div>
             <x-input-label for="name" :value="__('Name')" />
-            <x-text-input id="name" class="block mt-1 w-full" type="text" name="name" :value="old('name')" required
-                autofocus autocomplete="name" />
+            <x-text-input id="name" class="block mt-1 w-full" type="text" name="name" :value="old('name')" autofocus
+                autocomplete="name" placeholder="ex: Pierre Rubens MILORME" />
             <x-input-error :messages="$errors->get('name')" class="mt-2" />
         </div>
 
@@ -23,15 +23,15 @@
         <div class="mt-4">
             <x-input-label for="email" :value="__('Email')" />
             <x-text-input id="email" class="block mt-1 w-full" type="email" name="email" :value="old('email')"
-                required autocomplete="username" />
+                autocomplete="username" placeholder="ex: example@gmail.com" />
             <x-input-error :messages="$errors->get('email')" class="mt-2" />
         </div>
 
         <!-- Password -->
         <div class="mt-4">
             <x-input-label for="password" :value="__('Password')" />
-            <x-text-input id="password" class="block mt-1 w-full" type="password" name="password" required
-                autocomplete="new-password" />
+            <x-text-input id="password" class="block mt-1 w-full" type="password" name="password"
+                autocomplete="new-password" placeholder="*********" />
             <x-input-error :messages="$errors->get('password')" class="mt-2" />
         </div>
 
@@ -39,7 +39,7 @@
         <div class="mt-4">
             <x-input-label for="password_confirmation" :value="__('Confirm Password')" />
             <x-text-input id="password_confirmation" class="block mt-1 w-full" type="password"
-                name="password_confirmation" required autocomplete="new-password" />
+                name="password_confirmation" autocomplete="new-password" placeholder="********" />
             <x-input-error :messages="$errors->get('password_confirmation')" class="mt-2" />
         </div>
 
@@ -64,7 +64,7 @@
         <div id="pension_code_container" class="mt-4 hidden">
             <x-input-label for="pension_code" :value="__('Code de pension')" />
             <x-text-input id="pension_code" class="block mt-1 w-full" type="text" name="pension_code"
-                :value="old('pension_code')" required />
+                :value="old('pension_code')" placeholder="ex: PEN-987654321" />
             <x-input-error :messages="$errors->get('pension_code')" class="mt-2" />
         </div>
 
@@ -72,7 +72,7 @@
         <div class="mt-4">
             <x-input-label for="nif" :value="__('NIF')" />
             <x-text-input id="nif" class="block mt-1 w-full" type="text" name="nif" :value="old('nif')"
-                required />
+                placeholder="ex: 123-456-789-0" />
             <x-input-error :messages="$errors->get('nif')" class="mt-2" />
         </div>
 
@@ -97,10 +97,8 @@
 
                 if (document.getElementById('user_type_pensionnaire').checked) {
                     pensionCodeContainer.classList.remove('hidden');
-                    pensionCodeInput.setAttribute('required', 'required');
                 } else {
                     pensionCodeContainer.classList.add('hidden');
-                    pensionCodeInput.removeAttribute('required');
                 }
             });
         });

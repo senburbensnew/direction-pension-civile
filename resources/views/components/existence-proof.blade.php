@@ -1,4 +1,4 @@
-<div class="max-w-6xl mx-auto p-6 m-2 bg-white">
+<div class="max-w-6xl mx-auto p-4 md:p-6 m-2 bg-white">
     <!-- Breadcrumb -->
     <nav class="text-sm text-gray-600 mb-4">
         <span class="text-gray-800">Pensionnaire</span>
@@ -6,14 +6,14 @@
         <span class="text-gray-800">Preuve d'existence</span>
     </nav>
 
-    {{-- <form method="POST" action="{{ route('pensionnaire.process-identification') }}" --}}
     <form method="POST" action="{{ route('pensionnaire.process-existence-proof-request') }}"
-        class="p-5 bg-white shadow-md rounded-lg border">
+        class="p-4 md:p-5 bg-white shadow-md rounded-lg border">
         @csrf
-        <div class="flex flex-col md:flex-row justify-between items-center mb-12 gap-8">
-            <div class="text-center mb-6 flex flex-col md:flex-row items-center justify-center w-full gap-4 md:gap-8">
-                <!-- ID Number Input - Mobile first -->
-                <div class="relative w-40 md:w-48"> <!-- Fixed width value -->
+        <!-- Header Section -->
+        <div class="flex flex-col md:flex-row justify-between items-center mb-8 gap-4">
+            <!-- ID Input -->
+            <div class="w-full md:w-40 order-1">
+                <div class="relative">
                     <input type="text" name="id_number" id="id_number" value="{{ old('id_number') }}"
                         class="peer w-full h-12 py-2 text-lg border-b-2 border-gray-500 focus:outline-none placeholder-transparent"
                         placeholder="NO D’IDENTITE" aria-label="Numéro d'identité" />
@@ -22,26 +22,28 @@
                         NO D’IDENTITE
                     </label>
                 </div>
-
-                <!-- Organization Info -->
-                <div class="px-4 order-2 md:order-none flex-shrink-0">
-                    <h1 class="text-xl md:text-2xl font-bold leading-tight">
-                        MINISTERE DE L’ECONOMIE ET DES FINANCES
-                    </h1>
-                    <h2 class="text-lg md:text-xl font-bold mb-1">
-                        Direction de la Pension Civile (DPC)
-                    </h2>
-                    <h3 class="text-md font-semibold mb-4 md:mb-6">
-                        FICHE D’IDENTIFICATION DU PENSIONNE
-                    </h3>
-                </div>
-
-                <!-- Profile Picture -->
-                <x-profile-picture class="order-3 md:order-none w-24 h-24 md:w-32 md:h-32" />
             </div>
+
+            <!-- Organization Info -->
+            <div class="text-center order-3 md:order-2 flex-grow mx-4">
+                <h1 class="text-lg md:text-xl font-bold leading-tight">
+                    MINISTERE DE L’ECONOMIE ET DES FINANCES
+                </h1>
+                <h2 class="text-md md:text-lg font-bold mb-1">
+                    Direction de la Pension Civile (DPC)
+                </h2>
+                <h3 class="text-sm md:text-md font-semibold">
+                    FICHE D’IDENTIFICATION DU PENSIONNE
+                </h3>
+            </div>
+
+            <!-- Profile Picture -->
+            <x-profile-picture class="order-2 md:order-3 w-16 h-16 md:w-24 md:h-24" />
         </div>
+
+        <!-- Alerts Section -->
         @if (session('success'))
-            <div class="mb-4 p-4 bg-green-50 border border-green-200 text-green-700 rounded">
+            <div class="mb-4 p-3 bg-green-50 border border-green-200 text-green-700 rounded text-sm">
                 {{ session('success') }}
             </div>
         @endif
@@ -62,329 +64,327 @@
             </div>
         @endif
 
-        <div class="w-1/2 mt-5">
-            <label for="annee_fiscale" class="block text-sm font-medium text-gray-700">ANNEE FISCALE *</label>
-            <input value="{{ old('fiscal_year') }}" placeholder="20../20.." type="text" name="fiscal_year"
-                id="annee_fiscale" min="1900" max="2100"
-                class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
-        </div>
+        {{-- <input type="file" id="photoUpload" accept="image/*" class="hidden" onchange="previewPhoto(event)"
+            name="profile_photo"> --}}
+        <!-- Main Form Content -->
+        <div class="space-y-6 mt-5">
+            <!-- Fiscal Year -->
+            <div class="w-full md:w-1/2">
+                <label for="annee_fiscale" class="block text-sm font-medium text-gray-700">ANNEE FISCALE *</label>
+                <input value="{{ old('fiscal_year') }}" placeholder="20../20.." type="text" name="fiscal_year"
+                    id="annee_fiscale" min="1900" max="2100"
+                    class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+            </div>
 
-        <fieldset class="mt-2 mb-2 shadow-md rounded-lg p-5 border">
-            <div class="grid grid-cols-2 gap-4 mb-4 items-center">
-                <div>
-                    <label for="nif" class="block text-sm font-medium text-gray-700">NIF *</label>
-                    <input type="text" name="nif" id="nif" value="{{ auth()->user()->nif }}"
-                        class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 bg-gray-100"
-                        readonly>
-                </div>
-                <div>
-                    <label for="nom" class="block text-sm font-medium text-gray-700">NOM *</label>
-                    <input value="{{ old('lastname') }}" type="text" name="lastname" id="nom"
-                        class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
-                </div>
-                <div>
-                    <label for="prenom" class="block text-sm font-medium text-gray-700">PRENOM *</label>
-                    <input value="{{ old('firstname') }}" type="text" name="firstname" id="prenom"
-                        class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
-                </div>
-                <div>
-                    <label for="adresse" class="block text-sm font-medium text-gray-700">ADRESSE *</label>
-                    <input value="{{ old('address') }}" type="text" name="address" id="adresse"
-                        class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
-                </div>
-                <div>
-                    <label for="location" class="block text-sm font-medium text-gray-700">LOCALISATION *</label>
-                    <input value="{{ old('location') }}" type="text" name="location" id="location"
-                        class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
-                </div>
-                <div>
-                    <label for="date_naissance" class="block text-sm font-medium text-gray-700">DATE DE NAISSANCE
-                        *</label>
-                    <input value="{{ old('birth_date') }}" type="date" name="birth_date" id="date_naissance"
-                        class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
-                </div>
-                <div>
-                    <label for="etat_civil" class="block text-sm font-medium text-gray-700">ETAT CIVIL *</label>
-                    <select name="civil_status_id" id="etat_civil"
-                        class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
-                        <option value="">Sélectionner</option>
-                        @foreach ($civilStatuses as $status)
-                            <option value="{{ $status['id'] }}" @selected(old('civil_status_id') == $status['id'])>
-                                {{ ucfirst($status['name']) }}
-                            </option>
-                        @endforeach
-                    </select>
-                </div>
-                <div>
-                    <label for="sexe" class="block text-sm font-medium text-gray-700">SEXE *</label>
-                    <select name="gender_id" id="sexe"
-                        class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
-                        <option value="">Sélectionner</option>
-                        @foreach ($genders as $gender)
-                            <option value="{{ $gender['id'] }}" @selected(old('gender_id') == $gender['id'])>
-                                {{ $gender['name'] }}
-                            </option>
-                        @endforeach
-                    </select>
-                </div>
-                <div>
-                    <label for="boite_postale" class="block text-sm font-medium text-gray-700">BOITE POSTALE *</label>
-                    <input value="{{ old('postal_address') }}" type="text" name="postal_address"
-                        id="boite_postale"
-                        class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
-                </div>
-                <div>
-                    <label for="telephone" class="block text-sm font-medium text-gray-700">TELEPHONE *</label>
-                    <input value="{{ old('phone') }}" type="tel" name="phone" id="telephone"
-                        class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
-                </div>
-                <div>
-                    <label for="montant_pension" class="block text-sm font-medium text-gray-700">MONTANT PENSION
-                        *</label>
-                    <input value="{{ old('pension_amount') }}" type="number" name="pension_amount"
-                        id="montant_pension"
-                        class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-                        min="0">
-                </div>
-                <div>
-                    <label for="no_moniteur" class="block text-sm font-medium text-gray-700">NO MONITEUR *</label>
-                    <input value="{{ old('monitor_number') }}" type="text" name="monitor_number"
-                        id="no_moniteur"
-                        class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
-                </div>
-                <div>
-                    <label for="date_moniteur" class="block text-sm font-medium text-gray-700">DATE MONITEUR *</label>
-                    <input value="{{ old('monitor_date') }}" type="date" name="monitor_date" id="date_moniteur"
-                        class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
-                </div>
-                <div>
-                    <label for="debut_pension" class="block text-sm font-medium text-gray-700">DEBUT PENSION *</label>
-                    <input value="{{ old('pension_start_date') }}" type="date" name="pension_start_date"
-                        id="debut_pension"
-                        class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
-                </div>
-                <div>
-                    <label for="fin_pension" class="block text-sm font-medium text-gray-700">FIN PENSION *</label>
-                    <input value="{{ old('pension_end_date') }}" type="date" name="pension_end_date"
-                        id="fin_pension"
-                        class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
-                </div>
-                <div>
-                    <label for="nature_pension" class="block text-sm font-medium text-gray-700">NATURE PENSION
-                        *</label>
-                    @foreach ($pensionCategories as $category)
-                        <div class="flex items-center">
-                            <input type="radio" id="pension_{{ $category->slug }}" name="pension_category_id"
-                                value="{{ $category->id }}"
-                                class="h-4 w-4 text-blue-600 border-gray-300 focus:ring-blue-500"
-                                @checked(old('pension_category_id') == $category->id)>
-                            <label for="pension_{{ $category->slug }}" class="ml-2 text-sm text-gray-700">
-                                {{ $category->name }}
-                            </label>
+            <!-- Personal Information -->
+            <fieldset class="shadow-md rounded-lg p-4 md:p-5 border">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <!-- NIF -->
+                    <div>
+                        <label for="nif" class="block text-sm font-medium text-gray-700">NIF *</label>
+                        <input type="text" name="nif" id="nif" value="{{ auth()->user()->nif }}"
+                            class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 bg-gray-100"
+                            readonly>
+                    </div>
+
+                    <!-- Name Fields -->
+                    <div>
+                        <label for="nom" class="block text-sm font-medium text-gray-700">NOM *</label>
+                        <input value="{{ old('lastname') }}" type="text" name="lastname" id="nom"
+                            class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                    </div>
+
+                    <div>
+                        <label for="prenom" class="block text-sm font-medium text-gray-700">PRENOM *</label>
+                        <input value="{{ old('firstname') }}" type="text" name="firstname" id="prenom"
+                            class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                    </div>
+
+                    <!-- Address Fields -->
+                    <div class="md:col-span-2">
+                        <label for="adresse" class="block text-sm font-medium text-gray-700">ADRESSE *</label>
+                        <input value="{{ old('address') }}" type="text" name="address" id="adresse"
+                            class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                    </div>
+
+                    <div>
+                        <label for="location" class="block text-sm font-medium text-gray-700">LOCALISATION *</label>
+                        <input value="{{ old('location') }}" type="text" name="location" id="location"
+                            class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                    </div>
+
+                    <!-- Birth Date -->
+                    <div>
+                        <label for="date_naissance" class="block text-sm font-medium text-gray-700">DATE DE NAISSANCE
+                            *</label>
+                        <input value="{{ old('birth_date') }}" type="date" name="birth_date" id="date_naissance"
+                            class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                    </div>
+
+                    <!-- Civil Status -->
+                    <div>
+                        <label for="etat_civil" class="block text-sm font-medium text-gray-700">ETAT CIVIL *</label>
+                        <select name="civil_status_id" id="etat_civil"
+                            class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                            <option value="">Sélectionner</option>
+                            @foreach ($civilStatuses as $status)
+                                <option value="{{ $status['id'] }}" @selected(old('civil_status_id') == $status['id'])>
+                                    {{ ucfirst($status['name']) }}
+                                </option>
+                            @endforeach
+                        </select>
+                    </div>
+
+                    <!-- Gender -->
+                    <div>
+                        <label for="sexe" class="block text-sm font-medium text-gray-700">SEXE *</label>
+                        <select name="gender_id" id="sexe"
+                            class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                            <option value="">Sélectionner</option>
+                            @foreach ($genders as $gender)
+                                <option value="{{ $gender['id'] }}" @selected(old('gender_id') == $gender['id'])>
+                                    {{ $gender['name'] }}
+                                </option>
+                            @endforeach
+                        </select>
+                    </div>
+
+                    <!-- Contact Info -->
+                    <div>
+                        <label for="boite_postale" class="block text-sm font-medium text-gray-700">BOITE POSTALE
+                            *</label>
+                        <input value="{{ old('postal_address') }}" type="text" name="postal_address"
+                            id="boite_postale"
+                            class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                    </div>
+
+                    <div>
+                        <label for="telephone" class="block text-sm font-medium text-gray-700">TELEPHONE *</label>
+                        <input value="{{ old('phone') }}" type="tel" name="phone" id="telephone"
+                            class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                    </div>
+
+                    <!-- Pension Info -->
+                    <div>
+                        <label for="montant_pension" class="block text-sm font-medium text-gray-700">MONTANT PENSION
+                            *</label>
+                        <input value="{{ old('pension_amount') }}" type="number" name="pension_amount"
+                            id="montant_pension"
+                            class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                            min="0">
+                    </div>
+
+                    <div>
+                        <label for="no_moniteur" class="block text-sm font-medium text-gray-700">NO MONITEUR *</label>
+                        <input value="{{ old('monitor_number') }}" type="text" name="monitor_number"
+                            id="no_moniteur"
+                            class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                    </div>
+
+                    <!-- Dates -->
+                    <div>
+                        <label for="date_moniteur" class="block text-sm font-medium text-gray-700">DATE MONITEUR
+                            *</label>
+                        <input value="{{ old('monitor_date') }}" type="date" name="monitor_date"
+                            id="date_moniteur"
+                            class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                    </div>
+
+                    <div>
+                        <label for="debut_pension" class="block text-sm font-medium text-gray-700">DEBUT PENSION
+                            *</label>
+                        <input value="{{ old('pension_start_date') }}" type="date" name="pension_start_date"
+                            id="debut_pension"
+                            class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                    </div>
+
+                    <div>
+                        <label for="fin_pension" class="block text-sm font-medium text-gray-700">FIN PENSION *</label>
+                        <input value="{{ old('pension_end_date') }}" type="date" name="pension_end_date"
+                            id="fin_pension"
+                            class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                    </div>
+
+                    <!-- Pension Type -->
+                    <div class="md:col-span-2">
+                        <label class="block text-sm font-medium text-gray-700 mb-2">NATURE PENSION *</label>
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-2">
+                            @foreach ($pensionCategories as $category)
+                                <div class="flex items-center">
+                                    <input type="radio" id="pension_{{ $category->slug }}"
+                                        name="pension_category_id" value="{{ $category->id }}"
+                                        class="h-4 w-4 text-blue-600 border-gray-300 focus:ring-blue-500"
+                                        @checked(old('pension_category_id') == $category->id)>
+                                    <label for="pension_{{ $category->slug }}" class="ml-2 text-sm text-gray-700">
+                                        {{ $category->name }}
+                                    </label>
+                                </div>
+                            @endforeach
                         </div>
-                    @endforeach
+                    </div>
                 </div>
-            </div>
-        </fieldset>
+            </fieldset>
 
-        <fieldset class="mt-2 mb-2 shadow-md rounded-lg p-5 border">
-            <legend>LISTE DES DEPENDANTS</legend>
-            <div>
-                <table class="min-w-full table-auto">
-                    <thead class="bg-gray-100">
-                        <tr>
-                            <th class="px-6 py-3 text-left text-sm font-medium text-gray-700 uppercase tracking-wider">
-                            </th>
-                            <th class="px-6 py-3 text-left text-sm font-medium text-gray-700 uppercase tracking-wider">
-                                NOM ET PRENOMS</th>
-                            <th class="px-6 py-3 text-left text-sm font-medium text-gray-700 uppercase tracking-wider">
-                                RELATION</th>
-                            <th class="px-6 py-3 text-left text-sm font-medium text-gray-700 uppercase tracking-wider">
-                                DATE DE NAISSANCE</th>
-                            <th class="px-6 py-3 text-left text-sm font-medium text-gray-700 uppercase tracking-wider">
-                                SEXE</th>
-                        </tr>
-                    </thead>
-                    <tbody class="bg-white divide-y divide-gray-200">
-                        <tr>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                                1
-                            </td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                <input type="text" name="nom_1"
-                                    class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
-                            </td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                <input type="text" name="relation_1"
-                                    class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
-                            </td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                <input type="date" name="date_naissance_1"
-                                    class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
-                            </td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                <select name="sexe" id="sexe"
-                                    class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
-                                    <option value="">Sélectionner</option>
-                                    @foreach ($genders as $gender)
-                                        <option value="{{ $gender['id'] }}" @selected(old('gender_id') == $gender['id'])>
-                                            {{ $gender['name'] }}
-                                        </option>
-                                    @endforeach
-                                </select>
-                            </td>
-                        </tr>
-                        <tr>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                                2
-                            </td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                <input type="text" name="nom_2"
-                                    class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
-                            </td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                <input type="text" name="relation_2"
-                                    class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
-                            </td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                <input type="date" name="date_naissance_2"
-                                    class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
-                            </td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                <select name="sexe" id="sexe"
-                                    class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
-                                    <option value="">Sélectionner</option>
-                                    @foreach ($genders as $gender)
-                                        <option value="{{ $gender['id'] }}" @selected(old('gender_id') == $gender['id'])>
-                                            {{ $gender['name'] }}
-                                        </option>
-                                    @endforeach
-                                </select>
-                            </td>
-                        </tr>
-                        <tr>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                                3
-                            </td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                <input type="text" name="nom_3"
-                                    class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
-                            </td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                <input type="text" name="relation_3"
-                                    class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
-                            </td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                <input type="date" name="date_naissance_3"
-                                    class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
-                            </td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                <select name="sexe" id="sexe"
-                                    class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
-                                    <option value="">Sélectionner</option>
-                                    @foreach ($genders as $gender)
-                                        <option value="{{ $gender['id'] }}" @selected(old('gender_id') == $gender['id'])>
-                                            {{ $gender['name'] }}
-                                        </option>
-                                    @endforeach
-                                </select>
-                            </td>
-                        </tr>
-                        <tr>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                                4
-                            </td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                <input type="text" name="nom_3"
-                                    class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
-                            </td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                <input type="text" name="relation_3"
-                                    class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
-                            </td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                <input type="date" name="date_naissance_3"
-                                    class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
-                            </td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                <select name="sexe" id="sexe"
-                                    class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
-                                    <option value="">Sélectionner</option>
-                                    @foreach ($genders as $gender)
-                                        <option value="{{ $gender['id'] }}" @selected(old('gender_id') == $gender['id'])>
-                                            {{ $gender['name'] }}
-                                        </option>
-                                    @endforeach
-                                </select>
-                            </td>
-                        </tr>
-                        <tr>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                                5
-                            </td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                <input type="text" name="nom_3"
-                                    class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
-                            </td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                <input type="text" name="relation_3"
-                                    class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
-                            </td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                <input type="date" name="date_naissance_3"
-                                    class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
-                            </td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                <select name="sexe" id="sexe"
-                                    class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
-                                    <option value="">Sélectionner</option>
-                                    @foreach ($genders as $gender)
-                                        <option value="{{ $gender['id'] }}" @selected(old('gender_id') == $gender['id'])>
-                                            {{ $gender['name'] }}
-                                        </option>
-                                    @endforeach
-                                </select>
-                            </td>
-                        </tr>
-                        <!-- Additional rows can be added here in the same format -->
-                    </tbody>
-                </table>
+            <!-- Dependants Section -->
+            <fieldset class="shadow-md rounded-lg p-4 md:p-5 border">
+                <legend class="text-lg font-medium mb-4">LISTE DES DEPENDANTS</legend>
+                <div>
+                    <div id="no-dependants-message" class="text-center text-sm text-gray-500 py-4">
+                        Aucun dépendant ajouté
+                    </div>
 
-            </div>
-        </fieldset>
+                    <div id="dependants-table" class="hidden overflow-x-auto">
+                        <table class="min-w-full table-auto">
+                            <thead class="bg-gray-100">
+                                <tr>
+                                    <th class="px-4 py-2 text-left text-sm font-medium text-gray-700">#</th>
+                                    <th class="px-4 py-2 text-left text-sm font-medium text-gray-700">NOM ET PRENOMS
+                                    </th>
+                                    <th class="px-4 py-2 text-left text-sm font-medium text-gray-700">RELATION</th>
+                                    <th class="px-4 py-2 text-left text-sm font-medium text-gray-700">DATE DE NAISSANCE
+                                    </th>
+                                    <th class="px-4 py-2 text-left text-sm font-medium text-gray-700">SEXE</th>
+                                    <th class="px-4 py-2"></th>
+                                </tr>
+                            </thead>
+                            <tbody class="bg-white divide-y divide-gray-200">
+                            </tbody>
+                        </table>
+                    </div>
 
-        <fieldset class="mt-2 mb-2 shadow-md rounded-lg p-5 border flex justify-between">
-            <div>
-                <p class="text-xs font-semibold text-gray-600 uppercase tracking-wide">
-                    SIGNATURE EMPLOYE PENSION CIVILE
-                </p>
-                <div class="h-2 border-t-2 border-gray-700"></div>
-            </div>
-            <div>
-                <p class="text-xs font-semibold text-gray-600 uppercase tracking-wide">
-                    Signature du Pensionné
-                </p>
-                <div class="h-2 border-t-2 border-gray-700"></div>
-                <x-signature-pad />
-            </div>
-            <div>
-                <p class="text-xs font-semibold text-gray-600 uppercase tracking-wide">
-                    SIGNATURE MANDATAIRE
-                </p>
-                <div class="h-2 border-t-2 border-gray-700"></div>
-                <br /> <br /> <br /> <br />
-                MERE, PERE, TUTEUR, CURATEUR <br />
-                NOM__________________________________<br />
-                NIF OU CIN__________________________________
-            </div>
-        </fieldset>
+                    <div class="mt-4">
+                        <button type="button" onclick="addDependantRow()"
+                            class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded text-sm">
+                            + Ajouter un dépendant
+                        </button>
+                    </div>
+                </div>
+            </fieldset>
 
-        <fieldset class="mt-2 mb-2 shadow-md rounded-lg p-5 border flex justify-between">
-        </fieldset>
+            <!-- Signature Section -->
+            <fieldset class="shadow-md rounded-lg p-4 md:p-5 border">
+                <div class="flex flex-col md:flex-row justify-between gap-4">
+                    <div class="flex-1">
+                        <p class="text-xs font-semibold text-gray-600 uppercase">SIGNATURE EMPLOYE PENSION CIVILE</p>
+                        <div class="h-0.5 bg-gray-300 my-2"></div>
+                    </div>
 
-        <div class="mt-8 text-sm text-gray-700 text-right">
-            <button type="submit"
-                class="bg-blue-600 text-white px-6 py-2 rounded hover:bg-blue-700 transition-colors">Soumettre</button>
+                    <div class="flex-1">
+                        <p class="text-xs font-semibold text-gray-600 uppercase">Signature du Pensionné</p>
+                        <div class="h-0.5 bg-gray-300 my-2"></div>
+                        <x-signature-pad class="h-20 md:h-32" />
+                    </div>
+
+                    <div class="flex-1">
+                        <p class="text-xs font-semibold text-gray-600 uppercase">SIGNATURE MANDATAIRE</p>
+                        <div class="h-0.5 bg-gray-300 my-2"></div>
+                        <div class="space-y-2 text-sm">
+                            <div class="h-20 md:h-32"></div>
+                            <p>MERE, PERE, TUTEUR, CURATEUR</p>
+                            <p>NOM__________________________</p>
+                            <p>NIF OU CIN____________________</p>
+                        </div>
+                    </div>
+                </div>
+            </fieldset>
+
+            <!-- Submit Button -->
+            <div class="mt-6 text-right">
+                <button type="submit"
+                    class="bg-blue-600 text-white px-6 py-2 rounded hover:bg-blue-700 transition-colors text-sm md:text-base">
+                    Soumettre
+                </button>
+            </div>
         </div>
     </form>
 </div>
+
+<!-- Hidden Template -->
+<div class="hidden">
+    <select id="genderOptionsTemplate">
+        <option value="">Sélectionner</option>
+        @foreach ($genders as $gender)
+            <option value="{{ $gender['id'] }}">{{ $gender['name'] }}</option>
+        @endforeach
+    </select>
+</div>
+
+<script>
+    let rowCount = 0;
+
+    function addDependantRow() {
+        const tableContainer = document.getElementById('dependants-table');
+        const messageDiv = document.getElementById('no-dependants-message');
+        const tbody = document.querySelector('#dependants-table tbody');
+
+        if (rowCount === 0) {
+            tableContainer.classList.remove('hidden');
+            messageDiv.classList.add('hidden');
+        }
+
+        rowCount++;
+
+        const newRow = document.createElement('tr');
+        newRow.className = 'even:bg-gray-50';
+        newRow.innerHTML = `
+        <td class="px-4 py-2 text-sm font-medium text-gray-900">${rowCount}</td>
+        <td class="px-4 py-2">
+            <input type="text" name="nom_${rowCount}" 
+                   class="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 text-sm"
+                   >
+        </td>
+        <td class="px-4 py-2">
+            <input type="text" name="relation_${rowCount}" 
+                   class="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 text-sm"
+                   >
+        </td>
+        <td class="px-4 py-2">
+            <input type="date" name="date_naissance_${rowCount}" 
+                   class="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 text-sm"
+                   >
+        </td>
+        <td class="px-4 py-2">
+            <select name="sexe_${rowCount}" 
+                    class="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 text-sm"
+                    >
+                ${document.getElementById('genderOptionsTemplate').innerHTML}
+            </select>
+        </td>
+        <td class="px-4 py-2">
+            <button type="button" onclick="deleteRow(this)" 
+                    class="text-red-600 hover:text-red-900">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
+                          d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                </svg>
+            </button>
+        </td>
+    `;
+
+        tbody.appendChild(newRow);
+    }
+
+    function deleteRow(button) {
+        const row = button.closest('tr');
+        row.remove();
+        rowCount--;
+        reindexRows();
+
+        if (rowCount === 0) {
+            document.getElementById('dependants-table').classList.add('hidden');
+            document.getElementById('no-dependants-message').classList.remove('hidden');
+        }
+    }
+
+    function reindexRows() {
+        const rows = document.querySelectorAll('#dependants-table tbody tr');
+        rows.forEach((row, index) => {
+            row.cells[0].textContent = index + 1;
+            const newIndex = index + 1;
+            row.querySelectorAll('input, select').forEach(input => {
+                input.name = input.name.replace(/_(\d+)$/, `_${newIndex}`);
+            });
+        });
+        rowCount = rows.length;
+    }
+</script>

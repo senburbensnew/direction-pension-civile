@@ -17,6 +17,9 @@ use App\Models\ErrorLog;
 use App\Helpers\CodeGeneratorService;
 use App\Helpers\ErrorLoggerService;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
+use Illuminate\Support\Facades\DB;
 
 class PensionnaireController extends Controller
 {
@@ -101,7 +104,7 @@ class PensionnaireController extends Controller
             $validated = $request->validate([
                 'pensioner_code' => 'required',
                 'pension_type_id' => 'required|in:' . implode(',', $validPensionTypes),
-                'nif' => 'required|digits:10',
+                'nif' => 'required',
                 'full_name' => 'required|string|max:255',
                 'address' => 'required|string|max:255',
                 'city' => 'required|string|max:255',
@@ -445,8 +448,7 @@ class PensionnaireController extends Controller
         return view('pensionnaire.preuve-existence', compact('genders', 'civilStatuses', 'pensionCategories'));
     }
 
-    public function processExistenceProofRequest(Request $request){
-        // dd($request->all());
+/*     public function processExistenceProofRequest(Request $request){
         $attributes = [
             "id_number" => "numero identite",
             "profile_photo" => "photo profil",
@@ -482,28 +484,6 @@ class PensionnaireController extends Controller
             'max.string' => 'Le :attribute ne doit pas dépasser :max caractères.',
             'max.file' => 'La photo ne doit pas dépasser :max Ko.',
             'image' => 'Le fichier doit être une image valide (JPG, PNG, JPEG).',
-            
-            // Field-specific messages
-/*             "id_number" => "numero identite",
-            "profile_photo" => "photo profil",
-            "fiscal_year" => "annee fiscale",
-            "nif" => "NIF",
-            "lastname" => "nom",
-            "firstname" => "prenom",
-            "address" => "adresse",
-            "location" => "localisation",
-            "birth_date" => "date de naissance",
-            "civil_status_id" => "etat civil",
-            "gender_id" => "sexe",
-            "postal_address" => "adresse postale",
-            "phone" => "telephone",
-            "amount" => "montant",
-            "monitor_number" => "numero moniteur",
-            "monitor_date" => "date moniteur",
-            "pension_start_date" => "date debut pension",
-            "pension_end_date" => "date fin pension",
-            "pension_nature" => "nature pension",
-            "signature" => "signature", */
         ]; 
 
 
@@ -530,7 +510,7 @@ class PensionnaireController extends Controller
                 "pension_end_date" => "required|date",
                 "pension_category_id" => "required|string|max:255",
                 'fiscal_year' => 'required|string|max:255',
-                // "signature" => "",
+                // "signature" => "required|string",
             ], $messages, $attributes);
 
             // Handle the payment stop logic here
@@ -551,12 +531,181 @@ class PensionnaireController extends Controller
         } catch (\Exception $e) {
             \Log::error('Erreur soumission formulaire: ' . $e->getMessage() . ' - ' . $e->getTraceAsString());
             ErrorLoggerService::logError($e, $request);
-            dd($e->getMessage());
             $errorMessage = "Une erreur inattendue est survenue. Veuillez réessayer.";
     
             return redirect()->back()
                 ->with('error', $errorMessage)
                 ->withInput();
+        }
+    } */
+    
+    public function processExistenceProofRequest(Request $request)
+    {
+        dd($request->all());
+        dd($request->input('profile_photo'), $request->input('signature'));
+
+        $attributes = [
+            "id_number" => "numéro identité",
+            "profile_photo" => "photo profil",
+            "fiscal_year" => "année fiscale",
+            "nif" => "NIF",
+            "lastname" => "nom",
+            "firstname" => "prénom",
+            "address" => "adresse",
+            "location" => "localisation",
+            "birth_date" => "date de naissance",
+            "civil_status_id" => "état civil",
+            "gender_id" => "sexe",
+            "postal_address" => "adresse postale",
+            "phone" => "téléphone",
+            "pension_amount" => "montant",
+            "monitor_number" => "numéro moniteur",
+            "monitor_date" => "date moniteur",
+            "pension_start_date" => "date début pension",
+            "pension_end_date" => "date fin pension",
+            "pension_category_id" => "nature pension",
+            "signature" => "signature",
+        ];
+    
+        $messages = [
+            'required' => 'Le champ :attribute est obligatoire.',
+            'exists' => 'La valeur sélectionnée pour :attribute est invalide.',
+            'digits' => 'Le :attribute doit contenir exactement :digits chiffres.',
+            'digits_between' => 'Le :attribute doit contenir entre :min et :max chiffres.',
+            'numeric' => 'Le :attribute doit être un nombre valide.',
+            'date' => 'La date de :attribute est invalide.',
+            'in' => 'La valeur sélectionnée pour :attribute est invalide.',
+            'max.string' => 'Le :attribute ne doit pas dépasser :max caractères.',
+            'image' => 'Le fichier :attribute doit être une image valide (JPG, PNG, JPEG).',
+            'base64_image' => 'Le :attribute doit être une image valide en base64.',
+            'regex' => 'Le format du champ :attribute est invalide.',
+            'fiscal_year.regex' => 'Le format de l\'année fiscale est invalide. Il doit être sous la forme 20XX/20XX (ex: 2023/2024).',
+        ];
+    
+        try {
+            // Get valid references
+/*             $validPensionCategories = PensionCategory::pluck('id')->toArray();
+            $validCivilStatuses = CivilStatus::pluck('id')->toArray();
+            $validGenders = Gender::pluck('id')->toArray(); */
+    
+            // Validation rules
+            $validationRules = [
+                "id_number" => "required|string|max:255",
+                "nif" => "required|string|max:255",
+                "lastname" => "required|string|max:255",
+                "firstname" => "required|string|max:255",
+                "address" => "required|string|max:255",
+                "location" => "required|string|max:255",
+                "birth_date" => "required|date",
+                "civil_status_id" => "required|string|exists:civil_statuses,id",
+                "gender_id" => "required|string|exists:genders,id",
+                "postal_address" => "required|string|max:255",
+                "phone" => "required|string|max:255",
+                "pension_amount" => "required|numeric",
+                "monitor_number" => "required|string|max:255",
+                "monitor_date" => "required|date",
+                "pension_start_date" => "required|date",
+                "pension_end_date" => "required|date",
+                "pension_category_id" => "required|string|exists:pension_categories,id",
+                'fiscal_year' => [
+                    'required',
+                    'string',
+                    'regex:/^20\d{2}\/20\d{2}$/'
+                ],
+                // "signature" => "required|string|base64_image",
+                'signature' => 'required|string',
+                'profile_photo' => 'required|image|mimes:jpeg,png,jpg|max:2048',
+            ];
+    
+            $validatedData = $request->validate($validationRules, $messages, $attributes);
+    
+            /*         if ($request->hasFile('profile_photo')) {
+            $photoPath = $request->file('profile_photo')->store('profile-photos', 'public');
+        } */
+
+            // Process files first
+            $validatedData['signature'] = $this->processBase64Image(
+                $validatedData['signature'], 
+                'signatures',
+                'Signature processing failed'
+            );
+    
+            $validatedData['profile_photo'] = $this->processBase64Image(
+                $validatedData['profile_photo'], 
+                'profile_photos',
+                'Profile photo processing failed'
+            );
+    
+            // Generate request code
+            $validatedData['code'] = CodeGeneratorService::generateUniqueRequestCode(
+                'EXISTENCE-PROOF', 
+                (new ExistenceProofRequest())->getTable()
+            );
+    
+            // Set system fields
+            $validatedData['status_id'] = Status::getStatusPending()->id;
+            $validatedData['created_by'] = auth()->id();
+    
+            // Create database record
+            ExistenceProofRequest::create($validatedData);
+    
+            return redirect()->route('pensionnaire.preuve-existence')
+                ->with('success', 'La demande de preuve d\'existence a été soumise avec succès.');
+    
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return redirect()->back()
+                ->withErrors($e->validator)
+                ->withInput()
+                ->with('error', 'Veuillez corriger les erreurs dans le formulaire.');
+                
+        } catch (\Exception $e) {
+            \Log::error('Form submission error: ' . $e->getMessage() . "\n" . $e->getTraceAsString());
+            
+            // Cleanup any partially uploaded files
+            $this->cleanupFiles([
+                $validatedData['signature'] ?? null,
+                $validatedData['profile_photo'] ?? null
+            ]);
+    
+            return redirect()->back()
+                ->with('error', 'Une erreur inattendue est survenue. Veuillez réessayer.')
+                ->withInput();
+        }
+    }
+    
+    private function processBase64Image($base64Data, $folder, $errorMessage)
+    {
+        try {
+            if (!preg_match('/^data:image\/(\w+);base64,/', $base64Data, $matches)) {
+                throw new \Exception('Invalid base64 format');
+            }
+    
+            $extension = strtolower($matches[1]);
+            if (!in_array($extension, ['jpg', 'jpeg', 'png', 'gif'])) {
+                throw new \Exception('Unsupported image format');
+            }
+    
+            $imageData = base64_decode(substr($base64Data, strpos($base64Data, ',') + 1));
+            if ($imageData === false) {
+                throw new \Exception('Base64 decoding failed');
+            }
+    
+            $filename = $folder . '/' . Str::uuid() . '.' . $extension;
+            Storage::disk('public')->put($filename, $imageData);
+    
+            return $filename;
+    
+        } catch (\Exception $e) {
+            throw new \Exception("$errorMessage: " . $e->getMessage());
+        }
+    }
+    
+    private function cleanupFiles($filePaths)
+    {
+        foreach ($filePaths as $path) {
+            if ($path && Storage::disk('public')->exists($path)) {
+                Storage::disk('public')->delete($path);
+            }
         }
     }
 }
