@@ -3,6 +3,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\ExistenceProofRequest;
 use Illuminate\Http\Request;
 use App\Models\BankTransferRequests;
 use App\Models\PaymentStopRequests;
@@ -20,6 +21,7 @@ class PersonalController extends Controller
         $bankTransferRequestCounts = BankTransferRequests::where('created_by', auth()->id())->count();
         $checkTransferRequestCounts = CheckTransferRequests::where('created_by', auth()->id())->count();
         $paymentStopRequestCounts = PaymentStopRequests::where('created_by', auth()->id())->count();
+        $existenceProofRequestCounts = ExistenceProofRequest::where('created_by', auth()->id())->count();
 
         $stats = [
             'pensionnaire' => [
@@ -37,6 +39,11 @@ class PersonalController extends Controller
                     'label' => 'Demande d\'arret de paiement',
                     'count' => $paymentStopRequestCounts,
                     'type' => 'paymentStopRequest'
+                ],
+                [
+                    'label' => 'Preuve d\'existence',
+                    'count' => $existenceProofRequestCounts,
+                    'type' => 'existenceProofRequest'
                 ],
             ],
             'fonctionnaire' => [],
@@ -92,6 +99,17 @@ class PersonalController extends Controller
                 $stats['rejected'] = PaymentStopRequests::forUser()->rejected()->count();
                 $stats['completed'] = PaymentStopRequests::forUser()->completed()->count();
                 $type = 'Demande d\'arret de paiement';
+                break;
+            case 'existenceProofRequest' :
+                $requests = ExistenceProofRequest::where('created_by', auth()->id())
+                ->orderBy('created_at', 'desc')
+                ->paginate(10);  ;
+                $stats['pending'] = ExistenceProofRequest::forUser()->pending()->count();
+                $stats['approved'] = ExistenceProofRequest::forUser()->approved()->count();
+                $stats['in_progress'] = ExistenceProofRequest::forUser()->inProgress()->count();
+                $stats['rejected'] = ExistenceProofRequest::forUser()->rejected()->count();
+                $stats['completed'] = ExistenceProofRequest::forUser()->completed()->count();
+                $type = 'Preuve d\'existence';
                 break;
         }
 

@@ -11,9 +11,15 @@ class ExistenceProof extends Component
     /**
      * Create a new component instance.
      */
-    public function __construct()
+    public $genders;
+    public $civilStatuses;
+    public $pensionCategories;
+
+    public function __construct($genders, $civilStatuses, $pensionCategories)
     {
-        //
+        $this->genders = $genders;
+        $this->civilStatuses = $civilStatuses;
+        $this->pensionCategories = $pensionCategories;
     }
 
     /**

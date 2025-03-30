@@ -7,13 +7,14 @@
     </nav>
 
     {{-- <form method="POST" action="{{ route('pensionnaire.process-identification') }}" --}}
-    <form method="POST" action="#" class="p-5 bg-white shadow-md rounded-lg border">
+    <form method="POST" action="{{ route('pensionnaire.process-existence-proof-request') }}"
+        class="p-5 bg-white shadow-md rounded-lg border">
         @csrf
         <div class="flex flex-col md:flex-row justify-between items-center mb-12 gap-8">
             <div class="text-center mb-6 flex flex-col md:flex-row items-center justify-center w-full gap-4 md:gap-8">
                 <!-- ID Number Input - Mobile first -->
                 <div class="relative w-40 md:w-48"> <!-- Fixed width value -->
-                    <input type="text" name="id_number" id="id_number"
+                    <input type="text" name="id_number" id="id_number" value="{{ old('id_number') }}"
                         class="peer w-full h-12 py-2 text-lg border-b-2 border-gray-500 focus:outline-none placeholder-transparent"
                         placeholder="NO D’IDENTITE" aria-label="Numéro d'identité" />
                     <label for="id_number"
@@ -39,6 +40,18 @@
                 <x-profile-picture class="order-3 md:order-none w-24 h-24 md:w-32 md:h-32" />
             </div>
         </div>
+        @if (session('success'))
+            <div class="mb-4 p-4 bg-green-50 border border-green-200 text-green-700 rounded">
+                {{ session('success') }}
+            </div>
+        @endif
+
+        @if (session('error'))
+            <div class="mb-4 p-4 bg-red-50 border border-red-200 text-red-700 rounded">
+                {{ session('error') }}
+            </div>
+        @endif
+
         @if ($errors->any())
             <div class="p-4 bg-red-50 border border-red-200 text-red-700 rounded">
                 <ul class="list-disc pl-5 space-y-1">
@@ -49,14 +62,10 @@
             </div>
         @endif
 
-        <!-- Hidden file input -->
-        <input type="file" id="photoUpload" accept="image/*" class="hidden" onchange="previewPhoto(event)"
-            name="profile_photo">
-
-        <div class="w-1/2">
+        <div class="w-1/2 mt-5">
             <label for="annee_fiscale" class="block text-sm font-medium text-gray-700">ANNEE FISCALE *</label>
-            <input placeholder="20../20.." type="text" name="fiscal_year" id="annee_fiscale" min="1900"
-                max="2100"
+            <input value="{{ old('fiscal_year') }}" placeholder="20../20.." type="text" name="fiscal_year"
+                id="annee_fiscale" min="1900" max="2100"
                 class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
         </div>
 
@@ -70,91 +79,110 @@
                 </div>
                 <div>
                     <label for="nom" class="block text-sm font-medium text-gray-700">NOM *</label>
-                    <input type="text" name="nom" id="nom"
+                    <input value="{{ old('lastname') }}" type="text" name="lastname" id="nom"
                         class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
                 </div>
                 <div>
                     <label for="prenom" class="block text-sm font-medium text-gray-700">PRENOM *</label>
-                    <input type="text" name="prenom" id="prenom"
+                    <input value="{{ old('firstname') }}" type="text" name="firstname" id="prenom"
                         class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
                 </div>
                 <div>
                     <label for="adresse" class="block text-sm font-medium text-gray-700">ADRESSE *</label>
-                    <input type="text" name="adresse" id="adresse"
+                    <input value="{{ old('address') }}" type="text" name="address" id="adresse"
                         class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
                 </div>
                 <div>
-                    <label for="location" class="block text-sm font-medium text-gray-700">LOCATION *</label>
-                    <input type="text" name="location" id="location"
+                    <label for="location" class="block text-sm font-medium text-gray-700">LOCALISATION *</label>
+                    <input value="{{ old('location') }}" type="text" name="location" id="location"
                         class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
                 </div>
                 <div>
                     <label for="date_naissance" class="block text-sm font-medium text-gray-700">DATE DE NAISSANCE
                         *</label>
-                    <input type="date" name="date_naissance" id="date_naissance"
+                    <input value="{{ old('birth_date') }}" type="date" name="birth_date" id="date_naissance"
                         class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
                 </div>
                 <div>
                     <label for="etat_civil" class="block text-sm font-medium text-gray-700">ETAT CIVIL *</label>
-                    <select name="etat_civil" id="etat_civil"
+                    <select name="civil_status_id" id="etat_civil"
                         class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
-                        <option value="single">Célibataire</option>
-                        <option value="married">Marié(e)</option>
-                        <option value="divorced">Divorcé(e)</option>
-                        <option value="widowed">Veuf(ve)</option>
+                        <option value="">Sélectionner</option>
+                        @foreach ($civilStatuses as $status)
+                            <option value="{{ $status['id'] }}" @selected(old('civil_status_id') == $status['id'])>
+                                {{ ucfirst($status['name']) }}
+                            </option>
+                        @endforeach
                     </select>
                 </div>
                 <div>
                     <label for="sexe" class="block text-sm font-medium text-gray-700">SEXE *</label>
-                    <select name="sexe" id="sexe"
+                    <select name="gender_id" id="sexe"
                         class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
-                        <option value="male">Homme</option>
-                        <option value="female">Femme</option>
-                        <option value="other">Autre</option>
+                        <option value="">Sélectionner</option>
+                        @foreach ($genders as $gender)
+                            <option value="{{ $gender['id'] }}" @selected(old('gender_id') == $gender['id'])>
+                                {{ $gender['name'] }}
+                            </option>
+                        @endforeach
                     </select>
                 </div>
                 <div>
                     <label for="boite_postale" class="block text-sm font-medium text-gray-700">BOITE POSTALE *</label>
-                    <input type="text" name="boite_postale" id="boite_postale"
+                    <input value="{{ old('postal_address') }}" type="text" name="postal_address"
+                        id="boite_postale"
                         class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
                 </div>
                 <div>
                     <label for="telephone" class="block text-sm font-medium text-gray-700">TELEPHONE *</label>
-                    <input type="tel" name="telephone" id="telephone"
+                    <input value="{{ old('phone') }}" type="tel" name="phone" id="telephone"
                         class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
                 </div>
                 <div>
                     <label for="montant_pension" class="block text-sm font-medium text-gray-700">MONTANT PENSION
                         *</label>
-                    <input type="number" name="montant_pension" id="montant_pension"
+                    <input value="{{ old('pension_amount') }}" type="number" name="pension_amount"
+                        id="montant_pension"
                         class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
                         min="0">
                 </div>
                 <div>
                     <label for="no_moniteur" class="block text-sm font-medium text-gray-700">NO MONITEUR *</label>
-                    <input type="text" name="no_moniteur" id="no_moniteur"
+                    <input value="{{ old('monitor_number') }}" type="text" name="monitor_number"
+                        id="no_moniteur"
                         class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
                 </div>
                 <div>
                     <label for="date_moniteur" class="block text-sm font-medium text-gray-700">DATE MONITEUR *</label>
-                    <input type="date" name="date_moniteur" id="date_moniteur"
+                    <input value="{{ old('monitor_date') }}" type="date" name="monitor_date" id="date_moniteur"
                         class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
                 </div>
                 <div>
                     <label for="debut_pension" class="block text-sm font-medium text-gray-700">DEBUT PENSION *</label>
-                    <input type="date" name="debut_pension" id="debut_pension"
+                    <input value="{{ old('pension_start_date') }}" type="date" name="pension_start_date"
+                        id="debut_pension"
                         class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
                 </div>
                 <div>
                     <label for="fin_pension" class="block text-sm font-medium text-gray-700">FIN PENSION *</label>
-                    <input type="date" name="fin_pension" id="fin_pension"
+                    <input value="{{ old('pension_end_date') }}" type="date" name="pension_end_date"
+                        id="fin_pension"
                         class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
                 </div>
                 <div>
                     <label for="nature_pension" class="block text-sm font-medium text-gray-700">NATURE PENSION
                         *</label>
-                    <input type="text" name="nature_pension" id="nature_pension"
-                        class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                    @foreach ($pensionCategories as $category)
+                        <div class="flex items-center">
+                            <input type="radio" id="pension_{{ $category->slug }}" name="pension_category_id"
+                                value="{{ $category->id }}"
+                                class="h-4 w-4 text-blue-600 border-gray-300 focus:ring-blue-500"
+                                @checked(old('pension_category_id') == $category->id)>
+                            <label for="pension_{{ $category->slug }}" class="ml-2 text-sm text-gray-700">
+                                {{ $category->name }}
+                            </label>
+                        </div>
+                    @endforeach
                 </div>
             </div>
         </fieldset>
@@ -197,9 +225,12 @@
                             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                                 <select name="sexe" id="sexe"
                                     class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
-                                    <option value="male">Homme</option>
-                                    <option value="female">Femme</option>
-                                    <option value="other">Autre</option>
+                                    <option value="">Sélectionner</option>
+                                    @foreach ($genders as $gender)
+                                        <option value="{{ $gender['id'] }}" @selected(old('gender_id') == $gender['id'])>
+                                            {{ $gender['name'] }}
+                                        </option>
+                                    @endforeach
                                 </select>
                             </td>
                         </tr>
@@ -222,9 +253,12 @@
                             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                                 <select name="sexe" id="sexe"
                                     class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
-                                    <option value="male">Homme</option>
-                                    <option value="female">Femme</option>
-                                    <option value="other">Autre</option>
+                                    <option value="">Sélectionner</option>
+                                    @foreach ($genders as $gender)
+                                        <option value="{{ $gender['id'] }}" @selected(old('gender_id') == $gender['id'])>
+                                            {{ $gender['name'] }}
+                                        </option>
+                                    @endforeach
                                 </select>
                             </td>
                         </tr>
@@ -247,9 +281,12 @@
                             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                                 <select name="sexe" id="sexe"
                                     class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
-                                    <option value="male">Homme</option>
-                                    <option value="female">Femme</option>
-                                    <option value="other">Autre</option>
+                                    <option value="">Sélectionner</option>
+                                    @foreach ($genders as $gender)
+                                        <option value="{{ $gender['id'] }}" @selected(old('gender_id') == $gender['id'])>
+                                            {{ $gender['name'] }}
+                                        </option>
+                                    @endforeach
                                 </select>
                             </td>
                         </tr>
@@ -272,9 +309,12 @@
                             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                                 <select name="sexe" id="sexe"
                                     class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
-                                    <option value="male">Homme</option>
-                                    <option value="female">Femme</option>
-                                    <option value="other">Autre</option>
+                                    <option value="">Sélectionner</option>
+                                    @foreach ($genders as $gender)
+                                        <option value="{{ $gender['id'] }}" @selected(old('gender_id') == $gender['id'])>
+                                            {{ $gender['name'] }}
+                                        </option>
+                                    @endforeach
                                 </select>
                             </td>
                         </tr>
@@ -297,9 +337,12 @@
                             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                                 <select name="sexe" id="sexe"
                                     class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
-                                    <option value="male">Homme</option>
-                                    <option value="female">Femme</option>
-                                    <option value="other">Autre</option>
+                                    <option value="">Sélectionner</option>
+                                    @foreach ($genders as $gender)
+                                        <option value="{{ $gender['id'] }}" @selected(old('gender_id') == $gender['id'])>
+                                            {{ $gender['name'] }}
+                                        </option>
+                                    @endforeach
                                 </select>
                             </td>
                         </tr>

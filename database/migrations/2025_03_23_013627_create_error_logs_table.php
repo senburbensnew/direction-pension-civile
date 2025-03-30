@@ -21,8 +21,7 @@ public function up()
         $table->text('trace')->nullable();
         $table->text('request_data')->nullable();
         $table->unsignedBigInteger('user_id')->nullable();
-        $table->timestamps();
-        
+        $table->timestamps();        
         $table->foreign('user_id')->references('id')->on('users');
     });
 }

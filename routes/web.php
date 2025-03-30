@@ -211,6 +211,7 @@ Route::prefix('pensionnaire')
         Route::post('/demande-arret-paiement', [PensionnaireController::class, 'processPaymentStopRequest'])->name('process-payment-stop-request');
         Route::post('/demande-reinsertion', [PensionnaireController::class, 'processReinstatementRequest'])->name('process-reinstatement-request');
         Route::post('/demande-arret-virement', [PensionnaireController::class, 'processTransferStopRequest'])->name('process-transfer-stop-request');
+        Route::post('/preuve-existence', [PensionnaireController::class, 'processExistenceProofRequest'])->name('process-existence-proof-request');
     });
 
     Route::prefix('fonctionnaire')->name('fonctionnaire.')->middleware('auth')->group(function () {
