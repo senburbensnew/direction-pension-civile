@@ -55,7 +55,8 @@
 
         <div class="w-1/2">
             <label for="annee_fiscale" class="block text-sm font-medium text-gray-700">ANNEE FISCALE *</label>
-            <input type="number" name="annee_fiscale" id="annee_fiscale" min="1900" max="2100"
+            <input placeholder="20../20.." type="text" name="fiscal_year" id="annee_fiscale" min="1900"
+                max="2100"
                 class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
         </div>
 
@@ -338,9 +339,9 @@
         <fieldset class="mt-2 mb-2 shadow-md rounded-lg p-5 border flex justify-between">
         </fieldset>
 
-        <div class="mt-8 text-sm text-gray-700">
+        <div class="mt-8 text-sm text-gray-700 text-right">
             <button type="submit"
-                class="px-4 py-2 bg-blue-600 text-white rounded-lg shadow hover:bg-blue-700">Soumettre</button>
+                class="bg-blue-600 text-white px-6 py-2 rounded hover:bg-blue-700 transition-colors">Soumettre</button>
         </div>
     </form>
 </div>

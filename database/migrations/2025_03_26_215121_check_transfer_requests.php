@@ -17,7 +17,7 @@ return new class extends Migration
             $table->string('fiscal_year')->nullable();
             $table->string('start_month', 7);
             $table->date('request_date');
-            $table->foreignId('pension_category_id')->constrained('pension_categories')->onDelete('cascade');
+            $table->foreignId('pension_category_id')->constrained('pension_categories')->onDelete('restrict');
             $table->string('pensioner_code');
             $table->decimal('amount', 10, 2);
             $table->string('lastname');
@@ -35,7 +35,7 @@ return new class extends Migration
                 ->constrained('users')
                 ->restrictOnDelete()
                 ->nullable(false);
-            $table->foreignId('status_id')->constrained('statuses')->onDelete('cascade');
+            $table->foreignId('status_id')->constrained('statuses')->onDelete('restrict');
             $table->timestamps();
         });
     }

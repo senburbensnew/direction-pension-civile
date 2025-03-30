@@ -14,7 +14,7 @@ return new class extends Migration
 // In your request_histories migration file
 Schema::create('request_histories', function (Blueprint $table) {
     $table->id();
-    $table->foreignId('request_id')->constrained('bank_transfer_requests')->onDelete('cascade');
+    $table->foreignId('request_id')->constrained('bank_transfer_requests')->onDelete('restrict');
     $table->string('title');
     $table->text('description');
     $table->timestamps();

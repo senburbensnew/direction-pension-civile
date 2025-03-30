@@ -13,11 +13,11 @@ return new class extends Migration
             $table->dropColumn(['pension_type', 'civil_status', 'gender', 'pension_category', 'status']);
 
             // Add foreign keys
-            $table->foreignId('pension_type_id')->constrained('pension_types')->onDelete('cascade');
-            $table->foreignId('civil_status_id')->constrained('civil_statuses')->onDelete('cascade');
-            $table->foreignId('gender_id')->constrained('genders')->onDelete('cascade');
-            $table->foreignId('pension_category_id')->constrained('pension_categories')->onDelete('cascade');
-            $table->foreignId('status_id')->constrained('statuses')->onDelete('cascade');
+            $table->foreignId('pension_type_id')->constrained('pension_types')->onDelete('restrict');
+            $table->foreignId('civil_status_id')->constrained('civil_statuses')->onDelete('restrict');
+            $table->foreignId('gender_id')->constrained('genders')->onDelete('restrict');
+            $table->foreignId('pension_category_id')->constrained('pension_categories')->onDelete('restrict');
+            $table->foreignId('status_id')->constrained('statuses')->onDelete('restrict');
         });
     }
 
