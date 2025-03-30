@@ -28,14 +28,14 @@ return new class extends Migration
             $table->string('address');
             $table->string('email');
             $table->string('phone');
-            $table->string('from');
-            $table->string('to');
+            $table->date('from');
+            $table->date('to');
             $table->text('transfer_reason');
             $table->foreignId('created_by')
                 ->constrained('users')
                 ->restrictOnDelete()
                 ->nullable(false);
-                $table->foreignId('status_id')->constrained('statuses')->onDelete('cascade');
+            $table->foreignId('status_id')->constrained('statuses')->onDelete('cascade');
             $table->timestamps();
         });
     }

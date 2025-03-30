@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\CheckTransferRequests;
+use App\Models\PaymentStopRequests;
 use App\Models\Gender;
 use App\Models\PensionCategory;
 use App\Models\PensionType;
@@ -188,6 +189,54 @@ class PensionnaireController extends Controller
     // Process the check transfer request form
     public function processCheckTransferRequest(Request $request)
     {
+        // Custom validation attributes
+        $attributes = [
+            'pensioner_code' => 'code du pensionné',
+            'pension_type_id' => 'type de pension',
+            'nif' => 'NIF',
+            'full_name' => 'nom complet',
+            'address' => 'adresse',
+            'city' => 'ville',
+            'civil_status_id' => 'état civil',
+            'gender_id' => 'genre',
+            'amount' => 'montant d\'allocation',
+            'maiden' => 'nom de la mère',
+            'phone' => 'téléphone',
+            'fiscal_year' => 'année fiscale',
+            'start_month' => 'mois de début',
+            'request_date' => 'date de la demande',
+            'pension_category_id' => 'régime de pension',
+            'lastname' => 'nom',
+            'firstname' => 'prénom',
+            'maiden_name' => 'nom de jeune fille',
+            'ninu' => 'NINU',
+            'email' => 'courriel',
+            'from' => 'début période',
+            'to' => 'fin période',
+            'transfer_reason' => 'motif',
+        ];
+    
+        // Custom validation messages
+        $messages = [
+            'required' => 'Le champ :attribute est obligatoire.',
+            'unique' => 'Ce code est déjà utilisé.',
+            'digits' => 'Le :attribute doit contenir exactement :digits chiffres.',
+            'digits_between' => 'Le :attribute doit contenir entre :min et :max chiffres.',
+            'numeric' => 'Le :attribute doit être un nombre valide.',
+            'date' => 'La date de naissance est invalide.',
+            'in' => 'La valeur sélectionnée pour :attribute est invalide.',
+            'max.string' => 'Le :attribute ne doit pas dépasser :max caractères.',
+            'max.file' => 'La photo ne doit pas dépasser :max Ko.',
+            'image' => 'Le fichier doit être une image valide (JPG, PNG, JPEG).',
+            
+            // Field-specific messages
+            'nif.digits' => 'Le NIF doit contenir exactement 10 chiffres.',
+            'phone.digits' => 'Le numéro de téléphone doit contenir exactement 10 chiffres.',
+            'account_number.digits_between' => 'Le numéro de compte doit contenir entre 5 et 20 chiffres.',
+            'birth_date.date' => 'Veuillez entrer une date de naissance valide.',
+            'pensioner_code.required' => 'Le code pensionnaire est obligatoire.',
+        ];        
+        
         $validPensionCategories = PensionCategory::pluck('id')->toArray();
 
         // Validation logic
@@ -206,10 +255,10 @@ class PensionnaireController extends Controller
             'address' => 'required|string|max:255',
             'phone' => 'required|string|max:255',
             'email' => 'required|string|email|max:255',
-            'from' => 'required|string|max:255',
-            'to' => 'required|string|max:255',
+            'from' => 'required|date',
+            'to' => 'required|date',
             'transfer_reason' => 'required|string|max:1000',  // Assumes the transfer reason might be a longer text
-        ]);
+        ], $messages, $attributes);
 
         $validatedData['code'] = CodeGeneratorService::generateUniqueRequestCode('TRANSF_CHEQ', (new CheckTransferRequests())->getTable());
         $validatedData['status_id'] = Status::getStatusPending()->id;
@@ -223,22 +272,107 @@ class PensionnaireController extends Controller
     // Display the request for payment stop form
     public function demandeArretPaiement()
     {
-        return view('pensionnaire.demande-arret-paiement');
+        $pensionCategories = PensionCategory::orderBy('name', 'asc')->get();
+        return view('pensionnaire.demande-arret-paiement', compact("pensionCategories"));
     }
 
     // Process the payment stop request form
     public function processPaymentStopRequest(Request $request)
     {
-        // Validation logic
-        $validatedData = $request->validate([
-            'firstname' => 'required|string|max:255',
-            'lastname' => 'required|string|max:255',
-            // Add more fields as needed
-        ]);
+        $attributes = [
+            'pensioner_code' => 'code du pensionné',
+            'pension_type_id' => 'type de pension',
+            'nif' => 'NIF',
+            'full_name' => 'nom complet',
+            'address' => 'adresse',
+            'city' => 'ville',
+            'civil_status_id' => 'état civil',
+            'gender_id' => 'genre',
+            'amount' => 'montant d\'allocation',
+            'maiden' => 'nom de la mère',
+            'phone' => 'téléphone',
+            'fiscal_year' => 'année fiscale',
+            'start_month' => 'mois de début',
+            'request_date' => 'date de la demande',
+            'pension_category_id' => 'régime de pension',
+            'lastname' => 'nom',
+            'firstname' => 'prénom',
+            'maiden_name' => 'nom de jeune fille',
+            'ninu' => 'NINU',
+            'email' => 'courriel',
+            'from' => 'début période',
+            'to' => 'fin période',
+            'transfer_reason' => 'motif',
+        ];
 
-        // Handle the payment stop logic here
+        // Custom validation messages
+        $messages = [
+            'required' => 'Le champ :attribute est obligatoire.',
+            'unique' => 'Ce code est déjà utilisé.',
+            'digits' => 'Le :attribute doit contenir exactement :digits chiffres.',
+            'digits_between' => 'Le :attribute doit contenir entre :min et :max chiffres.',
+            'numeric' => 'Le :attribute doit être un nombre valide.',
+            'date' => 'La date de naissance est invalide.',
+            'in' => 'La valeur sélectionnée pour :attribute est invalide.',
+            'max.string' => 'Le :attribute ne doit pas dépasser :max caractères.',
+            'max.file' => 'La photo ne doit pas dépasser :max Ko.',
+            'image' => 'Le fichier doit être une image valide (JPG, PNG, JPEG).',
+            
+            // Field-specific messages
+            'nif.digits' => 'Le NIF doit contenir exactement 10 chiffres.',
+            'phone.digits' => 'Le numéro de téléphone doit contenir exactement 10 chiffres.',
+            'account_number.digits_between' => 'Le numéro de compte doit contenir entre 5 et 20 chiffres.',
+            'birth_date.date' => 'Veuillez entrer une date de naissance valide.',
+            'pensioner_code.required' => 'Le code pensionnaire est obligatoire.',
+        ]; 
 
-        return redirect()->route('pensionnaire.payment-stop-request-form')->with('success', 'Payment stop request submitted successfully.');
+
+        try {
+            $validPensionCategories = PensionCategory::pluck('id')->toArray();
+            // Validation logic
+            $validatedData = $request->validate([
+                // 'fiscal_year' => 'required|string|max:255',
+                'start_month' => 'required|string|size:7',  // Ensures the month is in the format YYYY-MM
+                'request_date' => 'required|date',
+                'pension_category_id' => 'required|in:' . implode(',', $validPensionCategories), // Ensures that the pension_category_id exists in the pension_categories table
+                'pensioner_code' => 'required|string|max:255',
+                'amount' => 'required|numeric',  // Validates the allocation amount as numeric
+                'lastname' => 'required|string|max:255',
+                'firstname' => 'required|string|max:255',
+                'maiden_name' => 'required|string|max:255',
+                'nif' => 'required|string|max:255',
+                'ninu' => 'required|string|max:255',
+                'address' => 'required|string|max:255',
+                'phone' => 'required|string|max:255',
+                'email' => 'required|string|email|max:255',
+                'from' => 'required|date',
+                'to' => 'required|date',
+            ], $messages, $attributes);
+
+            // Handle the payment stop logic here
+            $validatedData['code'] = CodeGeneratorService::generateUniqueRequestCode('ARRET_PAIE', (new PaymentStopRequests())->getTable());
+            $validatedData['status_id'] = Status::getStatusPending()->id;
+            $validatedData['created_by'] = auth()->id();
+
+            PaymentStopRequests::create($validatedData);
+
+            return redirect()->route('pensionnaire.payment-stop-request-form')->with('success', 'La demande de cessation de paiement a été soumise avec succès.');
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return redirect()->back()
+                ->withErrors($e->validator)
+                ->withInput()
+                ->with('error', 'Veuillez corriger les erreurs dans le formulaire.');
+                
+        } catch (\Exception $e) {
+            \Log::error('Erreur soumission formulaire: ' . $e->getMessage() . ' - ' . $e->getTraceAsString());
+            ErrorLoggerService::logError($e, $request);
+
+            $errorMessage = "Une erreur inattendue est survenue. Veuillez réessayer.";
+    
+            return redirect()->back()
+                ->with('error', $errorMessage)
+                ->withInput();
+        }
     }
 
     // Display the request for reinstatement form

@@ -20,7 +20,6 @@ class PersonalController extends Controller
         $bankTransferRequestCounts = BankTransferRequests::where('created_by', auth()->id())->count();
         $checkTransferRequestCounts = CheckTransferRequests::where('created_by', auth()->id())->count();
         $paymentStopRequestCounts = PaymentStopRequests::where('created_by', auth()->id())->count();
-        // dd($checkTransferRequestCounts);
 
         $stats = [
             'pensionnaire' => [
@@ -75,7 +74,7 @@ class PersonalController extends Controller
             case 'checkTransferRequest' :
                 $requests = CheckTransferRequests::where('created_by', auth()->id())
                 ->orderBy('created_at', 'desc')
-                ->paginate(10);;          
+                ->paginate(10);        
                 $stats['pending'] = CheckTransferRequests::forUser()->pending()->count();
                 $stats['approved'] = CheckTransferRequests::forUser()->approved()->count();
                 $stats['in_progress'] = CheckTransferRequests::forUser()->inProgress()->count();
@@ -84,15 +83,21 @@ class PersonalController extends Controller
                 $type = 'Demande de transfert de cheques';
                 break;
             case 'paymentStopRequest' :
-                $requests = PaymentStopRequests::where('created_by', auth()->id())->orderBy('created_at', 'desc');
-                $type = '';
+                $requests = PaymentStopRequests::where('created_by', auth()->id())
+                ->orderBy('created_at', 'desc')
+                ->paginate(10);  ;
+                $stats['pending'] = PaymentStopRequests::forUser()->pending()->count();
+                $stats['approved'] = PaymentStopRequests::forUser()->approved()->count();
+                $stats['in_progress'] = PaymentStopRequests::forUser()->inProgress()->count();
+                $stats['rejected'] = PaymentStopRequests::forUser()->rejected()->count();
+                $stats['completed'] = PaymentStopRequests::forUser()->completed()->count();
+                $type = 'Demande d\'arret de paiement';
                 break;
         }
 
         return view('personal.requests', compact('requests', 'stats', 'requestType','type')); 
     }
 
-    // Afficher les détails d'une demande
     public function showRequest(Request $request, $id)
     {
         $requestType = $request->query('requestType');
@@ -105,80 +110,33 @@ class PersonalController extends Controller
                 $request = CheckTransferRequests::where('created_by', auth()->id())->findOrFail($id);
                 break;
             case 'paymentStopRequest' :
-                // $request = BankTransferRequests::where('created_by', auth()->id())->findOrFail($id);
+                $request = PaymentStopRequests::where('created_by', auth()->id())->findOrFail($id);
                 break;
         }
 
         return view('personal.request-details', compact('request', 'requestType'));
     }
 
-    /**
-     * Show the form for creating a new resource.
-     */
     public function create()
     {
         return view('personal.create');
     }
 
-    /**
-     * Store a newly created resource in storage.
-     */
-    public function store(Request $request)
-    {
-        // Validation logic here
+    public function updateRequest(Request $request, $id){
+        $transferRequest = BankTransferRequests::where('created_by', auth()->id())->findOrFail($id);
+
+        $validated = $request->validate([
+            'bank_name' => 'sometimes|required|string|max:255',
+            'account_number' => 'sometimes|required|digits_between:5,20',
+            'account_name' => 'sometimes|required|string|max:255',
+            'status' => 'sometimes|required|in:pending,in_progress,completed'
+        ]);
+
+        $transferRequest->update($validated);
+
+        return redirect()->back()->with('success', 'Demande mise à jour avec succès');
     }
 
-    /**
-     * Display the specified resource.
-     */
-/*     public function show($id)
-    {
-        return view('personal.show', compact('id'));
-    } */
-
-    /**
-     * Show the form for editing the specified resource.
-     */
-    public function edit($id)
-    {
-        return view('personal.edit', compact('id'));
-    }
-
-    /**
-     * Update the specified resource in storage.
-     */
-    public function update(Request $request, $id)
-    {
-        // Update logic here
-    }
-
-    /**
-     * Remove the specified resource from storage.
-     */
-    public function destroy($id)
-    {
-        // Delete logic here
-    }
-
-
-// Mettre à jour une demande
-public function updateRequest(Request $request, $id)
-{
-    $transferRequest = BankTransferRequests::where('created_by', auth()->id())->findOrFail($id);
-
-    $validated = $request->validate([
-        'bank_name' => 'sometimes|required|string|max:255',
-        'account_number' => 'sometimes|required|digits_between:5,20',
-        'account_name' => 'sometimes|required|string|max:255',
-        'status' => 'sometimes|required|in:pending,in_progress,completed'
-    ]);
-
-    $transferRequest->update($validated);
-
-    return redirect()->back()->with('success', 'Demande mise à jour avec succès');
-}
-
-// Annuler une demande
     public function cancelRequest($id)
     {
         $request = BankTransferRequests::where('created_by', auth()->id())->findOrFail($id);
