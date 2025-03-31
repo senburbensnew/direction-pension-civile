@@ -26,4 +26,15 @@ class RequestHistory extends Model
     {
         return $query->where('created_by', auth()->id());
     }
+
+    public static function store($requestId, $requestType, $requestData, $eventType, $eventDate, $by){
+        $requestHistory = new RequestHistory();
+        $requestHistory->request_id = $requestId;
+        $requestHistory->request_type = $requestType;
+        $requestHistory->request_data = $requestData;
+        $requestHistory->event_type = $eventType;
+        $requestHistory->event_date = $eventDate;
+        $requestHistory->created_by = $by;
+        $requestHistory->save();
+    }
 }

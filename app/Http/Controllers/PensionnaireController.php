@@ -771,14 +771,23 @@ class PensionnaireController extends Controller
     
             DB::commit();
 
-            $requestHistory = new RequestHistory();
+/*             $requestHistory = new RequestHistory();
             $requestHistory->request_id = $existenceProofRequest->id;
             $requestHistory->request_type = RequestTypeEnum::EXISTENCE_PROOF_REQUEST;
             $requestHistory->request_data = json_encode($existenceProofRequest);
             $requestHistory->event_type = RequestEventTypeEnum::REQUEST_CREATED;
             $requestHistory->event_date = $existenceProofRequest->created_at;
             $requestHistory->created_by = auth()->id();
-            $requestHistory->save();
+            $requestHistory->save(); */
+
+            RequestHistory::store(
+                $existenceProofRequest->id,
+                RequestTypeEnum::EXISTENCE_PROOF_REQUEST,
+                json_encode($existenceProofRequest),
+                RequestEventTypeEnum::REQUEST_CREATED,
+                $existenceProofRequest->created_at,
+                auth()->id()
+            );
 
             // event(new RequestCreated($bankTranferRequest));
     

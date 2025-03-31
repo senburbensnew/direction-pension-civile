@@ -55,33 +55,36 @@
                             </div>
                         </button>
                     </x-slot>
-
-                    <!-- Rest of dropdown content remains the same -->
                     <x-slot name="content">
-                        @role('admin')
-                            <x-dropdown-link :href="route('admin.carousels.index')">
-                                {{ __('messages.admin_panel') }}
+                        <!-- Rest of dropdown content remains the same -->
+                        <x-slot name="content">
+                            <x-dropdown-link :href="route('profile.edit')">
+                                {{ __('Profile') }}
                             </x-dropdown-link>
-                        @endrole
-
-                        @auth
-                            @can('viewDashboard')
-                                <x-dropdown-link :href="route('personal.index')">
-                                    Dashboard
+                            @role('admin')
+                                <x-dropdown-link :href="route('admin.carousels.index')">
+                                    {{ __('messages.admin_panel') }}
                                 </x-dropdown-link>
-                            @endcan
-                        @endauth
+                            @endrole
 
-                        <!-- Authentication -->
-                        <form method="POST" action="{{ route('logout') }}">
-                            @csrf
-                            <x-dropdown-link :href="route('logout')"
-                                onclick="event.preventDefault();
+                            @auth
+                                @can('viewDashboard')
+                                    <x-dropdown-link :href="route('personal.index')">
+                                        Dashboard
+                                    </x-dropdown-link>
+                                @endcan
+                            @endauth
+
+                            <!-- Authentication -->
+                            <form method="POST" action="{{ route('logout') }}">
+                                @csrf
+                                <x-dropdown-link :href="route('logout')"
+                                    onclick="event.preventDefault();
                         this.closest('form').submit();">
-                                {{ __('Log Out') }}
-                            </x-dropdown-link>
-                        </form>
-                    </x-slot>
+                                    {{ __('Log Out') }}
+                                </x-dropdown-link>
+                            </form>
+                        </x-slot>
                 </x-dropdown>
             @endauth
             {{--             @auth
@@ -239,7 +242,9 @@
                         {{ Auth::user()->name }}
                     </span>
                 </div>
-
+                <a href="{{ route('profile.edit') }}" class="block text-gray-700 hover:text-orange-500 p-2">
+                    {{ __('Profile') }}
+                </a>
                 @role('admin')
                     <a href="{{ route('admin.carousels.index') }}" class="block text-gray-700 hover:text-orange-500 p-2">
                         {{ __('messages.admin_panel') }}
