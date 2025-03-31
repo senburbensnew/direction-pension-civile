@@ -9,7 +9,8 @@ class Carousel extends Model
 {
     use HasFactory;
 
-    protected $fillable = ['title', 'description', 'image', 'status', 'order'];
+    protected $fillable = ['title', 'description', 'image', 'status', 'order', "created_at",
+    "updated_at",];
 
     public function scopeOrdered($query)
     {

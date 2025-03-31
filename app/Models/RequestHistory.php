@@ -12,11 +12,18 @@ class RequestHistory extends Model
     protected $fillable = [
         'request_id',
         'title',
-        'description'
+        'description',
+        'request_type',
+        'request_data',
+        'event_type',
+        'event_date',
+        'created_by',
+        "created_at",
+        "updated_at",
     ];
 
-    public function request()
+    public function scopeForUser($query)
     {
-        return $this->belongsTo(BankTransferRequests::class, 'request_id');
+        return $query->where('created_by', auth()->id());
     }
 }

@@ -9,7 +9,7 @@
         </div>
     @endif
 
-    <form method="POST" action="{{ route('register') }}">
+    <form method="POST" action="{{ route('register') }}" enctype="multipart/form-data">
         @csrf
         <!-- Name -->
         <div>
@@ -18,7 +18,7 @@
         <div>
             <x-input-label for="name" :value="__('Nom complet')" />
             <x-text-input id="name" class="bg-gray-100 block mt-1 w-full" type="text" name="name"
-                :value="old('name')" autofocus autocomplete="name" placeholder="ex: Pierre Rubens MILORME" readonly />
+                :value="old('name')" autofocus autocomplete="name" placeholder="Pierre Rubens MILORME" readonly />
             <x-input-error :messages="$errors->get('name')" class="mt-2" />
         </div>
 
@@ -113,11 +113,11 @@
                 placeholder="ex: 123-456-789-0" />
             <x-input-error :messages="$errors->get('ninu')" class="mt-2" />
         </div> --}}
-
+        {{-- 
         <div class="mt-4">
             <x-input-label for="signature" :value="__('Signature')" />
             <x-signature-pad />
-        </div>
+        </div> --}}
 
         <div class="flex items-center justify-end mt-4">
             <a class="underline text-sm text-gray-600 hover:text-gray-900 rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"

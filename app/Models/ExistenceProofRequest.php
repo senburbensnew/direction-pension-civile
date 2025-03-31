@@ -10,6 +10,8 @@ class ExistenceProofRequest extends Model
     use HasFactory;
 
     protected $fillable = [
+        "created_at",
+        "updated_at",
         "status_id",
         "created_by",
         "pension_amount",
@@ -33,7 +35,9 @@ class ExistenceProofRequest extends Model
         "monitor_date",
         "pension_start_date",
         "pension_end_date",
-        "pension_nature"
+        "pension_nature",
+        "created_at",
+        "updated_at",
     ];
 
     public function scopeForUser($query)

@@ -34,7 +34,18 @@
                     <x-slot name="trigger">
                         <button
                             class="text-white hover:text-orange-500 cursor-pointer text-sm md:text-base inline-flex items-center">
-                            <div class="underline">{{ Auth::user()->name }}</div>
+                            @if (Auth::user()->profile_photo)
+                                <div class="h-8 w-8 rounded-full overflow-hidden">
+                                    <img src="{{ asset('storage/' . Auth::user()->profile_photo) }}"
+                                        class="h-8 w-8 object-cover" alt="{{ __('Profile Photo') }}">
+                                </div>
+                            @else
+                                {{--                                     <svg class="h-8 w-8 text-gray-300" viewBox="0 0 32 32" fill="currentColor">
+                                <path
+                                    d="M16 16c4.418 0 8-3.582 8-8s-3.582-8-8-8-8 3.582-8 8 3.582 8 8 8zm0 4c-5.523 0-16 2.477-16 8v4h32v-4c0-5.523-10.477-8-16-8z" />
+                            </svg> --}}
+                                <span>{{ Auth::user()->name }}</span>
+                            @endif
                             <div class="ms-1">
                                 <svg class="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">
                                     <path fill-rule="evenodd"
@@ -45,16 +56,14 @@
                         </button>
                     </x-slot>
 
+                    <!-- Rest of dropdown content remains the same -->
                     <x-slot name="content">
-                        {{--                         <x-dropdown-link :href="route('profile.edit')">
-                            {{ __('Profile') }}
-                        </x-dropdown-link> --}}
-
                         @role('admin')
                             <x-dropdown-link :href="route('admin.carousels.index')">
                                 {{ __('messages.admin_panel') }}
                             </x-dropdown-link>
                         @endrole
+
                         @auth
                             @can('viewDashboard')
                                 <x-dropdown-link :href="route('personal.index')">
@@ -68,13 +77,59 @@
                             @csrf
                             <x-dropdown-link :href="route('logout')"
                                 onclick="event.preventDefault();
-                                    this.closest('form').submit();">
+                        this.closest('form').submit();">
                                 {{ __('Log Out') }}
                             </x-dropdown-link>
                         </form>
                     </x-slot>
                 </x-dropdown>
             @endauth
+            {{--             @auth
+                <x-dropdown align="right" width="48">
+                    <x-slot name="trigger">
+                        <button
+                            class="text-white hover:text-orange-500 cursor-pointer text-sm md:text-base inline-flex items-center">
+                            <div class="underline">{{ Auth::user()->name }}</div>
+                            <div class="ms-1">
+                                <svg class="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">
+                                    <path fill-rule="evenodd"
+                                        d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"
+                                        clip-rule="evenodd" />
+                                </svg>
+                            </div>
+                        </button>
+                    </x-slot>
+
+                    <x-slot name="content">
+                                                <x-dropdown-link :href="route('profile.edit')">
+                            {{ __('Profile') }}
+                        </x-dropdown-link>
+
+            @role('admin')
+                <x-dropdown-link :href="route('admin.carousels.index')">
+                    {{ __('messages.admin_panel') }}
+                </x-dropdown-link>
+            @endrole
+            @auth
+                @can('viewDashboard')
+                    <x-dropdown-link :href="route('personal.index')">
+                        Dashboard
+                    </x-dropdown-link>
+                @endcan
+            @endauth
+
+            <!-- Authentication -->
+            <form method="POST" action="{{ route('logout') }}">
+                @csrf
+                <x-dropdown-link :href="route('logout')"
+                    onclick="event.preventDefault();
+                                    this.closest('form').submit();">
+                    {{ __('Log Out') }}
+                </x-dropdown-link>
+            </form>
+            </x-slot>
+            </x-dropdown>
+        @endauth --}}
         </div>
 
         <!-- Search Icon -->
@@ -163,16 +218,60 @@
                 {{ __('messages.login') }}
             </a>
         @endguest
-
         @auth
+            <!-- Mobile-friendly user menu -->
+            <div class="space-y-2">
+                <div class="px-2 py-3 pl-0 flex items-center gap-3">
+                    <div class="h-8 w-8 rounded-full overflow-hidden shrink-0">
+                        @if (Auth::user()->profile_photo)
+                            <img src="{{ asset('storage/' . Auth::user()->profile_photo) }}"
+                                class="h-full w-full object-cover"
+                                alt="{{ Auth::user()->name }} {{ __('Profile Photo') }}">
+                        @else
+                            <svg class="h-full w-full text-gray-300" viewBox="0 0 32 32" fill="currentColor"
+                                aria-hidden="true">
+                                <path
+                                    d="M16 16c4.418 0 8-3.582 8-8s-3.582-8-8-8-8 3.582-8 8 3.582 8 8 8zm0 4c-5.523 0-16 2.477-16 8v4h32v-4c0-5.523-10.477-8-16-8z" />
+                            </svg>
+                        @endif
+                    </div>
+                    <span class="text-orange-500 font-medium truncate">
+                        {{ Auth::user()->name }}
+                    </span>
+                </div>
+
+                @role('admin')
+                    <a href="{{ route('admin.carousels.index') }}" class="block text-gray-700 hover:text-orange-500 p-2">
+                        {{ __('messages.admin_panel') }}
+                    </a>
+                @endrole
+
+                @auth
+                    @can('viewDashboard')
+                        <a href="{{ route('personal.index') }}" class="block text-gray-700 hover:text-orange-500 p-2">
+                            {{ __('Dashboard') }}
+                        </a>
+                    @endcan
+                @endauth
+
+                <form method="POST" action="{{ route('logout') }}">
+                    @csrf
+                    <a href="{{ route('logout') }}" class="block text-gray-700 hover:text-orange-500 p-2"
+                        onclick="event.preventDefault(); this.closest('form').submit();">
+                        {{ __('Log Out') }}
+                    </a>
+                </form>
+            </div>
+        @endauth
+        {{--         @auth
             <!-- Mobile-friendly user menu -->
             <div class="space-y-2">
                 <div class="px-2 py-3 text-orange-500 font-medium pl-0 underline">
                     {{ Auth::user()->name }}
                 </div>
-                {{--                 <a href="{{ route('profile.edit') }}" class="block text-gray-700 hover:text-orange-500 p-2">
+                                <a href="{{ route('profile.edit') }}" class="block text-gray-700 hover:text-orange-500 p-2">
                     {{ __('Profile') }}
-                </a> --}}
+                </a> 
                 @role('admin')
                     <a href="{{ route('admin.carousels.index') }}" class="block text-gray-700 hover:text-orange-500 p-2">
                         {{ __('messages.admin_panel') }}
@@ -193,7 +292,7 @@
                     </a>
                 </form>
             </div>
-        @endauth
+        @endauth --}}
     </div>
 
     <p class="text-gray-700 text-xs md:text-sm mt-4">

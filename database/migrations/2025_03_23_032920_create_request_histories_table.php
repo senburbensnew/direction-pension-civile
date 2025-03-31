@@ -14,9 +14,15 @@ return new class extends Migration
 // In your request_histories migration file
 Schema::create('request_histories', function (Blueprint $table) {
     $table->id();
-    $table->foreignId('request_id')->constrained('bank_transfer_requests')->onDelete('restrict');
-    $table->string('title');
-    $table->text('description');
+    $table->string('request_id');
+    $table->string('request_type');
+    $table->json('request_data');
+    $table->string('event_type');
+    $table->datetime('event_date');
+    $table->foreignId('created_by')
+    ->constrained('users')
+    ->restrictOnDelete()
+    ->nullable(false);
     $table->timestamps();
 });
     }

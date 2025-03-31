@@ -2,6 +2,9 @@
 
 namespace App\Http\Controllers;
 
+use App\Enums\RequestEventTypeEnum;
+use App\Enums\RequestTypeEnum;
+use App\Events\RequestCreated;
 use App\Models\CheckTransferRequests;
 use App\Helpers\RegexExpressions;
 use App\Models\ExistenceProofRequest;
@@ -9,6 +12,7 @@ use App\Models\PaymentStopRequests;
 use App\Models\Gender;
 use App\Models\PensionCategory;
 use App\Models\PensionType;
+use App\Models\RequestHistory;
 use App\Models\Status;
 use App\Models\CivilStatus;
 use App\View\Components\ExistenceProof;
@@ -763,9 +767,20 @@ class PensionnaireController extends Controller
             $validatedData['created_by'] = auth()->id();
     
             // Create record
-            ExistenceProofRequest::create($validatedData);
+            $existenceProofRequest = ExistenceProofRequest::create($validatedData);
     
             DB::commit();
+
+            $requestHistory = new RequestHistory();
+            $requestHistory->request_id = $existenceProofRequest->id;
+            $requestHistory->request_type = RequestTypeEnum::EXISTENCE_PROOF_REQUEST;
+            $requestHistory->request_data = json_encode($existenceProofRequest);
+            $requestHistory->event_type = RequestEventTypeEnum::REQUEST_CREATED;
+            $requestHistory->event_date = $existenceProofRequest->created_at;
+            $requestHistory->created_by = auth()->id();
+            $requestHistory->save();
+
+            // event(new RequestCreated($bankTranferRequest));
     
             return redirect()->route('pensionnaire.preuve-existence')
                 ->with('success', 'Demande soumise avec succès.');

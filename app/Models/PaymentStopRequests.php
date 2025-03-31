@@ -28,7 +28,9 @@ class PaymentStopRequests extends Model
         'to',
         'code',
         'status_id',
-        'created_by'
+        'created_by',
+        "created_at",
+        "updated_at",
     ];
 
     

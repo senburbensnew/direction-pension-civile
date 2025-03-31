@@ -31,6 +31,8 @@ class BankTransferRequests extends Model
         'photo_path',
         'created_by',
         'status_id',
+        "created_at",
+        "updated_at",
     ];
 
     protected $casts = [
