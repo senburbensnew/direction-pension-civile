@@ -17,7 +17,7 @@
         </div>
         <div>
             <x-input-label for="name" :value="__('Nom complet')" />
-            <x-text-input id="name" class="bg-gray-200 block mt-1 w-full" type="text" name="name"
+            <x-text-input id="name" class="bg-gray-100 block mt-1 w-full" type="text" name="name"
                 :value="old('name')" autofocus autocomplete="name" placeholder="ex: Pierre Rubens MILORME" readonly />
             <x-input-error :messages="$errors->get('name')" class="mt-2" />
         </div>
@@ -40,9 +40,23 @@
         <div class="mt-4">
             <x-input-label for="email" :value="__('Email')" />
             <x-text-input id="email" class="block mt-1 w-full" type="email" name="email" :value="old('email')"
-                autocomplete="username" placeholder="ex: example@gmail.com" />
+                autocomplete="email" placeholder="ex: example@gmail.com" />
             <x-input-error :messages="$errors->get('email')" class="mt-2" />
         </div>
+
+        {{--         <div class="mt-4">
+            <x-input-label for="phone" :value="__('Telephone')" />
+            <x-text-input id="phone" class="block mt-1 w-full" type="text" name="phone" :value="old('phone')"
+                autocomplete="phone" placeholder="" />
+            <x-input-error :messages="$errors->get('phone')" class="mt-2" />
+        </div>
+
+        <div class="mt-4">
+            <x-input-label for="gender" :value="__('Sexe')" />
+            <x-text-input id="gender" class="block mt-1 w-full" type="text" name="gender" :value="old('gender')"
+                autocomplete="gender" placeholder="" />
+            <x-input-error :messages="$errors->get('gender')" class="mt-2" />
+        </div> --}}
 
         <!-- Password -->
         <div class="mt-4">
@@ -93,12 +107,12 @@
             <x-input-error :messages="$errors->get('nif')" class="mt-2" />
         </div>
 
-        <div class="mt-4">
+        {{--         <div class="mt-4">
             <x-input-label for="ninu" :value="__('NINU')" />
             <x-text-input id="ninu" class="block mt-1 w-full" type="text" name="ninu" :value="old('ninu')"
                 placeholder="ex: 123-456-789-0" />
             <x-input-error :messages="$errors->get('ninu')" class="mt-2" />
-        </div>
+        </div> --}}
 
         <div class="mt-4">
             <x-input-label for="signature" :value="__('Signature')" />
