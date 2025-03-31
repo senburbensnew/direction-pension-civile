@@ -141,7 +141,16 @@ class PensionnaireController extends Controller
     
             $validated['created_by'] = auth()->id();
     
-            BankTransferRequests::create($validated);
+            $bankTransferRequests = BankTransferRequests::create($validated);
+
+            RequestHistory::store(
+                $bankTransferRequests->id,
+                RequestTypeEnum::BANK_TRANSFER_REQUEST,
+                json_encode($bankTransferRequests),
+                RequestEventTypeEnum::REQUEST_CREATED,
+                $bankTransferRequests->created_at,
+                auth()->id()
+            );
     
             return redirect()->back()
                 ->with('success', 'Demande de virement enregistrée avec succès! Un email de confirmation vous a été envoyé.');
@@ -276,7 +285,16 @@ class PensionnaireController extends Controller
             $validatedData['status_id'] = Status::getStatusPending()->id;
             $validatedData['created_by'] = auth()->id();
 
-            CheckTransferRequests::create($validatedData);
+            $checkTransferRequests = CheckTransferRequests::create($validatedData);
+
+            RequestHistory::store(
+                $checkTransferRequests->id,
+                RequestTypeEnum::CHECK_TRANSFER_REQUEST,
+                json_encode($checkTransferRequests),
+                RequestEventTypeEnum::REQUEST_CREATED,
+                $checkTransferRequests->created_at,
+                auth()->id()
+            );
 
             return redirect()->route('pensionnaire.check-transfer-request-form')->with('success', 'La demande de transfert a été soumise avec succès.');
        } catch (\Illuminate\Validation\ValidationException $e) {
@@ -382,7 +400,16 @@ class PensionnaireController extends Controller
             $validatedData['status_id'] = Status::getStatusPending()->id;
             $validatedData['created_by'] = auth()->id();
 
-            PaymentStopRequests::create($validatedData);
+            $paymentStopRequests = PaymentStopRequests::create($validatedData);
+
+            RequestHistory::store(
+                $paymentStopRequests->id,
+                RequestTypeEnum::PAYMENT_STOP_REQUEST,
+                json_encode($paymentStopRequests),
+                RequestEventTypeEnum::REQUEST_CREATED,
+                $paymentStopRequests->created_at,
+                auth()->id()
+            );
 
             return redirect()->route('pensionnaire.payment-stop-request-form')->with('success', 'La demande de cessation de paiement a été soumise avec succès.');
         } catch (\Illuminate\Validation\ValidationException $e) {

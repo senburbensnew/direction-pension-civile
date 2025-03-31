@@ -27,7 +27,9 @@ class User extends Authenticatable
         'pension_code',
         "created_at",
         "updated_at",
-        "profile_photo"
+        "profile_photo",
+        "firstname",
+        "lastname"
     ];
 
     /**
