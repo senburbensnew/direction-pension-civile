@@ -7,7 +7,7 @@
     </nav>
 
     <form method="POST" action="{{ route('pensionnaire.process-existence-proof-request') }}"
-        class="p-4 md:p-5 bg-white shadow-md rounded-lg border">
+        class="p-4 md:p-5 bg-white shadow-md rounded-lg border" enctype="multipart/form-data">
         @csrf
         <!-- Header Section -->
         <div class="flex flex-col md:flex-row justify-between items-center mb-8 gap-4">
@@ -15,12 +15,15 @@
             <div class="w-full md:w-40 order-1">
                 <div class="relative">
                     <input type="text" name="id_number" id="id_number" value="{{ old('id_number') }}"
-                        class="peer w-full h-12 py-2 text-lg border-b-2 border-gray-500 focus:outline-none placeholder-transparent"
+                        class="peer w-full h-12 py-2 text-lg border-b-2 border-gray-500 focus:outline-none placeholder-transparent @error('id_number') border-red-500 @else border-gray-300 @enderror"
                         placeholder="NO D’IDENTITE" aria-label="Numéro d'identité" />
                     <label for="id_number"
                         class="absolute left-0 -top-4 text-gray-500 text-sm transition-all peer-placeholder-shown:top-2 peer-placeholder-shown:text-base peer-focus:-top-4 peer-focus:text-sm">
                         NO D’IDENTITE
                     </label>
+                    @error('id_number')
+                        <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                    @enderror
                 </div>
             </div>
 
@@ -74,6 +77,9 @@
                 <input value="{{ old('fiscal_year') }}" placeholder="20../20.." type="text" name="fiscal_year"
                     id="annee_fiscale" min="1900" max="2100"
                     class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                @error('fiscal_year')
+                    <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                @enderror
             </div>
 
             <!-- Personal Information -->
@@ -85,6 +91,9 @@
                         <input type="text" name="nif" id="nif" value="{{ auth()->user()->nif }}"
                             class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 bg-gray-100"
                             readonly>
+                        @error('nif')
+                            <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                        @enderror
                     </div>
 
                     <!-- Name Fields -->
@@ -92,12 +101,18 @@
                         <label for="nom" class="block text-sm font-medium text-gray-700">NOM *</label>
                         <input value="{{ old('lastname') }}" type="text" name="lastname" id="nom"
                             class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                        @error('lastname')
+                            <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                        @enderror
                     </div>
 
                     <div>
                         <label for="prenom" class="block text-sm font-medium text-gray-700">PRENOM *</label>
                         <input value="{{ old('firstname') }}" type="text" name="firstname" id="prenom"
                             class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                        @error('firstname')
+                            <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                        @enderror
                     </div>
 
                     <!-- Address Fields -->
@@ -105,12 +120,18 @@
                         <label for="adresse" class="block text-sm font-medium text-gray-700">ADRESSE *</label>
                         <input value="{{ old('address') }}" type="text" name="address" id="adresse"
                             class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                        @error('address')
+                            <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                        @enderror
                     </div>
 
                     <div>
                         <label for="location" class="block text-sm font-medium text-gray-700">LOCALISATION *</label>
                         <input value="{{ old('location') }}" type="text" name="location" id="location"
                             class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                        @error('location')
+                            <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                        @enderror
                     </div>
 
                     <!-- Birth Date -->
@@ -119,6 +140,9 @@
                             *</label>
                         <input value="{{ old('birth_date') }}" type="date" name="birth_date" id="date_naissance"
                             class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                        @error('birth_date')
+                            <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                        @enderror
                     </div>
 
                     <!-- Civil Status -->
@@ -133,6 +157,9 @@
                                 </option>
                             @endforeach
                         </select>
+                        @error('civil_status_id')
+                            <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                        @enderror
                     </div>
 
                     <!-- Gender -->
@@ -147,6 +174,9 @@
                                 </option>
                             @endforeach
                         </select>
+                        @error('gender_id')
+                            <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                        @enderror
                     </div>
 
                     <!-- Contact Info -->
@@ -156,12 +186,18 @@
                         <input value="{{ old('postal_address') }}" type="text" name="postal_address"
                             id="boite_postale"
                             class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                        @error('postal_address')
+                            <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                        @enderror
                     </div>
 
                     <div>
                         <label for="telephone" class="block text-sm font-medium text-gray-700">TELEPHONE *</label>
                         <input value="{{ old('phone') }}" type="tel" name="phone" id="telephone"
                             class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                        @error('phone')
+                            <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                        @enderror
                     </div>
 
                     <!-- Pension Info -->
@@ -172,6 +208,9 @@
                             id="montant_pension"
                             class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
                             min="0">
+                        @error('pension_amount')
+                            <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                        @enderror
                     </div>
 
                     <div>
@@ -179,6 +218,9 @@
                         <input value="{{ old('monitor_number') }}" type="text" name="monitor_number"
                             id="no_moniteur"
                             class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                        @error('monitor_number')
+                            <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                        @enderror
                     </div>
 
                     <!-- Dates -->
@@ -188,6 +230,9 @@
                         <input value="{{ old('monitor_date') }}" type="date" name="monitor_date"
                             id="date_moniteur"
                             class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                        @error('monitor_date')
+                            <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                        @enderror
                     </div>
 
                     <div>
@@ -196,6 +241,9 @@
                         <input value="{{ old('pension_start_date') }}" type="date" name="pension_start_date"
                             id="debut_pension"
                             class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                        @error('pension_start_date')
+                            <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                        @enderror
                     </div>
 
                     <div>
@@ -203,10 +251,13 @@
                         <input value="{{ old('pension_end_date') }}" type="date" name="pension_end_date"
                             id="fin_pension"
                             class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                        @error('pension_end_date')
+                            <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                        @enderror
                     </div>
 
                     <!-- Pension Type -->
-                    <div class="md:col-span-2">
+                    <div class="md:col-span-2 border rounded-lg p-3">
                         <label class="block text-sm font-medium text-gray-700 mb-2">NATURE PENSION *</label>
                         <div class="grid grid-cols-1 md:grid-cols-3 gap-2">
                             @foreach ($pensionCategories as $category)
@@ -222,6 +273,9 @@
                             @endforeach
                         </div>
                     </div>
+                    @error('pension_category_id')
+                        <p class="text-sm text-red-600">{{ $message }}</p>
+                    @enderror
                 </div>
             </fieldset>
 

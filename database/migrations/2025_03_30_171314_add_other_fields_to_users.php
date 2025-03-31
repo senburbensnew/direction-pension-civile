@@ -11,11 +11,12 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('users', function (Blueprint $table) {
-            $table->string('profile_picture')->nullable();
-            $table->string('email')->unique();
+        Schema::table('users', function (Blueprint $table) {
+            $table->string('ninu')->nullable();
             $table->string('firstname')->nullable();
             $table->string('lastname')->nullable();
+            $table->string('profile_photo')->nullable();
+            $table->string('signature')->nullable();
         });
     }
 

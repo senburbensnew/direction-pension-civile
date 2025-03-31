@@ -1,6 +1,9 @@
 <div class="signature-container">
-    <input type="hidden" id="signature-input" name="signature">
-    <canvas id="signature-pad"></canvas>
+    @error('signature')
+        <p class="text-sm text-red-600">{{ $message }}</p>
+    @enderror
+    <input type="hidden" type="file" accept="image/*" id="signature-input" name="signature" />
+    <canvas id="signature-pad" class="@error('signature') border-red-500 @enderror"></canvas>
     <div class="button-container">
         <span id="clear" aria-label="Supprimer">
             effacer
@@ -13,97 +16,97 @@
     </div>
 </div>
 
-@push('styles')
-    <style>
-        .signature-container {
-            display: flex;
-            flex-direction: column;
-            align-items: flex-start;
-            gap: 15px;
-        }
+{{-- @push('styles') --}}
+<style>
+    .signature-container {
+        display: flex;
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 15px;
+    }
 
-        .signature-container canvas {
-            width: 100%;
-            height: 150px;
-            border: 2px dotted #d3d3d3;
-            background-color: #fff;
-            cursor: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"><path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/></svg>') 0 16, auto;
-            touch-action: none;
-        }
+    .signature-container canvas {
+        width: 100%;
+        height: 150px;
+        border: 2px dotted #d3d3d3;
+        background-color: #fff;
+        cursor: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"><path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/></svg>') 0 16, auto;
+        touch-action: none;
+    }
 
-        .button-container {
-            display: flex;
-            gap: 10px;
-            width: 100%;
-        }
+    .button-container {
+        display: flex;
+        gap: 10px;
+        width: 100%;
+    }
 
-        .button-container span {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            // width: 40px;
-            height: 40px;
-            cursor: pointer;
-            border: none;
-            border-radius: 5px;
-            transition: all 0.3s ease;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            padding: 8px;
-            background-color: #f0f0f0;
-        }
+    .button-container span {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        // width: 40px;
+        height: 40px;
+        cursor: pointer;
+        border: none;
+        border-radius: 5px;
+        transition: all 0.3s ease;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 8px;
+        // background-color: #f0f0f0;
+    }
 
-        #clear {
-            background-color: #ffe6e6;
-            color: #e74c3c;
-        }
+    #clear {
+        // background-color: #ffe6e6;
+        color: #e74c3c;
+    }
 
-        #clear:hover {
-            transform: translateY(-1px);
-        }
+    #clear:hover {
+        transform: translateY(-1px);
+    }
 
-        #clear svg {
-            width: 20px;
-            height: 20px;
-            fill: #e74c3c;
-        }
+    #clear svg {
+        width: 20px;
+        height: 20px;
+        fill: #e74c3c;
+    }
 
-        #confirm {
-            background-color: #e6f6e6;
-            color: #2ecc71;
-        }
+    #confirm {
+        // background-color: #e6f6e6;
+        color: #2ecc71;
+    }
 
-        #confirm:hover {
-            background-color: #d4efdf;
-            transform: translateY(-1px);
-        }
+    #confirm:hover {
+        // background-color: #d4efdf;
+        transform: translateY(-1px);
+    }
 
-        #confirm svg {
-            width: 20px;
-            height: 20px;
-            fill: #2ecc71;
-        }
+    #confirm svg {
+        width: 20px;
+        height: 20px;
+        fill: #2ecc71;
+    }
 
-        /* Save button styling */
-        #save-as-image {
-            background-color: #d6e8f3;
-            color: #3498db;
-        }
+    /* Save button styling */
+    #save-as-image {
+        background-color: #d6e8f3;
+        color: #3498db;
+    }
 
-        #save-as-image:hover {
-            transform: translateY(-1px);
-        }
+    #save-as-image:hover {
+        transform: translateY(-1px);
+    }
 
-        #save-as-image svg {
-            width: 20px;
-            height: 20px;
-            fill: #3498db;
-        }
-    </style>
-@endpush
+    #save-as-image svg {
+        width: 20px;
+        height: 20px;
+        fill: #3498db;
+    }
+</style>
+{{-- @endpush --}}
 
-@push('scripts')
+{{-- @push('scripts')
     <script>
         document.addEventListener('DOMContentLoaded', function() {
             const canvas = document.getElementById('signature-pad');
@@ -213,7 +216,6 @@
 
                 signatureInput.value = imageData;
 
-                alert('Signature enregistrée avec succès !');
                 canvas.style.borderColor = '#2ecc71';
             });
 
@@ -230,4 +232,143 @@
             });
         });
     </script>
-@endpush
+@endpush --}}
+
+{{-- @push('scripts') --}}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const canvas = document.getElementById('signature-pad');
+        const ctx = canvas.getContext('2d');
+        let drawing = false;
+
+        // Handle high DPI displays
+        const rect = canvas.getBoundingClientRect();
+        const dpr = window.devicePixelRatio || 1;
+        canvas.width = rect.width * dpr;
+        canvas.height = rect.height * dpr;
+        ctx.scale(dpr, dpr);
+
+        // Initial styling
+        ctx.lineWidth = 2;
+        ctx.lineCap = 'round';
+        ctx.strokeStyle = '#000';
+
+        // Cross-browser coordinates handling
+        function getCanvasPosition(e) {
+            const rect = canvas.getBoundingClientRect();
+            let x, y;
+
+            if (e.touches) {
+                x = e.touches[0].clientX - rect.left;
+                y = e.touches[0].clientY - rect.top;
+            } else {
+                x = e.clientX - rect.left;
+                y = e.clientY - rect.top;
+            }
+
+            return {
+                x: x * (canvas.width / rect.width / dpr),
+                y: y * (canvas.height / rect.height / dpr)
+            };
+        }
+
+        // Drawing functions
+        function startDrawing(e) {
+            drawing = true;
+            const pos = getCanvasPosition(e);
+            ctx.beginPath();
+            ctx.moveTo(pos.x, pos.y);
+        }
+
+        function draw(e) {
+            if (!drawing) return;
+            const pos = getCanvasPosition(e);
+            ctx.lineTo(pos.x, pos.y);
+            ctx.stroke();
+        }
+
+        function stopDrawing() {
+            drawing = false;
+        }
+
+        // Event listeners
+        canvas.addEventListener('mousedown', startDrawing);
+        canvas.addEventListener('mousemove', draw);
+        canvas.addEventListener('mouseup', stopDrawing);
+        canvas.addEventListener('mouseout', stopDrawing);
+
+        // Touch support
+        canvas.addEventListener('touchstart', (e) => {
+            e.preventDefault();
+            startDrawing(e);
+        });
+        canvas.addEventListener('touchmove', (e) => {
+            e.preventDefault();
+            draw(e);
+        });
+        canvas.addEventListener('touchend', stopDrawing);
+
+        // Clear button
+        document.getElementById('clear').addEventListener('click', () => {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            const signatureInput = document.getElementById('signature-input');
+            if (signatureInput) {
+                signatureInput.value = '';
+            }
+            canvas.style.borderColor = '#d3d3d3';
+        });
+
+        // Blank canvas reference
+        const blankCanvas = document.createElement('canvas');
+        blankCanvas.width = canvas.width;
+        blankCanvas.height = canvas.height;
+
+        // Confirm signature
+        document.getElementById('confirm').addEventListener('click', () => {
+            if (canvas.toDataURL() === blankCanvas.toDataURL()) {
+                alert('Fournir une signature d\'abord !');
+                return;
+            }
+
+            const tempCanvas = document.createElement('canvas');
+            const tempCtx = tempCanvas.getContext('2d');
+
+            tempCanvas.width = canvas.width;
+            tempCanvas.height = canvas.height;
+
+            // Create transparent background
+            tempCtx.clearRect(0, 0, tempCanvas.width, tempCanvas.height);
+            tempCtx.drawImage(canvas, 0, 0);
+
+            // Save as PNG
+            const imageData = tempCanvas.toDataURL('image/png');
+
+            // Create or update hidden input
+            let signatureInput = document.getElementById('signature-input');
+            if (!signatureInput) {
+                signatureInput = document.createElement('input');
+                signatureInput.type = 'hidden';
+                signatureInput.id = 'signature-input';
+                signatureInput.name = 'signature';
+                document.querySelector('.signature-container').appendChild(signatureInput);
+            }
+
+            signatureInput.value = imageData;
+            canvas.style.borderColor = '#2ecc71';
+        });
+
+        // Save as image
+        document.getElementById('save-as-image').addEventListener('click', () => {
+            if (canvas.toDataURL() === blankCanvas.toDataURL()) {
+                alert('Aucune signature à enregistrer !');
+                return;
+            }
+
+            const link = document.createElement('a');
+            link.href = canvas.toDataURL('image/png');
+            link.download = 'signature.png';
+            link.click();
+        });
+    });
+</script>
+{{-- @endpush --}}

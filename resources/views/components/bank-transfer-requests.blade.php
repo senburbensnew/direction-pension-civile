@@ -366,7 +366,7 @@
                         <p class="text-xs font-semibold text-gray-600 uppercase tracking-wide">
                             Chef de Service de la Comptabilité
                         </p>
-                        <div class="h-2 border-t-2 border-gray-700"></div>
+                        <div class="h-0.5 bg-gray-300 my-2"></div>
                     </div>
 
                     <!-- Pensionné Signature -->
@@ -374,7 +374,7 @@
                         <p class="text-xs font-semibold text-gray-600 uppercase tracking-wide">
                             Signature du Pensionné
                         </p>
-                        <div class="h-2 border-t-2 border-gray-700"></div>
+                        <div class="h-0.5 bg-gray-300 my-2"></div>
                         <x-signature-pad />
                     </div>
                 </div>

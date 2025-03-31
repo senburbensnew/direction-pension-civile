@@ -13,10 +13,27 @@
         @csrf
         <!-- Name -->
         <div>
-            <x-input-label for="name" :value="__('Name')" />
-            <x-text-input id="name" class="block mt-1 w-full" type="text" name="name" :value="old('name')" autofocus
-                autocomplete="name" placeholder="ex: Pierre Rubens MILORME" />
+            <x-profile-picture />
+        </div>
+        <div>
+            <x-input-label for="name" :value="__('Nom complet')" />
+            <x-text-input id="name" class="bg-gray-200 block mt-1 w-full" type="text" name="name"
+                :value="old('name')" autofocus autocomplete="name" placeholder="ex: Pierre Rubens MILORME" readonly />
             <x-input-error :messages="$errors->get('name')" class="mt-2" />
+        </div>
+
+        <div class="mt-4">
+            <x-input-label for="lastname" :value="__('Nom')" />
+            <x-text-input id="lastname" class="block mt-1 w-full" type="text" name="lastname" :value="old('lastname')"
+                autofocus autocomplete="lastname" placeholder="ex: MILORME" />
+            <x-input-error :messages="$errors->get('lastname')" class="mt-2" />
+        </div>
+
+        <div class="mt-4">
+            <x-input-label for="firstname" :value="__('Prenom')" />
+            <x-text-input id="firstname" class="block mt-1 w-full" type="text" name="firstname" :value="old('firstname')"
+                autofocus autocomplete="firstname" placeholder="ex: Pierre Rubens" />
+            <x-input-error :messages="$errors->get('firstname')" class="mt-2" />
         </div>
 
         <!-- Email Address -->
@@ -76,6 +93,18 @@
             <x-input-error :messages="$errors->get('nif')" class="mt-2" />
         </div>
 
+        <div class="mt-4">
+            <x-input-label for="ninu" :value="__('NINU')" />
+            <x-text-input id="ninu" class="block mt-1 w-full" type="text" name="ninu" :value="old('ninu')"
+                placeholder="ex: 123-456-789-0" />
+            <x-input-error :messages="$errors->get('ninu')" class="mt-2" />
+        </div>
+
+        <div class="mt-4">
+            <x-input-label for="signature" :value="__('Signature')" />
+            <x-signature-pad />
+        </div>
+
         <div class="flex items-center justify-end mt-4">
             <a class="underline text-sm text-gray-600 hover:text-gray-900 rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
                 href="{{ route('login') }}">
@@ -105,5 +134,20 @@
 
         // Trigger change event on page load to set the initial visibility state
         document.querySelector('input[name="user_type"]:checked')?.dispatchEvent(new Event('change'));
+    </script>
+    <script>
+        // Function to update the 'name' field
+        function updateNameField() {
+            const lastname = document.getElementById('lastname').value.trim();
+            const firstname = document.getElementById('firstname').value.trim();
+            document.getElementById('name').value = [firstname, lastname].filter(Boolean).join(' ');
+        }
+
+        // Initial update when the page loads
+        updateNameField();
+
+        // Add event listeners to both fields
+        document.getElementById('lastname').addEventListener('input', updateNameField);
+        document.getElementById('firstname').addEventListener('input', updateNameField);
     </script>
 </x-guest-layout>
