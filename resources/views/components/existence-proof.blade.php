@@ -309,7 +309,7 @@
                     <div class="mt-4">
                         <button type="button" onclick="addDependantRow()"
                             class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded text-sm">
-                            + Ajouter un dépendant
+                            + Ajouter dépendant
                         </button>
                     </div>
                 </div>
@@ -353,7 +353,6 @@
     </form>
 </div>
 
-<!-- Hidden Template -->
 <div class="hidden">
     <select id="genderOptionsTemplate">
         <option value="">Sélectionner</option>

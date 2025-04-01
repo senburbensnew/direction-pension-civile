@@ -141,7 +141,7 @@ class PensionnaireController extends Controller
     
             $validated['created_by'] = auth()->id();
     
-            $bankTransferRequests = BankTransferRequests::create($validated);
+/*             $bankTransferRequests = BankTransferRequests::create($validated);
 
             RequestHistory::store(
                 $bankTransferRequests->id,
@@ -150,7 +150,24 @@ class PensionnaireController extends Controller
                 RequestEventTypeEnum::REQUEST_CREATED,
                 $bankTransferRequests->created_at,
                 auth()->id()
-            );
+            ); */
+
+            $bankTransferRequest = DB::transaction(function () use ($validated) {
+                // Create the BankTransferRequest
+                $bankTransferRequest = BankTransferRequests::create($validated);
+    
+                // Create the associated RequestHistory
+                RequestHistory::store(
+                    $bankTransferRequest->id,
+                    RequestTypeEnum::BANK_TRANSFER_REQUEST,
+                    json_encode($bankTransferRequest),
+                    RequestEventTypeEnum::REQUEST_CREATED,
+                    $bankTransferRequest->created_at,
+                    auth()->id()
+                );
+    
+                return $bankTransferRequest;
+            });       
     
             return redirect()->back()
                 ->with('success', 'Demande de virement enregistrée avec succès! Un email de confirmation vous a été envoyé.');
@@ -262,7 +279,7 @@ class PensionnaireController extends Controller
 
             // Validation logic
             $validatedData = $request->validate([
-                // 'fiscal_year' => 'required|string|max:255',
+                'fiscal_year' => 'required|string|max:255',
                 'start_month' => 'required|string|size:7',  // Ensures the month is in the format YYYY-MM
                 'request_date' => 'required|date',
                 'pension_category_id' => 'required|in:' . implode(',', $validPensionCategories), // Ensures that the pension_category_id exists in the pension_categories table
@@ -285,7 +302,7 @@ class PensionnaireController extends Controller
             $validatedData['status_id'] = Status::getStatusPending()->id;
             $validatedData['created_by'] = auth()->id();
 
-            $checkTransferRequests = CheckTransferRequests::create($validatedData);
+/*             $checkTransferRequests = CheckTransferRequests::create($validatedData);
 
             RequestHistory::store(
                 $checkTransferRequests->id,
@@ -294,7 +311,24 @@ class PensionnaireController extends Controller
                 RequestEventTypeEnum::REQUEST_CREATED,
                 $checkTransferRequests->created_at,
                 auth()->id()
-            );
+            ); */
+
+            $checkTransferRequest = DB::transaction(function () use ($validatedData) {
+                // Create the BankTransferRequest
+                $checkTransferRequest = CheckTransferRequests::create($validatedData);
+    
+                // Create the associated RequestHistory
+                RequestHistory::store(
+                    $checkTransferRequest->id,
+                    RequestTypeEnum::CHECK_TRANSFER_REQUEST,
+                    json_encode($checkTransferRequest),
+                    RequestEventTypeEnum::REQUEST_CREATED,
+                    $checkTransferRequest->created_at,
+                    auth()->id()
+                );
+    
+                return $checkTransferRequest;
+            });
 
             return redirect()->route('pensionnaire.check-transfer-request-form')->with('success', 'La demande de transfert a été soumise avec succès.');
        } catch (\Illuminate\Validation\ValidationException $e) {
@@ -400,16 +434,22 @@ class PensionnaireController extends Controller
             $validatedData['status_id'] = Status::getStatusPending()->id;
             $validatedData['created_by'] = auth()->id();
 
-            $paymentStopRequests = PaymentStopRequests::create($validatedData);
-
-            RequestHistory::store(
-                $paymentStopRequests->id,
-                RequestTypeEnum::PAYMENT_STOP_REQUEST,
-                json_encode($paymentStopRequests),
-                RequestEventTypeEnum::REQUEST_CREATED,
-                $paymentStopRequests->created_at,
-                auth()->id()
-            );
+            $paymentStopRequest = DB::transaction(function () use ($validatedData) {
+                // Create the BankTransferRequest
+                $paymentStopRequest = PaymentStopRequests::create($validatedData);
+    
+                // Create the associated RequestHistory
+                RequestHistory::store(
+                    $paymentStopRequest->id,
+                    RequestTypeEnum::PAYMENT_STOP_REQUEST,
+                    json_encode($paymentStopRequest),
+                    RequestEventTypeEnum::REQUEST_CREATED,
+                    $paymentStopRequest->created_at,
+                    auth()->id()
+                );
+    
+                return $paymentStopRequest;
+            });
 
             return redirect()->route('pensionnaire.payment-stop-request-form')->with('success', 'La demande de cessation de paiement a été soumise avec succès.');
         } catch (\Illuminate\Validation\ValidationException $e) {
@@ -764,7 +804,7 @@ class PensionnaireController extends Controller
     
             $validatedData = $request->validate($validationRules, $messages, $attributes);
     
-            DB::beginTransaction();
+            // DB::beginTransaction();
     
             // Process signature
             $signaturePath = Helpers::processBase64Image(
@@ -794,27 +834,24 @@ class PensionnaireController extends Controller
             $validatedData['created_by'] = auth()->id();
     
             // Create record
-            $existenceProofRequest = ExistenceProofRequest::create($validatedData);
+            $existenceProofRequest = DB::transaction(function () use ($validatedData) {
+                // Create the BankTransferRequest
+                $existenceProofRequest = ExistenceProofRequest::create($validatedData);
     
-            DB::commit();
-
-/*             $requestHistory = new RequestHistory();
-            $requestHistory->request_id = $existenceProofRequest->id;
-            $requestHistory->request_type = RequestTypeEnum::EXISTENCE_PROOF_REQUEST;
-            $requestHistory->request_data = json_encode($existenceProofRequest);
-            $requestHistory->event_type = RequestEventTypeEnum::REQUEST_CREATED;
-            $requestHistory->event_date = $existenceProofRequest->created_at;
-            $requestHistory->created_by = auth()->id();
-            $requestHistory->save(); */
-
-            RequestHistory::store(
-                $existenceProofRequest->id,
-                RequestTypeEnum::EXISTENCE_PROOF_REQUEST,
-                json_encode($existenceProofRequest),
-                RequestEventTypeEnum::REQUEST_CREATED,
-                $existenceProofRequest->created_at,
-                auth()->id()
-            );
+                // Create the associated RequestHistory
+                RequestHistory::store(
+                    $existenceProofRequest->id,
+                    RequestTypeEnum::EXISTENCE_PROOF_REQUEST,
+                    json_encode($existenceProofRequest),
+                    RequestEventTypeEnum::REQUEST_CREATED,
+                    $existenceProofRequest->created_at,
+                    auth()->id()
+                );
+    
+                return $existenceProofRequest;
+            });
+    
+            // DB::commit();
 
             // event(new RequestCreated($bankTranferRequest));
     

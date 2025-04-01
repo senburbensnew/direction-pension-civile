@@ -34,7 +34,7 @@ class RegisteredUserController extends Controller
             'password' => 'mot de passe',
             'nif' => 'NIF',
             'pension_code' => 'code pension',
-            'user_type' => 'type d\'utilisateur',
+            'user_type_id' => 'type d\'utilisateur',
             "profile_photo" => "photo profil",
         ];
 
@@ -58,7 +58,7 @@ class RegisteredUserController extends Controller
                 'regex:' . RegexExpressions::nif(),
                 'unique:' . User::class
             ],
-            'user_type' => ['required', 'exists:user_types,id'],
+            'user_type_id' => ['required', 'exists:user_types,id'],
             'pension_code' => [
                 'nullable',
                 'string',
@@ -103,7 +103,7 @@ class RegisteredUserController extends Controller
             'email' => $request->email,
             'password' => Hash::make($request->password),
             'nif' => $request->nif,
-            'user_type_id' => $request->user_type,
+            'user_type_id' => $request->user_type_id,
             'pension_code' => $request->pension_code,
             'profile_photo' => $profilePhotoPath,
             "lastname" => $request->last_name,
@@ -112,19 +112,19 @@ class RegisteredUserController extends Controller
     
         // Determine role based on user type
         $userType = $user->userType->name; // Assuming `userType` is a relationship to the `UserType` model
-        
+
         switch ($userType) {
-            case UserTypeEnum::FONCTIONNAIRE :
-                $user->assignRole('fonctionnaire');
+            case UserTypeEnum::FONCTIONNAIRE->value :
+                $user->assignRole(UserTypeEnum::FONCTIONNAIRE->value);
                 break;    
             case UserTypeEnum::PENSIONNAIRE :
-                $user->assignRole('pensionnaire');
+                $user->assignRole(UserTypeEnum::PENSIONNAIRE->value);
                 break;    
             case UserTypeEnum::INSTITUTION :
-                $user->assignRole('institution');
+                $user->assignRole(UserTypeEnum::INSTITUTION->value);
                 break;    
             default:
-                $user->assignRole('pensionnaire');
+                $user->assignRole(UserTypeEnum::PENSIONNAIRE->value);
                 break;
         }
     

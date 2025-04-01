@@ -41,7 +41,7 @@
             var swiper = new Swiper(".mySwiper", {
                 loop: true,
                 autoplay: {
-                    delay: 3000, // Change slides every 3 seconds
+                    delay: 6000, // Change slides every 3 seconds
                     disableOnInteraction: false // Keeps autoplay even when user interacts
                 },
                 pagination: {

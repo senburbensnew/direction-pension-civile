@@ -29,10 +29,8 @@
                     <h3 class="text-base md:text-lg font-semibold mb-2">Formulaire de doléances / Demande de Transfert
                     </h3>
                     <p class="text-sm md:text-gray-600">Service de Comptabilité</p>
-                    <p class="text-sm md:text-gray-600 mt-1 ">
-                        Exercice : <span
-                            class="@error('fiscal_year') border border-red-500 @else border-gray-300 @enderror"
-                            id="editableText" contenteditable="true">20.../20...</span></p>
+                    <p class="text-sm md:text-gray-600 mt-1">
+                        Exercice : <span id="editableText" contenteditable="true">20.../20...</span></p>
                 </div>
 
                 <!-- Hidden on mobile, visible on md+ screens -->
@@ -281,7 +279,7 @@
 
             <!-- Signature Section -->
             <fieldset class="shadow-md rounded-lg p-5 border mb-6">
-                <div class="text-left mb-4"> <!-- Added margin-bottom -->
+                <div class="text-left mb-4">
                     <p class="font-semibold text-gray-600 pt-5">
                         Fait à <span contenteditable="true">Port-au-Prince</span>, le
                         <span class="inline-block mx-2 px-2 bg-gray-100 rounded">{{ now()->format('d/m/Y') }}</span>

@@ -80,15 +80,16 @@
             <!-- Radio buttons for user types -->
             <div class="flex justify-between">
                 @foreach ($userTypes as $type)
+                    {{ $type->name }}
                     <label for="user_type_{{ $type->name }}" class="{{ $loop->last ? 'ml-4' : '' }}">
-                        <input type="radio" id="user_type_{{ $type->name }}" name="user_type"
-                            value="{{ $type->id }}" {{ old('user_type') == $type->id ? 'checked' : '' }}
-                            {{ old('user_type', request()->isMethod('get') ? 'pensionnaire' : null) == $type->name ? 'checked' : '' }} />
+                        <input type="radio" id="user_type_{{ $type->name }}" name="user_type_id"
+                            value="{{ $type->id }}" {{ old('user_type_id') == $type->id ? 'checked' : '' }}
+                            {{ old('user_type_id', request()->isMethod('get') ? 'pensionnaire' : null) == $type->name ? 'checked' : '' }} />
                         {{ ucfirst($type->name) }}
                     </label>
                 @endforeach
             </div>
-            <x-input-error :messages="$errors->get('user_type')" class="mt-2" />
+            <x-input-error :messages="$errors->get('user_type_id')" class="mt-2" />
         </div>
 
         <!-- Pension Code (only visible when "Pensionnaire" is selected) -->
@@ -133,7 +134,7 @@
 
     <script>
         // Show or hide pension code field based on selected user type (radio buttons)
-        document.querySelectorAll('input[name="user_type"]').forEach(function(radio) {
+        document.querySelectorAll('input[name="user_type_id"]').forEach(function(radio) {
             radio.addEventListener('change', function() {
                 var pensionCodeContainer = document.getElementById('pension_code_container');
                 var pensionCodeInput = document.getElementById('pension_code');
@@ -147,7 +148,7 @@
         });
 
         // Trigger change event on page load to set the initial visibility state
-        document.querySelector('input[name="user_type"]:checked')?.dispatchEvent(new Event('change'));
+        document.querySelector('input[name="user_type_id"]:checked')?.dispatchEvent(new Event('change'));
     </script>
     <script>
         // Function to update the 'name' field
