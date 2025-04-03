@@ -49,17 +49,9 @@
         <!-- Sidebar -->
         <aside class="sidebar fixed inset-y-0 left-0 z-50 w-64 bg-[#173152] overflow-y-auto">
             <div class="p-4">
-                <h2 class="text-white text-xl font-semibold">Admin Panel</h2>
+                <h2 class="text-white text-xl font-semibold">Administration</h2>
             </div>
             <nav class="mt-4">
-                <a href="{{ route('admin.users.index') }}"
-                    class="flex items-center px-4 py-2 text-gray-300 hover:bg-gray-700 {{ request()->routeIs('admin.users.index') ? 'bg-gray-700' : '' }}">
-                    <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                            d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                    </svg>
-                    Users
-                </a>
                 <a href="{{ route('admin.carousels.index') }}"
                     class="flex items-center px-4 py-2 text-gray-300 hover:bg-gray-700 {{ request()->routeIs('admin.carousels.index') ? 'bg-gray-700' : '' }}">
                     <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -69,9 +61,31 @@
                             fill="none" />
                         <path d="M2 18L8 12L12 16L18 10L22 14" stroke="currentColor" stroke-width="2" fill="none" />
                     </svg>
-                    Carousel
+                    Carrousel
+                </a>
+                <a href="{{ route('admin.users.index') }}"
+                    class="flex items-center px-4 py-2 text-gray-300 hover:bg-gray-700 {{ request()->routeIs('admin.users.index') ? 'bg-gray-700' : '' }}">
+                    <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                    </svg>
+                    Utilisateurs
+                </a>
+                <a href="#" class="flex items-center px-4 py-2 text-gray-300 hover:bg-gray-700">
+                    <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                    </svg>
+                    Roles et Permissions
                 </a>
             </nav>
+            <a href="#" class="flex items-center px-4 py-2 text-gray-300 hover:bg-gray-700">
+                <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                </svg>
+                Directrice
+            </a>
         </aside>
 
         <!-- Main Content -->
@@ -96,7 +110,7 @@
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                     d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
                             </svg>
-                            <span class="hidden sm:inline">Home</span>
+                            <span class="hidden sm:inline">Accueil</span>
                         </a>
                     </div>
 
