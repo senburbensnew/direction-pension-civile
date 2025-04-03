@@ -117,10 +117,10 @@ class RegisteredUserController extends Controller
             case UserTypeEnum::FONCTIONNAIRE->value :
                 $user->assignRole(UserTypeEnum::FONCTIONNAIRE->value);
                 break;    
-            case UserTypeEnum::PENSIONNAIRE :
+            case UserTypeEnum::PENSIONNAIRE->value :
                 $user->assignRole(UserTypeEnum::PENSIONNAIRE->value);
                 break;    
-            case UserTypeEnum::INSTITUTION :
+            case UserTypeEnum::INSTITUTION->value :
                 $user->assignRole(UserTypeEnum::INSTITUTION->value);
                 break;    
             default:

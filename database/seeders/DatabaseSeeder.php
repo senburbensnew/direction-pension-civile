@@ -28,5 +28,6 @@ class DatabaseSeeder extends Seeder
         $this->call(PensionTypesSeeder::class);
         $this->call(PensionCategoriesSeeder::class);
         $this->call(RequestTypeSeeder::class);
+        $this->call(ParametersSeeder::class);
     }
 }

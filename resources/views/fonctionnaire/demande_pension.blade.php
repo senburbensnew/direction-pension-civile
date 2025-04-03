@@ -41,7 +41,9 @@
             <div class="space-y-8">
                 <!-- Pension Request Section -->
                 <fieldset class="bg-white shadow-md rounded-xl p-6 border border-gray-200 mb-8">
-                    <legend class="text-lg font-semibold text-gray-800 mb-4 px-2">Demande de pension standard</legend>
+                    <legend class="text-lg font-semibold text-gray-800 mb-4 px-2">Demande de pension standard (pour tout
+                        agent public ayant fourni à l’État un minimum de cinq (5) années (60 mois) de service âgé de 58 ans)
+                    </legend>
                     <ul class="list-disc ml-6 space-y-2 text-gray-700">
                         <li>Original Certificat de Carrière</li>
                         <li>Copie du Moniteur (pour les Grands Commis)</li>
@@ -63,7 +65,9 @@
 
                 <!-- Pension Reversion Section -->
                 <fieldset class="bg-white shadow-md rounded-xl p-6 border border-gray-200 mb-8">
-                    <legend class="text-lg font-semibold text-gray-800 mb-4 px-2">Demande de pension par réversion</legend>
+                    <legend class="text-lg font-semibold text-gray-800 mb-4 px-2">Demande de pension par réversion (si le
+                        défunt est fonctionnaire et laisse un conjoint survivant et des enfants mineurs et ou majeurs
+                        jusqu’à 24 ans)</legend>
                     <ul class="list-disc ml-6 space-y-2 text-gray-700">
                         <li>Original Certificat de Carrière</li>
                         <li>Copie et Original Acte de décès</li>

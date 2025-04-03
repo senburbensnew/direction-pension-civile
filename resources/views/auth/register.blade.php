@@ -18,14 +18,14 @@
         <div>
             <x-input-label for="name" :value="__('Nom complet')" />
             <x-text-input id="name" class="bg-gray-100 block mt-1 w-full" type="text" name="name"
-                :value="old('name')" autofocus autocomplete="name" placeholder="Pierre Rubens MILORME" readonly />
+                :value="old('name')" autocomplete="name" placeholder="Pierre Rubens MILORME" readonly />
             <x-input-error :messages="$errors->get('name')" class="mt-2" />
         </div>
 
         <div class="mt-4">
             <x-input-label for="lastname" :value="__('Nom')" />
-            <x-text-input id="lastname" class="block mt-1 w-full" type="text" name="lastname" :value="old('lastname')"
-                autofocus autocomplete="lastname" placeholder="ex: MILORME" />
+            <x-text-input id="lastname" autofocus class="block mt-1 w-full" type="text" name="lastname"
+                :value="old('lastname')" autofocus autocomplete="lastname" placeholder="ex: MILORME" />
             <x-input-error :messages="$errors->get('lastname')" class="mt-2" />
         </div>
 
@@ -62,7 +62,7 @@
         <div class="mt-4">
             <x-input-label for="password" :value="__('Password')" />
             <x-text-input id="password" class="block mt-1 w-full" type="password" name="password"
-                autocomplete="new-password" placeholder="*********" />
+                autocomplete="new-password" placeholder="********" />
             <x-input-error :messages="$errors->get('password')" class="mt-2" />
         </div>
 
@@ -80,7 +80,6 @@
             <!-- Radio buttons for user types -->
             <div class="flex justify-between">
                 @foreach ($userTypes as $type)
-                    {{ $type->name }}
                     <label for="user_type_{{ $type->name }}" class="{{ $loop->last ? 'ml-4' : '' }}">
                         <input type="radio" id="user_type_{{ $type->name }}" name="user_type_id"
                             value="{{ $type->id }}" {{ old('user_type_id') == $type->id ? 'checked' : '' }}
