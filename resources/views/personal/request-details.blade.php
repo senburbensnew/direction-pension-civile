@@ -16,6 +16,14 @@
                             </svg>
                             Modifier
                         </a>
+                        <a href=""
+                            class="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-md flex items-center transition-colors">
+                            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 114.95 0 2.5 2.5 0 01-4.95 0M12 15v3m0 0h3m-3 0H9m6-12a3 3 0 11-6 0 3 3 0 016 0z" />
+                            </svg>
+                            Annuler
+                        </a>
                         <a href="{{ route('personal.dashboard') }}"
                             class="bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-2 rounded-md flex items-center transition-colors">
                             <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -184,6 +192,63 @@
                                 </div>
                             </div>
                         </div>
+                        <!-- History -->
+                        <div class="mt-8 px-6">
+                            <h3 class="ml-1 text-xl font-semibold mb-4 text-gray-800">Historique de la demande</h3>
+
+                            <div class="bg-white rounded-lg shadow-sm border border-gray-100">
+                                @forelse($requestHistories as $history)
+                                    <div class="p-4 border-b border-gray-100 last:border-b-0">
+                                        <div class="flex justify-between items-start">
+                                            <div class="flex-1">
+                                                <div class="flex items-center gap-3 mb-2">
+                                                    <span class="text-sm font-medium text-gray-700">
+                                                        {{ $history->event_type }}
+                                                    </span>
+                                                    <span class="text-xs text-gray-500">
+                                                        {{ $history->event_date }}
+                                                    </span>
+                                                </div>
+
+                                                {{--                                             @if ($history->request_data)
+                                                                        <div class="text-sm text-gray-600 mt-1">
+                                                                            @foreach (json_decode($history->request_data, true) as $key => $value)
+                                                                                <p class="break-words">
+                                                                                    <span
+                                                                                        class="font-medium">{{ ucfirst(str_replace('_', ' ', $key)) }}:</span>
+                                                                                    {{ is_array($value) ? json_encode($value) : $value }}
+                                                                                </p>
+                                                                            @endforeach
+                                                                        </div>
+                                                                    @endif --}}
+                                            </div>
+
+                                            <div class="text-right">
+                                                <p class="text-sm text-gray-500">
+                                                    @if ($history->creator)
+                                                        Par {{ $history->creator->name }}
+                                                    @else
+                                                        Système
+                                                    @endif
+                                                </p>
+                                                <p class="text-xs text-gray-400">
+                                                    #{{ $history->request_type }}
+                                                </p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                @empty
+                                    <div class="p-4 text-center text-gray-500">
+                                        Aucun historique disponible pour cette demande
+                                    </div>
+                                @endforelse
+                            </div>
+
+                            <!-- Pagination -->
+                            <div class="mt-4">
+                                {{ $requestHistories->links() }}
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -203,6 +268,14 @@
                                     d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 114.95 0 2.5 2.5 0 01-4.95 0M12 15v3m0 0h3m-3 0H9m6-12a3 3 0 11-6 0 3 3 0 016 0z" />
                             </svg>
                             Modifier
+                        </a>
+                        <a href=""
+                            class="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-md flex items-center transition-colors">
+                            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 114.95 0 2.5 2.5 0 01-4.95 0M12 15v3m0 0h3m-3 0H9m6-12a3 3 0 11-6 0 3 3 0 016 0z" />
+                            </svg>
+                            Annuler
                         </a>
                         <a href="{{ route('personal.dashboard') }}"
                             class="bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-2 rounded-md flex items-center transition-colors">
@@ -344,6 +417,63 @@
                                 </div>
                             </div>
                         </div>
+                        <!-- History -->
+                        <div class="mt-8 px-6">
+                            <h3 class="ml-1 text-xl font-semibold mb-4 text-gray-800">Historique de la demande</h3>
+
+                            <div class="bg-white rounded-lg shadow-sm border border-gray-100">
+                                @forelse($requestHistories as $history)
+                                    <div class="p-4 border-b border-gray-100 last:border-b-0">
+                                        <div class="flex justify-between items-start">
+                                            <div class="flex-1">
+                                                <div class="flex items-center gap-3 mb-2">
+                                                    <span class="text-sm font-medium text-gray-700">
+                                                        {{ $history->event_type }}
+                                                    </span>
+                                                    <span class="text-xs text-gray-500">
+                                                        {{ $history->event_date }}
+                                                    </span>
+                                                </div>
+
+                                                {{--                                             @if ($history->request_data)
+                                                                        <div class="text-sm text-gray-600 mt-1">
+                                                                            @foreach (json_decode($history->request_data, true) as $key => $value)
+                                                                                <p class="break-words">
+                                                                                    <span
+                                                                                        class="font-medium">{{ ucfirst(str_replace('_', ' ', $key)) }}:</span>
+                                                                                    {{ is_array($value) ? json_encode($value) : $value }}
+                                                                                </p>
+                                                                            @endforeach
+                                                                        </div>
+                                                                    @endif --}}
+                                            </div>
+
+                                            <div class="text-right">
+                                                <p class="text-sm text-gray-500">
+                                                    @if ($history->creator)
+                                                        Par {{ $history->creator->name }}
+                                                    @else
+                                                        Système
+                                                    @endif
+                                                </p>
+                                                <p class="text-xs text-gray-400">
+                                                    #{{ $history->request_type }}
+                                                </p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                @empty
+                                    <div class="p-4 text-center text-gray-500">
+                                        Aucun historique disponible pour cette demande
+                                    </div>
+                                @endforelse
+                            </div>
+
+                            <!-- Pagination -->
+                            <div class="mt-4">
+                                {{ $requestHistories->links() }}
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -363,6 +493,14 @@
                                     d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 114.95 0 2.5 2.5 0 01-4.95 0M12 15v3m0 0h3m-3 0H9m6-12a3 3 0 11-6 0 3 3 0 016 0z" />
                             </svg>
                             Modifier
+                        </a>
+                        <a href=""
+                            class="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-md flex items-center transition-colors">
+                            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 114.95 0 2.5 2.5 0 01-4.95 0M12 15v3m0 0h3m-3 0H9m6-12a3 3 0 11-6 0 3 3 0 016 0z" />
+                            </svg>
+                            Annuler
                         </a>
                         <a href="{{ route('personal.dashboard') }}"
                             class="bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-2 rounded-md flex items-center transition-colors">
@@ -494,6 +632,63 @@
                                 </div>
                             </div>
                         </div>
+                        <!-- History -->
+                        <div class="mt-8 px-6">
+                            <h3 class="ml-1 text-xl font-semibold mb-4 text-gray-800">Historique de la demande</h3>
+
+                            <div class="bg-white rounded-lg shadow-sm border border-gray-100">
+                                @forelse($requestHistories as $history)
+                                    <div class="p-4 border-b border-gray-100 last:border-b-0">
+                                        <div class="flex justify-between items-start">
+                                            <div class="flex-1">
+                                                <div class="flex items-center gap-3 mb-2">
+                                                    <span class="text-sm font-medium text-gray-700">
+                                                        {{ $history->event_type }}
+                                                    </span>
+                                                    <span class="text-xs text-gray-500">
+                                                        {{ $history->event_date }}
+                                                    </span>
+                                                </div>
+
+                                                {{--                                             @if ($history->request_data)
+                                                                        <div class="text-sm text-gray-600 mt-1">
+                                                                            @foreach (json_decode($history->request_data, true) as $key => $value)
+                                                                                <p class="break-words">
+                                                                                    <span
+                                                                                        class="font-medium">{{ ucfirst(str_replace('_', ' ', $key)) }}:</span>
+                                                                                    {{ is_array($value) ? json_encode($value) : $value }}
+                                                                                </p>
+                                                                            @endforeach
+                                                                        </div>
+                                                                    @endif --}}
+                                            </div>
+
+                                            <div class="text-right">
+                                                <p class="text-sm text-gray-500">
+                                                    @if ($history->creator)
+                                                        Par {{ $history->creator->name }}
+                                                    @else
+                                                        Système
+                                                    @endif
+                                                </p>
+                                                <p class="text-xs text-gray-400">
+                                                    #{{ $history->request_type }}
+                                                </p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                @empty
+                                    <div class="p-4 text-center text-gray-500">
+                                        Aucun historique disponible pour cette demande
+                                    </div>
+                                @endforelse
+                            </div>
+
+                            <!-- Pagination -->
+                            <div class="mt-4">
+                                {{ $requestHistories->links() }}
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -513,6 +708,14 @@
                                     d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 114.95 0 2.5 2.5 0 01-4.95 0M12 15v3m0 0h3m-3 0H9m6-12a3 3 0 11-6 0 3 3 0 016 0z" />
                             </svg>
                             Modifier
+                        </a>
+                        <a href=""
+                            class="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-md flex items-center transition-colors">
+                            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 114.95 0 2.5 2.5 0 01-4.95 0M12 15v3m0 0h3m-3 0H9m6-12a3 3 0 11-6 0 3 3 0 016 0z" />
+                            </svg>
+                            Annuler
                         </a>
                         <a href="{{ route('personal.dashboard') }}"
                             class="bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-2 rounded-md flex items-center transition-colors">
@@ -535,7 +738,7 @@
                             <a href="{{ url()->previous() }}" class="hover:underline">Page précédente</a>
                         @endif
                         <span class="mx-2">/</span>
-                        <span class="text-gray-700 font-semibold">Détails de la demande</span>
+                        <span class="text-gray-700 font-semibold">Détails de la demande de preuve d'existence </span>
                     </nav>
 
                     <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
@@ -553,81 +756,123 @@
                             </div>
 
                             <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                                <!-- Left Column -->
                                 <div class="lg:col-span-1 space-y-6">
+                                    <!-- Personal Information -->
                                     <div class="p-4 bg-gray-50 rounded-lg">
-                                        <h3 class="text-lg font-semibold mb-3 text-gray-700">Identité</h3>
+                                        <h3 class="text-lg font-semibold mb-3 text-gray-700">Informations personnelles</h3>
+                                        <div class="flex items-center mb-4">
+                                            @if ($request->profile_photo)
+                                                <img src="{{ asset('storage/' . $request->profile_photo) }}"
+                                                    alt="Photo de profil" class="w-20 h-20 rounded-full object-cover mr-4">
+                                            @endif
+                                            <div>
+                                                <p class="font-medium text-lg">{{ $request->lastname }}
+                                                    {{ $request->firstname }}</p>
+                                                <p class="text-sm text-gray-500">Né(e) le
+                                                    {{ $request->birth_date }}</p>
+                                            </div>
+                                        </div>
                                         <dl class="space-y-3">
                                             <div>
-                                                <dt class="text-sm text-gray-500">Nom complet</dt>
-                                                <dd class="font-medium">{{ $request->lastname }} {{ $request->firstname }}
-                                                </dd>
+                                                <dt class="text-sm text-gray-500">Genre</dt>
+                                                <dd class="font-medium">{{ $request->gender->name }}</dd>
                                             </div>
                                             <div>
-                                                <dt class="text-sm text-gray-500">Nom de jeune fille</dt>
-                                                <dd class="font-medium">{{ $request->maiden_name }}</dd>
+                                                <dt class="text-sm text-gray-500">État civil</dt>
+                                                <dd class="font-medium">{{ $request->civilStatus->name }}</dd>
                                             </div>
                                         </dl>
                                     </div>
 
+                                    <!-- Official IDs -->
                                     <div class="p-4 bg-gray-50 rounded-lg">
                                         <h3 class="text-lg font-semibold mb-3 text-gray-700">Identifiants officiels</h3>
                                         <dl class="space-y-3">
                                             <div>
-                                                <dt class="text-sm text-gray-500">NIF</dt>
-                                                <dd class="font-medium">{{ $request->nif }}</dd>
+                                                <dt class="text-sm text-gray-500">Numéro d'identification</dt>
+                                                <dd class="font-medium">{{ $request->id_number }}</dd>
                                             </div>
                                             <div>
-                                                <dt class="text-sm text-gray-500">NINU</dt>
-                                                <dd class="font-medium">{{ $request->ninu }}</dd>
+                                                <dt class="text-sm text-gray-500">NIF</dt>
+                                                <dd class="font-medium">{{ $request->nif }}</dd>
                                             </div>
                                         </dl>
                                     </div>
 
+                                    <!-- Contact Information -->
                                     <div class="p-4 bg-gray-50 rounded-lg">
                                         <h3 class="text-lg font-semibold mb-3 text-gray-700">Coordonnées</h3>
                                         <dl class="space-y-3">
                                             <div>
-                                                <dt class="text-sm text-gray-500">Adresse</dt>
+                                                <dt class="text-sm text-gray-500">Adresse physique</dt>
                                                 <dd class="font-medium">{{ $request->address }}</dd>
+                                            </div>
+                                            <div>
+                                                <dt class="text-sm text-gray-500">Adresse postale</dt>
+                                                <dd class="font-medium">{{ $request->postal_address }}</dd>
                                             </div>
                                             <div>
                                                 <dt class="text-sm text-gray-500">Téléphone</dt>
                                                 <dd class="font-medium">{{ $request->phone }}</dd>
                                             </div>
-                                            <div>
-                                                <dt class="text-sm text-gray-500">Email</dt>
-                                                <dd class="font-medium">{{ $request->email }}</dd>
-                                            </div>
                                         </dl>
                                     </div>
                                 </div>
 
+                                <!-- Right Column -->
                                 <div class="lg:col-span-2 space-y-6">
+                                    <!-- Pension Summary -->
                                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                                         <div class="p-4 bg-blue-50 rounded-lg">
-                                            <dt class="text-sm text-gray-500">Montant du transfert</dt>
-                                            <dd class="text-2xl font-bold text-blue-600">{{ $request->amount }} HTG</dd>
+                                            <dt class="text-sm text-gray-500">Montant de la pension</dt>
+                                            <dd class="text-2xl font-bold text-blue-600">
+                                                {{ number_format($request->pension_amount, 0, ',', ' ') }} HTG</dd>
                                         </div>
                                         <div class="p-4 bg-indigo-50 rounded-lg">
                                             <dt class="text-sm text-gray-500">Date de la demande</dt>
-                                            <dd class="font-medium">{{ $request->request_date }}</dd>
+                                            <dd class="font-medium">{{ $request->created_at->format('d/m/Y H:i') }}</dd>
                                         </div>
                                     </div>
 
+                                    <!-- Pension Details -->
                                     <div class="p-4 bg-gray-50 rounded-lg">
-                                        <h3 class="text-lg font-semibold mb-3 text-gray-700">Calendrier fiscal</h3>
+                                        <h3 class="text-lg font-semibold mb-3 text-gray-700">Détails de la pension</h3>
                                         <dl class="grid grid-cols-1 md:grid-cols-2 gap-4">
                                             <div>
-                                                <dt class="text-sm text-gray-500">Année fiscale</dt>
-                                                <dd class="font-medium">{{ $request->fiscal_year }}</dd>
+                                                <dt class="text-sm text-gray-500">Nature de la pension</dt>
+                                                <dd class="font-medium">{{ $request->pensionCategory->name }}</dd>
                                             </div>
                                             <div>
-                                                <dt class="text-sm text-gray-500">Mois de début</dt>
-                                                <dd class="font-medium">{{ $request->start_month }}</dd>
+                                                <dt class="text-sm text-gray-500">Date de début</dt>
+                                                <dd class="font-medium">{{ $request->pension_start_date }}
+                                                </dd>
+                                            </div>
+                                            <div>
+                                                <dt class="text-sm text-gray-500">Date de fin</dt>
+                                                <dd class="font-medium">
+                                                    {{ $request->pension_end_date ? $request->pension_end_date : 'N/A' }}
+                                                </dd>
                                             </div>
                                         </dl>
                                     </div>
 
+                                    <!-- Monitor Information -->
+                                    <div class="p-4 bg-gray-50 rounded-lg">
+                                        <h3 class="text-lg font-semibold mb-3 text-gray-700">Information de suivi</h3>
+                                        <dl class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                            <div>
+                                                <dt class="text-sm text-gray-500">Numéro de monitor</dt>
+                                                <dd class="font-medium">{{ $request->monitor_number }}</dd>
+                                            </div>
+                                            <div>
+                                                <dt class="text-sm text-gray-500">Date de monitorat</dt>
+                                                <dd class="font-medium">{{ $request->monitor_date }}</dd>
+                                            </div>
+                                        </dl>
+                                    </div>
+
+                                    <!-- Metadata -->
                                     <div class="p-4 bg-gray-50 rounded-lg">
                                         <h3 class="text-lg font-semibold mb-3 text-gray-700">Métadonnées</h3>
                                         <dl class="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -642,6 +887,63 @@
                                         </dl>
                                     </div>
                                 </div>
+                            </div>
+                        </div>
+                        <!-- History -->
+                        <div class="mt-8 px-6">
+                            <h3 class="ml-1 text-xl font-semibold mb-4 text-gray-800">Historique de la demande</h3>
+
+                            <div class="bg-white rounded-lg shadow-sm border border-gray-100">
+                                @forelse($requestHistories as $history)
+                                    <div class="p-4 border-b border-gray-100 last:border-b-0">
+                                        <div class="flex justify-between items-start">
+                                            <div class="flex-1">
+                                                <div class="flex items-center gap-3 mb-2">
+                                                    <span class="text-sm font-medium text-gray-700">
+                                                        {{ $history->event_type }}
+                                                    </span>
+                                                    <span class="text-xs text-gray-500">
+                                                        {{ $history->event_date }}
+                                                    </span>
+                                                </div>
+
+                                                {{--                                             @if ($history->request_data)
+                                                <div class="text-sm text-gray-600 mt-1">
+                                                    @foreach (json_decode($history->request_data, true) as $key => $value)
+                                                        <p class="break-words">
+                                                            <span
+                                                                class="font-medium">{{ ucfirst(str_replace('_', ' ', $key)) }}:</span>
+                                                            {{ is_array($value) ? json_encode($value) : $value }}
+                                                        </p>
+                                                    @endforeach
+                                                </div>
+                                            @endif --}}
+                                            </div>
+
+                                            <div class="text-right">
+                                                <p class="text-sm text-gray-500">
+                                                    @if ($history->creator)
+                                                        Par {{ $history->creator->name }}
+                                                    @else
+                                                        Système
+                                                    @endif
+                                                </p>
+                                                <p class="text-xs text-gray-400">
+                                                    #{{ $history->request_type }}
+                                                </p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                @empty
+                                    <div class="p-4 text-center text-gray-500">
+                                        Aucun historique disponible pour cette demande
+                                    </div>
+                                @endforelse
+                            </div>
+
+                            <!-- Pagination -->
+                            <div class="mt-4">
+                                {{ $requestHistories->links() }}
                             </div>
                         </div>
                     </div>

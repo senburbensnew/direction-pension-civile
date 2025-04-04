@@ -10,8 +10,6 @@ class ExistenceProofRequest extends Model
     use HasFactory;
 
     protected $fillable = [
-        "created_at",
-        "updated_at",
         "status_id",
         "created_by",
         "pension_amount",
@@ -34,10 +32,7 @@ class ExistenceProofRequest extends Model
         "monitor_number",
         "monitor_date",
         "pension_start_date",
-        "pension_end_date",
-        "pension_nature",
-        "created_at",
-        "updated_at",
+        "pension_end_date"
     ];
 
     public function scopeForUser($query)
@@ -88,6 +83,11 @@ class ExistenceProofRequest extends Model
     public function status()
     {
         return $this->belongsTo(Status::class, 'status_id');
+    }
+
+    public function pensionCategory()
+    {
+        return $this->belongsTo(PensionCategory::class, 'pension_category_id');
     }
 
     public function dependants()

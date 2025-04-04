@@ -4,6 +4,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\ExistenceProofRequest;
+use App\Models\RequestHistory;
 use Illuminate\Http\Request;
 use App\Models\BankTransferRequests;
 use App\Models\PaymentStopRequests;
@@ -116,7 +117,7 @@ class PersonalController extends Controller
         return view('personal.requests', compact('requests', 'stats', 'requestType','type')); 
     }
 
-    public function showRequest(Request $request, $id)
+/*     public function showRequest(Request $request, $id)
     {
         $requestType = $request->query('requestType');
 
@@ -130,11 +131,72 @@ class PersonalController extends Controller
             case 'paymentStopRequest' :
                 $request = PaymentStopRequests::where('created_by', auth()->id())->findOrFail($id);
                 break;
+            case 'existenceProofRequest' :
+                $request = ExistenceProofRequest::where('created_by', auth()->id())->findOrFail($id);
+                break;
+            default :
+                $request = BankTransferRequests::where('created_by', auth()->id())->findOrFail($id);
+                break;
         }
 
         return view('personal.request-details', compact('request', 'requestType'));
-    }
+    } */
 
+    public function showRequest(Request $httpRequest, $id)
+    {
+        $requestType = $httpRequest->query('requestType');
+        $requestHistories = [];
+        $requestModel = null;
+
+        switch($requestType) {
+            case 'bankTransferRequest':
+                $requestModel = BankTransferRequests::where('created_by', auth()->id())->findOrFail($id);
+                $requestHistories = RequestHistory::where('request_id', $requestModel->id)
+                    ->where('request_type', 'BANK_TRANSFER_REQUEST')
+                    ->orderBy('event_date', 'desc')
+                    ->paginate(10);
+                break;
+
+            case 'checkTransferRequest':
+                $requestModel = CheckTransferRequests::where('created_by', auth()->id())->findOrFail($id);
+                $requestHistories = RequestHistory::where('request_id', $requestModel->id)
+                    ->where('request_type', 'CHECK_TRANSFER_REQUEST')
+                    ->orderBy('event_date', 'desc')
+                    ->paginate(10);
+                break;
+
+            case 'paymentStopRequest':
+                $requestModel = PaymentStopRequests::where('created_by', auth()->id())->findOrFail($id);
+                $requestHistories = RequestHistory::where('request_id', $requestModel->id)
+                    ->where('request_type', 'PAYMENT_STOP_REQUEST')
+                    ->orderBy('event_date', 'desc')
+                    ->paginate(10);
+                break;
+
+            case 'existenceProofRequest':
+                $requestModel = ExistenceProofRequest::where('created_by', auth()->id())->findOrFail($id);
+                $requestHistories = RequestHistory::where('request_id', $requestModel->id)
+                    ->where('request_type', 'EXISTENCE_PROOF_REQUEST')
+                    ->orderBy('event_date', 'desc')
+                    ->paginate(10);
+                break;
+
+            default:
+                $requestModel = BankTransferRequests::where('created_by', auth()->id())->findOrFail($id);
+                $requestHistories = RequestHistory::where('request_id', $requestModel->id)
+                    ->where('request_type', 'BANK_TRANSFER_REQUEST')
+                    ->orderBy('event_date', 'desc')
+                    ->paginate(10);
+                break;
+        }
+
+        return view('personal.request-details', [
+            'request' => $requestModel,
+            'requestType' => $requestType,
+            'requestHistories' => $requestHistories
+        ]);
+    }
+    
     public function create()
     {
         return view('personal.create');

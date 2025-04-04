@@ -26,6 +26,11 @@ class RequestHistory extends Model
         return $query->where('created_by', auth()->id());
     }
 
+    public function creator()
+    {
+        return $this->belongsTo(User::class, 'created_by');
+    }
+
     public static function store (
         $requestId,
         RequestTypeEnum $requestType,
