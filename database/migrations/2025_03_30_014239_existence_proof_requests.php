@@ -14,7 +14,7 @@ return new class extends Migration
         Schema::create('existence_proof_requests', function (Blueprint $table) {
             $table->id();
             $table->string('code')->unique();
-            $table->string('id_number')->unique();
+            $table->string('id_number');
             $table->string('profile_photo')->nullable();
             $table->string('fiscal_year');
             $table->string('nif');

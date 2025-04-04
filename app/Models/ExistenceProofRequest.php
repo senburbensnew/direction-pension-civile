@@ -89,4 +89,9 @@ class ExistenceProofRequest extends Model
     {
         return $this->belongsTo(Status::class, 'status_id');
     }
+
+    public function dependants()
+    {
+        return $this->hasMany(Dependant::class);
+    }
 }

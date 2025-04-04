@@ -15,6 +15,17 @@ return new class extends Migration
             $table->string('ninu')->nullable();
             $table->string('firstname')->nullable();
             $table->string('lastname')->nullable();
+            $table->date('birth_date')->nullable();
+            $table->string('phone')->nullable();
+            $table->string('address')->nullable();
+            $table->foreignId('civil_status_id')
+            ->nullable()
+            ->constrained('civil_statuses')
+            ->onDelete('restrict');        
+            $table->foreignId('gender_id')
+                ->nullable()
+                ->constrained('genders')
+                ->onDelete('restrict');
             $table->string('profile_photo')->nullable();
             $table->string('signature')->nullable();
         });

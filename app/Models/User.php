@@ -29,7 +29,7 @@ class User extends Authenticatable
         "updated_at",
         "profile_photo",
         "firstname",
-        "lastname"
+        "lastname",
     ];
 
     /**

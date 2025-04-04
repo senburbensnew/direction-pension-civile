@@ -81,7 +81,6 @@
                     <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
                 @enderror
             </div>
-
             <!-- Personal Information -->
             <fieldset class="shadow-md rounded-lg p-4 md:p-5 border">
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -99,8 +98,10 @@
                     <!-- Name Fields -->
                     <div>
                         <label for="nom" class="block text-sm font-medium text-gray-700">NOM *</label>
-                        <input value="{{ old('lastname') }}" type="text" name="lastname" id="nom"
-                            class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+
+                        <input readonly value="{{ auth()->user()->lastname }}" type="text" name="lastname"
+                            id="nom"
+                            class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 bg-gray-100">
                         @error('lastname')
                             <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
                         @enderror
@@ -108,8 +109,9 @@
 
                     <div>
                         <label for="prenom" class="block text-sm font-medium text-gray-700">PRENOM *</label>
-                        <input value="{{ old('firstname') }}" type="text" name="firstname" id="prenom"
-                            class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                        <input readonly value="{{ auth()->user()->firstname }}" type="text" name="firstname"
+                            id="prenom"
+                            class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 bg-gray-100">
                         @error('firstname')
                             <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
                         @enderror
@@ -278,17 +280,26 @@
                     @enderror
                 </div>
             </fieldset>
-
             <!-- Dependants Section -->
             <fieldset class="shadow-md rounded-lg p-4 md:p-5 border">
                 <legend class="text-lg font-medium mb-4">LISTE DES DEPENDANTS</legend>
                 <div>
-                    <div id="no-dependants-message" class="text-center text-sm text-gray-500 py-4">
-                        Aucun dépendant ajouté
-                    </div>
+                    <!-- Template des options de genre (à inclure ailleurs dans la page) -->
+                    <template id="genderOptionsTemplate">
+                        @foreach ($genders as $gender)
+                            <option value="{{ $gender->id }}">{{ $gender->name }}</option>
+                        @endforeach
+                    </template>
 
-                    <div id="dependants-table" class="hidden overflow-x-auto">
-                        <table class="min-w-full table-auto">
+                    <!-- Tableau des dépendants -->
+                    <div class="mt-6">
+                        <div id="no-dependants-message"
+                            class="p-4 text-center text-gray-500 {{ count(old('dependants', [])) > 0 ? 'hidden' : '' }}">
+                            Aucun dépendant enregistré.
+                        </div>
+                        {{-- {{ count(old('dependants', [])) }} --}}
+                        <table class="min-w-full table-auto" id="dependants-table"
+                            {{ count(old('dependants', [])) === 0 ? 'hidden' : '' }}>
                             <thead class="bg-gray-100">
                                 <tr>
                                     <th class="px-4 py-2 text-left text-sm font-medium text-gray-700">#</th>
@@ -302,19 +313,154 @@
                                 </tr>
                             </thead>
                             <tbody class="bg-white divide-y divide-gray-200">
+                                {{--                                 @if (count((array) old('dependants', [])) === 0)
+                                    <input type="hidden" name="dependants" value="[]">
+                                @endif --}}
+                                {{-- 
+                                @foreach (old('dependants', []) as $index => $dependant)
+                                    <tr class="hover:bg-gray-50">
+                                        <td class="px-4 py-2 text-sm text-gray-700">{{ $index + 1 }}</td>
+
+                                        <!-- Nom -->
+                                        <td class="px-4 py-2 text-sm text-gray-900">
+                                            <input type="text" name="dependants[{{ $index }}][name]"
+                                                value="{{ old("dependants.{$index}.name") }}"
+                                                class="w-full border rounded px-2 py-1 @error("dependants.{$index}.name") border-red-500 @enderror">
+                                            @error("dependants.{$index}.name")
+                                                <span class="text-red-500 text-xs">{{ $message }}</span>
+                                            @enderror
+                                        </td>
+
+                                        <!-- Relation -->
+                                        <td class="px-4 py-2 text-sm text-gray-700">
+                                            <input type="text" name="dependants[{{ $index }}][relation]"
+                                                value="{{ old("dependants.{$index}.relation") }}"
+                                                class="w-full border rounded px-2 py-1 @error("dependants.{$index}.relation") border-red-500 @enderror">
+                                            @error("dependants.{$index}.relation")
+                                                <span class="text-red-500 text-xs">{{ $message }}</span>
+                                            @enderror
+                                        </td>
+
+                                        <!-- Date de naissance -->
+                                        <td class="px-4 py-2 text-sm text-gray-700">
+                                            <input type="date" name="dependants[{{ $index }}][birth_date]"
+                                                value="{{ old("dependants.{$index}.birth_date") }}"
+                                                class="w-full border rounded px-2 py-1 @error("dependants.{$index}.birth_date") border-red-500 @enderror">
+                                            @error("dependants.{$index}.birth_date")
+                                                <span class="text-red-500 text-xs">{{ $message }}</span>
+                                            @enderror
+                                        </td>
+
+                                        <!-- Sexe -->
+                                        <td class="px-4 py-2 text-sm text-gray-700">
+                                            <select name="dependants[{{ $index }}][gender_id]"
+                                                class="w-full border rounded px-2 py-1 @error("dependants.{$index}.gender_id") border-red-500 @enderror">
+                                                <option value="">Sélectionner</option>
+                                                @foreach ($genders as $gender)
+                                                    <option value="{{ $gender->id }}"
+                                                        {{ old("dependants.{$index}.gender_id") == $gender->id ? 'selected' : '' }}>
+                                                        {{ $gender->name }}
+                                                    </option>
+                                                @endforeach
+                                            </select>
+                                            @error("dependants.{$index}.gender_id")
+                                                <span class="text-red-500 text-xs">{{ $message }}</span>
+                                            @enderror
+                                        </td>
+
+                                        <!-- Actions -->
+                                        <td class="px-4 py-2 text-sm text-right space-x-2">
+                                            <button type="button" onclick="deleteRow(this)"
+                                                class="text-red-600 hover:text-red-900">
+                                                <svg class="w-4 h-4" fill="none" stroke="currentColor"
+                                                    viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round"
+                                                        stroke-width="2"
+                                                        d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                                </svg>
+                                            </button>
+                                        </td>
+                                    </tr>
+                                @endforeach --}}
+
+                                @foreach (old('dependants', []) as $index => $dependant)
+                                    <tr class="hover:bg-gray-50">
+                                        <!-- Serial Number -->
+                                        <td class="px-4 py-2 text-sm text-gray-700 align-center">
+                                            {{ $index + 1 }}</td>
+
+                                        <!-- Name -->
+                                        <td class="px-4 py-2 text-sm text-gray-900 align-top">
+                                            <input type="text" name="dependants[{{ $index }}][name]"
+                                                value="{{ old("dependants.{$index}.name") }}"
+                                                class="w-full border rounded px-2 py-1 @error("dependants.{$index}.name") border-red-500 @enderror">
+                                            @error("dependants.{$index}.name")
+                                                <span class="text-red-500 text-xs">{{ $message }}</span>
+                                            @enderror
+                                        </td>
+
+                                        <!-- Relation -->
+                                        <td class="px-4 py-2 text-sm text-gray-700 align-top">
+                                            <input type="text" name="dependants[{{ $index }}][relation]"
+                                                value="{{ old("dependants.{$index}.relation") }}"
+                                                class="w-full border rounded px-2 py-1 @error("dependants.{$index}.relation") border-red-500 @enderror">
+                                            @error("dependants.{$index}.relation")
+                                                <span class="text-red-500 text-xs">{{ $message }}</span>
+                                            @enderror
+                                        </td>
+
+                                        <!-- Birth Date -->
+                                        <td class="px-4 py-2 text-sm text-gray-700 align-top">
+                                            <input type="date" name="dependants[{{ $index }}][birth_date]"
+                                                value="{{ old("dependants.{$index}.birth_date") }}"
+                                                class="w-full border rounded px-2 py-1 @error("dependants.{$index}.birth_date") border-red-500 @enderror">
+                                            @error("dependants.{$index}.birth_date")
+                                                <span class="text-red-500 text-xs">{{ $message }}</span>
+                                            @enderror
+                                        </td>
+
+                                        <!-- Gender -->
+                                        <td class="px-4 py-2 text-sm text-gray-700 align-top">
+                                            <select name="dependants[{{ $index }}][gender_id]"
+                                                class="w-full border rounded px-2 py-1 @error("dependants.{$index}.gender_id") border-red-500 @enderror">
+                                                <option value="">Sélectionner</option>
+                                                @foreach ($genders as $gender)
+                                                    <option value="{{ $gender->id }}"
+                                                        {{ old("dependants.{$index}.gender_id") == $gender->id ? 'selected' : '' }}>
+                                                        {{ $gender->name }}
+                                                    </option>
+                                                @endforeach
+                                            </select>
+                                            @error("dependants.{$index}.gender_id")
+                                                <span class="text-red-500 text-xs">{{ $message }}</span>
+                                            @enderror
+                                        </td>
+
+                                        <!-- Actions -->
+                                        <td class="px-4 py-2 text-sm text-right space-x-2 align-center">
+                                            <button type="button" onclick="deleteRow(this)"
+                                                class="text-red-600 hover:text-red-900">
+                                                <svg class="w-4 h-4" fill="none" stroke="currentColor"
+                                                    viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round"
+                                                        stroke-width="2"
+                                                        d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                                </svg>
+                                            </button>
+                                        </td>
+                                    </tr>
+                                @endforeach
                             </tbody>
                         </table>
                     </div>
 
-                    <div class="mt-4">
-                        <button type="button" onclick="addDependantRow()"
-                            class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded text-sm">
-                            + Ajouter dépendant
-                        </button>
-                    </div>
+                    <!-- Bouton d'ajout -->
+                    <button type="button" class="mt-4 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+                        onclick="addDependantRow()">
+                        + Ajouter
+                    </button>
                 </div>
             </fieldset>
-
             <!-- Signature Section -->
             <fieldset class="shadow-md rounded-lg p-4 md:p-5 border">
                 <div class="flex flex-col md:flex-row justify-between gap-4">
@@ -341,7 +487,44 @@
                     </div>
                 </div>
             </fieldset>
+            <!-- Certification Section -->
+            <fieldset class="shadow-md rounded-lg p-4 md:p-5 border">
+                <div class="flex flex-col md:flex-row gap-8 relative">
+                    <!-- Left Panel -->
+                    <div class="flex-1 p-4 space-y-6">
+                        <div>
+                            <p class="font-semibold text-gray-700">La Direction de la Pension Civile certifie que</p>
+                            <p class="mt-2 text-gray-600">a rempli les formalités pour l’année fiscale</p>
+                        </div>
+                        <div class="mt-6 flex justify-between text-gray-700">
+                            <span>Le</span>
+                            <span>Visé par</span>
+                        </div>
+                        <p class="mt-8 font-bold text-sm uppercase text-gray-700">SOUCHE A REMETTRE AU PENSIONNE</p>
+                    </div>
 
+                    <!-- Vertical Divider -->
+                    <div class="hidden md:block absolute inset-y-0 left-1/2 -translate-x-1/2">
+                        <div class="w-px h-full bg-gray-300 border-l-2 border-dashed"></div>
+                    </div>
+
+                    <!-- Right Panel -->
+                    <div class="flex-1 p-4 space-y-6">
+                        <div>
+                            <p class="font-semibold text-gray-700">La Direction de la Pension Civile certifie que</p>
+                            <p class="mt-2 text-gray-600">a rempli les formalités pour l’année fiscale</p>
+                        </div>
+                        <div class="mt-6 flex justify-between text-gray-700">
+                            <span>Le</span>
+                            <span>Visé par</span>
+                        </div>
+                        <p class="mt-8 font-bold text-sm uppercase text-gray-700">SOUCHE A REMETTRE AU PENSIONNE</p>
+                    </div>
+                </div>
+
+                <!-- Footer Note -->
+                <p class="text-xs text-right font-bold mt-6 text-gray-500 tracking-wide">mefd/dpc/sicp/jr</p>
+            </fieldset>
             <!-- Submit Button -->
             <div class="mt-6 text-right">
                 <button type="submit"
@@ -363,81 +546,119 @@
 </div>
 
 <script>
-    let rowCount = 0;
+    let rowCount = {{ count((array) old('dependants', [])) }};
+    count(old('dependants', []))
 
     function addDependantRow() {
-        const tableContainer = document.getElementById('dependants-table');
-        const messageDiv = document.getElementById('no-dependants-message');
         const tbody = document.querySelector('#dependants-table tbody');
+        const hiddenInput = tbody.querySelector('input[name="dependants"]');
+        const messageDiv = document.getElementById('no-dependants-message');
+        const table = document.getElementById('dependants-table');
 
-        if (rowCount === 0) {
-            tableContainer.classList.remove('hidden');
-            messageDiv.classList.add('hidden');
-        }
+        // Supprimer le champ caché si existant
+        if (hiddenInput) hiddenInput.remove();
 
-        rowCount++;
-
+        const newIndex = rowCount;
         const newRow = document.createElement('tr');
-        newRow.className = 'even:bg-gray-50';
+        newRow.className = 'hover:bg-gray-50';
         newRow.innerHTML = `
-        <td class="px-4 py-2 text-sm font-medium text-gray-900">${rowCount}</td>
-        <td class="px-4 py-2">
-            <input type="text" name="nom_${rowCount}" 
-                   class="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 text-sm"
-                   >
-        </td>
-        <td class="px-4 py-2">
-            <input type="text" name="relation_${rowCount}" 
-                   class="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 text-sm"
-                   >
-        </td>
-        <td class="px-4 py-2">
-            <input type="date" name="date_naissance_${rowCount}" 
-                   class="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 text-sm"
-                   >
-        </td>
-        <td class="px-4 py-2">
-            <select name="sexe_${rowCount}" 
-                    class="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 text-sm"
-                    >
-                ${document.getElementById('genderOptionsTemplate').innerHTML}
+            <td class="px-4 py-2 text-sm text-gray-700 align-center">${newIndex + 1}</td>
+
+            <!-- Nom -->
+            <td class="px-4 py-2 text-sm text-gray-900 align-top">
+            <input type="text" 
+            name="dependants[${newIndex}][name]"
+            class="w-full border rounded px-2 py-1">
+            <div class="validation-message"></div>
+            </td>
+
+            <!-- Relation -->
+            <td class="px-4 py-2 text-sm text-gray-700 align-top">
+            <input type="text" 
+            name="dependants[${newIndex}][relation]"
+            class="w-full border rounded px-2 py-1">
+            <div class="validation-message"></div>
+            </td>
+
+            <!-- Date de naissance -->
+            <td class="px-4 py-2 text-sm text-gray-700 align-top">
+            <input type="date" 
+            name="dependants[${newIndex}][birth_date]"
+            class="w-full border rounded px-2 py-1">
+            <div class="validation-message"></div>
+            </td>
+
+            <!-- Sexe -->
+            <td class="px-4 py-2 text-sm text-gray-700 align-top">
+            <select name="dependants[${newIndex}][gender_id]"
+                class="w-full border rounded px-2 py-1">
+            <option value="">Sélectionner</option>
+            ${document.getElementById('genderOptionsTemplate').innerHTML}
             </select>
-        </td>
-        <td class="px-4 py-2">
-            <button type="button" onclick="deleteRow(this)" 
-                    class="text-red-600 hover:text-red-900">
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
-                          d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
-                </svg>
+            <div class="validation-message"></div>
+            </td>
+
+            <!-- Actions -->
+            <td class="px-4 py-2 text-sm text-right space-x-2 align-center">
             </button>
-        </td>
-    `;
+                <button type="button" onclick="deleteRow(this)" 
+                    class="text-red-600 hover:text-red-900">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
+                            d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                    </svg>
+                </button>
+            </td>
+            `;
 
         tbody.appendChild(newRow);
+        rowCount++;
+
+        // Afficher le tableau
+        table.hidden = false;
+        messageDiv.hidden = true;
     }
 
     function deleteRow(button) {
         const row = button.closest('tr');
+        const tbody = row.parentElement;
         row.remove();
-        rowCount--;
-        reindexRows();
 
+        // Réindexer les lignes
+        const rows = tbody.querySelectorAll('tr');
+        rows.forEach((row, index) => {
+            // Mise à jour des noms de champs
+            const inputs = row.querySelectorAll('input, select');
+            inputs.forEach(input => {
+                const fieldName = input.name.split('][')[1].replace(']', '');
+                input.name = `dependants[${index}][${fieldName}]`;
+            });
+
+            // Mise à jour du numéro de ligne
+            row.querySelector('td:first-child').textContent = index + 1;
+        });
+
+        rowCount = rows.length;
+
+        // Gérer l'affichage quand il n'y a plus de dépendants
         if (rowCount === 0) {
-            document.getElementById('dependants-table').classList.add('hidden');
-            document.getElementById('no-dependants-message').classList.remove('hidden');
+            /*             const hiddenInput = document.createElement('input');
+                        hiddenInput.type = 'hidden';
+                        hiddenInput.name = 'dependants';
+                        hiddenInput.value = '[]';
+                        tbody.appendChild(hiddenInput); */
+
+            document.getElementById('dependants-table').hidden = true;
+            document.getElementById('no-dependants-message').hidden = false;
         }
     }
 
-    function reindexRows() {
-        const rows = document.querySelectorAll('#dependants-table tbody tr');
-        rows.forEach((row, index) => {
-            row.cells[0].textContent = index + 1;
-            const newIndex = index + 1;
-            row.querySelectorAll('input, select').forEach(input => {
-                input.name = input.name.replace(/_(\d+)$/, `_${newIndex}`);
-            });
-        });
-        rowCount = rows.length;
-    }
+    // Validation avant soumission
+    document.querySelector('form').addEventListener('submit', function(e) {
+        const dependants = document.querySelectorAll('[name^="dependants["]');
+        if (dependants.length === 0) {
+            e.preventDefault();
+            alert('Veuillez ajouter au moins un dépendant.');
+        }
+    });
 </script>

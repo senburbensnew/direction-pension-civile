@@ -15,6 +15,7 @@ use App\Models\PensionType;
 use App\Models\RequestHistory;
 use App\Models\Status;
 use App\Models\CivilStatus;
+use App\Rules\Base64Image;
 use App\View\Components\ExistenceProof;
 use Faker\Extension\Helper;
 use Illuminate\Http\Request;
@@ -798,14 +799,22 @@ class PensionnaireController extends Controller
                     'string',
                     "regex:" . RegexExpressions::fiscalYear(),
                 ],
-                'signature' => 'required|string|base64_image|max:2800000', // ~2MB base64
+                // 'signature' => 'required|max:2800000', // ~2MB base64
+                'signature' => [
+                    'required',
+                    'string',
+                    new Base64Image,
+                ],
                 'profile_photo' => 'required|image|mimes:jpeg,png,jpg,gif,webp|max:2048',
+                'dependants' => 'nullable|array',
+                'dependants.*.name' => 'required|string',
+                'dependants.*.relation' => 'required|string',
+                'dependants.*.birth_date' => 'required|date',
+                'dependants.*.gender_id' => 'required|string|exists:genders,id',
             ];
     
             $validatedData = $request->validate($validationRules, $messages, $attributes);
-    
-            // DB::beginTransaction();
-    
+
             // Process signature
             $signaturePath = Helpers::processBase64Image(
                 $request->input('signature'),
@@ -834,12 +843,14 @@ class PensionnaireController extends Controller
             $validatedData['created_by'] = auth()->id();
     
             // Create record
-            $existenceProofRequest = DB::transaction(function () use ($validatedData) {
-                // Create the BankTransferRequest
+            DB::transaction(function () use ($validatedData) {
                 $existenceProofRequest = ExistenceProofRequest::create($validatedData);
-    
-                // Create the associated RequestHistory
-                RequestHistory::store(
+                    
+                if (!empty($validatedData['dependants']) && is_array($validatedData['dependants'])) {
+                    $existenceProofRequest->dependants()->createMany($validatedData['dependants']);
+                }
+                
+                $requestHistory = RequestHistory::store(
                     $existenceProofRequest->id,
                     RequestTypeEnum::EXISTENCE_PROOF_REQUEST,
                     json_encode($existenceProofRequest),
@@ -847,11 +858,7 @@ class PensionnaireController extends Controller
                     $existenceProofRequest->created_at,
                     auth()->id()
                 );
-    
-                return $existenceProofRequest;
-            });
-    
-            // DB::commit();
+            });            
 
             // event(new RequestCreated($bankTranferRequest));
     
@@ -864,10 +871,10 @@ class PensionnaireController extends Controller
                 ->withInput()
                 ->with('error', 'Erreurs dans le formulaire.');
         } catch (\Exception $e) {
+            dd($e->getMessage());
             DB::rollBack();
             \Log::error('Submission Error: ' . $e->getMessage() . "\n" . $e->getTraceAsString());
     
-            // Cleanup files if they exist
             if (isset($signaturePath)) {
                 Storage::disk('public')->delete($signaturePath);
             }

@@ -7,8 +7,8 @@
             <span class="mx-2">></span>
             <span class="text-gray-800">Liste</span>
         </nav>
-        <a href="{{ route('admin.users.create') }}"
-            class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 transition-colors">+ Ajouter</a>
+        <a href="{{ route('admin.users.create') }}" class="text-blue-500 hover:text-blue-800 transition-colors">+
+            Ajouter</a>
 
         @if (session('success'))
             <div class="bg-green-200 p-2 rounded mt-3">{{ session('success') }}</div>
@@ -27,7 +27,7 @@
                     </tr>
                 </thead>
                 <tbody>
-                    @foreach ($users as $user)
+                    @forelse ($users as $user)
                         <tr class="hover:bg-gray-50">
                             <td class="border p-2 text-center align-middle">
                                 <div class="w-10 h-10 inline-flex items-center justify-center">
@@ -64,16 +64,22 @@
                                 </div>
                             </td>
                         </tr>
-                    @endforeach
+                    @empty
+                        <tr>
+                            <td colspan="6" class="border p-4 text-center text-gray-500">
+                                Aucun utilisateur.
+                            </td>
+                        </tr>
+                    @endforelse
                 </tbody>
             </table>
         </div>
 
         {{-- Pagination --}}
-        {{--         @if ($users->hasPages())
+        @if ($users->hasPages())
             <div class="mt-4">
                 {{ $users->links() }}
             </div>
-        @endif --}}
+        @endif
     </div>
 @endsection

@@ -11,9 +11,11 @@ class ProfilePicture extends Component
     /**
      * Create a new component instance.
      */
-    public function __construct()
+    public $showLabel;
+
+    public function __construct($showLabel = true)
     {
-        //
+        $this->showLabel = $showLabel;
     }
 
     /**

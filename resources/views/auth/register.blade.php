@@ -13,9 +13,9 @@
         @csrf
         <!-- Name -->
         <div>
-            <x-profile-picture />
+            <x-profile-picture :showLabel="false" />
         </div>
-        <div>
+        <div class="hidden">
             <x-input-label for="name" :value="__('Nom complet')" />
             <x-text-input id="name" class="bg-gray-100 block mt-1 w-full" type="text" name="name"
                 :value="old('name')" autocomplete="name" placeholder="Pierre Rubens MILORME" readonly />

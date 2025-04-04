@@ -2,6 +2,9 @@
 
 namespace App\Models;
 
+use App\Enums\RequestEventTypeEnum;
+use App\Enums\RequestTypeEnum;
+use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
@@ -11,15 +14,11 @@ class RequestHistory extends Model
 
     protected $fillable = [
         'request_id',
-        'title',
-        'description',
         'request_type',
         'request_data',
         'event_type',
         'event_date',
         'created_by',
-        "created_at",
-        "updated_at",
     ];
 
     public function scopeForUser($query)
@@ -27,14 +26,23 @@ class RequestHistory extends Model
         return $query->where('created_by', auth()->id());
     }
 
-    public static function store($requestId, $requestType, $requestData, $eventType, $eventDate, $by){
-        $requestHistory = new RequestHistory();
-        $requestHistory->request_id = $requestId;
-        $requestHistory->request_type = $requestType;
-        $requestHistory->request_data = $requestData;
-        $requestHistory->event_type = $eventType;
-        $requestHistory->event_date = $eventDate;
-        $requestHistory->created_by = $by;
-        $requestHistory->save();
+    public static function store (
+        $requestId,
+        RequestTypeEnum $requestType,
+        $requestData,  // Expect pre-sanitized JSON
+        RequestEventTypeEnum $eventType,
+        $eventDate,
+        $byUserId          // Enforce valid user ID
+    ){
+        $requestHistory = RequestHistory::create([
+            'request_id' => $requestId,
+            'request_type' => $requestType->value,
+            'request_data' => $requestData,
+            'event_type' => $eventType->value,
+            'event_date' => $eventDate,
+            'created_by' => $byUserId
+        ]);
+
+        return $requestHistory;
     }
 }
