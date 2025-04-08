@@ -30,8 +30,7 @@ class CheckTransferRequests extends Model
         'code',
         'status_id',
         'created_by',
-        "created_at",
-        "updated_at",
+        'pensioner_signature',
     ];
 
     public function scopeForUser($query)

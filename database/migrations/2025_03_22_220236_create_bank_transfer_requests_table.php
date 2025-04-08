@@ -33,11 +33,12 @@ return new class extends Migration
             $table->string('status')
             ->default('en_attente')
             ->checkIn(['en attente', 'approuvé(e)', 'en cours', 'rejeté(e)', 'traité(e)', 'annulé(e)']);
-            $table->string('photo_path')->nullable();
+            $table->string('profile_photo')->nullable();
             $table->foreignId('created_by')
                     ->constrained('users')
                     ->restrictOnDelete()
                     ->nullable(false);
+            $table->string('pensioner_signature')->nullable();
             $table->timestamps();
         });
     }

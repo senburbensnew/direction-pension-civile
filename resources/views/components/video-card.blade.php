@@ -1,4 +1,4 @@
-<div {{ $attributes->merge(['class' => 'w-full bg-white p-4 pt-0']) }}>
+<div {{ $attributes->merge(['class' => 'w-full bg-white pt-0']) }}>
     <!-- Header -->
     <div class="bg-blue-900 text-white p-1">
         <h4 class="text-lg font-bold">{{ $title }}</h4>

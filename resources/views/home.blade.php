@@ -84,57 +84,64 @@
             </button>
         </div>
     </div>
-    <div class="relative bg-white text-center py-10" style="border-top: 3px solid #173152;">
+    <div class="relative bg-white text-center py-10"
+        style="border-top: 3px solid #173152; border-bottom: 3px solid #173152;">
         <!-- Background Image -->
         <div class="absolute inset-0 bg-cover bg-center opacity-20" style="background-image: url('assets/image.png');">
         </div>
         <!-- Content -->
-        <div class="relative z-10 max-w-5xl mx-auto px-4 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            <!-- Statistics Section -->
-            <div class="bg-white p-4 rounded-lg shadow-md">
-                <h2 class="text-lg font-bold text-gray-800 border-b pb-2">STATISTIQUES</h2>
-                <p class="mt-2 text-sm text-gray-600">Évolution de l'indice des prix à la consommation (IPC) (Variation %)
-                </p>
-                <div class="flex justify-center my-3">
-                    <img src="{{ 'images/chart.PNG' }}" alt="chart" class="w-full rounded-lg">
+        <div class="flex">
+            <div class="elative z-10 max-w-5xl mx-auto px-4 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 flex-3">
+                <!-- Statistics Section -->
+                <div class="bg-white p-4 rounded-lg shadow-md">
+                    <h2 class="text-lg font-bold text-gray-800 border-b pb-2">STATISTIQUES</h2>
+                    <p class="mt-2 text-sm text-gray-600">Évolution de l'indice des prix à la consommation (IPC) (Variation
+                        %)
+                    </p>
+                    <div class="flex justify-center my-3">
+                        <img src="{{ 'images/chart.PNG' }}" alt="chart" class="w-full rounded-lg">
+                    </div>
+                </div>
+
+                <!-- Documentation Section -->
+                <div class="bg-white p-4 rounded-lg shadow-md">
+                    <h2 class="text-lg font-bold text-gray-800 border-b pb-2">DOCUMENTATION</h2>
+                    <ul class="mt-2 space-y-2">
+                        <li
+                            class="text-white flex items-center justify-between bg-blue-900 hover:bg-blue-950 px-4 py-3 rounded-lg shadow-md transition duration-200 hover:shadow-lg cursor-pointer">
+                            FINANCES PUBLIQUES <span class="text-white text-lg">→</span>
+                        </li>
+                        <li
+                            class="text-white flex items-center justify-between bg-blue-900 hover:bg-blue-950 px-4 py-3 rounded-lg shadow-md transition duration-200 hover:shadow-lg cursor-pointer">
+                            MARCHÉS PUBLICS <span class="text-white text-lg">→</span>
+                        </li>
+                        <li
+                            class="text-white flex items-center justify-between bg-blue-900 hover:bg-blue-950 px-4 py-3 rounded-lg shadow-md transition duration-200 hover:shadow-lg cursor-pointer">
+                            COMMERCE EXTÉRIEUR <span class="text-white text-lg">→</span>
+                        </li>
+                        <li
+                            class="text-white flex items-center justify-between bg-blue-900 hover:bg-blue-950 px-4 py-3 rounded-lg shadow-md transition duration-200 hover:shadow-lg cursor-pointer">
+                            DÉPENSES COVID-19 <span class="text-white text-lg">→</span>
+                        </li>
+                        <li
+                            class="text-white flex items-center justify-between bg-blue-900 hover:bg-blue-950 px-4 py-3 rounded-lg shadow-md transition duration-200 hover:shadow-lg cursor-pointer">
+                            Comprendre le budget <span class="text-white text-lg">→</span>
+                        </li>
+                    </ul>
+                </div>
+
+                <!-- News Section -->
+                <div class="bg-white p-4 rounded-lg shadow-md">
+                    <h2 class="text-lg font-bold text-gray-800 border-b pb-2">ACTUALITÉS DE LA DIRECTION</h2>
+                    <img src="https://picsum.photos/1000/500" alt="News" class="w-full mt-4">
+                    <p class="mt-2 text-sm text-gray-600 font-bold">La direction du FMI approuve un nouveau programme de
+                        référence en faveur d’Haïti</p>
                 </div>
             </div>
-
-            <!-- Documentation Section -->
-            <div class="bg-white p-4 rounded-lg shadow-md">
-                <h2 class="text-lg font-bold text-gray-800 border-b pb-2">DOCUMENTATION</h2>
-                <ul class="mt-2 space-y-2">
-                    <li
-                        class="text-white flex items-center justify-between bg-blue-900 hover:bg-blue-950 px-4 py-3 rounded-lg shadow-md transition duration-200 hover:shadow-lg cursor-pointer">
-                        FINANCES PUBLIQUES <span class="text-white text-lg">→</span>
-                    </li>
-                    <li
-                        class="text-white flex items-center justify-between bg-blue-900 hover:bg-blue-950 px-4 py-3 rounded-lg shadow-md transition duration-200 hover:shadow-lg cursor-pointer">
-                        MARCHÉS PUBLICS <span class="text-white text-lg">→</span>
-                    </li>
-                    <li
-                        class="text-white flex items-center justify-between bg-blue-900 hover:bg-blue-950 px-4 py-3 rounded-lg shadow-md transition duration-200 hover:shadow-lg cursor-pointer">
-                        COMMERCE EXTÉRIEUR <span class="text-white text-lg">→</span>
-                    </li>
-                    <li
-                        class="text-white flex items-center justify-between bg-blue-900 hover:bg-blue-950 px-4 py-3 rounded-lg shadow-md transition duration-200 hover:shadow-lg cursor-pointer">
-                        DÉPENSES COVID-19 <span class="text-white text-lg">→</span>
-                    </li>
-                    <li
-                        class="text-white flex items-center justify-between bg-blue-900 hover:bg-blue-950 px-4 py-3 rounded-lg shadow-md transition duration-200 hover:shadow-lg cursor-pointer">
-                        Comprendre le budget <span class="text-white text-lg">→</span>
-                    </li>
-                </ul>
-            </div>
-
-            <!-- News Section -->
-            <div class="bg-white p-4 rounded-lg shadow-md">
-                <h2 class="text-lg font-bold text-gray-800 border-b pb-2">ACTUALITÉS DE LA DIRECTION</h2>
-                <img src="https://picsum.photos/1000/500" alt="News" class="w-full mt-4">
-                <p class="mt-2 text-sm text-gray-600 font-bold">La direction du FMI approuve un nouveau programme de
-                    référence en faveur d’Haïti</p>
+            <div class="flex-3 border-l pl-2 ">
+                {{-- <x-mediatheque /> --}}
             </div>
         </div>
     </div>
-    {{-- <x-mediatheque /> --}}
+    <x-mediatheque />
 @endsection

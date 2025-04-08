@@ -57,14 +57,14 @@
 
             <!-- Content Sections -->
             <div class="space-y-8">
-                <!-- Standard Pension Section -->
-                <section aria-labelledby="standard-pension-heading"
+                <!-- Reversion Pension Section -->
+                <section aria-labelledby="reversion-pension-heading"
                     class="bg-white shadow-md rounded-xl p-6 border border-gray-200 mb-8">
-                    <h2 id="standard-pension-heading" class="text-lg font-semibold text-gray-800 mb-4">Demande de pension
-                        standard</h2>
+                    <h2 id="reversion-pension-heading" class="text-lg font-semibold text-gray-800 mb-4">Demande de pension
+                        par réversion</h2>
                     <div class="gradient-bg">
-                        <p class="text-sm">Pour tout agent public ayant fourni à l'État un minimum de cinq (5) années (60
-                            mois) de service âgé de 58 ans</p>
+                        <p class="text-sm">Si le défunt est fonctionnaire et laisse un conjoint survivant et des enfants
+                            mineurs et ou majeurs jusqu'à 24 ans</p>
                     </div>
                     <div class="p-6">
                         <ul class="space-y-3 text-gray-700 list-none">
@@ -74,12 +74,15 @@
                             </li>
                             <li class="flex items-start">
                                 <i class="fas fa-check-circle text-green-500 mt-1 mr-2" aria-hidden="true"></i>
-                                <span>Copie du Moniteur (pour les Grands Commis)</span>
+                                <span>Copie et Original Acte de décès</span>
                             </li>
                             <li class="flex items-start">
                                 <i class="fas fa-check-circle text-green-500 mt-1 mr-2" aria-hidden="true"></i>
-                                <span>Copie et Original de l'Extrait récent de l'Acte de Mariage (pour les femmes
-                                    mariées)</span>
+                                <span>Original Certificat de non-dissolution du Mariage</span>
+                            </li>
+                            <li class="flex items-start">
+                                <i class="fas fa-check-circle text-green-500 mt-1 mr-2" aria-hidden="true"></i>
+                                <span>Copie et Original de l'Extrait récent de l'Acte de Mariage</span>
                             </li>
                             <li class="flex items-start">
                                 <i class="fas fa-check-circle text-green-500 mt-1 mr-2" aria-hidden="true"></i>
@@ -87,12 +90,11 @@
                             </li>
                             <li class="flex items-start">
                                 <i class="fas fa-check-circle text-green-500 mt-1 mr-2" aria-hidden="true"></i>
-                                <span>Acte de divorce (le cas échéant)</span>
+                                <span>Copie du Matricule fiscal</span>
                             </li>
                             <li class="flex items-start">
                                 <i class="fas fa-check-circle text-green-500 mt-1 mr-2" aria-hidden="true"></i>
-                                <span>Copie du Matricule fiscal accompagné de la carte d'identification Nationale
-                                    (CIN)</span>
+                                <span>Copie de la carte électorale</span>
                             </li>
                             <li class="flex items-start">
                                 <i class="fas fa-check-circle text-green-500 mt-1 mr-2" aria-hidden="true"></i>
@@ -100,21 +102,37 @@
                             </li>
                             <li class="flex items-start">
                                 <i class="fas fa-check-circle text-green-500 mt-1 mr-2" aria-hidden="true"></i>
-                                <span>Certificat Médical (pour cause d'incapacité)</span>
+                                <span>Procès-verbal désignant un tuteur pour un mineur ou un handicapé</span>
                             </li>
                             <li class="flex items-start">
                                 <i class="fas fa-check-circle text-green-500 mt-1 mr-2" aria-hidden="true"></i>
-                                <span>Souche de chèque ou preuve de paiement</span>
+                                <span>Certificat Médical (pour les handicapés physiques ou les interdits)</span>
+                            </li>
+                            <li class="flex items-start">
+                                <i class="fas fa-check-circle text-green-500 mt-1 mr-2" aria-hidden="true"></i>
+                                <span>Copie du Moniteur (pour les Grands Commis)</span>
+                            </li>
+                            <li class="flex items-start">
+                                <i class="fas fa-check-circle text-green-500 mt-1 mr-2" aria-hidden="true"></i>
+                                <span>Carte de pension (du conjoint décédé)</span>
+                            </li>
+                            <li class="flex items-start">
+                                <i class="fas fa-check-circle text-green-500 mt-1 mr-2" aria-hidden="true"></i>
+                                <span>Souche de chèque ou preuve de paiement (du pensionné décédé)</span>
+                            </li>
+                            <li class="flex items-start">
+                                <i class="fas fa-check-circle text-green-500 mt-1 mr-2" aria-hidden="true"></i>
+                                <span>Attestation scolaire ou Universitaire (pour les étudiants majeurs)</span>
                             </li>
                         </ul>
                         <div class="mt-6 flex flex-col sm:flex-row gap-4">
-                            <a href="{{ route('fonctionnaire.pension-standard-form') }}" role="button"
+                            <a href="{{ route('pensionnaire.pension-reversion-form') }} " role="button"
                                 class="inline-flex items-center justify-center px-6 py-3 border border-transparent text-base font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 transition-colors duration-200 shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
                                 <i class="fas fa-file-alt mr-2" aria-hidden="true"></i> Faire la demande
                             </a>
-                            <a href="/downloads/pension-standard-checklist.pdf"
+                            <a href="/downloads/pension-reversion-checklist.pdf"
                                 class="inline-flex items-center justify-center px-6 py-3 border border-gray-300 text-base font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 transition-colors duration-200 shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-                                download="Liste_Pension_Standard.pdf">
+                                download="Liste_Pension_Reversion.pdf">
                                 <i class="fas fa-download mr-2" aria-hidden="true"></i> Télécharger la liste
                             </a>
                         </div>
@@ -127,14 +145,6 @@
                     <h2 id="legal-references-heading" class="text-lg font-semibold text-gray-800 mb-4">Références légales
                     </h2>
                     <div class="space-y-6">
-                        <div class="flex items-start space-x-3">
-                            <i class="fas fa-gavel text-lg w-6 h-6 text-blue-500 flex-shrink-0" aria-hidden="true"></i>
-                            <div class="text-gray-700">
-                                <strong class="block text-gray-800">Article 4</strong>
-                                Est éligible à la pension de retraite, tout agent public âgé de 58 ans au moins ayant fourni
-                                à l’État un minimum de 5 ans (60 mois) de service.
-                            </div>
-                        </div>
                         <div class="flex items-start space-x-3">
                             <i class="fas fa-gavel text-lg w-6 h-6 text-blue-500 flex-shrink-0" aria-hidden="true"></i>
                             <div class="text-gray-700">

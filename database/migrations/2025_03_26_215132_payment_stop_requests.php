@@ -19,6 +19,7 @@ return new class extends Migration
             $table->date('request_date');            
             $table->foreignId('pension_category_id')->constrained('pension_categories')->onDelete('cascade');
             $table->string('pensioner_code');
+            $table->string('pensioner_signature')->nullable();
             $table->decimal('amount', 10, 2);
             $table->string('lastname');
             $table->string('firstname');

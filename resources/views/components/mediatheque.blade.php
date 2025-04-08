@@ -1,44 +1,12 @@
-@props(['books'])
+<div class="grid grid-cols-1 gap-6 md:grid-cols-5 lg:gap-8">
+    <!-- Books Slider - 4/5 width on desktop -->
+    <div
+        class="md:col-span-4 h-full relative after:absolute after:top-1/2 after:-right-3 after:-translate-y-1/2 after:w-px after:h-4/5 after:bg-gray-200 after:hidden md:after:block lg:after:-right-4">
+        <x-books-slider />
+    </div>
 
-<div class="flex gap-4 p-4 border">
-    {{--     <div class="swiper2 books relative w-3/4 bg-cover bg-center border border-red-600">
-        <div class="swiper-wrapper">
-            <div class="swiper-slide">
-                <div class="p-4">
-                    <div class="bg-white rounded-lg shadow-md p-4 hover:shadow-lg transition-shadow flex flex-col">
-                        <img src="https://mef.gouv.ht/themes/demo/assets/images/home/01.png" alt="Book cover"
-                            class="w-full h-48 object-cover rounded-md" />
-                        <h4 class="font-bold mt-3 text-center line-clamp-2">book . title</h4>
-                        <p class="text-sm text-gray-600 text-center mb-4 flex-1 overflow-hidden">
-                            book description
-                        </p>
-                        <a class="mt-auto inline-block bg-gray-800 opacity-75 hover:opacity-100 text-white py-2 px-4 rounded transition-colors text-center"
-                            href="#" target="_blank">
-                            TELECHARGER
-                        </a>
-                    </div>
-                </div>
-            </div>
-            <div class="swiper-slide">
-                <div class="p-4">
-                    <div class="bg-white rounded-lg shadow-md p-4 hover:shadow-lg transition-shadow flex flex-col">
-                        <img src="https://mef.gouv.ht/themes/demo/assets/images/home/01.png" alt="Book cover"
-                            class="w-full h-48 object-cover rounded-md" />
-                        <h4 class="font-bold mt-3 text-center line-clamp-2">book . title</h4>
-                        <p class="text-sm text-gray-600 text-center mb-4 flex-1 overflow-hidden">
-                            book description
-                        </p>
-                        <a class="mt-auto inline-block bg-gray-800 opacity-75 hover:opacity-100 text-white py-2 px-4 rounded transition-colors text-center"
-                            href="#" target="_blank">
-                            TELECHARGER
-                        </a>
-                    </div>
-                </div>
-            </div>
-        </div>
-        <div class="swiper-pagination"></div>
-        <div class="swiper-button-prev"></div>
-        <div class="swiper-button-next"></div>
-    </div> --}}
-    <x-video-card title="Mediatheque/video" videoUrl="https://www.youtube.com/embed/zpVPYB2_ztM" />
+    <!-- Video Section - 1/5 width on desktop -->
+    <div class="aspect-video w-full md:col-span-1 md:mt-11">
+        <x-video-card title="Mediatheque/video" videoUrl="https://www.youtube.com/embed/zpVPYB2_ztM" />
+    </div>
 </div>

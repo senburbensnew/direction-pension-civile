@@ -33,6 +33,8 @@ class BankTransferRequests extends Model
         'status_id',
         "created_at",
         "updated_at",
+        'profile_photo',
+        'pensioner_signature'
     ];
 
     protected $casts = [

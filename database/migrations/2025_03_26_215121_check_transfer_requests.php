@@ -17,6 +17,7 @@ return new class extends Migration
             $table->string('fiscal_year')->nullable();
             $table->string('start_month', 7);
             $table->date('request_date');
+            $table->string('pensioner_signature')->nullable();
             $table->foreignId('pension_category_id')->constrained('pension_categories')->onDelete('restrict');
             $table->string('pensioner_code');
             $table->decimal('amount', 10, 2);

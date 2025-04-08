@@ -205,6 +205,11 @@ Route::prefix('pensionnaire')
         Route::get('/demande-reinsertion', [PensionnaireController::class, 'demandeReinsertion'])->name('reinstatement-request-form');
         Route::get('/demande-arret-virement', [PensionnaireController::class, 'demandeArretVirement'])->name('transfer-stop-request-form');
         Route::get('/preuve-existence', [PensionnaireController::class, 'preuveExistence'])->name('preuve-existence');
+        Route::get('/demande-pension', [PensionnaireController::class, 'demandePension'])
+        ->name('pension-request-form');
+        Route::get('/demande-pension-reversion', [PensionnaireController::class, 'showPensionReversionForm'])
+        ->name('pension-reversion-form');
+
         Route::post('/demande-virement', [PensionnaireController::class, 'processVirementRequest'])->name('process-virement-request');
         Route::post('/demande-attestation', [PensionnaireController::class, 'processAttestationRequest'])->name('process-attestation-request');
         Route::post('/demande-transfert-cheque', [PensionnaireController::class, 'processCheckTransferRequest'])->name('process-check-transfer-request');
@@ -216,14 +221,33 @@ Route::prefix('pensionnaire')
 
     Route::prefix('fonctionnaire')->name('fonctionnaire.')->middleware('auth')->group(function () {
         // Get routes
-        Route::get('/demande-etat-de-carriere', [FonctionnaireController::class, 'demandeEtatCarriere'])->name('career-state-form');
-        Route::get('/simulation-retraite', [FonctionnaireController::class, 'retirementSimulation'])->name('retirement-simulation-form');
-        Route::get('/demande-pension', [FonctionnaireController::class, 'demandePension'])->name('pension-request-form');
+        Route::get('/demande-etat-de-carriere', [FonctionnaireController::class, 'demandeEtatCarriere'])
+            ->name('career-state-form');
+            
+        Route::get('/simulation-retraite', [FonctionnaireController::class, 'retirementSimulation'])
+            ->name('retirement-simulation-form');
+            
+        Route::get('/demande-pension', [FonctionnaireController::class, 'demandePension'])
+            ->name('pension-request-form');
+            
+        Route::get('/demande-pension-standard', [FonctionnaireController::class, 'showPensionStandardForm'])
+            ->name('pension-standard-form');
     
         // Post routes
-        Route::post('/demande-etat-de-carriere', [FonctionnaireController::class, 'processCareerStateRequest'])->name('process-career-state-request');
-        Route::post('/simulation-retraite', [FonctionnaireController::class, 'processRetirementSimulation'])->name('process-retirement-simulation');
-        Route::post('/demande-pension', [FonctionnaireController::class, 'processPensionRequest'])->name('process-pension-request');
+        Route::post('/demande-etat-de-carriere', [FonctionnaireController::class, 'processCareerStateRequest'])
+            ->name('process-career-state-request');
+            
+        Route::post('/simulation-retraite', [FonctionnaireController::class, 'processRetirementSimulation'])
+            ->name('process-retirement-simulation');
+            
+        Route::post('/demande-pension', [FonctionnaireController::class, 'processPensionRequest'])
+            ->name('process-pension-request');
+            
+        Route::post('/demande-pension-standard', [FonctionnaireController::class, 'processPensionStandard'])
+            ->name('process-pension-standard');
+            
+        Route::post('/demande-pension-reversion', [FonctionnaireController::class, 'processPensionReversion'])
+            ->name('process-pension-reversion');
     });
 
 

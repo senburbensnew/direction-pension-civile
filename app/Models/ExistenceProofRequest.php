@@ -10,13 +10,14 @@ class ExistenceProofRequest extends Model
     use HasFactory;
 
     protected $fillable = [
+        'fiscal_year',
         "status_id",
         "created_by",
         "pension_amount",
         "code",
         "id_number",
-        "profile_photo",
-        "fiscal_year",
+        'profile_photo',
+        'pensioner_signature',
         "nif",
         "lastname",
         "firstname",
@@ -27,6 +28,7 @@ class ExistenceProofRequest extends Model
         "pension_category_id",
         "gender_id",
         "postal_address",
+        "last_proof_mandate_date",
         "phone",
         "amount",
         "monitor_number",

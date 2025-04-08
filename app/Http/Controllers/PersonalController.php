@@ -23,6 +23,7 @@ class PersonalController extends Controller
         $checkTransferRequestCounts = CheckTransferRequests::where('created_by', auth()->id())->count();
         $paymentStopRequestCounts = PaymentStopRequests::where('created_by', auth()->id())->count();
         $existenceProofRequestCounts = ExistenceProofRequest::where('created_by', auth()->id())->count();
+        $pensionRequestCounts = 0;//ExistenceProofRequest::where('created_by', auth()->id())->count();
 
         $stats = [
             'pensionnaire' => [
@@ -47,7 +48,23 @@ class PersonalController extends Controller
                     'type' => 'existenceProofRequest'
                 ],
             ],
-            'fonctionnaire' => [],
+            'fonctionnaire' => [
+                [
+                    'label' => 'Demande de pension',
+                    'count' => $pensionRequestCounts,
+                    'type' => 'pensionRequest'
+                ],
+                [
+                    'label' => 'Demande d\'etat de carriere',
+                    'count' => 0,
+                    'type' => 'etatcarriere'
+                ],
+                [
+                    'label' => 'Simulation de retraite',
+                    'count' => 0,
+                    'type' => 'simulation'
+                ],
+            ],
             'institution' => [],
         ];
 
@@ -147,6 +164,7 @@ class PersonalController extends Controller
         $requestType = $httpRequest->query('requestType');
         $requestHistories = [];
         $requestModel = null;
+        $dependants = [];
 
         switch($requestType) {
             case 'bankTransferRequest':
@@ -174,7 +192,7 @@ class PersonalController extends Controller
                 break;
 
             case 'existenceProofRequest':
-                $requestModel = ExistenceProofRequest::where('created_by', auth()->id())->findOrFail($id);
+                $requestModel = ExistenceProofRequest::with('dependants')->where('created_by', auth()->id())->findOrFail($id);
                 $requestHistories = RequestHistory::where('request_id', $requestModel->id)
                     ->where('request_type', 'EXISTENCE_PROOF_REQUEST')
                     ->orderBy('event_date', 'desc')

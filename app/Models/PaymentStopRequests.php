@@ -31,6 +31,7 @@ class PaymentStopRequests extends Model
         'created_by',
         "created_at",
         "updated_at",
+        'pensioner_signature',
     ];
 
     

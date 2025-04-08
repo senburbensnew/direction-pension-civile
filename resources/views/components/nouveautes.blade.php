@@ -1,21 +1,14 @@
-<div class="border-gray-300 md:w-1/5 w-full mt-4 md:mt-0">
-    <div class="text-center text-white" style="background-color: #173152;">{{ __('messages.new_feeds') }}</div>
-    <x-nouveaute>
-        Avis de recrutement pour les postes suivants : Gardien, Agent de Sécurité, Messager (ère) et Ménager
-        (ère).
-    </x-nouveaute>
-    <x-nouveaute>
-        Rapport des décaissements à partir des Ressources du Food Shock Window (Exercice
-        23-24)
-    </x-nouveaute>
-    <x-nouveaute>Dépenses Sociales.- décembre 2024</x-nouveaute>
-    <x-nouveaute>
-        Résume analytique de la situation des finances publiques pour les deux premiers mois de l’Exercice
-        Fiscal 2024-2025
-    </x-nouveaute>
-    <x-nouveaute>Document Annexe à la lettre de Cadrage 2024-2025</x-nouveaute>
-    <x-nouveaute>
-        COMMUNIQUE DE PRESSE.- Lancement du Processus d’Élaboration du Projet de Budget
-        2024-2025
-    </x-nouveaute>
+<div class="border md:w-1/5 w-full mt-4 md:mt-0">
+    <div class="text-center text-white" style="background-color: #173152;">
+        {{ __('messages.new_feeds') }}
+    </div>
+
+    {{-- @forelse ($nouveautes as $nouveaute) --}}
+    @forelse ([] as $nouveaute)
+        <x-nouveaute :title="$nouveaute['title']" :date="$nouveaute['date']">
+            {{ $nouveaute['content'] }}
+        </x-nouveaute>
+    @empty
+        <div class="p-4 text-gray-500">{{ __('Aucune nouveauté pour le moment.') }}</div>
+    @endforelse
 </div>

@@ -15,8 +15,12 @@
             <div class="w-full md:w-40 order-1">
                 <div class="relative">
                     <input type="text" name="id_number" id="id_number" value="{{ old('id_number') }}"
-                        class="peer w-full h-12 py-2 text-lg border-b-2 border-gray-500 focus:outline-none placeholder-transparent @error('id_number') border-red-500 @else border-gray-300 @enderror"
-                        placeholder="NO D’IDENTITE" aria-label="Numéro d'identité" />
+                        class="
+                        {{-- peer --}}
+                         w-full h-12 py-2 text-lg border-b-2 border-gray-500 focus:outline-none 
+                        {{-- placeholder-transparent  --}}
+                        @error('id_number') border-red-500 @else border-gray-300 @enderror"
+                        placeholder="003-456-789-0" aria-label="Numéro d'identité" />
                     <label for="id_number"
                         class="absolute left-0 -top-4 text-gray-500 text-sm transition-all peer-placeholder-shown:top-2 peer-placeholder-shown:text-base peer-focus:-top-4 peer-focus:text-sm">
                         NO D’IDENTITE
@@ -254,6 +258,18 @@
                             id="fin_pension"
                             class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
                         @error('pension_end_date')
+                            <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                        @enderror
+                    </div>
+
+                    <div>
+                        <label for="last_proof_mandate_date" class="block text-sm font-medium text-gray-700">
+                            Date de dernière Preuve/Mandat
+                        </label>
+                        <input value="{{ old('last_proof_mandate_date') }}" type="date"
+                            name="last_proof_mandate_date" id="last_proof_mandate_date"
+                            class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                        @error('last_proof_mandate_date')
                             <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
                         @enderror
                     </div>

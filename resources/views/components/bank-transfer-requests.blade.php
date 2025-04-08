@@ -16,43 +16,44 @@
         <span class="text-gray-800">Demande de virement</span>
     </nav>
 
-    <div id="bank_transfer_request_form"
-        class="tab-content max-w-7xl mx-auto bg-white p-6 shadow-md rounded-lg relative m-2">
-        <div class="flex flex-col md:flex-row justify-between items-center mb-12 gap-8">
-            <!-- Increased bottom margin and added gap -->
-            <!-- Logo -->
-            <div class="order-1">
-                <img src="{{ asset('images/setting-logo-1-M13oPLiYoM.png') }}" alt="Logo"
-                    class="w-24 h-24 object-cover">
+    <form method="POST" action="{{ route('pensionnaire.process-virement-request') }}" enctype="multipart/form-data">
+        <div id="bank_transfer_request_form"
+            class="tab-content max-w-7xl mx-auto bg-white p-6 shadow-md rounded-lg relative m-2">
+            <div class="flex flex-col md:flex-row justify-between items-center mb-12 gap-8">
+                <!-- Increased bottom margin and added gap -->
+                <!-- Logo -->
+                <div class="order-1">
+                    <img src="{{ asset('images/setting-logo-1-M13oPLiYoM.png') }}" alt="Logo"
+                        class="w-24 h-24 object-cover">
+                </div>
+
+                <!-- Title Section -->
+                <div class="order-2 mx-4 md:mx-12 text-center flex-grow"> <!-- Added horizontal margins -->
+                    <h1 class="text-xl md:text-2xl font-bold">
+                        MINISTERE DE L’ECONOMIE ET DES FINANCES <br />
+                        <span class="underline">PENSION CIVILE</span><br />
+                        <span>PAIEMENT PAR VIREMENT BANCAIRE</span><br />
+                        <span class="underline font-normal text-base md:text-lg">Formulaire de souscription</span>
+                    </h1>
+                </div>
+
+                <!-- Enhanced Photo Upload Component -->
+                <x-profile-picture />
             </div>
 
-            <!-- Title Section -->
-            <div class="order-2 mx-4 md:mx-12 text-center flex-grow"> <!-- Added horizontal margins -->
-                <h1 class="text-xl md:text-2xl font-bold">
-                    MINISTERE DE L’ECONOMIE ET DES FINANCES <br />
-                    <span class="underline">PENSION CIVILE</span><br />
-                    <span>PAIEMENT PAR VIREMENT BANCAIRE</span><br />
-                    <span class="underline font-normal text-base md:text-lg">Formulaire de souscription</span>
-                </h1>
-            </div>
+            @if (session('success'))
+                <div class="mb-4 p-4 bg-green-50 border border-green-200 text-green-700 rounded">
+                    {{ session('success') }}
+                </div>
+            @endif
 
-            <!-- Enhanced Photo Upload Component -->
-            <x-profile-picture />
-        </div>
+            @if (session('error'))
+                <div class="mb-4 p-4 bg-red-50 border border-red-200 text-red-700 rounded">
+                    {{ session('error') }}
+                </div>
+            @endif
 
-        @if (session('success'))
-            <div class="mb-4 p-4 bg-green-50 border border-green-200 text-green-700 rounded">
-                {{ session('success') }}
-            </div>
-        @endif
-
-        @if (session('error'))
-            <div class="mb-4 p-4 bg-red-50 border border-red-200 text-red-700 rounded">
-                {{ session('error') }}
-            </div>
-        @endif
-
-        <form method="POST" action="{{ route('pensionnaire.process-virement-request') }}">
+            {{-- <form method="POST" action="{{ route('pensionnaire.process-virement-request') }}"> --}}
             @csrf
             @if ($errors->any())
                 <div class="p-4 bg-red-50 border border-red-200 text-red-700 rounded">
@@ -64,8 +65,8 @@
                 </div>
             @endif
             <!-- Hidden file input -->
-            <input type="file" id="photoUpload" accept="image/*" class="hidden" onchange="previewPhoto(event)"
-                name="profile_photo">
+            {{--             <input type="file" id="photoUpload" accept="image/*" class="hidden" onchange="previewPhoto(event)"
+                name="profile_photo"> --}}
             <fieldset class="mt-2 mb-2 shadow-md rounded-lg p-5 border pt-5">
                 <div class="grid grid-cols-2 gap-4 mb-4 items-center">
                     <div>
@@ -394,6 +395,6 @@
             <div class="mt-6 text-right">
                 <button class="bg-blue-600 text-white px-6 py-2 rounded">Soumettre</button>
             </div>
-        </form>
-    </div>
+    </form>
+</div>
 </div>

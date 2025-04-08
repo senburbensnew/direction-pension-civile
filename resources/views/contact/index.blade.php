@@ -110,7 +110,7 @@
                         </div>
 
                         <button type="submit"
-                            class="w-full py-3 bg-blue-600 text-white font-medium rounded-md hover:bg-blue-700 transition-colors">
+                            class="w-full py-3 bg-blue-800 text-white font-medium rounded-md hover:bg-blue-900 transition-colors">
                             Envoyer le message →
                         </button>
                     </form>

@@ -30,5 +30,15 @@ class FonctionnaireController extends Controller
     public function demandePension(){
         return view('fonctionnaire.demande_pension'); 
     }
+
+    public function showPensionStandardForm()
+    {
+        return view('fonctionnaire.demande-pension-standard');
+    }
+
+    public function processPensionStandard(Request $request)
+    {
+        // Handle standard pension form submission
+    }
 }
 

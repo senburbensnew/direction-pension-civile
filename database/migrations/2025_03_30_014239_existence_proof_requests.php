@@ -32,6 +32,7 @@ return new class extends Migration
             $table->date('monitor_date');
             $table->date('pension_start_date');
             $table->date('pension_end_date');
+            $table->date('last_proof_mandate_date')->nullable();
             $table->string('mandataire_name')->nullable();
             $table->string('mandataire_nif')->nullable();
             $table->string('mandataire_cin')->nullable();

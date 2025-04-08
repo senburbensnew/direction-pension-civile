@@ -70,9 +70,15 @@
                                     <div class="p-4 bg-gray-50 rounded-lg">
                                         <h3 class="text-lg font-semibold mb-3 text-gray-700">État civil</h3>
                                         <dl class="space-y-3">
-                                            <div>
-                                                <dt class="text-sm text-gray-500">Nom complet</dt>
-                                                <dd class="font-medium">{{ $request->full_name }}</dd>
+                                            <div class="flex justify-start items-center">
+                                                @if ($request->profile_photo)
+                                                    <img src="{{ asset('storage/' . $request->profile_photo) }}"
+                                                        alt="Photo de profil" class="w-20 h-20 rounded-full object-cover mr-4">
+                                                @endif
+                                                <div>
+                                                    <dt class="text-sm text-gray-500">Nom complet</dt>
+                                                    <dd class="font-medium">{{ $request->full_name }}</dd>
+                                                </div>
                                             </div>
                                             <div>
                                                 <dt class="text-sm text-gray-500">NIF</dt>
@@ -95,6 +101,15 @@
                                             <div>
                                                 <dt class="text-sm text-gray-500">Nom de la mère</dt>
                                                 <dd class="font-medium">{{ $request->mother_name }}</dd>
+                                            </div>
+                                            <div>
+                                                <dt class="text-sm text-gray-500">Signature</dt>
+                                                <dd class="font-medium">
+                                                    @if ($request->pensioner_signature)
+                                                        <img src="{{ asset('storage/' . $request->pensioner_signature) }}"
+                                                            alt="Signature" class="w-full h-full object-cover mr-4">
+                                                    @endif
+                                                </dd>
                                             </div>
                                         </dl>
                                     </div>
@@ -329,6 +344,15 @@
                                                 <dt class="text-sm text-gray-500">Nom de jeune fille</dt>
                                                 <dd class="font-medium">{{ $request->maiden_name }}</dd>
                                             </div>
+                                            <div>
+                                                <dt class="text-sm text-gray-500">Signature</dt>
+                                                <dd class="font-medium border-red-600">
+                                                    @if ($request->pensioner_signature)
+                                                        <img src="{{ asset('storage/' . $request->pensioner_signature) }}"
+                                                            alt="Signature" class="w-full h-full object-cover mr-4">
+                                                    @endif
+                                                </dd>
+                                            </div>
                                         </dl>
                                     </div>
 
@@ -553,6 +577,15 @@
                                             <div>
                                                 <dt class="text-sm text-gray-500">Nom de jeune fille</dt>
                                                 <dd class="font-medium">{{ $request->maiden_name }}</dd>
+                                            </div>
+                                            <div>
+                                                <dt class="text-sm text-gray-500">Signature</dt>
+                                                <dd class="font-medium">
+                                                    @if ($request->pensioner_signature)
+                                                        <img src="{{ asset('storage/' . $request->pensioner_signature) }}"
+                                                            alt="Signature" class="w-full h-full object-cover mr-4">
+                                                    @endif
+                                                </dd>
                                             </div>
                                         </dl>
                                     </div>
@@ -782,6 +815,15 @@
                                                 <dt class="text-sm text-gray-500">État civil</dt>
                                                 <dd class="font-medium">{{ $request->civilStatus->name }}</dd>
                                             </div>
+                                            <div>
+                                                <dt class="text-sm text-gray-500">Signature</dt>
+                                                <dd class="font-medium">
+                                                    @if ($request->pensioner_signature)
+                                                        <img src="{{ asset('storage/' . $request->pensioner_signature) }}"
+                                                            alt="Signature" class="w-full h-full object-cover mr-4">
+                                                    @endif
+                                                </dd>
+                                            </div>
                                         </dl>
                                     </div>
 
@@ -825,7 +867,7 @@
                                     <!-- Pension Summary -->
                                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                                         <div class="p-4 bg-blue-50 rounded-lg">
-                                            <dt class="text-sm text-gray-500">Montant de la pension</dt>
+                                            <dt class="text-sm text-gray-500">Montant</dt>
                                             <dd class="text-2xl font-bold text-blue-600">
                                                 {{ number_format($request->pension_amount, 0, ',', ' ') }} HTG</dd>
                                         </div>
@@ -837,10 +879,10 @@
 
                                     <!-- Pension Details -->
                                     <div class="p-4 bg-gray-50 rounded-lg">
-                                        <h3 class="text-lg font-semibold mb-3 text-gray-700">Détails de la pension</h3>
+                                        <h3 class="text-lg font-semibold mb-3 text-gray-700">Détails</h3>
                                         <dl class="grid grid-cols-1 md:grid-cols-2 gap-4">
                                             <div>
-                                                <dt class="text-sm text-gray-500">Nature de la pension</dt>
+                                                <dt class="text-sm text-gray-500">Nature</dt>
                                                 <dd class="font-medium">{{ $request->pensionCategory->name }}</dd>
                                             </div>
                                             <div>
@@ -852,6 +894,12 @@
                                                 <dt class="text-sm text-gray-500">Date de fin</dt>
                                                 <dd class="font-medium">
                                                     {{ $request->pension_end_date ? $request->pension_end_date : 'N/A' }}
+                                                </dd>
+                                            </div>
+                                            <div>
+                                                <dt class="text-sm text-gray-500">Date de derniere preuve/mandat</dt>
+                                                <dd class="font-medium">
+                                                    {{ $request->last_proof_mandate_date ? $request->last_proof_mandate_date : 'N/A' }}
                                                 </dd>
                                             </div>
                                         </dl>
@@ -872,85 +920,116 @@
                                         </dl>
                                     </div>
 
-                                    <!-- Metadata -->
                                     <div class="p-4 bg-gray-50 rounded-lg">
-                                        <h3 class="text-lg font-semibold mb-3 text-gray-700">Métadonnées</h3>
-                                        <dl class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                            <div>
-                                                <dt class="text-sm text-gray-500">Code de la demande</dt>
-                                                <dd class="font-medium">#{{ $request->code }}</dd>
-                                            </div>
-                                            <div>
-                                                <dt class="text-sm text-gray-500">Dernière mise à jour</dt>
-                                                <dd class="font-medium">{{ $request->updated_at->format('d/m/Y H:i') }}</dd>
-                                            </div>
-                                        </dl>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        <!-- History -->
-                        <div class="mt-8 px-6">
-                            <h3 class="ml-1 text-xl font-semibold mb-4 text-gray-800">Historique de la demande</h3>
+                                        <h3 class="text-lg font-semibold mb-3 text-gray-700">Liste des dependants</h3>
+                                        <div class="space-y-2">
+                                            @forelse ($request->dependants as $dependant)
+                                                <div class="bg-white p-3 rounded-md border border-gray-200">
+                                                    <div class="grid grid-cols-2 md:grid-cols-4 gap-2 text-sm">
+                                                        <div>
+                                                            <div class="text-gray-500 font-medium">Nom</div>
+                                                            <div class="text-gray-900">{{ $dependant->name }}</div>
+                                                        </div>
+                                                        <div>
+                                                            <div class="text-gray-500 font-medium">Relation</div>
+                                                            <div class="text-gray-900">{{ $dependant->relation }}</div>
+                                                        </div>
+                                                        <div>
+                                                            <div class="text-gray-500 font-medium">Naissance</div>
+                                                            <div class="text-gray-900">
+                                                                {{ \Carbon\Carbon::parse($dependant->birth_date)->format('d/m/Y') }}
+                                                            </div>
+                                                        </div>
+                                                        <div>
+                                                            <div class="text-gray-500 font-medium">Genre</div>
+                                                            <div class="text-gray-900">
+                                                                @switch($dependant->gender_id)
+                                                                    @case(1)
+                                                                        Homme
+                                                                    @break
 
-                            <div class="bg-white rounded-lg shadow-sm border border-gray-100">
-                                @forelse($requestHistories as $history)
-                                    <div class="p-4 border-b border-gray-100 last:border-b-0">
-                                        <div class="flex justify-between items-start">
-                                            <div class="flex-1">
-                                                <div class="flex items-center gap-3 mb-2">
-                                                    <span class="text-sm font-medium text-gray-700">
-                                                        {{ $history->event_type }}
-                                                    </span>
-                                                    <span class="text-xs text-gray-500">
-                                                        {{ $history->event_date }}
-                                                    </span>
+                                                                    @case(2)
+                                                                        Femme
+                                                                    @break
+
+                                                                    @default
+                                                                        Autre
+                                                                @endswitch
+                                                            </div>
+                                                        </div>
+                                                    </div>
                                                 </div>
-
-                                                {{--                                             @if ($history->request_data)
-                                                <div class="text-sm text-gray-600 mt-1">
-                                                    @foreach (json_decode($history->request_data, true) as $key => $value)
-                                                        <p class="break-words">
-                                                            <span
-                                                                class="font-medium">{{ ucfirst(str_replace('_', ' ', $key)) }}:</span>
-                                                            {{ is_array($value) ? json_encode($value) : $value }}
-                                                        </p>
-                                                    @endforeach
-                                                </div>
-                                            @endif --}}
-                                            </div>
-
-                                            <div class="text-right">
-                                                <p class="text-sm text-gray-500">
-                                                    @if ($history->creator)
-                                                        Par {{ $history->creator->name }}
-                                                    @else
-                                                        Système
-                                                    @endif
-                                                </p>
-                                                <p class="text-xs text-gray-400">
-                                                    #{{ $history->request_type }}
-                                                </p>
+                                                @empty
+                                                    <div class="text-gray-500 py-2">
+                                                        Aucun dependant
+                                                    </div>
+                                                @endforelse
                                             </div>
                                         </div>
                                     </div>
-                                @empty
-                                    <div class="p-4 text-center text-gray-500">
-                                        Aucun historique disponible pour cette demande
-                                    </div>
-                                @endforelse
+                                </div>
                             </div>
+                            <!-- History -->
+                            <div class="mt-8 px-6">
+                                <h3 class="ml-1 text-xl font-semibold mb-4 text-gray-800">Historique de la demande</h3>
 
-                            <!-- Pagination -->
-                            <div class="mt-4">
-                                {{ $requestHistories->links() }}
+                                <div class="bg-white rounded-lg shadow-sm border border-gray-100">
+                                    @forelse($requestHistories as $history)
+                                        <div class="p-4 border-b border-gray-100 last:border-b-0">
+                                            <div class="flex justify-between items-start">
+                                                <div class="flex-1">
+                                                    <div class="flex items-center gap-3 mb-2">
+                                                        <span class="text-sm font-medium text-gray-700">
+                                                            {{ $history->event_type }}
+                                                        </span>
+                                                        <span class="text-xs text-gray-500">
+                                                            {{ $history->event_date }}
+                                                        </span>
+                                                    </div>
+
+                                                    {{--                                             @if ($history->request_data)
+                                                                            <div class="text-sm text-gray-600 mt-1">
+                                                                                @foreach (json_decode($history->request_data, true) as $key => $value)
+                                                                                    <p class="break-words">
+                                                                                        <span
+                                                                                            class="font-medium">{{ ucfirst(str_replace('_', ' ', $key)) }}:</span>
+                                                                                        {{ is_array($value) ? json_encode($value) : $value }}
+                                                                                    </p>
+                                                                                @endforeach
+                                                                            </div>
+                                                                        @endif --}}
+                                                </div>
+
+                                                <div class="text-right">
+                                                    <p class="text-sm text-gray-500">
+                                                        @if ($history->creator)
+                                                            Par {{ $history->creator->name }}
+                                                        @else
+                                                            Système
+                                                        @endif
+                                                    </p>
+                                                    <p class="text-xs text-gray-400">
+                                                        #{{ $history->request_type }}
+                                                    </p>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    @empty
+                                        <div class="p-4 text-center text-gray-500">
+                                            Aucun historique disponible pour cette demande
+                                        </div>
+                                    @endforelse
+                                </div>
+
+                                <!-- Pagination -->
+                                <div class="mt-4">
+                                    {{ $requestHistories->links() }}
+                                </div>
                             </div>
                         </div>
                     </div>
-                </div>
-            </div>
-        @break
+                @break
 
-        @default
-    @endswitch
-</x-app-layout>
+                @default
+            @endswitch
+    </x-app-layout>
