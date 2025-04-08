@@ -10,15 +10,18 @@ return new class extends Migration
     {
         Schema::create('pension_requests', function (Blueprint $table) {
             $table->id();
-            $table->string('certificat_carriere');
-            $table->string('copie_moniteur');
-            $table->string('acte_mariage');
-            $table->string('acte_naissance');
-            $table->string('acte_divorce')->nullable();
-            $table->string('matricule_fiscal_cin');
+            $table->string('code')->unique();
+            $table->string('name');
+            $table->string('nif');
+            $table->string('career_certificate');
+            $table->string('monitor_copy');
+            $table->string('marriage_certificate');
+            $table->string('birth_certificate');
+            $table->string('divorce_certificate')->nullable();
+            $table->string('tax_id_number');
             $table->json('photos');
-            $table->string('certificat_medical');
-            $table->string('souche_cheque');
+            $table->string('medical_certificate');
+            $table->string('check_stub');
             // Foreign key constraints
             $table->foreignId('created_by')
                 ->constrained('users')

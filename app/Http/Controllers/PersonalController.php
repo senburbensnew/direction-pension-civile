@@ -125,6 +125,17 @@ class PersonalController extends Controller
                 $stats['completed'] = ExistenceProofRequest::forUser()->completed()->count();
                 $type = 'Preuve d\'existence';
                 break;
+            case 'pensionRequest' :
+                $requests = PensionRequest::where('created_by', auth()->id())
+                ->orderBy('created_at', 'desc')
+                ->paginate(10);  ;
+                $stats['pending'] = PensionRequest::forUser()->pending()->count();
+                $stats['approved'] = PensionRequest::forUser()->approved()->count();
+                $stats['in_progress'] = PensionRequest::forUser()->inProgress()->count();
+                $stats['rejected'] = PensionRequest::forUser()->rejected()->count();
+                $stats['completed'] = PensionRequest::forUser()->completed()->count();
+                $type = 'Demande de pension';
+                break;
         }
 
         return view('personal.requests', compact('requests', 'stats', 'requestType','type')); 
@@ -160,7 +171,6 @@ class PersonalController extends Controller
         $requestType = $httpRequest->query('requestType');
         $requestHistories = [];
         $requestModel = null;
-        $dependants = [];
 
         switch($requestType) {
             case 'bankTransferRequest':
@@ -170,7 +180,6 @@ class PersonalController extends Controller
                     ->orderBy('event_date', 'desc')
                     ->paginate(10);
                 break;
-
             case 'checkTransferRequest':
                 $requestModel = CheckTransferRequests::where('created_by', auth()->id())->findOrFail($id);
                 $requestHistories = RequestHistory::where('request_id', $requestModel->id)
@@ -178,7 +187,6 @@ class PersonalController extends Controller
                     ->orderBy('event_date', 'desc')
                     ->paginate(10);
                 break;
-
             case 'paymentStopRequest':
                 $requestModel = PaymentStopRequests::where('created_by', auth()->id())->findOrFail($id);
                 $requestHistories = RequestHistory::where('request_id', $requestModel->id)
@@ -186,7 +194,6 @@ class PersonalController extends Controller
                     ->orderBy('event_date', 'desc')
                     ->paginate(10);
                 break;
-
             case 'existenceProofRequest':
                 $requestModel = ExistenceProofRequest::with('dependants')->where('created_by', auth()->id())->findOrFail($id);
                 $requestHistories = RequestHistory::where('request_id', $requestModel->id)
@@ -194,7 +201,13 @@ class PersonalController extends Controller
                     ->orderBy('event_date', 'desc')
                     ->paginate(10);
                 break;
-
+            case 'pensionRequest':
+                $requestModel = PensionRequest::where('created_by', auth()->id())->findOrFail($id);
+                $requestHistories = RequestHistory::where('request_id', $requestModel->id)
+                    ->where('request_type', 'PENSION_REQUEST')
+                    ->orderBy('event_date', 'desc')
+                    ->paginate(10);
+                break;
             default:
                 $requestModel = BankTransferRequests::where('created_by', auth()->id())->findOrFail($id);
                 $requestHistories = RequestHistory::where('request_id', $requestModel->id)

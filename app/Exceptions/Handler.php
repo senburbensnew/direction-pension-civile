@@ -3,6 +3,7 @@
 namespace App\Exceptions;
 
 use Illuminate\Foundation\Exceptions\Handler as ExceptionHandler;
+use Illuminate\Http\Exceptions\PostTooLargeException;
 use Throwable;
 use Illuminate\Support\Facades\App;
 use Illuminate\Support\Facades\Session;
@@ -27,6 +28,14 @@ class Handler extends ExceptionHandler
     {
         $this->reportable(function (Throwable $e) {
             //
+        });
+
+        $this->renderable(function (PostTooLargeException $e, $request) {
+            return redirect()->back()
+                ->withInput()
+                ->withErrors([
+                    'system_error' => 'La taille totale des fichiers dépasse la limite autorisée de 20 Mo'
+                ]);
         });
     }
 

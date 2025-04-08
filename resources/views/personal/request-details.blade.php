@@ -1030,6 +1030,249 @@
                     </div>
                 @break
 
+                @case('pensionRequest')
+                    <x-slot name="header">
+                        <div class="flex justify-between items-center">
+                            <h2 class="font-semibold text-xl text-gray-800 leading-tight">
+                                Détails de la demande #{{ $request->code }}
+                            </h2>
+                            <div class="flex items-center space-x-4">
+                                <a href=""
+                                    class="bg-yellow-500 hover:bg-yellow-600 text-white px-4 py-2 rounded-md flex items-center transition-colors">
+                                    <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                            d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 114.95 0 2.5 2.5 0 01-4.95 0M12 15v3m0 0h3m-3 0H9m6-12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                    </svg>
+                                    Modifier
+                                </a>
+                                <a href=""
+                                    class="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-md flex items-center transition-colors">
+                                    <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                            d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 114.95 0 2.5 2.5 0 01-4.95 0M12 15v3m0 0h3m-3 0H9m6-12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                    </svg>
+                                    Annuler
+                                </a>
+                                <a href="{{ route('personal.dashboard') }}"
+                                    class="bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-2 rounded-md flex items-center transition-colors">
+                                    <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                            d="M3 10h10M3 14h10m5-4v8m-9-6h10M3 10l5 5m0 0l5-5" />
+                                    </svg>
+                                    Tableau de bord
+                                </a>
+                            </div>
+                        </div>
+                    </x-slot>
+
+                    <div class="py-8">
+                        <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
+                            <nav class="text-sm text-gray-500 flex items-center mb-5">
+                                <a href="{{ route('personal.dashboard') }}" class="hover:underline">Dashboard</a>
+                                <span class="mx-2">/</span>
+                                @if (url()->previous() !== url()->current())
+                                    <a href="{{ url()->previous() }}" class="hover:underline">Page précédente</a>
+                                @endif
+                                <span class="mx-2">/</span>
+                                <span class="text-gray-700 font-semibold">Détails de la demande</span>
+                            </nav>
+
+                            <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
+                                <div class="p-6 bg-white border-b border-gray-200">
+                                    <div
+                                        class="mb-6 p-4 rounded-lg {{ App\Models\Status::getStatusStyle($request->status->name) }}">
+                                        <div class="flex items-center justify-between">
+                                            <div>
+                                                <span class="font-semibold">Statut actuel :</span>
+                                                {{ $request->status->name }}
+                                            </div>
+                                            <span class="text-sm">
+                                                Dernière mise à jour : {{ $request->updated_at->format('d/m/Y H:i') }}
+                                            </span>
+                                        </div>
+                                    </div>
+
+                                    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                                        <div class="lg:col-span-1 space-y-6">
+                                            <div class="p-4 bg-gray-50 rounded-lg">
+                                                <h3 class="text-lg font-semibold mb-3 text-gray-700">Identité</h3>
+                                                <dl class="space-y-3">
+                                                    <div>
+                                                        <dt class="text-sm text-gray-500">Nom complet</dt>
+                                                        <dd class="font-medium">{{ $request->name }}</dd>
+                                                    </div>
+                                                </dl>
+                                            </div>
+
+                                            <div class="p-4 bg-gray-50 rounded-lg">
+                                                <h3 class="text-lg font-semibold mb-3 text-gray-700">Identifiants officiels</h3>
+                                                <dl class="space-y-3">
+                                                    <div>
+                                                        <dt class="text-sm text-gray-500">NIF</dt>
+                                                        <dd class="font-medium">{{ $request->nif }}</dd>
+                                                    </div>
+                                                </dl>
+                                            </div>
+                                        </div>
+
+                                        <div class="lg:col-span-2 space-y-6">
+                                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                                {{--                                                 <div class="p-4 bg-blue-50 rounded-lg">
+                                                    <dt class="text-sm text-gray-500">Montant du transfert</dt>
+                                                    <dd class="text-2xl font-bold text-blue-600">{{ $request->amount }} HTG</dd>
+                                                </div> --}}
+                                                <div class="p-4 bg-indigo-50 rounded-lg">
+                                                    <dt class="text-sm text-gray-500">Date de la demande</dt>
+                                                    <dd class="font-medium">{{ $request->created_at->format('d/m/Y H:i') }}</dd>
+                                                </div>
+                                            </div>
+
+                                            <div class="p-4 bg-gray-50 rounded-lg">
+                                                <h3 class="text-lg font-semibold mb-3 text-gray-700">Documents Attachés</h3>
+                                                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                                    <!-- Photos -->
+                                                    <div class="col-span-2">
+                                                        <dt class="text-sm text-gray-500">Photos</dt>
+                                                        <dd class="mt-1">
+                                                            @php
+                                                                // Decode the JSON array and remove backslashes
+                                                                $photos = json_decode(
+                                                                    str_replace('\\/', '/', $request->photos),
+                                                                    true,
+                                                                );
+                                                            @endphp
+
+                                                            @if (is_array($photos) && count($photos) > 0)
+                                                                <div class="flex flex-wrap gap-4">
+                                                                    @foreach ($photos as $photo)
+                                                                        <div class="w-32 h-32">
+                                                                            <img src="{{ asset('storage/' . $photo) }}"
+                                                                                alt="Photo"
+                                                                                class="w-full h-full object-cover rounded shadow-sm">
+                                                                        </div>
+                                                                    @endforeach
+                                                                </div>
+                                                            @else
+                                                                <span class="text-gray-500">Aucune photo téléchargée</span>
+                                                            @endif
+                                                        </dd>
+                                                    </div>
+
+                                                    <!-- Certificats -->
+                                                    @foreach ([
+                    'career_certificate' => 'Certificat de Carrière',
+                    'monitor_copy' => 'Copie du Moniteur',
+                    'marriage_certificate' => 'Certificat de Mariage',
+                    'birth_certificate' => 'Certificat de Naissance',
+                    'divorce_certificate' => 'Certificat de Divorce',
+                    'medical_certificate' => 'Certificat Médical',
+                    'check_stub' => 'Bulletin de Paie',
+                ] as $field => $label)
+                                                        <div>
+                                                            <dt class="text-sm text-gray-500">{{ $label }}</dt>
+                                                            <dd class="mt-1">
+                                                                @if ($request->$field)
+                                                                    <a href="{{ asset('storage/' . $request->$field) }}"
+                                                                        target="_blank"
+                                                                        class="text-blue-600 hover:underline flex items-center">
+                                                                        <svg class="w-4 h-4 mr-1" fill="none"
+                                                                            stroke="currentColor" viewBox="0 0 24 24">
+                                                                            <path stroke-linecap="round" stroke-linejoin="round"
+                                                                                stroke-width="2"
+                                                                                d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                                                                        </svg>
+                                                                        Voir le document
+                                                                    </a>
+                                                                @else
+                                                                    <span class="text-gray-500">Non fourni</span>
+                                                                @endif
+                                                            </dd>
+                                                        </div>
+                                                    @endforeach
+                                                </div>
+                                            </div>
+
+                                            <div class="p-4 bg-gray-50 rounded-lg">
+                                                <h3 class="text-lg font-semibold mb-3 text-gray-700">Métadonnées</h3>
+                                                <dl class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                                    <div>
+                                                        <dt class="text-sm text-gray-500">Code de la demande</dt>
+                                                        <dd class="font-medium">#{{ $request->code }}</dd>
+                                                    </div>
+                                                    {{--                                                     <div>
+                                                        <dt class="text-sm text-gray-500">Créé par</dt>
+                                                        <dd class="font-medium">{{ $request->createdBy->name ?? 'Système' }}</dd>
+                                                    </div> --}}
+                                                    <div>
+                                                        <dt class="text-sm text-gray-500">Dernière mise à jour</dt>
+                                                        <dd class="font-medium">{{ $request->updated_at->format('d/m/Y H:i') }}
+                                                        </dd>
+                                                    </div>
+                                                </dl>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- History Section Remains Same -->
+                                <div class="mt-8 px-6">
+                                    <h3 class="ml-1 text-xl font-semibold mb-4 text-gray-800">Historique de la demande</h3>
+                                    <div class="bg-white rounded-lg shadow-sm border border-gray-100">
+                                        @forelse($requestHistories as $history)
+                                            <div class="p-4 border-b border-gray-100 last:border-b-0">
+                                                <div class="flex justify-between items-start">
+                                                    <div class="flex-1">
+                                                        <div class="flex items-center gap-3 mb-2">
+                                                            <span class="text-sm font-medium text-gray-700">
+                                                                {{ $history->event_type }}
+                                                            </span>
+                                                            <span class="text-xs text-gray-500">
+                                                                {{ $history->event_date }}
+                                                            </span>
+                                                        </div>
+
+                                                        {{--                                             @if ($history->request_data)
+                                                                            <div class="text-sm text-gray-600 mt-1">
+                                                                                @foreach (json_decode($history->request_data, true) as $key => $value)
+                                                                                    <p class="break-words">
+                                                                                        <span
+                                                                                            class="font-medium">{{ ucfirst(str_replace('_', ' ', $key)) }}:</span>
+                                                                                        {{ is_array($value) ? json_encode($value) : $value }}
+                                                                                    </p>
+                                                                                @endforeach
+                                                                            </div>
+                                                                        @endif --}}
+                                                    </div>
+
+                                                    <div class="text-right">
+                                                        <p class="text-sm text-gray-500">
+                                                            @if ($history->creator)
+                                                                Par {{ $history->creator->name }}
+                                                            @else
+                                                                Système
+                                                            @endif
+                                                        </p>
+                                                        <p class="text-xs text-gray-400">
+                                                            #{{ $history->request_type }}
+                                                        </p>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        @empty
+                                            <div class="p-4 text-center text-gray-500">
+                                                Aucun historique disponible pour cette demande
+                                            </div>
+                                        @endforelse
+                                    </div>
+                                    <div class="mt-4">
+                                        {{ $requestHistories->links() }}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                @break
+
                 @default
             @endswitch
     </x-app-layout>
