@@ -4,6 +4,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\ExistenceProofRequest;
+use App\Models\PensionRequest;
 use App\Models\RequestHistory;
 use Illuminate\Http\Request;
 use App\Models\BankTransferRequests;
@@ -23,7 +24,7 @@ class PersonalController extends Controller
         $checkTransferRequestCounts = CheckTransferRequests::where('created_by', auth()->id())->count();
         $paymentStopRequestCounts = PaymentStopRequests::where('created_by', auth()->id())->count();
         $existenceProofRequestCounts = ExistenceProofRequest::where('created_by', auth()->id())->count();
-        $pensionRequestCounts = 0;//ExistenceProofRequest::where('created_by', auth()->id())->count();
+        $pensionRequestCounts = PensionRequest::where('created_by', auth()->id())->count();
 
         $stats = [
             'pensionnaire' => [
