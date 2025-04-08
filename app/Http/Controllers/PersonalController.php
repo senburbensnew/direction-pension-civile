@@ -59,11 +59,6 @@ class PersonalController extends Controller
                     'count' => 0,
                     'type' => 'etatcarriere'
                 ],
-                [
-                    'label' => 'Simulation de retraite',
-                    'count' => 0,
-                    'type' => 'simulation'
-                ],
             ],
             'institution' => [],
         ];
