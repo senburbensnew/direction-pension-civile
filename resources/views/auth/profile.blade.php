@@ -88,23 +88,29 @@
                 </div>
 
                 <div class="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
-                    @foreach (['firstname' => 'Prénom', 'lastname' => 'Nom', 'email' => 'Email', 'nif' => 'NIF', 'ninu' => 'NINU', 'phone' => 'Telephone'] as $field => $label)
-                        <div>
-                            <label for="{{ $field }}" class="block text-sm font-medium text-gray-700 mb-1">
-                                {{ $label }} *
-                                @if ($field === 'email' || $field === 'firstname' || $field === 'lastname')
-                                    <span class="text-gray-500 text-xs">(non modifiable)</span>
-                                @endif
-                            </label>
-                            <input type="{{ $field === 'email' ? 'email' : 'text' }}" name="{{ $field }}"
-                                id="{{ $field }}" value="{{ old($field, auth()->user()->$field) }}"
-                                class="w-full rounded-md @error($field) border-red-500 @else border-gray-300 @enderror
-                                          {{ $field === 'email' || $field === 'firstname' || $field === 'lastname' ? 'bg-gray-100 cursor-not-allowed' : '' }}"
-                                {{ $field === 'email' || $field === 'firstname' || $field === 'lastname' ? 'readonly' : '' }}>
-                            @error($field)
-                                <p class="error-message">{{ $message }}</p>
-                            @enderror
-                        </div>
+                    @foreach (['name' => 'Nom', 'firstname' => 'Prénom', 'lastname' => 'Nom de famille', 'email' => 'Email', 'nif' => 'NIF', 'ninu' => 'NINU', 'phone' => 'Telephone'] as $field => $label)
+                        @if (($field === 'firstname' || $field === 'lastname' || $field === 'ninu') && auth()->user()->hasRole('institution'))
+                            @continue
+                        @elseif ($field === 'name' && !auth()->user()->hasRole('institution'))
+                            @continue
+                        @else
+                            <div>
+                                <label for="{{ $field }}" class="block text-sm font-medium text-gray-700 mb-1">
+                                    {{ $label }} *
+                                    @if ($field === 'name' || $field === 'email' || $field === 'firstname' || $field === 'lastname')
+                                        <span class="text-gray-500 text-xs">(non modifiable)</span>
+                                    @endif
+                                </label>
+                                <input type="{{ $field === 'email' ? 'email' : 'text' }}" name="{{ $field }}"
+                                    id="{{ $field }}" value="{{ old($field, auth()->user()->$field) }}"
+                                    class="w-full rounded-md @error($field) border-red-500 @else border-gray-300 @enderror
+                                      {{ $field === 'name' || $field === 'email' || $field === 'firstname' || $field === 'lastname' ? 'bg-gray-100 cursor-not-allowed' : '' }}"
+                                    {{ $field === 'email' || $field === 'firstname' || $field === 'lastname' ? 'readonly' : '' }}>
+                                @error($field)
+                                    <p class="error-message">{{ $message }}</p>
+                                @enderror
+                            </div>
+                        @endif
                     @endforeach
                 </div>
 

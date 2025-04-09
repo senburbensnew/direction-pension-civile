@@ -249,14 +249,14 @@
                                 {{ __('messages.career_status_request') }}
                             </a>
                         </li>
-                        <li>
+                        {{--                         <li>
                             <a href="{{ route('fonctionnaire.retirement-simulation-form') }}"
                                 class="text-slate-600 block px-4 py-3 hover:bg-gray-100 
                                                transition-colors text-sm truncate-text
                                                focus:outline-none focus:ring-2 ">
                                 {{ __('messages.retirement_simulation') }}
                             </a>
-                        </li>
+                        </li> --}}
                         <li>
                             <a href="{{ route('fonctionnaire.pension-request-form') }}"
                                 class="text-slate-600 block px-4 py-3 hover:bg-gray-100 
@@ -295,7 +295,7 @@
                             </a>
                         </li>
                         <li>
-                            <a href="#"
+                            <a href="{{ route('institution.demande-adhesion-form') }}"
                                 class="text-slate-600 block px-4 py-3 hover:bg-gray-100 
                                    transition-colors text-sm truncate-text
                                    focus:outline-none focus:ring-2 ">

@@ -79,6 +79,27 @@ class RegisteredUserController extends Controller
                 'unique:' . User::class
             ];
         }
+
+        if ($userType === UserTypeEnum::INSTITUTION->value) {
+            $rules['name'] = [
+                'required',
+                'string',
+                'max:255',
+                'unique:' . User::class
+            ];
+
+            $rules['firstname'] = [
+                'nullable',
+                'string',
+                'max:255'
+            ];
+
+            $rules['lastname'] = [
+                'nullable',
+                'string',
+                'max:255'
+            ];
+        }
     
         $validated = $request->validate($rules, $messages, $attributes);
     
@@ -89,8 +110,8 @@ class RegisteredUserController extends Controller
     
         $user = User::create([
             'name' => $validated['name'],
-            "lastname" => $validated['lastname'],
-            "firstname" => $validated['firstname'],
+            "lastname" => $validated['lastname'] ?? null,
+            "firstname" => $validated['firstname'] ?? null,
             'email' => $validated['email'],
             'password' => Hash::make($validated['password']),
             'nif' => $validated['nif'],

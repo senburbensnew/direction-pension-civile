@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\AdminController;
 use App\Http\Controllers\FonctionnaireController;
+use App\Http\Controllers\InstitutionController;
 use App\Http\Controllers\PensionnaireController;
 use App\Http\Controllers\PostController;
 use App\Http\Controllers\ProfileController;
@@ -248,6 +249,17 @@ Route::prefix('pensionnaire')
             
         Route::post('/demande-pension-reversion', [FonctionnaireController::class, 'processPensionReversion'])
             ->name('process-pension-reversion');
+    });
+
+    Route::prefix('institution')->name('institution.')->middleware('auth')->group(function () {
+        // Get routes
+        Route::get('/demande-adhesion', [InstitutionController::class, 'demandeAdhesion'])
+            ->name('demande-adhesion-form');
+    
+        // Post routes
+            
+/*         Route::post('/demande-pension-reversion', [FonctionnaireController::class, 'processPensionReversion'])
+            ->name('process-pension-reversion'); */
     });
 
 

@@ -11,9 +11,15 @@ class SignaturePad extends Component
     /**
      * Create a new component instance.
      */
-    public function __construct()
+    public $name;
+    public $inputId;
+    public $canvasId;
+
+    public function __construct($name = 'signature')
     {
-        //
+        $this->name = $name;
+        $this->inputId = "$name-input";
+        $this->canvasId = "$name-pad";
     }
 
     /**
