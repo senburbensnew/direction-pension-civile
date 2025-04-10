@@ -1,23 +1,29 @@
-@props(['id' => $name])
+@props(['name', 'id' => null, 'disablePad' => false])
 
 <div class="signature-container">
     @error($name)
         <p class="text-sm text-red-600">{{ $message }}</p>
     @enderror
-    <input type="hidden" id="{{ $inputId }}" name="{{ $name }}" />
+    <input type="hidden" id="{{ $id ?? $name }}" name="{{ $name }}" />
 
-    <canvas id="{{ $canvasId }}" class="@error($name) border-red-500 @enderror" style="touch-action: none"></canvas>
+    <canvas id="{{ $id ?? $name }}-canvas"
+        class="@error($name) border-red-500 @enderror @if ($disablePad) pointer-events-none @endif"
+        style="touch-action: none"></canvas>
 
     <div class="button-container">
         <div class="left-buttons">
-            <button type="button" id="clear-{{ $inputId }}" class="clear-btn" aria-label="Supprimer">
+            <button type="button" id="clear-{{ $id ?? $name }}" class="clear-btn"
+                @if ($disablePad) disabled @endif aria-label="Supprimer">
                 effacer
                 <svg viewBox="0 0 24 24" width="20" height="20">
                     <path fill="currentColor"
                         d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12 19 6.41z" />
                 </svg>
             </button>
-            <button type="button" id="confirm-{{ $inputId }}" class="confirm-btn">valider &check;</button>
+            <button type="button" id="confirm-{{ $id ?? $name }}" class="confirm-btn"
+                @if ($disablePad) disabled @endif>
+                valider &check;
+            </button>
         </div>
         <div class="color-options">
             <div class="color-option active" data-color="#070707" title="Black Ink">
@@ -28,10 +34,19 @@
             </div>
         </div>
     </div>
+
+    @if ($disablePad)
+        <div class="w-full h-full bg-gray-100/50 absolute inset-0 z-10 flex items-center justify-center">
+            <span class="bg-white p-3 rounded-lg border shadow-sm text-gray-600">
+                Signature désactivée
+            </span>
+        </div>
+    @endif
 </div>
 
 <style>
     .signature-container {
+        position: relative;
         display: flex;
         flex-direction: column;
         gap: 15px;
@@ -116,10 +131,16 @@
         color: #2ecc71;
     }
 
-    .clear-btn:hover,
-    .confirm-btn:hover {
+    .clear-btn:hover:not(:disabled),
+    .confirm-btn:hover:not(:disabled) {
         transform: translateY(-1px);
         box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+
+    .clear-btn:disabled,
+    .confirm-btn:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
     }
 </style>
 
@@ -132,64 +153,67 @@
 <script>
     (function() {
         const initSignaturePad = () => {
-            const canvas = document.getElementById('{{ $canvasId }}');
-            const input = document.getElementById('{{ $inputId }}');
+            const canvas = document.getElementById('{{ $id ?? $name }}-canvas');
+            const input = document.getElementById('{{ $id ?? $name }}');
             if (!canvas || !input) return;
 
-            // Initialize Signature Pad
-            const signaturePad = new SignaturePad(canvas, {
-                backgroundColor: 'rgba(255, 255, 255, 0)',
-                penColor: '#070707'
-            });
-
-            // High DPI support
-            const updateCanvasSize = () => {
-                const ratio = Math.max(window.devicePixelRatio || 1, 1);
-                canvas.width = canvas.offsetWidth * ratio;
-                canvas.height = canvas.offsetHeight * ratio;
-                canvas.getContext('2d').scale(ratio, ratio);
-                signaturePad.clear();
-            };
-            updateCanvasSize();
-
-            // Color selection
-            const colorOptions = document.querySelectorAll(
-                `#{{ $canvasId }} ~ .button-container .color-option`);
-            colorOptions.forEach(option => {
-                option.addEventListener('click', () => {
-                    colorOptions.forEach(opt => opt.classList.remove('active'));
-                    option.classList.add('active');
-                    signaturePad.penColor = option.dataset.color;
+            // Don't initialize if pad is disabled
+            @if (!$disablePad)
+                // Initialize Signature Pad
+                const signaturePad = new SignaturePad(canvas, {
+                    backgroundColor: 'rgba(255, 255, 255, 0)',
+                    penColor: '#070707'
                 });
-            });
 
-            // Clear button
-            document.getElementById('clear-{{ $inputId }}').addEventListener('click', () => {
-                signaturePad.clear();
-                input.value = '';
-                canvas.style.borderColor = '#d3d3d3';
-            });
+                // High DPI support
+                const updateCanvasSize = () => {
+                    const ratio = Math.max(window.devicePixelRatio || 1, 1);
+                    canvas.width = canvas.offsetWidth * ratio;
+                    canvas.height = canvas.offsetHeight * ratio;
+                    canvas.getContext('2d').scale(ratio, ratio);
+                    signaturePad.clear();
+                };
+                updateCanvasSize();
 
-            // Confirm button
-            document.getElementById('confirm-{{ $inputId }}').addEventListener('click', () => {
-                if (signaturePad.isEmpty()) {
-                    alert('Veuillez fournir une signature d\'abord !');
-                    return;
-                }
-                input.value = signaturePad.toDataURL('image/png');
-                canvas.style.borderColor = '#2ecc71';
-            });
+                // Color selection
+                const colorOptions = document.querySelectorAll(
+                    `#{{ $id ?? $name }}-canvas ~ .button-container .color-option`);
+                colorOptions.forEach(option => {
+                    option.addEventListener('click', () => {
+                        colorOptions.forEach(opt => opt.classList.remove('active'));
+                        option.classList.add('active');
+                        signaturePad.penColor = option.dataset.color;
+                    });
+                });
 
-            // Window resize handler
-            let resizeTimer;
-            window.addEventListener('resize', () => {
-                clearTimeout(resizeTimer);
-                resizeTimer = setTimeout(() => {
-                    const data = signaturePad.toData();
-                    updateCanvasSize();
-                    signaturePad.fromData(data);
-                }, 200);
-            });
+                // Clear button
+                document.getElementById('clear-{{ $id ?? $name }}').addEventListener('click', () => {
+                    signaturePad.clear();
+                    input.value = '';
+                    canvas.style.borderColor = '#d3d3d3';
+                });
+
+                // Confirm button
+                document.getElementById('confirm-{{ $id ?? $name }}').addEventListener('click', () => {
+                    if (signaturePad.isEmpty()) {
+                        alert('Veuillez fournir une signature d\'abord !');
+                        return;
+                    }
+                    input.value = signaturePad.toDataURL('image/png');
+                    canvas.style.borderColor = '#2ecc71';
+                });
+
+                // Window resize handler
+                let resizeTimer;
+                window.addEventListener('resize', () => {
+                    clearTimeout(resizeTimer);
+                    resizeTimer = setTimeout(() => {
+                        const data = signaturePad.toData();
+                        updateCanvasSize();
+                        signaturePad.fromData(data);
+                    }, 200);
+                });
+            @endif
         };
 
         if (document.readyState === 'complete') {

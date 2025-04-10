@@ -6,6 +6,8 @@ use App\Enums\RequestEventTypeEnum;
 use App\Enums\RequestTypeEnum;
 use App\Helpers\CodeGeneratorService;
 use App\Helpers\Helpers;
+use App\Models\CivilStatus;
+use App\Models\Gender;
 use App\Models\PensionRequest;
 use App\Models\RequestHistory;
 use Illuminate\Http\Exceptions\PostTooLargeException;
@@ -30,7 +32,11 @@ class InstitutionController extends Controller
 
     public function demandeAdhesion()
     {
-        return view('institution.demande_adhesion');
+        $genders = Gender::orderBy('name', 'asc')->get();
+        $civilStatuses = CivilStatus::orderBy('name', 'asc')->get();
+/*         $pensionTypes = PensionType::orderBy('name', 'asc')->get();
+        $pensionCategories = PensionCategory::orderBy('name', 'asc')->get(); */
+        return view('institution.demande_adhesion', compact('genders', 'civilStatuses'));
     }
 
     public function processPensionStandard(Request $request)

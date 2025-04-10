@@ -14,12 +14,14 @@ class SignaturePad extends Component
     public $name;
     public $inputId;
     public $canvasId;
+    public $disablePad;
 
-    public function __construct($name = 'signature')
+    public function __construct($name = 'signature', $disablePad=false)
     {
         $this->name = $name;
         $this->inputId = "$name-input";
         $this->canvasId = "$name-pad";
+        $this->disablePad = $disablePad;
     }
 
     /**

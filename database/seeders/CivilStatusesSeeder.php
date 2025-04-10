@@ -14,6 +14,7 @@ class CivilStatusesSeeder extends Seeder
             ['name' => 'marié(e)', 'description' => ''],
             ['name' => 'divorcé(e)', 'description' => ''],
             ['name' => 'veuf(ve)', 'description' => ''],
+            ['name' => 'concubinage', 'description' => ''],
         ];
 
         DB::table('civil_statuses')->insert($statuses);
