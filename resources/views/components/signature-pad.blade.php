@@ -115,8 +115,8 @@
     .confirm-btn {
         padding: 8px 12px;
         border-radius: 5px;
-        border: 1px solid #ddd;
-        background: white;
+        // border: 1px solid #ddd;
+        // background: white;
         transition: all 0.3s;
         display: flex;
         align-items: center;
@@ -134,7 +134,7 @@
     .clear-btn:hover:not(:disabled),
     .confirm-btn:hover:not(:disabled) {
         transform: translateY(-1px);
-        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        // box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
     }
 
     .clear-btn:disabled,

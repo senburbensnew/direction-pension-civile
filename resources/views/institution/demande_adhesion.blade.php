@@ -34,7 +34,7 @@
                 </div>
             @endif
 
-            <form action="#" method="POST" enctype="multipart/form-data">
+            <form action="{{ route('institution.process-demande-adhesion') }}" method="POST" enctype="multipart/form-data">
                 @csrf
 
                 <!-- Personal Information Section -->
@@ -218,31 +218,6 @@
                                     @enderror
                                 </div>
                             </div>
-
-                            <!-- Dependents Section -->
-                            <div class="mt-4">
-                                <label class="block text-sm font-medium text-gray-700 mb-2">
-                                    Enfants à charge
-                                </label>
-                                <div id="dependents-container">
-                                    <div class="dependent grid grid-cols-1 md:grid-cols-4 gap-4 mb-4">
-                                        <input type="text" name="dependents[0][lastname]"
-                                            placeholder="Nom de l'enfant" class="rounded-md border-gray-300">
-                                        <input type="text" name="dependents[0][firstname]"
-                                            placeholder="Prénom de l'enfant" class="rounded-md border-gray-300">
-                                        <input type="date" name="dependents[0][birthdate]"
-                                            placeholder="Date de naissance" class="rounded-md border-gray-300">
-                                        <select name="dependents[0][relation]" class="rounded-md border-gray-300">
-                                            <option value="fils">Fils</option>
-                                            <option value="fille">Fille</option>
-                                        </select>
-                                    </div>
-                                </div>
-                                <button type="button" id="add-dependent"
-                                    class="text-blue-600 text-sm hover:text-blue-800">
-                                    + Ajouter un enfant
-                                </button>
-                            </div>
                         </div>
 
                         <!-- Right Column - Profile Picture -->
@@ -252,6 +227,132 @@
                                 <p class="error-message">{{ $message }}</p>
                             @enderror
                         </div>
+                    </div>
+
+                    <!-- Dependents Section -->
+                    <div class="mt-4">
+                        <label class="block text-sm font-medium text-gray-700 mb-2">
+                            Enfants à charge
+                        </label>
+                        <div id="dependents-container">
+                            <template id="dependentTemplate">
+                                <div class="dependent-entry grid grid-cols-1 md:grid-cols-5 gap-4 mb-4">
+                                    <!-- Last Name -->
+                                    <div class="md:col-span-1">
+                                        <input type="text" name="dependents[__index__][lastname]"
+                                            placeholder="Nom de l'enfant"
+                                            class="w-full rounded-md border-gray-300 @error('dependents.__index__.lastname') border-red-500 @enderror"
+                                            value="{{ old('dependents.__index__.lastname') }}">
+                                        <div class="validation-message text-red-500 text-xs mt-1"></div>
+                                    </div>
+
+                                    <!-- First Name -->
+                                    <div class="md:col-span-1">
+                                        <input type="text" name="dependents[__index__][firstname]"
+                                            placeholder="Prénom de l'enfant"
+                                            class="w-full rounded-md border-gray-300 @error('dependents.__index__.firstname') border-red-500 @enderror"
+                                            value="{{ old('dependents.__index__.firstname') }}">
+                                        <div class="validation-message text-red-500 text-xs mt-1"></div>
+                                    </div>
+
+                                    <!-- Birth Date -->
+                                    <div class="md:col-span-1">
+                                        <input type="date" name="dependents[__index__][birthdate]"
+                                            class="w-full rounded-md border-gray-300 @error('dependents.__index__.birthdate') border-red-500 @enderror"
+                                            value="{{ old('dependents.__index__.birthdate') }}">
+                                        <div class="validation-message text-red-500 text-xs mt-1"></div>
+                                    </div>
+
+                                    <!-- Relation -->
+                                    <div class="md:col-span-1">
+                                        <select name="dependents[__index__][relation]"
+                                            class="w-full rounded-md border-gray-300 @error('dependents.__index__.relation') border-red-500 @enderror">
+                                            <option value="fils">Fils</option>
+                                            <option value="fille">Fille</option>
+                                        </select>
+                                        <div class="validation-message text-red-500 text-xs mt-1"></div>
+                                    </div>
+
+                                    <!-- Delete Button -->
+                                    <div class="md:col-span-1 flex items-center justify-end">
+                                        <button type="button" data-action="delete-dependent"
+                                            class="text-red-600 hover:text-red-900">
+                                            <svg class="w-5 h-5" fill="none" stroke="currentColor"
+                                                viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                    d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                            </svg>
+                                        </button>
+                                    </div>
+                                </div>
+                            </template>
+
+                            <!-- No dependents message -->
+                            <div id="no-dependents-message"
+                                class="p-4 text-center text-gray-500 {{ count(old('dependents', [])) > 0 ? 'hidden' : '' }}">
+                                Aucun enfant enregistré.
+                            </div>
+
+                            <!-- Existing dependents -->
+                            @foreach (old('dependents', []) as $index => $dependent)
+                                <div class="dependent-entry grid grid-cols-1 md:grid-cols-5 gap-4 mb-4">
+                                    <div>
+                                        <input type="text" name="dependents[{{ $index }}][lastname]"
+                                            value="{{ old("dependents.{$index}.lastname") }}"
+                                            placeholder="Nom de l'enfant"
+                                            class="w-full border rounded px-2 py-1 @error("dependents.{$index}.lastname") border-red-500 @enderror">
+                                        @error("dependents.{$index}.lastname")
+                                            <span class="text-red-500 text-xs">{{ $message }}</span>
+                                        @enderror
+                                    </div>
+                                    <div>
+                                        <input type="text" name="dependents[{{ $index }}][firstname]"
+                                            value="{{ old("dependents.{$index}.firstname") }}"
+                                            placeholder="Prénom de l'enfant"
+                                            class="w-full border rounded px-2 py-1 @error("dependents.{$index}.firstname") border-red-500 @enderror">
+                                        @error("dependents.{$index}.firstname")
+                                            <span class="text-red-500 text-xs">{{ $message }}</span>
+                                        @enderror
+                                    </div>
+                                    <div>
+                                        <input type="date" name="dependents[{{ $index }}][birthdate]"
+                                            value="{{ old("dependents.{$index}.birthdate") }}"
+                                            class="w-full border rounded px-2 py-1 @error("dependents.{$index}.birthdate") border-red-500 @enderror">
+                                        @error("dependents.{$index}.birthdate")
+                                            <span class="text-red-500 text-xs">{{ $message }}</span>
+                                        @enderror
+                                    </div>
+                                    <div>
+                                        <select name="dependents[{{ $index }}][relation]"
+                                            class="w-full border rounded px-2 py-1 @error("dependents.{$index}.relation") border-red-500 @enderror">
+                                            <option value="fils"
+                                                {{ old("dependents.{$index}.relation") == 'fils' ? 'selected' : '' }}>
+                                                Fils</option>
+                                            <option value="fille"
+                                                {{ old("dependents.{$index}.relation") == 'fille' ? 'selected' : '' }}>
+                                                Fille</option>
+                                        </select>
+                                        @error("dependents.{$index}.relation")
+                                            <span class="text-red-500 text-xs">{{ $message }}</span>
+                                        @enderror
+                                    </div>
+                                    <div class="flex items-center justify-end">
+                                        <button type="button" onclick="deleteDependent(this)"
+                                            class="text-red-600 hover:text-red-900">
+                                            <svg class="w-4 h-4" fill="none" stroke="currentColor"
+                                                viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                    d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                            </svg>
+                                        </button>
+                                    </div>
+                                </div>
+                            @endforeach
+                        </div>
+                        <button type="button" id="add-dependent"
+                            class="mt-4 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">
+                            + Ajouter un enfant
+                        </button>
                     </div>
                 </fieldset>
 
@@ -285,23 +386,103 @@
                         </div>
                     </div>
 
-                    <!-- Previous Employment Section -->
+                    <!-- Emplois anterieurs -->
                     <div class="mt-4">
                         <label class="block text-sm font-medium text-gray-700 mb-2">
-                            Emplois antérieurs (nom de l'institution, date debut, date fin)
+                            Emplois antérieurs (nom de l'institution, date début, date fin)
                         </label>
                         <div id="previous-jobs-container">
-                            <div class="previous-job grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
-                                <input type="text" name="previous_jobs[0][institution]"
-                                    placeholder="Nom de l'institution" class="rounded-md border-gray-300">
-                                <input type="date" name="previous_jobs[0][start_date]" placeholder="Date début"
-                                    class="rounded-md border-gray-300">
-                                <input type="date" name="previous_jobs[0][end_date]" placeholder="Date fin"
-                                    class="rounded-md border-gray-300">
+                            <template id="jobTemplate">
+                                <div class="previous-job grid grid-cols-1 md:grid-cols-4 gap-4 mb-4">
+                                    <!-- Institution -->
+                                    <div class="md:col-span-1">
+                                        <input type="text" name="previous_jobs[__index__][institution]"
+                                            placeholder="Nom de l'institution"
+                                            class="w-full rounded-md border-gray-300 @error('previous_jobs.__index__.institution') border-red-500 @enderror"
+                                            value="{{ old('previous_jobs.__index__.institution') }}">
+                                        <div class="validation-message text-red-500 text-xs mt-1"></div>
+                                    </div>
+
+                                    <!-- Start Date -->
+                                    <div class="md:col-span-1">
+                                        <input type="date" name="previous_jobs[__index__][start_date]"
+                                            class="w-full rounded-md border-gray-300 @error('previous_jobs.__index__.start_date') border-red-500 @enderror"
+                                            value="{{ old('previous_jobs.__index__.start_date') }}">
+                                        <div class="validation-message text-red-500 text-xs mt-1"></div>
+                                    </div>
+
+                                    <!-- End Date -->
+                                    <div class="md:col-span-1">
+                                        <input type="date" name="previous_jobs[__index__][end_date]"
+                                            class="w-full rounded-md border-gray-300 @error('previous_jobs.__index__.end_date') border-red-500 @enderror"
+                                            value="{{ old('previous_jobs.__index__.end_date') }}">
+                                        <div class="validation-message text-red-500 text-xs mt-1"></div>
+                                    </div>
+
+                                    <!-- Delete Button -->
+                                    <div class="md:col-span-1 flex items-center justify-end">
+                                        <button type="button" data-action="delete-job"
+                                            class="text-red-600 hover:text-red-900">
+                                            <svg class="w-5 h-5" fill="none" stroke="currentColor"
+                                                viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                    d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                            </svg>
+                                        </button>
+                                    </div>
+                                </div>
+                            </template>
+
+                            <!-- No jobs message -->
+                            <div id="no-jobs-message"
+                                class="p-4 text-center text-gray-500 {{ count(old('previous_jobs', [])) > 0 ? 'hidden' : '' }}">
+                                Aucun emploi antérieur enregistré.
                             </div>
+
+                            <!-- Existing jobs -->
+                            @foreach (old('previous_jobs', []) as $index => $job)
+                                <div class="previous-job grid grid-cols-1 md:grid-cols-4 gap-4 mb-4">
+                                    <div>
+                                        <input type="text" name="previous_jobs[{{ $index }}][institution]"
+                                            value="{{ old("previous_jobs.{$index}.institution") }}"
+                                            placeholder="Nom de l'institution"
+                                            class="w-full rounded-md border-gray-300 px-2 py-1 @error("previous_jobs.{$index}.institution") border-red-500 @enderror">
+                                        @error("previous_jobs.{$index}.institution")
+                                            <span class="text-red-500 text-xs">{{ $message }}</span>
+                                        @enderror
+                                    </div>
+                                    <div>
+                                        <input type="date" name="previous_jobs[{{ $index }}][start_date]"
+                                            value="{{ old("previous_jobs.{$index}.start_date") }}"
+                                            class="w-full rounded-md border-gray-300 px-2 py-1 @error("previous_jobs.{$index}.start_date") border-red-500 @enderror">
+                                        @error("previous_jobs.{$index}.start_date")
+                                            <span class="text-red-500 text-xs">{{ $message }}</span>
+                                        @enderror
+                                    </div>
+                                    <div>
+                                        <input type="date" name="previous_jobs[{{ $index }}][end_date]"
+                                            value="{{ old("previous_jobs.{$index}.end_date") }}"
+                                            class="w-full rounded-md border-gray-300 px-2 py-1 @error("previous_jobs.{$index}.end_date") border-red-500 @enderror">
+                                        @error("previous_jobs.{$index}.end_date")
+                                            <span class="text-red-500 text-xs">{{ $message }}</span>
+                                        @enderror
+                                    </div>
+                                    <div class="flex items-center justify-end">
+                                        <button type="button" onclick="deleteJob(this)"
+                                            class="text-red-600 hover:text-red-900">
+                                            <svg class="w-4 h-4" fill="none" stroke="currentColor"
+                                                viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                    d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                            </svg>
+                                        </button>
+                                    </div>
+                                </div>
+                            @endforeach
                         </div>
-                        <button type="button" id="add-job" class="text-blue-600 text-sm hover:text-blue-800">
-                            + Ajouter un emploi antérieur
+                        <button type="button" id="add-job"
+                            class="mt-2 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">
+                            + Ajouter un emploi
                         </button>
                     </div>
                 </fieldset>
@@ -442,3 +623,113 @@
         </div>
     </div>
 @endsection
+
+<script>
+    // Dependents Section Script
+    document.addEventListener('DOMContentLoaded', function() {
+        let dependentCount = {{ count(old('dependents', [])) }};
+        const container = document.getElementById('dependents-container');
+
+        // Event delegation for delete buttons
+        container.addEventListener('click', function(e) {
+            const deleteBtn = e.target.closest('[data-action="delete-dependent"]');
+            if (deleteBtn) {
+                deleteDependent(deleteBtn);
+            }
+        });
+
+        function addDependent() {
+            const template = document.getElementById('dependentTemplate');
+            const messageDiv = document.getElementById('no-dependents-message');
+            const newIndex = dependentCount;
+
+            // Clone template safely
+            const newEntry = document.importNode(template.content, true);
+            newEntry.querySelectorAll('[name]').forEach(element => {
+                element.name = element.name.replace(/__index__/g, newIndex);
+            });
+
+            container.insertBefore(newEntry, messageDiv);
+            dependentCount++;
+            messageDiv.classList.add('hidden');
+        }
+
+        function deleteDependent(button) {
+            const entry = button?.closest('.dependent-entry');
+            if (!entry) return;
+
+            entry.remove();
+
+            // Reindex with null checks
+            const entries = container.querySelectorAll('.dependent-entry');
+            entries.forEach((entry, index) => {
+                entry.querySelectorAll('[name]').forEach(element => {
+                    if (element.name) { // Critical null check
+                        element.name = element.name.replace(/dependents\[\d+\]/g,
+                            `dependents[${index}]`);
+                    }
+                });
+            });
+
+            dependentCount = entries.length;
+            document.getElementById('no-dependents-message')
+                .classList.toggle('hidden', dependentCount > 0);
+        }
+
+        // Initialize
+        document.getElementById('add-dependent').addEventListener('click', addDependent);
+    });
+
+    // Previous Jobs Section Script
+    document.addEventListener('DOMContentLoaded', function() {
+        let jobIndex = {{ count(old('previous_jobs', [])) }};
+        const container = document.getElementById('previous-jobs-container');
+
+        // Event delegation for job deletion
+        container.addEventListener('click', function(e) {
+            const deleteBtn = e.target.closest('[data-action="delete-job"]');
+            if (deleteBtn) {
+                deleteJob(deleteBtn);
+            }
+        });
+
+        function addJob() {
+            const template = document.getElementById('jobTemplate').content;
+            const messageDiv = document.getElementById('no-jobs-message');
+            const newEntry = document.importNode(template, true);
+
+            newEntry.querySelectorAll('[name]').forEach(element => {
+                element.name = element.name.replace(/__index__/g, jobIndex);
+            });
+
+            container.insertBefore(newEntry, messageDiv);
+            jobIndex++;
+            messageDiv?.classList.add('hidden');
+        }
+
+        function deleteJob(button) {
+            const entry = button?.closest('.previous-job');
+            if (!entry) return;
+
+            entry.remove();
+
+            // Safe reindexing
+            const entries = container.querySelectorAll('.previous-job');
+            entries.forEach((entry, index) => {
+                entry.querySelectorAll('[name]').forEach(element => {
+                    if (element.name) { // Essential null check
+                        element.name = element.name.replace(/previous_jobs\[\d+\]/g,
+                            `previous_jobs[${index}]`);
+                    }
+                });
+            });
+
+            jobIndex = entries.length;
+            document.getElementById('no-jobs-message')
+                ?.classList.toggle('hidden', entries.length > 0);
+        }
+
+        // Initialize
+        document.getElementById('add-job').addEventListener('click', addJob);
+    });
+</script>

@@ -257,9 +257,8 @@ Route::prefix('pensionnaire')
             ->name('demande-adhesion-form');
     
         // Post routes
-            
-/*         Route::post('/demande-pension-reversion', [FonctionnaireController::class, 'processPensionReversion'])
-            ->name('process-pension-reversion'); */
+        Route::post('/demande-adhesion', [InstitutionController::class, 'processDemandeAdhesion'])
+            ->name('process-demande-adhesion'); 
     });
 
 
