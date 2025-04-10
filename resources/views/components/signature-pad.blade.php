@@ -4,7 +4,9 @@
     @error($name)
         <p class="text-sm text-red-600">{{ $message }}</p>
     @enderror
-    <input type="hidden" id="{{ $id ?? $name }}" name="{{ $name }}" />
+    @if (!$disablePad)
+        <input type="hidden" id="{{ $id ?? $name }}" name="{{ $name }}" />
+    @endif
 
     <canvas id="{{ $id ?? $name }}-canvas"
         class="@error($name) border-red-500 @enderror @if ($disablePad) pointer-events-none @endif"

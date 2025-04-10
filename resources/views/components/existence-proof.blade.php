@@ -483,6 +483,7 @@
                     <div class="flex-1">
                         <p class="text-xs font-semibold text-gray-600 uppercase">SIGNATURE EMPLOYE PENSION CIVILE</p>
                         <div class="h-0.5 bg-gray-300 my-2"></div>
+                        <x-signature-pad name="civil_pension_employee_signature" disablePad=true />
                     </div>
 
                     <div class="flex-1">
@@ -492,13 +493,27 @@
                     </div>
 
                     <div class="flex-1">
-                        <p class="text-xs font-semibold text-gray-600 uppercase">SIGNATURE MANDATAIRE</p>
-                        <div class="h-0.5 bg-gray-300 my-2"></div>
-                        <div class="space-y-2 text-sm">
-                            <div class="h-20 md:h-32"></div>
-                            <p>MERE, PERE, TUTEUR, CURATEUR</p>
-                            <p>NOM__________________________</p>
-                            <p>NIF OU CIN____________________</p>
+                        <!-- Title Section -->
+                        <div>
+                            <p class="text-xs font-semibold text-gray-600 uppercase">SIGNATURE MANDATAIRE</p>
+                            <div class="h-0.5 bg-gray-300 my-2"></div>
+                            <x-signature-pad name="mandataire_signature" disablePad=true />
+                        </div>
+                        <!-- Form Fields -->
+                        <div class="space-y-3 mt-2">
+                            <div>(MERE, PERE,
+                                TUTEUR,
+                                CURATEUR)</div>
+                            <div>
+                                <input type="text" placeholder="Nom complet"
+                                    class="w-full border-b-2 border-gray-300 focus:border-blue-500 outline-none py-1"
+                                    required>
+                            </div>
+                            <div>
+                                <input type="text" placeholder="NIF ou CIN"
+                                    class="w-full border-b-2 border-gray-300 focus:border-blue-500 outline-none py-1"
+                                    required>
+                            </div>
                         </div>
                     </div>
                 </div>

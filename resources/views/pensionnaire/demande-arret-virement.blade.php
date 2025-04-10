@@ -185,9 +185,9 @@
 
                 <!-- Footer -->
                 <fieldset class="shadow-md rounded-lg p-5 border mb-6 @error('signature') border-red-500 @enderror">
-                    <div class="flex justify-between mt-8">
+                    <div class="grid grid-cols-2 gap-x-4 mt-8">
                         <!-- Pensionné Signature -->
-                        <div class="w-1/2">
+                        <div>
                             <div class="text-sm font-medium text-gray-700 mb-2">Signature du Pensionné *</div>
                             <div class="h-0.5 bg-gray-300 mb-2"></div>
                             <x-signature-pad />
@@ -197,9 +197,10 @@
                         </div>
 
                         <!-- Service Comptabilité -->
-                        <div class="w-1/2 text-right">
+                        <div class="text-right">
                             <div class="text-sm font-medium text-gray-700 mb-2">Service Comptabilité</div>
                             <div class="h-0.5 bg-gray-300 mb-2"></div>
+                            <x-signature-pad name="accounting_department_signature" disablePad=true />
                             <div class="text-xs text-gray-500 italic mt-4">
                                 <p>Date de réception: {{ now()->format('d/m/Y') }}</p>
                                 <p class="mt-2">Cachet & Signature:</p>

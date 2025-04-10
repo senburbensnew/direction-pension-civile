@@ -368,6 +368,7 @@
                             Chef de Service de la Comptabilité
                         </p>
                         <div class="h-0.5 bg-gray-300 my-2"></div>
+                        <x-signature-pad name="accounting_department_chief_signature" disablePad=true />
                     </div>
 
                     <!-- Pensionné Signature -->
