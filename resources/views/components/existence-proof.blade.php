@@ -497,7 +497,7 @@
                         <div>
                             <p class="text-xs font-semibold text-gray-600 uppercase">SIGNATURE MANDATAIRE</p>
                             <div class="h-0.5 bg-gray-300 my-2"></div>
-                            <x-signature-pad name="mandataire_signature" disablePad=true />
+                            <x-signature-pad name="mandataire_signature" :disablePad='false' />
                         </div>
                         <!-- Form Fields -->
                         <div class="space-y-3 mt-2">

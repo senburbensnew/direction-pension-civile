@@ -1,13 +1,9 @@
 @props(['name', 'id' => null, 'disablePad' => false])
 
 <div class="signature-container">
-    @error($name)
-        <p class="text-sm text-red-600">{{ $message }}</p>
-    @enderror
     @if (!$disablePad)
         <input type="hidden" id="{{ $id ?? $name }}" name="{{ $name }}" />
     @endif
-
     <canvas id="{{ $id ?? $name }}-canvas"
         class="@error($name) border-red-500 @enderror @if ($disablePad) pointer-events-none @endif"
         style="touch-action: none"></canvas>
@@ -36,7 +32,6 @@
             </div>
         </div>
     </div>
-
     @if ($disablePad)
         <div class="w-full h-full bg-gray-100/50 absolute inset-0 z-10 flex items-center justify-center">
             <span class="bg-white p-3 rounded-lg border shadow-sm text-gray-600">
@@ -44,6 +39,9 @@
             </span>
         </div>
     @endif
+    @error($name)
+        <p class="text-sm text-red-600">{{ $message }}</p>
+    @enderror
 </div>
 
 <style>

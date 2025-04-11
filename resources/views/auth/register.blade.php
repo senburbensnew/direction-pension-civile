@@ -18,12 +18,28 @@
     <form method="POST" action="{{ route('register') }}" enctype="multipart/form-data">
         @csrf
         <!-- Profile Picture -->
-        <div>
+        <div class="border-b pb-2">
             <x-profile-picture :showLabel="false" />
         </div>
 
+        <!-- User Type Selection -->
+        <div class="mt-4">
+            <x-input-label for="user_type" :value="__('Qui êtes-vous ?')" />
+            <div class="flex justify-between">
+                @foreach ($userTypes as $type)
+                    <label for="user_type_{{ $type->name }}" class="{{ $loop->last ? 'ml-4' : '' }}">
+                        <input type="radio" id="user_type_{{ $type->name }}" name="user_type_id"
+                            value="{{ $type->id }}" data-type-name="{{ $type->name }}"
+                            {{ old('user_type_id', request()->isMethod('get') ? $pensionnaireId : null) == $type->id ? 'checked' : '' }} />
+                        {{ ucfirst($type->name) }}
+                    </label>
+                @endforeach
+            </div>
+            <x-input-error :messages="$errors->get('user_type_id')" class="mt-2" />
+        </div>
+
         <!-- Institution Name Field -->
-        <div id="name_container" class="hidden">
+        <div id="name_container" class="hidden mt-4">
             <x-input-label for="name" :value="__('Nom')" />
             <x-text-input id="name" class="block mt-1 w-full" type="text" name="name" :value="old('name')"
                 autocomplete="name" placeholder="Nom de l'institution" />
@@ -68,22 +84,6 @@
             <x-text-input id="password_confirmation" class="block mt-1 w-full" type="password"
                 name="password_confirmation" autocomplete="new-password" placeholder="********" />
             <x-input-error :messages="$errors->get('password_confirmation')" class="mt-2" />
-        </div>
-
-        <!-- User Type Selection -->
-        <div class="mt-4">
-            <x-input-label for="user_type" :value="__('Qui êtes-vous ?')" />
-            <div class="flex justify-between">
-                @foreach ($userTypes as $type)
-                    <label for="user_type_{{ $type->name }}" class="{{ $loop->last ? 'ml-4' : '' }}">
-                        <input type="radio" id="user_type_{{ $type->name }}" name="user_type_id"
-                            value="{{ $type->id }}" data-type-name="{{ $type->name }}"
-                            {{ old('user_type_id', request()->isMethod('get') ? $pensionnaireId : null) == $type->id ? 'checked' : '' }} />
-                        {{ ucfirst($type->name) }}
-                    </label>
-                @endforeach
-            </div>
-            <x-input-error :messages="$errors->get('user_type_id')" class="mt-2" />
         </div>
 
         <!-- Pension Code Field -->

@@ -9,10 +9,6 @@
         .error-message {
             @apply mt-1 text-sm text-red-600;
         }
-
-        .remove-child {
-            @apply text-red-600 hover:text-red-800 cursor-pointer;
-        }
     </style>
 
     <div class="max-w-6xl mx-auto p-6 m-2 bg-white">
@@ -34,7 +30,31 @@
                 </div>
             @endif
 
-            <form action="{{ route('institution.process-demande-adhesion') }}" method="POST" enctype="multipart/form-data">
+            <!-- Alerts Section -->
+            @if (session('success'))
+                <div class="mb-4 p-3 bg-green-50 border border-green-200 text-green-700 rounded text-sm">
+                    {{ session('success') }}
+                </div>
+            @endif
+
+            @if (session('error'))
+                <div class="mb-4 p-4 bg-red-50 border border-red-200 text-red-700 rounded">
+                    {{ session('error') }}
+                </div>
+            @endif
+
+            @if ($errors->any())
+                <div class="p-4 bg-red-50 border border-red-200 text-red-700 rounded">
+                    <ul class="list-disc pl-5 space-y-1">
+                        @foreach ($errors->all() as $error)
+                            <li>{{ $error }}</li>
+                        @endforeach
+                    </ul>
+                </div>
+            @endif
+
+            <form class="mt-5" action="{{ route('institution.process-demande-adhesion') }}" method="POST"
+                enctype="multipart/form-data">
                 @csrf
 
                 <!-- Personal Information Section -->
@@ -52,7 +72,7 @@
                                     class="w-full rounded-md border-gray-300 @error('institution') input-error @enderror"
                                     value="{{ old('institution') }}">
                                 @error('institution')
-                                    <p class="error-message">{{ $message }}</p>
+                                    <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
                                 @enderror
                             </div>
 
@@ -65,7 +85,7 @@
                                         class="w-full rounded-md border-gray-300 @error('lastname') input-error @enderror"
                                         value="{{ old('lastname') }}">
                                     @error('lastname')
-                                        <p class="error-message">{{ $message }}</p>
+                                        <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
                                     @enderror
                                 </div>
                                 <div>
@@ -76,7 +96,7 @@
                                         class="w-full rounded-md border-gray-300 @error('firstname') input-error @enderror"
                                         value="{{ old('firstname') }}">
                                     @error('firstname')
-                                        <p class="error-message">{{ $message }}</p>
+                                        <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
                                     @enderror
                                 </div>
                             </div>
@@ -90,7 +110,7 @@
                                         class="w-full rounded-md border-gray-300 @error('mother_lastname') input-error @enderror"
                                         value="{{ old('mother_lastname') }}">
                                     @error('mother_lastname')
-                                        <p class="error-message">{{ $message }}</p>
+                                        <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
                                     @enderror
                                 </div>
                                 <div>
@@ -101,7 +121,7 @@
                                         class="w-full rounded-md border-gray-300 @error('mother_firstname') input-error @enderror"
                                         value="{{ old('mother_firstname') }}">
                                     @error('mother_firstname')
-                                        <p class="error-message">{{ $message }}</p>
+                                        <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
                                     @enderror
                                 </div>
                             </div>
@@ -115,7 +135,7 @@
                                         class="w-full rounded-md border-gray-300 @error('birth_place') input-error @enderror"
                                         value="{{ old('birth_place') }}">
                                     @error('birth_place')
-                                        <p class="error-message">{{ $message }}</p>
+                                        <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
                                     @enderror
                                 </div>
                                 <div>
@@ -126,7 +146,7 @@
                                         class="w-full rounded-md border-gray-300 @error('birth_date') input-error @enderror"
                                         value="{{ old('birth_date') }}">
                                     @error('birth_date')
-                                        <p class="error-message">{{ $message }}</p>
+                                        <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
                                     @enderror
                                 </div>
                             </div>
@@ -140,7 +160,7 @@
                                         class="w-full rounded-md border-gray-300 @error('nif') input-error @enderror"
                                         value="{{ old('nif') }}" data-inputmask="'mask': '999-999-9999'">
                                     @error('nif')
-                                        <p class="error-message">{{ $message }}</p>
+                                        <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
                                     @enderror
                                 </div>
                                 <div>
@@ -151,7 +171,7 @@
                                         class="w-full rounded-md border-gray-300 @error('ninu') input-error @enderror"
                                         value="{{ old('ninu') }}" data-inputmask="'mask': '9999-9999-9999'">
                                     @error('ninu')
-                                        <p class="error-message">{{ $message }}</p>
+                                        <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
                                     @enderror
                                 </div>
                             </div>
@@ -171,7 +191,7 @@
                                         @endforeach
                                     </select>
                                     @error('gender_id')
-                                        <p class="error-message">{{ $message }}</p>
+                                        <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
                                     @enderror
                                 </div>
                                 <div>
@@ -188,7 +208,7 @@
                                         @endforeach
                                     </select>
                                     @error('civil_status_id')
-                                        <p class="error-message">{{ $message }}</p>
+                                        <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
                                     @enderror
                                 </div>
                             </div>
@@ -197,24 +217,24 @@
                             <div class="grid grid-cols-2 gap-4">
                                 <div>
                                     <label for="spouse_lastname" class="block text-sm font-medium text-gray-700 mb-1">
-                                        Nom du conjoint *
+                                        Nom du conjoint
                                     </label>
                                     <input type="text" id="spouse_lastname" name="spouse_lastname"
                                         class="w-full rounded-md border-gray-300 @error('spouse_lastname') input-error @enderror"
                                         value="{{ old('spouse_lastname') }}">
                                     @error('spouse_lastname')
-                                        <p class="error-message">{{ $message }}</p>
+                                        <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
                                     @enderror
                                 </div>
                                 <div>
                                     <label for="spouse_firstname" class="block text-sm font-medium text-gray-700 mb-1">
-                                        Prénom du conjoint *
+                                        Prénom du conjoint
                                     </label>
                                     <input type="text" id="spouse_firstname" name="spouse_firstname"
                                         class="w-full rounded-md border-gray-300 @error('spouse_firstname') input-error @enderror"
                                         value="{{ old('spouse_firstname') }}">
                                     @error('spouse_firstname')
-                                        <p class="error-message">{{ $message }}</p>
+                                        <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
                                     @enderror
                                 </div>
                             </div>
@@ -224,7 +244,7 @@
                         <div class="ml-4">
                             <x-profile-picture :showLabel="true" />
                             @error('profile_picture')
-                                <p class="error-message">{{ $message }}</p>
+                                <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
                             @enderror
                         </div>
                     </div>
@@ -369,7 +389,7 @@
                                 class="w-full rounded-md border-gray-300 @error('entry_date') input-error @enderror"
                                 value="{{ old('entry_date') }}">
                             @error('entry_date')
-                                <p class="error-message">{{ $message }}</p>
+                                <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
                             @enderror
                         </div>
 
@@ -381,7 +401,7 @@
                                 class="w-full rounded-md border-gray-300 @error('current_salary') input-error @enderror"
                                 value="{{ old('current_salary') }}">
                             @error('current_salary')
-                                <p class="error-message">{{ $message }}</p>
+                                <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
                             @enderror
                         </div>
                     </div>
@@ -495,12 +515,7 @@
                             <label class="block text-sm font-medium text-gray-700 mb-2">
                                 Signature du cotisant *
                             </label>
-                            <div class="border rounded-lg p-3 bg-gray-50">
-                                <x-signature-pad name="cotisant_signature" />
-                            </div>
-                            @error('cotisant_signature')
-                                <p class="error-message mt-1">{{ $message }}</p>
-                            @enderror
+                            <x-signature-pad name="cotisant_signature" />
                         </div>
 
                         <!-- DRH Signature -->
@@ -508,15 +523,10 @@
                             <label class="block text-sm font-medium text-gray-700 mb-2">
                                 Direction des Ressources Humaines *
                             </label>
-                            <div class="border rounded-lg p-3 bg-gray-50">
-                                <x-signature-pad name="drh_signature" disablePad=true />
-                            </div>
+                            <x-signature-pad name="drh_signature" disablePad=true />
                             <p class="text-xs text-gray-500 mt-1">
                                 Pour la validation de l'institution
                             </p>
-                            @error('drh_signature')
-                                <p class="error-message mt-1">{{ $message }}</p>
-                            @enderror
                         </div>
                     </div>
 
@@ -531,7 +541,9 @@
                     </div>
                 </fieldset>
 
-                <fieldset class="shadow-md rounded-lg p-5 border mb-6">
+                <fieldset class="relative shadow-md rounded-lg p-5 border mb-6">
+                    <div class="w-full h-full bg-gray-100/50 absolute inset-0 z-10 flex items-center justify-center">
+                    </div>
                     <div class="space-y-4">
                         <div class="text-center text-sm text-gray-600 mb-4">
                             <p>RESERVE A LA DIRECTION DE LA PENSION CIVILE</p>
@@ -542,66 +554,66 @@
                                 <label class="block text-sm font-medium text-gray-700 mb-1">
                                     Augmentation (Gdes)
                                 </label>
-                                <input readonly type="number" name="augmentation_amount" step="0.01"
+                                <input disabled type="number" name="augmentation_amount" step="0.01"
                                     class="bg-gray-100  w-full rounded-md border-gray-300 @error('augmentation_amount') input-error @enderror"
                                     value="{{ old('augmentation_amount') }}">
                                 @error('augmentation_amount')
-                                    <p class="error-message">{{ $message }}</p>
+                                    <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
                                 @enderror
                             </div>
                             <div>
                                 <label class="block text-sm font-medium text-gray-700 mb-1">
                                     Date de l'augmentation (jj/mm/aaaa)
                                 </label>
-                                <input readonly type="date" name="augmentation_date"
+                                <input disabled type="date" name="augmentation_date"
                                     class="bg-gray-100  w-full rounded-md border-gray-300 @error('augmentation_date') input-error @enderror"
                                     value="{{ old('augmentation_date') }}">
                                 @error('augmentation_date')
-                                    <p class="error-message">{{ $message }}</p>
+                                    <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
                                 @enderror
                             </div>
                             <div>
                                 <label class="block text-sm font-medium text-gray-700 mb-1">
                                     Date de cessation (jj/mm/aaaa)
                                 </label>
-                                <input readonly type="date" name="cessation_date"
+                                <input disabled type="date" name="cessation_date"
                                     class="bg-gray-100  w-full rounded-md border-gray-300 @error('cessation_date') input-error @enderror"
                                     value="{{ old('cessation_date') }}">
                                 @error('cessation_date')
-                                    <p class="error-message">{{ $message }}</p>
+                                    <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
                                 @enderror
                             </div>
                             <div>
                                 <label class="block text-sm font-medium text-gray-700 mb-1">
                                     Date de réintégration (jj/mm/aaaa)
                                 </label>
-                                <input readonly type="date" name="reintegration_date"
+                                <input disabled type="date" name="reintegration_date"
                                     class="bg-gray-100  w-full rounded-md border-gray-300 @error('reintegration_date') input-error @enderror"
                                     value="{{ old('reintegration_date') }}">
                                 @error('reintegration_date')
-                                    <p class="error-message">{{ $message }}</p>
+                                    <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
                                 @enderror
                             </div>
                             <div>
                                 <label class="block text-sm font-medium text-gray-700 mb-1">
                                     Nouveau salaire (Gdes)
                                 </label>
-                                <input readonly type="number" name="new_salary" step="0.01"
+                                <input disabled type="number" name="new_salary" step="0.01"
                                     class="bg-gray-100  w-full rounded-md border-gray-300 @error('new_salary') input-error @enderror"
                                     value="{{ old('new_salary') }}">
                                 @error('new_salary')
-                                    <p class="error-message">{{ $message }}</p>
+                                    <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
                                 @enderror
                             </div>
                             <div>
                                 <label class="block text-sm font-medium text-gray-700 mb-1">
                                     Date de fin de serv. Ou de carr. (jj/mm/aaaa)
                                 </label>
-                                <input readonly type="date" name="end_of_service_date"
+                                <input disabled type="date" name="end_of_service_date"
                                     class="bg-gray-100 w-full rounded-md border-gray-300 @error('end_of_service_date') input-error @enderror"
                                     value="{{ old('end_of_service_date') }}">
                                 @error('end_of_service_date')
-                                    <p class="error-message">{{ $message }}</p>
+                                    <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
                                 @enderror
                             </div>
                         </div>
