@@ -12,6 +12,7 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\CarouselController;
 use App\Http\Controllers\DocumentController;
 use App\Http\Controllers\PersonalController;
+use App\Http\Controllers\EnregistrementPensionnaireController;
 
 /*
 |--------------------------------------------------------------------------
@@ -24,11 +25,42 @@ use App\Http\Controllers\PersonalController;
 |
 */
 
-
-
 Route::get('/', function () {
     return view('home');
 })->name('home');
+
+Route::get('/simulateur-calcul', function () {
+    return view('simulateur-calcul');
+})->name('simulateur-calcul');
+
+Route::get('/textes_documents_legaux', function () {
+    return view('communication.textes_publication');
+})->name('textes_documents_legaux');
+
+Route::get('/documents/{filename}', function ($filename) {
+    $path = storage_path("app/public/documents/$filename");
+
+    if (!file_exists($path)) {
+        abort(404);
+    }
+
+    return response()->file($path);
+})->name('documents.view');
+
+Route::get('/documents/download/{filename}', function ($filename) {
+    $path = storage_path("app/public/documents/$filename");
+
+    if (!file_exists($path)) {
+        abort(404);
+    }
+
+    return response()->download($path);
+})->name('documents.download');
+
+
+
+Route::get('/enregistrement-pensionnaire/create', [EnregistrementPensionnaireController::class, 'create'])->name('enregistrement-pensionnaire.create');
+Route::post('/enregistrement-pensionnaire', [EnregistrementPensionnaireController::class, 'store'])->name('enregistrement-pensionnaire.store');
 
 Route::get('/liens-utiles', function () {
     $links_fr = [
@@ -224,29 +256,29 @@ Route::prefix('pensionnaire')
         // Get routes
         Route::get('/demande-etat-de-carriere', [FonctionnaireController::class, 'demandeEtatCarriere'])
             ->name('career-state-form');
-            
+
         Route::get('/simulation-retraite', [FonctionnaireController::class, 'retirementSimulation'])
             ->name('retirement-simulation-form');
-            
+
         Route::get('/demande-pension', [FonctionnaireController::class, 'demandePension'])
             ->name('pension-request-form');
-            
+
         Route::get('/demande-pension-standard', [FonctionnaireController::class, 'showPensionStandardForm'])
             ->name('pension-standard-form');
-    
+
         // Post routes
         Route::post('/demande-etat-de-carriere', [FonctionnaireController::class, 'processCareerStateRequest'])
             ->name('process-career-state-request');
-            
+
         Route::post('/simulation-retraite', [FonctionnaireController::class, 'processRetirementSimulation'])
             ->name('process-retirement-simulation');
-            
+
         Route::post('/demande-pension', [FonctionnaireController::class, 'processPensionRequest'])
             ->name('process-pension-request');
-            
+
         Route::post('/demande-pension-standard', [FonctionnaireController::class, 'processPensionStandard'])
             ->name('process-pension-standard');
-            
+
         Route::post('/demande-pension-reversion', [FonctionnaireController::class, 'processPensionReversion'])
             ->name('process-pension-reversion');
     });
@@ -255,10 +287,10 @@ Route::prefix('pensionnaire')
         // Get routes
         Route::get('/demande-adhesion', [InstitutionController::class, 'demandeAdhesion'])
             ->name('demande-adhesion-form');
-    
+
         // Post routes
         Route::post('/demande-adhesion', [InstitutionController::class, 'processDemandeAdhesion'])
-            ->name('process-demande-adhesion'); 
+            ->name('process-demande-adhesion');
     });
 
 

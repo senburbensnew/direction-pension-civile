@@ -66,25 +66,25 @@
 
         <!-- Main Navigation Menu -->
         <ul id="mobile-menu"
-            class="hidden md:flex md:justify-center md:items-center md:space-x-2 p-0 m-0 
-                    overflow-y-auto md:max-h-none md:overflow-visible 
+            class="hidden md:flex md:justify-center md:items-center md:space-x-2 p-0 m-0
+                    overflow-y-auto md:max-h-none md:overflow-visible
                    transition-all duration-300 w-full"
             aria-label="Menu de Navigation">
             <!-- Home -->
-            <li class="w-full md:w-auto border-b md:border-none">
+{{--             <li class="w-full md:w-auto border-b md:border-none">
                 <a href="{{ route('home') }}"
-                    class="block px-4 py-3 text-slate-600 hover:text-blue-600 
+                    class="block px-4 py-3 text-slate-600 hover:text-blue-600
                            text-base md:text-sm truncate-text
                            focus:outline-none focus:ring-2 ">
                     {{ __('messages.home') }}
                 </a>
-            </li>
+            </li> --}}
 
             <!-- Qui sommes nous? Dropdown -->
             <li class="relative w-full md:w-auto border-b md:border-none group">
                 <button
-                    class="dropdown-toggle flex w-full items-center justify-between px-4 py-3 
-                           text-slate-600 hover:text-blue-600 text-base md:text-sm 
+                    class="dropdown-toggle flex w-full items-center justify-between px-4 py-3
+                           text-slate-600 hover:text-blue-600 text-base md:text-sm
                            focus:outline-none focus:ring-2 ">
                     <span class="truncate-text">{{ __('messages.who_are_we') }}</span>
                     <svg class="dropdown-icon ml-2 w-4 h-4 transform transition-transform duration-300" fill="none"
@@ -98,7 +98,7 @@
                     aria-label="Sous-menu Qui sommes nous">
                     <li>
                         <a href="{{ route('quisommesnous.mots') }}"
-                            class="text-slate-600 block px-4 py-3 hover:bg-gray-100 
+                            class="text-slate-600 block px-4 py-3 hover:bg-gray-100
                                    transition-colors text-sm truncate-text
                                    focus:outline-none focus:ring-2 ">
                             {{ __('messages.words_from_the_director') }}
@@ -106,7 +106,7 @@
                     </li>
                     <li>
                         <a href="{{ route('quisommesnous.missions') }}"
-                            class="text-slate-600 block px-4 py-3 hover:bg-gray-100 
+                            class="text-slate-600 block px-4 py-3 hover:bg-gray-100
                                    transition-colors text-sm truncate-text
                                    focus:outline-none focus:ring-2 ">
                             {{ __('messages.mission_and_responsibilities') }}
@@ -114,7 +114,7 @@
                     </li>
                     <li>
                         <a href="{{ route('quisommesnous.historique') }}"
-                            class="text-slate-600 block px-4 py-3 hover:bg-gray-100 
+                            class="text-slate-600 block px-4 py-3 hover:bg-gray-100
                                    transition-colors text-sm truncate-text
                                    focus:outline-none focus:ring-2 ">
                             {{ __('messages.history') }}
@@ -122,7 +122,7 @@
                     </li>
                     <li>
                         <a href="{{ route('quisommesnous.structure-organique') }}"
-                            class="text-slate-600 block px-4 py-3 hover:bg-gray-100 
+                            class="text-slate-600 block px-4 py-3 hover:bg-gray-100
                                    transition-colors text-sm truncate-text
                                    focus:outline-none focus:ring-2 ">
                             {{ __('messages.organizational_structure') }}
@@ -130,7 +130,7 @@
                     </li>
                     <li>
                         <a href="{{ route('quisommesnous.financement') }}"
-                            class="text-slate-600 block px-4 py-3 hover:bg-gray-100 
+                            class="text-slate-600 block px-4 py-3 hover:bg-gray-100
                                    transition-colors text-sm truncate-text
                                    focus:outline-none focus:ring-2 ">
                             {{ __('messages.funding') }}
@@ -143,8 +143,8 @@
             @if (auth()->guest() || auth()->user()?->can('viewPensionnaireMenu'))
                 <li class="relative w-full md:w-auto border-b md:border-none group">
                     <button
-                        class="dropdown-toggle flex w-full items-center justify-between px-4 py-3 
-                           text-slate-600 hover:text-blue-600 text-base md:text-sm 
+                        class="dropdown-toggle flex w-full items-center justify-between px-4 py-3
+                           text-slate-600 hover:text-blue-600 text-base md:text-sm
                            focus:outline-none focus:ring-2 ">
                         <span class="truncate-text">{{ __('messages.pensioner') }}</span>
                         <svg class="dropdown-icon ml-2 w-4 h-4 transform transition-transform duration-300"
@@ -157,8 +157,16 @@
                     <ul class="dropdown-content bg-white md:shadow-lg md:border md:rounded-md"
                         aria-label="Sous-menu Pensionaire">
                         <li>
+                            <a href="{{ route('enregistrement-pensionnaire.create') }}"
+                                class="text-slate-600 block px-4 py-3 hover:bg-gray-100
+                                   transition-colors text-sm truncate-text
+                                   focus:outline-none focus:ring-2 ">
+                                    Enregistrement de pensionnaire
+                            </a>
+                        </li>
+                        <li>
                             <a href="{{ route('pensionnaire.virement-request-form') }}"
-                                class="text-slate-600 block px-4 py-3 hover:bg-gray-100 
+                                class="text-slate-600 block px-4 py-3 hover:bg-gray-100
                                    transition-colors text-sm truncate-text
                                    focus:outline-none focus:ring-2 ">
                                 {{ __('messages.transfer_request') }}
@@ -166,7 +174,7 @@
                         </li>
                         <li>
                             <a href="{{ route('pensionnaire.attestation-request-form') }}"
-                                class="text-slate-600 block px-4 py-3 hover:bg-gray-100 
+                                class="text-slate-600 block px-4 py-3 hover:bg-gray-100
                                    transition-colors text-sm truncate-text
                                    focus:outline-none focus:ring-2 ">
                                 {{ __('messages.certificate_request') }}
@@ -174,7 +182,7 @@
                         </li>
                         <li>
                             <a href="{{ route('pensionnaire.check-transfer-request-form') }}"
-                                class="text-slate-600 block px-4 py-3 hover:bg-gray-100 
+                                class="text-slate-600 block px-4 py-3 hover:bg-gray-100
                                    transition-colors text-sm truncate-text
                                    focus:outline-none focus:ring-2 ">
                                 {{ __('messages.check_transfer_request') }}
@@ -182,7 +190,7 @@
                         </li>
                         <li>
                             <a href="{{ route('pensionnaire.payment-stop-request-form') }}"
-                                class="text-slate-600 block px-4 py-3 hover:bg-gray-100 
+                                class="text-slate-600 block px-4 py-3 hover:bg-gray-100
                                    transition-colors text-sm truncate-text
                                    focus:outline-none focus:ring-2 ">
                                 {{ __('messages.payment_stop_request') }}
@@ -190,7 +198,7 @@
                         </li>
                         <li>
                             <a href="{{ route('pensionnaire.reinstatement-request-form') }}"
-                                class="text-slate-600 block px-4 py-3 hover:bg-gray-100 
+                                class="text-slate-600 block px-4 py-3 hover:bg-gray-100
                                    transition-colors text-sm truncate-text
                                    focus:outline-none focus:ring-2 ">
                                 {{ __('messages.reinstatement_request') }}
@@ -198,7 +206,7 @@
                         </li>
                         <li>
                             <a href="{{ route('pensionnaire.transfer-stop-request-form') }}"
-                                class="text-slate-600 block px-4 py-3 hover:bg-gray-100 
+                                class="text-slate-600 block px-4 py-3 hover:bg-gray-100
                                    transition-colors text-sm truncate-text
                                    focus:outline-none focus:ring-2 ">
                                 {{ __('messages.transfer_stop_request') }}
@@ -206,7 +214,7 @@
                         </li>
                         <li>
                             <a href="{{ route('pensionnaire.preuve-existence') }}"
-                                class="text-slate-600 block px-4 py-3 hover:bg-gray-100 
+                                class="text-slate-600 block px-4 py-3 hover:bg-gray-100
                                    transition-colors text-sm truncate-text
                                    focus:outline-none focus:ring-2 ">
                                 {{ __('messages.proof_of_existence') }}
@@ -214,7 +222,7 @@
                         </li>
                         <li>
                             <a href="{{ route('pensionnaire.pension-request-form') }}"
-                                class="text-slate-600 block px-4 py-3 hover:bg-gray-100 
+                                class="text-slate-600 block px-4 py-3 hover:bg-gray-100
                                    transition-colors text-sm truncate-text
                                    focus:outline-none focus:ring-2 ">
                                 Demande de pension de reversion
@@ -228,8 +236,8 @@
             @if (auth()->guest() || auth()->user()?->can('viewFonctionnaireMenu'))
                 <li class="relative w-full md:w-auto border-b md:border-none group">
                     <button
-                        class="dropdown-toggle flex w-full items-center justify-between px-4 py-3 
-                                       text-slate-600 hover:text-blue-600 text-base md:text-sm 
+                        class="dropdown-toggle flex w-full items-center justify-between px-4 py-3
+                                       text-slate-600 hover:text-blue-600 text-base md:text-sm
                                        focus:outline-none focus:ring-2 ">
                         <span class="truncate-text">{{ __('messages.civil_servant') }}</span>
                         <svg class="dropdown-icon ml-2 w-4 h-4 transform transition-transform duration-300"
@@ -243,7 +251,7 @@
                         aria-label="Sous-menu Pensionaire">
                         <li>
                             <a href="{{ route('fonctionnaire.career-state-form') }}"
-                                class="text-slate-600 block px-4 py-3 hover:bg-gray-100 
+                                class="text-slate-600 block px-4 py-3 hover:bg-gray-100
                                                transition-colors text-sm truncate-text
                                                focus:outline-none focus:ring-2 ">
                                 {{ __('messages.career_status_request') }}
@@ -251,7 +259,7 @@
                         </li>
                         {{--                         <li>
                             <a href="{{ route('fonctionnaire.retirement-simulation-form') }}"
-                                class="text-slate-600 block px-4 py-3 hover:bg-gray-100 
+                                class="text-slate-600 block px-4 py-3 hover:bg-gray-100
                                                transition-colors text-sm truncate-text
                                                focus:outline-none focus:ring-2 ">
                                 {{ __('messages.retirement_simulation') }}
@@ -259,7 +267,7 @@
                         </li> --}}
                         <li>
                             <a href="{{ route('fonctionnaire.pension-request-form') }}"
-                                class="text-slate-600 block px-4 py-3 hover:bg-gray-100 
+                                class="text-slate-600 block px-4 py-3 hover:bg-gray-100
                                                transition-colors text-sm truncate-text
                                                focus:outline-none focus:ring-2 ">
                                 {{ __('messages.pension_request') }}
@@ -273,8 +281,8 @@
             @if (auth()->guest() || auth()->user()?->can('viewInstitutionMenu'))
                 <li class="relative w-full md:w-auto border-b md:border-none group">
                     <button
-                        class="dropdown-toggle flex w-full items-center justify-between px-4 py-3 
-                           text-slate-600 hover:text-blue-600 text-base md:text-sm 
+                        class="dropdown-toggle flex w-full items-center justify-between px-4 py-3
+                           text-slate-600 hover:text-blue-600 text-base md:text-sm
                            focus:outline-none focus:ring-2 ">
                         <span class="truncate-text">{{ __('messages.institutions') }}</span>
                         <svg class="dropdown-icon ml-2 w-4 h-4 transform transition-transform duration-300"
@@ -288,7 +296,7 @@
                         aria-label="Sous-menu Pensionaire">
                         <li>
                             <a href="#"
-                                class="text-slate-600 block px-4 py-3 hover:bg-gray-100 
+                                class="text-slate-600 block px-4 py-3 hover:bg-gray-100
                                    transition-colors text-sm truncate-text
                                    focus:outline-none focus:ring-2 ">
                                 {{ __('messages.pension_request_transmission') }}
@@ -296,7 +304,7 @@
                         </li>
                         <li>
                             <a href="{{ route('institution.demande-adhesion-form') }}"
-                                class="text-slate-600 block px-4 py-3 hover:bg-gray-100 
+                                class="text-slate-600 block px-4 py-3 hover:bg-gray-100
                                    transition-colors text-sm truncate-text
                                    focus:outline-none focus:ring-2 ">
                                 {{ __('messages.membership_request') }}
@@ -308,8 +316,8 @@
 
             <li class="relative w-full md:w-auto border-b md:border-none group">
                 <button
-                    class="dropdown-toggle flex w-full items-center justify-between px-4 py-3 
-                                       text-slate-600 hover:text-blue-600 text-base md:text-sm 
+                    class="dropdown-toggle flex w-full items-center justify-between px-4 py-3
+                                       text-slate-600 hover:text-blue-600 text-base md:text-sm
                                        focus:outline-none focus:ring-2 ">
                     <span class="truncate-text">{{ __('messages.communications') }}</span>
                     <svg class="dropdown-icon ml-2 w-4 h-4 transform transition-transform duration-300" fill="none"
@@ -322,8 +330,8 @@
                 <ul class="dropdown-content bg-white md:shadow-lg md:border md:rounded-md"
                     aria-label="Sous-menu Pensionaire">
                     <li>
-                        <a href="#"
-                            class="text-slate-600 block px-4 py-3 hover:bg-gray-100 
+                        <a href="{{ route('textes_documents_legaux') }}"
+                            class="text-slate-600 block px-4 py-3 hover:bg-gray-100
                                                transition-colors text-sm truncate-text
                                                focus:outline-none focus:ring-2 ">
                             {{ __('messages.texts_and_publications') }}
@@ -331,7 +339,7 @@
                     </li>
                     <li>
                         <a href="#"
-                            class="text-slate-600 block px-4 py-3 hover:bg-gray-100 
+                            class="text-slate-600 block px-4 py-3 hover:bg-gray-100
                                                transition-colors text-sm truncate-text
                                                focus:outline-none focus:ring-2 ">
                             {{ __('messages.media_libraries') }}
@@ -339,13 +347,23 @@
                     </li>
                     <li>
                         <a href="#"
-                            class="text-slate-600 block px-4 py-3 hover:bg-gray-100 
+                            class="text-slate-600 block px-4 py-3 hover:bg-gray-100
                                                transition-colors text-sm truncate-text
                                                focus:outline-none focus:ring-2 ">
                             {{ __('messages.success_stories') }}
                         </a>
                     </li>
                 </ul>
+            </li>
+
+            <!-- Simulateur de calcul -->
+            <li class="w-full md:w-auto border-b md:border-none">
+                <a href="{{ route('simulateur-calcul') }}"
+                    class="block px-4 py-3 text-slate-600 hover:text-blue-600
+                           text-base md:text-sm truncate-text
+                           focus:outline-none focus:ring-2 ">
+                    {{ __('messages.simulateur-calcul') }}
+                </a>
             </li>
         </ul>
     </nav>

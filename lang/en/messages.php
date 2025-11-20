@@ -55,6 +55,8 @@ return [
     'media_libraries' => 'Media Libraries',
     'success_stories' => 'Success Stories',
 
+    'simulateur-calcul' => 'Simulator',
+
     // Footer
     'director' => 'The Director',
     'all_rights_reserved' => 'ALL RIGHTS RESERVED',

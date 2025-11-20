@@ -57,6 +57,8 @@
 
 <!-- Book Carousel Section -->
 <div class="container mx-auto px-4 py-5">
+    <div class="w-full px-4 py-5">
+
     <div class="relative">
         <!-- Navigation Buttons -->
         <button id="prevBtn"
@@ -71,80 +73,13 @@
 
         <!-- Carousel Content -->
         <div id="carousel"
-            class="border-red-600 carousel-container overflow-x-auto whitespace-nowrap px-4 scroll-smooth hide-scrollbar">
-            <!-- Book 1 -->
-            <div
-                class="border-red-600 book-card inline-block w-64 bg-white rounded-lg overflow-hidden shadow-md mx-4 animate-fadeIn">
-                <div class="book-cover p-6">
-                    <img src="https://m.media-amazon.com/images/I/71tbalAHYCL._AC_UF1000,1000_QL80_.jpg"
-                        alt="Le Petit Prince" class="w-full h-64 object-cover rounded">
-                </div>
-                <div class="p-4">
-                    <h3 class="font-bold text-lg truncate">Le Petit Prince</h3>
-                    <p class="text-gray-600 text-sm">Antoine de Saint-Exupéry</p>
-                </div>
-            </div>
-
-            <!-- Book 2 -->
-            <div class="book-card inline-block w-64 bg-white rounded-lg overflow-hidden shadow-md mx-4 animate-fadeIn">
-                <div class="book-cover p-6">
-                    <img src="https://m.media-amazon.com/images/I/71X1p4TGlxL._AC_UF1000,1000_QL80_.jpg" alt="1984"
-                        class="w-full h-64 object-cover rounded">
-                </div>
-                <div class="p-4">
-                    <h3 class="font-bold text-lg truncate">1984</h3>
-                    <p class="text-gray-600 text-sm">George Orwell</p>
-                </div>
-            </div>
-
-            <!-- Book 3 -->
-            <div class="book-card inline-block w-64 bg-white rounded-lg overflow-hidden shadow-md mx-4 animate-fadeIn">
-                <div class="book-cover p-6">
-                    <img src="https://m.media-amazon.com/images/I/81dQwQlmAXL._AC_UF1000,1000_QL80_.jpg"
-                        alt="L'Étranger" class="w-full h-64 object-cover rounded">
-                </div>
-                <div class="p-4">
-                    <h3 class="font-bold text-lg truncate">L'Étranger</h3>
-                    <p class="text-gray-600 text-sm">Albert Camus</p>
-                </div>
-            </div>
-
-            <!-- Book 4 -->
-            <div class="book-card inline-block w-64 bg-white rounded-lg overflow-hidden shadow-md mx-4 animate-fadeIn">
-                <div class="book-cover p-6">
-                    <img src="https://upload.wikimedia.org/wikipedia/en/6/6b/Harry_Potter_and_the_Philosopher%27s_Stone_Book_Cover.jpg"
-                        alt="Harry Potter" class="w-full h-64 object-cover rounded">
-                </div>
-                <div class="p-4">
-                    <h3 class="font-bold text-lg truncate">Harry Potter à l'école des sorciers</h3>
-                    <p class="text-gray-600 text-sm">J.K. Rowling</p>
-                </div>
-            </div>
-
-            <!-- Book 5 -->
-            <div class="book-card inline-block w-64 bg-white rounded-lg overflow-hidden shadow-md mx-4 animate-fadeIn">
-                <div class="book-cover p-6">
-                    <img src="https://upload.wikimedia.org/wikipedia/en/8/8e/The_Fellowship_of_the_Ring_cover.gif"
-                        alt="Lord of the Rings" class="w-full h-64 object-cover rounded">
-                </div>
-                <div class="p-4">
-                    <h3 class="font-bold text-lg truncate">Le Seigneur des Anneaux</h3>
-                    <p class="text-gray-600 text-sm">J.R.R. Tolkien</p>
-                </div>
-            </div>
-
-            <!-- Book 6 -->
-            <div class="book-card inline-block w-64 bg-white rounded-lg overflow-hidden shadow-md mx-4 animate-fadeIn">
-                <div class="book-cover p-6">
-                    <img src="https://upload.wikimedia.org/wikipedia/en/d/d0/Le_Comte_de_Monte-Cristo_2024_film_poster.jpg"
-                        alt="Monte Cristo" class="w-full h-64 object-cover rounded">
-                </div>
-                <div class="p-4">
-                    <h3 class="font-bold text-lg truncate">Le Comte de Monte-Cristo</h3>
-                    <p class="text-gray-600 text-sm">Alexandre Dumas</p>
-
-                </div>
-            </div>
+            class="carousel-container overflow-x-auto whitespace-nowrap px-4 scroll-smooth hide-scrollbar">
+                <x-carousel-item :imageUrls="[asset('images/photo_2025-11-18_23-36-39.jpg')]" />
+                <x-carousel-item :imageUrls="[asset('images/photo_2025-11-18_23-36-43.jpg')]" />
+                <x-carousel-item :imageUrls="[asset('images/photo_2025-11-18_23-36-46.jpg')]" />
+                <x-carousel-item :imageUrls="[asset('images/photo_2025-11-18_23-36-49.jpg')]" />
+                <x-carousel-item :imageUrls="[asset('images/photo_2025-11-18_23-36-52.jpg')]" />
+                <x-carousel-item :imageUrls="[asset('images/photo_2025-11-18_23-36-55.jpg')]" />
         </div>
 
         <!-- Carousel Indicators -->
