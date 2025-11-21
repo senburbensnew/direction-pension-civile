@@ -4,11 +4,28 @@
 
 @section('content')
     <div class="bg-gray-50 text-gray-800 font-sans">
+{{--     <x-carousel>
+            <div class="swiper-slide">
+                <img src="{{ asset('images/carousel/slide1.jpg') }}" alt="Slide 1">
+            </div>
+            <div class="swiper-slide">
+                <img src="{{ asset('images/carousel/slide2.jpg') }}" alt="Slide 2">
+            </div>
+            <div class="swiper-slide">
+                <img src="{{ asset('images/carousel/slide3.jpg') }}" alt="Slide 3">
+            </div>
+            <div class="swiper-slide">
+                <img src="{{ asset('images/carousel/slide4.jpg') }}" alt="Slide 3">
+            </div>
+            <div class="swiper-slide">
+                <img src="{{ asset('images/carousel/slide5.jpg') }}" alt="Slide 3">
+            </div>
+        </x-carousel> --}}
         <!-- About Section -->
-        <section class="container mx-auto mt-10 px-4">
+        <section class="container mx-auto px-4">
             <div class="flex flex-col lg:flex-row items-center gap-8">
                 <div class="relative w-full lg:w-1/2">
-                    <img src="{{ asset('images/carousel/slide2.jpg') }}" alt="Pension Civile" class="rounded-lg shadow-lg">
+                    <img src="{{ asset('images/photo_2025-11-21_06-42-22.jpg') }}" alt="Pension Civile" class="rounded-lg shadow-lg">
                 </div>
                 <div class="w-full lg:w-1/2">
                     <h2 class="text-3xl font-bold mb-4">Votre guide vers la Pension Civile</h2>
