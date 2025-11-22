@@ -29,6 +29,11 @@ Route::get('/', function () {
     return view('home');
 })->name('home');
 
+Route::get('/glossaire', function () {
+    return view('glossaire.index');
+})->name('glossaire');
+
+
 Route::get('/simulateur-calcul', function () {
     return view('simulateur-calcul');
 })->name('simulateur-calcul');
@@ -36,6 +41,11 @@ Route::get('/simulateur-calcul', function () {
 Route::get('/textes_documents_legaux', function () {
     return view('communication.textes_publication');
 })->name('textes_documents_legaux');
+
+Route::get('/faq', function () {
+    return view('faq.index');
+})->name('faq.index');
+
 
 Route::get('/documents/{filename}', function ($filename) {
     $path = storage_path("app/public/documents/$filename");

@@ -13,8 +13,8 @@
           integrity="sha512-Evv84Mr4kqVGRNSgIGL/F/aIDqQb7xQ2vcrdIwxfjThSH8CSR7PBEakCr51Ck+w+/U6swU2Im1vVX0SVk9ABhg=="
           crossorigin="anonymous" referrerpolicy="no-referrer" />
 
-     @vite(['resources/css/app.css', 'resources/js/app.js'])
-    {{-- <link href="{{ asset('build/assets/app-CFGfTGFn.css') }}" rel="stylesheet"> --}}
+     {{-- @vite(['resources/css/app.css', 'resources/js/app.js']) --}}
+    <link href="{{ asset('build/assets/app-CFGfTGFn.css') }}" rel="stylesheet">
     @stack('styles')
 </head>
 
@@ -60,6 +60,14 @@
                         <a href="{{ route('contact') }}"
                            class="hover:text-orange-500 transition-colors py-1 border-b-2 border-transparent hover:border-orange-500">
                             Contact
+                        </a>
+                        <a href="{{ route('faq.index') }}"
+                           class="hover:text-orange-500 transition-colors py-1 border-b-2 border-transparent hover:border-orange-500">
+                            FAQ
+                        </a>
+                        <a href="{{ route('glossaire') }}"
+                           class="hover:text-orange-500 transition-colors py-1 border-b-2 border-transparent hover:border-orange-500">
+                            Glossaire
                         </a>
                     </nav>
 
@@ -164,6 +172,6 @@
     <x-contact-bar borderType="top"  />
 
     @stack('scripts')
-    {{-- <script src="{{ asset('build/assets/app-CbEvcXly.js') }}"></script> --}}
+    <script src="{{ asset('build/assets/app-CbEvcXly.js') }}"></script>
 </body>
 </html>

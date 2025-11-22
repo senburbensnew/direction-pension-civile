@@ -250,7 +250,7 @@
     </section>
 
     <!-- Section Carte -->
-    <section class="max-w-7xl mx-auto px-6 py-16 fade-in">
+    <section class="max-w-7xl mx-auto px-6 pt-16 fade-in">
         <div class="text-center mb-10">
             <h2 class="text-3xl font-bold gradient-text mb-3">Notre localisation</h2>
             <p class="text-gray-600 max-w-2xl mx-auto">Retrouvez-nous facilement à notre siège social situé au cœur de Port-au-Prince</p>
