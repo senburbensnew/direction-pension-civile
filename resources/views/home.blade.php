@@ -76,38 +76,107 @@
             0%, 100% { transform: scale(1); }
             50% { transform: scale(1.05); }
         }
+
+        /* Styles spécifiques pour le carousel */
+        .carousel-slide-content {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(0, 0, 0, 0.4);
+        }
+
+        .carousel-text-content {
+            text-align: center;
+            color: white;
+            z-index: 2;
+            padding: 2rem;
+        }
+
+        .swiper-button-next,
+        .swiper-button-prev {
+            color: white;
+            background: rgba(255, 255, 255, 0.2);
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            backdrop-filter: blur(10px);
+        }
+
+        .swiper-button-next:after,
+        .swiper-button-prev:after {
+            font-size: 1.5rem;
+        }
+
+        .swiper-pagination-bullet {
+            background: white;
+            opacity: 0.5;
+        }
+
+        .swiper-pagination-bullet-active {
+            background: #f59e0b;
+            opacity: 1;
+        }
     </style>
 
-    <!-- Hero Section -->
-    <section class="gradient-bg text-white p-20 fade-in -mt-6">
-        <div class="container mx-auto px-4 text-center">
-            <h1 class="text-4xl md:text-6xl font-bold mb-6">Direction de la Pension Civile</h1>
-            <p class="text-xl md:text-2xl text-blue-100 mb-8 max-w-3xl mx-auto">
-                Votre partenaire de confiance pour une retraite sereine et sécurisée
-            </p>
-            <div class="flex flex-col sm:flex-row gap-4 justify-center">
-                <button class="btn-primary text-white px-8 py-4 rounded-lg font-semibold text-lg">
-                    Découvrir nos services
-                </button>
-                <a href="{{ route('simulateur-calcul') }}">
-                <button class="bg-white text-blue-600 px-8 py-4 rounded-lg font-semibold text-lg hover:bg-blue-50 transition-colors">
-                    Calculer ma pension
-                </button>
-            </a>
-            </div>
-        </div>
-    </section>
-
-{{--     <section class="py-0">
+    <!-- Hero Section avec Carousel -->
+    <section class="py-0 -mt-6">
         <x-carousel>
+            <!-- Slide 1 - Contenu texte avec fond gradient -->
             <div class="swiper-slide">
-                <img src="{{ asset('images/carousel/carousel1.png') }}" alt="Slide 1">
+                <div class="gradient-bg w-full h-full flex items-center justify-center">
+                    <div class="carousel-text-content fade-in">
+                        <h1 class="text-4xl md:text-6xl font-bold mb-6">Direction de la Pension Civile</h1>
+                        <p class="text-xl md:text-2xl text-blue-100 mb-8 max-w-3xl mx-auto">
+                            Votre partenaire de confiance pour une retraite sereine et sécurisée
+                        </p>
+                        <div class="flex flex-col sm:flex-row gap-4 justify-center">
+                            <button class="btn-primary text-white px-8 py-4 rounded-lg font-semibold text-lg">
+                                Découvrir nos services
+                            </button>
+                            <a href="{{ route('simulateur-calcul') }}">
+                                <button class="bg-white text-blue-600 px-8 py-4 rounded-lg font-semibold text-lg hover:bg-blue-50 transition-colors">
+                                    Calculer ma pension
+                                </button>
+                            </a>
+                        </div>
+                    </div>
+                </div>
             </div>
-            <div class="swiper-slide">
-                <img src="{{ asset('images/carousel/carousel1.png') }}" alt="Slide 2">
+
+            <!-- Slide 2 - Image avec overlay -->
+            <div class="swiper-slide relative">
+                <img src="{{ asset('images/carousel/carousel1.png') }}" alt="Direction de la Pension Civile" class="w-full h-full object-cover">
+                <div class="carousel-slide-content">
+                    <div class="carousel-text-content">
+                        <h2 class="text-4xl md:text-5xl font-bold mb-4">Expertise et Accompagnement</h2>
+                        <p class="text-xl text-white mb-6">Notre équipe vous guide à chaque étape</p>
+                        <button class="btn-primary text-white px-8 py-3 rounded-lg font-semibold">
+                            En savoir plus
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Slide 3 - Image supplémentaire -->
+            <div class="swiper-slide relative">
+                <img src="{{ asset('images/carousel/carousel2.png') }}" alt="Services Pension Civile" class="w-full h-full object-cover">
+                <div class="carousel-slide-content">
+                    <div class="carousel-text-content">
+                        <h2 class="text-4xl md:text-5xl font-bold mb-4">Votre Avenir Sécurisé</h2>
+                        <p class="text-xl text-white mb-6">Des solutions adaptées à vos besoins</p>
+                        <button class="bg-white text-blue-600 px-8 py-3 rounded-lg font-semibold hover:bg-blue-50 transition-colors">
+                            Nos solutions
+                        </button>
+                    </div>
+                </div>
             </div>
         </x-carousel>
-    </section> --}}
+    </section>
 
     <!-- About Section -->
     <section class="py-16 bg-white fade-in">
@@ -296,61 +365,61 @@
         </div>
     </section>
 
-<!-- Quick Links Section -->
-<section class="py-16 bg-white fade-in">
-    <div class="container mx-auto px-4">
-        <h2 class="text-3xl md:text-4xl font-bold mb-12 text-center gradient-text">Accès Rapide</h2>
-        <div class="grid grid-cols-1 md:grid-cols-4 gap-8">
-            <!-- Simulateur -->
-            <div class="bg-blue-50 rounded-2xl p-8 text-center card-shadow hover-lift">
-                <div class="w-16 h-16 bg-blue-100 rounded-xl flex items-center justify-center mx-auto mb-4">
-                    <i class="fas fa-calculator text-blue-600 text-2xl"></i>
+    <!-- Quick Links Section -->
+    <section class="py-16 bg-white fade-in">
+        <div class="container mx-auto px-4">
+            <h2 class="text-3xl md:text-4xl font-bold mb-12 text-center gradient-text">Accès Rapide</h2>
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-8">
+                <!-- Simulateur -->
+                <div class="bg-blue-50 rounded-2xl p-8 text-center card-shadow hover-lift">
+                    <div class="w-16 h-16 bg-blue-100 rounded-xl flex items-center justify-center mx-auto mb-4">
+                        <i class="fas fa-calculator text-blue-600 text-2xl"></i>
+                    </div>
+                    <h3 class="text-xl font-bold mb-4">Simulateur de Pension</h3>
+                    <p class="text-gray-600 mb-6">Estimez votre future pension en quelques clics</p>
+                    <a href="{{ route('simulateur-calcul') }}" class="text-blue-600 font-semibold hover:text-blue-800 transition-colors">
+                        Calculer ma pension →
+                    </a>
                 </div>
-                <h3 class="text-xl font-bold mb-4">Simulateur de Pension</h3>
-                <p class="text-gray-600 mb-6">Estimez votre future pension en quelques clics</p>
-                <a href="{{ route('simulateur-calcul') }}" class="text-blue-600 font-semibold hover:text-blue-800 transition-colors">
-                    Calculer ma pension →
-                </a>
-            </div>
 
-            <!-- Documents légaux -->
-            <div class="bg-green-50 rounded-2xl p-8 text-center card-shadow hover-lift">
-                <div class="w-16 h-16 bg-green-100 rounded-xl flex items-center justify-center mx-auto mb-4">
-                    <i class="fas fa-file-alt text-green-600 text-2xl"></i>
+                <!-- Documents légaux -->
+                <div class="bg-green-50 rounded-2xl p-8 text-center card-shadow hover-lift">
+                    <div class="w-16 h-16 bg-green-100 rounded-xl flex items-center justify-center mx-auto mb-4">
+                        <i class="fas fa-file-alt text-green-600 text-2xl"></i>
+                    </div>
+                    <h3 class="text-xl font-bold mb-4">Documents Légaux</h3>
+                    <p class="text-gray-600 mb-6">Accédez à tous les documents officiels et réglementaires</p>
+                    <a href="{{ route('textes_documents_legaux') }}" class="text-green-600 font-semibold hover:text-green-800 transition-colors">
+                        Consulter les documents →
+                    </a>
                 </div>
-                <h3 class="text-xl font-bold mb-4">Documents Légaux</h3>
-                <p class="text-gray-600 mb-6">Accédez à tous les documents officiels et réglementaires</p>
-                <a href="{{ route('textes_documents_legaux') }}" class="text-green-600 font-semibold hover:text-green-800 transition-colors">
-                    Consulter les documents →
-                </a>
-            </div>
 
-            <!-- FAQ -->
-            <div class="bg-purple-50 rounded-2xl p-8 text-center card-shadow hover-lift">
-                <div class="w-16 h-16 bg-purple-100 rounded-xl flex items-center justify-center mx-auto mb-4">
-                    <i class="fas fa-question-circle text-purple-600 text-2xl"></i>
+                <!-- FAQ -->
+                <div class="bg-purple-50 rounded-2xl p-8 text-center card-shadow hover-lift">
+                    <div class="w-16 h-16 bg-purple-100 rounded-xl flex items-center justify-center mx-auto mb-4">
+                        <i class="fas fa-question-circle text-purple-600 text-2xl"></i>
+                    </div>
+                    <h3 class="text-xl font-bold mb-4">FAQ & Support</h3>
+                    <p class="text-gray-600 mb-6">Trouvez rapidement des réponses à vos questions</p>
+                    <a href="{{ route('faq.index') }}" class="text-purple-600 font-semibold hover:text-purple-800 transition-colors">
+                        Obtenir de l'aide →
+                    </a>
                 </div>
-                <h3 class="text-xl font-bold mb-4">FAQ & Support</h3>
-                <p class="text-gray-600 mb-6">Trouvez rapidement des réponses à vos questions</p>
-                <a href="{{ route('faq.index') }}" class="text-purple-600 font-semibold hover:text-purple-800 transition-colors">
-                    Obtenir de l'aide →
-                </a>
-            </div>
-            <!-- Glossaire -->
-            <div class="bg-yellow-50 rounded-2xl p-8 text-center card-shadow hover-lift">
-                <div class="w-16 h-16 bg-yellow-100 rounded-xl flex items-center justify-center mx-auto mb-4">
-                    <i class="fas fa-book text-yellow-600 text-2xl"></i>
+
+                <!-- Glossaire -->
+                <div class="bg-yellow-50 rounded-2xl p-8 text-center card-shadow hover-lift">
+                    <div class="w-16 h-16 bg-yellow-100 rounded-xl flex items-center justify-center mx-auto mb-4">
+                        <i class="fas fa-book text-yellow-600 text-2xl"></i>
+                    </div>
+                    <h3 class="text-xl font-bold mb-4">Glossaire</h3>
+                    <p class="text-gray-600 mb-6">Comprenez les termes clés liés à la pension civile</p>
+                    <a href="{{ route('glossaire') }}" class="text-yellow-600 font-semibold hover:text-yellow-800 transition-colors">
+                        Consulter le glossaire →
+                    </a>
                 </div>
-                <h3 class="text-xl font-bold mb-4">Glossaire</h3>
-                <p class="text-gray-600 mb-6">Comprenez les termes clés liés à la pension civile</p>
-                <a href="{{ route('glossaire') }}" class="text-yellow-600 font-semibold hover:text-yellow-800 transition-colors">
-                    Consulter le glossaire →
-                </a>
             </div>
         </div>
-    </div>
-</section>
-
+    </section>
 
     <x-mediatheque />
 @endsection
