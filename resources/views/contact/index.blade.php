@@ -130,7 +130,7 @@
                                 <div>
                                     <h3 class="text-xl font-semibold text-gray-800 mb-1">Adresse e-mail</h3>
                                     <a href="mailto:contact@mef.gouv.ht" class="text-blue-600 hover:text-blue-800 transition-colors text-lg font-medium">
-                                        info@mef.gouv.ht
+                                        dpc.info@mef.gouv.ht
                                     </a>
                                 </div>
                             </div>
@@ -287,7 +287,7 @@
                     <i class="fas fa-envelope-open-text text-purple-600 text-xl"></i>
                 </div>
                 <h3 class="text-lg font-semibold text-gray-800 mb-2">Support par email</h3>
-                <p class="text-gray-600">info@mef.gouv.ht</p>
+                <p class="text-gray-600">dpc.info@mef.gouv.ht</p>
                 <p class="text-gray-600">Réponse sous 48h</p>
             </div>
         </div>

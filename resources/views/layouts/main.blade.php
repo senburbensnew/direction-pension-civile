@@ -19,8 +19,8 @@
 </head>
 
 <body class="bg-gray-50">
-    <x-contact-bar borderType="bottom"  />
-    <header class="relative bg-blue-900 text-white bg-cover bg-center"
+    <x-contact-info-bar borderType="bottom"  />
+    <header class="relative bg-blue-900 text-white bg-cover bg-center z-[1001]"
             style="background-image: url({{ asset('images/carousel/slide2.jpg') }});">
         <div class="absolute inset-0 bg-blue-900 bg-opacity-70"></div>
 
@@ -88,7 +88,7 @@
                                     <button class="text-white hover:text-orange-500 cursor-pointer text-sm md:text-base flex items-center transition-colors focus:outline-none focus:ring-2 focus:ring-orange-500 focus:ring-opacity-50 rounded-md p-1">
                                         @if (Auth::user()->profile_photo)
                                             <div class="h-8 w-8 rounded-full overflow-hidden mr-2 border-2 border-orange-500">
-                                                <img src="{{ asset('storage/' . Auth::user()->profile_photo) }}"
+                                                <img src="{{ Storage::url(Auth::user()->profile_photo) }}"
                                                     class="h-8 w-8 object-cover" alt="{{ __('Profile Photo') }}">
                                             </div>
                                         @else
@@ -108,7 +108,7 @@
                                         </div>
                                     </button>
                                 </x-slot>
-                                <x-slot name="content" style>
+                                <x-slot name="content" style="">
                                     <x-dropdown-link :href="route('profile.edit')">
                                         <i class="fas fa-user-circle mr-2 text-gray-400"></i>
                                         {{ __('Profile') }}
@@ -153,9 +153,9 @@
                                 </a>
                             @endif
 
-                            @if (App::getLocale() !== 'en')
-                                <a href="{{ route('locale', 'en') }}" class="hover:opacity-75 transition-opacity" title="English">
-                                    <img src="{{ asset('images/us-flag.svg') }}" alt="English Flag" class="w-4 h-4 rounded-sm">
+                            @if (App::getLocale() !== 'ht')
+                                <a href="{{ route('locale', 'ht') }}" class="hover:opacity-75 transition-opacity" title="Kreyòl">
+                                    <img src="{{ asset('images/ht-flag.PNG') }}" alt="Haitian Flag Flag" class="w-4 h-4 rounded-sm">
                                 </a>
                             @endif
                         </div>
@@ -169,7 +169,7 @@
         @yield('content')
     </main>
     <x-footer />
-    <x-contact-bar borderType="top"  />
+    <x-contact-info-bar borderType="top"  />
 
     @stack('scripts')
     <script src="{{ asset('build/assets/app-CbEvcXly.js') }}"></script>

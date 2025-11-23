@@ -13,14 +13,14 @@
     <link href="https://fonts.bunny.net/css?family=figtree:400,500,600&display=swap" rel="stylesheet" />
 
     <!-- Scripts -->
-        {{-- <link href="{{ asset('build/assets/app-CFGfTGFn.css') }}" rel="stylesheet"> --}}
-    @vite(['resources/css/app.css', 'resources/js/app.js'])
+    <link href="{{ asset('build/assets/app-CFGfTGFn.css') }}" rel="stylesheet">
+    {{-- @vite(['resources/css/app.css', 'resources/js/app.js']) --}}
 </head>
 
 <body class="font-sans antialiased">
     <div class="min-h-screen bg-gray-100">
         {{-- @include('layouts.navigation') --}}
-    <x-contact-bar />
+    <x-contact-info-bar />
 <header class="relative bg-blue-900 text-white bg-cover bg-center"
         style="background-image: url({{ asset('images/carousel/slide2.jpg') }});">
     <div class="absolute inset-0 bg-blue-900 bg-opacity-70"></div>

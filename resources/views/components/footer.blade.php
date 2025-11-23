@@ -25,28 +25,28 @@
             <h3 class="font-bold text-lg md:text-xl mb-3 border-b-2 border-white pb-2">{{ __('messages.useful_links') }}
             </h3>
             <ul class="space-y-2">
-                <li><a href="https://mef.gouv.ht/"
+                <li><a href="https://mef.gouv.ht/" target="_blank"
                         class="hover:text-orange-500 transition">{{ __('messages.MEF') }}</a>
                 </li>
-                <li><a href="https://budget.gouv.ht/"
+                <li><a href="https://budget.gouv.ht/" target="_blank"
                         class="hover:text-orange-500 transition">{{ __('messages.DGB') }}</a></li>
-                <li><a href="https://www.douane.gouv.ht/"
+                <li><a href="https://www.douane.gouv.ht/" target="_blank"
                         class="hover:text-orange-500 transition">{{ __('messages.AGD') }}</a></li>
-                <li><a href="https://www.brh.ht/" class="hover:text-orange-500 transition">{{ __('messages.BRH') }}</a>
+                <li><a href="https://www.brh.ht/" target="_blank" class="hover:text-orange-500 transition">{{ __('messages.BRH') }}</a>
                 </li>
-                <li><a href="https://bmpad.gouv.ht/"
+                <li><a href="https://bmpad.gouv.ht/" target="_blank"
                         class="hover:text-orange-500 transition">{{ __('messages.BMPAD') }}</a></li>
-                <li><a href="https://dgi.gouv.ht/"
+                <li><a href="https://dgi.gouv.ht/" target="_blank"
                         class="hover:text-orange-500 transition">{{ __('messages.DGI') }}</a></li>
-                <li><a href="https://igf.gouv.ht/"
+                <li><a href="https://igf.gouv.ht/" target="_blank"
                         class="hover:text-orange-500 transition">{{ __('messages.IGF') }}</a></li>
-                <li><a href="https://ihsi.gouv.ht/"
+                <li><a href="https://ihsi.gouv.ht/" target="_blank"
                         class="hover:text-orange-500 transition">{{ __('messages.IHSI') }}</a></li>
-                <li><a href="https://oavct.gouv.ht/"
+                <li><a href="https://oavct.gouv.ht/" target="_blank"
                         class="hover:text-orange-500 transition">{{ __('messages.OAVCT') }}</a></li>
-                <li><a href="https://sonapi.gouv.ht/"
+                <li><a href="https://sonapi.gouv.ht/" target="_blank"
                         class="hover:text-orange-500 transition">{{ __('messages.SONAPI') }}</a></li>
-                <li><a href="https://www.bnconline.com/"
+                <li><a href="https://www.bnconline.com/" target="_blank"
                         class="hover:text-orange-500 transition">{{ __('messages.BNC') }}</a></li>
             </ul>
         </div>
