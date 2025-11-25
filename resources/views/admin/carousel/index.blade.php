@@ -2,12 +2,6 @@
 
 @section('content')
     <div class="container mx-auto p-6 bg-white shadow-md rounded-lg">
-        <!-- Breadcrumb -->
-        <nav class="text-sm text-gray-600 mb-4">
-            <span class="text-gray-800">Carousels</span>
-            <span class="mx-2">></span>
-            <span class="text-gray-800">List</span>
-        </nav>
         <div class="flex justify-between items-center mb-4">
             <a href="{{ route('admin.carousels.create') }}"
                 class="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600">Add Slide</a>

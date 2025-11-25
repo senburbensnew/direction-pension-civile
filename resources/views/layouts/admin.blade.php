@@ -5,7 +5,6 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Admin Panel - {{ config('app.name', 'Laravel') }}</title>
-    @vite(['resources/css/app.css', 'resources/js/app.js'])
     <style>
         .sidebar {
             transform: translateX(-100%);
@@ -39,6 +38,8 @@
             }
         }
     </style>
+    {{-- @vite(['resources/css/app.css', 'resources/js/app.js']) --}}
+        <link href="{{ asset('build/assets/app-CFGfTGFn.css') }}" rel="stylesheet">
 </head>
 
 <body class="bg-gray-100">
@@ -178,6 +179,7 @@
             }
         });
     </script>
+        <script src="{{ asset('build/assets/app-CbEvcXly.js') }}"></script>
 </body>
 
 </html>

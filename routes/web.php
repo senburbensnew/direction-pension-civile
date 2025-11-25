@@ -67,8 +67,6 @@ Route::get('/documents/download/{filename}', function ($filename) {
     return response()->download($path);
 })->name('documents.download');
 
-
-
 Route::get('/enregistrement-pensionnaire/create', [EnregistrementPensionnaireController::class, 'create'])->name('enregistrement-pensionnaire.create');
 Route::post('/enregistrement-pensionnaire', [EnregistrementPensionnaireController::class, 'store'])->name('enregistrement-pensionnaire.store');
 

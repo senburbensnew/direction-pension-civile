@@ -4,6 +4,7 @@
 
 @section('content')
     <style>
+        /* Garder uniquement les styles généraux, supprimer les styles des graphiques */
         .gradient-bg {
             background: linear-gradient(135deg, #1e40af 0%, #3b82f6 100%);
         }
@@ -123,7 +124,7 @@
     </style>
 
     <!-- HERO + SIDEBAR -->
-    <section class="py-0 -mt-6 gap-6 flex flex-col lg:flex-row lg:justify-between items-start bg-white border-b w-full">
+    <section class="py-0 -mt-6 gap-6 flex flex-col lg:flex-row lg:justify-between items-start bg-white w-full">
         <x-carousel>
             <!-- Slide 1 -->
             <div class="swiper-slide">
@@ -498,11 +499,14 @@
         </div>
     </section>
 
+    <!-- GRAPH SECTION COMPONENT -->
+    <x-graph-section />
+
     <!-- MODULES -->
-    <section class="py-16 pt-0 border-b bg-white fade-in">
+    <section class="py-12 bg-white fade-in">
         <div class="container mx-auto px-4">
 
-            <h2 class="text-3xl md:text-4xl font-bold mb-12 text-center gradient-text">
+            <h2 class="text-3xl md:text-4xl font-bold mb-8 text-center gradient-text">
                 Nouveautés
             </h2>
 

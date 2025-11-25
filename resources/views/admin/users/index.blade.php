@@ -2,11 +2,6 @@
 
 @section('content')
     <div class="container mx-auto bg-white p-5 shadow rounded">
-        <nav class="text-sm text-gray-600 mb-4">
-            <span class="text-gray-800">Utilisateurs</span>
-            <span class="mx-2">></span>
-            <span class="text-gray-800">Liste</span>
-        </nav>
         <a href="{{ route('admin.users.create') }}" class="text-blue-500 hover:text-blue-800 transition-colors">+
             Ajouter</a>
 

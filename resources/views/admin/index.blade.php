@@ -2,14 +2,6 @@
 
 @section('content')
     <div class="container mx-auto px-4">
-        <!-- Breadcrumb -->
-        <div class="flex justify-between items-center mb-6">
-            <h1 class="text-2xl font-bold">Users Management</h1>
-            <a href="{{ route('admin.users.create') }}" class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">
-                Add New User
-            </a>
-        </div>
-
         <div class="bg-white rounded-lg shadow overflow-hidden">
             <table class="min-w-full divide-y divide-gray-200">
                 <thead class="bg-gray-50">

@@ -97,7 +97,6 @@
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <!-- Header -->
         <header class="mb-10 text-center fade-in">
-            {{-- <h1 class="text-4xl font-bold gradient-text mb-3">Documents Légaux</h1> --}}
             <p class="text-lg text-gray-600 max-w-3xl mx-auto">Accédez à tous les documents officiels relatifs à la fonction publique et aux pensions de retraite</p>
 
             <!-- Search and Filters -->
@@ -385,46 +384,48 @@
     </div>
 
     <script>
-        // Document search and filtering functionality
         document.addEventListener('DOMContentLoaded', function() {
             const searchInput = document.getElementById('search-documents');
             const filterButtons = document.querySelectorAll('.filter-btn');
             const documentCards = document.querySelectorAll('.document-card');
+            const sections = document.querySelectorAll('section');
 
-            // Search functionality
-            searchInput.addEventListener('input', function() {
-                const searchTerm = this.value.toLowerCase();
+            function updateSectionVisibility() {
+                sections.forEach(section => {
+                    const visibleCards = section.querySelectorAll('.document-card:not([style*="display: none"])');
+                    section.style.display = visibleCards.length > 0 ? 'block' : 'none';
+                });
+            }
+
+            function filterDocuments() {
+                const searchTerm = searchInput.value.toLowerCase();
+                const activeFilter = document.querySelector('.filter-btn.active').getAttribute('data-filter');
 
                 documentCards.forEach(card => {
                     const title = card.querySelector('h3').textContent.toLowerCase();
                     const category = card.getAttribute('data-category');
-                    const isVisible = title.includes(searchTerm);
+                    const matchesSearch = title.includes(searchTerm);
+                    const matchesFilter = activeFilter === 'all' || category === activeFilter;
 
-                    card.style.display = isVisible ? 'block' : 'none';
+                    card.style.display = (matchesSearch && matchesFilter) ? 'block' : 'none';
                 });
-            });
 
-            // Filter functionality
+                updateSectionVisibility();
+            }
+
+            // Search input
+            searchInput.addEventListener('input', filterDocuments);
+
+            // Filter buttons
             filterButtons.forEach(button => {
                 button.addEventListener('click', function() {
-                    const filter = this.getAttribute('data-filter');
-
-                    // Update active button
                     filterButtons.forEach(btn => btn.classList.remove('active'));
                     this.classList.add('active');
-
-                    // Filter cards
-                    documentCards.forEach(card => {
-                        const category = card.getAttribute('data-category');
-
-                        if (filter === 'all' || category === filter) {
-                            card.style.display = 'block';
-                        } else {
-                            card.style.display = 'none';
-                        }
-                    });
+                    filterDocuments();
                 });
             });
         });
     </script>
 @endsection
+
+
