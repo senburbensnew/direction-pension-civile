@@ -9,7 +9,7 @@ class VideoCard extends Component
     public $title;
     public $videoUrl;
 
-    public function __construct($title = 'Mediatheque/Video', $videoUrl = null)
+    public function __construct($title = '', $videoUrl = null)
     {
         $this->title = $title;
         $this->videoUrl = $videoUrl;

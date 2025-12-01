@@ -101,7 +101,7 @@
             }
         </style>
     </head>
-    <div class="max-w-6xl mx-auto">
+    <div class="py-8 max-w-6xl mx-auto">
         <!-- Header -->
         <header class="mb-8 text-center">
             <h1 class="text-4xl font-bold gradient-text mb-2">Simulateur de Pension</h1>

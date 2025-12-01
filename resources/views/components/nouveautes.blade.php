@@ -1,7 +1,6 @@
 @props(['nouveautes' => []])
 
 @php
-    // Nouveautés par défaut si aucune n'est passée
     if (empty($nouveautes)) {
         $nouveautes = [
             [
@@ -19,13 +18,6 @@
                 'color' => 'bg-orange-100 text-orange-600',
             ],
             [
-                'title' => 'Atelier de sensibilisation',
-                'date' => '15 Nov 2025',
-                'content' => 'Participez à notre atelier gratuit et découvrez comment optimiser vos droits à la pension civile.',
-                'icon' => 'fas fa-chalkboard-teacher',
-                'color' => 'bg-green-100 text-green-600',
-            ],
-            [
                 'title' => 'Nouvelle rubrique FAQ',
                 'date' => '20 Nov 2025',
                 'content' => 'Toutes vos questions fréquentes sont désormais regroupées pour vous guider pas à pas.',
@@ -37,13 +29,11 @@
 @endphp
 
 <div class="w-full mt-6 md:mt-0 overflow-hidden">
-{{--     <div class="gradient-bg text-white fade-in text-center py-3 text-lg font-bold tracking-wide rounded-t-lg">
-        {{ __('messages.new_feeds') }}
-    </div> --}}
 
-    <div class="p-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+    <div class="flex flex-wrap justify-center items-stretch gap-6 p-4">
         @foreach ($nouveautes as $nouveaute)
-            <div class="bg-white rounded-2xl shadow-lg hover:shadow-xl transition duration-300 flex flex-col">
+            <div class="bg-white rounded-2xl shadow-lg hover:shadow-xl transition duration-300 flex flex-col w-72">
+
                 <div class="flex items-center justify-center h-16 w-16 rounded-full mx-auto mt-4 {{ $nouveaute['color'] }}">
                     <i class="{{ $nouveaute['icon'] }} text-2xl"></i>
                 </div>
@@ -56,7 +46,9 @@
                         Lire plus →
                     </a>
                 </div>
+
             </div>
         @endforeach
     </div>
+
 </div>

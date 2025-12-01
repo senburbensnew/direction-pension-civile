@@ -4,10 +4,8 @@
 ">
     <div class="container mx-auto">
         <div class="flex flex-col md:flex-row justify-between items-center px-4 py-2 md:py-0 md:h-10">
-
             <!-- Contact Info + Hours -->
             <div class="flex flex-wrap justify-center md:justify-start gap-4 items-center mb-2 md:mb-0">
-
                 <!-- Hours -->
                 <div class="flex items-center gap-1">
                     <i class="fas fa-clock text-xs"></i>
@@ -34,7 +32,7 @@
             </div>
 
             <!-- Social Media -->
-            <div class="flex items-center gap-3">
+{{--              <div class="flex items-center gap-3">
                 <a href="#" class="hover:text-blue-200 transition-colors" aria-label="Facebook">
                     <i class="fab fa-facebook-f"></i>
                 </a>
@@ -50,8 +48,7 @@
                 <a href="#" class="hover:text-blue-200 transition-colors" aria-label="YouTube">
                     <i class="fab fa-youtube"></i>
                 </a>
-            </div>
-
+            </div> --}}
         </div>
     </div>
 </div>

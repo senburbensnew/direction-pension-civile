@@ -2,7 +2,6 @@
 <div class="bg-[#064991] mx-auto py-6 px-4 sm:px-6 lg:px-8 text-white border-t-4"
     style="border-top: 3px solid red;">
     <div class="flex flex-col md:flex-row justify-between items-start md:space-x-6 lg:space-x-8 space-y-8 md:space-y-0">
-
         <!-- LA DIRECTION Column -->
         <div class="w-full md:w-1/3">
             <h3 class="font-bold text-lg md:text-xl mb-3 border-b-2 border-white pb-2">{{ __('messages.who_are_we') }}
@@ -17,6 +16,32 @@
                         class="hover:text-orange-500 transition">{{ __('messages.history') }}</a></li>
                 <li><a href="{{ route('quisommesnous.structure-organique') }}"
                         class="hover:text-orange-500 transition">{{ __('messages.organizational_structure') }}</a></li>
+            </ul>
+        </div>
+
+                <!-- LIENS UTILES Column -->
+        <div class="w-full md:w-1/3">
+            <h3 class="font-bold text-lg md:text-xl mb-3 border-b-2 border-white pb-2">Directions et Services
+            </h3>
+            <ul class="space-y-2">
+                <li><a href="https://mef.gouv.ht/" target="_blank"
+                        class="hover:text-orange-500 transition">Secrétariat</a>
+                </li>
+                <li><a href="https://budget.gouv.ht/" target="_blank"
+                        class="hover:text-orange-500 transition">Réception</a></li>
+                <li><a href="https://www.douane.gouv.ht/" target="_blank"
+                        class="hover:text-orange-500 transition">Service Contrôle et Placements (SCP)</a></li>
+                <li><a href="https://www.brh.ht/" target="_blank" class="hover:text-orange-500 transition">Cellule Administration (CA)</a>
+                </li>
+                <li><a href="https://bmpad.gouv.ht/" target="_blank"
+                        class="hover:text-orange-500 transition">Service Liquidation de Pension (SLP)</a></li>
+                <li><a href="https://dgi.gouv.ht/" target="_blank"
+                        class="hover:text-orange-500 transition">Service Comptabilité (SC)</a></li>
+                <li><a href="https://igf.gouv.ht/" target="_blank"
+                        class="hover:text-orange-500 transition">Service des Formalités (SF)</a></li>
+                <li><a href="https://ihsi.gouv.ht/"
+                        class="hover:text-orange-500 transition">Service Assurance (SA)</a></li>
+
             </ul>
         </div>
 
@@ -60,22 +85,20 @@
                 <p>5, Avenue Charles Sumner</p>
                 <p>Port-au-Prince, Haïti</p>
             </div>
-
+{{--
             <h4 class="font-bold mt-6 mb-3">{{ __('messages.follow_us') }}</h4>
-            <div class="flex space-x-4 md:space-x-3 justify-start">
-                <a href="#" class="text-white hover:text-orange-500 transition text-2xl md:text-base">
-                    <i class="fab fa-facebook"></i>
+            <div class="flex space-x-4 justify-start text-white text-3xl">
+                <a href="#" aria-label="Facebook" class="hover:text-orange-500 transition-colors duration-300">
+                    <i class="fab fa-facebook-f"></i>
                 </a>
-                <a href="#" class="text-white hover:text-orange-500 transition text-2xl md:text-base">
+                <a href="#" aria-label="Twitter" class="hover:text-orange-500 transition-colors duration-300">
                     <i class="fab fa-twitter"></i>
                 </a>
-                <a href="#" class="text-white hover:text-orange-500 transition text-2xl md:text-base">
+                <a href="#" aria-label="YouTube" class="hover:text-orange-500 transition-colors duration-300">
                     <i class="fab fa-youtube"></i>
                 </a>
-                <a href="#" class="text-white hover:text-orange-500 transition text-2xl md:text-base">
-                    <i class="fas fa-envelope"></i>
-                </a>
-            </div>
+            </div> --}}
+
         </div>
     </div>
 </div>
@@ -84,10 +107,12 @@
 <div class="mx-auto py-6 px-4 sm:px-6 lg:px-8 text-white border-t-2 border-white bg-[#064991]">
     <div class="flex flex-col md:flex-row justify-between items-center space-y-4 md:space-y-0">
         <div class="w-full md:w-1/3 text-center md:text-left">
-            <p class="text-sm">&copy;2025 {{ __('messages.direction') }}</p>
+            <p class="text-sm">&copy;2025 {{ __('messages.direction') }}. Tous droits réservés.</p>
         </div>
         <div class="w-full md:w-1/3 text-center">
-            <p class="text-sm">{{ __('messages.all_rights_reserved') }}</p>
+            <p class="text-sm">        <a href="{{ route('privacy.policy') }}" class="text-sm md:text-base text-white hover:text-orange-500 transition text-center md:text-right">
+            Politique de Confidentialité et de la Protection des Données des Utilisateurs
+        </a></p>
         </div>
         <div class="w-full md:w-1/3 text-center md:text-right">
             <img src="{{ asset('images/setting-logo-1-M13oPLiYoM.png') }}" alt="Logo"
@@ -95,3 +120,4 @@
         </div>
     </div>
 </div>
+

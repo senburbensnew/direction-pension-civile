@@ -13,6 +13,7 @@ use App\Http\Controllers\CarouselController;
 use App\Http\Controllers\DocumentController;
 use App\Http\Controllers\PersonalController;
 use App\Http\Controllers\EnregistrementPensionnaireController;
+use App\Http\Controllers\NewsletterController;
 
 /*
 |--------------------------------------------------------------------------
@@ -28,6 +29,10 @@ use App\Http\Controllers\EnregistrementPensionnaireController;
 Route::get('/', function () {
     return view('home');
 })->name('home');
+
+Route::post('/newsletter/subscribe', [NewsletterController::class, 'subscribe'])
+    ->name('newsletter.subscribe');
+
 
 Route::get('/glossaire', function () {
     return view('glossaire.index');
@@ -215,6 +220,11 @@ Route::prefix('personal')->middleware('auth')->group(function () {
         Route::delete('/{id}/cancel', action: [PersonalController::class, 'cancelRequest'])->name('personal.request.cancel');
     });
 });
+
+Route::get('/politique-confidentialite', function () {
+    return view('privacy'); // Assurez-vous que resources/views/privacy.blade.php existe
+})->name('privacy.policy');
+
 
 
 Route::prefix('admin')->name('admin.')->group(function () {
