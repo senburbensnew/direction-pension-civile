@@ -1,5 +1,5 @@
 <!-- Director Card -->
-<div class="relative w-full md:w-60 bg-gray-50 text-center p-4 border-t border-r border-b border-gray-900">
+<div class="relative w-full md:w-60 bg-gray-50 text-center p-4 border-t border-r border-b border-blue-600">
     <span class="relative -top-8 bg-gray-50 px-1 text-lg font-bold text-blue-600">
         {{ __('messages.director') }}
     </span>

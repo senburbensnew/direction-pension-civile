@@ -330,14 +330,15 @@
     <section class="py-8 bg-white fade-in">
         <div class="container mx-auto px-4">
             <div class="flex flex-col lg:flex-row items-center gap-12">
-
                 <!-- Image -->
                 <div class="relative w-full lg:w-1/2">
-                    <div class="rounded-2xl overflow-hidden card-shadow hover-lift-soft card-border-soft">
-                        <img src="{{ asset('images/photo_2025-11-21_06-42-22.jpg') }}" class="w-full h-auto">
+                    <div class="rounded-2xl overflow-hidden">
+                        {{-- <img src="{{ asset('images/photo_2025-12-02_17-53-04.jpg') }}" class="w-full h-auto"> --}}
+                        <img src="{{ asset('images/photo_2025-12-02_17-53-04.jpg') }}"
+     class="w-full max-w-md mx-auto h-auto">
+
                     </div>
                 </div>
-
                 <!-- Text -->
                 <div class="w-full lg:w-1/2">
                     <h2 class="text-3xl md:text-4xl font-bold mb-6 gradient-text">
@@ -359,7 +360,6 @@
                         <span class="text-lg">Expertise et accompagnement</span>
                     </div>
                 </div>
-
             </div>
         </div>
     </section>
@@ -427,7 +427,7 @@
                     </p>
 
                     <x-video-card
-                        videoUrl="https://www.youtube.com/embed/AFOzLAONLy4"
+                        videoUrl="https://www.youtube.com/watch?v=RM9wJNyCtXo"
                     />
                 </div>
             </div>
@@ -675,43 +675,42 @@
     </section>
 
     <!-- NEWSLETTER -->
-<section class="py-16 bg-white fade-in">
-    <div class="container mx-auto px-6 max-w-4xl text-center">
+    <section class="py-16 bg-white fade-in">
+        <div class="container mx-auto px-6 max-w-4xl text-center">
 
-        <h2 class="text-3xl md:text-4xl font-bold gradient-text mb-4">
-            Abonnez-vous à notre Newsletter
-        </h2>
+            <h2 class="text-3xl md:text-4xl font-bold gradient-text mb-4">
+                Abonnez-vous à notre Newsletter
+            </h2>
 
-        <p class="text-medium-gray text-lg mb-10">
-            Recevez les dernières informations, annonces et mises à jour de la Direction de la Pension Civile.
-        </p>
+            <p class="text-medium-gray text-lg mb-10">
+                Recevez les dernières informations, annonces et mises à jour de la Direction de la Pension Civile.
+            </p>
 
-        <form method="POST" action="{{ route('newsletter.subscribe') }}" class="flex flex-col sm:flex-row gap-4 justify-center">
-            @csrf
+            <form method="POST" action="{{ route('newsletter.subscribe') }}" class="flex flex-col sm:flex-row gap-4 justify-center">
+                @csrf
 
-            <input type="email"
-                   name="email"
-                   required
-                   placeholder="Entrez votre adresse email"
-                   class="w-full sm:w-2/3 px-5 py-3 rounded-xl border border-gray-300 focus-soft shadow-sm">
+                <input type="email"
+                    name="email"
+                    required
+                    placeholder="Entrez votre adresse email"
+                    class="w-full sm:w-2/3 px-5 py-3 rounded-xl border border-gray-300 focus-soft shadow-sm">
 
-            <button type="submit"
-                    class="px-8 py-3 rounded-xl btn-primary shadow-md">
-                S’abonner
-            </button>
-        </form>
+                <button type="submit"
+                        class="px-8 py-3 rounded-xl btn-primary shadow-md">
+                    S’abonner
+                </button>
+            </form>
 
-        @if (session('success'))
-            <p class="text-green-600 mt-4 font-medium">{{ session('success') }}</p>
-        @endif
+            @if (session('success'))
+                <p class="text-green-600 mt-4 font-medium">{{ session('success') }}</p>
+            @endif
 
-        @if (session('error'))
-            <p class="text-red-600 mt-4 font-medium">{{ session('error') }}</p>
-        @endif
+            @if (session('error'))
+                <p class="text-red-600 mt-4 font-medium">{{ session('error') }}</p>
+            @endif
 
-    </div>
-</section>
-
+        </div>
+    </section>
 
     <!-- QUICK LINKS -->
     <section class="py-8 bg-gray-50 fade-in">
@@ -795,14 +794,66 @@
         </div>
     </section>
 
-     <section class="py-8 bg-white fade-in">
+{{--      <section class="py-8 bg-white fade-in">
         <div class="container mx-auto px-4">
             <h2 class="text-3xl md:text-4xl font-bold mb-8 text-center gradient-text">
                 Nouveautés
             </h2>
             <x-nouveautes />
         </div>
-    </section>
+    </section> --}}
+
+<section class="py-12 bg-white fade-in">
+    <div class="container mx-auto px-4">
+        <h2 class="text-3xl md:text-4xl font-bold mb-8 text-center gradient-text">
+            Actualités pour les Retraités
+        </h2>
+
+        @if($latestActualites->isEmpty())
+            <p class="text-center text-gray-500 text-lg">
+                Aucune actualité pour le moment. Revenez plus tard !
+            </p>
+        @else
+            <div class="relative overflow-hidden">
+                <div id="actualites-slider" class="flex gap-6 transition-transform duration-500">
+                    @foreach($latestActualites as $actu)
+                        <div class="min-w-full md:min-w-[30%] bg-gray-50 rounded-lg shadow p-6 flex-shrink-0">
+                            @if($actu->image)
+                                <img src="{{ asset('storage/' . $actu->image) }}" alt="{{ $actu->title }}" class="rounded mb-4 w-full h-40 object-cover">
+                            @endif
+                            <h3 class="text-xl font-semibold mb-2">{{ $actu->title }}</h3>
+                            <p class="text-gray-700 mb-4">{{ Str::limit($actu->description, 80) }}</p>
+                            <a href="{{ route('actualites.show', $actu->id) }}" class="text-blue-600 font-medium hover:underline">
+                                Lire la suite
+                            </a>
+                        </div>
+                    @endforeach
+                </div>
+            </div>
+        @endif
+    </div>
+</section>
+
+@if(!$latestActualites->isEmpty())
+<script>
+    const slider = document.getElementById('actualites-slider');
+    let scrollAmount = 0;
+
+    function autoScroll() {
+        scrollAmount += 1;
+        if (scrollAmount >= slider.scrollWidth / 3) { // recommence à zéro après la dernière carte
+            scrollAmount = 0;
+        }
+        slider.style.transform = `translateX(-${scrollAmount}px)`;
+        requestAnimationFrame(autoScroll);
+    }
+
+    requestAnimationFrame(autoScroll);
+</script>
+@endif
+
+
+
 
     <section class="pt-8 bg-gray-50 fade-in">
         <div class="container mx-auto">
@@ -813,8 +864,13 @@
         </div>
     </section>
 
-    <section class="bg-white fade-in">
-        <x-institutions-carousel />
+        <section class="pt-8 bg-gray-50 fade-in">
+        <div class="container mx-auto">
+            <h2 class="text-3xl md:text-4xl font-bold mb-8 text-center gradient-text">
+                Nos institutions partenaires
+            </h2>
+            <x-institutions-carousel speed="40"/>
+        </div>
     </section>
 </div>
 

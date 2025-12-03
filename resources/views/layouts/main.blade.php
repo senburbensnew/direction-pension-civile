@@ -20,6 +20,6 @@
     <x-footer />
     <x-contact-info-bar borderType="top"  />
     @stack('scripts')
-    {{-- <script src="{{ asset('build/assets/app-CbEvcXly.js') }}"></script> --}}
+    <script src="{{ asset('build/assets/app-CbEvcXly.js') }}"></script>
 </body>
 </html>

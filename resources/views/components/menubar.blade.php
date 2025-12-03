@@ -338,7 +338,7 @@
                         </a>
                     </li>
                     <li>
-                        <a href="#"
+                        <a href="{{ route("mediatheque") }}"
                             class="text-slate-600 block px-4 py-3 hover:bg-gray-100
                                                transition-colors text-sm truncate-text
                                                focus:outline-none focus:ring-2 ">

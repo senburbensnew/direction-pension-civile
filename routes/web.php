@@ -14,6 +14,9 @@ use App\Http\Controllers\DocumentController;
 use App\Http\Controllers\PersonalController;
 use App\Http\Controllers\EnregistrementPensionnaireController;
 use App\Http\Controllers\NewsletterController;
+use App\Http\Controllers\ActualiteController;
+use App\Http\Controllers\MediaController;
+use App\Models\Actualite;
 
 /*
 |--------------------------------------------------------------------------
@@ -26,12 +29,19 @@ use App\Http\Controllers\NewsletterController;
 |
 */
 
+
 Route::get('/', function () {
-    return view('home');
+    $latestActualites = Actualite::latest()->take(3)->get(); // récupérer les 3 dernières actualités
+    return view('home', compact('latestActualites'));
 })->name('home');
+
+Route::get('/mediatheque', [MediaController::class, 'index'])->name('mediatheque');
 
 Route::post('/newsletter/subscribe', [NewsletterController::class, 'subscribe'])
     ->name('newsletter.subscribe');
+
+Route::get('/actualites', [ActualiteController::class, 'index'])->name('actualites.index');
+Route::get('/actualites/{id}', [ActualiteController::class, 'show'])->name('actualites.show');
 
 
 Route::get('/glossaire', function () {

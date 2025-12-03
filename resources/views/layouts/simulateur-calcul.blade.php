@@ -1,8 +1,14 @@
 @extends('layouts.main')
 
-@section('title', 'Simulateur de pension')
+@section('title', 'Accueil')
 
 @section('content')
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Simulateur de calcul de pension</title>
+        <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+        <script src="https://cdn.tailwindcss.com"></script>
         <script>
             tailwind.config = {
                 theme: {
@@ -94,6 +100,7 @@
                 to { opacity: 1; transform: translateY(0); }
             }
         </style>
+    </head>
     <div class="py-8 max-w-6xl mx-auto">
         <!-- Header -->
         <header class="mb-8 text-center">
@@ -112,7 +119,7 @@
                     </div>
                     <div class="mt-4 md:mt-0">
                         <div class="flex space-x-2">
-                            <button onclick="exportToPDF()" class="bg-white text-blue-600 px-4 py-2 rounded-lg font-medium hover:bg-blue-50 transition-colors flex items-center">
+                            <button onclick="exportToPDF()" class="bg-white text-primary px-4 py-2 rounded-lg font-medium hover:bg-blue-50 transition-colors flex items-center">
                                 <i class="fas fa-file-pdf mr-2"></i> Exporter PDF
                             </button>
                             <button onclick="resetTable()" class="bg-white text-red-600 px-4 py-2 rounded-lg font-medium hover:bg-red-50 transition-colors flex items-center">
@@ -134,7 +141,7 @@
                         <div class="ml-3">
                             <p class="text-sm text-blue-700">
                                 <strong>Comment utiliser ce simulateur :</strong> Saisissez vos salaires et le nombre de mois correspondants.
-                                Le système donnera les 60 meilleurs salaires, la moyenne pondérée et la pension estimée.
+                                Le système calculera automatiquement les 60 meilleurs mois, la moyenne pondérée et votre pension estimée.
                                 <span class="font-semibold block mt-1">Vous devez effectuer le calcul pour chaque carrière séparément.</span>
                             </p>
                         </div>
@@ -214,18 +221,12 @@
 
                 <!-- Results Section -->
                 <div id="resultArea" class="mt-8 p-6 rounded-2xl border border-gray-200 bg-gradient-to-r from-blue-50 to-indigo-50 fade-in" style="display: none;">
-<div class="flex items-center mb-6">
-    <!-- Icon Container -->
-    <div class="bg-blue-600 rounded-full p-4 mr-3 flex items-center justify-center w-10 h-10">
-        <i class="fas fa-chart-line text-white text-2xl"></i>
-    </div>
-
-    <!-- Heading -->
-    <h3 class="text-xl font-bold text-gray-800">
-        Résultats de votre simulation
-    </h3>
-</div>
-
+                    <div class="flex items-center mb-6">
+                        <div class="bg-primary rounded-full p-2 mr-3">
+                            <i class="fas fa-chart-line text-white"></i>
+                        </div>
+                        <h3 class="text-xl font-bold text-gray-800">Résultats de votre simulation</h3>
+                    </div>
 
                     <!-- Summary Cards -->
                     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">

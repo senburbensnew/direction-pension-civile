@@ -3,64 +3,90 @@
 @section('title', 'Politique de Confidentialité et de la Protection des Données')
 
 @section('content')
-<div class="container mx-auto px-4 py-8">
-    <h1 class="text-3xl font-bold mb-6 text-center">Politique de Confidentialité et de la Protection des Données des Utilisateurs</h1>
 
-    <p class="mb-4">
-        La Direction de la Pension Civile s'engage à protéger la vie privée et les données personnelles de ses utilisateurs. La présente politique explique quelles informations nous collectons, comment elles sont utilisées et les choix dont disposent nos utilisateurs.
-    </p>
+<style>
+    .gradient-text {
+        background: linear-gradient(135deg, #3b82f6 0%, #1e40af 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+    }
+    .card-shadow {
+        box-shadow: 0 20px 40px -10px rgba(0, 0, 0, 0.1), 0 10px 20px -5px rgba(0, 0, 0, 0.04);
+    }
+    .fade-in {
+        animation: fadeIn 0.6s ease-in-out;
+    }
+    @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(20px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+</style>
 
-    <h2 class="text-2xl font-semibold mt-6 mb-3">1. Collecte des informations</h2>
-    <p class="mb-4">
-        Nous collectons uniquement les informations nécessaires pour fournir nos services, telles que :
-    </p>
-    <ul class="list-disc ml-6 mb-4">
-        <li>Nom, prénom et coordonnées</li>
-        <li>Informations relatives aux formulaires administratifs</li>
-        <li>Adresses e-mail pour la correspondance et les notifications</li>
-    </ul>
+<div class="py-8 bg-gray-50 fade-in">
+    <div class="max-w-7xl mx-auto px-6">
+        <div class="bg-white rounded-2xl card-shadow overflow-hidden p-10">
+            <h1 class="text-3xl font-bold mb-6 text-center gradient-text">
+                Politique de Confidentialité et de la Protection des Données des Utilisateurs
+            </h1>
+        <p class="mb-6 text-gray-700">
+            La Direction de la Pension Civile s'engage à protéger la vie privée et les données personnelles de ses utilisateurs.
+            La présente politique explique quelles informations nous collectons, comment elles sont utilisées et les choix dont disposent nos utilisateurs.
+        </p>
 
-    <h2 class="text-2xl font-semibold mt-6 mb-3">2. Utilisation des informations</h2>
-    <p class="mb-4">
-        Les informations collectées sont utilisées pour :
-    </p>
-    <ul class="list-disc ml-6 mb-4">
-        <li>Traiter les demandes des utilisateurs</li>
-        <li>Améliorer nos services et notre site web</li>
-        <li>Envoyer des communications importantes relatives aux services proposés</li>
-    </ul>
+        <!-- Sections -->
+        @php
+            $sections = [
+                [
+                    'title' => '1. Collecte des informations',
+                    'content' => 'Nous collectons uniquement les informations nécessaires pour fournir nos services, telles que :',
+                    'list' => ['Nom, prénom et coordonnées', 'Informations relatives aux formulaires administratifs', 'Adresses e-mail pour la correspondance et les notifications']
+                ],
+                [
+                    'title' => '2. Utilisation des informations',
+                    'content' => 'Les informations collectées sont utilisées pour :',
+                    'list' => ['Traiter les demandes des utilisateurs', 'Améliorer nos services et notre site web', 'Envoyer des communications importantes relatives aux services proposés']
+                ],
+                [
+                    'title' => '3. Partage des informations',
+                    'content' => 'Nous ne vendons ni ne louons vos informations personnelles à des tiers. Les informations peuvent être partagées uniquement avec :',
+                    'list' => ['Les partenaires autorisés pour la gestion des services', 'Les autorités compétentes lorsque la loi l’exige']
+                ],
+                [
+                    'title' => '4. Sécurité des données',
+                    'content' => 'Nous mettons en œuvre des mesures de sécurité techniques et organisationnelles pour protéger vos données contre tout accès non autorisé, perte ou divulgation.',
+                    'list' => []
+                ],
+                [
+                    'title' => '5. Droits des utilisateurs',
+                    'content' => 'Conformément à la législation applicable, les utilisateurs disposent des droits suivants :',
+                    'list' => ['Accéder à leurs données personnelles', 'Demander la correction ou la suppression de leurs données', 'Retirer leur consentement à tout moment pour certaines utilisations']
+                ],
+                [
+                    'title' => '6. Modifications de la politique',
+                    'content' => 'Nous pouvons mettre à jour cette politique de confidentialité de temps en temps. Toute modification sera publiée sur cette page avec la date de mise à jour.',
+                    'list' => []
+                ]
+            ];
+        @endphp
 
-    <h2 class="text-2xl font-semibold mt-6 mb-3">3. Partage des informations</h2>
-    <p class="mb-4">
-        Nous ne vendons ni ne louons vos informations personnelles à des tiers. Les informations peuvent être partagées uniquement avec :
-    </p>
-    <ul class="list-disc ml-6 mb-4">
-        <li>Les partenaires autorisés pour la gestion des services</li>
-        <li>Les autorités compétentes lorsque la loi l’exige</li>
-    </ul>
+        @foreach($sections as $sec)
+            <div class="mb-8">
+                <h2 class="text-2xl font-semibold mb-3 gradient-text">{{ $sec['title'] }}</h2>
+                <p class="mb-4 text-gray-700">{{ $sec['content'] }}</p>
+                @if(count($sec['list']) > 0)
+                    <ul class="list-disc ml-6 text-gray-700">
+                        @foreach($sec['list'] as $item)
+                            <li class="mb-1">{{ $item }}</li>
+                        @endforeach
+                    </ul>
+                @endif
+            </div>
+        @endforeach
 
-    <h2 class="text-2xl font-semibold mt-6 mb-3">4. Sécurité des données</h2>
-    <p class="mb-4">
-        Nous mettons en œuvre des mesures de sécurité techniques et organisationnelles pour protéger vos données contre tout accès non autorisé, perte ou divulgation.
-    </p>
-
-    <h2 class="text-2xl font-semibold mt-6 mb-3">5. Droits des utilisateurs</h2>
-    <p class="mb-4">
-        Conformément à la législation applicable, les utilisateurs disposent des droits suivants :
-    </p>
-    <ul class="list-disc ml-6 mb-4">
-        <li>Accéder à leurs données personnelles</li>
-        <li>Demander la correction ou la suppression de leurs données</li>
-        <li>Retirer leur consentement à tout moment pour certaines utilisations</li>
-    </ul>
-
-    <h2 class="text-2xl font-semibold mt-6 mb-3">6. Modifications de la politique</h2>
-    <p class="mb-4">
-        Nous pouvons mettre à jour cette politique de confidentialité de temps en temps. Toute modification sera publiée sur cette page avec la date de mise à jour.
-    </p>
-
-    <p class="mt-6 text-sm text-gray-600">
-        Date de dernière mise à jour : 30 novembre 2025
-    </p>
+        <p class="mt-6 text-sm text-gray-500 text-center">
+            Date de dernière mise à jour : 30 novembre 2025
+        </p>
+    </div>
+</div>
 </div>
 @endsection
