@@ -62,7 +62,7 @@
     </style>
 
     <!-- Contact Principal -->
-    <div class="py-8 bg-gray-50">
+    <div class="py-8 bg-transparent">
         <section class="relative fade-in">
             <div class="max-w-7xl mx-auto px-6">
                 <div class="bg-white rounded-2xl card-shadow overflow-hidden">
@@ -110,7 +110,6 @@
                                     </div>
                                 </div>
                             </div>
-{{--
                             <div class="section-divider"></div>
 
                             <div class="pt-6">
@@ -129,7 +128,7 @@
                                         <i class="fab fa-youtube text-lg"></i>
                                     </a>
                                 </div>
-                            </div> --}}
+                            </div>
                         </div>
 
                         <!-- Formulaire de contact -->
@@ -215,7 +214,6 @@
                 </div>
             </div>
         </section>
-
         <!-- Section Carte -->
         <section class="max-w-7xl mx-auto px-6 pt-16 fade-in">
             <div class="text-center mb-10">
@@ -229,7 +227,6 @@
                     referrerpolicy="no-referrer-when-downgrade"></iframe>
             </div>
         </section>
-
         <!-- Section Directions Départementales -->
         <section class="max-w-7xl mx-auto px-6 pt-16 fade-in">
             <div class="text-center mb-10">
@@ -333,7 +330,6 @@
 
             </div>
         </section>
-
         <!-- Section Services -->
         <section class="max-w-7xl mx-auto px-6 pt-20 fade-in">
             <div class="text-center mb-10">
@@ -424,6 +420,5 @@
 
             </div>
         </section>
-
     </div>
 @endsection

@@ -6,9 +6,34 @@ use Illuminate\Http\Request;
 
 class QuiSommesNousController extends Controller
 {
-    public function mots()
+    public function mots(Request $request)
     {
-        return view('quisommesnous.mots');
+        $role = $request->query('role');
+
+        // Allowed roles
+        $allowed = ['ministre', 'directeur-general', 'directeur'];
+
+        // If role NOT allowed → redirect to home
+        if (!in_array($role, $allowed)) {
+            return redirect()->route('home');
+        }
+
+        return view('quisommesnous.mots', compact('role'));
+    }
+
+   public function profil(Request $request)
+    {
+        $role = $request->query('role');
+
+        // Allowed roles
+        $allowed = ['ministre', 'directeur-general', 'directeur'];
+
+        // If role NOT allowed → redirect to home
+        if (!in_array($role, $allowed)) {
+            return redirect()->route('home');
+        }
+
+        return view('quisommesnous.profil', compact('role'));
     }
 
     public function missions()

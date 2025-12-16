@@ -52,7 +52,7 @@ return [
 
     'communications' => 'Communications',
     'texts_and_publications' => 'Texts And Publications',
-    'media_libraries' => 'Media Libraries',
+    'media_libraries' => 'Media Library',
     'success_stories' => 'Success Stories',
 
     'simulateur-calcul' => 'Simulator',

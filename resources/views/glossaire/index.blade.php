@@ -63,7 +63,7 @@
     }
 </style>
 
-<div class="py-8 max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+<div class="my-8 rounded-lg py-8 max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 bg-white">
 
     <!-- Header -->
     <header class="mb-10 text-center fade-in">

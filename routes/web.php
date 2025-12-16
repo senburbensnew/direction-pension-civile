@@ -17,7 +17,10 @@ use App\Http\Controllers\NewsletterController;
 use App\Http\Controllers\ActualiteController;
 use App\Http\Controllers\MediaController;
 use App\Models\Actualite;
-
+use App\Http\Controllers\ReportController;
+use App\Models\Report;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Artisan;
 /*
 |--------------------------------------------------------------------------
 | Web Routes
@@ -29,19 +32,87 @@ use App\Models\Actualite;
 |
 */
 
+Route::get('/toggle-construction', function () {
+    // Flip session value (true → false, false/null → true)
+    session()->put('site_under_construction', !session()->get('site_under_construction', true));
+
+    return redirect()->back();
+})->name('toggle.construction');
+
+
+// Actualites routes
+Route::get('actualites', [ActualiteController::class, 'index'])->name('actualites.index');
+Route::get('actualites/{actualite}', [ActualiteController::class, 'show'])->name('actualites.show');
+Route::get('actualites/{actualite}/download', [ActualiteController::class, 'download'])->name('actualites.download');
+Route::middleware(['auth'])->group(function() {
+    Route::get('admin/actualites', [ActualiteController::class, 'adminIndex'])->name('actualites.admin.index');
+    Route::get('admin/actualites/create', [ActualiteController::class, 'create'])->name('actualites.create');
+    Route::post('admin/actualites', [ActualiteController::class, 'store'])->name('actualites.store');
+    Route::get('admin/actualites/{actualite}/edit', [ActualiteController::class, 'edit'])->name('actualites.edit');
+    Route::put('admin/actualites/{actualite}', [ActualiteController::class, 'update'])->name('actualites.update');
+    Route::delete('admin/actualites/{actualite}', [ActualiteController::class, 'destroy'])->name('actualites.destroy');
+    Route::post('admin/actualites/{actualite}/toggle', [ActualiteController::class, 'togglePublish'])->name('actualites.toggle');
+});
+
+
+Route::get('/reports/view/{report}', function (Report $report) {
+    return response()->file(storage_path('app/public/' . $report->file_path));
+})->name('reports.view');
+
+Route::get('rapports', [ReportController::class,'index'])->name('reports.index');
+Route::get('rapports/{report}', [ReportController::class,'show'])->name('reports.show');
+Route::get('rapports/{report}/download', [ReportController::class,'download'])->name('reports.download');
+
+Route::middleware(['auth'])->group(function(){
+    Route::get('admin/rapports', [ReportController::class,'adminIndex'])->name('reports.admin.index');
+    Route::get('admin/rapports/create', [ReportController::class,'create'])->name('reports.create');
+    Route::post('admin/rapports', [ReportController::class,'store'])->name('reports.store');
+    Route::get('admin/rapports/{report}/edit', [ReportController::class,'edit'])->name('reports.edit');
+    Route::put('admin/rapports/{report}', [ReportController::class,'update'])->name('reports.update');
+    Route::delete('admin/rapports/{report}', [ReportController::class,'destroy'])->name('reports.destroy');
+    Route::post('admin/rapports/{report}/toggle', [ReportController::class,'togglePublish'])->name('reports.toggle');
+});
+
+Route::middleware(['auth'])->group(function(){
+    // Usagers (pensionnaires / fonctionnaires)
+    Route::get('/mes-demandes', [DemandeController::class,'index'])->name('demandes.index');
+    Route::get('/mes-demandes/{demande}', [DemandeController::class,'show'])->name('demandes.show');
+
+
+    // Admin / agents
+    Route::prefix('admin')->name('admin.')->middleware('can:access-admin')->group(function(){
+    Route::get('/demandes', [DemandeManagementController::class,'index'])->name('demandes.index');
+    Route::get('/demandes/{demande}/edit', [DemandeManagementController::class,'edit'])->name('demandes.edit');
+    Route::post('/demandes/{demande}/update-status', [DemandeManagementController::class,'updateStatus'])->name('demandes.updateStatus');
+    });
+});
+
+Route::middleware('auth:sanctum')->group(function(){
+    Route::get('/demandes/{demande}/progress', [DemandeApiController::class,'progress']);
+});
 
 Route::get('/', function () {
-    $latestActualites = Actualite::latest()->take(3)->get(); // récupérer les 3 dernières actualités
-    return view('home', compact('latestActualites'));
+    $latestActualites = Actualite::latest()->take(6)->get(); // récupérer les 3 dernières actualités
+
+    $recents = Report::where('status', 'published')
+        ->orderBy('published_at', 'desc')
+        ->limit(3)
+        ->get();
+
+    return view('home', compact('latestActualites', 'recents'));
+
 })->name('home');
+
+// Page Profil de la Directrice
+/* Route::get('/profil-directrice', function () {
+    return view('quisommesnous.profil');
+})->name('profil.directrice'); */
+
 
 Route::get('/mediatheque', [MediaController::class, 'index'])->name('mediatheque');
 
 Route::post('/newsletter/subscribe', [NewsletterController::class, 'subscribe'])
     ->name('newsletter.subscribe');
-
-Route::get('/actualites', [ActualiteController::class, 'index'])->name('actualites.index');
-Route::get('/actualites/{id}', [ActualiteController::class, 'show'])->name('actualites.show');
 
 
 Route::get('/glossaire', function () {
@@ -235,8 +306,6 @@ Route::get('/politique-confidentialite', function () {
     return view('privacy'); // Assurez-vous que resources/views/privacy.blade.php existe
 })->name('privacy.policy');
 
-
-
 Route::prefix('admin')->name('admin.')->group(function () {
     // Carousels
     Route::middleware(['auth'])->group(function () {
@@ -326,6 +395,7 @@ Route::prefix('pensionnaire')
 Route::prefix('quisommesnous')->name('quisommesnous.')->group(function () {
     // Get routes
     Route::get('/mots', [QuiSommesNousController::class, 'mots'])->name('mots');
+    Route::get('/profil', [QuiSommesNousController::class, 'profil'])->name('profil');
     Route::get('/missions', [QuiSommesNousController::class, 'missions'])->name('missions');
     Route::get('/historique', [QuiSommesNousController::class, 'historique'])->name('historique');
     Route::get('/structure-organique', [QuiSommesNousController::class, 'structureOrganique'])->name('structure-organique');

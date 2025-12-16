@@ -211,4 +211,6 @@ return [
 
     'partitioned' => false,
 
+    'site_under_construction' => env('SITE_UNDER_CONSTRUCTION', false),
+
 ];

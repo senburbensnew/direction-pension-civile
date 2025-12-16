@@ -1,4 +1,4 @@
-    <div class="relative bg-blue-900 text-white bg-cover bg-center z-[1001]"
+    <div class="container mx-auto relative bg-blue-900 text-white bg-cover bg-center z-[1001]"
             style="background-image: url({{ asset('images/carousel/slide2.jpg') }});">
         <div class="absolute inset-0 bg-blue-900 bg-opacity-70"></div>
 

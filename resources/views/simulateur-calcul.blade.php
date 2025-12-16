@@ -158,12 +158,12 @@
 
                 <!-- Salary Table -->
                 <div class="mb-6">
-                    <div class="flex justify-between items-center mb-4">
+{{--                     <div class="flex justify-between items-center mb-4">
                         <h3 class="text-lg font-semibold text-gray-800">Saisie des salaires</h3>
                         <button onclick="addRow()" class="bg-accent text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors flex items-center">
                             <i class="fas fa-plus mr-2"></i> Ajouter une ligne
                         </button>
-                    </div>
+                    </div> --}}
 
                     <div class="overflow-x-auto rounded-lg border border-gray-200">
                         <table class="w-full">
@@ -202,6 +202,11 @@
                 </div>
 
                 <!-- Progress Indicator -->
+                <div class="flex justify-end mb-5">
+					<button onclick="addRow()" class="bg-accent text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors flex items-center">
+						<i class="fas fa-plus mr-2"></i> Ajouter une ligne
+					</button>
+				</div>
                 <div class="mb-8">
                     <div class="flex justify-between text-sm text-gray-600 mb-1">
                         <span>Progression du calcul</span>

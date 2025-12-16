@@ -1,5 +1,5 @@
 <!-- Main Footer Section -->
-<div class="bg-[#064991] mx-auto py-6 px-4 sm:px-6 lg:px-8 text-white border-t-4"
+<div class="container mx-auto bg-[#064991] mx-auto py-6 px-4 sm:px-6 lg:px-8 text-white border-t-4"
     style="border-top: 3px solid red;">
     <div class="flex flex-col md:flex-row justify-between items-start md:space-x-6 lg:space-x-8 space-y-8 md:space-y-0">
         <!-- LA DIRECTION Column -->
@@ -104,7 +104,7 @@
 </div>
 
 <!-- Copyright Section -->
-<div class="mx-auto py-6 px-4 sm:px-6 lg:px-8 text-white border-t-2 border-white bg-[#064991]">
+<div class="container mx-auto py-6 px-4 sm:px-6 lg:px-8 text-white border-t-2 border-white bg-[#064991]">
     <div class="flex flex-col md:flex-row justify-between items-center space-y-4 md:space-y-0">
         <div class="w-full md:w-1/3 text-center md:text-left">
             <p class="text-sm">&copy;2025 {{ __('messages.direction') }}. Tous droits réservés.</p>

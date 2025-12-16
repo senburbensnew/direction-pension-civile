@@ -17,6 +17,29 @@
 </head>
 
 <body class="font-sans text-gray-900 antialiased">
+    <noscript>
+        <div class="fixed inset-0 z-[10001] flex items-center justify-center bg-black bg-opacity-80">
+            <div class="bg-white max-w-md w-full mx-4 p-6 rounded-xl shadow-xl text-center">
+                <div class="text-red-500 text-5xl mb-4">
+                    <i class="fas fa-exclamation-triangle"></i>
+                </div>
+
+                <h2 class="text-2xl font-bold text-gray-800 mb-2">
+                    JavaScript désactivé
+                </h2>
+
+                <p class="text-gray-600 mb-4">
+                    Ce site nécessite JavaScript pour fonctionner correctement.
+                    Veuillez activer JavaScript dans votre navigateur et recharger la page.
+                </p>
+
+                <p class="text-sm text-gray-500">
+                    Sans JavaScript, certaines fonctionnalités ne seront pas disponibles.
+                </p>
+            </div>
+        </div>
+    </noscript>
+
     <div class="min-h-screen flex flex-col sm:justify-center items-center sm:pt-0 bg-gray-100 p-2">
         <div>
             <a href="/">

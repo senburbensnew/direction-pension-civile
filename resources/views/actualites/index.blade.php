@@ -11,16 +11,7 @@
 
         <div class="grid md:grid-cols-3 gap-6">
             @foreach ($actualites as $actu)
-                <div class="bg-gray-50 rounded-lg shadow p-6 hover:shadow-lg transition">
-                    @if($actu->image)
-                        <img src="{{ asset('storage/' . $actu->image) }}" alt="{{ $actu->title }}" class="rounded mb-4 w-full h-40 object-cover">
-                    @endif
-                    <h3 class="text-xl font-semibold mb-2">{{ $actu->title }}</h3>
-                    <p class="text-gray-700 mb-4">{{ Str::limit($actu->description, 100) }}</p>
-                    <a href="{{ route('actualites.show', $actu->id) }}" class="text-blue-600 font-medium hover:underline">
-                        Lire la suite
-                    </a>
-                </div>
+                <x-actualite-card :actualite="$actu" />
             @endforeach
         </div>
 

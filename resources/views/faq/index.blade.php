@@ -83,7 +83,7 @@
     </section> --}}
 
     <!-- FAQ CONTENT -->
-    <section class="py-8 relative fade-in">
+    <section class="py-8 relative fade-in ">
         <div class="max-w-7xl mx-auto px-6">
             <div class="bg-white rounded-2xl card-shadow overflow-hidden">
                 <div class="grid grid-cols-1 lg:grid-cols-2 gap-0">

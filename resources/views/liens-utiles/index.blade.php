@@ -90,7 +90,7 @@
     </section> --}}
 
     <!-- Search and Filters -->
-    <section class="py-8 max-w-7xl mx-auto px-6 fade-in">
+    <section class="py-8 max-w-7xl mx-auto px-6 fade-in bg-white">
         <div class="bg-white rounded-2xl card-shadow p-6 mb-8">
             <div class="flex flex-col md:flex-row gap-4 justify-between items-center">
                 <div class="w-full md:w-auto md:flex-1 max-w-2xl">

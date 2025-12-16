@@ -1,4 +1,4 @@
-<div class="bg-[#064991] text-white text-sm
+<div class="container mx-auto bg-[#064991] text-white text-sm
     @if($borderType === 'top') border-t-4 border-yellow-600 @endif
     @if($borderType === 'bottom') border-b-4 border-yellow-600 @endif
 ">

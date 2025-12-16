@@ -94,7 +94,7 @@
         }
     </style>
 
-    <div class="py-8 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div class="py-8 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 bg-white">
         <!-- Header -->
         <header class="mb-10 text-center fade-in">
             <p class="text-lg text-gray-600 max-w-3xl mx-auto">Accédez à tous les documents officiels relatifs à la fonction publique et aux pensions de retraite</p>

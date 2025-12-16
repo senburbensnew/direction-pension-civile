@@ -74,16 +74,32 @@
     }
 </style>
 
-<div class="py-8 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-    <!-- Header -->
-    <header class="mb-10 text-center fade-in">
-        <p class="text-lg text-gray-600 max-w-3xl mx-auto">Accédez à toutes les images, vidéos et audios disponibles</p>
+<div class="py-8 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 bg-white">
+    <!-- Hero Section -->
+    <div class="max-w-7xl mx-auto p-10 mb-10 rounded-2xl gradient-bg text-white shadow-lg text-center fade-in relative overflow-hidden">
+        <h2 class="text-3xl md:text-4xl font-bold mb-4">Centre Multimédia de la DPC</h2>
+        <p class="text-lg md:text-xl max-w-3xl mx-auto">
+            Explorez la riche histoire et les réalisations de la Direction de la Pension Civile à travers des vidéos, photos et contenus interactifs.
+        </p>
 
-        <!-- Search and Filters -->
+        <div class="absolute inset-0 bg-gradient-to-r from-white/10 via-white/5 to-white/10 pointer-events-none rounded-2xl"></div>
+    </div>
+    <!-- Featured Content Section -->
+    <div class="max-w-7xl mx-auto rounded-2xl text-blue-600 fade-in">
+        <h2 class="text-3xl md:text-4xl font-bold mb-6 text-center">Contenu en vedette</h2>
+
+        <div class="flex justify-center">
+            <div class="bg-white rounded-2xl overflow-hidden shadow-lg max-w-xl w-full">
+                <x-video-card videoUrl="https://www.youtube.com/watch?v=RM9wJNyCtXo" />
+            </div>
+        </div>
+    </div>
+    <!-- Search + Filters -->
+    <header class="mb-10 text-center fade-in">
         <div class="mt-8 max-w-2xl mx-auto">
             <div class="relative">
                 <input type="text" id="search-media" placeholder="Rechercher un média..."
-                       class="w-full p-4 pl-12 rounded-xl border border-gray-300 search-box focus:outline-none">
+                    class="w-full p-4 pl-12 rounded-xl border border-gray-300 search-box focus:outline-none">
                 <div class="absolute inset-y-0 left-0 flex items-center pl-4 pointer-events-none">
                     <i class="fas fa-search text-gray-400"></i>
                 </div>
@@ -97,7 +113,6 @@
             </div>
         </div>
     </header>
-
     <!-- Media Grid -->
     <section id="media-library" class="fade-in">
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -105,7 +120,9 @@
             <div class="media-card bg-white border border-gray-200 rounded-xl p-5 card-shadow" data-category="image">
                 <span class="category-badge bg-blue-100 text-blue-800">Image</span>
                 <img src="{{ asset('media/images/' . $image->getFilename()) }}" class="w-full h-48 object-cover rounded mb-4">
-                <h3 class="text-md font-semibold text-gray-800 leading-tight truncate">{{ $image->getFilename() }}</h3>
+                <h3 class="text-md font-semibold text-gray-800 leading-tight truncate">
+                    {{ pathinfo($image->getFilename(), PATHINFO_FILENAME) }}
+                </h3>
             </div>
             @endforeach
 
@@ -116,7 +133,9 @@
                     <source src="{{ asset('media/videos/' . $video->getFilename()) }}" type="video/mp4">
                     Votre navigateur ne supporte pas la lecture vidéo.
                 </video>
-                <h3 class="text-md font-semibold text-gray-800 leading-tight truncate">{{ $video->getFilename() }}</h3>
+                <h3 class="text-md font-semibold text-gray-800 leading-tight truncate">
+                    {{ pathinfo($video->getFilename(), PATHINFO_FILENAME) }}
+                </h3>
             </div>
             @endforeach
 
@@ -125,7 +144,9 @@
                 <span class="category-badge bg-purple-100 text-purple-800">Audio</span>
                 <div class="flex items-center mb-4">
                     <i class="fas fa-music text-purple-600 text-xl mr-3"></i>
-                    <h3 class="text-md font-semibold text-gray-800 leading-tight truncate">{{ $audio->getFilename() }}</h3>
+                    <h3 class="text-md font-semibold text-gray-800 leading-tight truncate">
+                        {{ pathinfo($audio->getFilename(), PATHINFO_FILENAME) }}
+                    </h3>
                 </div>
                 <audio controls class="w-full">
                     <source src="{{ asset('media/audios/' . $audio->getFilename()) }}" type="audio/mpeg">
@@ -135,7 +156,6 @@
             @endforeach
         </div>
     </section>
-
     <div class="section-divider"></div>
 </div>
 

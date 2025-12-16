@@ -1,4 +1,4 @@
-<section class="bg-gray-100 fade-in py-4 md:py-4">
+<section class="fade-in py-4 md:py-4">
     <div class="relative overflow-hidden">
         <div class="absolute left-0 top-0 bottom-0 w-16 md:w-24 bg-gradient-to-r from-gray-100 to-transparent z-10 pointer-events-none"></div>
         <div class="absolute right-0 top-0 bottom-0 w-16 md:w-24 bg-gradient-to-l from-gray-100 to-transparent z-10 pointer-events-none"></div>
@@ -6,7 +6,6 @@
         <div class="carousel-container flex overflow-x-visible py-4">
             <div class="carousel-track flex items-start gap-8 md:gap-12 animate-scroll whitespace-nowrap"
                  style="animation-duration: {{ $speed }}s;">
-                {{-- Loop 2 times for seamless animation --}}
                 @for($i = 0; $i < 2; $i++)
                     @foreach ($institutions as $institution)
                         <div class="carousel-item flex flex-col items-center min-w-[180px] md:min-w-[200px] px-2">
@@ -70,8 +69,11 @@
         transition: transform 0.3s ease;
     }
 
+    .carousel-item .logo-container {
+        box-shadow: 0 8px 20px rgba(0, 0, 0, 0.12);
+    }
+
     .carousel-item:hover .logo-container {
         transform: translateY(-5px);
-        box-shadow: 0 8px 20px rgba(0, 0, 0, 0.12);
     }
 </style>
