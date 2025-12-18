@@ -15,11 +15,11 @@ class Actualite extends Model
         'content_text',
         'category',
         'posted_in',
-        'published_at',
+        'published', // ✅ replaced published_at
     ];
 
     protected $casts = [
-        'published_at' => 'datetime',
+        'published' => 'boolean', // ✅ ensures true/false
     ];
 
     /**
@@ -30,3 +30,4 @@ class Actualite extends Model
         return $this->hasMany(ActualiteImage::class);
     }
 }
+

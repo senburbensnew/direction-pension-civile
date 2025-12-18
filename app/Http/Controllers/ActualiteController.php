@@ -43,15 +43,15 @@ class ActualiteController extends Controller
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'title' => 'required|string|max:255',
-            'description' => 'nullable|string',
+            'title'        => 'required|string|max:255',
+            'description'  => 'nullable|string',
             'content_text' => 'nullable|string',
-            'category' => 'nullable|string|max:255',
-            'posted_in' => 'nullable|string|max:255',
-            'published_at' => 'nullable|date',
+            'category'     => 'nullable|string|max:255',
+            'posted_in'    => 'nullable|string|max:255',
+            'published'    => 'nullable|boolean',
 
-            'images' => 'nullable|array',
-            'images.*' => 'image|mimes:jpg,jpeg,png,webp',
+            'images'       => 'nullable|array',
+            'images.*'     => 'image|mimes:jpg,jpeg,png,webp|max:2048',
         ]);
 
         DB::beginTransaction();
@@ -59,22 +59,18 @@ class ActualiteController extends Controller
         try {
             // 1️⃣ Create actualité
             $actualite = Actualite::create([
-                'title' => $validated['title'],
-                'description' => $validated['description'] ?? null,
+                'title'        => $validated['title'],
+                'description'  => $validated['description'] ?? null,
                 'content_text' => $validated['content_text'] ?? null,
-                'category' => $validated['category'] ?? null,
-                'posted_in' => $validated['posted_in'] ?? null,
-                'published_at' => $validated['published_at'] ?? null,
+                'category'     => $validated['category'] ?? null,
+                'posted_in'    => $validated['posted_in'] ?? null,
+                'published'    => $request->has('published'), // true if checked, false if not
             ]);
-
-            // Keep track of stored files (important!)
-            $storedPaths = [];
 
             // 2️⃣ Store images
             if ($request->hasFile('images')) {
                 foreach ($request->file('images') as $image) {
                     $path = $image->store('actualites', 'public');
-                    $storedPaths[] = $path;
 
                     $actualite->images()->create([
                         'image_path' => $path,
@@ -92,10 +88,10 @@ class ActualiteController extends Controller
 
             DB::rollBack();
 
-            // 3️⃣ Cleanup uploaded files if DB fails
-            if (!empty($storedPaths)) {
-                foreach ($storedPaths as $path) {
-                    Storage::disk('public')->delete($path);
+            // Cleanup uploaded files if DB fails
+            if ($request->hasFile('images')) {
+                foreach ($request->file('images') as $image) {
+                    Storage::disk('public')->delete($image->hashName());
                 }
             }
 
@@ -127,27 +123,53 @@ class ActualiteController extends Controller
     public function update(Request $request, $id)
     {
         $request->validate([
-            'title' => 'required|string|max:255',
-            'content' => 'required|string',
-            'image' => 'nullable|image|max:2048',
+            'title'        => 'required|string|max:255',
+            'description'  => 'required|string',
+            'content_text' => 'required|string',
+            'category'     => 'nullable|string|max:255',
+            'posted_in'    => 'nullable|string|max:255',
+            'published'    => 'nullable|boolean',
+            'images.*'     => 'nullable|image|mimes:jpg,jpeg,png,webp|max:2048', // validate each uploaded image
+            'delete_images' => 'nullable|array', // array of image IDs to delete
+            'delete_images.*' => 'integer|exists:actualite_images,id'
         ]);
 
         $actualite = Actualite::findOrFail($id);
-        $actualite->title = $request->title;
-        $actualite->content = $request->content;
 
-        if ($request->hasFile('image')) {
-            // Delete old image if exists
-            if ($actualite->image && \Storage::disk('public')->exists($actualite->image)) {
-                \Storage::disk('public')->delete($actualite->image);
-            }
-            $path = $request->file('image')->store('actualites', 'public');
-            $actualite->image = $path;
-        }
+        // Update main fields
+        $actualite->title        = $request->title;
+        $actualite->description  = $request->description;
+        $actualite->content_text = $request->content_text;
+        $actualite->category     = $request->category;
+        $actualite->posted_in    = $request->posted_in;
+        $actualite->published    = $request->boolean('published', true); // default true
 
         $actualite->save();
 
-        return redirect()->route('actualites.index')
+        // Delete selected images
+        if ($request->filled('delete_images')) {
+            foreach ($request->delete_images as $imageId) {
+                $image = $actualite->images()->find($imageId);
+                if ($image) {
+                    Storage::disk('public')->delete($image->image_path); // delete file
+                    $image->delete(); // delete DB record
+                }
+            }
+        }
+
+        // Handle multiple uploaded images
+        if ($request->hasFile('images')) {
+            foreach ($request->file('images') as $image) {
+                $path = $image->store('actualites', 'public');
+
+                // Save each image in the related table
+                $actualite->images()->create([
+                    'image_path' => $path,
+                ]);
+            }
+        }
+
+        return redirect()->route('actualites.edit', $actualite->id)
             ->with('success', 'Actualité mise à jour avec succès.');
     }
 

@@ -24,12 +24,10 @@
                         </span>
                     @endif
 
-                    @if($actu->published_at)
-                        <span class="flex items-center gap-1">
-                            <i class="fa-regular fa-calendar"></i>
-                            {{ $actu->published_at->translatedFormat('d F Y') }}
-                        </span>
-                    @endif
+                    <span class="flex items-center gap-1">
+                        <i class="fa-regular fa-calendar"></i>
+                        {{ $actu->created_at->translatedFormat('d F Y') }}
+                    </span>
 
                     @if($actu->posted_in)
                         <span class="flex items-center gap-1">

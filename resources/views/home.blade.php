@@ -421,7 +421,7 @@
                         Visionnez notre vidéo de présentation
                     </p>
                     <div class="rounded-lg">
-                        <x-video-card videoUrl="https://www.youtube.com/watch?v=RM9wJNyCtXo" />
+                        <x-video-card videoUrl="https://www.youtube.com/watch?v=8sigu4fUheo" />
                     </div>
                 </div>
             </div>
@@ -595,7 +595,7 @@
                 publiés par la Direction de la Pension Civile.
             </p>
 
-            @if($recents->count() === 0)
+            @if($recentReports->count() === 0)
                 <p class="text-gray-500 text-center">Aucun rapport récent n'est disponible.</p>
             @else
                 <!-- Lien Voir tous les rapports -->
@@ -609,7 +609,7 @@
 
                 <div class="grid md:grid-cols-3 gap-8">
 
-                    @foreach($recents as $report)
+                    @foreach($recentReports as $report)
                         <div
                             class="bg-white rounded-2xl p-6 shadow-lg border border-gray-100 hover:shadow-xl transition hover:-translate-y-1">
 
@@ -771,12 +771,15 @@
                 Actualités pour les Retraités
             </h2>
             <x-actualites :actualites="$latestActualites" :showLatest="true" />
-            <div class="mt-8 text-center">
-                <a href="{{ route('actualites.index') }}"
-                class="inline-block px-6 py-3 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700 transition">
-                    Plus d’actualités →
-                </a>
-            </div>
+            @if($latestActualites->count() > 0)
+                <div class="mt-8 text-center">
+                    <a href="{{ route('actualites.index') }}"
+                    class="inline-block px-6 py-3 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700 transition">
+                        Plus d’actualités →
+                    </a>
+                </div>
+            @endif
+
         </div>
     </section>
 

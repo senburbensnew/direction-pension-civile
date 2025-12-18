@@ -92,16 +92,21 @@ Route::middleware('auth:sanctum')->group(function(){
 });
 
 Route::get('/', function () {
-    $latestActualites = Actualite::latest()->take(6)->get(); // récupérer les 3 dernières actualités
-
-    $recents = Report::where('status', 'published')
-        ->orderBy('published_at', 'desc')
-        ->limit(3)
+    // Latest 6 published actualités
+    $latestActualites = Actualite::where('published', true)
+        ->orderBy('created_at', 'desc')
+        ->take(6)
         ->get();
 
-    return view('home', compact('latestActualites', 'recents'));
+    // Latest 3 published reports
+    $recentReports = Report::where('status', 'published')
+        ->orderBy('published_at', 'desc')
+        ->take(3)
+        ->get();
 
+    return view('home', compact('latestActualites', 'recentReports'));
 })->name('home');
+
 
 // Page Profil de la Directrice
 /* Route::get('/profil-directrice', function () {

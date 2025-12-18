@@ -49,8 +49,8 @@
                     </td>
                     <td class="px-4 py-2 border">
                         <span class="px-2 py-1 rounded text-sm
-                            {{ $actualite->published_at ? 'bg-green-100 text-green-700' : 'bg-gray-200 text-gray-600' }}">
-                            {{ $actualite->published_at ? 'Publié' : 'Brouillon' }}
+                            {{ $actualite->published ? 'bg-green-100 text-green-700' : 'bg-gray-200 text-gray-600' }}">
+                            {{ $actualite->published ? 'Publié' : 'Brouillon' }}
                         </span>
                     </td>
                     <td class="px-4 py-2 border gap-3">

@@ -90,7 +90,7 @@
 
         <div class="flex justify-center">
             <div class="bg-white rounded-2xl overflow-hidden shadow-lg max-w-xl w-full">
-                <x-video-card videoUrl="https://www.youtube.com/watch?v=RM9wJNyCtXo" />
+                <x-video-card videoUrl="https://www.youtube.com/watch?v=8sigu4fUheo" />
             </div>
         </div>
     </div>

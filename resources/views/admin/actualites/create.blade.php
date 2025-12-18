@@ -87,18 +87,19 @@
             </p>
         </div>
 
-        <div>
-            <label class="inline-flex items-center">
-                <input
-                    type="checkbox"
-                    name="published_at"
-                    value="{{ now() }}"
-                    class="mr-2"
-                    {{ old('published_at') ? 'checked' : '' }}
-                >
-                Publier immédiatement
-            </label>
-        </div>
+<div>
+    <label class="inline-flex items-center">
+        <input
+            type="checkbox"
+            name="published"
+            value="1"
+            class="mr-2"
+            {{ old('published', true) ? 'checked' : '' }}
+        >
+        Publier immédiatement
+    </label>
+</div>
+
 
         <div>
             <button class="px-4 py-2 bg-green-600 text-white rounded">

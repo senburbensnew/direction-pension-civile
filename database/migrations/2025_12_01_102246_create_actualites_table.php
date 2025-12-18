@@ -14,11 +14,11 @@ return new class extends Migration
         Schema::create('actualites', function (Blueprint $table) {
             $table->id();
             $table->string('title');
-            $table->text('description');         // short summary
-            $table->longText('content_text');    // full text content
-            $table->string('category')->nullable();   // category like subvention, support, etc.
-            $table->string('posted_in')->nullable();  // optional section/page
-            $table->timestamp('published_at')->nullable(); // optional publication date
+            $table->text('description');          // short summary
+            $table->longText('content_text');     // full text content
+            $table->string('category')->nullable();
+            $table->string('posted_in')->nullable();
+            $table->boolean('published')->default(true); // ✅ true / false
             $table->timestamps();
         });
     }
