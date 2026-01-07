@@ -19,10 +19,10 @@
     }
 </style>
 
-<div class="max-w-6xl mx-auto p-6 m-2 bg-white">
+<div class="max-w-6xl mx-auto p-6 m-2 ">
 
     <!-- ✅ Breadcrumb -->
-    <nav aria-label="Breadcrumb" class="mb-4">
+{{--     <nav aria-label="Breadcrumb" class="mb-4">
         <ol class="flex items-center space-x-2 text-sm text-gray-600">
             <li><span class="text-gray-800">Formalité</span></li>
             <li class="flex items-center">
@@ -32,7 +32,7 @@
                 <span class="text-gray-800 font-medium">Formulaire</span>
             </li>
         </ol>
-    </nav>
+    </nav> --}}
 
     <!-- ✅ Main Card -->
     <main class="max-w-7xl mx-auto bg-white p-6 shadow-md rounded-lg relative m-2">
@@ -58,7 +58,7 @@
         </div>
 
         <!-- ✅ Form -->
-        <form action="{{ route('formalites.store') }}" method="POST" class="space-y-8">
+        <form action="{{ route('demandes.demande-pension-reversion.store') }}" method="POST" class="space-y-8">
             @csrf
 
             {{-- ✅ Identité --}}
@@ -73,32 +73,32 @@
 
                     <div>
                         <label class="block mb-1 font-medium text-gray-700">NIF <span class="text-red-500">*</span></label>
-                        <input type="text" name="nif" class="input" required>
+                        <input type="text" name="nif" class="input mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500" >
                     </div>
 
                     <div>
                         <label class="block mb-1 font-medium text-gray-700">Nom <span class="text-red-500">*</span></label>
-                        <input type="text" name="nom" class="input" required>
+                        <input type="text" name="nom" class="input mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500" >
                     </div>
 
                     <div>
                         <label class="block mb-1 font-medium text-gray-700">Prénom <span class="text-red-500">*</span></label>
-                        <input type="text" name="prenom" class="input" required>
+                        <input type="text" name="prenom" class="input mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500" >
                     </div>
 
                     <div>
                         <label class="block mb-1 font-medium text-gray-700">Nom complet</label>
-                        <input type="text" name="nom_complet" class="input">
+                        <input type="text" name="nom_complet" class="input mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
                     </div>
 
                     <div>
                         <label class="block mb-1 font-medium text-gray-700">Téléphone</label>
-                        <input type="text" name="telephone" class="input">
+                        <input type="text" name="telephone" class="input mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
                     </div>
 
                     <div>
                         <label class="block mb-1 font-medium text-gray-700">Email</label>
-                        <input type="email" name="email" class="input">
+                        <input type="email" name="email" class="input mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
                     </div>
 
                 </div>
@@ -113,12 +113,12 @@
 
                     <div>
                         <label class="block mb-1 font-medium text-gray-700">Date de naissance</label>
-                        <input type="date" name="date_naissance" class="input">
+                        <input type="date" name="date_naissance" class="input mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
                     </div>
 
                     <div>
                         <label class="block mb-1 font-medium text-gray-700">Lieu de naissance</label>
-                        <input type="text" name="lieu_naissance" class="input">
+                        <input type="text" name="lieu_naissance" class="input mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
                     </div>
 
                 </div>
@@ -133,17 +133,17 @@
 
                     <div>
                         <label class="block mb-1 font-medium text-gray-700">Département</label>
-                        <input type="text" name="departement" class="input">
+                        <input type="text" name="departement" class="input mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
                     </div>
 
                     <div>
                         <label class="block mb-1 font-medium text-gray-700">Commune</label>
-                        <input type="text" name="commune" class="input">
+                        <input type="text" name="commune" class="input mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
                     </div>
 
                     <div>
                         <label class="block mb-1 font-medium text-gray-700">Adresse</label>
-                        <input type="text" name="adresse" class="input">
+                        <input type="text" name="adresse" class="input mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
                     </div>
 
                 </div>
@@ -158,17 +158,17 @@
 
                     <div>
                         <label class="block mb-1 font-medium text-gray-700">CIN</label>
-                        <input type="text" name="cin" class="input">
+                        <input type="text" name="cin" class="input mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
                     </div>
 
                     <div>
                         <label class="block mb-1 font-medium text-gray-700">Date délivrance</label>
-                        <input type="date" name="date_delivrance_cin" class="input">
+                        <input type="date" name="date_delivrance_cin" class="input mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
                     </div>
 
                     <div>
                         <label class="block mb-1 font-medium text-gray-700">Lieu délivrance</label>
-                        <input type="text" name="lieu_delivrance_cin" class="input">
+                        <input type="text" name="lieu_delivrance_cin" class="input mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
                     </div>
 
                 </div>
@@ -183,22 +183,22 @@
 
                     <div>
                         <label class="block mb-1 font-medium text-gray-700">Passeport</label>
-                        <input type="text" name="passeport" class="input">
+                        <input type="text" name="passeport" class="input mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
                     </div>
 
                     <div>
                         <label class="block mb-1 font-medium text-gray-700">Date délivrance</label>
-                        <input type="date" name="date_delivrance_passeport" class="input">
+                        <input type="date" name="date_delivrance_passeport" class="input mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
                     </div>
 
                     <div>
                         <label class="block mb-1 font-medium text-gray-700">Lieu délivrance</label>
-                        <input type="text" name="lieu_delivrance_passeport" class="input">
+                        <input type="text" name="lieu_delivrance_passeport" class="input mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
                     </div>
 
                     <div>
                         <label class="block mb-1 font-medium text-gray-700">Date expiration</label>
-                        <input type="date" name="date_expiration_passeport" class="input">
+                        <input type="date" name="date_expiration_passeport" class="input mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
                     </div>
 
                 </div>

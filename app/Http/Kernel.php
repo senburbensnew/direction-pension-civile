@@ -2,7 +2,21 @@
 
 namespace App\Http;
 
+use App\Http\Middleware\Authenticate;
+use Illuminate\Auth\Middleware\Authorize;
+use App\Http\Middleware\ValidateSignature;
+use Illuminate\Auth\Middleware\RequirePassword;
+use Illuminate\Http\Middleware\SetCacheHeaders;
+use App\Http\Middleware\RedirectIfAuthenticated;
+use Spatie\Permission\Middleware\RoleMiddleware;
+use Illuminate\Routing\Middleware\ThrottleRequests;
 use Illuminate\Foundation\Http\Kernel as HttpKernel;
+use Illuminate\Auth\Middleware\EnsureEmailIsVerified;
+use Illuminate\Session\Middleware\AuthenticateSession;
+use Spatie\Permission\Middleware\PermissionMiddleware;
+use Illuminate\Auth\Middleware\AuthenticateWithBasicAuth;
+use Spatie\Permission\Middleware\RoleOrPermissionMiddleware;
+use Illuminate\Foundation\Http\Middleware\HandlePrecognitiveRequests;
 
 class Kernel extends HttpKernel
 {
@@ -54,16 +68,21 @@ class Kernel extends HttpKernel
      * @var array<string, class-string|string>
      */
     protected $middlewareAliases = [
-        'auth' => \App\Http\Middleware\Authenticate::class,
-        'auth.basic' => \Illuminate\Auth\Middleware\AuthenticateWithBasicAuth::class,
-        'auth.session' => \Illuminate\Session\Middleware\AuthenticateSession::class,
-        'cache.headers' => \Illuminate\Http\Middleware\SetCacheHeaders::class,
-        'can' => \Illuminate\Auth\Middleware\Authorize::class,
-        'guest' => \App\Http\Middleware\RedirectIfAuthenticated::class,
-        'password.confirm' => \Illuminate\Auth\Middleware\RequirePassword::class,
-        'precognitive' => \Illuminate\Foundation\Http\Middleware\HandlePrecognitiveRequests::class,
-        'signed' => \App\Http\Middleware\ValidateSignature::class,
-        'throttle' => \Illuminate\Routing\Middleware\ThrottleRequests::class,
-        'verified' => \Illuminate\Auth\Middleware\EnsureEmailIsVerified::class,
+        'auth' => Authenticate::class,
+        'auth.basic' => AuthenticateWithBasicAuth::class,
+        'auth.session' => AuthenticateSession::class,
+        'cache.headers' => SetCacheHeaders::class,
+        'can' => Authorize::class,
+        'guest' => RedirectIfAuthenticated::class,
+        'password.confirm' => RequirePassword::class,
+        'precognitive' => HandlePrecognitiveRequests::class,
+        'signed' => ValidateSignature::class,
+        'throttle' => ThrottleRequests::class,
+        'verified' => EnsureEmailIsVerified::class,
+
+        // Spatie Permission
+        'role' => RoleMiddleware::class,
+        'permission' => PermissionMiddleware::class,
+        'role_or_permission' => RoleOrPermissionMiddleware::class,
     ];
 }

@@ -102,9 +102,18 @@
                                         @can('viewDashboard')
                                             <x-dropdown-link :href="route('personal.index')">
                                                 <i class="fas fa-tachometer-alt mr-2 text-gray-400"></i>
-                                                Dashboard
+                                                Mon Dashboard
                                             </x-dropdown-link>
                                         @endcan
+                                    @endauth
+
+                                    @auth
+                                        @role('secretariat')
+                                            <x-dropdown-link :href="route('personal.cart')">
+                                                <i class="fas fa-shopping-cart mr-2 text-gray-400"></i>
+                                                Corbeille
+                                            </x-dropdown-link>
+                                        @endrole
                                     @endauth
 
                                     <hr class="my-1 border-gray-200">
@@ -124,7 +133,7 @@
                         @endguest
 
                         <!-- Language Selector -->
-                        <div class="flex items-center gap-2">
+ {{--                         <div class="flex items-center gap-2">
                             @if (App::getLocale() !== 'fr')
                                 <a href="{{ route('locale', 'fr') }}" class="hover:opacity-75 transition-opacity" title="Français">
                                     <img src="{{ asset('images/france-flag-icon.svg') }}" alt="French Flag" class="w-4 h-4 rounded-sm">
@@ -136,7 +145,7 @@
                                     <img src="{{ asset('images/haiti-flag-icon.svg') }}" alt="Haitian Flag Flag" class="w-4 h-4 rounded-sm">
                                 </a>
                             @endif
-                        </div>
+                        </div> --}}
                     </div>
                 </div>
             </div>

@@ -11,12 +11,12 @@
         }
     </style>
 
-    <div class="max-w-6xl mx-auto p-6 m-2 bg-white">
-        <nav class="text-sm text-gray-600 mb-4">
+    <div class="max-w-6xl mx-auto p-6 m-2">
+{{--         <nav class="text-sm text-gray-600 mb-4">
             <span class="text-gray-800">Adhésion Auto-Assurance</span>
             <span class="mx-2">></span>
             <span class="text-gray-800">Formulaire</span>
-        </nav>
+        </nav> --}}
 
         <div id="form-section" class="max-w-7xl mx-auto bg-white p-6 shadow-md rounded-lg relative m-2">
             <div class="text-center mb-6">
@@ -30,7 +30,7 @@
                 </div>
             @endif
 
-            <form action="#" method="POST" class="space-y-6">
+            <form action="{{ route('demandes.arret-paiement.store') }}" method="POST" class="space-y-6">
                 @csrf
 
                 <!-- Informations du Pensionnaire -->
@@ -38,21 +38,21 @@
                     <legend class="text-sm font-medium text-gray-700 mb-2">Informations du Pensionnaire</legend>
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div>
-                            <label for="code_pension" class="block text-sm font-medium text-gray-700 mb-1">Code Pension
+                            <label for="pensioner_code" class="block text-sm font-medium text-gray-700 mb-1">Code Pension
                                 *</label>
-                            <input type="text" id="code_pension" name="code_pension" placeholder="Code Pension"
-                                class="w-full rounded-md border-gray-300 focus:border-blue-500 focus:ring-blue-500 @error('code_pension') border-red-500 @enderror">
-                            @error('code_pension')
+                            <input type="text" id="code_pension" name="pensioner_code" placeholder="Code Pension"
+                                class="w-full rounded-md border-gray-300 focus:border-blue-500 focus:ring-blue-500 @error('pensioner_code') border-red-500 @enderror">
+                            @error('pensioner_code')
                                 <p class="error-message">{{ $message }}</p>
                             @enderror
                         </div>
 
                         <!-- Repeat similar structure for other fields -->
                         <div>
-                            <label for="nom" class="block text-sm font-medium text-gray-700 mb-1">Nom *</label>
-                            <input type="text" id="nom" name="nom" placeholder="Nom"
-                                class="w-full rounded-md border-gray-300 focus:border-blue-500 focus:ring-blue-500 @error('nom') border-red-500 @enderror">
-                            @error('nom')
+                            <label for="name" class="block text-sm font-medium text-gray-700 mb-1">Nom *</label>
+                            <input type="text" id="name" name="name" placeholder="Nom"
+                                class="w-full rounded-md border-gray-300 focus:border-blue-500 focus:ring-blue-500 @error('name') border-red-500 @enderror">
+                            @error('name')
                                 <p class="error-message">{{ $message }}</p>
                             @enderror
                         </div>
@@ -67,9 +67,9 @@
                     <legend class="text-sm font-medium text-gray-700 mb-2">Informations sur l'Assurance</legend>
                     <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                         <div>
-                            <label for="compagnie_si_oui"
+                            <label for="company"
                                 class="block text-sm font-medium text-gray-700 mb-1">Compagnie</label>
-                            <input type="text" id="compagnie_si_oui" name="compagnie_si_oui"
+                            <input type="text" id="company" name="company"
                                 placeholder="Nom de la compagnie"
                                 class="w-full rounded-md border-gray-300 focus:border-blue-500 focus:ring-blue-500">
                         </div>
@@ -93,12 +93,12 @@
                 </fieldset>
 
                 <!-- Partie I -->
-                <fieldset class="shadow-md rounded-lg p-5 border">
+{{--                 <fieldset class="shadow-md rounded-lg p-5 border">
                     <legend class="text-sm font-medium text-gray-700 mb-2">Partie I: Désignation du Dépendant Éligible
                     </legend>
                     <textarea id="partie1" name="partie1" rows="4" placeholder="Informations complémentaires..."
                         class="w-full rounded-md border-gray-300 focus:border-blue-500 focus:ring-blue-500"></textarea>
-                </fieldset>
+                </fieldset> --}}
 
                 <!-- Dépendant Éligible / Conjoint(e) -->
                 <fieldset class="shadow-md rounded-lg p-5 border">
@@ -114,7 +114,7 @@
                 </fieldset>
 
                 <!-- Signature Section -->
-                <fieldset class="shadow-md rounded-lg p-5 border">
+{{--                 <fieldset class="shadow-md rounded-lg p-5 border">
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div>
                             <label for="signature" class="block text-sm font-medium text-gray-700 mb-1">Signature *</label>
@@ -127,7 +127,7 @@
                                 class="w-full rounded-md border-gray-300 focus:border-blue-500 focus:ring-blue-500">
                         </div>
                     </div>
-                </fieldset>
+                </fieldset> --}}
 
                 <!-- Submit Button -->
                 <div class="mt-8 text-right">

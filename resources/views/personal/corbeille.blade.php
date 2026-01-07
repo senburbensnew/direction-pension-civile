@@ -9,13 +9,12 @@
         {{-- ===================== MES DEMANDES ===================== --}}
         <fieldset class="border-2 border-gray-200 rounded-lg mt-8 pl-3 ml-1 mr-1">
             <legend class="text-lg font-semibold ml-4 px-4 text-gray-700 bg-white rounded-full shadow-sm">
-                Mes demandes
+                Demandes à traiter
             </legend>
 
             <div class="py-6 pl-5 pr-5">
                 <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
                     {{-- ===================== PENSIONNAIRE ===================== --}}
-                    @can('viewPensionnaireSection')
                         <div class="mb-12">
                             <h3 class="text-lg font-semibold mb-4 text-gray-700">Pensionnaire</h3>
 
@@ -23,7 +22,7 @@
                                 @foreach ($stats['pensionnaire'] as $request)
                                     @if ($request['count'] > 0)
                                         <a
-                                            href="{{ route('personal.requests-dashboard', ['request_type' => $request['type']]) }}"
+                                            href="{{ route('personal.requests-dashboard-corbeille', ['request_type' => $request['type']]) }}"
                                             class="bg-white p-4 rounded-lg shadow-sm hover:shadow-md transition-all duration-200 cursor-pointer hover:bg-gray-50 group block"
                                         >
                                     @else
@@ -52,10 +51,8 @@
                                 @endforeach
                             </div>
                         </div>
-                    @endcan
 
                     {{-- ===================== FONCTIONNAIRE ===================== --}}
-                    @can('viewFonctionnaireSection')
                         <div class="mb-12">
                             <h3 class="text-lg font-semibold mb-4 text-gray-700">Fonctionnaire</h3>
 
@@ -63,7 +60,7 @@
                                 @foreach ($stats['fonctionnaire'] as $request)
                                     @if ($request['count'] > 0)
                                         <a
-                                            href="{{ route('personal.requests-dashboard', ['request_type' => $request['type']]) }}"
+                                            href="{{ route('personal.requests-dashboard-corbeille', ['request_type' => $request['type']]) }}"
                                             class="bg-white p-4 rounded-lg shadow-sm hover:shadow-md transition-all duration-200 cursor-pointer hover:bg-gray-50 group block"
                                         >
                                     @else
@@ -92,10 +89,8 @@
                                 @endforeach
                             </div>
                         </div>
-                    @endcan
 
                     {{-- ===================== INSTITUTION ===================== --}}
-                    @can('viewInstitutionSection')
                         <div class="mb-12">
                             <h3 class="text-lg font-semibold mb-4 text-gray-700">Institution</h3>
 
@@ -103,7 +98,7 @@
                                 @foreach ($stats['institution'] as $request)
                                     @if ($request['count'] > 0)
                                         <a
-                                            href="{{ route('personal.requests-dashboard', ['request_type' => $request['type']]) }}"
+                                            href="{{ route('personal.requests-dashboard-corbeille', ['request_type' => $request['type']]) }}"
                                             class="bg-white p-4 rounded-lg shadow-sm hover:shadow-md transition-all duration-200 cursor-pointer hover:bg-gray-50 group block"
                                         >
                                     @else
@@ -132,7 +127,6 @@
                                 @endforeach
                             </div>
                         </div>
-                    @endcan
 
                 </div>
             </div>

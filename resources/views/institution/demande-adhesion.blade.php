@@ -11,11 +11,11 @@
         }
     </style>
 
-    <div class="max-w-6xl mx-auto p-6 m-2 bg-white">
-        <nav class="text-sm text-gray-600 mb-4">
+    <div class="max-w-6xl mx-auto p-6 m-2 ">
+{{--         <nav class="text-sm text-gray-600 mb-4">
             <span class="text-gray-800">Institutions</span> >
             <span class="text-gray-800">Demande d'Adhésion</span>
-        </nav>
+        </nav> --}}
 
         <div id="form-section" class="max-w-7xl mx-auto bg-white p-6 shadow-md rounded-lg relative m-2">
             <div class="text-center mb-8">
@@ -26,13 +26,6 @@
 
             @if (session('success'))
                 <div class="mb-4 p-4 bg-green-50 border border-green-200 text-green-700 rounded">
-                    {{ session('success') }}
-                </div>
-            @endif
-
-            <!-- Alerts Section -->
-            @if (session('success'))
-                <div class="mb-4 p-3 bg-green-50 border border-green-200 text-green-700 rounded text-sm">
                     {{ session('success') }}
                 </div>
             @endif
@@ -53,7 +46,7 @@
                 </div>
             @endif
 
-            <form class="mt-5" action="{{ route('institution.process-demande-adhesion') }}" method="POST"
+            <form class="mt-5" action="{{ route('demandes.demande-adhesion.store') }}" method="POST"
                 enctype="multipart/form-data">
                 @csrf
 
@@ -508,7 +501,7 @@
                 </fieldset>
 
                 <!-- Signature Section -->
-                <fieldset class="shadow-md rounded-lg p-5 border mb-6">
+{{--                 <fieldset class="shadow-md rounded-lg p-5 border mb-6">
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
                         <!-- Cotisant Signature -->
                         <div class="space-y-2">
@@ -539,7 +532,7 @@
                             </p>
                         </div>
                     </div>
-                </fieldset>
+                </fieldset> --}}
 
                 <fieldset class="relative shadow-md rounded-lg p-5 border mb-6">
                     <div class="w-full h-full bg-gray-100/50 absolute inset-0 z-10 flex items-center justify-center">

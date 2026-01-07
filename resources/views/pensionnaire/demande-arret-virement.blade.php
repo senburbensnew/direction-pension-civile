@@ -1,13 +1,13 @@
 @extends('layouts.main')
 
 @section('content')
-    <div class="max-w-6xl mx-auto p-6 m-2 bg-white">
+    <div class="max-w-6xl mx-auto p-6 m-2 ">
         <!-- Breadcrumb -->
-        <nav class="text-sm text-gray-600 mb-4">
+{{--         <nav class="text-sm text-gray-600 mb-4">
             <span class="text-gray-800">Pensionnaire</span>
             <span class="mx-2">></span>
             <span class="text-gray-800">Demande d'arret de virement</span>
-        </nav>
+        </nav> --}}
 
         <!-- Form Section -->
         <div id="form-section" class="max-w-7xl mx-auto bg-white p-6 shadow-md rounded-lg relative m-2">
@@ -23,7 +23,7 @@
                 </div>
             @endif
 
-            <form method="POST" action="#">
+            <form method="POST" action="{{ route('demandes.demande-arret-virement.store') }}">
                 @csrf
                 @if ($errors->any())
                     <div class="p-4 bg-red-50 border border-red-200 text-red-700 rounded">
@@ -184,7 +184,7 @@
                 </fieldset>
 
                 <!-- Footer -->
-                <fieldset class="shadow-md rounded-lg p-5 border mb-6 @error('signature') border-red-500 @enderror">
+{{--                 <fieldset class="shadow-md rounded-lg p-5 border mb-6 @error('signature') border-red-500 @enderror">
                     <div class="grid grid-cols-2 gap-x-4 mt-8">
                         <!-- Pensionné Signature -->
                         <div>
@@ -207,7 +207,7 @@
                             </div>
                         </div>
                     </div>
-                </fieldset>
+                </fieldset> --}}
 
                 <div class="mt-8 text-right">
                     <button type="submit"

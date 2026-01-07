@@ -1,9 +1,9 @@
 @extends('layouts.main')
 
 @section('content')
-    <div class="max-w-6xl mx-auto p-6 bg-white">
+    <div class="max-w-6xl mx-auto p-6 ">
         <!-- Breadcrumb -->
-        <nav aria-label="Breadcrumb" class="mb-4">
+{{--         <nav aria-label="Breadcrumb" class="mb-4">
             <ol class="flex items-center space-x-2 text-sm text-gray-600">
                 <li>
                     <a href="/" class="text-gray-800 hover:text-blue-600">Fonctionnaire</a>
@@ -15,14 +15,14 @@
                     <span class="text-gray-800 font-medium">Demande de pension par réversion</span>
                 </li>
             </ol>
-        </nav>
+        </nav> --}}
 
         <!-- Main Content -->
         <div class="bg-white shadow-md rounded-xl p-6 border border-gray-200">
             <h1 class="text-2xl font-bold text-gray-800 mb-6">Demande de Pension par Réversion</h1>
 
             <!-- Document Upload Form -->
-            <form class="space-y-6" method="POST" action="/submit-reversion-pension" enctype="multipart/form-data">
+            <form class="space-y-6" method="POST" action="{{route('demandes.demande-pension-reversion.store')}}" enctype="multipart/form-data">
                 @csrf
 
                 <!-- Deceased Information -->
@@ -31,12 +31,12 @@
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div>
                             <label class="block text-sm font-medium text-gray-700">Nom complet du défunt</label>
-                            <input type="text" required
+                            <input type="text" 
                                 class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
                         </div>
                         <div>
                             <label class="block text-sm font-medium text-gray-700">Numéro de pension</label>
-                            <input type="text" required
+                            <input type="text" 
                                 class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
                         </div>
                     </div>
@@ -52,7 +52,7 @@
                             Certificat de Carrière (Original)
                             <span class="text-red-500">*</span>
                         </label>
-                        <input type="file" required name="certificat_carriere"
+                        <input type="file"  name="certificat_carriere"
                             class="mt-1 block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100">
                     </div>
 
@@ -62,7 +62,7 @@
                             Acte de Décès (Copie + Original)
                             <span class="text-red-500">*</span>
                         </label>
-                        <input type="file" required name="acte_deces"
+                        <input type="file"  name="acte_deces"
                             class="mt-1 block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100">
                     </div>
 
@@ -72,7 +72,7 @@
                             Certificat de Non-Dissolution du Mariage (Original)
                             <span class="text-red-500">*</span>
                         </label>
-                        <input type="file" required name="certificat_non_dissolution"
+                        <input type="file"  name="certificat_non_dissolution"
                             class="mt-1 block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100">
                     </div>
 
@@ -82,7 +82,7 @@
                             Carte de Pension du Défunt
                             <span class="text-red-500">*</span>
                         </label>
-                        <input type="file" required name="carte_pension"
+                        <input type="file"  name="carte_pension"
                             class="mt-1 block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100">
                     </div>
 
@@ -92,7 +92,7 @@
                             Souche de Chèque ou Preuve de Paiement
                             <span class="text-red-500">*</span>
                         </label>
-                        <input type="file" required name="souche_cheque"
+                        <input type="file"  name="souche_cheque"
                             class="mt-1 block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100">
                     </div>
                 </div>
@@ -104,12 +104,12 @@
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div>
                             <label class="block text-sm font-medium text-gray-700">Nom du bénéficiaire</label>
-                            <input type="text" required
+                            <input type="text" 
                                 class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
                         </div>
                         <div>
                             <label class="block text-sm font-medium text-gray-700">Relation avec le défunt</label>
-                            <select required
+                            <select 
                                 class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
                                 <option>Conjoint(e)</option>
                                 <option>Enfant</option>
@@ -128,7 +128,7 @@
                                 Extrait récent de l'Acte de Mariage (Copie + Original)
                                 <span class="text-red-500">*</span>
                             </label>
-                            <input type="file" required name="extrait_acte_mariage"
+                            <input type="file"  name="extrait_acte_mariage"
                                 class="mt-1 block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100">
                         </div>
 
@@ -138,7 +138,7 @@
                                 Extrait récent de l'Acte de Naissance (Copie + Original)
                                 <span class="text-red-500">*</span>
                             </label>
-                            <input type="file" required name="extrait_acte_naissance"
+                            <input type="file"  name="extrait_acte_naissance"
                                 class="mt-1 block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100">
                         </div>
 
@@ -148,7 +148,7 @@
                                 Copie du Matricule Fiscal
                                 <span class="text-red-500">*</span>
                             </label>
-                            <input type="file" required name="matricule_fiscal"
+                            <input type="file"  name="matricule_fiscal"
                                 class="mt-1 block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100">
                         </div>
 
@@ -158,7 +158,7 @@
                                 Copie de la Carte Électorale
                                 <span class="text-red-500">*</span>
                             </label>
-                            <input type="file" required name="carte_electorale"
+                            <input type="file"  name="carte_electorale"
                                 class="mt-1 block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100">
                         </div>
 
@@ -168,7 +168,7 @@
                                 Deux (2) Photos d'Identité Récentes
                                 <span class="text-red-500">*</span>
                             </label>
-                            <input type="file" required name="photos_identite" multiple
+                            <input type="file"  name="photos_identite" multiple
                                 class="mt-1 block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100">
                             <p class="mt-1 text-xs text-gray-500">Veuillez télécharger les deux photos</p>
                         </div>

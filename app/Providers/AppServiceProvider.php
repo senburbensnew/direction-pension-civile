@@ -20,7 +20,7 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-/*         Validator::extend('base64_image', function ($attribute, $value, $parameters, $validator) {
+        /* Validator::extend('base64_image', function ($attribute, $value, $parameters, $validator) {
             if (!Str::startsWith($value, 'data:image')) return false;
             
             $parts = explode(',', $value);

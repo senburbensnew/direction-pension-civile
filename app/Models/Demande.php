@@ -2,13 +2,17 @@
 
 namespace App\Models;
 
+use Carbon\Carbon;
+use App\Models\Gender;
+use App\Models\CivilStatus;
+use App\Models\PensionType;
+use App\Models\PensionCategory;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 
 class Demande extends Model
 {
-    use HasFactory, SoftDeletes;
+    use HasFactory;
 
     protected $fillable = [
         'code',
@@ -22,9 +26,40 @@ class Demande extends Model
         'data' => 'array',
     ];
 
-    public function histories()
+    public function civilStatus()
     {
-        return $this->hasMany(DemandeHistory::class);
+        if (!isset($this->data['civil_status_id'])) {
+            return null;
+        }
+
+        return CivilStatus::find($this->data['civil_status_id']);
+    }
+
+    public function gender()
+    {
+        if (!isset($this->data['gender_id'])) {
+            return null;
+        }
+
+        return Gender::find($this->data['gender_id']);
+    }
+
+    public function pensionType()
+    {
+        if (!isset($this->data['pension_type_id'])) {
+            return null;
+        }
+
+        return PensionType::find($this->data['pension_type_id']);
+    }
+
+    public function pensionCategory()
+    {
+        if (!isset($this->data['pension_category_id'])) {
+            return null;
+        }
+
+        return PensionCategory::find($this->data['pension_category_id']);
     }
 
     public function user()
@@ -32,8 +67,59 @@ class Demande extends Model
         return $this->belongsTo(User::class, 'created_by');
     }
 
+    public function histories()
+    {
+        return $this->hasMany(DemandeHistory::class);
+    }
+
+    /*     public function parseDate($date)
+    {
+        return $date ? Carbon::parse($date) : null;
+    } */
+
     public function status()
     {
         return $this->belongsTo(Status::class);
+    }
+
+    public function scopeForUser($query)
+    {
+        return $query->where('created_by', auth()->id());
+    }
+
+    public function scopeOfType($query, $type)
+    {
+        return $query->where('type', $type);
+    }
+
+
+    public function scopePending($query)
+    {
+        return $query->where('status_id', Status::getStatusPending()->id);
+    }
+
+    public function scopeApproved($query)
+    {
+        return $query->where('status_id', Status::getStatusApproved()->id);
+    }
+
+    public function scopeInProgress($query)
+    {
+        return $query->where('status_id', Status::getStatusInProgress()->id);
+    }
+
+    public function scopeRejected($query)
+    {
+        return $query->where('status_id', Status::getStatusRejected()->id);
+    }
+
+    public function scopeCanceled($query)
+    {
+        return $query->where('status_id', Status::getStatusCanceled()->id);
+    }
+
+    public function scopeCompleted($query)
+    {
+        return $query->where('status_id', Status::getStatusCompleted()->id);
     }
 }

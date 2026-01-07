@@ -1,12 +1,12 @@
-<div class="max-w-6xl mx-auto p-4 md:p-6 m-2 bg-white">
+<div class="max-w-6xl mx-auto p-4 md:p-6 m-2 ">
     <!-- Breadcrumb -->
-    <nav class="text-sm text-gray-600 mb-4">
+{{--     <nav class="text-sm text-gray-600 mb-4">
         <span class="text-gray-800">Pensionnaire</span>
         <span class="mx-2">></span>
         <span class="text-gray-800">Preuve d'existence</span>
-    </nav>
+    </nav> --}}
 
-    <form method="POST" action="{{ route('pensionnaire.process-existence-proof-request') }}"
+    <form method="POST" action="{{ route('demandes.preuve-existence.store') }}"
         class="p-4 md:p-5 bg-white shadow-md rounded-lg border" enctype="multipart/form-data">
         @csrf
         <!-- Header Section -->
@@ -478,7 +478,7 @@
                 </div>
             </fieldset>
             <!-- Signature Section -->
-            <fieldset class="shadow-md rounded-lg p-4 md:p-5 border">
+{{--             <fieldset class="shadow-md rounded-lg p-4 md:p-5 border">
                 <div class="flex flex-col md:flex-row justify-between gap-4">
                     <div class="flex-1">
                         <p class="text-xs font-semibold text-gray-600 uppercase">SIGNATURE EMPLOYE PENSION CIVILE</p>
@@ -517,9 +517,9 @@
                         </div>
                     </div>
                 </div>
-            </fieldset>
+            </fieldset> --}}
             <!-- Certification Section -->
-            <fieldset class="shadow-md rounded-lg p-4 md:p-5 border">
+{{--             <fieldset class="shadow-md rounded-lg p-4 md:p-5 border">
                 <div class="flex flex-col md:flex-row gap-8 relative">
                     <!-- Left Panel -->
                     <div class="flex-1 p-4 space-y-6">
@@ -555,7 +555,7 @@
 
                 <!-- Footer Note -->
                 <p class="text-xs text-right font-bold mt-6 text-gray-500 tracking-wide">mefd/dpc/sicp/jr</p>
-            </fieldset>
+            </fieldset> --}}
             <!-- Submit Button -->
             <div class="mt-6 text-right">
                 <button type="submit"

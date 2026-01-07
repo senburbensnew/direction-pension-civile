@@ -8,13 +8,13 @@
     }
 </style>
 
-<div class="max-w-6xl mx-auto p-6 m-2 bg-white">
+<div class="max-w-6xl mx-auto p-6 m-2">
     <!-- Breadcrumb -->
-    <nav class="text-sm text-gray-600 mb-4">
+{{--     <nav class="text-sm text-gray-600 mb-4">
         <span class="text-gray-800">Pensionnaire</span>
         <span class="mx-2">></span>
         <span class="text-gray-800">Demande de transfert de chèques</span>
-    </nav>
+    </nav> --}}
 
     <!-- Form Section -->
     <div id="form-section" class="max-w-7xl mx-auto bg-white p-6 shadow-md rounded-lg relative m-2">
@@ -51,7 +51,7 @@
             </div>
         @endif
 
-        <form method="POST" action="{{ route('pensionnaire.process-check-transfer-request') }}"
+        <form method="POST" action="{{ route('demandes.transfert-cheque.store') }}"
             id="check-transfert-form">
             @csrf
             <input type="hidden" name="fiscal_year" id="hiddenInput">
@@ -124,8 +124,8 @@
                         </label>
                         <input type="text" name="pensioner_code" id="pension_code"
                             value="{{ auth()->user()->pension_code }}"
-                            class="w-full rounded-md @error('pension_code') border-red-500 @else border-gray-300 @enderror focus:border-blue-500 focus:ring-blue-500 bg-gray-100"
-                            readonly>
+                            class="w-full rounded-md @error('pension_code') border-red-500 @else border-gray-300 @enderror focus:border-blue-500 focus:ring-blue-500"
+                            >
                         @error('pensioner_code')
                             <p class="mt-2 text-sm text-red-600">{{ $message }}</p>
                         @enderror
@@ -278,7 +278,7 @@
             </fieldset>
 
             <!-- Signature Section -->
-            <fieldset class="shadow-md rounded-lg p-5 border mb-6">
+{{--             <fieldset class="shadow-md rounded-lg p-5 border mb-6">
                 <div class="text-left mb-4">
                     <p class="font-semibold text-gray-600 pt-5">
                         Fait à <span contenteditable="true">Port-au-Prince</span>, le
@@ -292,7 +292,7 @@
                     <div class="h-0.5 bg-gray-300 my-2"></div>
                     <x-signature-pad />
                 </div>
-            </fieldset>
+            </fieldset> --}}
 
             <!-- Submit Section -->
             <div class="mt-8 text-right">

@@ -11,14 +11,13 @@ return new class extends Migration
     {
         Schema::create('demande_histories', function (Blueprint $table) {
             $table->id();
-            $table->unsignedBigInteger('demande_id');
-            $table->string('etat');
+            $table->string('statut');
             $table->text('commentaire')->nullable();
+            $table->json('data')->nullable();
             $table->unsignedBigInteger('changed_by')->nullable();
-            $table->timestamps();
-
-
+            $table->unsignedBigInteger('demande_id');
             $table->foreign('demande_id')->references('id')->on('demandes')->onDelete('cascade');
+            $table->timestamps();
         });
     }
 

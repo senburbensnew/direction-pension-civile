@@ -172,16 +172,16 @@
 
                     <ul class="dropdown-content bg-white md:shadow-lg md:border md:rounded-md"
                         aria-label="Sous-menu Pensionaire">
-                        <li>
+{{--                         <li>
                             <a href="{{ route('enregistrement-pensionnaire.create') }}"
                                 class="text-slate-600 block px-4 py-3 hover:bg-gray-100
                                    transition-colors text-sm truncate-text
                                    focus:outline-none focus:ring-2 ">
                                     Enregistrement de pensionnaire
                             </a>
-                        </li>
+                        </li> --}}
                         <li>
-                            <a href="{{ route('pensionnaire.virement-request-form') }}"
+                            <a href="{{ route('demandes.virements.create') }}"
                                 class="text-slate-600 block px-4 py-3 hover:bg-gray-100
                                    transition-colors text-sm truncate-text
                                    focus:outline-none focus:ring-2 ">
@@ -189,7 +189,7 @@
                             </a>
                         </li>
                         <li>
-                            <a href="{{ route('pensionnaire.attestation-request-form') }}"
+                            <a href="{{ route('demandes.attestations.create') }}"
                                 class="text-slate-600 block px-4 py-3 hover:bg-gray-100
                                    transition-colors text-sm truncate-text
                                    focus:outline-none focus:ring-2 ">
@@ -197,7 +197,7 @@
                             </a>
                         </li>
                         <li>
-                            <a href="{{ route('pensionnaire.check-transfer-request-form') }}"
+                            <a href="{{ route('demandes.transfert-cheque.create') }}"
                                 class="text-slate-600 block px-4 py-3 hover:bg-gray-100
                                    transition-colors text-sm truncate-text
                                    focus:outline-none focus:ring-2 ">
@@ -205,7 +205,7 @@
                             </a>
                         </li>
                         <li>
-                            <a href="{{ route('pensionnaire.payment-stop-request-form') }}"
+                            <a href="{{ route('demandes.arret-paiement.create') }}"
                                 class="text-slate-600 block px-4 py-3 hover:bg-gray-100
                                    transition-colors text-sm truncate-text
                                    focus:outline-none focus:ring-2 ">
@@ -213,7 +213,7 @@
                             </a>
                         </li>
                         <li>
-                            <a href="{{ route('pensionnaire.reinstatement-request-form') }}"
+                            <a href="{{ route('demandes.demande-reinsertion.create') }}"
                                 class="text-slate-600 block px-4 py-3 hover:bg-gray-100
                                    transition-colors text-sm truncate-text
                                    focus:outline-none focus:ring-2 ">
@@ -221,7 +221,7 @@
                             </a>
                         </li>
                         <li>
-                            <a href="{{ route('pensionnaire.transfer-stop-request-form') }}"
+                            <a href="{{ route('demandes.demande-arret-virement.create') }}"
                                 class="text-slate-600 block px-4 py-3 hover:bg-gray-100
                                    transition-colors text-sm truncate-text
                                    focus:outline-none focus:ring-2 ">
@@ -229,7 +229,7 @@
                             </a>
                         </li>
                         <li>
-                            <a href="{{ route('pensionnaire.preuve-existence') }}"
+                            <a href="{{ route('demandes.preuve-existence.create') }}"
                                 class="text-slate-600 block px-4 py-3 hover:bg-gray-100
                                    transition-colors text-sm truncate-text
                                    focus:outline-none focus:ring-2 ">
@@ -237,7 +237,7 @@
                             </a>
                         </li>
                         <li>
-                            <a href="{{ route('pensionnaire.pension-request-form') }}"
+                            <a href="{{ route('demandes.demande-pension-reversion.create') }}"
                                 class="text-slate-600 block px-4 py-3 hover:bg-gray-100
                                    transition-colors text-sm truncate-text
                                    focus:outline-none focus:ring-2 ">
@@ -266,7 +266,7 @@
                     <ul class="dropdown-content bg-white md:shadow-lg md:border md:rounded-md"
                         aria-label="Sous-menu Pensionaire">
                         <li>
-                            <a href="{{ route('fonctionnaire.career-state-form') }}"
+                            <a href="{{ route('demandes.demande-etat-carriere.create') }}"
                                 class="text-slate-600 block px-4 py-3 hover:bg-gray-100
                                                transition-colors text-sm truncate-text
                                                focus:outline-none focus:ring-2 ">
@@ -282,7 +282,7 @@
                             </a>
                         </li> --}}
                         <li>
-                            <a href="{{ route('fonctionnaire.pension-request-form') }}"
+                            <a href="{{ route('demandes.demande-pension.create') }}"
                                 class="text-slate-600 block px-4 py-3 hover:bg-gray-100
                                                transition-colors text-sm truncate-text
                                                focus:outline-none focus:ring-2 ">
@@ -319,7 +319,7 @@
                             </a>
                         </li>
                         <li>
-                            <a href="{{ route('institution.demande-adhesion-form') }}"
+                            <a href="{{ route('demandes.demande-adhesion.create') }}"
                                 class="text-slate-600 block px-4 py-3 hover:bg-gray-100
                                    transition-colors text-sm truncate-text
                                    focus:outline-none focus:ring-2 ">

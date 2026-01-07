@@ -18,9 +18,9 @@
         }
     </style>
 
-    <div class="max-w-6xl mx-auto p-6 m-2 bg-white">
+    <div class="max-w-6xl mx-auto p-6 m-2 ">
         <!-- Breadcrumb -->
-        <nav aria-label="Breadcrumb" class="mb-4">
+{{--         <nav aria-label="Breadcrumb" class="mb-4">
             <ol class="flex items-center space-x-2 text-sm text-gray-600">
                 <li>
                     <span class="text-gray-800">Fonctionnaire</span>
@@ -32,7 +32,7 @@
                     <span class="text-gray-800 font-medium">Demande de pension</span>
                 </li>
             </ol>
-        </nav>
+        </nav> --}}
 
         <!-- Main Content -->
         <main class="max-w-7xl mx-auto bg-white p-6 shadow-md rounded-lg relative m-2">
@@ -111,11 +111,6 @@
                             <a href="{{ route('fonctionnaire.pension-standard-form') }}" role="button"
                                 class="inline-flex items-center justify-center px-6 py-3 border border-transparent text-base font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 transition-colors duration-200 shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
                                 <i class="fas fa-file-alt mr-2" aria-hidden="true"></i> Faire la demande
-                            </a>
-                            <a href="/downloads/pension-standard-checklist.pdf"
-                                class="inline-flex items-center justify-center px-6 py-3 border border-gray-300 text-base font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 transition-colors duration-200 shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-                                download="Liste_Pension_Standard.pdf">
-                                <i class="fas fa-download mr-2" aria-hidden="true"></i> Télécharger la liste
                             </a>
                         </div>
                     </div>

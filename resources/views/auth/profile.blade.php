@@ -1,26 +1,9 @@
 @extends('layouts.main')
 
-@section('title', 'Modifier profil')
+@section('title', 'Modifier votre profil')
 
 @section('content')
-    <style>
-        .input-error {
-            @apply border-red-500 focus:border-red-500 focus:ring-red-500;
-        }
-
-        .error-message {
-            @apply mt-1 text-sm text-red-600;
-        }
-    </style>
-
-    <div class="max-w-6xl mx-auto p-6 m-2 bg-white">
-        <nav class="text-sm text-gray-600 mb-4">
-            <span class="text-gray-800">Profil</span>
-            <span class="mx-2">></span>
-            <span class="text-gray-800">Modifier profil</span>
-        </nav>
-
-        <div class="max-w-7xl mx-auto bg-white p-6 shadow-md rounded-lg relative m-2">
+        <div class="max-w-6xl mx-auto bg-white p-6 my-8 shadow-md rounded-lg relative m-2">
             <h2 class="text-lg md:text-xl font-bold mb-4">Modifier votre profil</h2>
 
             @if (session('success'))
@@ -144,7 +127,6 @@
                 </div>
             </form>
         </div>
-    </div>
 
     <script>
         // Update file name display

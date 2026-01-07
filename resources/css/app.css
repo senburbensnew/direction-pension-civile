@@ -19,3 +19,12 @@
     white-space: nowrap;
     font-size: 12px;
 }
+
+.input-error {
+    @apply border-red-500 focus:border-red-500 focus:ring-red-500;
+}
+
+.error-message {
+    @apply mt-1 text-sm text-red-600;
+}
+

@@ -1,26 +1,27 @@
 <?php
 
-use App\Http\Controllers\AdminController;
-use App\Http\Controllers\FonctionnaireController;
-use App\Http\Controllers\InstitutionController;
-use App\Http\Controllers\PensionnaireController;
-use App\Http\Controllers\PostController;
-use App\Http\Controllers\ProfileController;
-use App\Http\Controllers\QuiSommesNousController;
-use App\Http\Controllers\UserController;
+use App\Models\Report;
+use App\Models\Actualite;
 use Illuminate\Support\Facades\Route;
+use Illuminate\Support\Facades\Artisan;
+use Illuminate\Support\Facades\Storage;
+use App\Http\Controllers\PostController;
+use App\Http\Controllers\UserController;
+use App\Http\Controllers\AdminController;
+use App\Http\Controllers\MediaController;
+use App\Http\Controllers\ReportController;
+use App\Http\Controllers\DemandeController;
+use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\CarouselController;
 use App\Http\Controllers\DocumentController;
 use App\Http\Controllers\PersonalController;
-use App\Http\Controllers\EnregistrementPensionnaireController;
-use App\Http\Controllers\NewsletterController;
 use App\Http\Controllers\ActualiteController;
-use App\Http\Controllers\MediaController;
-use App\Models\Actualite;
-use App\Http\Controllers\ReportController;
-use App\Models\Report;
-use Illuminate\Support\Facades\Storage;
-use Illuminate\Support\Facades\Artisan;
+use App\Http\Controllers\NewsletterController;
+use App\Http\Controllers\InstitutionController;
+use App\Http\Controllers\PensionnaireController;
+use App\Http\Controllers\FonctionnaireController;
+use App\Http\Controllers\QuiSommesNousController;
+use App\Http\Controllers\EnregistrementPensionnaireController;
 /*
 |--------------------------------------------------------------------------
 | Web Routes
@@ -31,6 +32,136 @@ use Illuminate\Support\Facades\Artisan;
 | be assigned to the "web" middleware group. Make something great!
 |
 */
+
+Route::middleware('auth')
+    ->prefix('demandes')
+    ->name('demandes.')
+    ->group(function () {
+
+        // ======================
+        // Demandes de Virement
+        // ======================
+        Route::prefix('virements')
+            ->name('virements.')
+            ->controller(DemandeController::class)
+            ->group(function () {
+                Route::get('/create', 'createDemandeVirement')->name('create');
+                Route::post('/', 'storeDemandeVirement')->name('store');
+            });
+
+        // ======================
+        // Demandes d’Attestation
+        // ======================
+        Route::prefix('attestations')
+            ->name('attestations.')
+            ->controller(DemandeController::class)
+            ->group(function () {
+                Route::get('/create', 'createDemandeAttestation')->name('create');
+                Route::post('/', 'storeDemandeAttestation')->name('store');
+            });
+
+        // ======================
+        // Demandes de transfert de cheques
+        // ======================
+        Route::prefix('transfert-cheque')
+            ->name('transfert-cheque.')
+            ->controller(DemandeController::class)
+            ->group(function () {
+                Route::get('/create', 'createDemandeTransfertCheque')->name('create');
+                Route::post('/', 'storeDemandeTransfertCheque')->name('store');
+            });
+
+        // ======================
+        // Demandes d'arret de paiement
+        // ======================
+        Route::prefix('arret-paiement')
+            ->name('arret-paiement.')
+            ->controller(DemandeController::class)
+            ->group(function () {
+                Route::get('/create', 'createDemandeArretPaiement')->name('create');
+                Route::post('/', 'storeDemandeArretPaiement')->name('store');
+            });
+
+        // ======================
+        // Demandes de reinsertion
+        // ======================
+        Route::prefix('demande-reinsertion')
+            ->name('demande-reinsertion.')
+            ->controller(DemandeController::class)
+            ->group(function () {
+                Route::get('/create', 'createDemandeReinsertion')->name('create');
+                Route::post('/', 'storeDemandeReinsertion')->name('store');
+            });
+
+
+        // ======================
+        // Demandes d'arret de virement
+        // ======================
+        Route::prefix('demande-arret-virement')
+            ->name('demande-arret-virement.')
+            ->controller(DemandeController::class)
+            ->group(function () {
+                Route::get('/create', 'createDemandeArretVirement')->name('create');
+                Route::post('/', 'storeDemandeArretVirement')->name('store');
+            });
+
+
+        // ======================
+        // Preuve d'existence
+        // ======================
+        Route::prefix('preuve-existence')
+            ->name('preuve-existence.')
+            ->controller(DemandeController::class)
+            ->group(function () {
+                Route::get('/create', 'createPreuveExistence')->name('create');
+                Route::post('/', 'storePreuveExistence')->name('store');
+            });
+
+        // ======================
+        // Demande de pension de reversion
+        // ======================
+        Route::prefix('demande-pension-reversion')
+            ->name('demande-pension-reversion.')
+            ->controller(DemandeController::class)
+            ->group(function () {
+                Route::get('/create', 'createDemandePensionReversion')->name('create');
+                Route::post('/', 'storeDemandePensionReversion')->name('store');
+            });
+
+        // ======================
+        // Demande d'etat de carriere
+        // ======================
+        Route::prefix('demande-etat-carriere')
+            ->name('demande-etat-carriere.')
+            ->controller(DemandeController::class)
+            ->group(function () {
+                Route::get('/create', 'createDemandeEtatCarriere')->name('create');
+                Route::post('/', 'storeDemandeEtatCarriere')->name('store');
+            });
+
+        // ======================
+        // Demande de pension
+        // ======================
+        Route::prefix('demande-pension')
+            ->name('demande-pension.')
+            ->controller(DemandeController::class)
+            ->group(function () {
+                Route::get('/create', 'createDemandePension')->name('create');
+                Route::post('/', 'storeDemandePension')->name('store');
+            });
+
+        // ======================
+        // Demande adhesion
+        // ======================
+        Route::prefix('demande-adhesion')
+            ->name('demande-adhesion.')
+            ->controller(DemandeController::class)
+            ->group(function () {
+                Route::get('/create', 'createDemandeAdhesion')->name('create');
+                Route::post('/', 'storeDemandeAdhesion')->name('store');
+            });
+});
+
 
 Route::get('/toggle-construction', function () {
     // Flip session value (true → false, false/null → true)
@@ -298,7 +429,9 @@ Route::get('/locale/{locale}', [App\Http\Controllers\LocaleController::class, 's
 
 Route::prefix('personal')->middleware('auth')->group(function () {
     Route::get('/', [PersonalController::class, 'index'])->name('personal.index');
+    Route::get('/corbeille', [PersonalController::class, 'corbeille'])->middleware(['role:secretariat'])->name('personal.cart');
     Route::get('/dashboard', [PersonalController::class, 'dashboard'])->name('personal.dashboard');
+    Route::get('/dashboard-corbeille', [PersonalController::class, 'requestsDashboardCorbeille'])->name('personal.requests-dashboard-corbeille');
     Route::get('/requestsDashboard', [PersonalController::class, 'requestsDashboard'])->name('personal.requests-dashboard');
     Route::prefix('requests')->group(function () {
         Route::get('/{id}', [PersonalController::class, 'showRequest'])->name('personal.request.show');

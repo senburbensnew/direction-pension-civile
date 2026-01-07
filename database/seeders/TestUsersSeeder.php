@@ -2,9 +2,9 @@
 
 namespace Database\Seeders;
 
-use Illuminate\Database\Seeder;
 use App\Models\User;
 use App\Models\UserType;
+use Illuminate\Database\Seeder;
 
 class TestUsersSeeder extends Seeder
 {
@@ -24,9 +24,10 @@ class TestUsersSeeder extends Seeder
             'institution' => [
                 'name' => 'Institution',
                 'email' => 'institution@example.com',
-            ]
+            ],
         ];
 
+        // Users with ONE role
         foreach ($roleUsers as $roleName => $data) {
             $userType = UserType::firstOrCreate(['name' => $roleName]);
 
@@ -34,14 +35,28 @@ class TestUsersSeeder extends Seeder
                 ['email' => $data['email']],
                 [
                     'name' => $data['name'],
-                    'email' => $data['email'],
                     'password' => $defaultPassword,
                     'nif' => fake()->numerify('##########'),
                     'user_type_id' => $userType->id,
                 ]
             );
 
-            $user->syncRoles([$roleName]);
+            $user->syncRoles($roleName);
         }
+
+        // User with TWO roles
+        $fonctionnaireType = UserType::firstOrCreate(['name' => 'fonctionnaire']);
+
+        $multiRoleUser = User::updateOrCreate(
+            ['email' => 'dagrin@example.com'],
+            [
+                'name' => 'Secretaire',
+                'password' => $defaultPassword,
+                'nif' => fake()->numerify('##########'),
+                'user_type_id' => $fonctionnaireType->id,
+            ]
+        );
+
+        $multiRoleUser->syncRoles(['fonctionnaire', 'secretariat']);
     }
 }
