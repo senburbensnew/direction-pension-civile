@@ -1,41 +1,9 @@
 @extends('layouts.main')
 
 @section('content')
-    <style>
-        .input-error {
-            @apply border-red-500 focus:border-red-500 focus:ring-red-500;
-        }
-
-        .error-message {
-            @apply mt-1 text-sm text-red-600;
-        }
-
-        .gradient-bg {
-            background: linear-gradient(90deg, #f8fafc 0%, #f1f5f9 100%);
-            border-radius: 0.5rem;
-            padding: 1rem;
-            margin: 1rem 0;
-        }
-    </style>
-
-    <div class="max-w-6xl mx-auto p-6 m-2 ">
-        <!-- Breadcrumb -->
-{{--         <nav aria-label="Breadcrumb" class="mb-4">
-            <ol class="flex items-center space-x-2 text-sm text-gray-600">
-                <li>
-                    <span class="text-gray-800">Fonctionnaire</span>
-                </li>
-                <li class="flex items-center">
-                    <span class="mx-2">›</span>
-                </li>
-                <li aria-current="page">
-                    <span class="text-gray-800 font-medium">Demande de pension</span>
-                </li>
-            </ol>
-        </nav> --}}
-
+    <div class="max-w-6xl mx-auto my-5">
         <!-- Main Content -->
-        <main class="max-w-7xl mx-auto bg-white p-6 shadow-md rounded-lg relative m-2">
+        <main class="max-w-6xl mx-auto bg-white p-6 shadow-md rounded-lg relative">
             <!-- Header Section -->
             <div class="flex flex-col md:flex-row justify-between items-center mb-12 gap-8">
                 <div class="text-center mb-6 flex flex-col md:flex-row items-center justify-center w-full gap-4 md:gap-8">
@@ -44,9 +12,9 @@
                         class="w-16 h-16 md:w-24 md:h-24 object-cover shrink-0" loading="lazy">
 
                     <div class="px-4">
-                        <h1 class="text-lg md:text-xl font-bold mb-1">Direction de la Pension Civile (DPC)</h1>
-                        <p class="text-base md:text-lg font-semibold mb-2">Pièces à fournir pour demande de pension</p>
-                        <p class="text-sm text-gray-600">Service des Requêtes</p>
+                        <h1 class="text-lg md:text-xl font-bold mb-1">Demande de Pension</h1>
+                        <p class="text-base md:text-lg font-semibold mb-2">Pièces à soumettre pour demande de pension</p>
+                        <p class="text-sm text-gray-600">Direction de la Pension Civile (DPC)</p>
                     </div>
 
                     <img src="{{ asset('images/setting-logo-1-M13oPLiYoM.png') }}" alt=""
@@ -70,7 +38,7 @@
                         <ul class="space-y-3 text-gray-700 list-none">
                             <li class="flex items-start">
                                 <i class="fas fa-check-circle text-green-500 mt-1 mr-2" aria-hidden="true"></i>
-                                <span>Original Certificat de Carrière</span>
+                                <span>Original Certificat de Carrière (autant de certificats de carrière que d’employeurs)</span>
                             </li>
                             <li class="flex items-start">
                                 <i class="fas fa-check-circle text-green-500 mt-1 mr-2" aria-hidden="true"></i>
@@ -111,6 +79,108 @@
                             <a href="{{ route('fonctionnaire.pension-standard-form') }}" role="button"
                                 class="inline-flex items-center justify-center px-6 py-3 border border-transparent text-base font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 transition-colors duration-200 shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
                                 <i class="fas fa-file-alt mr-2" aria-hidden="true"></i> Faire la demande
+                            </a>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Reversion Pension Section -->
+                <section aria-labelledby="reversion-pension-heading"
+                    class="bg-white shadow-md rounded-xl p-6 border border-gray-200 mb-8">
+                    <h2 id="reversion-pension-heading" class="text-lg font-semibold text-gray-800 mb-4">
+                        Demande de pension par réversion
+                    </h2>
+
+                    <div class="gradient-bg">
+                        <p class="text-sm">
+                            Pour le conjoint survivant et les enfants (mineurs ou majeurs jusqu’à 24 ans) d’un fonctionnaire décédé
+                        </p>
+                    </div>
+
+                    <div class="p-6">
+                        <ul class="space-y-3 text-gray-700 list-none">
+                            <li class="flex items-start">
+                                <i class="fas fa-check-circle text-green-500 mt-1 mr-2"></i>
+                                <span>Original Certificat de Carrière (autant de certificats que d’employeurs)</span>
+                            </li>
+
+                            <li class="flex items-start">
+                                <i class="fas fa-check-circle text-green-500 mt-1 mr-2"></i>
+                                <span>Copie et Original de l’Acte de Décès</span>
+                            </li>
+
+                            <li class="flex items-start">
+                                <i class="fas fa-check-circle text-green-500 mt-1 mr-2"></i>
+                                <span>Original Certificat de non-dissolution du Mariage (Greffe du Tribunal Civil)</span>
+                            </li>
+
+                            <li class="flex items-start">
+                                <i class="fas fa-check-circle text-green-500 mt-1 mr-2"></i>
+                                <span>Copie et Original de l’Extrait récent de l’Acte de Mariage</span>
+                            </li>
+
+                            <li class="flex items-start">
+                                <i class="fas fa-check-circle text-green-500 mt-1 mr-2"></i>
+                                <span>
+                                    Copie et Original de l’Extrait récent de l’Acte de Naissance
+                                    (conjoint survivant et/ou enfants)
+                                </span>
+                            </li>
+
+                            <li class="flex items-start">
+                                <i class="fas fa-check-circle text-green-500 mt-1 mr-2"></i>
+                                <span>Copie du Matricule fiscal</span>
+                            </li>
+
+                            <li class="flex items-start">
+                                <i class="fas fa-check-circle text-green-500 mt-1 mr-2"></i>
+                                <span>Copie de la carte électorale</span>
+                            </li>
+
+                            <li class="flex items-start">
+                                <i class="fas fa-check-circle text-green-500 mt-1 mr-2"></i>
+                                <span>Deux (2) photos d’identité récentes</span>
+                            </li>
+
+                            <li class="flex items-start">
+                                <i class="fas fa-check-circle text-green-500 mt-1 mr-2"></i>
+                                <span>
+                                    Procès-verbal désignant un tuteur
+                                    (Conseil de Famille pour les enfants mineurs ou handicapés)
+                                </span>
+                            </li>
+
+                            <li class="flex items-start">
+                                <i class="fas fa-check-circle text-green-500 mt-1 mr-2"></i>
+                                <span>Certificat Médical (pour les handicapés physiques ou les interdits)</span>
+                            </li>
+
+                            <li class="flex items-start">
+                                <i class="fas fa-check-circle text-green-500 mt-1 mr-2"></i>
+                                <span>Copie du Moniteur (pour les Grands Commis)</span>
+                            </li>
+
+                            <li class="flex items-start">
+                                <i class="fas fa-check-circle text-green-500 mt-1 mr-2"></i>
+                                <span>Carte de pension du conjoint décédé</span>
+                            </li>
+
+                            <li class="flex items-start">
+                                <i class="fas fa-check-circle text-green-500 mt-1 mr-2"></i>
+                                <span>Souche de chèque ou preuve de paiement du pensionné décédé</span>
+                            </li>
+
+                            <li class="flex items-start">
+                                <i class="fas fa-check-circle text-green-500 mt-1 mr-2"></i>
+                                <span>Attestation scolaire ou universitaire (pour les étudiants majeurs)</span>
+                            </li>
+                        </ul>
+
+                        <div class="mt-6 flex flex-col sm:flex-row gap-4">
+                            <a href="{{ route('demandes.demande-pension-reversion.create') }}" role="button"
+                                class="inline-flex items-center justify-center px-6 py-3 border border-transparent text-base font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 transition-colors duration-200 shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                                <i class="fas fa-file-alt mr-2"></i>
+                                Faire la demande
                             </a>
                         </div>
                     </div>

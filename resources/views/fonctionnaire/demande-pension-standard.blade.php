@@ -2,39 +2,29 @@
 
 @section('content')
     <div class="max-w-6xl mx-auto p-6">
-        <!-- Fil d'Ariane -->
-{{--         <nav aria-label="Fil d'Ariane" class="mb-4">
-            <ol class="flex items-center space-x-2 text-sm text-gray-600">
-                <li>
-                    <a href="/" class="text-gray-800 hover:text-blue-600">Fonctionnaire</a>
-                </li>
-                <li class="flex items-center">
-                    <span class="mx-2">›</span>
-                </li>
-                <li aria-current="page">
-                    <span class="text-gray-800 font-medium">Demande de pension</span>
-                </li>
-            </ol>
-        </nav> --}}
-
         <!-- Contenu Principal -->
         <div class="bg-white shadow-md rounded-xl p-6 border border-gray-200">
-            <h1 class="text-2xl font-bold text-gray-800 mb-6">Demande de Pension</h1>
+            <!-- Header Section -->
+            <div class="flex flex-col md:flex-row justify-between items-center mb-12 gap-8">
+                <div class="text-center mb-6 flex flex-col md:flex-row items-center justify-center w-full gap-4 md:gap-8">
+                    <img src="{{ asset('images/setting-logo-1-M13oPLiYoM.png') }}"
+                        alt="Logo de la Direction de la Pension Civile"
+                        class="w-16 h-16 md:w-24 md:h-24 object-cover shrink-0" loading="lazy">
+
+                    <div class="px-4">
+                        <h1 class="text-lg md:text-xl font-bold mb-1">Demande de Pension</h1>
+                        <p class="text-sm text-gray-600">Direction de la Pension Civile (DPC)</p>
+                    </div>
+
+                    <img src="{{ asset('images/setting-logo-1-M13oPLiYoM.png') }}" alt=""
+                        class="w-16 h-16 md:w-24 md:h-24 object-cover shrink-0 hidden md:block" role="presentation"
+                        loading="lazy">
+                </div>
+            </div>
 
             @if (session('success'))
                 <div class="mb-4 p-4 bg-green-50 border border-green-200 text-green-700 rounded">
                     {{ session('success') }}
-                </div>
-            @endif
-
-            @if ($errors->any())
-                <div class="mb-6 p-4 bg-red-50 border border-red-200 text-red-700 rounded-lg">
-                    <h2 class="font-bold mb-2">Veuillez corriger les erreurs suivantes :</h2>
-                    <ul class="list-disc list-inside">
-                        @foreach ($errors->all() as $error)
-                            <li class="p-1">{{ $error }}</li>
-                        @endforeach
-                    </ul>
                 </div>
             @endif
 
@@ -61,135 +51,187 @@
                 <div class="space-y-4">
                     <h2 class="text-lg font-semibold text-gray-800 mb-4">Documents requis :</h2>
 
-                    <!-- Certificat de Carrière -->
-                    <div class="document-upload">
-                        <label class="block text-sm font-medium text-gray-700">
-                            Original du Certificat de Carrière (autant de certificats que d'employeurs) (pdf)
-                            <span class="text-red-500">*</span>
-                        </label>
-                        <input type="file" name="career_certificate" accept="application/pdf"
-                            class="mt-1 block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100">
-                        <div class="preview-container mt-2"></div>
-                        @error('career_certificate')
-                            <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
-                        @enderror
-                    </div>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <!-- Certificat de Carrière -->
+                        <div class="document-upload">
+                            <label class="block text-sm font-medium text-gray-700">
+                                Original du Certificat de Carrière (autant de certificats que d'employeurs) (pdf)
+                                <span class="text-red-500">*</span>
+                            </label>
+                            <input type="file" name="career_certificates[]" multiple accept="application/pdf"
+                                class="mt-1 block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100">
+                            <div class="preview-container mt-2"></div>
+                            @error('career_certificates')
+                                <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                            @enderror
+                            @error('career_certificates.*')
+                                <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                            @enderror
+                        </div>
 
-                    <!-- Copie du Moniteur -->
-                    <div class="document-upload">
-                        <label class="block text-sm font-medium text-gray-700">
-                            Copie du Moniteur (pour les Grands Commis) (pdf)
-                            <span class="text-red-500">*</span>
-                        </label>
-                        <input type="file" name="monitor_copy" accept="application/pdf"
-                            class="mt-1 block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100">
-                        <div class="preview-container mt-2"></div>
-                        @error('monitor_copy')
-                            <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
-                        @enderror
-                    </div>
+                        <!-- Copie du Moniteur -->
+                        <div class="document-upload">
+                            <label class="block text-sm font-medium text-gray-700">
+                                Copie du Moniteur (pour les Grands Commis) (pdf)
+                            </label>
+                            <input type="file" name="monitor_copy" accept="application/pdf"
+                                class="mt-1 block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100">
+                            <div class="preview-container mt-2"></div>
+                            @error('monitor_copy')
+                                <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                            @enderror
+                        </div>
 
-                    <!-- Acte de Mariage -->
-                    <div class="document-upload">
-                        <label class="block text-sm font-medium text-gray-700">
-                            Extrait récent de l'Acte de Mariage (Copie + Original pour les femmes mariées) (pdf)
-                            <span class="text-red-500">*</span>
-                        </label>
-                        <input type="file" name="marriage_certificate" accept="application/pdf"
-                            class="mt-1 block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100">
-                        <div class="preview-container mt-2"></div>
-                        @error('marriage_certificate')
-                            <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
-                        @enderror
-                    </div>
+                        <!-- Acte de Mariage -->
+                        <div class="document-upload">
+                            <label class="block text-sm font-medium text-gray-700">
+                                Extrait récent de l'Acte de Mariage (Copie + Original pour les femmes mariées) (pdf)
+                            </label>
+                            <input type="file" name="marriage_certificates[]" multiple  accept="application/pdf"
+                                class="mt-1 block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100">
+                            <div class="preview-container mt-2"></div>
+                            <p class="mt-1 text-sm text-gray-500">
+                                Si vous fournissez un acte de mariage, veuillez joindre obligatoirement la copie et l’original.
+                            </p>
 
-                    <!-- Acte de Naissance -->
-                    <div class="document-upload">
-                        <label class="block text-sm font-medium text-gray-700">
-                            Extrait récent de l'Acte de Naissance (Copie + Original) (pdf)
-                            <span class="text-red-500">*</span>
-                        </label>
-                        <input type="file" name="birth_certificate" accept="application/pdf"
-                            class="mt-1 block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100">
-                        <div class="preview-container mt-2"></div>
-                        @error('birth_certificate')
-                            <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
-                        @enderror
-                    </div>
+                            @error('marriage_certificates')
+                                <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                            @enderror
 
-                    <!-- Acte de divorce -->
-                    <div class="document-upload">
-                        <label class="block text-sm font-medium text-gray-700">
-                            Acte de divorce (le cas échéant) (pdf)
-                        </label>
-                        <input type="file" name="divorce_certificate" accept="application/pdf"
-                            class="mt-1 block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100">
-                        <div class="preview-container mt-2"></div>
-                        @error('divorce_certificate')
-                            <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
-                        @enderror
-                    </div>
+                            @error('marriage_certificates.*')
+                                <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                            @enderror
+                        </div>
 
-                    <!-- Matricule fiscal + CIN -->
-                    <div class="document-upload">
-                        <label class="block text-sm font-medium text-gray-700">
-                            Copie du Matricule fiscal avec CIN (pdf, jpg, png)
-                            <span class="text-red-500">*</span>
-                        </label>
-                        <input type="file" name="tax_id_number" accept=".pdf,.jpg,.png"
-                            class="mt-1 block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100">
-                        <div class="preview-container mt-2"></div>
-                        @error('tax_id_number')
-                            <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
-                        @enderror
-                    </div>
+                        <!-- Acte de Naissance -->
+                        <div class="document-upload">
+                            <label class="block text-sm font-medium text-gray-700">
+                                Extrait récent de l'Acte de Naissance (Copie + Original) (pdf)
+                                <span class="text-red-500">*</span>
+                            </label>
+                            <input type="file" name="birth_certificates[]"  multiple accept="application/pdf"
+                                class="mt-1 block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100">
+                            <div class="preview-container mt-2"></div>
+                            @error('birth_certificates')
+                                <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                            @enderror
+                            @error('birth_certificates.*')
+                                <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                            @enderror
+                        </div>
 
-                    <!-- Photos d'identité -->
-                    <div class="document-upload">
-                        <label class="block text-sm font-medium text-gray-700">
-                            Photos d'identité récentes (2 exemplaires) (jpeg, png, jpg)
-                            <span class="text-red-500">*</span>
-                        </label>
-                        <input type="file" name="photos[]" multiple accept="image/jpeg, image/png, image/jpg"
-                            class="mt-1 block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100">
-                        <div class="preview-container mt-2"></div>
-                        @error('photos')
-                            <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
-                        @enderror
-                        <p class="mt-1 text-sm text-gray-500">Format accepté: JPEG, PNG (Max 1MB par photo)</p>
-                    </div>
+                        <!-- Acte de divorce -->
+                        <div class="document-upload">
+                            <label class="block text-sm font-medium text-gray-700">
+                                Acte de divorce (le cas échéant) (pdf)
+                            </label>
+                            <input type="file" name="divorce_certificate" accept="application/pdf"
+                                class="mt-1 block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100">
+                            <div class="preview-container mt-2"></div>
+                            @error('divorce_certificate')
+                                <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                            @enderror
+                        </div>
 
-                    <!-- Certificat Médical -->
-                    <div class="document-upload">
-                        <label class="block text-sm font-medium text-gray-700">
-                            Certificat Médical (pour cause d'incapacité) (pdf)
-                            <span class="text-red-500">*</span>
-                        </label>
-                        <input type="file" name="medical_certificate" accept="application/pdf"
-                            class="mt-1 block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100">
-                        <div class="preview-container mt-2"></div>
-                        @error('medical_certificate')
-                            <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
-                        @enderror
-                    </div>
+                        <!-- Matricule fiscal + CIN -->
+                        <div class="document-upload">
+                            <label class="block text-sm font-medium text-gray-700">
+                                Copie du Matricule fiscal accompagné de la Carte d’Identification Nationale (CIN) (pdf, jpg, png)
+                                <span class="text-red-500">*</span>
+                            </label>
+                            <input type="file" name="tax_id_numbers[]"  multiple  accept=".pdf,.jpg,.png"
+                                class="mt-1 block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100">
+                            <div class="preview-container mt-2"></div>
+                            @error('tax_id_numbers')
+                                <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                            @enderror
+                            @error('tax_id_numbers.*')
+                                <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                            @enderror
+                        </div>
 
-                    <!-- Souche de chèque -->
-                    <div class="document-upload">
-                        <label class="block text-sm font-medium text-gray-700">
-                            Souche de chèque ou preuve de paiement (pdf, jpg, png)
-                            <span class="text-red-500">*</span>
-                        </label>
-                        <input type="file" name="check_stub" accept=".pdf,.jpg,.png"
-                            class="mt-1 block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100">
-                        <div class="preview-container mt-2"></div>
-                        @error('check_stub')
-                            <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
-                        @enderror
+                        <!-- Photos d'identité -->
+                        <div class="document-upload">
+                            <label class="block text-sm font-medium text-gray-700">
+                                Photos d'identité récentes (2 exemplaires) (jpeg, png, jpg)
+                                <span class="text-red-500">*</span>
+                            </label>
+                            <input type="file" name="photos[]" multiple accept="image/jpeg, image/png, image/jpg"
+                                class="mt-1 block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100">
+                            <div class="preview-container mt-2"></div>
+                            @error('photos')
+                                <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                            @enderror
+                            @error('photos.*')
+                                <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                            @enderror
+                            <p class="mt-1 text-sm text-gray-500">Format accepté: JPEG, PNG (Max 1MB par photo)</p>
+                        </div>
+
+                        <!-- Certificat Médical -->
+                        <div class="document-upload">
+                            <label class="block text-sm font-medium text-gray-700">
+                                Certificat Médical (pour cause d'incapacité) (pdf)
+                            </label>
+                            <input type="file" name="medical_certificate" accept="application/pdf"
+                                class="mt-1 block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100">
+                            <div class="preview-container mt-2"></div>
+                            @error('medical_certificate')
+                                <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                            @enderror
+                        </div>
+
+                        <!-- Souche de chèque -->
+                        <div class="document-upload">
+                            <label class="block text-sm font-medium text-gray-700">
+                                Souche de chèque ou preuve de paiement (pdf, jpg, png)
+                                <span class="text-red-500">*</span>
+                            </label>
+                            <input type="file" name="check_stub" accept=".pdf,.jpg,.png"
+                                class="mt-1 block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100">
+                            <div class="preview-container mt-2"></div>
+                            @error('check_stub')
+                                <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                            @enderror
+                        </div>
                     </div>
                 </div>
 
+                {{-- Consentement --}}
+                <div class="mt-6">
+                    <div class="flex items-start">
+                        <div class="flex items-center h-5">
+                            <input
+                                id="consentement"
+                                name="consentement"
+                                type="checkbox"
+                                value="1"
+                                {{ old('consentement') ? 'checked' : '' }}
+                                class="h-4 w-4 rounded border-gray-300 text-blue-600
+                                    focus:ring-blue-500
+                                    @error('consentement') border-red-500 @enderror"
+                                
+                            >
+                        </div>
+
+                        <div class="ml-3 text-sm">
+                            <label for="consentement" class="font-medium text-gray-700">
+                                Je certifie que les informations fournies sont exactes
+                            </label>
+                            <p class="text-gray-500">
+                                Je reconnais que toute fausse déclaration peut entraîner le rejet
+                                de la demande ou des sanctions prévues par la loi.
+                            </p>
+                        </div>
+                    </div>
+
+                    @error('consentement')
+                        <p class="mt-2 text-sm text-red-600">{{ $message }}</p>
+                    @enderror
+                </div>
+
                 <!-- Soumission -->
-                <div class="mt-8 text-right">
+                <div class="mt-8">
                     <button type="submit"
                         class="inline-flex items-center justify-center px-3 py-3 border border-transparent text-base font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
                         Soumettre

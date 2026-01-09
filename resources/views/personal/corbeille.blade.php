@@ -9,7 +9,7 @@
         {{-- ===================== MES DEMANDES ===================== --}}
         <fieldset class="border-2 border-gray-200 rounded-lg mt-8 pl-3 ml-1 mr-1">
             <legend class="text-lg font-semibold ml-4 px-4 text-gray-700 bg-white rounded-full shadow-sm">
-                Demandes à traiter
+                <i class="fas fa-shopping-cart mr-2 text-gray-400"></i> Demandes à traiter
             </legend>
 
             <div class="py-6 pl-5 pr-5">

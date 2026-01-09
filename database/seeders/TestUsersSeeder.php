@@ -14,15 +14,15 @@ class TestUsersSeeder extends Seeder
 
         $roleUsers = [
             'pensionnaire' => [
-                'name' => 'Pensionnaire',
+                'name' => 'pens-prenom pens-nom',
                 'email' => 'pensionnaire@example.com',
             ],
             'fonctionnaire' => [
-                'name' => 'Fonctionnaire',
+                'name' => 'fonct-prenom fonct-nom',
                 'email' => 'fonctionnaire@example.com',
             ],
             'institution' => [
-                'name' => 'Institution',
+                'name' => 'inst-prenom inst-nom',
                 'email' => 'institution@example.com',
             ],
         ];

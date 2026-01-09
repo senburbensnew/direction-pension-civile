@@ -50,10 +50,6 @@ class PersonalController extends Controller
             ->where('type', 'DEMANDE_PREUVE_EXISTENCE')
             ->count();
 
-        $reversionaryPensionRequestCounts = Demande::where('created_by', auth()->id())
-            ->where('type', 'DEMANDE_PENSION_REVERSION')
-            ->count();
-
         // FONCTIONNAIRE
         $carreerStateRequestCounts = Demande::where('created_by', auth()->id())
             ->where('type', 'DEMANDE_ETAT_CARRIERE')
@@ -66,6 +62,12 @@ class PersonalController extends Controller
         // INSTITUTION
         $adhesionRequestCounts = Demande::where('created_by', auth()->id())
             ->where('type', 'DEMANDE_ADHESION')
+            ->count();
+
+
+        // PENSIONNAIRE ET FONCTIONNAIRE
+        $reversionaryPensionRequestCounts = Demande::where('created_by', auth()->id())
+            ->where('type', 'DEMANDE_PENSION_REVERSION')
             ->count();
 
 
@@ -107,7 +109,7 @@ class PersonalController extends Controller
                     'type' => 'existenceProofRequest'
                 ],
                 [
-                    'label' => 'Demande de pension de reversion',
+                    'label' => 'Demande de pension de réversion',
                     'count' => $reversionaryPensionRequestCounts,
                     'type' => 'reversionaryPensionRequest'
                 ],
@@ -122,7 +124,12 @@ class PersonalController extends Controller
                     'label' => 'Demande de pension',
                     'count' => $pensionRequestCounts,
                     'type' => 'pensionRequest'
-                ]
+                ],
+                [
+                    'label' => 'Demande de pension de réversion',
+                    'count' => $reversionaryPensionRequestCounts,
+                    'type' => 'reversionaryPensionRequest'
+                ],
             ],
             'institution' => [
                 [
@@ -393,6 +400,7 @@ class PersonalController extends Controller
     public function showRequest(Request $request, $id)
     {
         $REQUEST_CONFIG = [
+            // Pensionnaire
             'bankTransferRequest' => [
                 'type' => null,
                 'order' => 'id',
@@ -404,25 +412,52 @@ class PersonalController extends Controller
                 'with' => [],
             ],
             'checkTransferRequest' => [
-                'type' => 'CHECK_TRANSFER_REQUEST',
-                'order' => 'event_date',
+                'type' => null,
+                'order' => 'id',
                 'with' => [],
             ],
             'paymentStopRequest' => [
-                'type' => 'PAYMENT_STOP_REQUEST',
-                'order' => 'event_date',
+                'type' => null,
+                'order' => 'id',
+                'with' => [],
+            ],
+            'reinstateRequest' => [
+                'type' => null,
+                'order' => 'id',
+                'with' => [],
+            ],
+            'transferStopRequest' => [
+                'type' => null,
+                'order' => 'id',
                 'with' => [],
             ],
             'existenceProofRequest' => [
-                'type' => 'EXISTENCE_PROOF_REQUEST',
-                'order' => 'event_date',
-                'with' => ['dependants'],
-            ],
-            'pensionRequest' => [
-                'type' => 'PENSION_REQUEST',
-                'order' => 'event_date',
+                'type' => null,
+                'order' => 'id',
                 'with' => [],
             ],
+            'reversionaryPensionRequest' => [
+                'type' => null,
+                'order' => 'id',
+                'with' => [],
+            ],
+            // Fonctionnaire
+            'careerStateRequest' => [
+                'type' => null,
+                'order' => 'id',
+                'with' => [],
+            ],
+            'pensionRequest' => [
+                'type' => null,
+                'order' => 'id',
+                'with' => [],
+            ],
+            // Institution
+            'adhesionRequest' => [
+                'type' => null,
+                'order' => 'id',
+                'with' => [],
+            ]
         ];
 
         $requestType = $request->query('requestType');

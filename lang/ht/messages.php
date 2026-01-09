@@ -55,7 +55,7 @@ return [
     'media_libraries' => 'Mediatèks',
     'success_stories' => 'Istwa siksè',
 
-    'simulateur-calcul' => 'Similatè',
+    'simulateur-calcul' => 'Similatè Retrèt',
 
     // Footer
     'director' => 'Direktris la',

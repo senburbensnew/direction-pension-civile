@@ -55,7 +55,7 @@ return [
     'media_libraries' => 'Médiathèque',
     'success_stories' => 'Success stories',
 
-    'simulateur-calcul' => 'Simulateur',
+    'simulateur-calcul' => 'Simulateur Retraite',
 
     // Footer
     'director' => 'La Directrice',

@@ -236,14 +236,14 @@
                                 {{ __('messages.proof_of_existence') }}
                             </a>
                         </li>
-                        <li>
+{{--                         <li>
                             <a href="{{ route('demandes.demande-pension-reversion.create') }}"
                                 class="text-slate-600 block px-4 py-3 hover:bg-gray-100
                                    transition-colors text-sm truncate-text
                                    focus:outline-none focus:ring-2 ">
                                 Demande de pension de reversion
                             </a>
-                        </li>
+                        </li> --}}
                     </ul>
                 </li>
             @endif
@@ -273,14 +273,14 @@
                                 {{ __('messages.career_status_request') }}
                             </a>
                         </li>
-                        {{--                         <li>
-                            <a href="{{ route('fonctionnaire.retirement-simulation-form') }}"
+                        <li>
+                            <a href="{{ route('simulateur-calcul') }}"
                                 class="text-slate-600 block px-4 py-3 hover:bg-gray-100
                                                transition-colors text-sm truncate-text
                                                focus:outline-none focus:ring-2 ">
-                                {{ __('messages.retirement_simulation') }}
+                                {{ __('messages.simulateur-calcul') }}
                             </a>
-                        </li> --}}
+                        </li>
                         <li>
                             <a href="{{ route('demandes.demande-pension.create') }}"
                                 class="text-slate-600 block px-4 py-3 hover:bg-gray-100
@@ -310,14 +310,14 @@
 
                     <ul class="dropdown-content bg-white md:shadow-lg md:border md:rounded-md"
                         aria-label="Sous-menu Pensionaire">
-                        <li>
+{{--                         <li>
                             <a href="#"
                                 class="text-slate-600 block px-4 py-3 hover:bg-gray-100
                                    transition-colors text-sm truncate-text
                                    focus:outline-none focus:ring-2 ">
                                 {{ __('messages.pension_request_transmission') }}
                             </a>
-                        </li>
+                        </li> --}}
                         <li>
                             <a href="{{ route('demandes.demande-adhesion.create') }}"
                                 class="text-slate-600 block px-4 py-3 hover:bg-gray-100
@@ -373,14 +373,14 @@
             </li>
 
             <!-- Simulateur de calcul -->
-            <li class="w-full md:w-auto border-b md:border-none">
+{{--             <li class="w-full md:w-auto border-b md:border-none">
                 <a href="{{ route('simulateur-calcul') }}"
                     class="block px-4 py-3 text-slate-600 hover:text-blue-600
                            text-base md:text-sm truncate-text
                            focus:outline-none focus:ring-2 ">
                     {{ __('messages.simulateur-calcul') }}
                 </a>
-            </li>
+            </li> --}}
             <!-- rapports -->
             <li class="w-full md:w-auto border-b md:border-none">
                 <a href="{{  route('reports.index') }}"

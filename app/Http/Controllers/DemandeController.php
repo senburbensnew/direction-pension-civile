@@ -19,6 +19,9 @@ use Illuminate\Support\Facades\DB;
 use App\Helpers\CodeGeneratorService;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\ValidationException;
+use App\Http\Requests\StoreEtatCarriereRequest;
+use App\Http\Requests\StoreDemandePensionRequest;
+use App\Http\Requests\StoreDemandePensionReversionRequest;
 
 class DemandeController extends Controller
 {
@@ -562,19 +565,23 @@ class DemandeController extends Controller
     // DEMANDE DE PENSION DE REVERSION
     public function createDemandePensionReversion(){
         
-        return view('pensionnaire.demande-pension-reversion');
+        return view('fonctionnaire.demande-pension-reversion');
     }
 
-    public function storeDemandePensionReversion(Request $request)
+    public function storeDemandePensionReversion(StoreDemandePensionReversionRequest $request)
     {
 
         DB::beginTransaction();
 
-        try {
-            $validated = $request->validate([
+        // 👉 Tableau pour tracer tous les fichiers stockés
+        $storedFilePaths = [];
 
-            ]);
+        try {
+            $validated = $request->validated();
  
+            // ----------------------------------
+            // Generate request metadata
+            // ----------------------------------
             $validated['code'] = CodeGeneratorService::generateUniqueRequestCode(
                 TypeDemandeEnum::DEMANDE_PENSION_REVERSION->value,
                 (new Demande())->getTable()
@@ -583,11 +590,113 @@ class DemandeController extends Controller
             $validated['created_by'] = auth()->id();
             $validated['type'] = TypeDemandeEnum::DEMANDE_PENSION_REVERSION->value;
 
-           $validated['data'] = collect($validated)->toArray();
+            // ----------------------------------
+            // Handle file uploads
+            // ----------------------------------
+            $uploadedFiles = [];
+            $basePath = 'demandes/pension-reversion';
+
+            // Helper pour fichiers multiples
+            $storeMultiple = function ($files) use ($basePath, &$storedFilePaths) {
+                if (!$files) {
+                    return [];
+                }
+
+                return collect($files)->map(function ($file) use ($basePath, &$storedFilePaths) {
+                    $path = $file->store($basePath, 'public');
+                    $storedFilePaths[] = $path;
+                    return $path;
+                })->toArray();
+            };
+
+            // ================================
+            // 1️⃣ FICHIERS MULTIPLES
+            // ================================
+            $multipleFields = [
+                'acte_deces',
+                'photos_identite',
+                'attestation_scolaires',
+            ];
+
+            foreach ($multipleFields as $field) {
+                $uploadedFiles[$field] = $storeMultiple($request->file($field));
+            }
 
 
+            // ================================
+            // 2️⃣ FICHIERS SIMPLES
+            // ================================
+            $singleFields = [
+                'certificat_carriere',
+                'certificat_non_dissolution',
+                'carte_pension',
+                'souche_cheque',
+                'extrait_acte_mariage',
+                'extrait_acte_naissance',
+                'matricule_fiscal',
+                'carte_electorale',
+                'pv_tutelle',
+                'certificat_medical',
+                'copie_moniteur'
+            ];
+
+            foreach ($singleFields as $field) {
+                if ($request->hasFile($field)) {
+                    $path = $request->file($field)->store($basePath, 'public');
+                    $uploadedFiles[$field] = $path;
+                    $storedFilePaths[] = $path;
+                }
+            }
+
+            // ----------------------------------
+            // Build data payload
+            // ----------------------------------
+            $validated['data'] = array_merge(
+                collect($validated)->except([
+                    'acte_deces',
+                    'photos_identite',
+                    'attestation_scolaires',
+                    'certificat_carriere',
+                    'certificat_non_dissolution',
+                    'carte_pension',
+                    'souche_cheque',
+                    'extrait_acte_mariage',
+                    'extrait_acte_naissance',
+                    'matricule_fiscal',
+                    'carte_electorale',
+                    'pv_tutelle',
+                    'certificat_medical',
+                    'copie_moniteur'
+                ])->toArray(),
+                ['documents' => $uploadedFiles]
+            );
+
+            // Nettoyage avant création
+            unset(
+                $validated['acte_deces'],
+                $validated['photos_identite'],
+                $validated['attestation_scolaires'],
+                $validated['certificat_carriere'],
+                $validated['certificat_non_dissolution'],
+                $validated['carte_pension'],
+                $validated['souche_cheque'],
+                $validated['extrait_acte_mariage'],
+                $validated['extrait_acte_naissance'],
+                $validated['matricule_fiscal'],
+                $validated['carte_electorale'],
+                $validated['pv_tutelle'],
+                $validated['certificat_medical'],
+                $validated['copie_moniteur']
+            );
+
+            // ----------------------------------
+            // Create Demande
+            // ----------------------------------
            $demande = Demande::create($validated);
 
+            // ----------------------------------
+            // History
+            // ----------------------------------
            DemandeHistory::create([
                'demande_id' => $demande->id,
                'statut' => $demande->status->name,
@@ -602,11 +711,22 @@ class DemandeController extends Controller
         } catch (ValidationException $e) {
             DB::rollBack();
 
+            // ❌ Supprimer les fichiers stockés
+            if (!empty($storedFilePaths)) {
+                Storage::disk('public')->delete($storedFilePaths);
+            }
+
             return back()
                 ->withErrors($e->validator)
                 ->withInput();
         } catch (\Exception $e) {
             DB::rollBack();
+
+            // ❌ Supprimer les fichiers stockés
+            if (!empty($storedFilePaths)) {
+                Storage::disk('public')->delete($storedFilePaths);
+            }
+
             Log::error($e);
 
             return back()
@@ -621,16 +741,20 @@ class DemandeController extends Controller
         return view('fonctionnaire.etat-carriere', compact('civilStatuses'));
     }
 
-    public function storeDemandeEtatCarriere(Request $request)
+    public function storeDemandeEtatCarriere(StoreEtatCarriereRequest $request)
     {
 
         DB::beginTransaction();
 
-        try {
-            $validated = $request->validate([
+        // 👉 Tableau pour tracer tous les fichiers stockés
+        $storedFilePaths = [];
 
-            ]);
+        try {
+            $validated = $request->validated();
  
+            // ----------------------------------
+            // Generate request metadata
+            // ----------------------------------
             $validated['code'] = CodeGeneratorService::generateUniqueRequestCode(
                 TypeDemandeEnum::DEMANDE_ETAT_CARRIERE->value,
                 (new Demande())->getTable()
@@ -639,8 +763,77 @@ class DemandeController extends Controller
             $validated['created_by'] = auth()->id();
             $validated['type'] = TypeDemandeEnum::DEMANDE_ETAT_CARRIERE->value;
 
-           $validated['data'] = collect($validated)->toArray();
+            // ----------------------------------
+            // Handle file uploads
+            // ----------------------------------
+            $uploadedFiles = [];
+            $basePath = 'demandes/etat_carriere';
 
+            // Helper pour fichiers multiples
+            $storeMultiple = function ($files) use ($basePath, &$storedFilePaths) {
+                if (!$files) {
+                    return [];
+                }
+
+                return collect($files)->map(function ($file) use ($basePath, &$storedFilePaths) {
+                    $path = $file->store($basePath, 'public');
+                    $storedFilePaths[] = $path;
+                    return $path;
+                })->toArray();
+            };
+
+            // ================================
+            // 1️⃣ FICHIERS MULTIPLES
+            // ================================
+            $multipleFields = [
+                'bulletins_salaire',
+                'documents_carriere'
+            ];
+
+            foreach ($multipleFields as $field) {
+                $uploadedFiles[$field] = $storeMultiple($request->file($field));
+            }
+
+
+            // ================================
+            // 2️⃣ FICHIERS SIMPLES
+            // ================================
+            $singleFields = [
+                'copie_piece_identite',
+                'lettre_nomination',
+                'acte_mariage_acte_deces'
+            ];
+
+            foreach ($singleFields as $field) {
+                if ($request->hasFile($field)) {
+                    $path = $request->file($field)->store($basePath, 'public');
+                    $uploadedFiles[$field] = $path;
+                    $storedFilePaths[] = $path;
+                }
+            }
+
+            // ----------------------------------
+            // Build data payload
+            // ----------------------------------
+            $validated['data'] = array_merge(
+                collect($validated)->except([
+                    'bulletins_salaire',
+                    'documents_carriere',
+                    'copie_piece_identite',
+                    'lettre_nomination',
+                    'acte_mariage_acte_deces'
+                ])->toArray(),
+                ['documents' => $uploadedFiles]
+            );
+
+            // Nettoyage avant création
+            unset(
+                $validated['bulletins_salaire'],
+                $validated['documents_carriere'],
+                $validated['copie_piece_identite'],
+                $validated['lettre_nomination'],
+                $validated['acte_mariage_acte_deces'],
+            );
 
            $demande = Demande::create($validated);
 
@@ -654,15 +847,25 @@ class DemandeController extends Controller
 
            DB::commit();
 
-           return back()->with('success', 'Demande d\'etat de carriere de reversion enregistrée avec succès.');
+           return back()->with('success', 'Demande d\'état de carrière de reversion enregistrée avec succès.');
         } catch (ValidationException $e) {
             DB::rollBack();
+
+                        // ❌ Supprimer les fichiers stockés
+            if (!empty($storedFilePaths)) {
+                Storage::disk('public')->delete($storedFilePaths);
+            }
 
             return back()
                 ->withErrors($e->validator)
                 ->withInput();
         } catch (\Exception $e) {
             DB::rollBack();
+
+                        // ❌ Supprimer les fichiers stockés
+            if (!empty($storedFilePaths)) {
+                Storage::disk('public')->delete($storedFilePaths);
+            }
             Log::error($e);
 
             return back()
@@ -676,16 +879,19 @@ class DemandeController extends Controller
         return view('fonctionnaire.demande-pension');
     }
 
-    public function storeDemandePension(Request $request)
+    public function storeDemandePension(StoreDemandePensionRequest $request)
     {
-
         DB::beginTransaction();
 
-        try {
-            $validated = $request->validate([
+        // 👉 Tableau pour tracer tous les fichiers stockés
+        $storedFilePaths = [];
 
-            ]);
- 
+        try {
+            $validated = $request->validated();
+
+            // ----------------------------------
+            // Generate request metadata
+            // ----------------------------------
             $validated['code'] = CodeGeneratorService::generateUniqueRequestCode(
                 TypeDemandeEnum::DEMANDE_PENSION->value,
                 (new Demande())->getTable()
@@ -694,30 +900,131 @@ class DemandeController extends Controller
             $validated['created_by'] = auth()->id();
             $validated['type'] = TypeDemandeEnum::DEMANDE_PENSION->value;
 
-           $validated['data'] = collect($validated)->toArray();
+            // ----------------------------------
+            // Handle file uploads
+            // ----------------------------------
+            $uploadedFiles = [];
+            $basePath = 'demandes/pension';
 
+            // Helper pour fichiers multiples
+            $storeMultiple = function ($files) use ($basePath, &$storedFilePaths) {
+                if (!$files) {
+                    return [];
+                }
 
-           $demande = Demande::create($validated);
+                return collect($files)->map(function ($file) use ($basePath, &$storedFilePaths) {
+                    $path = $file->store($basePath, 'public');
+                    $storedFilePaths[] = $path;
+                    return $path;
+                })->toArray();
+            };
 
-           DemandeHistory::create([
-               'demande_id' => $demande->id,
-               'statut' => $demande->status->name,
-               'commentaire' => 'Demande créée',
-               'changed_by' => auth()->id(),
-               'data' => $demande->data
-           ]);
+            // ================================
+            // 1️⃣ FICHIERS MULTIPLES
+            // ================================
+            $multipleFields = [
+                'career_certificates',
+                'marriage_certificates',
+                'birth_certificates',
+                'tax_id_numbers',
+                'photos',
+            ];
 
-           DB::commit();
+            foreach ($multipleFields as $field) {
+                $uploadedFiles[$field] = $storeMultiple($request->file($field));
+            }
 
-           return back()->with('success', 'Demande d\'etat de carriere de reversion enregistrée avec succès.');
+            // ================================
+            // 2️⃣ FICHIERS SIMPLES
+            // ================================
+            $singleFields = [
+                'monitor_copy',
+                'medical_certificate',
+                'check_stub',
+                'divorce_certificate',
+            ];
+
+            foreach ($singleFields as $field) {
+                if ($request->hasFile($field)) {
+                    $path = $request->file($field)->store($basePath, 'public');
+                    $uploadedFiles[$field] = $path;
+                    $storedFilePaths[] = $path;
+                }
+            }
+
+            // ----------------------------------
+            // Build data payload
+            // ----------------------------------
+            $validated['data'] = array_merge(
+                collect($validated)->except([
+                    'career_certificates',
+                    'marriage_certificates',
+                    'birth_certificates',
+                    'tax_id_numbers',
+                    'photos',
+                    'monitor_copy',
+                    'medical_certificate',
+                    'check_stub',
+                    'divorce_certificate',
+                ])->toArray(),
+                ['documents' => $uploadedFiles]
+            );
+
+            // Nettoyage avant création
+            unset(
+                $validated['career_certificates'],
+                $validated['marriage_certificates'],
+                $validated['birth_certificates'],
+                $validated['tax_id_numbers'],
+                $validated['photos'],
+                $validated['monitor_copy'],
+                $validated['medical_certificate'],
+                $validated['check_stub'],
+                $validated['divorce_certificate']
+            );
+
+            // ----------------------------------
+            // Create Demande
+            // ----------------------------------
+            $demande = Demande::create($validated);
+
+            // ----------------------------------
+            // History
+            // ----------------------------------
+            DemandeHistory::create([
+                'demande_id' => $demande->id,
+                'statut' => $demande->status->name,
+                'commentaire' => 'Demande créée',
+                'changed_by' => auth()->id(),
+                'data' => $demande->data,
+            ]);
+
+            DB::commit();
+
+            return back()->with('success', 'Demande de pension enregistrée avec succès.');
+
         } catch (ValidationException $e) {
+
             DB::rollBack();
+
+            // ❌ Supprimer les fichiers stockés
+            if (!empty($storedFilePaths)) {
+                Storage::disk('public')->delete($storedFilePaths);
+            }
 
             return back()
                 ->withErrors($e->validator)
                 ->withInput();
+
         } catch (\Exception $e) {
+
             DB::rollBack();
+
+            // ❌ Supprimer les fichiers stockés
+            if (!empty($storedFilePaths)) {
+                Storage::disk('public')->delete($storedFilePaths);
+            }
+
             Log::error($e);
 
             return back()
