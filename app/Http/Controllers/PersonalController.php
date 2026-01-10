@@ -89,17 +89,17 @@ class PersonalController extends Controller
                     'type' => 'checkTransferRequest'
                 ],
                 [
-                    'label' => 'Demande d\'arret de paiement',
+                    'label' => 'Demande d\'arrêt de paiement',
                     'count' => $paymentStopRequestCounts,
                     'type' => 'paymentStopRequest'
                 ],
                 [
-                    'label' => 'Demande de reinsertion',
+                    'label' => 'Demande de réinsertion',
                     'count' => $reinstateRequestCounts,
                     'type' => 'reinstateRequest'
                 ],
                 [
-                    'label' => 'Demande d\'arret de virement',
+                    'label' => 'Demande d\'arrêt de virement',
                     'count' => $transferStopRequestCounts,
                     'type' => 'transferStopRequest'
                 ],

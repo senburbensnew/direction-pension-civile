@@ -1,5 +1,5 @@
 @extends('layouts.main')
 
 @section('content')
-    <x-payment-stop-transfer-requests :pensionCategories="$pensionCategories" />
+    <x-payment-stop-request :pensionCategories="$pensionCategories" />
 @endsection

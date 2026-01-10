@@ -2,13 +2,6 @@
 
 @section('content')
     <div class="max-w-6xl mx-auto p-6 m-2 ">
-        <!-- Breadcrumb -->
-{{--         <nav class="text-sm text-gray-600 mb-4">
-            <span class="text-gray-800">Pensionnaire</span>
-            <span class="mx-2">></span>
-            <span class="text-gray-800">Demande d'arret de virement</span>
-        </nav> --}}
-
         <!-- Form Section -->
         <div id="form-section" class="max-w-7xl mx-auto bg-white p-6 shadow-md rounded-lg relative m-2">
             @if (session('success'))
@@ -17,23 +10,8 @@
                 </div>
             @endif
 
-            @if (session('error'))
-                <div class="mb-4 p-4 bg-red-50 border border-red-200 text-red-700 rounded">
-                    {{ session('error') }}
-                </div>
-            @endif
-
             <form method="POST" action="{{ route('demandes.demande-arret-virement.store') }}">
                 @csrf
-                @if ($errors->any())
-                    <div class="p-4 bg-red-50 border border-red-200 text-red-700 rounded">
-                        <ul class="list-disc pl-5 space-y-1">
-                            @foreach ($errors->all() as $error)
-                                <li>{{ $error }}</li>
-                            @endforeach
-                        </ul>
-                    </div>
-                @endif
 
                 <!-- Header Section -->
                 <div class="text-center mb-8">
@@ -208,6 +186,16 @@
                         </div>
                     </div>
                 </fieldset> --}}
+            <!-- DECLARATION -->
+            <fieldset class="mb-6 p-5 border rounded-lg">
+                <label class="flex items-start">
+                    <input type="checkbox" name="consentement" value="1">
+                    <span class="ml-2 text-sm">Je certifie l’exactitude des informations</span>
+                </label>
+                @error('consentement')
+                    <p class="text-red-600 text-sm mt-2">{{ $message }}</p>
+                @enderror
+            </fieldset>
 
                 <div class="mt-8 text-right">
                     <button type="submit"
@@ -218,14 +206,4 @@
             </form>
         </div>
     </div>
-
-    <style>
-        .input-error {
-            @apply border-red-500 focus:border-red-500 focus:ring-red-500;
-        }
-
-        .error-message {
-            @apply mt-1 text-sm text-red-600;
-        }
-    </style>
 @endsection

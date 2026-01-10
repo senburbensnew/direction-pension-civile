@@ -23,6 +23,16 @@ class RolesAndPermissionsSeeder extends Seeder
             'viewDashboard',
         ];
 
+/*      $permissions = [
+            'CAN_VIEW_PENSIONNAIRE_SECTION',
+            'CAN_VIEW_FONCTIONNAIRE_SECTION',
+            'CAN_VIEW_INSTITUTION_SECTION',
+            'CAN_VIEW_PENSIONNAIRE_MENU',
+            'CAN_VIEW_FONCTIONNAIRE_MENU',
+            'CAN_VIEW_INSTITUTION_MENU',
+            'CAN_VIEW_DASHBOARD',
+        ]; */
+
         foreach ($permissions as $permission) {
             Permission::firstOrCreate(['name' => $permission]);
         }
@@ -36,19 +46,48 @@ class RolesAndPermissionsSeeder extends Seeder
         $viewInstitutionMenu = Permission::where('name', 'viewInstitutionMenu')->first();
         $viewDashboard = Permission::where('name', 'viewDashboard')->first();
 
+/*      $canViewPensionnaireSection   = Permission::where('name', 'CAN_VIEW_PENSIONNAIRE_SECTION')->first();
+        $canViewFonctionnaireSection = Permission::where('name', 'CAN_VIEW_FONCTIONNAIRE_SECTION')->first();
+        $canViewInstitutionSection   = Permission::where('name', 'CAN_VIEW_INSTITUTION_SECTION')->first();
+        $canViewPensionnaireMenu     = Permission::where('name', 'CAN_VIEW_PENSIONNAIRE_MENU')->first();
+        $canViewFonctionnaireMenu    = Permission::where('name', 'CAN_VIEW_FONCTIONNAIRE_MENU')->first();
+        $canViewInstitutionMenu      = Permission::where('name', 'CAN_VIEW_INSTITUTION_MENU')->first();
+        $canViewDashboard            = Permission::where('name', 'CAN_VIEW_DASHBOARD')->first(); */
+
+
         // Create roles
         $roles = [
             'admin',
             'pensionnaire',
             'fonctionnaire',
             'institution',
-            'liquidation',
-            'service_formalite',
-            'assurance',
-            'comptabilite',
+            'direction',
             'secretariat',
+            'service liquidation',
+            'service formalite',
+            'service controle et placement',
+            'service comptabilite',
+            'service assurance',
             'administration',
         ];
+
+/*         $roles = [
+            'ROLE_SUPERADMIN',
+            'ROLE_PENSIONNAIRE',
+            'ROLE_FONCTIONNAIRE',
+            'ROLE_INSTITUTION',
+            'ROLE_DIRECTION',
+            'ROLE_SECRETARIAT',
+
+            'ROLE_SERVICE_LIQUIDATION',
+            'ROLE_SERVICE_FORMALITE',
+            'ROLE_SERVICE_CONTROLE_PLACEMENT',
+            'ROLE_SERVICE_COMPTABILITE',
+            'ROLE_SERVICE_ASSURANCE',
+
+            'ROLE_ADMINISTRATION',
+        ]; */
+
 
         foreach ($roles as $role) {
             Role::firstOrCreate(['name' => $role]);

@@ -6,7 +6,7 @@ use App\Models\User;
 use App\Models\UserType;
 use Illuminate\Database\Seeder;
 
-class TestUsersSeeder extends Seeder
+class UsersSeeder extends Seeder
 {
     public function run()
     {
@@ -14,15 +14,15 @@ class TestUsersSeeder extends Seeder
 
         $roleUsers = [
             'pensionnaire' => [
-                'name' => 'pens-prenom pens-nom',
+                'name' => 'pensionnaire',
                 'email' => 'pensionnaire@example.com',
             ],
             'fonctionnaire' => [
-                'name' => 'fonct-prenom fonct-nom',
+                'name' => 'fonctionnaire',
                 'email' => 'fonctionnaire@example.com',
             ],
             'institution' => [
-                'name' => 'inst-prenom inst-nom',
+                'name' => 'institution',
                 'email' => 'institution@example.com',
             ],
         ];
@@ -50,7 +50,7 @@ class TestUsersSeeder extends Seeder
         $multiRoleUser = User::updateOrCreate(
             ['email' => 'dagrin@example.com'],
             [
-                'name' => 'Secretaire',
+                'name' => 'Secrétaire Dagrin',
                 'password' => $defaultPassword,
                 'nif' => fake()->numerify('##########'),
                 'user_type_id' => $fonctionnaireType->id,

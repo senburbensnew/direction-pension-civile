@@ -10,6 +10,7 @@ use App\Models\Demande;
 use App\Rules\Base64Image;
 use App\Models\CivilStatus;
 use App\Models\PensionType;
+use Illuminate\Support\Arr;
 use Illuminate\Http\Request;
 use App\Enums\TypeDemandeEnum;
 use App\Models\DemandeHistory;
@@ -20,8 +21,15 @@ use App\Helpers\CodeGeneratorService;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\ValidationException;
 use App\Http\Requests\StoreEtatCarriereRequest;
+use App\Http\Requests\StoreArretPaiementRequest;
 use App\Http\Requests\StoreDemandePensionRequest;
+use App\Http\Requests\StoreDemandeAdhesionRequest;
+use App\Http\Requests\StoreTransfertChequeRequest;
+use App\Http\Requests\StoreDemandeAttestationRequest;
+use App\Http\Requests\StoreDemandeReinsertionRequest;
+use App\Http\Requests\StoreDemandeArretVirementRequest;
 use App\Http\Requests\StoreDemandePensionReversionRequest;
+use App\Http\Requests\StoreDemandeVirementBancaireRequest;
 
 class DemandeController extends Controller
 {
@@ -32,103 +40,61 @@ class DemandeController extends Controller
         $civilStatuses = CivilStatus::orderBy('name', 'asc')->get();
         $pensionTypes = PensionType::orderBy('name', 'asc')->get();
         $pensionCategories = PensionCategory::orderBy('name', 'asc')->get();
-        return view('pensionnaire.demande-virement', compact('genders', 'civilStatuses', 'pensionTypes', 'pensionCategories'));
+
+        return view('pensionnaire.demande-virement-bancaire', compact('genders', 'civilStatuses', 'pensionTypes', 'pensionCategories'));
     }
 
-    public function storeDemandeVirement(Request $request)
+    public function storeDemandeVirement(StoreDemandeVirementBancaireRequest $request)
     {
-        $attributes = [
-            'profile_photo' => "photo de profil",
-            'pensioner_code' => 'code du pensionné',
-            'pension_type_id' => 'type de pension',
-            'nif' => 'NIF',
-            'full_name' => 'nom complet',
-            'address' => 'adresse',
-            'city' => 'ville',
-            'birth_date' => 'date de naissance',
-            'civil_status_id' => 'état civil',
-            'gender_id' => 'genre',
-            'allocation_amount' => 'montant d\'allocation',
-            'mother_name' => 'nom de la mère',
-            'phone' => 'téléphone',
-            'pension_category_id' => 'catégorie de pension',
-            'bank_name' => 'nom de la banque',
-            'account_number' => 'numéro de compte',
-            'account_name' => 'nom du compte',
-            'signature' => 'signature',
-            'declaration_accepted' => "déclaration et engagement"
-        ];
-
-        $messages = [
-            'required' => 'Le champ :attribute est obligatoire.',
-            'exists' => 'La valeur sélectionnée pour :attribute est invalide.',
-            'numeric' => 'Le :attribute doit être un nombre valide.',
-            'digits_between' => 'Le :attribute doit contenir entre :min et :max chiffres.',
-            'image' => 'Le fichier doit être une image valide.',
-            'profile_photo.max' => 'La taille ne doit pas dépasser 2 Mo',
-        ];
-
         DB::beginTransaction();
+        $storedFilePaths = [];
 
         try {
-            $validated = $request->validate([
-                'profile_photo' => 'required|image|mimes:jpeg,png,jpg,gif,webp|max:2048',
-                'pensioner_code' => 'required',
-                'pension_type_id' => 'required|exists:pension_types,id',
-                'nif' => ['required', 'regex:' . RegexExpressions::nif()],
-                'full_name' => 'required|string|max:255',
-                'address' => 'required|string|max:255',
-                'city' => 'required|string|max:255',
-                'birth_date' => 'required|date',
-                'civil_status_id' => 'required|exists:civil_statuses,id',
-                'gender_id' => 'required|exists:genders,id',
-                'allocation_amount' => 'required|numeric',
-                'mother_name' => 'required|string|max:255',
-                'phone' => ['required'],
-                'pension_category_id' => 'required|exists:pension_categories,id',
-                'bank_name' => 'required|string|max:255',
-                'account_number' => 'required|numeric|digits_between:5,20',
-                'account_name' => 'required|string|max:255',
-                'signature' => ['nullable', 'string', new Base64Image],
-                'declaration_accepted' => ['required', 'accepted'],
-            ], $messages, $attributes);
+            $validated = $request->validated();
 
             $validated['code'] = CodeGeneratorService::generateUniqueRequestCode(
                 TypeDemandeEnum::DEMANDE_VIREMENT_BANCAIRE->value,
                 (new Demande())->getTable()
             );
+
             $validated['status_id'] = Status::getStatusPending()->id;
             $validated['created_by'] = auth()->id();
             $validated['type'] = TypeDemandeEnum::DEMANDE_VIREMENT_BANCAIRE->value;
-           
+
+            $basePath = 'demandes/virement-bancaire/' . now()->format('Y/m');
+
+            // Upload photo
             if ($request->hasFile('profile_photo')) {
-                $validated['profile_photo'] = $request->file('profile_photo')
-                    ->store('profile_photos', 'public');
+                $path = $request->file('profile_photo')->store($basePath, 'public');
+                $validated['profile_photo'] = $path;
+                $storedFilePaths[] = $path;
             }
 
-           $validated['data'] = collect($validated)->except(['signature'])->toArray();
+            // Data métier
+            $validated['data'] = collect($validated)
+                ->except(['consentement'])
+                ->toArray();
 
-           $demande = Demande::create($validated);
+            $demande = Demande::create($validated);
 
-           DemandeHistory::create([
-               'demande_id' => $demande->id,
-               'statut' => $demande->status->name,
-               'commentaire' => 'Demande créée',
-               'changed_by' => auth()->id(),
-               'data' => $demande->data
-           ]);
+            DemandeHistory::create([
+                'demande_id' => $demande->id,
+                'statut'     => $demande->status->name,
+                'commentaire'=> 'Demande créée',
+                'changed_by' => auth()->id(),
+                'data'       => $demande->data,
+            ]);
 
-           DB::commit();
+            DB::commit();
 
-           return back()->with('success', 'Demande de virement enregistrée avec succès.');
-        } catch (ValidationException $e) {
-            DB::rollBack();
-
-            return back()
-                ->withErrors($e->validator)
-                ->withInput();
+            return back()->with('success', 'Demande enregistrée avec succès.');
         } catch (\Exception $e) {
             DB::rollBack();
+
+            if (!empty($storedFilePaths)) {
+                Storage::disk('public')->delete($storedFilePaths);
+            }
+
             Log::error($e);
 
             return back()
@@ -143,33 +109,13 @@ class DemandeController extends Controller
         return view('pensionnaire.demande-attestation');
     }
 
-    public function storeDemandeAttestation(Request $request)
+    public function storeDemandeAttestation(StoreDemandeAttestationRequest $request)
     {
-        $attributes = [
-            'pensioner_code' => 'code du pensionné',
-            'nif' => 'NIF',
-            'firstname' => 'Prénom',
-            'lastname' => 'Nom',
-            // 'declaration_accepted' => "déclaration et engagement"
-        ];
-
-        $messages = [
-            'required' => 'Le champ :attribute est obligatoire.',
-            'exists' => 'La valeur sélectionnée pour :attribute est invalide.',
-            'numeric' => 'Le :attribute doit être un nombre valide.',
-            'digits_between' => 'Le :attribute doit contenir entre :min et :max chiffres.',
-        ];
 
         DB::beginTransaction();
 
         try {
-            $validated = $request->validate([
-                'pensioner_code' => 'required',
-                'nif' => ['required', 'regex:' . RegexExpressions::nif()],
-                'firstname' => 'required|string|max:255',
-                'lastname' => 'required|string|max:255',
-                // 'declaration_accepted' => ['required', 'accepted'],
-            ], $messages, $attributes);
+            $validated = $request->validated();
 
             $validated['code'] = CodeGeneratorService::generateUniqueRequestCode(
                 TypeDemandeEnum::DEMANDE_ATTESTATION->value,
@@ -193,7 +139,7 @@ class DemandeController extends Controller
 
            DB::commit();
 
-           return back()->with('success', 'Demande de virement enregistrée avec succès.');
+           return back()->with('success', 'Demande enregistrée avec succès.');
         } catch (ValidationException $e) {
             DB::rollBack();
 
@@ -217,109 +163,36 @@ class DemandeController extends Controller
         return view('pensionnaire.demande-transfert-cheque', compact('pensionCategories'));
     }
 
-    public function storeDemandeTransfertCheque(Request $request)
+    public function storeDemandeTransfertCheque(StoreTransfertChequeRequest $request)
     {
-        $attributes = [
-                'pensioner_code' => 'code du pensionné',
-                'pension_type_id' => 'type de pension',
-                'nif' => 'NIF',
-                'full_name' => 'nom complet',
-                'address' => 'adresse',
-                'city' => 'ville',
-                'civil_status_id' => 'état civil',
-                'gender_id' => 'genre',
-                'amount' => 'montant d\'allocation',
-                'maiden' => 'nom de la mère',
-                'phone' => 'téléphone',
-                'fiscal_year' => 'année fiscale',
-                'start_month' => 'mois de début',
-                'request_date' => 'date de la demande',
-                'pension_category_id' => 'régime de pension',
-                'lastname' => 'nom',
-                'firstname' => 'prénom',
-                'maiden_name' => 'nom de jeune fille',
-                'ninu' => 'NINU',
-                'email' => 'courriel',
-                'from' => 'début période',
-                'to' => 'fin période',
-                'transfer_reason' => 'motif',
-        ];
-        
-        $messages = [
-                'required' => 'Le champ :attribute est obligatoire.',
-                'unique' => 'Ce code est déjà utilisé.',
-                'digits' => 'Le :attribute doit contenir exactement :digits chiffres.',
-                'digits_between' => 'Le :attribute doit contenir entre :min et :max chiffres.',
-                'numeric' => 'Le :attribute doit être un nombre valide.',
-                'date' => 'La date de naissance est invalide.',
-                'in' => 'La valeur sélectionnée pour :attribute est invalide.',
-                'max.string' => 'Le :attribute ne doit pas dépasser :max caractères.',
-                'max.file' => 'La photo ne doit pas dépasser :max Ko.',
-                'image' => 'Le fichier doit être une image valide (JPG, PNG, JPEG).',
-                
-                // Field-specific messages
-                'nif.digits' => 'Le NIF doit contenir exactement 10 chiffres.',
-                'phone.digits' => 'Le numéro de téléphone doit contenir exactement 10 chiffres.',
-                'account_number.digits_between' => 'Le numéro de compte doit contenir entre 5 et 20 chiffres.',
-                'birth_date.date' => 'Veuillez entrer une date de naissance valide.',
-                'pensioner_code.required' => 'Le code pensionnaire est obligatoire.',
-        ];    
-
-        $validPensionCategories = PensionCategory::pluck('id')->toArray();
-
         DB::beginTransaction();
 
         try {
-            $validated = $request->validate([
-                'fiscal_year' => 'required|string|max:255',
-                'start_month' => 'required|string|size:7',  // Ensures the month is in the format YYYY-MM
-                'request_date' => 'required|date',
-                'pension_category_id' => 'required|in:' . implode(',', $validPensionCategories), // Ensures that the pension_category_id exists in the pension_categories table
-                'pensioner_code' => 'required|string|max:255',
-                'amount' => 'required|numeric',  // Validates the allocation amount as numeric
-                'lastname' => 'required|string|max:255',
-                'firstname' => 'required|string|max:255',
-                'maiden_name' => 'required|string|max:255',
-                'nif' => 'required|string|max:255',
-                'ninu' => 'required|string|max:255',
-                'address' => 'required|string|max:255',
-                'phone' => 'required|string|max:255',
-                'email' => 'required|string|email|max:255',
-                'from' => 'required|date',
-                'to' => 'required|date',
-                'transfer_reason' => 'required|string|max:1000',  // Assumes the transfer reason might be a longer text
-            ], $messages, $attributes);
- 
+            $validated = $request->validated();
+
             $validated['code'] = CodeGeneratorService::generateUniqueRequestCode(
                 TypeDemandeEnum::DEMANDE_TRANSFERT_CHEQUE->value,
                 (new Demande())->getTable()
             );
+
             $validated['status_id'] = Status::getStatusPending()->id;
             $validated['created_by'] = auth()->id();
             $validated['type'] = TypeDemandeEnum::DEMANDE_TRANSFERT_CHEQUE->value;
+            $validated['data'] = collect($validated)->toArray();
 
-           $validated['data'] = collect($validated)->toArray();
+            $demande = Demande::create($validated);
 
+            DemandeHistory::create([
+                'demande_id' => $demande->id,
+                'statut' => $demande->status->name,
+                'commentaire' => 'Demande créée',
+                'changed_by' => auth()->id(),
+                'data' => $demande->data
+            ]);
 
-           $demande = Demande::create($validated);
+            DB::commit();
 
-           DemandeHistory::create([
-               'demande_id' => $demande->id,
-               'statut' => $demande->status->name,
-               'commentaire' => 'Demande créée',
-               'changed_by' => auth()->id(),
-               'data' => $demande->data
-           ]);
-
-           DB::commit();
-
-           return back()->with('success', 'Demande de virement enregistrée avec succès.');
-        } catch (ValidationException $e) {
-            DB::rollBack();
-
-            return back()
-                ->withErrors($e->validator)
-                ->withInput();
+            return back()->with('success', 'Demande enregistrée avec succès.');
         } catch (\Exception $e) {
             DB::rollBack();
             Log::error($e);
@@ -337,52 +210,86 @@ class DemandeController extends Controller
         return view('pensionnaire.demande-arret-paiement', compact('pensionCategories'));
     }
 
-    public function storeDemandeArretPaiement(Request $request)
+    public function storeDemandeArretPaiement(StoreArretPaiementRequest $request)
     {
         DB::beginTransaction();
 
+        $storedFilePaths = [];
+
         try {
-            $validated = $request->validate([
-                "pensioner_code" => 'required|string|max:255',
-                "name" => 'required|string|max:255',
-                "company" => 'required|string|max:255',
-                "personne_habilitee" => 'required|string|max:255',
-                "nom_conjoint" => 'required|string|max:255'
-            ]);
- 
+            // ✅ Validation
+            $validated = $request->validated();
+
+            // ❌ Champs non persistés
+            unset(
+                $validated['pieces'],
+                $validated['consentement']
+            );
+
+            // ✅ Métadonnées
             $validated['code'] = CodeGeneratorService::generateUniqueRequestCode(
                 TypeDemandeEnum::DEMANDE_ARRET_PAIEMENT->value,
                 (new Demande())->getTable()
             );
+
             $validated['status_id'] = Status::getStatusPending()->id;
             $validated['created_by'] = auth()->id();
             $validated['type'] = TypeDemandeEnum::DEMANDE_ARRET_PAIEMENT->value;
 
-           $validated['data'] = collect($validated)->toArray();
+            // 📂 Dossier upload
+            $basePath = 'demandes/arret-paiement/' . now()->format('Y/m');
+            $uploadedFiles = [];
+
+            if ($request->hasFile('pieces')) {
+                foreach ($request->file('pieces') as $file) {
+                    $path = $file->store($basePath, 'public');
+                    $storedFilePaths[] = $path;
+                    $uploadedFiles[] = $path;
+                }
+            }
+
+            // 🧾 Données métier UNIQUEMENT
+            $dataMetier = Arr::except($validated, [
+                'code',
+                'status_id',
+                'created_by',
+                'type'
+            ]);
+
+            $validated['data'] = $dataMetier;
+            $validated['data']['pieces'] = $uploadedFiles;
 
 
-           $demande = Demande::create($validated);
+            // 📝 Création
+            $demande = Demande::create($validated);
 
-           DemandeHistory::create([
-               'demande_id' => $demande->id,
-               'statut' => $demande->status->name,
-               'commentaire' => 'Demande créée',
-               'changed_by' => auth()->id(),
-               'data' => $demande->data
-           ]);
+            // 📜 Historique
+            DemandeHistory::create([
+                'demande_id' => $demande->id,
+                'statut' => $demande->status->name,
+                'commentaire' => 'Demande créée',
+                'changed_by' => auth()->id(),
+                'data' => $demande->data
+            ]);
 
-           DB::commit();
+            DB::commit();
 
-           return back()->with('success', 'Demande de virement enregistrée avec succès.');
-        } catch (ValidationException $e) {
-            DB::rollBack();
+            return back()->with(
+                'success',
+                'Demande d’arrêt de paiement enregistrée avec succès.'
+            );
 
-            return back()
-                ->withErrors($e->validator)
-                ->withInput();
         } catch (\Exception $e) {
             DB::rollBack();
-            Log::error($e);
+
+            if (!empty($storedFilePaths)) {
+                Storage::disk('public')->delete($storedFilePaths);
+            }
+
+            Log::error('Erreur demande arrêt paiement', [
+                'message' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+            ]);
 
             return back()
                 ->with('error', 'Une erreur inattendue est survenue.')
@@ -396,16 +303,12 @@ class DemandeController extends Controller
         return view('pensionnaire.demande-reinsertion');
     }
 
-    public function storeDemandeReinsertion(Request $request)
+    public function storeDemandeReinsertion(StoreDemandeReinsertionRequest $request)
     {
         DB::beginTransaction();
 
         try {
-            $validated = $request->validate([
-                "firstname" => 'required|string|max:255',
-                "lastname" => 'required|string|max:255',
-                "reason" => 'required|string|max:255'
-            ]);
+            $validated = $request->validated();
  
             $validated['code'] = CodeGeneratorService::generateUniqueRequestCode(
                 TypeDemandeEnum::DEMANDE_REINSERTION->value,
@@ -430,7 +333,7 @@ class DemandeController extends Controller
 
            DB::commit();
 
-           return back()->with('success', 'Demande de virement enregistrée avec succès.');
+           return back()->with('success', 'Demande enregistrée avec succès.');
         } catch (ValidationException $e) {
             DB::rollBack();
 
@@ -452,50 +355,55 @@ class DemandeController extends Controller
         return view('pensionnaire.demande-arret-virement');
     }
 
-    public function storeDemandeArretVirement(Request $request)
+    public function storeDemandeArretVirement(StoreDemandeArretVirementRequest $request)
     {
-
-
         DB::beginTransaction();
 
         try {
-            $validated = $request->validate([
+            // ✅ Données déjà validées par le FormRequest
+            $validated = $request->validated();
 
-            ]);
- 
+            // Génération du code
             $validated['code'] = CodeGeneratorService::generateUniqueRequestCode(
                 TypeDemandeEnum::DEMANDE_ARRET_VIREMENT->value,
                 (new Demande())->getTable()
             );
-            $validated['status_id'] = Status::getStatusPending()->id;
+
+            $validated['status_id']  = Status::getStatusPending()->id;
             $validated['created_by'] = auth()->id();
-            $validated['type'] = TypeDemandeEnum::DEMANDE_ARRET_VIREMENT->value;
+            $validated['type']       = TypeDemandeEnum::DEMANDE_ARRET_VIREMENT->value;
 
-           $validated['data'] = collect($validated)->toArray();
+            /**
+             * 📦 Payload métier stocké dans la colonne data (JSON)
+             * On exclut les champs techniques
+             */
+            $validated['data'] = collect($validated)
+                ->except(['status_id', 'created_by', 'type'])
+                ->toArray();
 
+            // Création de la demande
+            $demande = Demande::create($validated);
 
-           $demande = Demande::create($validated);
+            // Historique
+            DemandeHistory::create([
+                'demande_id' => $demande->id,
+                'statut'     => $demande->status->name,
+                'commentaire'=> 'Demande créée',
+                'changed_by' => auth()->id(),
+                'data'       => $demande->data,
+            ]);
 
-           DemandeHistory::create([
-               'demande_id' => $demande->id,
-               'statut' => $demande->status->name,
-               'commentaire' => 'Demande créée',
-               'changed_by' => auth()->id(),
-               'data' => $demande->data
-           ]);
+            DB::commit();
 
-           DB::commit();
+            return back()->with('success', 'Demande enregistrée avec succès.');
 
-           return back()->with('success', 'Demande de virement enregistrée avec succès.');
-        } catch (ValidationException $e) {
+        } catch (\Throwable $e) {
             DB::rollBack();
 
-            return back()
-                ->withErrors($e->validator)
-                ->withInput();
-        } catch (\Exception $e) {
-            DB::rollBack();
-            Log::error($e);
+            Log::error('Erreur Demande Arrêt Virement', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+            ]);
 
             return back()
                 ->with('error', 'Une erreur inattendue est survenue.')
@@ -545,7 +453,7 @@ class DemandeController extends Controller
 
            DB::commit();
 
-           return back()->with('success', 'Demande de virement enregistrée avec succès.');
+           return back()->with('success', 'Demande enregistrée avec succès.');
         } catch (ValidationException $e) {
             DB::rollBack();
 
@@ -594,7 +502,7 @@ class DemandeController extends Controller
             // Handle file uploads
             // ----------------------------------
             $uploadedFiles = [];
-            $basePath = 'demandes/pension-reversion';
+            $basePath = 'demandes/pension-reversion/'. now()->format('Y/m');
 
             // Helper pour fichiers multiples
             $storeMultiple = function ($files) use ($basePath, &$storedFilePaths) {
@@ -707,7 +615,7 @@ class DemandeController extends Controller
 
            DB::commit();
 
-           return back()->with('success', 'Demande de pension de reversion enregistrée avec succès.');
+           return back()->with('success', 'Demande enregistrée avec succès.');
         } catch (ValidationException $e) {
             DB::rollBack();
 
@@ -767,7 +675,7 @@ class DemandeController extends Controller
             // Handle file uploads
             // ----------------------------------
             $uploadedFiles = [];
-            $basePath = 'demandes/etat_carriere';
+            $basePath = 'demandes/etat_carriere/'. now()->format('Y/m');
 
             // Helper pour fichiers multiples
             $storeMultiple = function ($files) use ($basePath, &$storedFilePaths) {
@@ -847,7 +755,7 @@ class DemandeController extends Controller
 
            DB::commit();
 
-           return back()->with('success', 'Demande d\'état de carrière de reversion enregistrée avec succès.');
+           return back()->with('success', 'Demande enregistrée avec succès.');
         } catch (ValidationException $e) {
             DB::rollBack();
 
@@ -904,7 +812,7 @@ class DemandeController extends Controller
             // Handle file uploads
             // ----------------------------------
             $uploadedFiles = [];
-            $basePath = 'demandes/pension';
+            $basePath = 'demandes/pension/'. now()->format('Y/m');
 
             // Helper pour fichiers multiples
             $storeMultiple = function ($files) use ($basePath, &$storedFilePaths) {
@@ -1001,22 +909,9 @@ class DemandeController extends Controller
 
             DB::commit();
 
-            return back()->with('success', 'Demande de pension enregistrée avec succès.');
+            return back()->with('success', 'Demande enregistrée avec succès.');
 
-        } catch (ValidationException $e) {
-
-            DB::rollBack();
-
-            // ❌ Supprimer les fichiers stockés
-            if (!empty($storedFilePaths)) {
-                Storage::disk('public')->delete($storedFilePaths);
-            }
-
-            return back()
-                ->withErrors($e->validator)
-                ->withInput();
-
-        } catch (\Exception $e) {
+        }catch (\Exception $e) {
 
             DB::rollBack();
 
@@ -1040,49 +935,79 @@ class DemandeController extends Controller
         return view('institution.demande-adhesion', compact('genders', 'civilStatuses'));
     }
 
-    public function storeDemandeAdhesion(Request $request)
+    public function storeDemandeAdhesion(StoreDemandeAdhesionRequest $request)
     {
-
         DB::beginTransaction();
 
+        // 👉 Tableau pour tracer tous les fichiers stockés
+        $storedFilePaths = [];
+
         try {
-            $validated = $request->validate([
+            $validated = $request->validated();
 
+            $basePath = 'demandes/adhesion/' . now()->format('Y/m');
+
+            // =========================
+            // Upload photo de profil
+            // =========================
+            if ($request->hasFile('profile_photo')) {
+                $path = $request
+                    ->file('profile_photo')
+                    ->store($basePath, 'public');
+
+                $validated['profile_picture'] = $path;
+                $storedFilePaths[] = $path;
+            }
+
+            // =========================
+            // Séparer data métier
+            // =========================
+            $data = collect($validated)->except([
+                'profile_photo',
+                'consentement',
+            ])->toArray();
+
+            // =========================
+            // Création demande
+            // =========================
+            $demande = Demande::create([
+                'code'       => CodeGeneratorService::generateUniqueRequestCode(
+                    TypeDemandeEnum::DEMANDE_ADHESION->value,
+                    (new Demande())->getTable()
+                ),
+                'status_id'  => Status::getStatusPending()->id,
+                'created_by' => auth()->id(),
+                'type'       => TypeDemandeEnum::DEMANDE_ADHESION->value,
+                'data'       => $data,
             ]);
- 
-            $validated['code'] = CodeGeneratorService::generateUniqueRequestCode(
-                TypeDemandeEnum::DEMANDE_ADHESION->value,
-                (new Demande())->getTable()
-            );
-            $validated['status_id'] = Status::getStatusPending()->id;
-            $validated['created_by'] = auth()->id();
-            $validated['type'] = TypeDemandeEnum::DEMANDE_ADHESION->value;
 
-           $validated['data'] = collect($validated)->toArray();
+            // =========================
+            // Historique
+            // =========================
+            DemandeHistory::create([
+                'demande_id' => $demande->id,
+                'statut'     => $demande->status->name,
+                'commentaire'=> 'Demande créée',
+                'changed_by' => auth()->id(),
+                'data'       => $demande->data,
+            ]);
 
+            DB::commit();
 
-           $demande = Demande::create($validated);
+            return back()->with('success', 'Demande enregistrée avec succès.');
+        } catch (\Throwable $e) {
 
-           DemandeHistory::create([
-               'demande_id' => $demande->id,
-               'statut' => $demande->status->name,
-               'commentaire' => 'Demande créée',
-               'changed_by' => auth()->id(),
-               'data' => $demande->data
-           ]);
-
-           DB::commit();
-
-           return back()->with('success', 'Demande d\'adhésion enregistrée avec succès.');
-        } catch (ValidationException $e) {
             DB::rollBack();
 
-            return back()
-                ->withErrors($e->validator)
-                ->withInput();
-        } catch (\Exception $e) {
-            DB::rollBack();
-            Log::error($e);
+            // ❌ Supprimer les fichiers stockés
+            if (!empty($storedFilePaths)) {
+                Storage::disk('public')->delete($storedFilePaths);
+            }
+
+            Log::error('Erreur demande adhésion', [
+                'message' => $e->getMessage(),
+                'trace'   => $e->getTraceAsString(),
+            ]);
 
             return back()
                 ->with('error', 'Une erreur inattendue est survenue.')

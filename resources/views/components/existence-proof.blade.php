@@ -1,11 +1,4 @@
 <div class="max-w-6xl mx-auto p-4 md:p-6 m-2 ">
-    <!-- Breadcrumb -->
-{{--     <nav class="text-sm text-gray-600 mb-4">
-        <span class="text-gray-800">Pensionnaire</span>
-        <span class="mx-2">></span>
-        <span class="text-gray-800">Preuve d'existence</span>
-    </nav> --}}
-
     <form method="POST" action="{{ route('demandes.preuve-existence.store') }}"
         class="p-4 md:p-5 bg-white shadow-md rounded-lg border" enctype="multipart/form-data">
         @csrf
@@ -14,18 +7,18 @@
             <!-- ID Input -->
             <div class="w-full md:w-40 order-1">
                 <div class="relative">
-                    <input type="text" name="id_number" id="id_number" value="{{ old('id_number') }}"
+                    <input type="text" name="numero_identite" id="numero_identite" value="{{ old('numero_identite') }}"
                         class="
                         {{-- peer --}}
                          w-full h-12 py-2 text-lg border-b-2 border-gray-500 focus:outline-none 
                         {{-- placeholder-transparent  --}}
-                        @error('id_number') border-red-500 @else border-gray-300 @enderror"
+                        @error('numero_identite') border-red-500 @else border-gray-300 @enderror"
                         placeholder="003-456-789-0" aria-label="Numéro d'identité" />
-                    <label for="id_number"
+                    <label for="numero_identite"
                         class="absolute left-0 -top-4 text-gray-500 text-sm transition-all peer-placeholder-shown:top-2 peer-placeholder-shown:text-base peer-focus:-top-4 peer-focus:text-sm">
                         NO D’IDENTITE
                     </label>
-                    @error('id_number')
+                    @error('numero_identite')
                         <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
                     @enderror
                 </div>
@@ -55,33 +48,14 @@
             </div>
         @endif
 
-        @if (session('error'))
-            <div class="mb-4 p-4 bg-red-50 border border-red-200 text-red-700 rounded">
-                {{ session('error') }}
-            </div>
-        @endif
-
-        @if ($errors->any())
-            <div class="p-4 bg-red-50 border border-red-200 text-red-700 rounded">
-                <ul class="list-disc pl-5 space-y-1">
-                    @foreach ($errors->all() as $error)
-                        <li>{{ $error }}</li>
-                    @endforeach
-                </ul>
-            </div>
-        @endif
-
-        {{-- <input type="file" id="photoUpload" accept="image/*" class="hidden" onchange="previewPhoto(event)"
-            name="profile_photo"> --}}
-        <!-- Main Form Content -->
         <div class="space-y-6 mt-5">
             <!-- Fiscal Year -->
             <div class="w-full md:w-1/2">
                 <label for="annee_fiscale" class="block text-sm font-medium text-gray-700">ANNEE FISCALE *</label>
-                <input value="{{ old('fiscal_year') }}" placeholder="20../20.." type="text" name="fiscal_year"
+                <input value="{{ old('annee_fiscale') }}" placeholder="20../20.." type="text" name="annee_fiscale"
                     id="annee_fiscale" min="1900" max="2100"
                     class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
-                @error('fiscal_year')
+                @error('annee_fiscale')
                     <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
                 @enderror
             </div>
@@ -103,20 +77,20 @@
                     <div>
                         <label for="nom" class="block text-sm font-medium text-gray-700">NOM *</label>
 
-                        <input readonly value="{{ auth()->user()->lastname }}" type="text" name="lastname"
+                        <input readonly value="{{ auth()->user()->lastname }}" type="text" name="nom"
                             id="nom"
                             class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 bg-gray-100">
-                        @error('lastname')
+                        @error('nom')
                             <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
                         @enderror
                     </div>
 
                     <div>
                         <label for="prenom" class="block text-sm font-medium text-gray-700">PRENOM *</label>
-                        <input readonly value="{{ auth()->user()->firstname }}" type="text" name="firstname"
+                        <input readonly value="{{ auth()->user()->firstname }}" type="text" name="prenom"
                             id="prenom"
                             class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 bg-gray-100">
-                        @error('firstname')
+                        @error('prenom')
                             <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
                         @enderror
                     </div>
@@ -124,18 +98,18 @@
                     <!-- Address Fields -->
                     <div class="md:col-span-2">
                         <label for="adresse" class="block text-sm font-medium text-gray-700">ADRESSE *</label>
-                        <input value="{{ old('address') }}" type="text" name="address" id="adresse"
+                        <input value="{{ old('adresse') }}" type="text" name="adresse" id="adresse"
                             class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
-                        @error('address')
+                        @error('adresse')
                             <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
                         @enderror
                     </div>
 
                     <div>
-                        <label for="location" class="block text-sm font-medium text-gray-700">LOCALISATION *</label>
-                        <input value="{{ old('location') }}" type="text" name="location" id="location"
+                        <label for="localisation" class="block text-sm font-medium text-gray-700">LOCALISATION *</label>
+                        <input value="{{ old('localisation') }}" type="text" name="localisation" id="localisation"
                             class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
-                        @error('location')
+                        @error('localisation')
                             <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
                         @enderror
                     </div>
@@ -144,64 +118,64 @@
                     <div>
                         <label for="date_naissance" class="block text-sm font-medium text-gray-700">DATE DE NAISSANCE
                             *</label>
-                        <input value="{{ old('birth_date') }}" type="date" name="birth_date" id="date_naissance"
+                        <input value="{{ old('date_naissance') }}" type="date" name="date_naissance" id="date_naissance"
                             class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
-                        @error('birth_date')
+                        @error('date_naissance')
                             <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
                         @enderror
                     </div>
 
                     <!-- Civil Status -->
                     <div>
-                        <label for="etat_civil" class="block text-sm font-medium text-gray-700">ETAT CIVIL *</label>
-                        <select name="civil_status_id" id="etat_civil"
+                        <label for="etat_civil_id" class="block text-sm font-medium text-gray-700">ETAT CIVIL *</label>
+                        <select name="etat_civil_id" id="etat_civil_id"
                             class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
                             <option value="">Sélectionner</option>
                             @foreach ($civilStatuses as $status)
-                                <option value="{{ $status['id'] }}" @selected(old('civil_status_id') == $status['id'])>
+                                <option value="{{ $status['id'] }}" @selected(old('etat_civil_id') == $status['id'])>
                                     {{ ucfirst($status['name']) }}
                                 </option>
                             @endforeach
                         </select>
-                        @error('civil_status_id')
+                        @error('etat_civil_id')
                             <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
                         @enderror
                     </div>
 
                     <!-- Gender -->
                     <div>
-                        <label for="sexe" class="block text-sm font-medium text-gray-700">SEXE *</label>
-                        <select name="gender_id" id="sexe"
+                        <label for="sexe_id" class="block text-sm font-medium text-gray-700">SEXE *</label>
+                        <select name="sexe_id" id="sexe_id"
                             class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
                             <option value="">Sélectionner</option>
                             @foreach ($genders as $gender)
-                                <option value="{{ $gender['id'] }}" @selected(old('gender_id') == $gender['id'])>
+                                <option value="{{ $gender['id'] }}" @selected(old('sexe_id') == $gender['id'])>
                                     {{ $gender['name'] }}
                                 </option>
                             @endforeach
                         </select>
-                        @error('gender_id')
+                        @error('sexe_id')
                             <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
                         @enderror
                     </div>
 
                     <!-- Contact Info -->
                     <div>
-                        <label for="boite_postale" class="block text-sm font-medium text-gray-700">BOITE POSTALE
+                        <label for="adresse_postale" class="block text-sm font-medium text-gray-700">BOITE POSTALE
                             *</label>
-                        <input value="{{ old('postal_address') }}" type="text" name="postal_address"
-                            id="boite_postale"
+                        <input value="{{ old('adresse_postale') }}" type="text" name="adresse_postale"
+                            id="adresse_postale"
                             class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
-                        @error('postal_address')
+                        @error('adresse_postale')
                             <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
                         @enderror
                     </div>
 
                     <div>
                         <label for="telephone" class="block text-sm font-medium text-gray-700">TELEPHONE *</label>
-                        <input value="{{ old('phone') }}" type="tel" name="phone" id="telephone"
+                        <input value="{{ old('telephone') }}" type="tel" name="telephone" id="telephone"
                             class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
-                        @error('phone')
+                        @error('telephone')
                             <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
                         @enderror
                     </div>
@@ -210,21 +184,21 @@
                     <div>
                         <label for="montant_pension" class="block text-sm font-medium text-gray-700">MONTANT PENSION
                             *</label>
-                        <input value="{{ old('pension_amount') }}" type="number" name="pension_amount"
+                        <input value="{{ old('montant_pension') }}" type="number" name="montant_pension"
                             id="montant_pension"
                             class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
                             min="0">
-                        @error('pension_amount')
+                        @error('montant_pension')
                             <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
                         @enderror
                     </div>
 
                     <div>
                         <label for="no_moniteur" class="block text-sm font-medium text-gray-700">NO MONITEUR *</label>
-                        <input value="{{ old('monitor_number') }}" type="text" name="monitor_number"
+                        <input value="{{ old('no_moniteur') }}" type="text" name="no_moniteur"
                             id="no_moniteur"
                             class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
-                        @error('monitor_number')
+                        @error('no_moniteur')
                             <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
                         @enderror
                     </div>
@@ -233,10 +207,10 @@
                     <div>
                         <label for="date_moniteur" class="block text-sm font-medium text-gray-700">DATE MONITEUR
                             *</label>
-                        <input value="{{ old('monitor_date') }}" type="date" name="monitor_date"
+                        <input value="{{ old('date_moniteur') }}" type="date" name="date_moniteur"
                             id="date_moniteur"
                             class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
-                        @error('monitor_date')
+                        @error('date_moniteur')
                             <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
                         @enderror
                     </div>
@@ -244,32 +218,20 @@
                     <div>
                         <label for="debut_pension" class="block text-sm font-medium text-gray-700">DEBUT PENSION
                             *</label>
-                        <input value="{{ old('pension_start_date') }}" type="date" name="pension_start_date"
+                        <input value="{{ old('debut_pension') }}" type="date" name="debut_pension"
                             id="debut_pension"
                             class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
-                        @error('pension_start_date')
+                        @error('debut_pension')
                             <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
                         @enderror
                     </div>
 
                     <div>
                         <label for="fin_pension" class="block text-sm font-medium text-gray-700">FIN PENSION *</label>
-                        <input value="{{ old('pension_end_date') }}" type="date" name="pension_end_date"
+                        <input value="{{ old('fin_pension') }}" type="date" name="fin_pension"
                             id="fin_pension"
                             class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
-                        @error('pension_end_date')
-                            <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
-                        @enderror
-                    </div>
-
-                    <div>
-                        <label for="last_proof_mandate_date" class="block text-sm font-medium text-gray-700">
-                            Date de dernière Preuve/Mandat
-                        </label>
-                        <input value="{{ old('last_proof_mandate_date') }}" type="date"
-                            name="last_proof_mandate_date" id="last_proof_mandate_date"
-                            class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
-                        @error('last_proof_mandate_date')
+                        @error('fin_pension')
                             <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
                         @enderror
                     </div>
@@ -280,20 +242,20 @@
                         <div class="grid grid-cols-1 md:grid-cols-3 gap-2">
                             @foreach ($pensionCategories as $category)
                                 <div class="flex items-center">
-                                    <input type="radio" id="pension_{{ $category->slug }}"
-                                        name="pension_category_id" value="{{ $category->id }}"
+                                    <input type="radio"
+                                        name="categorie_pension_id" value="{{ $category->id }}"
                                         class="h-4 w-4 text-blue-600 border-gray-300 focus:ring-blue-500"
-                                        @checked(old('pension_category_id') == $category->id)>
-                                    <label for="pension_{{ $category->slug }}" class="ml-2 text-sm text-gray-700">
+                                        @checked(old('categorie_pension_id') == $category->id)>
+                                    <label class="ml-2 text-sm text-gray-700">
                                         {{ $category->name }}
                                     </label>
                                 </div>
                             @endforeach
                         </div>
+                        @error('categorie_pension_id')
+                            <p class="text-sm text-red-600">{{ $message }}</p>
+                        @enderror
                     </div>
-                    @error('pension_category_id')
-                        <p class="text-sm text-red-600">{{ $message }}</p>
-                    @enderror
                 </div>
             </fieldset>
             <!-- Dependants Section -->
@@ -329,76 +291,6 @@
                                 </tr>
                             </thead>
                             <tbody class="bg-white divide-y divide-gray-200">
-                                {{--                                 @if (count((array) old('dependants', [])) === 0)
-                                    <input type="hidden" name="dependants" value="[]">
-                                @endif --}}
-                                {{-- 
-                                @foreach (old('dependants', []) as $index => $dependant)
-                                    <tr class="hover:bg-gray-50">
-                                        <td class="px-4 py-2 text-sm text-gray-700">{{ $index + 1 }}</td>
-
-                                        <!-- Nom -->
-                                        <td class="px-4 py-2 text-sm text-gray-900">
-                                            <input type="text" name="dependants[{{ $index }}][name]"
-                                                value="{{ old("dependants.{$index}.name") }}"
-                                                class="w-full border rounded px-2 py-1 @error("dependants.{$index}.name") border-red-500 @enderror">
-                                            @error("dependants.{$index}.name")
-                                                <span class="text-red-500 text-xs">{{ $message }}</span>
-                                            @enderror
-                                        </td>
-
-                                        <!-- Relation -->
-                                        <td class="px-4 py-2 text-sm text-gray-700">
-                                            <input type="text" name="dependants[{{ $index }}][relation]"
-                                                value="{{ old("dependants.{$index}.relation") }}"
-                                                class="w-full border rounded px-2 py-1 @error("dependants.{$index}.relation") border-red-500 @enderror">
-                                            @error("dependants.{$index}.relation")
-                                                <span class="text-red-500 text-xs">{{ $message }}</span>
-                                            @enderror
-                                        </td>
-
-                                        <!-- Date de naissance -->
-                                        <td class="px-4 py-2 text-sm text-gray-700">
-                                            <input type="date" name="dependants[{{ $index }}][birth_date]"
-                                                value="{{ old("dependants.{$index}.birth_date") }}"
-                                                class="w-full border rounded px-2 py-1 @error("dependants.{$index}.birth_date") border-red-500 @enderror">
-                                            @error("dependants.{$index}.birth_date")
-                                                <span class="text-red-500 text-xs">{{ $message }}</span>
-                                            @enderror
-                                        </td>
-
-                                        <!-- Sexe -->
-                                        <td class="px-4 py-2 text-sm text-gray-700">
-                                            <select name="dependants[{{ $index }}][gender_id]"
-                                                class="w-full border rounded px-2 py-1 @error("dependants.{$index}.gender_id") border-red-500 @enderror">
-                                                <option value="">Sélectionner</option>
-                                                @foreach ($genders as $gender)
-                                                    <option value="{{ $gender->id }}"
-                                                        {{ old("dependants.{$index}.gender_id") == $gender->id ? 'selected' : '' }}>
-                                                        {{ $gender->name }}
-                                                    </option>
-                                                @endforeach
-                                            </select>
-                                            @error("dependants.{$index}.gender_id")
-                                                <span class="text-red-500 text-xs">{{ $message }}</span>
-                                            @enderror
-                                        </td>
-
-                                        <!-- Actions -->
-                                        <td class="px-4 py-2 text-sm text-right space-x-2">
-                                            <button type="button" onclick="deleteRow(this)"
-                                                class="text-red-600 hover:text-red-900">
-                                                <svg class="w-4 h-4" fill="none" stroke="currentColor"
-                                                    viewBox="0 0 24 24">
-                                                    <path stroke-linecap="round" stroke-linejoin="round"
-                                                        stroke-width="2"
-                                                        d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                                                </svg>
-                                            </button>
-                                        </td>
-                                    </tr>
-                                @endforeach --}}
-
                                 @foreach (old('dependants', []) as $index => $dependant)
                                     <tr class="hover:bg-gray-50">
                                         <!-- Serial Number -->
@@ -673,12 +565,6 @@
 
         // Gérer l'affichage quand il n'y a plus de dépendants
         if (rowCount === 0) {
-            /*             const hiddenInput = document.createElement('input');
-                        hiddenInput.type = 'hidden';
-                        hiddenInput.name = 'dependants';
-                        hiddenInput.value = '[]';
-                        tbody.appendChild(hiddenInput); */
-
             document.getElementById('dependants-table').hidden = true;
             document.getElementById('no-dependants-message').hidden = false;
         }

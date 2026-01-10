@@ -1,22 +1,7 @@
 @extends('layouts.main')
 
 @section('content')
-    <style>
-        .input-error {
-            @apply border-red-500 focus:border-red-500 focus:ring-red-500;
-        }
-
-        .error-message {
-            @apply mt-1 text-sm text-red-600;
-        }
-    </style>
-
     <div class="max-w-6xl mx-auto p-6 m-2 ">
-{{--         <nav class="text-sm text-gray-600 mb-4">
-            <span class="text-gray-800">Institutions</span> >
-            <span class="text-gray-800">Demande d'Adhésion</span>
-        </nav> --}}
-
         <div id="form-section" class="max-w-7xl mx-auto bg-white p-6 shadow-md rounded-lg relative m-2">
             <div class="text-center mb-8">
                 <h1 class="text-2xl font-bold mb-2">MINISTERE DE L'ECONOMIE ET DES FINANCES (MEF)</h1>
@@ -30,16 +15,11 @@
                 </div>
             @endif
 
-            @if (session('error'))
+                        <!-- VALIDATION ERRORS -->
+            @if($errors->any())
                 <div class="mb-4 p-4 bg-red-50 border border-red-200 text-red-700 rounded">
-                    {{ session('error') }}
-                </div>
-            @endif
-
-            @if ($errors->any())
-                <div class="p-4 bg-red-50 border border-red-200 text-red-700 rounded">
                     <ul class="list-disc pl-5 space-y-1">
-                        @foreach ($errors->all() as $error)
+                        @foreach($errors->all() as $error)
                             <li>{{ $error }}</li>
                         @endforeach
                     </ul>
@@ -373,36 +353,10 @@
                 <fieldset class="shadow-md rounded-lg p-5 border mb-6">
                     <legend class="text-lg font-semibold mb-4">Informations Professionnelles</legend>
 
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div>
-                            <label for="entry_date" class="block text-sm font-medium text-gray-700 mb-1">
-                                Date d'entrée en fonction *
-                            </label>
-                            <input type="date" id="entry_date" name="entry_date"
-                                class="w-full rounded-md border-gray-300 @error('entry_date') input-error @enderror"
-                                value="{{ old('entry_date') }}">
-                            @error('entry_date')
-                                <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
-                            @enderror
-                        </div>
-
-                        <div>
-                            <label for="current_salary" class="block text-sm font-medium text-gray-700 mb-1">
-                                Salaire mensuel actuel (brut) *
-                            </label>
-                            <input type="number" id="current_salary" name="current_salary" step="0.01"
-                                class="w-full rounded-md border-gray-300 @error('current_salary') input-error @enderror"
-                                value="{{ old('current_salary') }}">
-                            @error('current_salary')
-                                <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
-                            @enderror
-                        </div>
-                    </div>
-
                     <!-- Emplois anterieurs -->
-                    <div class="mt-4">
+                    <div class="mb-5">
                         <label class="block text-sm font-medium text-gray-700 mb-2">
-                            Emplois antérieurs (nom de l'institution, date début, date fin)
+                             Emplois antérieurs dans d'autres institutions
                         </label>
                         <div id="previous-jobs-container">
                             <template id="jobTemplate">
@@ -497,6 +451,32 @@
                             class="mt-2 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">
                             + Ajouter un emploi
                         </button>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label for="entry_date" class="block text-sm font-medium text-gray-700 mb-1">
+                               Date d'entrée en fonction dans l'organisme actuel *
+                            </label>
+                            <input type="date" id="entry_date" name="entry_date"
+                                class="w-full rounded-md border-gray-300 @error('entry_date') input-error @enderror"
+                                value="{{ old('entry_date') }}">
+                            @error('entry_date')
+                                <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                            @enderror
+                        </div>
+
+                        <div>
+                            <label for="current_salary" class="block text-sm font-medium text-gray-700 mb-1">
+                                Salaire mensuel actuel (brut) (Gdes) *
+                            </label>
+                            <input type="number" id="current_salary" name="current_salary" step="0.01"
+                                class="w-full rounded-md border-gray-300 @error('current_salary') input-error @enderror"
+                                value="{{ old('current_salary') }}">
+                            @error('current_salary')
+                                <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                            @enderror
+                        </div>
                     </div>
                 </fieldset>
 
@@ -614,6 +594,41 @@
                         <div class="mt-4 text-right text-xs text-gray-500">
                             DPC/ORG.A/001
                         </div>
+                    </div>
+                </fieldset>
+
+                {{-- Consentement --}}
+                <fieldset class="relative shadow-md rounded-lg p-5 border mb-6">
+                    <div class="mt-6">
+                        <div class="flex items-start">
+                            <div class="flex items-center h-5">
+                                <input
+                                    id="consentement"
+                                    name="consentement"
+                                    type="checkbox"
+                                    value="1"
+                                    {{ old('consentement') ? 'checked' : '' }}
+                                    class="h-4 w-4 rounded border-gray-300 text-blue-600
+                                        focus:ring-blue-500
+                                        @error('consentement') border-red-500 @enderror"
+                                    
+                                >
+                            </div>
+
+                            <div class="ml-3 text-sm">
+                                <label for="consentement" class="font-medium text-gray-700">
+                                    Je certifie que les informations fournies sont exactes
+                                </label>
+                                <p class="text-gray-500">
+                                    Je reconnais que toute fausse déclaration peut entraîner le rejet
+                                    de la demande.
+                                </p>
+                            </div>
+                        </div>
+
+                        @error('consentement')
+                            <p class="mt-2 text-sm text-red-600">{{ $message }}</p>
+                        @enderror
                     </div>
                 </fieldset>
 

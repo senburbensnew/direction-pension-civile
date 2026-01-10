@@ -26,40 +26,40 @@ class Demande extends Model
         'data' => 'array',
     ];
 
-    public function civilStatus()
+    public function civilStatus($name='civil_status_id')
     {
-        if (!isset($this->data['civil_status_id'])) {
+        if (!isset($this->data[$name])) {
             return null;
         }
 
-        return CivilStatus::find($this->data['civil_status_id']);
+        return CivilStatus::find($this->data[$name]);
     }
 
-    public function gender()
+    public function gender($name='gender_id')
     {
-        if (!isset($this->data['gender_id'])) {
+        if (!isset($this->data[$name])) {
             return null;
         }
 
-        return Gender::find($this->data['gender_id']);
+        return Gender::find($this->data[$name]);
     }
 
-    public function pensionType()
+    public function pensionType($name='pension_type_id')
     {
-        if (!isset($this->data['pension_type_id'])) {
+        if (!isset($this->data[$name])) {
             return null;
         }
 
-        return PensionType::find($this->data['pension_type_id']);
+        return PensionType::find($this->data[$name]);
     }
 
-    public function pensionCategory()
+    public function pensionCategory($name='pension_category_id')
     {
-        if (!isset($this->data['pension_category_id'])) {
+        if (!isset($this->data[$name])) {
             return null;
         }
 
-        return PensionCategory::find($this->data['pension_category_id']);
+        return PensionCategory::find($this->data[$name]);
     }
 
     public function user()
@@ -72,7 +72,7 @@ class Demande extends Model
         return $this->hasMany(DemandeHistory::class);
     }
 
-    /*     public function parseDate($date)
+    /* public function parseDate($date)
     {
         return $date ? Carbon::parse($date) : null;
     } */
