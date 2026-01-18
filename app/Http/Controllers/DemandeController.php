@@ -7,6 +7,7 @@ use Exception;
 use App\Models\Gender;
 use App\Models\Status;
 use App\Models\Demande;
+use App\Models\Service;
 use App\Rules\Base64Image;
 use App\Models\CivilStatus;
 use App\Models\PensionType;
@@ -14,6 +15,7 @@ use Illuminate\Support\Arr;
 use Illuminate\Http\Request;
 use App\Enums\TypeDemandeEnum;
 use App\Models\DemandeHistory;
+use App\Models\DemandeWorkflow;
 use App\Models\PensionCategory;
 use App\Helpers\RegexExpressions;
 use Illuminate\Support\Facades\DB;
@@ -61,6 +63,13 @@ class DemandeController extends Controller
             $validated['status_id'] = Status::getStatusPending()->id;
             $validated['created_by'] = auth()->id();
             $validated['type'] = TypeDemandeEnum::DEMANDE_VIREMENT_BANCAIRE->value;
+            $serviceId = Service::where('code', Service::SECRETARIAT)
+                                  ->value('id');
+            if (! $serviceId) {
+                throw new \Exception('Service secrétariat introuvable');
+            }
+            $validated['current_service_id'] = $serviceId;
+
 
             $basePath = 'demandes/virement-bancaire/' . now()->format('Y/m');
 
@@ -80,10 +89,18 @@ class DemandeController extends Controller
 
             DemandeHistory::create([
                 'demande_id' => $demande->id,
-                'statut'     => $demande->status->name,
+                'statut'     => $demande->status->code,
                 'commentaire'=> 'Demande créée',
                 'changed_by' => auth()->id(),
                 'data'       => $demande->data,
+            ]);
+
+            $demande->workflows()->create([
+                'from_service_id' => null,
+                'to_service_id'   => $demande->service->id,
+                'status_id'       => $demande->status->id,
+                'action_by'       => auth()->id(),
+                'commentaire'     => 'Soumission de la demande',
             ]);
 
             DB::commit();
@@ -112,12 +129,11 @@ class DemandeController extends Controller
 
     public function storeDemandeAttestation(StoreDemandeAttestationRequest $request)
     {
-
         DB::beginTransaction();
 
         try {
             $validated = $request->validated();
-
+                    
             $validated['code'] = CodeGeneratorService::generateUniqueRequestCode(
                 TypeDemandeEnum::DEMANDE_ATTESTATION->value,
                 (new Demande())->getTable()
@@ -125,18 +141,37 @@ class DemandeController extends Controller
             $validated['status_id'] = Status::getStatusPending()->id;
             $validated['created_by'] = auth()->id();
             $validated['type'] = TypeDemandeEnum::DEMANDE_ATTESTATION->value;
+            
+            $serviceId = Service::where('code', Service::SECRETARIAT)
+                                  ->value('id');
+            if (! $serviceId) {
+                throw new \Exception('Service secrétariat introuvable');
+            }
+            $validated['current_service_id'] = $serviceId;
 
-           $validated['data'] = collect($validated)->toArray();
+            unset($validated['consentement']);
+
+           $validated['data'] = collect($validated)
+                                ->except(['code', 'status_id', 'created_by', 'type', 'service_id'])
+                                ->toArray();
 
            $demande = Demande::create($validated);
 
            DemandeHistory::create([
                'demande_id' => $demande->id,
-               'statut' => $demande->status->name,
+               'statut' => $demande->status->code,
                'commentaire' => 'Demande créée',
                'changed_by' => auth()->id(),
                'data' => $demande->data
            ]);
+
+            $demande->workflows()->create([
+                'from_service_id' => null,
+                'to_service_id'   => $demande->service->id,
+                'status_id'       => $demande->status->id,
+                'action_by_user_id'       => auth()->id(),
+                'commentaire'     => 'Soumission de la demande',
+            ]);
 
            DB::commit();
 
@@ -179,16 +214,30 @@ class DemandeController extends Controller
             $validated['status_id'] = Status::getStatusPending()->id;
             $validated['created_by'] = auth()->id();
             $validated['type'] = TypeDemandeEnum::DEMANDE_TRANSFERT_CHEQUE->value;
+            $serviceId = Service::where('code', Service::SECRETARIAT)
+                                  ->value('id');
+            if (! $serviceId) {
+                throw new \Exception('Service secrétariat introuvable');
+            }
+            $validated['current_service_id'] = $serviceId;
+
             $validated['data'] = collect($validated)->toArray();
 
             $demande = Demande::create($validated);
 
             DemandeHistory::create([
                 'demande_id' => $demande->id,
-                'statut' => $demande->status->name,
+                'statut' => $demande->status->code,
                 'commentaire' => 'Demande créée',
                 'changed_by' => auth()->id(),
                 'data' => $demande->data
+            ]);
+            $demande->workflows()->create([
+                'from_service_id' => null,
+                'to_service_id'   => $demande->service->id,
+                'status_id'       => $demande->status->id,
+                'action_by'       => auth()->id(),
+                'commentaire'     => 'Soumission de la demande',
             ]);
 
             DB::commit();
@@ -236,6 +285,12 @@ class DemandeController extends Controller
             $validated['status_id'] = Status::getStatusPending()->id;
             $validated['created_by'] = auth()->id();
             $validated['type'] = TypeDemandeEnum::DEMANDE_ARRET_PAIEMENT->value;
+            $serviceId = Service::where('code', Service::SECRETARIAT)
+                                  ->value('id');
+            if (! $serviceId) {
+                throw new \Exception('Service secrétariat introuvable');
+            }
+            $validated['current_service_id'] = $serviceId;
 
             // 📂 Dossier upload
             $basePath = 'demandes/arret-paiement/' . now()->format('Y/m');
@@ -267,10 +322,17 @@ class DemandeController extends Controller
             // 📜 Historique
             DemandeHistory::create([
                 'demande_id' => $demande->id,
-                'statut' => $demande->status->name,
+                'statut' => $demande->status->code,
                 'commentaire' => 'Demande créée',
                 'changed_by' => auth()->id(),
                 'data' => $demande->data
+            ]);
+            $demande->workflows()->create([
+                'from_service_id' => null,
+                'to_service_id'   => $demande->service->id,
+                'status_id'       => $demande->status->id,
+                'action_by'       => auth()->id(),
+                'commentaire'     => 'Soumission de la demande',
             ]);
 
             DB::commit();
@@ -318,6 +380,12 @@ class DemandeController extends Controller
             $validated['status_id'] = Status::getStatusPending()->id;
             $validated['created_by'] = auth()->id();
             $validated['type'] = TypeDemandeEnum::DEMANDE_REINSERTION->value;
+            $serviceId = Service::where('code', Service::SECRETARIAT)
+                                  ->value('id');
+            if (! $serviceId) {
+                throw new \Exception('Service secrétariat introuvable');
+            }
+            $validated['current_service_id'] = $serviceId;
 
            $validated['data'] = collect($validated)->toArray();
 
@@ -326,11 +394,18 @@ class DemandeController extends Controller
 
            DemandeHistory::create([
                'demande_id' => $demande->id,
-               'statut' => $demande->status->name,
+               'statut' => $demande->status->code,
                'commentaire' => 'Demande créée',
                'changed_by' => auth()->id(),
                'data' => $demande->data
            ]);
+            $demande->workflows()->create([
+                'from_service_id' => null,
+                'to_service_id'   => $demande->service->id,
+                'status_id'       => $demande->status->id,
+                'action_by'       => auth()->id(),
+                'commentaire'     => 'Soumission de la demande',
+            ]);
 
            DB::commit();
 
@@ -388,10 +463,18 @@ class DemandeController extends Controller
             // Historique
             DemandeHistory::create([
                 'demande_id' => $demande->id,
-                'statut'     => $demande->status->name,
+                'statut'     => $demande->status->code,
                 'commentaire'=> 'Demande créée',
                 'changed_by' => auth()->id(),
                 'data'       => $demande->data,
+            ]);
+
+            $demande->workflows()->create([
+                'from_service_id' => null,
+                'to_service_id'   => $demande->service->id,
+                'status_id'       => $demande->status->id,
+                'action_by'       => auth()->id(),
+                'commentaire'     => 'Soumission de la demande',
             ]);
 
             DB::commit();
@@ -437,6 +520,12 @@ class DemandeController extends Controller
             $validated['status_id'] = Status::getStatusPending()->id;
             $validated['created_by'] = auth()->id();
             $validated['type'] = TypeDemandeEnum::DEMANDE_PREUVE_EXISTENCE->value;
+            $serviceId = Service::where('code', Service::SECRETARIAT)
+                                  ->value('id');
+            if (! $serviceId) {
+                throw new \Exception('Service secrétariat introuvable');
+            }
+            $validated['current_service_id'] = $serviceId;
 
             // Files
             $uploadedFiles = [];
@@ -460,10 +549,17 @@ class DemandeController extends Controller
 
             DemandeHistory::create([
                 'demande_id' => $demande->id,
-                'statut' => $demande->status->name,
+                'statut' => $demande->status->code,
                 'commentaire' => 'Demande créée',
                 'changed_by' => auth()->id(),
                 'data' => $demande->data
+            ]);
+            $demande->workflows()->create([
+                'from_service_id' => null,
+                'to_service_id'   => $demande->service->id,
+                'status_id'       => $demande->status->id,
+                'action_by'       => auth()->id(),
+                'commentaire'     => 'Soumission de la demande',
             ]);
 
             DB::commit();
@@ -512,6 +608,12 @@ class DemandeController extends Controller
             $validated['status_id'] = Status::getStatusPending()->id;
             $validated['created_by'] = auth()->id();
             $validated['type'] = TypeDemandeEnum::DEMANDE_ETAT_CARRIERE->value;
+                        $serviceId = Service::where('code', Service::SECRETARIAT)
+                                  ->value('id');
+            if (! $serviceId) {
+                throw new \Exception('Service secrétariat introuvable');
+            }
+            $validated['current_service_id'] = $serviceId;
 
             // ----------------------------------
             // Handle file uploads
@@ -543,7 +645,6 @@ class DemandeController extends Controller
             foreach ($multipleFields as $field) {
                 $uploadedFiles[$field] = $storeMultiple($request->file($field));
             }
-
 
             // ================================
             // 2️⃣ FICHIERS SIMPLES
@@ -589,11 +690,19 @@ class DemandeController extends Controller
 
            DemandeHistory::create([
                'demande_id' => $demande->id,
-               'statut' => $demande->status->name,
+               'statut' => $demande->status->code,
                'commentaire' => 'Demande créée',
                'changed_by' => auth()->id(),
                'data' => $demande->data
            ]);
+
+            $demande->workflows()->create([
+                'from_service_id' => null,
+                'to_service_id'   => $demande->service->id,
+                'status_id'       => $demande->status->id,
+                'action_by'       => auth()->id(),
+                'commentaire'     => 'Soumission de la demande',
+            ]);
 
            DB::commit();
 
@@ -601,7 +710,7 @@ class DemandeController extends Controller
         } catch (ValidationException $e) {
             DB::rollBack();
 
-                        // ❌ Supprimer les fichiers stockés
+            // ❌ Supprimer les fichiers stockés
             if (!empty($storedFilePaths)) {
                 Storage::disk('public')->delete($storedFilePaths);
             }
@@ -654,6 +763,12 @@ class DemandeController extends Controller
             $validated['status_id'] = Status::getStatusPending()->id;
             $validated['created_by'] = auth()->id();
             $validated['type'] = TypeDemandeEnum::DEMANDE_PENSION->value;
+                        $serviceId = Service::where('code', Service::SECRETARIAT)
+                                  ->value('id');
+            if (! $serviceId) {
+                throw new \Exception('Service secrétariat introuvable');
+            }
+            $validated['current_service_id'] = $serviceId;
 
             // ----------------------------------
             // Handle file uploads
@@ -748,10 +863,17 @@ class DemandeController extends Controller
             // ----------------------------------
             DemandeHistory::create([
                 'demande_id' => $demande->id,
-                'statut' => $demande->status->name,
+                'statut' => $demande->status->code,
                 'commentaire' => 'Demande créée',
                 'changed_by' => auth()->id(),
                 'data' => $demande->data,
+            ]);
+            $demande->workflows()->create([
+                'from_service_id' => null,
+                'to_service_id'   => $demande->service->id,
+                'status_id'       => $demande->status->id,
+                'action_by'       => auth()->id(),
+                'commentaire'     => 'Soumission de la demande',
             ]);
 
             DB::commit();
@@ -801,6 +923,12 @@ class DemandeController extends Controller
             $validated['status_id'] = Status::getStatusPending()->id;
             $validated['created_by'] = auth()->id();
             $validated['type'] = TypeDemandeEnum::DEMANDE_PENSION_REVERSION->value;
+                        $serviceId = Service::where('code', Service::SECRETARIAT)
+                                  ->value('id');
+            if (! $serviceId) {
+                throw new \Exception('Service secrétariat introuvable');
+            }
+            $validated['current_service_id'] = $serviceId;
 
             // ----------------------------------
             // Handle file uploads
@@ -911,11 +1039,18 @@ class DemandeController extends Controller
             // ----------------------------------
            DemandeHistory::create([
                'demande_id' => $demande->id,
-               'statut' => $demande->status->name,
+               'statut' => $demande->status->code,
                'commentaire' => 'Demande créée',
                'changed_by' => auth()->id(),
                'data' => $demande->data
            ]);
+            $demande->workflows()->create([
+                'from_service_id' => null,
+                'to_service_id'   => $demande->service->id,
+                'status_id'       => $demande->status->id,
+                'action_by'       => auth()->id(),
+                'commentaire'     => 'Soumission de la demande',
+            ]);
 
            DB::commit();
 
@@ -1005,10 +1140,18 @@ class DemandeController extends Controller
             // =========================
             DemandeHistory::create([
                 'demande_id' => $demande->id,
-                'statut'     => $demande->status->name,
+                'statut'     => $demande->status->code,
                 'commentaire'=> 'Demande créée',
                 'changed_by' => auth()->id(),
                 'data'       => $demande->data,
+            ]);
+
+            $demande->workflows()->create([
+                'from_service_id' => null,
+                'to_service_id'   => $demande->service->id,
+                'status_id'       => $demande->status->id,
+                'action_by'       => auth()->id(),
+                'commentaire'     => 'Soumission de la demande',
             ]);
 
             DB::commit();

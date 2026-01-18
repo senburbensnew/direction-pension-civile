@@ -7,6 +7,7 @@ use App\Models\Gender;
 use App\Models\Service;
 use App\Models\CivilStatus;
 use App\Models\PensionType;
+use App\Models\DemandeWorkflow;
 use App\Models\PensionCategory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -20,6 +21,7 @@ class Demande extends Model
         'type',
         'created_by',
         'status_id',
+        'current_service_id',
         'data',
     ];
 
@@ -64,24 +66,31 @@ class Demande extends Model
         return $this->belongsTo(User::class, 'created_by');
     }
 
+    public function service()
+    {
+        return $this->belongsTo(Service::class, 'current_service_id');
+    }
+
+    public function workflows()
+    {
+        return $this->hasMany(DemandeWorkflow::class);
+    }
+
     public function histories()
     {
         return $this->hasMany(DemandeHistory::class);
     }
 
-    /* public function parseDate($date)
-    {
-        return $date ? Carbon::parse($date) : null;
-    } */
+    /* 
+        public function parseDate($date)
+        {
+            return $date ? Carbon::parse($date) : null;
+        } 
+    */
 
     public function status()
     {
         return $this->belongsTo(Status::class);
-    }
-
-    public function service()
-    {
-        return $this->belongsTo(Service::class);
     }
 
     public function scopeForUser($query)
@@ -93,7 +102,6 @@ class Demande extends Model
     {
         return $query->where('type', $type);
     }
-
 
     public function scopePending($query)
     {

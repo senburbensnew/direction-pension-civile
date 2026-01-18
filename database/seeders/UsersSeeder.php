@@ -54,6 +54,7 @@ class UsersSeeder extends Seeder
                 'password' => $defaultPassword,
                 'nif' => fake()->unique()->numerify('###-###-###-#'),
                 'user_type_id' => $fonctionnaireType->id,
+                'service_id' => Service::where('code', 'secretariat')->value('id')
             ]
         );
 

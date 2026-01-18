@@ -3,6 +3,7 @@
 namespace App\Http\Requests;
 
 use App\Rules\Nif;
+use App\Rules\CodePension;
 use App\Helpers\RegexExpressions;
 use Illuminate\Foundation\Http\FormRequest;
 
@@ -16,7 +17,7 @@ class StoreDemandeAttestationRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'code_pension' => ['required', 'string'],
+            'code_pension' => ['required', new CodePension()],
             'nif'            => ['required', new Nif()],
             'prenom'      => ['required', 'string', 'max:255'],
             'nom'       => ['required', 'string', 'max:255'],

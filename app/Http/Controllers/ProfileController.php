@@ -2,12 +2,14 @@
 
 namespace App\Http\Controllers;
 
-use App\Http\Requests\ProfileUpdateRequest;
-use Illuminate\Http\RedirectResponse;
+use Illuminate\View\View;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Http\RedirectResponse;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Redirect;
-use Illuminate\View\View;
+use App\Http\Requests\ProfileUpdateRequest;
+use App\Http\Requests\ProfilePhotoUpdateRequest;
 
 class ProfileController extends Controller
 {
@@ -16,10 +18,6 @@ class ProfileController extends Controller
      */
     public function edit(Request $request): View
     {
-/*         return view('profile.edit', [
-            'user' => $request->user(),
-        ]); */
-
         return view('auth.profile');
     }
 
@@ -37,6 +35,29 @@ class ProfileController extends Controller
         $request->user()->save();
 
         return Redirect::route('profile.edit')->with('status', 'profile-updated');
+    }
+
+    /**
+     * Update the user's profile information.
+     */
+    public function updateProfilePhoto(ProfilePhotoUpdateRequest $request): RedirectResponse
+    {
+        $user = auth()->user();
+    
+        // Supprimer l’ancienne photo si elle existe
+        if ($user->profile_photo) {
+            Storage::disk('public')->delete($user->profile_photo);
+        }
+
+        // Stocker la nouvelle photo
+        $path = $request->file('profile_photo')->store('profile_photos', 'public');
+
+        // Sauvegarder en base
+        $user->update([
+            'profile_photo' => $path,
+        ]);
+
+        return Redirect::route('profile.edit')->with('status', 'profile-photo-updated');
     }
 
     /**

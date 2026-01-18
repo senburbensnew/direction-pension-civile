@@ -316,13 +316,18 @@
 
                 <div>
                     <label class="block text-sm font-medium text-gray-700">Motif *</label>
-                    <textarea name="raison" rows="5" 
-                              class="input mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 @error('raison') input-error @enderror" 
-                              placeholder="Précisez le motif de votre demande..." >{{ old('raison') }}</textarea>
+                    <textarea 
+                        name="raison" 
+                        rows="5" 
+                        class="mt-1 block w-full rounded-md border border-gray-300 shadow-sm
+                            focus:border-blue-500 focus:ring focus:ring-blue-500 focus:ring-opacity-50
+                            h-40 resize-y @error('raison') border-red-500 @enderror"
+                        placeholder="Précisez le motif de votre demande...">{{ old('raison') }}</textarea>
                     @error('raison')
                         <span class="mt-1 text-sm text-red-600">{{ $message }}</span>
                     @enderror
                 </div>
+
             </div>
         </div>
 
@@ -341,7 +346,7 @@
         </div>
 
         {{-- ================= BOUTONS ================= --}}
-        <div class="flex flex-col sm:flex-row gap-4 mt-8">
+        <div class="flex justify-end mt-8 gap-4">
             <button type="submit" 
                     class="px-6 py-3 bg-blue-600 text-white rounded hover:bg-blue-700 transition duration-200">
                 <span class="flex items-center justify-center">
@@ -349,6 +354,7 @@
                 </span>
             </button>
         </div>
+
     </form>
 </div>
 @endsection

@@ -4,6 +4,7 @@ namespace App\Http\Requests;
 
 use App\Rules\Nif;
 use App\Rules\Telephone;
+use App\Rules\CodePension;
 use Illuminate\Foundation\Http\FormRequest;
 
 class StoreDemandeVirementBancaireRequest extends FormRequest
@@ -18,7 +19,7 @@ class StoreDemandeVirementBancaireRequest extends FormRequest
         return [
             'profile_photo'        => 'required|image|mimes:jpeg,png,jpg,gif,webp|max:2048',
 
-            'code_pension'       => 'required|string',
+            'code_pension'       => ['required', new CodePension()],
 
             'type_pension_id'      => 'required|exists:pension_types,id',
 

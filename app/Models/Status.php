@@ -9,12 +9,12 @@ class Status extends Model
 {
     use HasFactory;
 
-   const STATUS_PENDING = 'En attente de traitement';
-   const STATUS_APPROVED = 'Demande approuvée';
-   const STATUS_IN_PROGRESS = 'En cours de traitement';
-   const STATUS_REJECTED = 'Demande rejetée';
-   const STATUS_COMPLETED = 'Traitement finalisé';
-   const STATUS_CANCELED = 'Demande annulée';
+   const STATUS_PENDING = 'EN_ATTENTE';
+   const STATUS_APPROVED = 'APPROUVEE';
+   const STATUS_IN_PROGRESS = 'EN_COURS';
+   const STATUS_REJECTED = 'REJETEE';
+   const STATUS_COMPLETED = 'FINALISEE';
+   const STATUS_CANCELED = 'ANNULEE';
 
     protected $fillable = [
         'name',
@@ -41,7 +41,7 @@ class Status extends Model
 
     private static function getStatus(string $statusConstant): Status
     {
-        return self::firstOrCreate(['name' => $statusConstant]);
+        return self::firstOrCreate(['code' => $statusConstant]);
     }
 
     public static function getStatusPending(): Status

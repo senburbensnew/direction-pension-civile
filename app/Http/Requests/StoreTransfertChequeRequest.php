@@ -4,6 +4,7 @@ namespace App\Http\Requests;
 
 use App\Rules\Nif;
 use App\Rules\Telephone;
+use App\Rules\CodePension;
 use App\Rules\AnneeFiscale;
 use App\Models\PensionCategory;
 use Illuminate\Foundation\Http\FormRequest;
@@ -25,7 +26,7 @@ class StoreTransfertChequeRequest extends FormRequest
             'date_demande' => 'required|date',
 
             'categorie_pension_id' => 'required|in:' . implode(',', $validPensionCategories),
-            'code_pension' => 'required|string|max:255',
+            'code_pension' => ['required', new CodePension()],
             'montant' => 'required|numeric',
 
             'nom' => 'required|string|max:255',

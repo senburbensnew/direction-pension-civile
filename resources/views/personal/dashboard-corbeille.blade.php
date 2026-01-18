@@ -17,7 +17,7 @@
                 <!-- En attente -->
                 <div class="bg-white p-6 rounded-lg shadow">
                     <div class="text-gray-500">
-                        {{ App\Models\Status::STATUS_PENDING }}
+                        {{ App\Models\Status::getStatusPending(App\Models\Status::STATUS_PENDING)->label }}
                     </div>
                     <div class="text-3xl font-bold text-yellow-600">{{ $stats['pending'] }}</div>
                 </div>
@@ -25,7 +25,7 @@
                 <!-- En cours -->
                 <div class="bg-white p-6 rounded-lg shadow">
                     <div class="text-gray-500">
-                        {{ App\Models\Status::STATUS_IN_PROGRESS }}
+                        {{ App\Models\Status::getStatusInProgress(App\Models\Status::STATUS_IN_PROGRESS)->label }}
                     </div>
                     <div class="text-3xl font-bold text-purple-600">{{ $stats['in_progress'] }}</div>
                 </div>
@@ -33,7 +33,7 @@
                 <!-- Rejeté -->
                 <div class="bg-white p-6 rounded-lg shadow">
                     <div class="text-gray-500">
-                        {{ App\Models\Status::STATUS_REJECTED }}
+                        {{ App\Models\Status::getStatusRejected(App\Models\Status::STATUS_REJECTED)->label }}
                     </div>
                     <div class="text-3xl font-bold text-red-600">{{ $stats['rejected'] }}</div>
                 </div>
@@ -41,7 +41,7 @@
                 <!-- Annulé -->
                 <div class="bg-white p-6 rounded-lg shadow">
                     <div class="text-gray-500">
-                        {{ App\Models\Status::STATUS_CANCELED }}
+                        {{ App\Models\Status::getStatusCanceled(App\Models\Status::STATUS_CANCELED)->label }}
                     </div>
                     <div class="text-3xl font-bold text-red-600">{{ $stats['canceled'] }}</div>
                 </div>
@@ -49,7 +49,7 @@
                 <!-- Approuvé -->
                 <div class="bg-white p-6 rounded-lg shadow">
                     <div class="text-gray-500">
-                        {{ App\Models\Status::STATUS_APPROVED }}
+                        {{ App\Models\Status::getStatusApproved(App\Models\Status::STATUS_APPROVED)->label }}
                     </div>
                     <div class="text-3xl font-bold text-blue-600">{{ $stats['approved'] }}</div>
                 </div>
@@ -57,7 +57,7 @@
                 <!-- Traité -->
                 <div class="bg-white p-6 rounded-lg shadow">
                     <div class="text-gray-500">
-                        {{ App\Models\Status::STATUS_COMPLETED }}
+                        {{ App\Models\Status::getStatusCompleted(App\Models\Status::STATUS_COMPLETED)->label }}
                     </div>
                     <div class="text-3xl font-bold text-green-600">{{ $stats['completed'] }}</div>
                 </div>
@@ -98,7 +98,7 @@
                                              @default
                                                  bg-gray-100 text-gray-800
                                          @endswitch">
-                                            {{ ucfirst(str_replace('_', ' ', $request->status->name)) }}
+                                            {{ ucfirst(str_replace('_', ' ', $request->status->code)) }}
                                         </span>
                                     </td>
                                     <td class="px-6 py-4">

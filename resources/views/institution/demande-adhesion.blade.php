@@ -3,10 +3,20 @@
 @section('content')
     <div class="max-w-6xl mx-auto p-6 m-2 ">
         <div id="form-section" class="max-w-7xl mx-auto bg-white p-6 shadow-md rounded-lg relative m-2">
-            <div class="text-center mb-8">
-                <h1 class="text-2xl font-bold mb-2">MINISTERE DE L'ECONOMIE ET DES FINANCES (MEF)</h1>
-                <p class="text-gray-600">DIRECTION DE LA PENSION CIVILE (DPC)</p>
-                <p class="text-gray-600">FICHE INDIVIDUELLE DES EMPLOYES COTISANT AU FONDS DE PENSION</p>
+            <div class="flex justify-center gap-5">
+                    <img src="{{ asset('images/setting-logo-1-M13oPLiYoM.png') }}" 
+                    alt="Logo de la Direction de la Pension Civile"
+                    class="w-16 h-16 md:w-20 md:h-20 object-contain" />
+
+                    <div class="text-center mb-8">
+                        <h1 class="text-xl font-bold mb-2">MINISTERE DE L'ECONOMIE ET DES FINANCES (MEF)</h1>
+                        <p class="text-gray-600">DIRECTION DE LA PENSION CIVILE (DPC)</p>
+                        <p class="text-gray-600">FICHE INDIVIDUELLE DES EMPLOYES COTISANT AU FONDS DE PENSION</p>
+                    </div>
+
+                    <img src="{{ asset('images/setting-logo-1-M13oPLiYoM.png') }}" 
+                    alt="Logo de la Direction de la Pension Civile"
+                    class="w-16 h-16 md:w-20 md:h-20 object-contain" />
             </div>
 
             @if (session('success'))
@@ -590,7 +600,7 @@
 
                 {{-- Consentement --}}
                 <fieldset class="relative shadow-md rounded-lg p-5 border mb-6">
-                    <div class="mt-6">
+                    <div>
                         <div class="flex items-start">
                             <div class="flex items-center h-5">
                                 <input

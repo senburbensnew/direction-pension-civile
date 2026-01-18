@@ -4,7 +4,6 @@
 
         <div class="container mx-auto px-4 py-4 relative z-10">
             <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-
                 <!-- Logo and Title -->
                 <div class="flex items-center">
                     <a href="{{ route('home') }}" class="flex items-center gap-3 group">
@@ -23,8 +22,7 @@
                 </div>
 
                 <!-- Navigation and User Menu -->
-                <div class="flex flex-col md:flex-row items-start md:items-center gap-4 md:gap-6 w-full md:w-auto">
-
+                <div class="flex flex-col lg:flex-row items-center lg:items-center justify-center gap-4 lg:gap-6 w-full lg:w-auto">
                     <!-- Main Navigation -->
                     <nav class="flex flex-wrap gap-4 md:gap-6 text-sm md:text-base">
                         <a href="{{ route('home') }}"
@@ -50,8 +48,7 @@
                     </nav>
 
                     <!-- User Section -->
-                    <div class="flex flex-col md:flex-row items-start md:items-center gap-4">
-
+                    <div class="flex items-center gap-4">
                         <!-- Login/User Info -->
                         @guest
                             <a href="{{ route('login') }}" class="inline-block">
@@ -142,7 +139,7 @@
                         @endguest
 
                         <!-- Language Selector -->
- {{--                         <div class="flex items-center gap-2">
+                        {{--  <div class="flex items-center gap-2">
                             @if (App::getLocale() !== 'fr')
                                 <a href="{{ route('locale', 'fr') }}" class="hover:opacity-75 transition-opacity" title="Français">
                                     <img src="{{ asset('images/france-flag-icon.svg') }}" alt="French Flag" class="w-4 h-4 rounded-sm">
@@ -160,3 +157,5 @@
             </div>
         </div>
     </div>
+
+ 

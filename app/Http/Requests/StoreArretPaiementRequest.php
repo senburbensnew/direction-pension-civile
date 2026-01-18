@@ -4,6 +4,7 @@ namespace App\Http\Requests;
 
 use App\Rules\Nif;
 use App\Rules\Telephone;
+use App\Rules\CodePension;
 use App\Helpers\RegexExpressions;
 use Illuminate\Foundation\Http\FormRequest;
 
@@ -26,7 +27,7 @@ class StoreArretPaiementRequest extends FormRequest
             'regime_pension' => 'required|in:civile,militaire',
 
             // Pensionné
-            'code_pension'   => 'required|string|max:50',
+            'code_pension'   => ['required', new CodePension()],
             'montant'        => 'required|numeric|min:0',
 
             'nom'            => 'required|string|max:100',

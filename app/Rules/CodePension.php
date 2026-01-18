@@ -14,6 +14,8 @@ class CodePension implements ValidationRule
      */
     public function validate(string $attribute, mixed $value, Closure $fail): void
     {
-        //
+        if (!preg_match('/^\d-\d{5}$/', $value)) {
+            $fail("Le champ :attribute doit être au format X-XXXXX (ex: 8-34321).");
+        }
     }
 }

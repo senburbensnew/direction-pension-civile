@@ -14,12 +14,9 @@ return new class extends Migration
             $table->string('type', 50)->index();
             $table->foreignId('created_by')
                     ->constrained('users')
-                    ->restrictOnDelete()
-                    ->index();
+                    ->restrictOnDelete();
             $table->foreignId('status_id')
-                    ->constrained('statuses')
-                    ->restrictOnDelete()
-                    ->index();
+                    ->constrained('statuses');
             $table->json('data')->nullable();
             $table->timestamps();
         });

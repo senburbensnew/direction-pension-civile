@@ -38,6 +38,16 @@
                                             Annuler
                         </a> --}}
 
+                        @role('secretariat')
+                            <button
+                                class="px-4 py-2 bg-blue-600 text-white rounded"
+                                onclick="document.getElementById('transferModal').classList.remove('hidden')"
+                            >
+                                Transférer la demande
+                            </button>
+                        @endrole
+
+
                     @if ($from === 'dashboard')
                         <a href="{{ route('personal.dashboard') }}"
                                                 class="bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-2 rounded-md flex items-center transition-colors">
@@ -74,11 +84,11 @@
                             <!-- ========================= -->
                             <!-- Status Banner -->
                             <!-- ========================= -->
-                            <div class="mb-6 p-4 rounded-lg {{ App\Models\Status::getStatusStyle($request->status->name) }}">
+                            <div class="mb-6 p-4 rounded-lg {{ App\Models\Status::getStatusStyle($request->status->code) }}">
                                 <div class="flex items-center justify-between">
                                     <div>
                                         <span class="font-semibold">Statut actuel :</span>
-                                        {{ $request->status->name }}
+                                        {{ $request->status->code }}
                                     </div>
                                     <span class="text-sm">
                                         Dernière mise à jour :
@@ -293,11 +303,11 @@
                         <div class="p-6 bg-white border-b border-gray-200">
 
                             <!-- Status Banner -->
-                            <div class="mb-6 p-4 rounded-lg {{ App\Models\Status::getStatusStyle($request->status->name) }}">
+                            <div class="mb-6 p-4 rounded-lg {{ App\Models\Status::getStatusStyle($request->status->code) }}">
                                 <div class="flex items-center justify-between">
                                     <div>
                                         <span class="font-semibold">Statut actuel :</span>
-                                        {{ $request->status->name }}
+                                        {{ $request->status->code }}
                                     </div>
                                     <span class="text-sm">
                                         Dernière mise à jour :
@@ -406,11 +416,11 @@
                         <div class="p-6 bg-white border-b border-gray-200">
 
                             <!-- Status Banner -->
-                            <div class="mb-6 p-4 rounded-lg {{ App\Models\Status::getStatusStyle($request->status->name) }}">
+                            <div class="mb-6 p-4 rounded-lg {{ App\Models\Status::getStatusStyle($request->status->code) }}">
                                 <div class="flex items-center justify-between">
                                     <div>
                                         <span class="font-semibold">Statut actuel :</span>
-                                        {{ $request->status->name }}
+                                        {{ $request->status->code }}
                                     </div>
                                     <span class="text-sm">
                                         Dernière mise à jour :
@@ -604,11 +614,11 @@
                         <div class="p-6 bg-white border-b border-gray-200">
 
                             {{-- ================= STATUS BANNER ================= --}}
-                            <div class="mb-6 p-4 rounded-lg {{ App\Models\Status::getStatusStyle($request->status->name) }}">
+                            <div class="mb-6 p-4 rounded-lg {{ App\Models\Status::getStatusStyle($request->status->code) }}">
                                 <div class="flex items-center justify-between">
                                     <div>
                                         <span class="font-semibold">Statut actuel :</span>
-                                        {{ $request->status->name }}
+                                        {{ $request->status->code }}
                                     </div>
                                     <span class="text-sm">
                                         Dernière mise à jour :
@@ -821,11 +831,11 @@
                         <div class="p-6 bg-white border-b border-gray-200">
 
                             <!-- Status Banner -->
-                            <div class="mb-6 p-4 rounded-lg {{ App\Models\Status::getStatusStyle($request->status->name) }}">
+                            <div class="mb-6 p-4 rounded-lg {{ App\Models\Status::getStatusStyle($request->status->code) }}">
                                 <div class="flex items-center justify-between">
                                     <div>
                                         <span class="font-semibold">Statut actuel :</span>
-                                        {{ $request->status->name }}
+                                        {{ $request->status->code }}
                                     </div>
                                     <span class="text-sm">
                                         Dernière mise à jour :
@@ -943,11 +953,11 @@
                             {{-- ===================== --}}
                             {{-- BANNIÈRE DE STATUT --}}
                             {{-- ===================== --}}
-                            <div class="mb-6 p-4 rounded-lg {{ App\Models\Status::getStatusStyle($request->status->name) }}">
+                            <div class="mb-6 p-4 rounded-lg {{ App\Models\Status::getStatusStyle($request->status->code) }}">
                                 <div class="flex items-center justify-between">
                                     <div>
                                         <span class="font-semibold">Statut actuel :</span>
-                                        {{ $request->status->name }}
+                                        {{ $request->status->code }}
                                     </div>
                                     <span class="text-sm">
                                         Dernière mise à jour :
@@ -1126,10 +1136,10 @@
                     <div class="bg-white shadow rounded-lg p-6 space-y-8">
 
                         {{-- ================= STATUT ================= --}}
-                        <div class="p-4 rounded-lg {{ App\Models\Status::getStatusStyle($request->status->name) }}">
+                        <div class="p-4 rounded-lg {{ App\Models\Status::getStatusStyle($request->status->code) }}">
                             <div class="flex justify-between items-center">
                                 <div>
-                                    <strong>Statut :</strong> {{ $request->status->name }}
+                                    <strong>Statut :</strong> {{ $request->status->code }}
                                 </div>
                                 <div class="text-sm">
                                     Mis à jour le {{ $request->updated_at->format('d/m/Y H:i') }}
@@ -1285,11 +1295,11 @@
                         <div class="p-6 bg-white border-b border-gray-200">
 
                             {{-- ================= STATUS BANNER ================= --}}
-                            <div class="mb-6 p-4 rounded-lg {{ App\Models\Status::getStatusStyle($request->status->name) }}">
+                            <div class="mb-6 p-4 rounded-lg {{ App\Models\Status::getStatusStyle($request->status->code) }}">
                                 <div class="flex items-center justify-between">
                                     <div>
                                         <span class="font-semibold">Statut actuel :</span>
-                                        {{ $request->status->name }}
+                                        {{ $request->status->code }}
                                     </div>
                                     <span class="text-sm">
                                         Dernière mise à jour :
@@ -1450,11 +1460,11 @@
                         <div class="p-6 bg-white border-b border-gray-200">
 
                             <!-- Status Banner -->
-                            <div class="mb-6 p-4 rounded-lg {{ App\Models\Status::getStatusStyle($request->status->name) }}">
+                            <div class="mb-6 p-4 rounded-lg {{ App\Models\Status::getStatusStyle($request->status->code) }}">
                                 <div class="flex items-center justify-between">
                                     <div>
                                         <span class="font-semibold">Statut actuel :</span>
-                                        {{ $request->status->name }}
+                                        {{ $request->status->code }}
                                     </div>
                                     <span class="text-sm">
                                         Dernière mise à jour :
@@ -1618,11 +1628,11 @@
                             <!-- ===================== -->
                             <!-- STATUS BANNER -->
                             <!-- ===================== -->
-                            <div class="mb-6 p-4 rounded-lg {{ App\Models\Status::getStatusStyle($request->status->name) }}">
+                            <div class="mb-6 p-4 rounded-lg {{ App\Models\Status::getStatusStyle($request->status->code) }}">
                                 <div class="flex items-center justify-between">
                                     <div>
                                         <span class="font-semibold">Statut actuel :</span>
-                                        {{ $request->status->name }}
+                                        {{ $request->status->code }}
                                     </div>
                                     <span class="text-sm">
                                         Dernière mise à jour :
@@ -1811,11 +1821,11 @@
                             <!-- ========================= -->
                             <!-- STATUS BANNER -->
                             <!-- ========================= -->
-                            <div class="mb-6 p-4 rounded-lg {{ App\Models\Status::getStatusStyle($request->status->name) }}">
+                            <div class="mb-6 p-4 rounded-lg {{ App\Models\Status::getStatusStyle($request->status->code) }}">
                                 <div class="flex items-center justify-between">
                                     <div>
                                         <span class="font-semibold">Statut actuel :</span>
-                                        {{ $request->status->name }}
+                                        {{ $request->status->code }}
                                     </div>
                                     <span class="text-sm">
                                         Dernière mise à jour :
@@ -2092,4 +2102,72 @@
             </div>
         </div>
     </div>
+
+    @if(!empty($services))
+        <div id="transferModal"
+            class="fixed inset-0 z-[20000] hidden flex items-center justify-center bg-black/50 border  border-red-600">
+
+            <div class="bg-white w-full max-w-md rounded shadow p-6">
+
+                <h2 class="text-lg font-semibold mb-4">
+                    Transférer la demande
+                </h2>
+
+                <form method="POST" action="">
+                    @csrf
+
+                    {{-- Service cible --}}
+                    <div class="mb-4">
+                        <label class="block text-sm font-medium mb-1">
+                            Service de destination
+                        </label>
+
+                        <select name="service_id"
+                                required
+                                class="w-full border rounded px-3 py-2">
+                            <option value="">-- Choisir un service --</option>
+                            @foreach($services as $service)
+                                @if($service->id !== $request->current_service_id)
+                                    <option value="{{ $service->id }}">
+                                        {{ $service->nom }}
+                                    </option>
+                                @endif
+                            @endforeach
+                        </select>
+
+                        @error('service_id')
+                            <p class="text-red-500 text-sm">{{ $message }}</p>
+                        @enderror
+                    </div>
+
+                    {{-- Commentaire --}}
+                    <div class="mb-4">
+                        <label class="block text-sm font-medium mb-1">
+                            Commentaire (optionnel)
+                        </label>
+
+                        <textarea name="commentaire"
+                                rows="3"
+                                class="w-full border rounded px-3 py-2"
+                                placeholder="Motif du transfert..."></textarea>
+                    </div>
+
+                    {{-- Actions --}}
+                    <div class="flex justify-end gap-2">
+                        <button type="button"
+                                onclick="document.getElementById('transferModal').classList.add('hidden')"
+                                class="px-4 py-2 border rounded">
+                            Annuler
+                        </button>
+
+                        <button type="submit"
+                                class="px-4 py-2 bg-green-600 text-white rounded">
+                            Confirmer
+                        </button>
+                    </div>
+                </form>
+
+            </div>
+        </div>   
+    @endif
 </x-app-layout>
