@@ -44,7 +44,7 @@
                     <input type="text" name="nom" value="{{ old('nom') }}" 
                            class="input mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 @error('nom') input-error @enderror">
                     @error('nom')
-                        <span class="error-message">{{ $message }}</span>
+                        <span class="mt-1 text-sm text-red-600">{{ $message }}</span>
                     @enderror
                 </div>
 
@@ -53,7 +53,7 @@
                     <input type="text" name="prenom" value="{{ old('prenom') }}" 
                            class="input mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 @error('prenom') input-error @enderror" >
                     @error('prenom')
-                        <span class="error-message">{{ $message }}</span>
+                        <span class="mt-1 text-sm text-red-600">{{ $message }}</span>
                     @enderror
                 </div>
 
@@ -62,7 +62,7 @@
                     <input type="text" name="nom_jeune_fille" value="{{ old('nom_jeune_fille') }}" 
                            class="input mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 @error('nom_jeune_fille') input-error @enderror">
                     @error('nom_jeune_fille')
-                        <span class="error-message">{{ $message }}</span>
+                        <span class="mt-1 text-sm text-red-600">{{ $message }}</span>
                     @enderror
                 </div>
 
@@ -72,7 +72,7 @@
                            max="{{ date('Y-m-d') }}" 
                            class="input mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 @error('date_naissance') input-error @enderror" >
                     @error('date_naissance')
-                        <span class="error-message">{{ $message }}</span>
+                        <span class="mt-1 text-sm text-red-600">{{ $message }}</span>
                     @enderror
                 </div>
 
@@ -81,7 +81,7 @@
                     <input type="text" name="lieu_naissance" value="{{ old('lieu_naissance') }}" 
                            class="input mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 @error('lieu_naissance') input-error @enderror" >
                     @error('lieu_naissance')
-                        <span class="error-message">{{ $message }}</span>
+                        <span class="mt-1 text-sm text-red-600">{{ $message }}</span>
                     @enderror
                 </div>
 
@@ -95,7 +95,7 @@
                         <option value="divorce" {{ old('etat_civil') == 'divorce' ? 'selected' : '' }}>Divorcé(e)</option>
                     </select>
                     @error('etat_civil')
-                        <span class="error-message">{{ $message }}</span>
+                        <span class="mt-1 text-sm text-red-600">{{ $message }}</span>
                     @enderror
                 </div>
             </div>
@@ -111,18 +111,21 @@
                 <div>
                     <label class="block text-sm font-medium text-gray-700">NIF / NINU *</label>
                     <input type="text" name="nif_ninu" value="{{ old('nif_ninu') }}" 
+                    placeholder="000-000-000-0"
                            class="input mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 @error('nif_ninu') input-error @enderror" >
                     @error('nif_ninu')
-                        <span class="error-message">{{ $message }}</span>
+                        <span class="mt-1 text-sm text-red-600">{{ $message }}</span>
                     @enderror
                 </div>
 
                 <div>
                     <label class="block text-sm font-medium text-gray-700">CIN *</label>
+                    
                     <input type="text" name="cin" value="{{ old('cin') }}" 
+                    placeholder="000-000-000-0"
                            class="input mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 @error('cin') input-error @enderror" >
                     @error('cin')
-                        <span class="error-message">{{ $message }}</span>
+                        <span class="mt-1 text-sm text-red-600">{{ $message }}</span>
                     @enderror
                 </div>
             </div>
@@ -145,7 +148,7 @@
                         <option value="pensionne" {{ old('statut') == 'pensionne' ? 'selected' : '' }}>Pensionné</option>
                     </select>
                     @error('statut')
-                        <span class="error-message">{{ $message }}</span>
+                        <span class="mt-1 text-sm text-red-600">{{ $message }}</span>
                     @enderror
                 </div>
 
@@ -154,7 +157,7 @@
                     <input type="text" name="employeur" value="{{ old('employeur') }}" 
                            class="input mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 @error('employeur') input-error @enderror" >
                     @error('employeur')
-                        <span class="error-message">{{ $message }}</span>
+                        <span class="mt-1 text-sm text-red-600">{{ $message }}</span>
                     @enderror
                 </div>
 
@@ -163,7 +166,7 @@
                     <input type="text" name="fonction" value="{{ old('fonction') }}" 
                            class="input mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 @error('fonction') input-error @enderror" >
                     @error('fonction')
-                        <span class="error-message">{{ $message }}</span>
+                        <span class="mt-1 text-sm text-red-600">{{ $message }}</span>
                     @enderror
                 </div>
 
@@ -173,7 +176,7 @@
                            max="{{ date('Y-m-d') }}" 
                            class="input mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 @error('date_debut_service') input-error @enderror" >
                     @error('date_debut_service')
-                        <span class="error-message">{{ $message }}</span>
+                        <span class="mt-1 text-sm text-red-600">{{ $message }}</span>
                     @enderror
                 </div>
 
@@ -182,7 +185,7 @@
                     <input type="date" name="date_fin_service" value="{{ old('date_fin_service') }}" 
                            class="input mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 @error('date_fin_service') input-error @enderror">
                     @error('date_fin_service')
-                        <span class="error-message">{{ $message }}</span>
+                        <span class="mt-1 text-sm text-red-600">{{ $message }}</span>
                     @enderror
                 </div>
 
@@ -191,7 +194,7 @@
                     <input type="text" name="numero_dossier" value="{{ old('numero_dossier') }}" 
                            class="input mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 @error('numero_dossier') input-error @enderror">
                     @error('numero_dossier')
-                        <span class="error-message">{{ $message }}</span>
+                        <span class="mt-1 text-sm text-red-600">{{ $message }}</span>
                     @enderror
                 </div>
             </div>
@@ -209,16 +212,17 @@
                     <input type="text" name="adresse" value="{{ old('adresse') }}" 
                            class="input mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 @error('adresse') input-error @enderror" >
                     @error('adresse')
-                        <span class="error-message">{{ $message }}</span>
+                        <span class="mt-1 text-sm text-red-600">{{ $message }}</span>
                     @enderror
                 </div>
 
                 <div>
                     <label class="block text-sm font-medium text-gray-700">Téléphone *</label>
                     <input type="tel" name="telephone" value="{{ old('telephone') }}" 
+                    placeholder="+509XXXXXXXX"
                            class="input mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 @error('telephone') input-error @enderror" >
                     @error('telephone')
-                        <span class="error-message">{{ $message }}</span>
+                        <span class="mt-1 text-sm text-red-600">{{ $message }}</span>
                     @enderror
                 </div>
 
@@ -227,7 +231,7 @@
                     <input type="email" name="email" value="{{ old('email') }}" 
                            class="input mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 @error('email') input-error @enderror" >
                     @error('email')
-                        <span class="error-message">{{ $message }}</span>
+                        <span class="mt-1 text-sm text-red-600">{{ $message }}</span>
                     @enderror
                 </div>
             </div>
@@ -251,7 +255,7 @@
                            class="mt-1 block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 @error('copie_piece_identite') input-error @enderror"
                            >
                     @error('copie_piece_identite')
-                        <span class="error-message">{{ $message }}</span>
+                        <span class="mt-1 text-sm text-red-600">{{ $message }}</span>
                     @enderror
                 </div>
                 
@@ -261,7 +265,7 @@
                            accept=".pdf,.jpg,.jpeg,.png" 
                            class="mt-1 block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 @error('lettre_nomination') input-error @enderror">
                     @error('lettre_nomination')
-                        <span class="error-message">{{ $message }}</span>
+                        <span class="mt-1 text-sm text-red-600">{{ $message }}</span>
                     @enderror
                 </div>
                 
@@ -271,7 +275,7 @@
                            accept=".pdf,.jpg,.jpeg,.png" 
                            class="mt-1 block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 @error('bulletins_salaire') input-error @enderror">
                     @error('bulletins_salaire')
-                        <span class="error-message">{{ $message }}</span>
+                        <span class="mt-1 text-sm text-red-600">{{ $message }}</span>
                     @enderror
                 </div>
                 
@@ -281,7 +285,7 @@
                            accept=".pdf,.jpg,.jpeg,.png" 
                            class="mt-1 block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 @error('documents_carriere') input-error @enderror">
                     @error('documents_carriere')
-                        <span class="error-message">{{ $message }}</span>
+                        <span class="mt-1 text-sm text-red-600">{{ $message }}</span>
                     @enderror
                 </div>
                 
@@ -291,7 +295,7 @@
                            accept=".pdf,.jpg,.jpeg,.png" 
                            class="mt-1 block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 @error('acte_mariage_acte_deces') input-error @enderror">
                     @error('acte_mariage_acte_deces')
-                        <span class="error-message">{{ $message }}</span>
+                        <span class="mt-1 text-sm text-red-600">{{ $message }}</span>
                     @enderror
                 </div>
             </div>
@@ -316,7 +320,7 @@
                               class="input mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 @error('raison') input-error @enderror" 
                               placeholder="Précisez le motif de votre demande..." >{{ old('raison') }}</textarea>
                     @error('raison')
-                        <span class="error-message">{{ $message }}</span>
+                        <span class="mt-1 text-sm text-red-600">{{ $message }}</span>
                     @enderror
                 </div>
             </div>
@@ -332,7 +336,7 @@
                 </label>
             </div>
             @error('consentement')
-                <span class="error-message">{{ $message }}</span>
+                <span class="mt-1 text-sm text-red-600">{{ $message }}</span>
             @enderror
         </div>
 

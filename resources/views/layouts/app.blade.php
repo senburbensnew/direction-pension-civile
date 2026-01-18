@@ -15,7 +15,7 @@
 
     <!-- Scripts -->
     <link href="{{ asset('build/assets/app-CFGfTGFn.css') }}" rel="stylesheet">
-    @vite(['resources/css/app.css', 'resources/js/app.js'])
+    {{-- @vite(['resources/css/app.css', 'resources/js/app.js']) --}}
 </head>
 
 <body class="container mx-auto font-sans antialiased border">

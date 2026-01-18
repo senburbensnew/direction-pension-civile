@@ -2,6 +2,9 @@
 
 namespace App\Http\Requests;
 
+use App\Rules\Nif;
+use App\Rules\Telephone;
+use App\Rules\AnneeFiscale;
 use Illuminate\Foundation\Http\FormRequest;
 
 class StorePreuveExistenceRequest extends FormRequest
@@ -11,6 +14,13 @@ class StorePreuveExistenceRequest extends FormRequest
         return auth()->check(); // sécurité
     }
 
+    protected function prepareForValidation(): void
+    {
+        $this->merge([
+            'fin_pension' => $this->fin_pension ?: null,
+        ]);
+    }
+
     public function rules(): array
     {
         return [
@@ -18,46 +28,45 @@ class StorePreuveExistenceRequest extends FormRequest
             // Identification
             'numero_identite' => 'required|string|max:50',
             'profile_photo'  => 'required|image|mimes:jpeg,png,jpg,gif,webp|max:2048',
-            'annee_fiscale'   => 'required|string|regex:/^\d{4}\/\d{4}$/',
+            'annee_fiscale'   => ['required', new AnneeFiscale()],
 
             // Identité pensionné
-            'nif'        => 'required|string|max:20',
+            'nif'        => ['required', new Nif()],
             'nom'        => 'required|string|max:100',
             'prenom'     => 'required|string|max:100',
             'adresse'    => 'required|string|max:255',
             'localisation' => 'required|string|max:150',
 
             'date_naissance' => 'required|date|before:today',
-            'etat_civil_id'  => 'required|exists:etat_civils,id',
-            'sexe_id'        => 'required|exists:sexes,id',
+            'etat_civil_id'  => 'required|exists:civil_statuses,id',
+            'sexe_id'        => 'required|exists:genders,id',
 
             // Contact
             'adresse_postale' => 'required|string|max:100',
-            'telephone'       => 'required|string|max:20',
+            'telephone'       => ['required', new Telephone()],
 
             // Pension
             'montant_pension' => 'required|numeric|min:0',
             'no_moniteur'     => 'required|string|max:50',
             'date_moniteur'   => 'required|date',
             'debut_pension'   => 'required|date|before_or_equal:fin_pension',
-            'fin_pension'     => 'required|date|after_or_equal:debut_pension',
+            'fin_pension'     => 'nullable|date|after_or_equal:debut_pension',
             'categorie_pension_id' => 'required|exists:pension_categories,id',
 
             // Dépendants
-            'dependants' => 'required|array|min:1',
+            'dependants' => 'nullable|array|min:1',
 
-            'dependants.*.name'       => 'required|string|max:150',
+            'dependants.*.nom'       => 'required|string|max:150',
             'dependants.*.relation'   => 'required|string|max:100',
-            'dependants.*.birth_date' => 'required|date|before:today',
-            'dependants.*.gender_id'  => 'required|exists:sexes,id',
+            'dependants.*.date_naissance' => 'required|date|before:today',
+            'dependants.*.sexe_id'  => 'required|exists:genders,id',
         ];
     }
 
     public function messages(): array
     {
         return [
-            'dependants.required' => 'Vous devez ajouter au moins un dépendant.',
-            'dependants.min'      => 'Vous devez ajouter au moins un dépendant.',
+            'required'  => 'Ce champ est obligatoire.',
             'annee_fiscale.regex' => 'Le format doit être YYYY/YYYY (ex: 2025/2026).',
         ];
     }

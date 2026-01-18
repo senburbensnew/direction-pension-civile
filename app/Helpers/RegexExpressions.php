@@ -5,7 +5,7 @@ namespace App\Helpers;
 class RegexExpressions
 {
     private static $rules = [
-        'nif' => '/^\d{3}-\d{3}-\d{3}-\d{1}$/',
+       // 'nif' => '/^\d{3}-\d{3}-\d{3}-\d{1}$/',
         'ninu' => '/^\d{3}-\d{3}-\d{3}-\d{1}$/',
         'id_number' => '/^\d{3}-\d{3}-\d{3}-\d{1}$|^\d{3}-\d{2}-\d{4}-\d{2}$/',
         'phone_number' => '/^(?:\+509)?(?:2[2-9]\d{5}|[34]\d{6}|8\d{6})$/',
@@ -15,10 +15,10 @@ class RegexExpressions
     ];
 
     // Static method for NIF regex
-    public static function nif(): string 
+/*     public static function nif(): string 
     {
         return self::$rules['nif'];
-    }
+    } */
 
     // Static method for Pension Code regex
     public static function pensionCode(): string 

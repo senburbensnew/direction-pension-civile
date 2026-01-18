@@ -2,9 +2,6 @@
 
 @section('content')
 <div class="container mx-auto p-6">
-
-    <h1 class="text-3xl font-bold mb-6 text-center text-gray-800">Rapports annuels</h1>
-
     <!-- Formulaire de recherche -->
     <form method="GET" class="mb-8 flex flex-col md:flex-row items-center justify-center gap-3">
         <input

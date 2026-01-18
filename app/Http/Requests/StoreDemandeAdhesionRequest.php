@@ -2,6 +2,9 @@
 
 namespace App\Http\Requests;
 
+use App\Rules\Nif;
+use App\Rules\Ninu;
+use App\Helpers\RegexExpressions;
 use Illuminate\Foundation\Http\FormRequest;
 
 class StoreDemandeAdhesionRequest extends FormRequest
@@ -31,8 +34,8 @@ class StoreDemandeAdhesionRequest extends FormRequest
             'birth_place'           => ['required', 'string', 'max:255'],
             'birth_date'            => ['required', 'date', 'before:today'],
 
-            'nif'                   => ['required', 'string', 'max:20'],
-            'ninu'                  => ['required', 'string', 'max:20'],
+            'nif'                   => ['required', new Nif()],
+            'ninu'                  => ['required', new Ninu()],
 
             'gender_id'             => ['required', 'integer'],
             'civil_status_id'       => ['required', 'integer'],

@@ -76,7 +76,7 @@
                             </li>
                         </ul>
                         <div class="mt-6 flex flex-col sm:flex-row gap-4">
-                            <a href="{{ route('fonctionnaire.pension-standard-form') }}" role="button"
+                            <a href="{{ route('demandes.demande-pension-standard.create') }}" role="button"
                                 class="inline-flex items-center justify-center px-6 py-3 border border-transparent text-base font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 transition-colors duration-200 shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
                                 <i class="fas fa-file-alt mr-2" aria-hidden="true"></i> Faire la demande
                             </a>

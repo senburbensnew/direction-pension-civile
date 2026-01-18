@@ -27,7 +27,7 @@
                         <input type="date" name="date" value="{{ old('date') }}"
                             class="w-full rounded-md border-gray-300 focus:border-blue-500 focus:ring-blue-500 @error('date') border-red-500 @enderror">
                         @error('date')
-                            <p class="error-message">{{ $message }}</p>
+                            <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
                         @enderror
                     </div>
                     <div>
@@ -36,7 +36,7 @@
                             class="w-full rounded-md border-gray-300 focus:border-blue-500 focus:ring-blue-500 @error('code') border-red-500 @enderror"
                             placeholder="">
                         @error('code')
-                            <p class="error-message">{{ $message }}</p>
+                            <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
                         @enderror
                     </div>
                 </div>
@@ -51,7 +51,7 @@
                                 class="w-full rounded-md border-gray-300 focus:border-blue-500 focus:ring-blue-500 @error('nom') border-red-500 @enderror"
                                 placeholder="">
                             @error('nom')
-                                <p class="error-message">{{ $message }}</p>
+                                <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
                             @enderror
                         </div>
                         <div>
@@ -60,16 +60,16 @@
                                 class="w-full rounded-md border-gray-300 focus:border-blue-500 focus:ring-blue-500 @error('prenom') border-red-500 @enderror"
                                 placeholder="">
                             @error('prenom')
-                                <p class="error-message">{{ $message }}</p>
+                                <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
                             @enderror
                         </div>
                         <div>
                             <label class="block text-sm font-medium">Téléphone (WhatsApp) :</label>
                             <input type="text" name="telephone" value="{{ old('telephone') }}"
                                 class="w-full rounded-md border-gray-300 focus:border-blue-500 focus:ring-blue-500 @error('telephone') border-red-500 @enderror"
-                                placeholder="">
+                                placeholder="+509XXXXXXXX">
                             @error('telephone')
-                                <p class="error-message">{{ $message }}</p>
+                                <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
                             @enderror
                         </div>
                         <div>
@@ -78,7 +78,7 @@
                                 class="w-full rounded-md border-gray-300 focus:border-blue-500 focus:ring-blue-500 @error('courriel') border-red-500 @enderror"
                                 placeholder="">
                             @error('courriel')
-                                <p class="error-message">{{ $message }}</p>
+                                <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
                             @enderror
                         </div>
                     </div>
@@ -93,7 +93,7 @@
                             class="w-full rounded-md border-gray-300 focus:border-blue-500 focus:ring-blue-500 @error('mois_non_recu') border-red-500 @enderror"
                             placeholder="">
                         @error('mois_non_recu')
-                            <p class="error-message">{{ $message }}</p>
+                            <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
                         @enderror
                     </div>
 
@@ -113,7 +113,7 @@
                             @endforeach
                         </div>
                         @error('motifs')
-                            <p class="error-message">{{ $message }}</p>
+                            <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
                         @enderror
                     </div>
 
@@ -124,7 +124,7 @@
                                 class="w-full rounded-md border-gray-300 focus:border-blue-500 focus:ring-blue-500 @error('nouveau_numero') border-red-500 @enderror"
                                 placeholder="">
                             @error('nouveau_numero')
-                                <p class="error-message">{{ $message }}</p>
+                                <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
                             @enderror
                         </div>
                         <div>
@@ -133,7 +133,7 @@
                                 class="w-full rounded-md border-gray-300 focus:border-blue-500 focus:ring-blue-500 @error('nom_du_compte') border-red-500 @enderror"
                                 placeholder="">
                             @error('nom_du_compte')
-                                <p class="error-message">{{ $message }}</p>
+                                <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
                             @enderror
                         </div>
                     </div>
@@ -146,7 +146,7 @@
                         class="w-full rounded-md border-gray-300 focus:border-blue-500 focus:ring-blue-500 @error('cheques') border-red-500 @enderror h-24"
                         placeholder="Décrivez votre réclamation...">{{ old('cheques') }}</textarea>
                     @error('cheques')
-                        <p class="error-message">{{ $message }}</p>
+                        <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
                     @enderror
                 </fieldset>
 
@@ -157,7 +157,7 @@
                         class="w-full rounded-md border-gray-300 focus:border-blue-500 focus:ring-blue-500 @error('informations') border-red-500 @enderror h-16"
                         placeholder="Informations supplémentaires...">{{ old('informations') }}</textarea>
                     @error('informations')
-                        <p class="error-message">{{ $message }}</p>
+                        <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
                     @enderror
                 </fieldset>
 
@@ -170,7 +170,7 @@
                             <div class="h-0.5 bg-gray-300 mb-2"></div>
                             <x-signature-pad />
                             @error('signature')
-                                <p class="error-message mt-2">{{ $message }}</p>
+                                <p class="mt-1 text-sm text-red-600 mt-2">{{ $message }}</p>
                             @enderror
                         </div>
 

@@ -108,17 +108,19 @@ class PersonalController extends Controller
                     'count' => $existenceProofRequestCounts,
                     'type' => 'existenceProofRequest'
                 ],
-                [
-                    'label' => 'Demande de pension de réversion',
-                    'count' => $reversionaryPensionRequestCounts,
-                    'type' => 'reversionaryPensionRequest'
-                ],
             ],
             'fonctionnaire' => [
                 [
                     'label' => 'Demande d\'état de carrière',
                     'count' => $carreerStateRequestCounts,
                     'type' => 'careerStateRequest'
+                ],
+            ],
+            'institution' => [
+                [
+                    'label' => 'Demande d\'adhésion',
+                    'count' => $adhesionRequestCounts,
+                    'type' => 'adhesionRequest'
                 ],
                 [
                     'label' => 'Demande de pension',
@@ -129,13 +131,6 @@ class PersonalController extends Controller
                     'label' => 'Demande de pension de réversion',
                     'count' => $reversionaryPensionRequestCounts,
                     'type' => 'reversionaryPensionRequest'
-                ],
-            ],
-            'institution' => [
-                [
-                    'label' => 'Demande d\'adhésion',
-                    'count' => $adhesionRequestCounts,
-                    'type' => 'adhesionRequest'
                 ],
             ],
         ];
@@ -342,148 +337,18 @@ class PersonalController extends Controller
         return view('personal.requests', compact('requests', 'stats', 'requestType','type')); 
     }
 
-/*     public function showRequest(Request $request, $id)
+    public function showRequestForAuthenticatedUser(Request $request, int $id)
     {
-        $requestType = $request->query('requestType');
-        $requestHistories = [];
-        $requestModel = null;
-
-        switch($requestType) {
-            case 'bankTransferRequest':
-                $requestModel = Demande::where('created_by', auth()->id())->findOrFail($id);
-                $requestHistories = DemandeHistory::where('demande_id', $requestModel->id)
-                                                    ->orderBy('id', 'desc')
-                                                    ->paginate(10);
-                break;
-            case 'certificateRequest':
-                $requestModel = Demande::where('created_by', auth()->id())->findOrFail($id);
-                $requestHistories = DemandeHistory::where('demande_id', $requestModel->id)
-                                                    ->orderBy('id', 'desc')
-                                                    ->paginate(10);
-                break;
-            case 'checkTransferRequest':
-                $requestModel = Demande::where('created_by', auth()->id())->findOrFail($id);
-                $requestHistories = DemandeHistory::where('demande_id', $requestModel->id)->where('request_type', 'CHECK_TRANSFER_REQUEST')
-                                                    ->orderBy('event_date', 'desc')
-                                                    ->paginate(10);
-                break;
-            case 'paymentStopRequest':
-                $requestModel = Demande::where('created_by', auth()->id())->findOrFail($id);
-                $requestHistories = DemandeHistory::where('demande_id', $requestModel->id)->where('request_type', 'PAYMENT_STOP_REQUEST')
-                                                    ->orderBy('event_date', 'desc')
-                                                    ->paginate(10);
-                break;
-            case 'existenceProofRequest':
-                $requestModel = Demande::with('dependants')->where('created_by', auth()->id())->findOrFail($id);
-                $requestHistories = DemandeHistory::where('demande_id', $requestModel->id)
-                    ->where('request_type', 'EXISTENCE_PROOF_REQUEST')
-                    ->orderBy('event_date', 'desc')
-                    ->paginate(10);
-                break;
-            case 'pensionRequest':
-                $requestModel = Demande::where('created_by', auth()->id())->findOrFail($id);
-                $requestHistories = DemandeHistory::where('demande_id', $requestModel->id)
-                    ->where('request_type', 'PENSION_REQUEST')
-                    ->orderBy('event_date', 'desc')
-                    ->paginate(10);
-                break;
-        }
-
-        return view('personal.request-details', [
-            'request' => $requestModel,
-            'requestType' => $requestType,
-            'requestHistories' => $requestHistories
-        ]);
-    }
- */
-
-    public function showRequest(Request $request, $id)
-    {
-        $REQUEST_CONFIG = [
-            // Pensionnaire
-            'bankTransferRequest' => [
-                'type' => null,
-                'order' => 'id',
-                'with' => [],
-            ],
-            'certificateRequest' => [
-                'type' => null,
-                'order' => 'id',
-                'with' => [],
-            ],
-            'checkTransferRequest' => [
-                'type' => null,
-                'order' => 'id',
-                'with' => [],
-            ],
-            'paymentStopRequest' => [
-                'type' => null,
-                'order' => 'id',
-                'with' => [],
-            ],
-            'reinstateRequest' => [
-                'type' => null,
-                'order' => 'id',
-                'with' => [],
-            ],
-            'transferStopRequest' => [
-                'type' => null,
-                'order' => 'id',
-                'with' => [],
-            ],
-            'existenceProofRequest' => [
-                'type' => null,
-                'order' => 'id',
-                'with' => [],
-            ],
-            'reversionaryPensionRequest' => [
-                'type' => null,
-                'order' => 'id',
-                'with' => [],
-            ],
-            // Fonctionnaire
-            'careerStateRequest' => [
-                'type' => null,
-                'order' => 'id',
-                'with' => [],
-            ],
-            'pensionRequest' => [
-                'type' => null,
-                'order' => 'id',
-                'with' => [],
-            ],
-            // Institution
-            'adhesionRequest' => [
-                'type' => null,
-                'order' => 'id',
-                'with' => [],
-            ]
-        ];
-
-        $requestType = $request->query('requestType');
-
-        abort_unless(
-            isset($REQUEST_CONFIG[$requestType]),
-            404,
-            'Invalid request type'
-        );
-
-        $config = $REQUEST_CONFIG[$requestType];
-
-        $requestModel = Demande::with($config['with'])
-            ->where('created_by', auth()->id())
+        $demande = Demande::where('created_by', auth()->id())
             ->findOrFail($id);
 
-        $requestHistories = DemandeHistory::where('demande_id', $requestModel->id)
-            ->when($config['type'], fn ($q) =>
-                $q->where('request_type', $config['type'])
-            )
-            ->orderBy($config['order'], 'desc')
+        $requestHistories = DemandeHistory::where('demande_id', $demande->id)
+            ->orderBy('id', 'desc')
             ->paginate(10);
 
         return view('personal.request-details', [
-            'request' => $requestModel,
-            'requestType' => $requestType,
+            'from' => 'dashboard',
+            'request' => $demande,
             'requestHistories' => $requestHistories,
         ]);
     }
@@ -545,17 +410,17 @@ class PersonalController extends Controller
                     'type' => 'checkTransferRequest'
                 ],
                 [
-                    'label' => 'Demande d\'arret de paiement',
+                    'label' => 'Demande d\'arrêt de paiement',
                     'count' => $paymentStopRequestCounts,
                     'type' => 'paymentStopRequest'
                 ],
                 [
-                    'label' => 'Demande de reinsertion',
+                    'label' => 'Demande de réinsertion',
                     'count' => $reinstateRequestCounts,
                     'type' => 'reinstateRequest'
                 ],
                 [
-                    'label' => 'Demande d\'arret de virement',
+                    'label' => 'Demande d\'arrêt de virement',
                     'count' => $transferStopRequestCounts,
                     'type' => 'transferStopRequest'
                 ],
@@ -564,11 +429,6 @@ class PersonalController extends Controller
                     'count' => $existenceProofRequestCounts,
                     'type' => 'existenceProofRequest'
                 ],
-                [
-                    'label' => 'Demande de pension de reversion',
-                    'count' => $reversionaryPensionRequestCounts,
-                    'type' => 'reversionaryPensionRequest'
-                ],
             ],
             'fonctionnaire' => [
                 [
@@ -576,17 +436,22 @@ class PersonalController extends Controller
                     'count' => $carreerStateRequestCounts,
                     'type' => 'careerStateRequest'
                 ],
-                [
-                    'label' => 'Demande de pension',
-                    'count' => $pensionRequestCounts,
-                    'type' => 'pensionRequest'
-                ]
             ],
             'institution' => [
                 [
                     'label' => 'Demande d\'adhésion',
                     'count' => $adhesionRequestCounts,
                     'type' => 'adhesionRequest'
+                ],
+                [
+                    'label' => 'Demande de pension',
+                    'count' => $pensionRequestCounts,
+                    'type' => 'pensionRequest'
+                ],
+                [
+                    'label' => 'Demande de pension de réversion',
+                    'count' => $reversionaryPensionRequestCounts,
+                    'type' => 'reversionaryPensionRequest'
                 ],
             ],
         ];
@@ -595,7 +460,6 @@ class PersonalController extends Controller
     }
 
     public function requestsDashboardCorbeille(Request $request){
-        //dd($request->all());
         $requestType = $request['request_type'];
         $requests = [];
         $stats = [
@@ -780,5 +644,20 @@ class PersonalController extends Controller
         }
 
         return view('personal.dashboard-corbeille', compact('requests', 'stats', 'requestType','type')); 
+    }
+
+    public function showRequest($id)
+    {
+        $requestModel = Demande::findOrFail($id);
+
+        $requestHistories = DemandeHistory::where('demande_id', $requestModel->id)
+            ->orderBy('id', 'desc')
+            ->paginate(10);
+
+        return view('personal.request-details', [
+            'from' => 'cart',
+            'request' => $requestModel,
+            'requestHistories' => $requestHistories,
+        ]);
     }
 }

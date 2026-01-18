@@ -539,7 +539,7 @@
         </div>
     </section>
 
-    <section class="py-8 bg-white fade-in">
+    {{--     <section class="py-8 bg-white fade-in">
         <div class="container mx-auto px-6">
             <h2 class="text-4xl font-bold text-center gradient-text mb-4">
                 Statistiques de la Pension Civile
@@ -550,7 +550,7 @@
             </p>
             <x-home-page-stats-component />
         </div>
-    </section>
+    </section> --}}
 
     <section class="py-8 bg-gray-50 fade-in">
         <div class="container mx-auto px-4">
@@ -659,7 +659,7 @@
                 Recevez les dernières informations, annonces et mises à jour de la Direction de la Pension Civile.
             </p>
 
-            <form method="POST" action="{{ route('newsletter.subscribe') }}"
+            <form method="POST" action="{{ route('newsletter.souscription') }}"
                 class="flex flex-col sm:flex-row gap-4 justify-center">
                 @csrf
 

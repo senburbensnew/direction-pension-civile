@@ -167,7 +167,7 @@
                         <label for="nif" class="block text-sm font-medium text-gray-700 mb-1">
                             NIF *
                         </label>
-                        <input type="text" name="nif" id="nif" value="{{ auth()->user()->nif }}"
+                        <input placeholder="998-369-226-3" type="text" name="nif" id="nif" value="{{ auth()->user()->nif }}"
                             class="w-full rounded-md @error('nif') border-red-500 @else border-gray-300 @enderror focus:border-blue-500 focus:ring-blue-500"
                             >
                         @error('nif')
@@ -198,9 +198,9 @@
                         <label for="telephone" class="block text-sm font-medium text-gray-700 mb-1">
                             Téléphone *
                         </label>
-                        <input type="tel" name="telephone" id="telephone" value="{{ old('telephone') }}"
+                        <input placeholder="+509 XXXX-XXXX" type="tel" name="telephone" id="telephone" value="{{ old('telephone') }}"
                             class="w-full rounded-md @error('telephone') border-red-500 @else border-gray-300 @enderror focus:border-blue-500 focus:ring-blue-500"
-                            pattern="[0-9]{10}">
+                            >
                         @error('telephone')
                             <p class="mt-2 text-sm text-red-600">{{ $message }}</p>
                         @enderror
@@ -209,7 +209,7 @@
                         <label for="email" class="block text-sm font-medium text-gray-700 mb-1">
                             Courriel
                         </label>
-                        <input type="email" name="email" id="email" value="{{ old('email') }}"
+                        <input placeholder="nom.prenom@example.com" type="email" name="email" id="email" value="{{ old('email') }}"
                             class="w-full rounded-md border-gray-300 focus:border-blue-500 focus:ring-blue-500 @error('email') border-red-500 @else border-gray-300 @enderror">
                         @error('email')
                             <p class="mt-2 text-sm text-red-600">{{ $message }}</p>

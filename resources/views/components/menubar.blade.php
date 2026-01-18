@@ -1,4 +1,3 @@
-    {{-- @push('styles') --}}
     <style>
         /* Dropdown styles */
         .dropdown-content {
@@ -47,7 +46,6 @@
             text-overflow: ellipsis;
         }
     </style>
-    {{-- @endpush --}}
 
     <nav id="menu" class="container mx-auto bg-white relative z-[1000] shadow-sm border-b nav-container"
         aria-label="Navigation Principale">
@@ -70,16 +68,6 @@
                     overflow-y-auto md:max-h-none md:overflow-visible
                    transition-all duration-300 w-full"
             aria-label="Menu de Navigation">
-            <!-- Home -->
-{{--             <li class="w-full md:w-auto border-b md:border-none">
-                <a href="{{ route('home') }}"
-                    class="block px-4 py-3 text-slate-600 hover:text-blue-600
-                           text-base md:text-sm truncate-text
-                           focus:outline-none focus:ring-2 ">
-                    {{ __('messages.home') }}
-                </a>
-            </li> --}}
-
             <!-- Qui sommes nous? Dropdown -->
             <li class="relative w-full md:w-auto border-b md:border-none group">
                 <button
@@ -104,22 +92,6 @@
                             Mots du Ministre
                         </a>
                     </li>
-<!--                     <li>
-                        <a href="{{ route('quisommesnous.mots', ['role' => 'directeur-general']) }}"
-                            class="text-slate-600 block px-4 py-3 hover:bg-gray-100
-                                   transition-colors text-sm truncate-text
-                                   focus:outline-none focus:ring-2 ">
-                            Mot du Directeur Général
-                        </a>
-                    </li>
-                    <li>
-                        <a href="{{ route('quisommesnous.mots', ['role' => 'directeur']) }}"
-                            class="text-slate-600 block px-4 py-3 hover:bg-gray-100
-                                   transition-colors text-sm truncate-text
-                                   focus:outline-none focus:ring-2 ">
-                            Mots de la Directrice
-                        </a>
-                    </li> -->
                     <li>
                         <a href="{{ route('quisommesnous.missions') }}"
                             class="text-slate-600 block px-4 py-3 hover:bg-gray-100
@@ -172,14 +144,6 @@
 
                     <ul class="dropdown-content bg-white md:shadow-lg md:border md:rounded-md"
                         aria-label="Sous-menu Pensionaire">
-{{--                         <li>
-                            <a href="{{ route('enregistrement-pensionnaire.create') }}"
-                                class="text-slate-600 block px-4 py-3 hover:bg-gray-100
-                                   transition-colors text-sm truncate-text
-                                   focus:outline-none focus:ring-2 ">
-                                    Enregistrement de pensionnaire
-                            </a>
-                        </li> --}}
                         <li>
                             <a href="{{ route('demandes.virements.create') }}"
                                 class="text-slate-600 block px-4 py-3 hover:bg-gray-100
@@ -236,14 +200,6 @@
                                 {{ __('messages.proof_of_existence') }}
                             </a>
                         </li>
-{{--                         <li>
-                            <a href="{{ route('demandes.demande-pension-reversion.create') }}"
-                                class="text-slate-600 block px-4 py-3 hover:bg-gray-100
-                                   transition-colors text-sm truncate-text
-                                   focus:outline-none focus:ring-2 ">
-                                Demande de pension de reversion
-                            </a>
-                        </li> --}}
                     </ul>
                 </li>
             @endif
@@ -281,14 +237,14 @@
                                 {{ __('messages.simulateur-calcul') }}
                             </a>
                         </li>
-                        <li>
-                            <a href="{{ route('demandes.demande-pension.create') }}"
+{{--                         <li>
+                            <a href="{{ route('demandes.demande-pension.index') }}"
                                 class="text-slate-600 block px-4 py-3 hover:bg-gray-100
                                                transition-colors text-sm truncate-text
                                                focus:outline-none focus:ring-2 ">
                                 {{ __('messages.pension_request') }}
                             </a>
-                        </li>
+                        </li> --}}
                     </ul>
                 </li>
             @endif
@@ -310,7 +266,7 @@
 
                     <ul class="dropdown-content bg-white md:shadow-lg md:border md:rounded-md"
                         aria-label="Sous-menu Pensionaire">
-{{--                         <li>
+                    {{-- <li>
                             <a href="#"
                                 class="text-slate-600 block px-4 py-3 hover:bg-gray-100
                                    transition-colors text-sm truncate-text
@@ -324,6 +280,14 @@
                                    transition-colors text-sm truncate-text
                                    focus:outline-none focus:ring-2 ">
                                 {{ __('messages.membership_request') }}
+                            </a>
+                        </li>
+                        <li>
+                            <a href="{{ route('demandes.demande-pension.index') }}"
+                                class="text-slate-600 block px-4 py-3 hover:bg-gray-100
+                                               transition-colors text-sm truncate-text
+                                               focus:outline-none focus:ring-2 ">
+                                {{ __('messages.pension_request') }}
                             </a>
                         </li>
                     </ul>
@@ -361,14 +325,6 @@
                             {{ __('messages.media_libraries') }}
                         </a>
                     </li>
-  {{--                   <li>
-                        <a href="#"
-                            class="text-slate-600 block px-4 py-3 hover:bg-gray-100
-                                               transition-colors text-sm truncate-text
-                                               focus:outline-none focus:ring-2 ">
-                            {{ __('messages.success_stories') }}
-                        </a>
-                    </li> --}}
                 </ul>
             </li>
 

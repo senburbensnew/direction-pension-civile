@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests;
 
+use App\Rules\Nif;
 use Illuminate\Foundation\Http\FormRequest;
 
 class StoreDemandePensionRequest extends FormRequest
@@ -15,7 +16,7 @@ class StoreDemandePensionRequest extends FormRequest
     {
         return [
             'name' => ['required', 'string', 'max:255'],
-            'nif'  => ['required', 'string', 'max:50'],
+            'nif'  => ['required', new Nif()],
 
             // Attestations de carrière
             'career_certificates'   => ['required', 'array', 'min:1'],

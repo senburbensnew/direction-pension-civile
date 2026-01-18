@@ -6,7 +6,7 @@
             @apply border-red-500 focus:border-red-500 focus:ring-red-500;
         }
 
-        .error-message {
+        .mt-1 text-sm text-red-600 {
             @apply mt-1 text-sm text-red-600;
         }
     </style>
@@ -43,7 +43,7 @@
                             <input type="text" id="code_pension" name="pensioner_code" placeholder="Code Pension"
                                 class="w-full rounded-md border-gray-300 focus:border-blue-500 focus:ring-blue-500 @error('pensioner_code') border-red-500 @enderror">
                             @error('pensioner_code')
-                                <p class="error-message">{{ $message }}</p>
+                                <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
                             @enderror
                         </div>
 
@@ -53,7 +53,7 @@
                             <input type="text" id="name" name="name" placeholder="Nom"
                                 class="w-full rounded-md border-gray-300 focus:border-blue-500 focus:ring-blue-500 @error('name') border-red-500 @enderror">
                             @error('name')
-                                <p class="error-message">{{ $message }}</p>
+                                <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
                             @enderror
                         </div>
 

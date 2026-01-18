@@ -7,8 +7,8 @@
             <h3 class="font-bold text-lg md:text-xl mb-3 border-b-2 border-white pb-2">{{ __('messages.who_are_we') }}
             </h3>
             <ul class="space-y-2">
-                <li><a href="{{ route('quisommesnous.mots') }}"
-                        class="hover:text-orange-500 transition">{{ __('messages.director') }}</a></li>
+{{--                 <li><a href="{{ route('quisommesnous.mots') }}"
+                        class="hover:text-orange-500 transition">{{ __('messages.director') }}</a></li> --}}
                 <li><a href="{{ route('quisommesnous.missions') }}"
                         class="hover:text-orange-500 transition">{{ __('messages.mission_and_responsibilities') }}</a>
                 </li>
@@ -24,22 +24,22 @@
             <h3 class="font-bold text-lg md:text-xl mb-3 border-b-2 border-white pb-2">Directions et Services
             </h3>
             <ul class="space-y-2">
-                <li><a href="https://mef.gouv.ht/" target="_blank"
+                <li><a href="#" target="_blank"
                         class="hover:text-orange-500 transition">Secrétariat</a>
                 </li>
-                <li><a href="https://budget.gouv.ht/" target="_blank"
+                <li><a href="#" target="_blank"
                         class="hover:text-orange-500 transition">Réception</a></li>
-                <li><a href="https://www.douane.gouv.ht/" target="_blank"
+                <li><a href="#" target="_blank"
                         class="hover:text-orange-500 transition">Service Contrôle et Placements (SCP)</a></li>
-                <li><a href="https://www.brh.ht/" target="_blank" class="hover:text-orange-500 transition">Cellule Administration (CA)</a>
+                <li><a href="#" target="_blank" class="hover:text-orange-500 transition">Cellule Administration (CA)</a>
                 </li>
-                <li><a href="https://bmpad.gouv.ht/" target="_blank"
+                <li><a href="#" target="_blank"
                         class="hover:text-orange-500 transition">Service Liquidation de Pension (SLP)</a></li>
-                <li><a href="https://dgi.gouv.ht/" target="_blank"
+                <li><a href="#" target="_blank"
                         class="hover:text-orange-500 transition">Service Comptabilité (SC)</a></li>
-                <li><a href="https://igf.gouv.ht/" target="_blank"
+                <li><a href="#" target="_blank"
                         class="hover:text-orange-500 transition">Service des Formalités (SF)</a></li>
-                <li><a href="https://ihsi.gouv.ht/"
+                <li><a href="#"
                         class="hover:text-orange-500 transition">Service Assurance (SA)</a></li>
 
             </ul>

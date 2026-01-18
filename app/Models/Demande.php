@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Carbon\Carbon;
 use App\Models\Gender;
+use App\Models\Service;
 use App\Models\CivilStatus;
 use App\Models\PensionType;
 use App\Models\PensionCategory;
@@ -35,13 +36,9 @@ class Demande extends Model
         return CivilStatus::find($this->data[$name]);
     }
 
-    public function gender($name='gender_id')
+    public function gender($sexeId)
     {
-        if (!isset($this->data[$name])) {
-            return null;
-        }
-
-        return Gender::find($this->data[$name]);
+        return Gender::find($sexeId);
     }
 
     public function pensionType($name='pension_type_id')
@@ -80,6 +77,11 @@ class Demande extends Model
     public function status()
     {
         return $this->belongsTo(Status::class);
+    }
+
+    public function service()
+    {
+        return $this->belongsTo(Service::class);
     }
 
     public function scopeForUser($query)

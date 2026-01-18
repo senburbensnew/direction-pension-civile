@@ -39,7 +39,7 @@
         }
     </style>
     @vite(['resources/css/app.css', 'resources/js/app.js'])
-        <link href="{{ asset('build/assets/app-CFGfTGFn.css') }}" rel="stylesheet">
+        {{-- <link href="{{ asset('build/assets/app-CFGfTGFn.css') }}" rel="stylesheet"> --}}
 </head>
 
 <body class="bg-gray-100">
@@ -76,78 +76,103 @@
                 <h2 class="text-white text-xl font-semibold">Administration</h2>
             </div>
             <nav class="mt-4">
+
+                <!-- Dashboard -->
                 <a href="#"
-                    class="flex items-center px-4 py-2 text-gray-300 hover:bg-gray-700 {{ request()->routeIs('admin.carousels.index') ? 'bg-gray-700' : '' }}">
+                    class="flex items-center px-4 py-2 text-gray-300 hover:bg-gray-700 {{ request()->routeIs('admin.dashboard') ? 'bg-gray-700' : '' }}">
                     <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <rect x="2" y="2" width="20" height="20" rx="3" stroke="currentColor"
-                            stroke-width="2" fill="none" />
-                        <circle cx="8" cy="8" r="2" stroke="currentColor" stroke-width="2"
-                            fill="none" />
-                        <path d="M2 18L8 12L12 16L18 10L22 14" stroke="currentColor" stroke-width="2" fill="none" />
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M3 12l2-2m0 0l7-7 7 7m-9 9V9m4 12V9m5 3l2 2"/>
                     </svg>
                     Dashboard
                 </a>
+
+                <!-- Utilisateurs -->
                 <a href="{{ route('admin.users.index') }}"
-                    class="flex items-center px-4 py-2 text-gray-300 hover:bg-gray-700 {{ request()->routeIs('admin.users.index') ? 'bg-gray-700' : '' }}">
+                    class="flex items-center px-4 py-2 text-gray-300 hover:bg-gray-700 {{ request()->routeIs('admin.users.*') ? 'bg-gray-700' : '' }}">
                     <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                            d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                            d="M17 20h5v-2a4 4 0 00-4-4h-1M9 20H4v-2a4 4 0 014-4h1m4-4a4 4 0 100-8 4 4 0 000 8zm6 0a3 3 0 100-6 3 3 0 000 6z"/>
                     </svg>
                     Utilisateurs
                 </a>
-                <a href="#" class="flex items-center px-4 py-2 text-gray-300 hover:bg-gray-700">
+
+                <!-- Permissions -->
+                <a href="{{ route('admin.permissions.index') }}"
+                    class="flex items-center px-4 py-2 text-gray-300 hover:bg-gray-700">
                     <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                            d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                            d="M12 11c1.657 0 3-1.343 3-3S13.657 5 12 5 9 6.343 9 8s1.343 3 3 3z"/>
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M19 11v6a2 2 0 01-2 2H7a2 2 0 01-2-2v-6"/>
                     </svg>
                     Permissions
                 </a>
-                <a href="#" class="flex items-center px-4 py-2 text-gray-300 hover:bg-gray-700">
+
+                <!-- Rôles -->
+                <a href="#"
+                    class="flex items-center px-4 py-2 text-gray-300 hover:bg-gray-700">
                     <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                            d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                            d="M9 12l2 2 4-4M12 3l7 4v5c0 5-3.5 9-7 9s-7-4-7-9V7l7-4z"/>
                     </svg>
-                    Roles
+                    Rôles
                 </a>
+
+                <!-- Carrousel -->
                 <a href="{{ route('admin.carousels.index') }}"
-                    class="flex items-center px-4 py-2 text-gray-300 hover:bg-gray-700 {{ request()->routeIs('admin.carousels.index') ? 'bg-gray-700' : '' }}">
+                    class="flex items-center px-4 py-2 text-gray-300 hover:bg-gray-700 {{ request()->routeIs('admin.carousels.*') ? 'bg-gray-700' : '' }}">
                     <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <rect x="2" y="2" width="20" height="20" rx="3" stroke="currentColor"
-                            stroke-width="2" fill="none" />
-                        <circle cx="8" cy="8" r="2" stroke="currentColor" stroke-width="2"
-                            fill="none" />
-                        <path d="M2 18L8 12L12 16L18 10L22 14" stroke="currentColor" stroke-width="2" fill="none" />
+                        <rect x="3" y="5" width="18" height="14" rx="2" ry="2" stroke-width="2"/>
+                        <circle cx="8" cy="10" r="2"/>
+                        <path stroke-width="2" d="M21 15l-5-5-4 4-2-2-5 5"/>
                     </svg>
                     Carrousel
                 </a>
-                <a href="#" class="flex items-center px-4 py-2 text-gray-300 hover:bg-gray-700">
+
+                <!-- Directrice -->
+                <a href="#"
+                    class="flex items-center px-4 py-2 text-gray-300 hover:bg-gray-700">
                     <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                            d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                            d="M12 14a4 4 0 100-8 4 4 0 000 8z"/>
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M4 20a8 8 0 0116 0"/>
                     </svg>
                     Directrice
                 </a>
-                <a href="{{ route('reports.create') }}" class="flex items-center px-4 py-2 text-gray-300 hover:bg-gray-700 {{ request()->routeIs('admin.reports.*') ? 'bg-gray-700' : '' }}">
+
+                <!-- Rapports -->
+                <a href="{{ route('reports.create') }}"
+                    class="flex items-center px-4 py-2 text-gray-300 hover:bg-gray-700 {{ request()->routeIs('reports.*') ? 'bg-gray-700' : '' }}">
                     <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                            d="M9 17v-6h6v6m2 4H7a2 2 0 01-2-2V7a2 2 0 012-2h5l2 2h5a2 2 0 012 2v10a2 2 0 01-2 2z"/>
+                            d="M9 17v-4m3 4v-6m3 6v-2M5 21h14a2 2 0 002-2V5a2 2 0 00-2-2H9L5 7v12a2 2 0 002 2z"/>
                     </svg>
                     Rapports
                 </a>
-                <a href="" class="flex items-center px-4 py-2 text-gray-300 hover:bg-gray-700 {{ request()->routeIs('admin.reports.*') ? 'bg-gray-700' : '' }}">
+
+                <!-- Newsletter -->
+                <a href="#"
+                    class="flex items-center px-4 py-2 text-gray-300 hover:bg-gray-700">
                     <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                            d="M9 17v-6h6v6m2 4H7a2 2 0 01-2-2V7a2 2 0 012-2h5l2 2h5a2 2 0 012 2v10a2 2 0 01-2 2z"/>
+                            d="M3 8l9 6 9-6M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
                     </svg>
-                    NewsLetter
+                    Newsletter
                 </a>
-                <a href="{{ route('actualites.admin.index') }}" class="flex items-center px-4 py-2 text-gray-300 hover:bg-gray-700 {{ request()->routeIs('admin.reports.*') ? 'bg-gray-700' : '' }}">
+
+                <!-- Actualités -->
+                <a href="{{ route('actualites.admin.index') }}"
+                    class="flex items-center px-4 py-2 text-gray-300 hover:bg-gray-700 {{ request()->routeIs('actualites.admin.*') ? 'bg-gray-700' : '' }}">
                     <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                            d="M9 17v-6h6v6m2 4H7a2 2 0 01-2-2V7a2 2 0 012-2h5l2 2h5a2 2 0 012 2v10a2 2 0 01-2 2z"/>
+                            d="M19 7h-1a2 2 0 00-2 2v10H6a2 2 0 01-2-2V5a2 2 0 012-2h9l4 4z"/>
+                        <path stroke-width="2" d="M8 13h8M8 17h6"/>
                     </svg>
-                    Actualites
+                    Actualités
                 </a>
+
             </nav>
         </aside>
 
@@ -241,7 +266,7 @@
             }
         });
     </script>
-    <script src="{{ asset('build/assets/app-CbEvcXly.js') }}"></script>
+    {{-- <script src="{{ asset('build/assets/app-CbEvcXly.js') }}"></script> --}}
 </body>
 
 </html>

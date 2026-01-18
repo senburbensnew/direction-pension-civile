@@ -2,8 +2,9 @@
 
 namespace App\Http\Requests;
 
-use Illuminate\Foundation\Http\FormRequest;
+use App\Rules\Nif;
 use App\Helpers\RegexExpressions;
+use Illuminate\Foundation\Http\FormRequest;
 
 class StoreDemandeAttestationRequest extends FormRequest
 {
@@ -16,7 +17,7 @@ class StoreDemandeAttestationRequest extends FormRequest
     {
         return [
             'code_pension' => ['required', 'string'],
-            'nif'            => ['required', 'regex:' . RegexExpressions::nif()],
+            'nif'            => ['required', new Nif()],
             'prenom'      => ['required', 'string', 'max:255'],
             'nom'       => ['required', 'string', 'max:255'],
             'consentement'   => ['required', 'accepted'],
@@ -38,7 +39,6 @@ class StoreDemandeAttestationRequest extends FormRequest
     {
         return [
             'required' => 'Le champ :attribute est obligatoire.',
-            'regex'    => 'Le format du champ :attribute est invalide.',
             'accepted' => 'Vous devez accepter la :attribute.',
         ];
     }

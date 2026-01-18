@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests;
 
+use App\Rules\Telephone;
 use Illuminate\Foundation\Http\FormRequest;
 
 class StoreDemandeArretVirementRequest extends FormRequest
@@ -29,7 +30,7 @@ class StoreDemandeArretVirementRequest extends FormRequest
             // Informations personnelles
             'nom' => ['required', 'string', 'max:100'],
             'prenom' => ['required', 'string', 'max:100'],
-            'telephone' => ['required', 'string', 'max:20'],
+            'telephone' => ['required', new Telephone()],
             'courriel' => ['required', 'email', 'max:150'],
 
             // Virement

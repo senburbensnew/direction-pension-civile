@@ -44,6 +44,7 @@
                     type="text"
                     name="nif"
                     value="{{ old('nif', auth()->user()->nif) }}"
+                    placeholder="998-369-226-3"
                     class="mt-1 block w-full rounded-md border
                         @error('nif') border-red-500 @else border-gray-300 @enderror"
                 >

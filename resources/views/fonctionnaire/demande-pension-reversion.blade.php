@@ -82,7 +82,7 @@
 
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                         {{-- Certificat de carrière --}}
-                        <div class="document-upload">
+                        <div class="document-upload border rounded-lg p-3">
                             <label class="block text-sm font-medium text-gray-700">
                                 Certificat de Carrière (Original)
                                 <span class="text-red-500">*</span>
@@ -105,7 +105,7 @@
                         </div>
 
                         {{-- Acte de décès --}}
-                        <div class="document-upload">
+                        <div class="document-upload border rounded-lg p-3">
                             <label class="block text-sm font-medium text-gray-700">
                                 Acte de Décès (Copie + Original)
                                 <span class="text-red-500">*</span>
@@ -129,7 +129,7 @@
                         </div>
 
                         {{-- Certificat de non-dissolution --}}
-                        <div class="document-upload">
+                        <div class="document-upload border rounded-lg p-3">
                             <label class="block text-sm font-medium text-gray-700">
                                 Certificat de Non-Dissolution du Mariage (Original)
                                 <span class="text-red-500">*</span>
@@ -152,7 +152,7 @@
                         </div>
 
                         {{-- Carte de pension --}}
-                        <div class="document-upload">
+                        <div class="document-upload border rounded-lg p-3">
                             <label class="block text-sm font-medium text-gray-700">
                                 Carte de Pension du Défunt
                                 <span class="text-red-500">*</span>
@@ -175,7 +175,7 @@
                         </div>
 
                         {{-- Souche de chèque --}}
-                        <div class="document-upload">
+                        <div class="document-upload border rounded-lg p-3">
                             <label class="block text-sm font-medium text-gray-700">
                                 Souche de Chèque ou Preuve de Paiement
                                 <span class="text-red-500">*</span>
@@ -266,7 +266,7 @@
 
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                             {{-- Acte de mariage --}}
-                            <div class="document-upload">
+                            <div class="document-upload border rounded-lg p-3">
                                 <label class="block text-sm font-medium text-gray-700">
                                     Extrait récent de l'Acte de Mariage
                                     <span class="text-red-500">*</span>
@@ -289,7 +289,7 @@
                             </div>
 
                             {{-- Acte de naissance --}}
-                            <div class="document-upload">
+                            <div class="document-upload border rounded-lg p-3">
                                 <label class="block text-sm font-medium text-gray-700">
                                     Extrait récent de l'Acte de Naissance
                                     <span class="text-red-500">*</span>
@@ -312,7 +312,7 @@
                             </div>
 
                             {{-- Matricule fiscal --}}
-                            <div class="document-upload">
+                            <div class="document-upload border rounded-lg p-3">
                                 <label class="block text-sm font-medium text-gray-700">
                                     Copie du Matricule Fiscal
                                     <span class="text-red-500">*</span>
@@ -335,7 +335,7 @@
                             </div>
 
                             {{-- Carte électorale --}}
-                            <div class="document-upload">
+                            <div class="document-upload border rounded-lg p-3">
                                 <label class="block text-sm font-medium text-gray-700">
                                     Copie de la Carte Électorale
                                     <span class="text-red-500">*</span>
@@ -358,7 +358,7 @@
                             </div>
 
                             {{-- Photos --}}
-                            <div class="document-upload">
+                            <div class="document-upload border rounded-lg p-3">
                                 <label class="block text-sm font-medium text-gray-700">
                                     Deux (2) Photos d'Identité Récentes
                                     <span class="text-red-500">*</span>
@@ -396,7 +396,7 @@
 
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                         {{-- PV de tutelle --}}
-                        <div class="document-upload">
+                        <div class="document-upload border rounded-lg p-3">
                             <label class="block text-sm font-medium text-gray-700">
                                 Procès-Verbal de Tutelle
                                 <span class="text-xs text-gray-500">(le cas échéant)</span>
@@ -418,7 +418,7 @@
                         </div>
 
                         {{-- Certificat médical --}}
-                        <div class="document-upload">
+                        <div class="document-upload border rounded-lg p-3">
                             <label class="block text-sm font-medium text-gray-700">
                                 Certificat Médical
                                 <span class="text-xs text-gray-500">
@@ -442,7 +442,7 @@
                         </div>
 
                         {{-- Copie du moniteur --}}
-                        <div class="document-upload">
+                        <div class="document-upload border rounded-lg p-3">
                             <label class="block text-sm font-medium text-gray-700">
                                 Copie du Moniteur
                                 <span class="text-xs text-gray-500">(pour les Grands Commis)</span>
@@ -464,7 +464,7 @@
                         </div>
 
                         {{-- Attestation scolaire --}}
-                        <div class="document-upload">
+                        <div class="document-upload border rounded-lg p-3">
                             <label class="block text-sm font-medium text-gray-700">
                                 Attestation Scolaire / Universitaire
                                 <span class="text-xs text-gray-500">

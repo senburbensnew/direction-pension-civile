@@ -17,7 +17,7 @@
                     PAIEMENT PAR VIREMENT BANCAIRE
                 </h1>
                 <div>
-                    <x-profile-picture />@error('profile_photo') <p class="text-red-600 text-sm">{{ $message }}</p> @enderror
+                    <x-profile-picture />
                 </div>
             </div>
 
@@ -80,11 +80,17 @@
                         </label>
 
                         <input
+                            placeholder="{{ 
+                                $name === 'nif' 
+                                    ? '123-456-789-0' 
+                                    : ($name === 'telephone' ? '+509 XXXX-XXXX' : '') 
+                            }}"
                             type="{{ $name === 'date_naissance' ? 'date' : 'text' }}"
                             name="{{ $name }}"
                             value="{{ old($name, auth()->user()->$name ?? '') }}"
                             class="mt-1 w-full rounded-md border
                                 @error($name) border-red-500 @else border-gray-300 @enderror"
+                                
                         >
 
                         @error($name)

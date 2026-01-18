@@ -63,11 +63,11 @@ class RolesAndPermissionsSeeder extends Seeder
             'institution',
             'direction',
             'secretariat',
-            'service liquidation',
-            'service formalite',
-            'service controle et placement',
-            'service comptabilite',
-            'service assurance',
+            'service_liquidation',
+            'service_formalite',
+            'service_controle_placement',
+            'service_comptabilite',
+            'service_assurance',
             'administration',
         ];
 

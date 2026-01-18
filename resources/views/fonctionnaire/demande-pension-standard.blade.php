@@ -29,21 +29,42 @@
             @endif
 
             <!-- Formulaire de Téléchargement -->
-            <form class="space-y-6" method="POST" action="{{ route('demandes.demande-pension.store') }}"
+            <form class="space-y-6" method="POST" action="{{ route('demandes.demande-pension-standard.store') }}"
                 enctype="multipart/form-data">
                 @csrf
 
                 <!-- Informations Personnelles -->
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div>
-                        <label class="block text-sm font-medium text-gray-700">Nom complet</label>
-                        <input type="text" name="name" value="{{ auth()->user()->name }}" 
-                            class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                        <label for="name" class="block text-sm font-medium text-gray-700">
+                            Nom complet
+                        </label>
+
+                        <input
+                            id="name"
+                            type="text"
+                            name="name"
+                            value="{{ old('name') }}"
+                            placeholder="Ex : Pierre Rubens Milorme"
+                            class="mt-1 block w-full rounded-md shadow-sm
+                                @error('name') border-red-500 focus:border-red-500 focus:ring-red-500
+                                @else border-gray-300 focus:border-blue-500 focus:ring-blue-500
+                                @enderror"
+                        >
+
+                        @error('name')
+                            <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                        @enderror
                     </div>
+
                     <div>
                         <label class="block text-sm font-medium text-gray-700">Matricule</label>
-                        <input type="text" name="nif" value="{{ auth()->user()->nif }}"
+                        <input type="text" name="nif" value="{{ old('nif') }}"
+                        placeholder="ex:345-667-222-5"
                             class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                        @error('nif')
+                                <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                            @enderror
                     </div>
                 </div>
 
@@ -53,7 +74,7 @@
 
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <!-- Certificat de Carrière -->
-                        <div class="document-upload">
+                        <div class="document-upload border rounded-lg p-3">
                             <label class="block text-sm font-medium text-gray-700">
                                 Original du Certificat de Carrière (autant de certificats que d'employeurs) (pdf)
                                 <span class="text-red-500">*</span>
@@ -70,7 +91,7 @@
                         </div>
 
                         <!-- Copie du Moniteur -->
-                        <div class="document-upload">
+                        <div class="document-upload border rounded-lg p-3">
                             <label class="block text-sm font-medium text-gray-700">
                                 Copie du Moniteur (pour les Grands Commis) (pdf)
                             </label>
@@ -83,7 +104,7 @@
                         </div>
 
                         <!-- Acte de Mariage -->
-                        <div class="document-upload">
+                        <div class="document-upload border rounded-lg p-3">
                             <label class="block text-sm font-medium text-gray-700">
                                 Extrait récent de l'Acte de Mariage (Copie + Original pour les femmes mariées) (pdf)
                             </label>
@@ -104,7 +125,7 @@
                         </div>
 
                         <!-- Acte de Naissance -->
-                        <div class="document-upload">
+                        <div class="document-upload border rounded-lg p-3">
                             <label class="block text-sm font-medium text-gray-700">
                                 Extrait récent de l'Acte de Naissance (Copie + Original) (pdf)
                                 <span class="text-red-500">*</span>
@@ -121,7 +142,7 @@
                         </div>
 
                         <!-- Acte de divorce -->
-                        <div class="document-upload">
+                        <div class="document-upload border rounded-lg p-3">
                             <label class="block text-sm font-medium text-gray-700">
                                 Acte de divorce (le cas échéant) (pdf)
                             </label>
@@ -134,7 +155,7 @@
                         </div>
 
                         <!-- Matricule fiscal + CIN -->
-                        <div class="document-upload">
+                        <div class="document-upload border rounded-lg p-3">
                             <label class="block text-sm font-medium text-gray-700">
                                 Copie du Matricule fiscal accompagné de la Carte d’Identification Nationale (CIN) (pdf, jpg, png)
                                 <span class="text-red-500">*</span>
@@ -151,7 +172,7 @@
                         </div>
 
                         <!-- Photos d'identité -->
-                        <div class="document-upload">
+                        <div class="document-upload border rounded-lg p-3">
                             <label class="block text-sm font-medium text-gray-700">
                                 Photos d'identité récentes (2 exemplaires) (jpeg, png, jpg)
                                 <span class="text-red-500">*</span>
@@ -169,7 +190,7 @@
                         </div>
 
                         <!-- Certificat Médical -->
-                        <div class="document-upload">
+                        <div class="document-upload border rounded-lg p-3">
                             <label class="block text-sm font-medium text-gray-700">
                                 Certificat Médical (pour cause d'incapacité) (pdf)
                             </label>
@@ -182,7 +203,7 @@
                         </div>
 
                         <!-- Souche de chèque -->
-                        <div class="document-upload">
+                        <div class="document-upload border rounded-lg p-3">
                             <label class="block text-sm font-medium text-gray-700">
                                 Souche de chèque ou preuve de paiement (pdf, jpg, png)
                                 <span class="text-red-500">*</span>

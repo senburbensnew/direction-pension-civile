@@ -108,7 +108,16 @@
                                     @endauth
 
                                     @auth
-                                        @role('secretariat')
+                                        @role([ 'admin',
+                                                'direction',
+                                                'secretariat',
+                                                'service_liquidation',
+                                                'service_formalite',
+                                                'service_controle_placement',
+                                                'service_comptabilite',
+                                                'service_assurance',
+                                                'administration',
+                                        ])
                                             <x-dropdown-link :href="route('personal.cart')">
                                                 <i class="fas fa-shopping-cart mr-2 text-gray-400"></i>
                                                 Corbeille

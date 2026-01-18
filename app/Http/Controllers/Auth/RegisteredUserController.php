@@ -2,19 +2,19 @@
 
 namespace App\Http\Controllers\Auth;
 
-use App\Helpers\RegexExpressions;
-use App\Http\Controllers\Controller;
+use App\Rules\Nif;
 use App\Models\User;
-use Illuminate\Auth\Events\Registered;
-use Illuminate\Http\RedirectResponse;
+use App\Models\UserType;
+use Illuminate\View\View;
+use App\Enums\UserTypeEnum;
 use Illuminate\Http\Request;
+use Illuminate\Validation\Rules;
+use Illuminate\Support\Facades\DB;
+use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
-use Illuminate\Validation\Rules;
-use Illuminate\View\View;
-use App\Models\UserType;
-use App\Enums\UserTypeEnum;
-use Illuminate\Support\Facades\DB;
+use Illuminate\Http\RedirectResponse;
+use Illuminate\Auth\Events\Registered;
 
 class RegisteredUserController extends Controller
 {
@@ -53,8 +53,7 @@ class RegisteredUserController extends Controller
             'password' => ['required', 'confirmed', Rules\Password::defaults()],
             'nif' => [
                 'required',
-                'string',
-                'regex:' . RegexExpressions::nif(),
+                new Nif(),
                 'unique:' . User::class
             ],
             'user_type_id' => ['required', 'exists:user_types,id'],

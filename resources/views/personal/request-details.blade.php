@@ -5,7 +5,11 @@
     <div class="max-w-7xl mx-auto pt-5 sm:px-6 lg:px-8">
         <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg p-6">
             <nav class="text-sm text-gray-500 flex items-center mb-5">
-                <a href="{{ route('personal.dashboard') }}" class="hover:underline">Dashboard</a>
+                @if ($from === 'dashboard')
+                    <a href="{{ route('personal.dashboard') }}" class="hover:underline">Dashboard</a>
+                @elseif ($from === 'cart')
+                    <a href="{{ route('personal.cart') }}" class="hover:underline">Corbeille</a>
+                @endif
                 <span class="mx-2">/</span>
                 @if(url()->previous() !== url()->current())
                     <a href="{{ url()->previous() }}" class="hover:underline">Liste</a>
@@ -33,23 +37,35 @@
                                             </svg>
                                             Annuler
                         </a> --}}
+
+                    @if ($from === 'dashboard')
                         <a href="{{ route('personal.dashboard') }}"
-                                            class="bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-2 rounded-md flex items-center transition-colors">
-                                            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                                    d="M3 10h10M3 14h10m5-4v8m-9-6h10M3 10l5 5m0 0l5-5" />
-                                            </svg>
-                                            Dashboard
+                                                class="bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-2 rounded-md flex items-center transition-colors">
+                                                <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                        d="M3 10h10M3 14h10m5-4v8m-9-6h10M3 10l5 5m0 0l5-5" />
+                                                </svg>
+                                                Dashboard
                         </a>
+                    @elseif ($from === 'cart')
+                        <a href="{{ route('personal.cart') }}"
+                                                class="bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-2 rounded-md flex items-center transition-colors">
+                                                <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                        d="M3 10h10M3 14h10m5-4v8m-9-6h10M3 10l5 5m0 0l5-5" />
+                                                </svg>
+                                                Corbeille
+                        </a>
+                    @endif
                     </div>
                 </div>
             </div>
         </div>
     </div>
 
-    @switch($requestType)
+    @switch($request->type)
         {{-- Pensionnaire --}}
-        @case('bankTransferRequest')
+        @case('DEMANDE_VIREMENT_BANCAIRE')
             <div class="py-5">
                 <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
                     <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
@@ -125,9 +141,10 @@
                                             </div>
 
                                             <div>
+
                                                 <dt class="text-sm text-gray-500">Genre</dt>
                                                 <dd class="font-medium">
-                                                    {{ $request->gender('sexe_id')->name }}
+                                                    {{ optional($request->gender($request->data['sexe_id']))->name ?? '—' }}
                                                 </dd>
                                             </div>
 
@@ -269,7 +286,7 @@
                 </div>
             </div>
             @break
-        @case('certificateRequest')
+        @case('DEMANDE_ATTESTATION')
             <div class="py-5">
                 <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
                     <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
@@ -382,7 +399,7 @@
                 </div>
             </div>
             @break
-        @case('checkTransferRequest')
+        @case('DEMANDE_TRANSFERT_CHEQUE')
             <div class="py-5">
                 <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
                     <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
@@ -579,7 +596,7 @@
                 </div>
             </div>
             @break
-        @case('paymentStopRequest')
+        @case('DEMANDE_ARRET_PAIEMENT')
             <div class="py-5">
                 <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
 
@@ -797,7 +814,7 @@
                 </div>
             </div>
             @break
-        @case('reinstateRequest')
+        @case('DEMANDE_REINSERTION')
             <div class="py-5">
                 <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
                     <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
@@ -916,7 +933,7 @@
                 </div>
             </div>
             @break
-        @case('transferStopRequest')
+        @case('DEMANDE_ARRET_VIREMENT')
             <div class="py-5">
                 <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
 
@@ -1103,103 +1120,165 @@
                 </div>
             </div>
             @break
-        @case('existenceProofRequest')
-            <div class="py-5">
+        @case('DEMANDE_PREUVE_EXISTENCE')
+            <div class="py-6">
                 <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
-                    <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
-                        <div class="p-6 bg-white border-b border-gray-200">
+                    <div class="bg-white shadow rounded-lg p-6 space-y-8">
 
-                            <!-- Status Banner -->
-                            <div class="mb-6 p-4 rounded-lg {{ App\Models\Status::getStatusStyle($request->status->name) }}">
-                                <div class="flex items-center justify-between">
-                                    <div>
-                                        <span class="font-semibold">Statut actuel :</span>
-                                        {{ $request->status->name }}
-                                    </div>
-                                    <span class="text-sm">
-                                        Dernière mise à jour :
-                                        {{ $request->updated_at->format('d/m/Y H:i') }}
-                                    </span>
+                        {{-- ================= STATUT ================= --}}
+                        <div class="p-4 rounded-lg {{ App\Models\Status::getStatusStyle($request->status->name) }}">
+                            <div class="flex justify-between items-center">
+                                <div>
+                                    <strong>Statut :</strong> {{ $request->status->name }}
+                                </div>
+                                <div class="text-sm">
+                                    Mis à jour le {{ $request->updated_at->format('d/m/Y H:i') }}
                                 </div>
                             </div>
-
-                            <!-- Main Grid -->
-                            <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
-
-                                <!-- LEFT COLUMN -->
-                                <div class="lg:col-span-1 space-y-6">
-
-                                    <!-- Request Type -->
-                                    <div class="p-4 bg-gray-50 rounded-lg">
-                                        <h3 class="text-lg font-semibold mb-3 text-gray-700">
-                                            Type de demande
-                                        </h3>
-                                        <p class="font-medium">
-                                            {{ str_replace('_', ' ', $request->type) }}
-                                        </p>
-                                    </div>
-
-                                </div>
-
-                                <!-- RIGHT COLUMN -->
-                                <div class="lg:col-span-2 space-y-6">
-
-                                    <!-- Request Details -->
-                                    <div class="p-4 bg-gray-50 rounded-lg">
-                                        <h3 class="text-lg font-semibold mb-3 text-gray-700">
-                                            Détails de la demande
-                                        </h3>
-
-                                        <dl class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                            <div>
-                                                <dt class="text-sm text-gray-500">Code de la demande</dt>
-                                                <dd class="font-medium">
-                                                    #{{ $request->code }}
-                                                </dd>
-                                            </div>
-
-                                            <div>
-                                                <dt class="text-sm text-gray-500">Créée le</dt>
-                                                <dd class="font-medium">
-                                                    {{ $request->created_at->format('d/m/Y H:i') }}
-                                                </dd>
-                                            </div>
-                                        </dl>
-                                    </div>
-
-                                    <!-- Metadata -->
-                                    <div class="p-4 bg-gray-50 rounded-lg">
-                                        <h3 class="text-lg font-semibold mb-3 text-gray-700">
-                                            Métadonnées
-                                        </h3>
-
-                                        <dl class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                            <div>
-                                                <dt class="text-sm text-gray-500">Identifiant interne</dt>
-                                                <dd class="font-medium">
-                                                    {{ $request->id }}
-                                                </dd>
-                                            </div>
-
-                                            <div>
-                                                <dt class="text-sm text-gray-500">Soumise par</dt>
-                                                <dd class="font-medium">
-                                                    {{ $request->user?->name ?? 'Système' }}
-                                                </dd>
-                                            </div>
-                                        </dl>
-                                    </div>
-
-                                </div>
-                            </div>
-
                         </div>
+
+                        {{-- ================= MÉTADONNÉES RACINE ================= --}}
+                        <div class="bg-gray-50 rounded-lg p-4">
+                            <h3 class="text-lg font-semibold mb-4 text-gray-700">Informations système</h3>
+
+                            <dl class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                <div>
+                                    <dt class="text-sm text-gray-500">Code</dt>
+                                    <dd class="font-medium">{{ $request->code }}</dd>
+                                </div>
+
+                                <div>
+                                    <dt class="text-sm text-gray-500">Type</dt>
+                                    <dd class="font-medium">{{ $request->type }}</dd>
+                                </div>
+
+                                <div>
+                                    <dt class="text-sm text-gray-500">Créée le</dt>
+                                    <dd class="font-medium">{{ $request->created_at->format('d/m/Y H:i') }}</dd>
+                                </div>
+
+                                <div>
+                                    <dt class="text-sm text-gray-500">Créée par (ID)</dt>
+                                    <dd class="font-medium">{{ $request->user->name }}</dd>
+                                </div>
+                            </dl>
+                        </div>
+
+                        {{-- ================= IDENTITÉ ================= --}}
+                        <div class="bg-gray-50 rounded-lg p-4">
+                            <h3 class="text-lg font-semibold mb-4 text-gray-700">Identité du pensionné</h3>
+
+                            <dl class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                <div><dt class="text-sm text-gray-500">Numéro d’identité</dt><dd class="font-medium">{{ $request->data['numero_identite'] }}</dd></div>
+                                <div><dt class="text-sm text-gray-500">Nom</dt><dd class="font-medium">{{ $request->data['nom'] }}</dd></div>
+                                <div><dt class="text-sm text-gray-500">Prénom</dt><dd class="font-medium">{{ $request->data['prenom'] }}</dd></div>
+                                <div><dt class="text-sm text-gray-500">Date de naissance</dt><dd class="font-medium">{{ $request->data['date_naissance'] }}</dd></div>
+                                <div><dt class="text-sm text-gray-500">Sexe (ID)</dt><dd class="font-medium">{{ optional($request->gender($request->data['sexe_id']))->name ?? '—' }}</dd></div>
+                                <div><dt class="text-sm text-gray-500">État civil (ID)</dt><dd class="font-medium">{{ $request->civilStatus('etat_civil_id')->name}}</dd></div>
+                            </dl>
+                        </div>
+
+                        {{-- ================= COORDONNÉES ================= --}}
+                        <div class="bg-gray-50 rounded-lg p-4">
+                            <h3 class="text-lg font-semibold mb-4 text-gray-700">Coordonnées</h3>
+
+                            <dl class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div><dt class="text-sm text-gray-500">Adresse</dt><dd class="font-medium">{{ $request->data['adresse'] }}</dd></div>
+                                <div><dt class="text-sm text-gray-500">Adresse postale</dt><dd class="font-medium">{{ $request->data['adresse_postale'] }}</dd></div>
+                                <div><dt class="text-sm text-gray-500">Localisation</dt><dd class="font-medium">{{ $request->data['localisation'] }}</dd></div>
+                                <div><dt class="text-sm text-gray-500">Téléphone</dt><dd class="font-medium">{{ $request->data['telephone'] }}</dd></div>
+                            </dl>
+                        </div>
+
+                        {{-- ================= DONNÉES FISCALES ================= --}}
+                        <div class="bg-gray-50 rounded-lg p-4">
+                            <h3 class="text-lg font-semibold mb-4 text-gray-700">Données fiscales</h3>
+
+                            <dl class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                <div><dt class="text-sm text-gray-500">Année fiscale</dt><dd class="font-medium">{{ $request->data['annee_fiscale'] }}</dd></div>
+                                <div><dt class="text-sm text-gray-500">NIF</dt><dd class="font-medium">{{ $request->data['nif'] }}</dd></div>
+                            </dl>
+                        </div>
+
+                        {{-- ================= PENSION ================= --}}
+                        <div class="bg-gray-50 rounded-lg p-4">
+                            <h3 class="text-lg font-semibold mb-4 text-gray-700">Pension</h3>
+
+                            <dl class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                <div><dt class="text-sm text-gray-500">Catégorie (ID)</dt><dd class="font-medium">{{ $request->pensionCategory('categorie_pension_id')->name }}</dd></div>
+                                <div><dt class="text-sm text-gray-500">Montant</dt><dd class="font-medium">{{ number_format($request->data['montant_pension'], 0, ',', ' ') }} HTG</dd></div>
+                                <div><dt class="text-sm text-gray-500">Début</dt><dd class="font-medium">{{ $request->data['debut_pension'] }}</dd></div>
+                                <div><dt class="text-sm text-gray-500">Fin</dt><dd class="font-medium">{{ $request->data['fin_pension'] }}</dd></div>
+                            </dl>
+                        </div>
+
+                        {{-- ================= MONITEUR ================= --}}
+                        <div class="bg-gray-50 rounded-lg p-4">
+                            <h3 class="text-lg font-semibold mb-4 text-gray-700">Moniteur</h3>
+
+                            <dl class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div><dt class="text-sm text-gray-500">Numéro</dt><dd class="font-medium">{{ $request->data['no_moniteur'] }}</dd></div>
+                                <div><dt class="text-sm text-gray-500">Date</dt><dd class="font-medium">{{ $request->data['date_moniteur'] }}</dd></div>
+                            </dl>
+                        </div>
+
+                        {{-- ================= DÉPENDANTS ================= --}}
+                        <div class="bg-gray-50 rounded-lg p-4">
+                            <h3 class="text-lg font-semibold mb-4 text-gray-700">Dépendants</h3>
+
+                            <table class="w-full border text-sm">
+                                <thead class="bg-gray-100">
+                                    <tr>
+                                        <th class="border p-2">Nom</th>
+                                        <th class="border p-2">Relation</th>
+                                        <th class="border p-2">Date de naissance</th>
+                                        <th class="border p-2">Sexe</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach($request->data['dependants'] as $dep)
+                                        <tr>
+                                            <td class="border p-2">{{ $dep['nom'] }}</td>
+                                            <td class="border p-2">{{ $dep['relation'] }}</td>
+                                            <td class="border p-2">{{ $dep['date_naissance'] }}</td>
+                                            <td class="border p-2">
+                                                {{ optional($request->gender($dep['sexe_id']))->name ?? '—' }}
+                                            </td>
+                                        </tr>
+                                    @endforeach
+                                </tbody>
+                            </table>
+                        </div>
+
+                        {{-- ================= DOCUMENT ================= --}}
+                        <div class="bg-gray-50 rounded-lg p-4">
+                            <h3 class="text-lg font-semibold mb-4 text-gray-700">Photo</h3>
+
+                            <img
+                                src="{{ asset('storage/' . $request->data['documents']['profile_photo']) }}"
+                                class="w-48 rounded border"
+                                alt="Photo de profil"
+                            >
+                        </div>
+
+                        {{-- ================= DONNÉES TECHNIQUES DANS DATA ================= --}}
+                        <div class="bg-gray-100 rounded-lg p-4">
+                            <h3 class="text-lg font-semibold mb-4 text-gray-700">Données techniques (data)</h3>
+
+                            <dl class="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
+                                <div><dt class="text-gray-500">Code</dt><dd>{{ $request->data['code'] }}</dd></div>
+                                <div><dt class="text-gray-500">Type</dt><dd>{{ $request->data['type'] }}</dd></div>
+                                <div><dt class="text-gray-500">Status ID</dt><dd>{{ $request->data['status_id'] }}</dd></div>
+                                <div><dt class="text-gray-500">Created by</dt><dd>{{ $request->data['created_by'] }}</dd></div>
+                            </dl>
+                        </div>
+
                     </div>
                 </div>
             </div>
             @break
         {{-- Fonctionnaire --}}
-        @case('careerStateRequest')
+        @case('DEMANDE_ETAT_CARRIERE')
             <div class="py-5">
                 <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
                     <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
@@ -1364,7 +1443,7 @@
                 </div>
             </div>
             @break
-        @case('pensionRequest')
+        @case('DEMANDE_PENSION')
             <div class="py-5">
                 <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
                     <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
@@ -1530,7 +1609,7 @@
                 </div>
             </div>
             @break
-        @case('reversionaryPensionRequest')
+        @case('DEMANDE_PENSION_REVERSION')
             <div class="py-5">
                 <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
                     <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
@@ -1723,7 +1802,7 @@
             </div>
             @break
         {{-- Institution --}}
-        @case('adhesionRequest')
+        @case('DEMANDE_ADHESION')
             <div class="py-5">
                 <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
                     <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">

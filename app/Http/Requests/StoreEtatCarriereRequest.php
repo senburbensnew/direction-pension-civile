@@ -2,6 +2,10 @@
 
 namespace App\Http\Requests;
 
+use App\Rules\Cin;
+use App\Rules\NifNinu;
+use App\Rules\Telephone;
+use App\Helpers\RegexExpressions;
 use Illuminate\Foundation\Http\FormRequest;
 
 class StoreEtatCarriereRequest extends FormRequest
@@ -30,8 +34,11 @@ class StoreEtatCarriereRequest extends FormRequest
             'etat_civil'        => ['required', 'in:celibataire,marie,veuf,divorce'],
 
             // ================= IDENTIFICATION =================
-            'nif_ninu'          => ['required', 'string', 'max:20'],
-            'cin'               => ['required', 'string', 'max:20'],
+            'nif_ninu'          => [
+                'required', 
+                new NifNinu()
+            ],
+            'cin'               => ['required', new Cin()],
 
             // ================= INFORMATIONS PROFESSIONNELLES =================
             'statut'            => ['required', 'in:fonctionnaire,contractuel,salarie,pensionne'],
@@ -43,7 +50,7 @@ class StoreEtatCarriereRequest extends FormRequest
 
             // ================= COORDONNÉES =================
             'adresse'           => ['required', 'string', 'max:255'],
-            'telephone'         => ['required', 'string', 'max:20'],
+            'telephone'         => ['required', new Telephone()],
             'email'             => ['required', 'email', 'max:255'],
 
             // ================= PIÈCES JOINTES =================

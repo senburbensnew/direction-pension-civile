@@ -3,29 +3,10 @@
         class="p-4 md:p-5 bg-white shadow-md rounded-lg border" enctype="multipart/form-data">
         @csrf
         <!-- Header Section -->
-        <div class="flex flex-col md:flex-row justify-between items-center mb-8 gap-4">
-            <!-- ID Input -->
-            <div class="w-full md:w-40 order-1">
-                <div class="relative">
-                    <input type="text" name="numero_identite" id="numero_identite" value="{{ old('numero_identite') }}"
-                        class="
-                        {{-- peer --}}
-                         w-full h-12 py-2 text-lg border-b-2 border-gray-500 focus:outline-none 
-                        {{-- placeholder-transparent  --}}
-                        @error('numero_identite') border-red-500 @else border-gray-300 @enderror"
-                        placeholder="003-456-789-0" aria-label="Numéro d'identité" />
-                    <label for="numero_identite"
-                        class="absolute left-0 -top-4 text-gray-500 text-sm transition-all peer-placeholder-shown:top-2 peer-placeholder-shown:text-base peer-focus:-top-4 peer-focus:text-sm">
-                        NO D’IDENTITE
-                    </label>
-                    @error('numero_identite')
-                        <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
-                    @enderror
-                </div>
-            </div>
+        <div class="flex flex-col md:flex-row items-center mb-8 gap-6">
 
-            <!-- Organization Info -->
-            <div class="text-center order-3 md:order-2 flex-grow mx-4">
+            <!-- Organization Info (CENTRE) -->
+            <div class="order-1 md:order-2 text-center flex-1">
                 <h1 class="text-lg md:text-xl font-bold leading-tight">
                     MINISTERE DE L’ECONOMIE ET DES FINANCES
                 </h1>
@@ -33,13 +14,49 @@
                     Direction de la Pension Civile (DPC)
                 </h2>
                 <h3 class="text-sm md:text-md font-semibold">
-                    FICHE D’IDENTIFICATION DU PENSIONNE
+                    FICHE D’IDENTIFICATION DU PENSIONNÉ
                 </h3>
             </div>
 
-            <!-- Profile Picture -->
-            <x-profile-picture class="order-2 md:order-3 w-16 h-16 md:w-24 md:h-24" />
+            <!-- ID Input (GAUCHE) -->
+            <div class="order-2 md:order-1 w-full md:w-40">
+                <div class="relative">
+                    <input
+                        type="text"
+                        name="numero_identite"
+                        id="numero_identite"
+                        value="{{ old('numero_identite') }}"
+                        placeholder="003-456-789-0"
+                        aria-label="Numéro d'identité"
+                        class="
+                            w-full h-12 py-2 text-lg
+                            border-b-2 focus:outline-none
+                            @error('numero_identite') border-red-500 @else border-gray-300 @enderror
+                        "
+                    />
+                    <label
+                        for="numero_identite"
+                        class="absolute left-0 -top-4 text-gray-500 text-sm"
+                    >
+                        NO D’IDENTITÉ
+                    </label>
+
+                    @error('numero_identite')
+                        <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                    @enderror
+                </div>
+            </div>
+
+            <!-- Profile Picture (DROITE) -->
+            <div class="order-3 md:order-3 flex-shrink-0">
+                <x-profile-picture class="w-16 h-16 md:w-24 md:h-24" />
+                @error('profile_photo')
+                    <p class="mt-1 text-sm text-red-600 text-center">{{ $message }}</p>
+                @enderror
+            </div>
+
         </div>
+
 
         <!-- Alerts Section -->
         @if (session('success'))
@@ -66,8 +83,9 @@
                     <div>
                         <label for="nif" class="block text-sm font-medium text-gray-700">NIF *</label>
                         <input type="text" name="nif" id="nif" value="{{ auth()->user()->nif }}"
-                            class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 bg-gray-100"
-                            readonly>
+                        placeholder="000-000-000-0"
+                            class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 "
+                            >
                         @error('nif')
                             <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
                         @enderror
@@ -77,9 +95,9 @@
                     <div>
                         <label for="nom" class="block text-sm font-medium text-gray-700">NOM *</label>
 
-                        <input readonly value="{{ auth()->user()->lastname }}" type="text" name="nom"
+                        <input value="{{ old('nom') }}" type="text" name="nom"
                             id="nom"
-                            class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 bg-gray-100">
+                            class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 ">
                         @error('nom')
                             <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
                         @enderror
@@ -87,9 +105,9 @@
 
                     <div>
                         <label for="prenom" class="block text-sm font-medium text-gray-700">PRENOM *</label>
-                        <input readonly value="{{ auth()->user()->firstname }}" type="text" name="prenom"
+                        <input value="{{ old('prenom') }}" type="text" name="prenom"
                             id="prenom"
-                            class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 bg-gray-100">
+                            class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 ">
                         @error('prenom')
                             <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
                         @enderror
@@ -174,6 +192,7 @@
                     <div>
                         <label for="telephone" class="block text-sm font-medium text-gray-700">TELEPHONE *</label>
                         <input value="{{ old('telephone') }}" type="tel" name="telephone" id="telephone"
+                        placeholder="+509XXXXXXXX"
                             class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
                         @error('telephone')
                             <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
@@ -299,10 +318,10 @@
 
                                         <!-- Name -->
                                         <td class="px-4 py-2 text-sm text-gray-900 align-top">
-                                            <input type="text" name="dependants[{{ $index }}][name]"
-                                                value="{{ old("dependants.{$index}.name") }}"
-                                                class="w-full border rounded px-2 py-1 @error("dependants.{$index}.name") border-red-500 @enderror">
-                                            @error("dependants.{$index}.name")
+                                            <input type="text" name="dependants[{{ $index }}][nom]"
+                                                value="{{ old("dependants.{$index}.nom") }}"
+                                                class="w-full border rounded px-2 py-1 @error("dependants.{$index}.nom") border-red-500 @enderror">
+                                            @error("dependants.{$index}.nom")
                                                 <span class="text-red-500 text-xs">{{ $message }}</span>
                                             @enderror
                                         </td>
@@ -319,27 +338,27 @@
 
                                         <!-- Birth Date -->
                                         <td class="px-4 py-2 text-sm text-gray-700 align-top">
-                                            <input type="date" name="dependants[{{ $index }}][birth_date]"
-                                                value="{{ old("dependants.{$index}.birth_date") }}"
-                                                class="w-full border rounded px-2 py-1 @error("dependants.{$index}.birth_date") border-red-500 @enderror">
-                                            @error("dependants.{$index}.birth_date")
+                                            <input type="date" name="dependants[{{ $index }}][date_naissance]"
+                                                value="{{ old("dependants.{$index}.date_naissance") }}"
+                                                class="w-full border rounded px-2 py-1 @error("dependants.{$index}.date_naissance") border-red-500 @enderror">
+                                            @error("dependants.{$index}.date_naissance")
                                                 <span class="text-red-500 text-xs">{{ $message }}</span>
                                             @enderror
                                         </td>
 
                                         <!-- Gender -->
                                         <td class="px-4 py-2 text-sm text-gray-700 align-top">
-                                            <select name="dependants[{{ $index }}][gender_id]"
-                                                class="w-full border rounded px-2 py-1 @error("dependants.{$index}.gender_id") border-red-500 @enderror">
+                                            <select name="dependants[{{ $index }}][sexe_id]"
+                                                class="w-full border rounded px-2 py-1 @error("dependants.{$index}.sexe_id") border-red-500 @enderror">
                                                 <option value="">Sélectionner</option>
                                                 @foreach ($genders as $gender)
                                                     <option value="{{ $gender->id }}"
-                                                        {{ old("dependants.{$index}.gender_id") == $gender->id ? 'selected' : '' }}>
+                                                        {{ old("dependants.{$index}.sexe_id") == $gender->id ? 'selected' : '' }}>
                                                         {{ $gender->name }}
                                                     </option>
                                                 @endforeach
                                             </select>
-                                            @error("dependants.{$index}.gender_id")
+                                            @error("dependants.{$index}.sexe_id")
                                                 <span class="text-red-500 text-xs">{{ $message }}</span>
                                             @enderror
                                         </td>
@@ -490,7 +509,7 @@
             <!-- Nom -->
             <td class="px-4 py-2 text-sm text-gray-900 align-top">
             <input type="text" 
-            name="dependants[${newIndex}][name]"
+            name="dependants[${newIndex}][nom]"
             class="w-full border rounded px-2 py-1">
             <div class="validation-message"></div>
             </td>
@@ -506,14 +525,14 @@
             <!-- Date de naissance -->
             <td class="px-4 py-2 text-sm text-gray-700 align-top">
             <input type="date" 
-            name="dependants[${newIndex}][birth_date]"
+            name="dependants[${newIndex}][date_naissance]"
             class="w-full border rounded px-2 py-1">
             <div class="validation-message"></div>
             </td>
 
             <!-- Sexe -->
             <td class="px-4 py-2 text-sm text-gray-700 align-top">
-            <select name="dependants[${newIndex}][gender_id]"
+            <select name="dependants[${newIndex}][sexe_id]"
                 class="w-full border rounded px-2 py-1">
             <option value="">Sélectionner</option>
             ${document.getElementById('genderOptionsTemplate').innerHTML}

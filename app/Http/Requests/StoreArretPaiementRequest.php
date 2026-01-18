@@ -2,6 +2,9 @@
 
 namespace App\Http\Requests;
 
+use App\Rules\Nif;
+use App\Rules\Telephone;
+use App\Helpers\RegexExpressions;
 use Illuminate\Foundation\Http\FormRequest;
 
 class StoreArretPaiementRequest extends FormRequest
@@ -30,9 +33,9 @@ class StoreArretPaiementRequest extends FormRequest
             'prenom'         => 'required|string|max:100',
             'nom_jeune_fille'=> 'nullable|string|max:100',
 
-            'nif'            => 'required|string|max:20',
+            'nif'            => ['required', new Nif()],
             'ninu'           => 'required|string|max:20',
-            'telephone'      => 'required|string|max:20',
+            'telephone'      => ['required', new Telephone()],
 
             'adresse'        => 'required|string|max:255',
             'email'          => 'required|email|max:255',

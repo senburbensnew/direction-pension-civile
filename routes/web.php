@@ -9,6 +9,7 @@ use App\Http\Controllers\PostController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\AdminController;
 use App\Http\Controllers\MediaController;
+use App\Http\Controllers\LocaleController;
 use App\Http\Controllers\ReportController;
 use App\Http\Controllers\DemandeController;
 use App\Http\Controllers\ProfileController;
@@ -17,210 +18,24 @@ use App\Http\Controllers\DocumentController;
 use App\Http\Controllers\PersonalController;
 use App\Http\Controllers\ActualiteController;
 use App\Http\Controllers\NewsletterController;
+use App\Http\Controllers\PermissionController;
 use App\Http\Controllers\InstitutionController;
 use App\Http\Controllers\PensionnaireController;
 use App\Http\Controllers\FonctionnaireController;
 use App\Http\Controllers\QuiSommesNousController;
 use App\Http\Controllers\EnregistrementPensionnaireController;
+
+
 /*
-|--------------------------------------------------------------------------
-| Web Routes
-|--------------------------------------------------------------------------
-|
-| Here is where you can register web routes for your application. These
-| routes are loaded by the RouteServiceProvider and all of them will
-| be assigned to the "web" middleware group. Make something great!
-|
+    |--------------------------------------------------------------------------
+    | Web Routes
+    |--------------------------------------------------------------------------
+    |
+    | Here is where you can register web routes for your application. These
+    | routes are loaded by the RouteServiceProvider and all of them will
+    | be assigned to the "web" middleware group. Make something great!
+    |
 */
-
-Route::middleware('auth')
-    ->prefix('demandes')
-    ->name('demandes.')
-    ->group(function () {
-
-        // ======================
-        // Demandes de Virement
-        // ======================
-        Route::prefix('virements')
-            ->name('virements.')
-            ->controller(DemandeController::class)
-            ->group(function () {
-                Route::get('/create', 'createDemandeVirement')->name('create');
-                Route::post('/', 'storeDemandeVirement')->name('store');
-            });
-
-        // ======================
-        // Demandes d’Attestation
-        // ======================
-        Route::prefix('attestations')
-            ->name('attestations.')
-            ->controller(DemandeController::class)
-            ->group(function () {
-                Route::get('/create', 'createDemandeAttestation')->name('create');
-                Route::post('/', 'storeDemandeAttestation')->name('store');
-            });
-
-        // ======================
-        // Demandes de transfert de cheques
-        // ======================
-        Route::prefix('transfert-cheque')
-            ->name('transfert-cheque.')
-            ->controller(DemandeController::class)
-            ->group(function () {
-                Route::get('/create', 'createDemandeTransfertCheque')->name('create');
-                Route::post('/', 'storeDemandeTransfertCheque')->name('store');
-            });
-
-        // ======================
-        // Demandes d'arret de paiement
-        // ======================
-        Route::prefix('arret-paiement')
-            ->name('arret-paiement.')
-            ->controller(DemandeController::class)
-            ->group(function () {
-                Route::get('/create', 'createDemandeArretPaiement')->name('create');
-                Route::post('/', 'storeDemandeArretPaiement')->name('store');
-            });
-
-        // ======================
-        // Demandes de reinsertion
-        // ======================
-        Route::prefix('demande-reinsertion')
-            ->name('demande-reinsertion.')
-            ->controller(DemandeController::class)
-            ->group(function () {
-                Route::get('/create', 'createDemandeReinsertion')->name('create');
-                Route::post('/', 'storeDemandeReinsertion')->name('store');
-            });
-
-
-        // ======================
-        // Demandes d'arret de virement
-        // ======================
-        Route::prefix('demande-arret-virement')
-            ->name('demande-arret-virement.')
-            ->controller(DemandeController::class)
-            ->group(function () {
-                Route::get('/create', 'createDemandeArretVirement')->name('create');
-                Route::post('/', 'storeDemandeArretVirement')->name('store');
-            });
-
-
-        // ======================
-        // Preuve d'existence
-        // ======================
-        Route::prefix('preuve-existence')
-            ->name('preuve-existence.')
-            ->controller(DemandeController::class)
-            ->group(function () {
-                Route::get('/create', 'createPreuveExistence')->name('create');
-                Route::post('/', 'storePreuveExistence')->name('store');
-            });
-
-        // ======================
-        // Demande de pension de reversion
-        // ======================
-        Route::prefix('demande-pension-reversion')
-            ->name('demande-pension-reversion.')
-            ->controller(DemandeController::class)
-            ->group(function () {
-                Route::get('/create', 'createDemandePensionReversion')->name('create');
-                Route::post('/', 'storeDemandePensionReversion')->name('store');
-            });
-
-        // ======================
-        // Demande d'etat de carriere
-        // ======================
-        Route::prefix('demande-etat-carriere')
-            ->name('demande-etat-carriere.')
-            ->controller(DemandeController::class)
-            ->group(function () {
-                Route::get('/create', 'createDemandeEtatCarriere')->name('create');
-                Route::post('/', 'storeDemandeEtatCarriere')->name('store');
-            });
-
-        // ======================
-        // Demande de pension
-        // ======================
-        Route::prefix('demande-pension')
-            ->name('demande-pension.')
-            ->controller(DemandeController::class)
-            ->group(function () {
-                Route::get('/create', 'createDemandePension')->name('create');
-                Route::post('/', 'storeDemandePension')->name('store');
-            });
-
-        // ======================
-        // Demande adhesion
-        // ======================
-        Route::prefix('demande-adhesion')
-            ->name('demande-adhesion.')
-            ->controller(DemandeController::class)
-            ->group(function () {
-                Route::get('/create', 'createDemandeAdhesion')->name('create');
-                Route::post('/', 'storeDemandeAdhesion')->name('store');
-            });
-});
-
-
-Route::get('/toggle-construction', function () {
-    // Flip session value (true → false, false/null → true)
-    session()->put('site_under_construction', !session()->get('site_under_construction', true));
-
-    return redirect()->back();
-})->name('toggle.construction');
-
-
-// Actualites routes
-Route::get('actualites', [ActualiteController::class, 'index'])->name('actualites.index');
-Route::get('actualites/{actualite}', [ActualiteController::class, 'show'])->name('actualites.show');
-Route::get('actualites/{actualite}/download', [ActualiteController::class, 'download'])->name('actualites.download');
-Route::middleware(['auth'])->group(function() {
-    Route::get('admin/actualites', [ActualiteController::class, 'adminIndex'])->name('actualites.admin.index');
-    Route::get('admin/actualites/create', [ActualiteController::class, 'create'])->name('actualites.create');
-    Route::post('admin/actualites', [ActualiteController::class, 'store'])->name('actualites.store');
-    Route::get('admin/actualites/{actualite}/edit', [ActualiteController::class, 'edit'])->name('actualites.edit');
-    Route::put('admin/actualites/{actualite}', [ActualiteController::class, 'update'])->name('actualites.update');
-    Route::delete('admin/actualites/{actualite}', [ActualiteController::class, 'destroy'])->name('actualites.destroy');
-    Route::post('admin/actualites/{actualite}/toggle', [ActualiteController::class, 'togglePublish'])->name('actualites.toggle');
-});
-
-
-Route::get('/reports/view/{report}', function (Report $report) {
-    return response()->file(storage_path('app/public/' . $report->file_path));
-})->name('reports.view');
-
-Route::get('rapports', [ReportController::class,'index'])->name('reports.index');
-Route::get('rapports/{report}', [ReportController::class,'show'])->name('reports.show');
-Route::get('rapports/{report}/download', [ReportController::class,'download'])->name('reports.download');
-
-Route::middleware(['auth'])->group(function(){
-    Route::get('admin/rapports', [ReportController::class,'adminIndex'])->name('reports.admin.index');
-    Route::get('admin/rapports/create', [ReportController::class,'create'])->name('reports.create');
-    Route::post('admin/rapports', [ReportController::class,'store'])->name('reports.store');
-    Route::get('admin/rapports/{report}/edit', [ReportController::class,'edit'])->name('reports.edit');
-    Route::put('admin/rapports/{report}', [ReportController::class,'update'])->name('reports.update');
-    Route::delete('admin/rapports/{report}', [ReportController::class,'destroy'])->name('reports.destroy');
-    Route::post('admin/rapports/{report}/toggle', [ReportController::class,'togglePublish'])->name('reports.toggle');
-});
-
-Route::middleware(['auth'])->group(function(){
-    // Usagers (pensionnaires / fonctionnaires)
-    Route::get('/mes-demandes', [DemandeController::class,'index'])->name('demandes.index');
-    Route::get('/mes-demandes/{demande}', [DemandeController::class,'show'])->name('demandes.show');
-
-
-    // Admin / agents
-    Route::prefix('admin')->name('admin.')->middleware('can:access-admin')->group(function(){
-    Route::get('/demandes', [DemandeManagementController::class,'index'])->name('demandes.index');
-    Route::get('/demandes/{demande}/edit', [DemandeManagementController::class,'edit'])->name('demandes.edit');
-    Route::post('/demandes/{demande}/update-status', [DemandeManagementController::class,'updateStatus'])->name('demandes.updateStatus');
-    });
-});
-
-Route::middleware('auth:sanctum')->group(function(){
-    Route::get('/demandes/{demande}/progress', [DemandeApiController::class,'progress']);
-});
 
 Route::get('/', function () {
     // Latest 6 published actualités
@@ -238,23 +53,21 @@ Route::get('/', function () {
     return view('home', compact('latestActualites', 'recentReports'));
 })->name('home');
 
+Route::prefix('quisommesnous')->name('quisommesnous.')->group(function () {
+    // Get routes
+    Route::get('/mots', [QuiSommesNousController::class, 'mots'])->name('mots');
+    Route::get('/profil', [QuiSommesNousController::class, 'profil'])->name('profil');
+    Route::get('/missions', [QuiSommesNousController::class, 'missions'])->name('missions');
+    Route::get('/historique', [QuiSommesNousController::class, 'historique'])->name('historique');
+    Route::get('/structure-organique', [QuiSommesNousController::class, 'structureOrganique'])->name('structure-organique');
+    Route::get('/financement', [QuiSommesNousController::class, 'financement'])->name('financement');
+});
 
-// Page Profil de la Directrice
-/* Route::get('/profil-directrice', function () {
-    return view('quisommesnous.profil');
-})->name('profil.directrice'); */
-
-
-Route::get('/mediatheque', [MediaController::class, 'index'])->name('mediatheque');
-
-Route::post('/newsletter/subscribe', [NewsletterController::class, 'subscribe'])
-    ->name('newsletter.subscribe');
-
+Route::post('/newsletter/souscription', [NewsletterController::class, 'souscription'])->name('newsletter.souscription');
 
 Route::get('/glossaire', function () {
     return view('glossaire.index');
 })->name('glossaire');
-
 
 Route::get('/simulateur-calcul', function () {
     return view('simulateur-calcul');
@@ -264,33 +77,11 @@ Route::get('/textes_documents_legaux', function () {
     return view('communication.textes_publication');
 })->name('textes_documents_legaux');
 
+Route::get('/mediatheque', [MediaController::class, 'index'])->name('mediatheque');
+
 Route::get('/faq', function () {
     return view('faq.index');
 })->name('faq.index');
-
-
-Route::get('/documents/{filename}', function ($filename) {
-    $path = storage_path("app/public/documents/$filename");
-
-    if (!file_exists($path)) {
-        abort(404);
-    }
-
-    return response()->file($path);
-})->name('documents.view');
-
-Route::get('/documents/download/{filename}', function ($filename) {
-    $path = storage_path("app/public/documents/$filename");
-
-    if (!file_exists($path)) {
-        abort(404);
-    }
-
-    return response()->download($path);
-})->name('documents.download');
-
-Route::get('/enregistrement-pensionnaire/create', [EnregistrementPensionnaireController::class, 'create'])->name('enregistrement-pensionnaire.create');
-Route::post('/enregistrement-pensionnaire', [EnregistrementPensionnaireController::class, 'store'])->name('enregistrement-pensionnaire.store');
 
 Route::get('/liens-utiles', function () {
     $links_fr = [
@@ -423,43 +214,284 @@ Route::get('/contact', function () {
     return view('contact.index');
 })->name('contact');
 
+Route::get('/politique-confidentialite', function () {
+    return view('privacy'); 
+})->name('privacy.policy');
 
-Route::get('/locale/{locale}', [App\Http\Controllers\LocaleController::class, 'switch'])
+Route::get('/locale/{locale}', [LocaleController::class, 'switch'])
     ->name('locale');
+
+Route::middleware('auth')
+    ->prefix('demandes')
+    ->name('demandes.')
+    ->group(function () {
+
+        // ======================
+        // Demandes de Virement
+        // ======================
+        Route::prefix('virements')
+            ->name('virements.')
+            ->controller(DemandeController::class)
+            ->group(function () {
+                Route::get('/create', 'createDemandeVirement')->name('create');
+                Route::post('/', 'storeDemandeVirement')->name('store');
+            });
+
+        // ======================
+        // Demandes d’Attestation
+        // ======================
+        Route::prefix('attestations')
+            ->name('attestations.')
+            ->controller(DemandeController::class)
+            ->group(function () {
+                Route::get('/create', 'createDemandeAttestation')->name('create');
+                Route::post('/', 'storeDemandeAttestation')->name('store');
+            });
+
+        // ======================
+        // Demandes de transfert de cheques
+        // ======================
+        Route::prefix('transfert-cheque')
+            ->name('transfert-cheque.')
+            ->controller(DemandeController::class)
+            ->group(function () {
+                Route::get('/create', 'createDemandeTransfertCheque')->name('create');
+                Route::post('/', 'storeDemandeTransfertCheque')->name('store');
+            });
+
+        // ======================
+        // Demandes d'arret de paiement
+        // ======================
+        Route::prefix('arret-paiement')
+            ->name('arret-paiement.')
+            ->controller(DemandeController::class)
+            ->group(function () {
+                Route::get('/create', 'createDemandeArretPaiement')->name('create');
+                Route::post('/', 'storeDemandeArretPaiement')->name('store');
+            });
+
+        // ======================
+        // Demandes de reinsertion
+        // ======================
+        Route::prefix('demande-reinsertion')
+            ->name('demande-reinsertion.')
+            ->controller(DemandeController::class)
+            ->group(function () {
+                Route::get('/create', 'createDemandeReinsertion')->name('create');
+                Route::post('/', 'storeDemandeReinsertion')->name('store');
+            });
+
+
+        // ======================
+        // Demandes d'arret de virement
+        // ======================
+        Route::prefix('demande-arret-virement')
+            ->name('demande-arret-virement.')
+            ->controller(DemandeController::class)
+            ->group(function () {
+                Route::get('/create', 'createDemandeArretVirement')->name('create');
+                Route::post('/', 'storeDemandeArretVirement')->name('store');
+            });
+
+
+        // ======================
+        // Preuve d'existence
+        // ======================
+        Route::prefix('preuve-existence')
+            ->name('preuve-existence.')
+            ->controller(DemandeController::class)
+            ->group(function () {
+                Route::get('/create', 'createPreuveExistence')->name('create');
+                Route::post('/', 'storePreuveExistence')->name('store');
+            });
+
+        // ======================
+        // Demande d'etat de carriere
+        // ======================
+        Route::prefix('demande-etat-carriere')
+            ->name('demande-etat-carriere.')
+            ->controller(DemandeController::class)
+            ->group(function () {
+                Route::get('/create', 'createDemandeEtatCarriere')->name('create');
+                Route::post('/', 'storeDemandeEtatCarriere')->name('store');
+            });
+
+        // ======================
+        // Demande de pension page
+        // ======================
+        Route::prefix('demande-pension')
+            ->name('demande-pension.')
+            ->controller(DemandeController::class)
+            ->group(function () {
+                Route::get('/', 'demandePension')->name('index');
+            });
+
+        // ======================
+        // Demande de pension
+        // ======================
+        Route::prefix('demande-pension-standard')
+            ->name('demande-pension-standard.')
+            ->controller(DemandeController::class)
+            ->group(function () {
+                Route::get('/create', 'createDemandePensionStandard')->name('create');
+                Route::post('/', 'storeDemandePensionStandard')->name('store');
+            });
+
+        // ======================
+        // Demande de pension de reversion
+        // ======================
+        Route::prefix('demande-pension-reversion')
+            ->name('demande-pension-reversion.')
+            ->controller(DemandeController::class)
+            ->group(function () {
+                Route::get('/create', 'createDemandePensionReversion')->name('create');
+                Route::post('/', 'storeDemandePensionReversion')->name('store');
+            });
+
+        // ======================
+        // Demande adhesion
+        // ======================
+        Route::prefix('demande-adhesion')
+            ->name('demande-adhesion.')
+            ->controller(DemandeController::class)
+            ->group(function () {
+                Route::get('/create', 'createDemandeAdhesion')->name('create');
+                Route::post('/', 'storeDemandeAdhesion')->name('store');
+            });
+});
+
+Route::get('rapports', [ReportController::class,'index'])->name('reports.index');
+
+Route::get('/toggle-construction', function () {
+    session()->put('site_under_construction', !session()->get('site_under_construction', true));
+
+    return redirect()->back();
+})->name('toggle.construction');
+
+
+Route::middleware('auth')->group(function () {
+    // Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
+    Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
+    // Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
+    // Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
+});
 
 Route::prefix('personal')->middleware('auth')->group(function () {
     Route::get('/', [PersonalController::class, 'index'])->name('personal.index');
-    Route::get('/corbeille', [PersonalController::class, 'corbeille'])->middleware(['role:secretariat'])->name('personal.cart');
     Route::get('/dashboard', [PersonalController::class, 'dashboard'])->name('personal.dashboard');
-    Route::get('/dashboard-corbeille', [PersonalController::class, 'requestsDashboardCorbeille'])->name('personal.requests-dashboard-corbeille');
     Route::get('/requestsDashboard', [PersonalController::class, 'requestsDashboard'])->name('personal.requests-dashboard');
-    Route::prefix('requests')->group(function () {
+    Route::get('/corbeille', [PersonalController::class, 'corbeille'])->middleware(['role:secretariat'])->name('personal.cart');
+    Route::get('/dashboard-corbeille', [PersonalController::class, 'requestsDashboardCorbeille'])->name('personal.requests-dashboard-corbeille');
+    Route::prefix('request')->group(function () {
         Route::get('/{id}', [PersonalController::class, 'showRequest'])->name('personal.request.show');
-        Route::put('/{id}', [PersonalController::class, 'updateRequest'])->name('personal.request.update');
-        Route::delete('/{id}/cancel', action: [PersonalController::class, 'cancelRequest'])->name('personal.request.cancel');
+        Route::get('/auth/{id}', [PersonalController::class, 'showRequestForAuthenticatedUser'])->name('personal.request.authenticated-user-request.show');
+        // Route::put('/{id}', [PersonalController::class, 'updateRequest'])->name('personal.request.update');
+        // Route::delete('/{id}/cancel', action: [PersonalController::class, 'cancelRequest'])->name('personal.request.cancel');
     });
 });
 
-Route::get('/politique-confidentialite', function () {
-    return view('privacy'); // Assurez-vous que resources/views/privacy.blade.php existe
-})->name('privacy.policy');
+Route::get('/documents/{filename}', function ($filename) {
+    $path = storage_path("app/public/documents/$filename");
 
-Route::prefix('admin')->name('admin.')->group(function () {
-    // Carousels
-    Route::middleware(['auth'])->group(function () {
+    if (!file_exists($path)) {
+        abort(404);
+    }
+
+    return response()->file($path);
+})->name('documents.view');
+
+Route::get('/documents/download/{filename}', function ($filename) {
+    $path = storage_path("app/public/documents/$filename");
+
+    if (!file_exists($path)) {
+        abort(404);
+    }
+
+    return response()->download($path);
+})->name('documents.download');
+
+
+Route::prefix('admin')
+    ->name('admin.')
+    ->middleware(['auth', 'role:admin'])
+    ->group(function () {
+
+        // Dashboard
+        Route::get('/dashboard', [AdminController::class, 'dashboard'])->name('dashboard');
+
+        // Carousels
         Route::resource('carousels', CarouselController::class);
+
+        // Documents
+        Route::controller(DocumentController::class)->group(function () {
+            Route::get('/documents/upload', 'index')->name('documents.index');
+            Route::post('/documents/upload', 'upload')->name('documents.upload');
+        });
+
+        // Users & Posts
+        Route::resource('users', UserController::class);
+        Route::resource('posts', PostController::class);
+
+        Route::get('/permissions', [PermissionController::class, 'index'])->name('permissions.index');
+
+        // Settings
+        Route::get('/settings', [AdminController::class, 'settings'])->name('settings');
     });
 
-    Route::controller(DocumentController::class)->group(function () {
-        Route::get('/documents/upload', 'index')->name('documents.index');
-        Route::post('/documents/upload', 'upload')->name('documents.upload');
-    });
-
-    Route::get('/dashboard', [AdminController::class, 'dashboard'])->name('dashboard');
-    Route::resource('users', UserController::class);
-    Route::resource('posts', PostController::class);
-    Route::get('/settings', [AdminController::class, 'settings'])->name('settings');
+Route::middleware(['auth'])->group(function(){
+    Route::get('admin/rapports', [ReportController::class,'adminIndex'])->name('reports.admin.index');
+    Route::get('admin/rapports/create', [ReportController::class,'create'])->name('reports.create');
+    Route::post('admin/rapports', [ReportController::class,'store'])->name('reports.store');
+    Route::get('admin/rapports/{report}/edit', [ReportController::class,'edit'])->name('reports.edit');
+    Route::put('admin/rapports/{report}', [ReportController::class,'update'])->name('reports.update');
+    Route::delete('admin/rapports/{report}', [ReportController::class,'destroy'])->name('reports.destroy');
+    Route::post('admin/rapports/{report}/toggle', [ReportController::class,'togglePublish'])->name('reports.toggle');
 });
+
+Route::get('/reports/view/{report}', function (Report $report) {
+    return response()->file(storage_path('app/public/' . $report->file_path));
+})->name('reports.view');
+
+Route::get('rapports/{report}', [ReportController::class,'show'])->name('reports.show');
+Route::get('rapports/{report}/download', [ReportController::class,'download'])->name('reports.download');
+
+// Actualites routes
+Route::get('actualites', [ActualiteController::class, 'index'])->name('actualites.index');
+Route::get('actualites/{actualite}', [ActualiteController::class, 'show'])->name('actualites.show');
+Route::get('actualites/{actualite}/download', [ActualiteController::class, 'download'])->name('actualites.download');
+Route::middleware(['auth'])->group(function() {
+    Route::get('admin/actualites', [ActualiteController::class, 'adminIndex'])->name('actualites.admin.index');
+    Route::get('admin/actualites/create', [ActualiteController::class, 'create'])->name('actualites.create');
+    Route::post('admin/actualites', [ActualiteController::class, 'store'])->name('actualites.store');
+    Route::get('admin/actualites/{actualite}/edit', [ActualiteController::class, 'edit'])->name('actualites.edit');
+    Route::put('admin/actualites/{actualite}', [ActualiteController::class, 'update'])->name('actualites.update');
+    Route::delete('admin/actualites/{actualite}', [ActualiteController::class, 'destroy'])->name('actualites.destroy');
+    Route::post('admin/actualites/{actualite}/toggle', [ActualiteController::class, 'togglePublish'])->name('actualites.toggle');
+});
+
+// #####################################################################################################################
+
+/* 
+Route::middleware(['auth'])->group(function(){
+    // Usagers (pensionnaires / fonctionnaires)
+    Route::get('/mes-demandes', [DemandeController::class,'index'])->name('demandes.index');
+    Route::get('/mes-demandes/{demande}', [DemandeController::class,'show'])->name('demandes.show');
+
+
+    // Admin / agents
+    Route::prefix('admin')->name('admin.')->middleware('can:access-admin')->group(function(){
+    Route::get('/demandes', [DemandeManagementController::class,'index'])->name('demandes.index');
+    Route::get('/demandes/{demande}/edit', [DemandeManagementController::class,'edit'])->name('demandes.edit');
+    Route::post('/demandes/{demande}/update-status', [DemandeManagementController::class,'updateStatus'])->name('demandes.updateStatus');
+    });
+});
+
+Route::middleware('auth:sanctum')->group(function(){
+    Route::get('/demandes/{demande}/progress', [DemandeApiController::class,'progress']);
+});
+
+Route::get('/enregistrement-pensionnaire/create', [EnregistrementPensionnaireController::class, 'create'])->name('enregistrement-pensionnaire.create');
+Route::post('/enregistrement-pensionnaire', [EnregistrementPensionnaireController::class, 'store'])->name('enregistrement-pensionnaire.store');
 
 // Pensionnaire Routes
 Route::prefix('pensionnaire')
@@ -530,26 +562,9 @@ Route::prefix('pensionnaire')
 
 
 // Qui sommes nous Routes
-Route::prefix('quisommesnous')->name('quisommesnous.')->group(function () {
-    // Get routes
-    Route::get('/mots', [QuiSommesNousController::class, 'mots'])->name('mots');
-    Route::get('/profil', [QuiSommesNousController::class, 'profil'])->name('profil');
-    Route::get('/missions', [QuiSommesNousController::class, 'missions'])->name('missions');
-    Route::get('/historique', [QuiSommesNousController::class, 'historique'])->name('historique');
-    Route::get('/structure-organique', [QuiSommesNousController::class, 'structureOrganique'])->name('structure-organique');
-    Route::get('/financement', [QuiSommesNousController::class, 'financement'])->name('financement');
-});
-
 
 Route::get('/dashboard', function () {
     return view('dashboard');
-})->middleware(['auth', 'verified'])->name('dashboard');
-
-Route::middleware('auth')->group(function () {
-    // Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
-    Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
-    // Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
-    // Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
-});
+})->middleware(['auth', 'verified'])->name('dashboard'); */
 
 require __DIR__ . '/auth.php';

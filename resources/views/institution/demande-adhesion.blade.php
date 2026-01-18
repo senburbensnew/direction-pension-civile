@@ -15,17 +15,6 @@
                 </div>
             @endif
 
-                        <!-- VALIDATION ERRORS -->
-            @if($errors->any())
-                <div class="mb-4 p-4 bg-red-50 border border-red-200 text-red-700 rounded">
-                    <ul class="list-disc pl-5 space-y-1">
-                        @foreach($errors->all() as $error)
-                            <li>{{ $error }}</li>
-                        @endforeach
-                    </ul>
-                </div>
-            @endif
-
             <form class="mt-5" action="{{ route('demandes.demande-adhesion.store') }}" method="POST"
                 enctype="multipart/form-data">
                 @csrf
@@ -130,6 +119,7 @@
                                         NIF *
                                     </label>
                                     <input type="text" id="nif" name="nif"
+                                        placeholder="000-000-000-0"
                                         class="w-full rounded-md border-gray-300 @error('nif') input-error @enderror"
                                         value="{{ old('nif') }}" data-inputmask="'mask': '999-999-9999'">
                                     @error('nif')
@@ -141,6 +131,7 @@
                                         NINU *
                                     </label>
                                     <input type="text" id="ninu" name="ninu"
+                                    placeholder="000-000-000-0"
                                         class="w-full rounded-md border-gray-300 @error('ninu') input-error @enderror"
                                         value="{{ old('ninu') }}" data-inputmask="'mask': '9999-9999-9999'">
                                     @error('ninu')

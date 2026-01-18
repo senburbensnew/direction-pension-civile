@@ -2,8 +2,11 @@
 
 namespace App\Http\Requests;
 
-use Illuminate\Foundation\Http\FormRequest;
+use App\Rules\Nif;
+use App\Rules\Telephone;
+use App\Rules\AnneeFiscale;
 use App\Models\PensionCategory;
+use Illuminate\Foundation\Http\FormRequest;
 
 class StoreTransfertChequeRequest extends FormRequest
 {
@@ -17,7 +20,7 @@ class StoreTransfertChequeRequest extends FormRequest
         $validPensionCategories = PensionCategory::pluck('id')->toArray();
 
         return [
-            'annee_fiscale' => 'required|string|max:255',
+            'annee_fiscale' => ['required', new AnneeFiscale()],
             'mois_debut' => 'required|string|size:7', // YYYY-MM
             'date_demande' => 'required|date',
 
@@ -29,11 +32,11 @@ class StoreTransfertChequeRequest extends FormRequest
             'prenom' => 'required|string|max:255',
             'nom_jeune_fille' => 'required|string|max:255',
 
-            'nif' => 'required|digits:10',
+            'nif' => ['required', new Nif()],
             'ninu' => 'required|string|max:255',
 
             'adresse' => 'required|string|max:255',
-            'telephone' => 'required|digits:10',
+            'telephone' => ['required', new Telephone()],
             'email' => 'required|email|max:255',
 
             'de' => 'required|date',

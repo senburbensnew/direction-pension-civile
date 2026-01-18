@@ -2,8 +2,9 @@
 
 namespace App\Http\Requests;
 
+use App\Rules\Nif;
+use App\Rules\Telephone;
 use Illuminate\Foundation\Http\FormRequest;
-use App\Helpers\RegexExpressions;
 
 class StoreDemandeVirementBancaireRequest extends FormRequest
 {
@@ -21,7 +22,7 @@ class StoreDemandeVirementBancaireRequest extends FormRequest
 
             'type_pension_id'      => 'required|exists:pension_types,id',
 
-            'nif'                  => ['required', 'regex:' . RegexExpressions::nif()],
+            'nif'                  => ['required', new Nif()],
 
             'nom_complet'            => 'required|string|max:255',
 
@@ -39,7 +40,10 @@ class StoreDemandeVirementBancaireRequest extends FormRequest
 
             'nom_mere'          => 'required|string|max:255',
 
-            'telephone'                => 'required|string|min:8|max:20',
+            'telephone'         => [
+               'required',
+                new Telephone()
+            ],
 
             'categorie_pension_id'  => 'required|exists:pension_categories,id',
 
@@ -113,16 +117,6 @@ class StoreDemandeVirementBancaireRequest extends FormRequest
             /* ACCOUNT NUMBER */
             'numero_compte.digits_between' =>
                 'Le :attribute doit contenir entre :min et :max chiffres.',
-
-            /* NIF */
-            'nif.regex' =>
-                'Le format du NIF est invalide. Veuillez vérifier le numéro saisi.',
-
-            /* PHONE */
-            'telephone.min' =>
-                'Le :attribute doit contenir au moins :min caractères.',
-            'telephone.max' =>
-                'Le :attribute ne doit pas dépasser :max caractères.',
 
             /* DECLARATION */
             'consentement.accepted' =>

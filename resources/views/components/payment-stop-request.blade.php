@@ -33,7 +33,7 @@
                         <input type="text" name="exercice" placeholder="20.. / 20.."
                                value="{{ old('exercice') }}"
                                class="input mt-1 w-full rounded-md border @error('exercice') border-red-500 @enderror">
-                        @error('exercice') <p class="error-message">{{ $message }}</p> @enderror
+                        @error('exercice') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
                     </div>
 
                     <div>
@@ -41,7 +41,7 @@
                         <input type="month" name="mois_debut"
                                value="{{ old('mois_debut') }}"
                                class="input mt-1 w-full rounded-md border @error('mois_debut') border-red-500 @enderror">
-                        @error('mois_debut') <p class="error-message">{{ $message }}</p> @enderror
+                        @error('mois_debut') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
                     </div>
 
                     <div>
@@ -49,7 +49,7 @@
                         <input type="date" name="date_demande"
                                value="{{ old('date_demande') }}"
                                class="input mt-1 w-full rounded-md border @error('date_demande') border-red-500 @enderror">
-                        @error('date_demande') <p class="error-message">{{ $message }}</p> @enderror
+                        @error('date_demande') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
                     </div>
                 </div>
             </fieldset>
@@ -73,7 +73,7 @@
                 </div>
 
                 @error('regime_pension')
-                    <p class="error-message mt-2">{{ $message }}</p>
+                    <p class="mt-1 text-sm text-red-600 mt-2">{{ $message }}</p>
                 @enderror
             </fieldset>
 
@@ -87,7 +87,7 @@
                         <input type="text" name="code_pension"
                                value="{{ old('code_pension') }}"
                                class="input mt-1 w-full rounded-md border @error('code_pension') border-red-500 @enderror">
-                        @error('code_pension') <p class="error-message">{{ $message }}</p> @enderror
+                        @error('code_pension') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
                     </div>
 
                     <div>
@@ -95,7 +95,7 @@
                         <input type="number" name="montant"
                                value="{{ old('montant') }}"
                                class="input mt-1 w-full rounded-md border @error('montant') border-red-500 @enderror">
-                        @error('montant') <p class="error-message">{{ $message }}</p> @enderror
+                        @error('montant') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
                     </div>
                 </div>
 
@@ -105,7 +105,7 @@
                         <input type="text" name="nom"
                                value="{{ old('nom') }}"
                                class="input mt-1 w-full rounded-md border  @error('nom') border-red-500 @enderror">
-                        @error('nom') <p class="error-message">{{ $message }}</p> @enderror
+                        @error('nom') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
                     </div>
 
                     <div>
@@ -113,7 +113,7 @@
                         <input type="text" name="prenom"
                                value="{{ old('prenom') }}"
                                class="input mt-1 w-full rounded-md border  @error('prenom') border-red-500 @enderror">
-                        @error('prenom') <p class="error-message">{{ $message }}</p> @enderror
+                        @error('prenom') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
                     </div>
 
                     <div>
@@ -121,7 +121,7 @@
                         <input type="text" name="nom_jeune_fille"
                                value="{{ old('nom_jeune_fille') }}"
                                class="input mt-1 w-full rounded-md border  @error('nom_jeune_fille') border-red-500 @enderror">
-                        @error('nom_jeune_fille') <p class="error-message">{{ $message }}</p> @enderror
+                        @error('nom_jeune_fille') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
                     </div>
                 </div>
 
@@ -129,9 +129,10 @@
                     <div>
                         <label>NIF *</label>
                         <input type="text" name="nif"
+                        placeholder="345-667-222-5"
                                value="{{ old('nif') }}"
                                class="input mt-1 w-full rounded-md border  @error('nif') border-red-500 @enderror">
-                        @error('nif') <p class="error-message">{{ $message }}</p> @enderror
+                        @error('nif') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
                     </div>
 
                     <div>
@@ -139,15 +140,16 @@
                         <input type="text" name="ninu"
                                value="{{ old('ninu') }}"
                                class="input mt-1 w-full rounded-md border  @error('ninu') border-red-500 @enderror">
-                        @error('ninu') <p class="error-message">{{ $message }}</p> @enderror
+                        @error('ninu') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
                     </div>
 
                     <div>
                         <label>Téléphone (WhatsApp)</label>
                         <input type="text" name="telephone"
+                        placeholder="+509XXXXXXXX"
                                value="{{ old('telephone') }}"
                                class="input mt-1 w-full rounded-md border  @error('telephone') border-red-500 @enderror">
-                        @error('telephone') <p class="error-message">{{ $message }}</p> @enderror
+                        @error('telephone') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
                     </div>
                 </div>
 
@@ -157,7 +159,7 @@
                         <input type="text" name="adresse"
                                value="{{ old('adresse') }}"
                                class="input mt-1 w-full rounded-md border  @error('adresse') border-red-500 @enderror">
-                        @error('adresse') <p class="error-message">{{ $message }}</p> @enderror
+                        @error('adresse') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
                     </div>
 
                     <div>
@@ -165,7 +167,7 @@
                         <input type="email" name="email"
                                value="{{ old('email') }}"
                                class="input mt-1 w-full rounded-md border  @error('email') border-red-500 @enderror">
-                         @error('email') <p class="error-message">{{ $message }}</p> @enderror
+                         @error('email') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
                     </div>
                 </div>
             </fieldset>
@@ -180,7 +182,7 @@
                         <input type="date" name="periode_debut"
                                value="{{ old('periode_debut') }}"
                                class="input mt-1 w-full rounded-md border  @error('periode_debut') border-red-500 @enderror">
-                        @error('periode_debut') <p class="error-message">{{ $message }}</p> @enderror
+                        @error('periode_debut') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
                     </div>
 
                     <div>
@@ -188,7 +190,7 @@
                         <input type="date" name="periode_fin"
                                value="{{ old('periode_fin') }}"
                                class="input mt-1 w-full rounded-md border  @error('periode_fin') border-red-500 @enderror">
-                        @error('periode_fin') <p class="error-message">{{ $message }}</p> @enderror
+                        @error('periode_fin') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
                     </div>
                 </div>
             </fieldset>

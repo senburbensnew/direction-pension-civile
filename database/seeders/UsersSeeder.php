@@ -36,7 +36,7 @@ class UsersSeeder extends Seeder
                 [
                     'name' => $data['name'],
                     'password' => $defaultPassword,
-                    'nif' => fake()->numerify('##########'),
+                    'nif' => fake()->unique()->numerify('###-###-###-#'),
                     'user_type_id' => $userType->id,
                 ]
             );
@@ -52,7 +52,7 @@ class UsersSeeder extends Seeder
             [
                 'name' => 'Secrétaire Dagrin',
                 'password' => $defaultPassword,
-                'nif' => fake()->numerify('##########'),
+                'nif' => fake()->unique()->numerify('###-###-###-#'),
                 'user_type_id' => $fonctionnaireType->id,
             ]
         );
