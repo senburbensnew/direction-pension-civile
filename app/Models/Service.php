@@ -28,4 +28,9 @@ class Service extends Model
     {
         return $this->hasMany(Demande::class, 'current_service_id');
     }
+
+    public function users()
+    {
+        return $this->hasMany(User::class, 'service_id');
+    }
 }

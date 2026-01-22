@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests;
 
+use App\Rules\CodePension;
 use Illuminate\Foundation\Http\FormRequest;
 
 class StoreDemandePensionReversionRequest extends FormRequest
@@ -11,6 +12,19 @@ class StoreDemandePensionReversionRequest extends FormRequest
         return auth()->check();
     }
 
+    protected function prepareForValidation()
+    {
+        logger()->info('Request size', [
+            'total_mb' => round(strlen($this->getContent()) / 1024 / 1024, 2),
+            'files_mb' => round(
+                collect($this->allFiles())
+                    ->flatten()
+                    ->sum(fn ($f) => $f->getSize()) / 1024 / 1024,
+                2
+            ),
+        ]);
+    }
+
     public function rules(): array
     {
         return [
@@ -18,7 +32,7 @@ class StoreDemandePensionReversionRequest extends FormRequest
             // Informations du défunt
             // -----------------------------
             'nom_complet_defunt'      => ['required', 'string', 'max:255'],
-            'numero_pension'     => ['required', 'string', 'max:100'],
+            'numero_pension'     => ['required', new CodePension()],
 
             // -----------------------------
             // Documents du défunt (obligatoires)
@@ -45,8 +59,8 @@ class StoreDemandePensionReversionRequest extends FormRequest
             'carte_electorale'       => ['required', 'file', 'mimes:pdf,jpg,jpeg,png', 'max:5120'],
 
             // Photos (2 minimum)
-            'photos_identite'        => ['required', 'array', 'min:2'],
-            'photos_identite.*'      => ['file', 'image', 'mimes:jpg,jpeg,png', 'max:2048'],
+            'photos_identites'        => ['required', 'array', 'min:2'],
+            'photos_identites.*'      => ['file', 'image', 'mimes:jpg,jpeg,png', 'max:2048'],
 
             // -----------------------------
             // Documents optionnels
@@ -54,27 +68,14 @@ class StoreDemandePensionReversionRequest extends FormRequest
             'pv_tutelle'          => ['nullable', 'file', 'mimes:pdf,jpg,jpeg,png', 'max:5120'],
             'certificat_medical'  => ['nullable', 'file', 'mimes:pdf,jpg,jpeg,png', 'max:5120'],
             'copie_moniteur'      => ['nullable', 'file', 'mimes:pdf,jpg,jpeg,png', 'max:5120'],
-            'attestation_scolaires' => ['nullable', 'array'],
-            'attestation_scolaires.*' => ['file', 'mimes:pdf,jpg,jpeg,png', 'max:5120'],
+            'attestations_scolaires' => ['nullable', 'array'],
+            'attestations_scolaires.*' => ['file', 'mimes:pdf,jpg,jpeg,png', 'max:5120'], 
 
 
             // -----------------------------
             // Consentement
             // -----------------------------
             'consentement'        => ['required', 'accepted']
-        ];
-    }
-
-    public function messages(): array
-    {
-        return [
-            'required' => 'Le champ :attribute est obligatoire.',
-            'file'     => 'Le champ :attribute doit être un fichier valide.',
-            'image'    => 'Le fichier :attribute doit être une image.',
-            'mimes'    => 'Le fichier :attribute doit être de type :values.',
-            'max'      => 'Le fichier :attribute ne doit pas dépasser :max Ko.',
-            'in'       => 'La valeur sélectionnée pour :attribute est invalide.',
-            'photos_identite.min' => 'Veuillez fournir au moins deux (2) photos d’identité.',
         ];
     }
 

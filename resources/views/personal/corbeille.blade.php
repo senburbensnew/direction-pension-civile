@@ -11,8 +11,12 @@
             <legend class="text-lg font-semibold ml-4 px-4 text-gray-700 bg-white rounded-full shadow-sm">
                 <i class="fas fa-shopping-cart mr-2 text-gray-400"></i> Demandes à traiter
             </legend>
-
             <div class="py-6 pl-5 pr-5">
+                            @if (session('success'))
+                <div class="my-4 p-4 bg-green-50 border border-green-200 text-green-700 rounded">
+                    {{ session('success') }}
+                </div>
+            @endif
                 <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
                     {{-- ===================== PENSIONNAIRE ===================== --}}
                         <div class="mb-12">

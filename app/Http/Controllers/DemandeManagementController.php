@@ -1,14 +1,15 @@
 <?php
 
 
-namespace App\Http\Controllers\Admin;
+namespace App\Http\Controllers;
 
 
-use App\Http\Controllers\Controller;
 use App\Models\Demande;
-use App\Models\DemandeHistory;
 use Illuminate\Http\Request;
+use App\Models\DemandeHistory;
 use Illuminate\Support\Facades\DB;
+use App\Http\Controllers\Controller;
+use App\Http\Requests\TransfertDemandeRequest;
 
 class DemandeManagementController extends Controller
 {
@@ -44,5 +45,13 @@ class DemandeManagementController extends Controller
         });
 
         return redirect()->back()->with('success', 'État mis à jour');
+    }
+
+    public function transfererDemande(TransfertDemandeRequest $request){
+        $demande = Demande::findOrFail($request->demande_id);
+
+        $demande->current_service_id = $request->service_id;
+        $demande->save();
+        return redirect()->route('personal.cart')->with('success', 'Demande transférée avec succès');
     }
 }

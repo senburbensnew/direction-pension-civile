@@ -18,7 +18,7 @@
     {{-- @vite(['resources/css/app.css', 'resources/js/app.js']) --}}
 </head>
 
-<body class="container mx-auto font-sans antialiased border">
+<body class="container mx-auto font-sans antialiased">
     <noscript>
         <div class="fixed inset-0 z-[10001] flex items-center justify-center bg-black bg-opacity-80">
             <div class="bg-white max-w-md w-full mx-4 p-6 rounded-xl shadow-xl text-center">
@@ -42,7 +42,7 @@
         </div>
     </noscript>
 
-    <div class="min-h-screen bg-gray-100">
+    <div class="bg-gray-100 border-2 h-screen overflow-scroll">
         <x-header />
         <main>
             {{ $slot }}

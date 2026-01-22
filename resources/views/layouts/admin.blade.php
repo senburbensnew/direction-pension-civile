@@ -39,7 +39,7 @@
         }
     </style>
     @vite(['resources/css/app.css', 'resources/js/app.js'])
-        {{-- <link href="{{ asset('build/assets/app-CFGfTGFn.css') }}" rel="stylesheet"> --}}
+    {{-- <link href="{{ asset('build/assets/app-CFGfTGFn.css') }}" rel="stylesheet"> --}}
 </head>
 
 <body class="bg-gray-100">
@@ -78,15 +78,14 @@
             <nav class="mt-4">
 
                 <!-- Dashboard -->
-                <a href="#"
-                    class="flex items-center px-4 py-2 text-gray-300 hover:bg-gray-700 {{ request()->routeIs('admin.dashboard') ? 'bg-gray-700' : '' }}">
+                 <a href="{{ route('admin.dashboard.index') }}"
+                    class="flex items-center px-4 py-2 text-gray-300 hover:bg-gray-700 {{ request()->routeIs('admin.dashboard.*') ? 'bg-gray-700' : '' }}">
                     <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                             d="M3 12l2-2m0 0l7-7 7 7m-9 9V9m4 12V9m5 3l2 2"/>
                     </svg>
                     Dashboard
-                </a>
-
+                </a> 
                 <!-- Utilisateurs -->
                 <a href="{{ route('admin.users.index') }}"
                     class="flex items-center px-4 py-2 text-gray-300 hover:bg-gray-700 {{ request()->routeIs('admin.users.*') ? 'bg-gray-700' : '' }}">
@@ -96,10 +95,18 @@
                     </svg>
                     Utilisateurs
                 </a>
-
+                <!-- Services -->
+                <a href="{{ route('admin.services.index') }}"
+                    class="flex items-center px-4 py-2 text-gray-300 hover:bg-gray-700 {{ request()->routeIs('admin.services.*') ? 'bg-gray-700' : '' }}">
+                    <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M17 20h5v-2a4 4 0 00-4-4h-1M9 20H4v-2a4 4 0 014-4h1m4-4a4 4 0 100-8 4 4 0 000 8zm6 0a3 3 0 100-6 3 3 0 000 6z"/>
+                    </svg>
+                    Services
+                </a>
                 <!-- Permissions -->
                 <a href="{{ route('admin.permissions.index') }}"
-                    class="flex items-center px-4 py-2 text-gray-300 hover:bg-gray-700">
+                    class="flex items-center px-4 py-2 text-gray-300 hover:bg-gray-700 {{ request()->routeIs('admin.permissions.*') ? 'bg-gray-700' : '' }}">
                     <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                             d="M12 11c1.657 0 3-1.343 3-3S13.657 5 12 5 9 6.343 9 8s1.343 3 3 3z"/>
@@ -108,17 +115,15 @@
                     </svg>
                     Permissions
                 </a>
-
                 <!-- Rôles -->
-                <a href="#"
-                    class="flex items-center px-4 py-2 text-gray-300 hover:bg-gray-700">
+                <a href="{{ route('admin.roles.index') }}"
+                    class="flex items-center px-4 py-2 text-gray-300 hover:bg-gray-700 {{ request()->routeIs('admin.roles.*') ? 'bg-gray-700' : '' }}">
                     <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                             d="M9 12l2 2 4-4M12 3l7 4v5c0 5-3.5 9-7 9s-7-4-7-9V7l7-4z"/>
                     </svg>
                     Rôles
                 </a>
-
                 <!-- Carrousel -->
                 <a href="{{ route('admin.carousels.index') }}"
                     class="flex items-center px-4 py-2 text-gray-300 hover:bg-gray-700 {{ request()->routeIs('admin.carousels.*') ? 'bg-gray-700' : '' }}">
@@ -129,19 +134,17 @@
                     </svg>
                     Carrousel
                 </a>
-
-                <!-- Directrice -->
+                <!-- Ministre -->
                 <a href="#"
-                    class="flex items-center px-4 py-2 text-gray-300 hover:bg-gray-700">
+                    class="flex items-center px-4 py-2 text-gray-300 hover:bg-gray-700 {{ request()->routeIs('admin.services.*') ? 'bg-gray-700' : '' }}">
                     <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                             d="M12 14a4 4 0 100-8 4 4 0 000 8z"/>
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                             d="M4 20a8 8 0 0116 0"/>
                     </svg>
-                    Directrice
+                    Ministre
                 </a>
-
                 <!-- Rapports -->
                 <a href="{{ route('reports.create') }}"
                     class="flex items-center px-4 py-2 text-gray-300 hover:bg-gray-700 {{ request()->routeIs('reports.*') ? 'bg-gray-700' : '' }}">
@@ -151,17 +154,15 @@
                     </svg>
                     Rapports
                 </a>
-
                 <!-- Newsletter -->
                 <a href="#"
-                    class="flex items-center px-4 py-2 text-gray-300 hover:bg-gray-700">
+                    class="flex items-center px-4 py-2 text-gray-300 hover:bg-gray-700 {{ request()->routeIs('admin.services.*') ? 'bg-gray-700' : '' }}">
                     <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                             d="M3 8l9 6 9-6M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
                     </svg>
                     Newsletter
                 </a>
-
                 <!-- Actualités -->
                 <a href="{{ route('actualites.admin.index') }}"
                     class="flex items-center px-4 py-2 text-gray-300 hover:bg-gray-700 {{ request()->routeIs('actualites.admin.*') ? 'bg-gray-700' : '' }}">

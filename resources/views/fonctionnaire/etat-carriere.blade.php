@@ -35,7 +35,7 @@
         {{-- ================= INFORMATIONS PERSONNELLES ================= --}}
         <div class="mb-8 p-4 border border-gray-200 rounded-lg">
             <h3 class="text-lg font-semibold mb-4  flex items-center">
-                <span class="mr-2">1.</span> Informations personnelles
+                Informations personnelles
             </h3>
             
             <div class="grid md:grid-cols-2 gap-4">
@@ -104,7 +104,7 @@
         {{-- ================= IDENTIFICATION ================= --}}
         <div class="mb-8 p-4 border border-gray-200 rounded-lg">
             <h3 class="text-lg font-semibold mb-4  flex items-center">
-                <span class="mr-2">2.</span> Informations d'identification
+                Informations d'identification
             </h3>
             
             <div class="grid md:grid-cols-2 gap-4">
@@ -134,7 +134,7 @@
         {{-- ================= INFORMATIONS PROFESSIONNELLES ================= --}}
         <div class="mb-8 p-4 border border-gray-200 rounded-lg">
             <h3 class="text-lg font-semibold mb-4  flex items-center">
-                <span class="mr-2">3.</span> Informations professionnelles
+                Informations professionnelles
             </h3>
             
             <div class="grid md:grid-cols-2 gap-4">
@@ -203,7 +203,7 @@
         {{-- ================= COORDONNÉES ================= --}}
         <div class="mb-8 p-4 border border-gray-200 rounded-lg">
             <h3 class="text-lg font-semibold mb-4  flex items-center">
-                <span class="mr-2">4.</span> Coordonnées du demandeur
+                Coordonnées du demandeur
             </h3>
             
             <div class="grid md:grid-cols-2 gap-4">
@@ -240,7 +240,7 @@
         {{-- ================= PIÈCES JOINTES ================= --}}
         <div class="mb-8 p-4 border border-gray-200 rounded-lg">
             <h3 class="text-lg font-semibold mb-4  flex items-center">
-                <span class="mr-2">5.</span> Pièces jointes
+                Pièces jointes
             </h3>
             <p class="text-sm text-gray-600 mb-4">Format accepté : PDF, JPG, PNG. Taille max : 5Mo par fichier.</p>
             
@@ -304,7 +304,7 @@
         {{-- ================= OBJET & MOTIF ================= --}}
         <div class="mb-8 p-4 border border-gray-200 rounded-lg">
             <h3 class="text-lg font-semibold mb-4  flex items-center">
-                <span class="mr-2">6.</span> Objet de la demande
+                Objet de la demande
             </h3>
             
             <div class="space-y-4">

@@ -4,11 +4,6 @@
     <div class="max-w-6xl mx-auto p-6 m-2 ">
         <!-- Form Section -->
         <div id="form-section" class="max-w-7xl mx-auto bg-white p-6 shadow-md rounded-lg relative m-2">
-            @if (session('success'))
-                <div class="mb-4 p-4 bg-green-50 border border-green-200 text-green-700 rounded">
-                    {{ session('success') }}
-                </div>
-            @endif
 
             <form method="POST" action="{{ route('demandes.demande-arret-virement.store') }}">
                 @csrf
@@ -19,6 +14,12 @@
                     <h2 class="text-xl font-bold uppercase mt-2">Formulaire de Doléances</h2>
                     <h3 class="text-lg font-semibold uppercase mt-2">Service de Comptabilité</h3>
                 </div>
+
+                @if (session('success'))
+                    <div class="mb-4 p-4 bg-green-50 border border-green-200 text-green-700 rounded">
+                        {{ session('success') }}
+                    </div>
+                @endif
 
                 <!-- Date & Code -->
                 <div class="grid grid-cols-2 gap-4 mb-6">

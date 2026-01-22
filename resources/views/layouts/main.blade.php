@@ -7,8 +7,8 @@
     <title>@yield('title', 'Direction de la Pension Civile')</title>
     <!-- Font Awesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
-    @vite(['resources/css/app.css', 'resources/js/app.js'])
-    {{-- <link href="{{ asset('build/assets/app-CFGfTGFn.css') }}" rel="stylesheet"> --}}
+    {{-- @vite(['resources/css/app.css', 'resources/js/app.js']) --}}
+    <link href="{{ asset('build/assets/app-CFGfTGFn.css') }}" rel="stylesheet">
     @stack('styles')
 </head>
 
@@ -43,7 +43,7 @@
     <x-footer />
     <x-contact-info-bar borderType="top"  />
     <!-- Under Construction Notification -->
-    @if(session()->get('site_under_construction', true))
+{{--     @if(session()->get('site_under_construction', true))
         <div id="construction-alert" 
             class="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-[10000]">
             
@@ -75,9 +75,9 @@
                 </a>
             </div>
         </div>
-    @endif
+    @endif --}}
 
     @stack('scripts')
-    {{-- <script src="{{ asset('build/assets/app-CbEvcXly.js') }}"></script> --}}
+    <script src="{{ asset('build/assets/app-CbEvcXly.js') }}"></script>
 </body>
 </html>

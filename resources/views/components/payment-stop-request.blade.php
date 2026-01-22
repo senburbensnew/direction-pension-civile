@@ -237,8 +237,7 @@
             <!-- DECLARATION -->
             <fieldset class="mb-6 p-5 border rounded-lg">
                 <label class="flex items-start">
-                    <input type="checkbox" name="consentement" value="1"
-                           {{ old('consentement') ? 'checked' : '' }}>
+                    <input type="checkbox" name="consentement" value="1">
                     <span class="ml-2 text-sm">Je certifie l’exactitude des informations</span>
                 </label>
                 @error('consentement')

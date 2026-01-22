@@ -6,6 +6,7 @@ use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Storage;
 use App\Http\Controllers\PostController;
+use App\Http\Controllers\RoleController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\AdminController;
 use App\Http\Controllers\MediaController;
@@ -13,6 +14,7 @@ use App\Http\Controllers\LocaleController;
 use App\Http\Controllers\ReportController;
 use App\Http\Controllers\DemandeController;
 use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\ServiceController;
 use App\Http\Controllers\CarouselController;
 use App\Http\Controllers\DocumentController;
 use App\Http\Controllers\PersonalController;
@@ -23,6 +25,8 @@ use App\Http\Controllers\InstitutionController;
 use App\Http\Controllers\PensionnaireController;
 use App\Http\Controllers\FonctionnaireController;
 use App\Http\Controllers\QuiSommesNousController;
+use App\Http\Controllers\AdminDashboardController;
+use App\Http\Controllers\DemandeManagementController;
 use App\Http\Controllers\EnregistrementPensionnaireController;
 
 
@@ -357,8 +361,10 @@ Route::middleware('auth')
             ->group(function () {
                 Route::get('/create', 'createDemandeAdhesion')->name('create');
                 Route::post('/', 'storeDemandeAdhesion')->name('store');
-            });
+            });   
 });
+
+Route::post('transfert-demande', [DemandeManagementController::class,'transfererDemande'])->name('demande.transfert');
 
 Route::get('rapports', [ReportController::class,'index'])->name('reports.index');
 
@@ -380,7 +386,10 @@ Route::prefix('personal')->middleware('auth')->group(function () {
     Route::get('/', [PersonalController::class, 'index'])->name('personal.index');
     Route::get('/dashboard', [PersonalController::class, 'dashboard'])->name('personal.dashboard');
     Route::get('/requestsDashboard', [PersonalController::class, 'requestsDashboard'])->name('personal.requests-dashboard');
-    Route::get('/corbeille', [PersonalController::class, 'corbeille'])->middleware(['role:secretariat'])->name('personal.cart');
+    Route::get('/corbeille', [PersonalController::class, 'corbeille'])
+        // ->middleware(['role:secretariat|direction|service_liquidation|service_formalite|service_controle_placement|service_comptabilite|service_assurance|administration|admin'])
+        ->middleware('corbeille.access')
+        ->name('personal.cart');
     Route::get('/dashboard-corbeille', [PersonalController::class, 'requestsDashboardCorbeille'])->name('personal.requests-dashboard-corbeille');
     Route::prefix('request')->group(function () {
         Route::get('/{id}', [PersonalController::class, 'showRequest'])->name('personal.request.show');
@@ -431,7 +440,10 @@ Route::prefix('admin')
         // Users & Posts
         Route::resource('users', UserController::class);
         Route::resource('posts', PostController::class);
-
+        
+        Route::get('/dashboard', [AdminDashboardController::class, 'index'])->name('dashboard.index');
+        Route::get('/services', [ServiceController::class, 'index'])->name('services.index');
+        Route::get('/roles', [RoleController::class, 'index'])->name('roles.index');
         Route::get('/permissions', [PermissionController::class, 'index'])->name('permissions.index');
 
         // Settings
@@ -446,6 +458,10 @@ Route::middleware(['auth'])->group(function(){
     Route::put('admin/rapports/{report}', [ReportController::class,'update'])->name('reports.update');
     Route::delete('admin/rapports/{report}', [ReportController::class,'destroy'])->name('reports.destroy');
     Route::post('admin/rapports/{report}/toggle', [ReportController::class,'togglePublish'])->name('reports.toggle');
+});
+
+Route::get('/php-info', function () {
+    phpinfo();
 });
 
 Route::get('/reports/view/{report}', function (Report $report) {

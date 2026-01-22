@@ -49,71 +49,82 @@ class DemandeController extends Controller
 
     public function storeDemandeVirement(StoreDemandeVirementBancaireRequest $request)
     {
-        DB::beginTransaction();
         $storedFilePaths = [];
 
         try {
-            $validated = $request->validated();
+            DB::transaction(function () use ($request, &$storedFilePaths) {
 
-            $validated['code'] = CodeGeneratorService::generateUniqueRequestCode(
-                TypeDemandeEnum::DEMANDE_VIREMENT_BANCAIRE->value,
-                (new Demande())->getTable()
-            );
+                $validated = $request->validated();
 
-            $validated['status_id'] = Status::getStatusPending()->id;
-            $validated['created_by'] = auth()->id();
-            $validated['type'] = TypeDemandeEnum::DEMANDE_VIREMENT_BANCAIRE->value;
-            $serviceId = Service::where('code', Service::SECRETARIAT)
-                                  ->value('id');
-            if (! $serviceId) {
-                throw new \Exception('Service secrétariat introuvable');
-            }
-            $validated['current_service_id'] = $serviceId;
+                $validated['code'] = CodeGeneratorService::generateUniqueRequestCode(
+                    TypeDemandeEnum::DEMANDE_VIREMENT_BANCAIRE->value,
+                    (new Demande())->getTable()
+                );
 
+                $validated += [
+                    'status_id' => Status::getStatusPending()->id,
+                    'created_by' => auth()->id(),
+                    'type' => TypeDemandeEnum::DEMANDE_VIREMENT_BANCAIRE->value,
+                ];
 
-            $basePath = 'demandes/virement-bancaire/' . now()->format('Y/m');
+                $serviceId = Service::where('code', Service::SECRETARIAT)->value('id');
 
-            // Upload photo
-            if ($request->hasFile('profile_photo')) {
-                $path = $request->file('profile_photo')->store($basePath, 'public');
-                $validated['profile_photo'] = $path;
-                $storedFilePaths[] = $path;
-            }
+                if (! $serviceId) {
+                    throw new \Exception('Service secrétariat introuvable');
+                }
 
-            // Data métier
-            $validated['data'] = collect($validated)
-                ->except(['consentement'])
-                ->toArray();
+                $validated['current_service_id'] = $serviceId;
 
-            $demande = Demande::create($validated);
+                $basePath = 'demandes/virement-bancaire/' . now()->format('Y/m');
 
-            DemandeHistory::create([
-                'demande_id' => $demande->id,
-                'statut'     => $demande->status->code,
-                'commentaire'=> 'Demande créée',
-                'changed_by' => auth()->id(),
-                'data'       => $demande->data,
-            ]);
+                if ($request->hasFile('profile_photo')) {
+                    $path = $request->file('profile_photo')->store($basePath, 'public');
+                    $validated['profile_photo'] = $path;
+                    $storedFilePaths[] = $path;
+                }
 
-            $demande->workflows()->create([
-                'from_service_id' => null,
-                'to_service_id'   => $demande->service->id,
-                'status_id'       => $demande->status->id,
-                'action_by'       => auth()->id(),
-                'commentaire'     => 'Soumission de la demande',
-            ]);
+                // Données métier (sans champs système ni fichier)
+                $validated['data'] = collect($validated)->except([
+                    'consentement',
+                    'status_id',
+                    'created_by',
+                    'type',
+                    'current_service_id',
+                    'code'
+                ])->toArray();
 
-            DB::commit();
+                $demande = Demande::create($validated);
+
+                DemandeHistory::create([
+                    'demande_id' => $demande->id,
+                    'statut' => $demande->status->code,
+                    'commentaire' => 'Demande créée',
+                    'changed_by' => auth()->id(),
+                    'data' => $demande->data,
+                ]);
+
+                $demande->workflows()->create([
+                    'from_service_id' => null,
+                    'to_service_id' => $demande->current_service_id,
+                    'status_id' => $demande->status->id,
+                    'action_by' => auth()->id(),
+                    'commentaire' => 'Soumission de la demande',
+                ]);
+            });
 
             return back()->with('success', 'Demande enregistrée avec succès.');
-        } catch (\Exception $e) {
-            DB::rollBack();
 
-            if (!empty($storedFilePaths)) {
+        } catch (\Throwable $e) {
+
+            // rollback fichiers
+            if ($storedFilePaths) {
                 Storage::disk('public')->delete($storedFilePaths);
             }
 
-            Log::error($e);
+            Log::error('Erreur demande virement bancaire', [
+                'user_id' => auth()->id(),
+                'exception' => $e,
+            ]);
 
             return back()
                 ->with('error', 'Une erreur inattendue est survenue.')
@@ -129,65 +140,62 @@ class DemandeController extends Controller
 
     public function storeDemandeAttestation(StoreDemandeAttestationRequest $request)
     {
-        DB::beginTransaction();
-
         try {
-            $validated = $request->validated();
-                    
-            $validated['code'] = CodeGeneratorService::generateUniqueRequestCode(
-                TypeDemandeEnum::DEMANDE_ATTESTATION->value,
-                (new Demande())->getTable()
-            );
-            $validated['status_id'] = Status::getStatusPending()->id;
-            $validated['created_by'] = auth()->id();
-            $validated['type'] = TypeDemandeEnum::DEMANDE_ATTESTATION->value;
-            
-            $serviceId = Service::where('code', Service::SECRETARIAT)
-                                  ->value('id');
-            if (! $serviceId) {
-                throw new \Exception('Service secrétariat introuvable');
-            }
-            $validated['current_service_id'] = $serviceId;
+            DB::transaction(function () use ($request) {
 
-            unset($validated['consentement']);
+                $validated = $request->validated();
 
-           $validated['data'] = collect($validated)
-                                ->except(['code', 'status_id', 'created_by', 'type', 'service_id'])
-                                ->toArray();
+                $serviceId = Service::where('code', Service::SECRETARIAT)->value('id');
+                if (! $serviceId) {
+                    throw new \Exception('Service secrétariat introuvable');
+                }
 
-           $demande = Demande::create($validated);
+                unset($validated['consentement']);
 
-           DemandeHistory::create([
-               'demande_id' => $demande->id,
-               'statut' => $demande->status->code,
-               'commentaire' => 'Demande créée',
-               'changed_by' => auth()->id(),
-               'data' => $demande->data
-           ]);
+                $validated = array_merge($validated, [
+                    'code'               => CodeGeneratorService::generateUniqueRequestCode(
+                        TypeDemandeEnum::DEMANDE_ATTESTATION->value,
+                        (new Demande())->getTable()
+                    ),
+                    'status_id'          => Status::getStatusPending()->id,
+                    'created_by'         => auth()->id(),
+                    'type'               => TypeDemandeEnum::DEMANDE_ATTESTATION->value,
+                    'current_service_id' => $serviceId,
+                ]);
 
-            $demande->workflows()->create([
-                'from_service_id' => null,
-                'to_service_id'   => $demande->service->id,
-                'status_id'       => $demande->status->id,
-                'action_by_user_id'       => auth()->id(),
-                'commentaire'     => 'Soumission de la demande',
-            ]);
+                $validated['data'] = collect($validated)->except([
+                    'status_id',
+                    'created_by',
+                    'type',
+                    'current_service_id',
+                    'code',
+                ])->toArray();
 
-           DB::commit();
+                $demande = Demande::create($validated);
 
-           return back()->with('success', 'Demande enregistrée avec succès.');
-        } catch (ValidationException $e) {
-            DB::rollBack();
+                DemandeHistory::create([
+                    'demande_id' => $demande->id,
+                    'statut'     => $demande->status->code,
+                    'commentaire'=> 'Demande créée',
+                    'changed_by'=> auth()->id(),
+                    'data'       => $demande->data,
+                ]);
+
+                $demande->workflows()->create([
+                    'from_service_id'   => null,
+                    'to_service_id'     => $demande->current_service_id,
+                    'status_id'         => $demande->status_id,
+                    'action_by_user_id' => auth()->id(),
+                    'commentaire'       => 'Soumission de la demande',
+                ]);
+            });
+
+            return back()->with('success', 'Demande enregistrée avec succès.');
+        } catch (\Throwable $e) {
+            report($e);
 
             return back()
-                ->withErrors($e->validator)
-                ->withInput();
-        } catch (\Exception $e) {
-            DB::rollBack();
-            Log::error($e);
-
-            return back()
-                ->with('error', 'Une erreur inattendue est survenue.')
+                ->withErrors(['error' => $e->getMessage()])
                 ->withInput();
         }
     }
@@ -201,51 +209,58 @@ class DemandeController extends Controller
 
     public function storeDemandeTransfertCheque(StoreTransfertChequeRequest $request)
     {
-        DB::beginTransaction();
-
         try {
-            $validated = $request->validated();
+            DB::transaction(function () use ($request) {
+                $validated = $request->validated();
 
-            $validated['code'] = CodeGeneratorService::generateUniqueRequestCode(
-                TypeDemandeEnum::DEMANDE_TRANSFERT_CHEQUE->value,
-                (new Demande())->getTable()
-            );
+                $validated['code'] = CodeGeneratorService::generateUniqueRequestCode(
+                    TypeDemandeEnum::DEMANDE_TRANSFERT_CHEQUE->value,
+                    (new Demande())->getTable()
+                );
 
-            $validated['status_id'] = Status::getStatusPending()->id;
-            $validated['created_by'] = auth()->id();
-            $validated['type'] = TypeDemandeEnum::DEMANDE_TRANSFERT_CHEQUE->value;
-            $serviceId = Service::where('code', Service::SECRETARIAT)
-                                  ->value('id');
-            if (! $serviceId) {
-                throw new \Exception('Service secrétariat introuvable');
-            }
-            $validated['current_service_id'] = $serviceId;
+                $validated['status_id'] = Status::getStatusPending()->id;
+                $validated['created_by'] = auth()->id();
+                $validated['type'] = TypeDemandeEnum::DEMANDE_TRANSFERT_CHEQUE->value;
+                $serviceId = Service::where('code', Service::SECRETARIAT)->value('id');
 
-            $validated['data'] = collect($validated)->toArray();
+                if (! $serviceId) {
+                    throw new \Exception('Service secrétariat introuvable');
+                }
+                $validated['current_service_id'] = $serviceId;
 
-            $demande = Demande::create($validated);
+                $validated['data'] = collect($validated)->except([
+                    'consentement',
+                    'status_id',
+                    'created_by',
+                    'type',
+                    'current_service_id',
+                    'code'
+                ])->toArray();
 
-            DemandeHistory::create([
-                'demande_id' => $demande->id,
-                'statut' => $demande->status->code,
-                'commentaire' => 'Demande créée',
-                'changed_by' => auth()->id(),
-                'data' => $demande->data
-            ]);
-            $demande->workflows()->create([
-                'from_service_id' => null,
-                'to_service_id'   => $demande->service->id,
-                'status_id'       => $demande->status->id,
-                'action_by'       => auth()->id(),
-                'commentaire'     => 'Soumission de la demande',
-            ]);
+                $demande = Demande::create($validated);
 
-            DB::commit();
+                DemandeHistory::create([
+                    'demande_id' => $demande->id,
+                    'statut' => $demande->status->code,
+                    'commentaire' => 'Demande créée',
+                    'changed_by' => auth()->id(),
+                    'data' => $demande->data
+                ]);
+                $demande->workflows()->create([
+                    'from_service_id' => null,
+                    'to_service_id'   => $demande->current_service_id,
+                    'status_id'       => $demande->status->id,
+                    'action_by'       => auth()->id(),
+                    'commentaire'     => 'Soumission de la demande',
+                ]);
+            });
 
             return back()->with('success', 'Demande enregistrée avec succès.');
-        } catch (\Exception $e) {
-            DB::rollBack();
-            Log::error($e);
+        } catch (\Throwable $e) {
+            Log::error('Erreur demande virement bancaire', [
+                'user_id' => auth()->id(),
+                'exception' => $e,
+            ]);
 
             return back()
                 ->with('error', 'Une erreur inattendue est survenue.')
@@ -262,80 +277,80 @@ class DemandeController extends Controller
 
     public function storeDemandeArretPaiement(StoreArretPaiementRequest $request)
     {
-        DB::beginTransaction();
-
         $storedFilePaths = [];
 
         try {
-            // ✅ Validation
-            $validated = $request->validated();
+            DB::transaction(function () use ($request, &$storedFilePaths) {
+                // ✅ Validation
+                $validated = $request->validated();
 
-            // ❌ Champs non persistés
-            unset(
-                $validated['pieces'],
-                $validated['consentement']
-            );
+                // ❌ Champs non persistés
+                unset(
+                    $validated['pieces'],
+                    $validated['consentement']
+                );
 
-            // ✅ Métadonnées
-            $validated['code'] = CodeGeneratorService::generateUniqueRequestCode(
-                TypeDemandeEnum::DEMANDE_ARRET_PAIEMENT->value,
-                (new Demande())->getTable()
-            );
+                // ✅ Métadonnées
+                $validated['code'] = CodeGeneratorService::generateUniqueRequestCode(
+                    TypeDemandeEnum::DEMANDE_ARRET_PAIEMENT->value,
+                    (new Demande())->getTable()
+                );
 
-            $validated['status_id'] = Status::getStatusPending()->id;
-            $validated['created_by'] = auth()->id();
-            $validated['type'] = TypeDemandeEnum::DEMANDE_ARRET_PAIEMENT->value;
-            $serviceId = Service::where('code', Service::SECRETARIAT)
-                                  ->value('id');
-            if (! $serviceId) {
-                throw new \Exception('Service secrétariat introuvable');
-            }
-            $validated['current_service_id'] = $serviceId;
-
-            // 📂 Dossier upload
-            $basePath = 'demandes/arret-paiement/' . now()->format('Y/m');
-            $uploadedFiles = [];
-
-            if ($request->hasFile('pieces')) {
-                foreach ($request->file('pieces') as $file) {
-                    $path = $file->store($basePath, 'public');
-                    $storedFilePaths[] = $path;
-                    $uploadedFiles[] = $path;
+                $validated['status_id'] = Status::getStatusPending()->id;
+                $validated['created_by'] = auth()->id();
+                $validated['type'] = TypeDemandeEnum::DEMANDE_ARRET_PAIEMENT->value;
+                $serviceId = Service::where('code', Service::SECRETARIAT)
+                                    ->value('id');
+                if (! $serviceId) {
+                    throw new \Exception('Service secrétariat introuvable');
                 }
-            }
+                $validated['current_service_id'] = $serviceId;
 
-            // 🧾 Données métier UNIQUEMENT
-            $dataMetier = Arr::except($validated, [
-                'code',
-                'status_id',
-                'created_by',
-                'type'
-            ]);
+                // 📂 Dossier upload
+                $basePath = 'demandes/arret-paiement/' . now()->format('Y/m');
+                $uploadedFiles = [];
 
-            $validated['data'] = $dataMetier;
-            $validated['data']['pieces'] = $uploadedFiles;
+                if ($request->hasFile('pieces')) {
+                    foreach ($request->file('pieces') as $file) {
+                        $path = $file->store($basePath, 'public');
+                        $storedFilePaths[] = $path;
+                        $uploadedFiles[] = $path;
+                    }
+                }
+
+                // 🧾 Données métier UNIQUEMENT
+                $dataMetier = Arr::except($validated, [
+                    'code',
+                    'status_id',
+                    'created_by',
+                    'type',
+                    'consentement',
+                    'current_service_id'
+                ]);
+
+                $validated['data'] = $dataMetier;
+                $validated['data']['pieces'] = $uploadedFiles;
 
 
-            // 📝 Création
-            $demande = Demande::create($validated);
+                // 📝 Création
+                $demande = Demande::create($validated);
 
-            // 📜 Historique
-            DemandeHistory::create([
-                'demande_id' => $demande->id,
-                'statut' => $demande->status->code,
-                'commentaire' => 'Demande créée',
-                'changed_by' => auth()->id(),
-                'data' => $demande->data
-            ]);
-            $demande->workflows()->create([
-                'from_service_id' => null,
-                'to_service_id'   => $demande->service->id,
-                'status_id'       => $demande->status->id,
-                'action_by'       => auth()->id(),
-                'commentaire'     => 'Soumission de la demande',
-            ]);
-
-            DB::commit();
+                // 📜 Historique
+                DemandeHistory::create([
+                    'demande_id' => $demande->id,
+                    'statut' => $demande->status->code,
+                    'commentaire' => 'Demande créée',
+                    'changed_by' => auth()->id(),
+                    'data' => $demande->data
+                ]);
+                $demande->workflows()->create([
+                    'from_service_id' => null,
+                    'to_service_id'   => $demande->current_service_id,
+                    'status_id'       => $demande->status->id,
+                    'action_by'       => auth()->id(),
+                    'commentaire'     => 'Soumission de la demande',
+                ]);
+            });
 
             return back()->with(
                 'success',
@@ -343,7 +358,6 @@ class DemandeController extends Controller
             );
 
         } catch (\Exception $e) {
-            DB::rollBack();
 
             if (!empty($storedFilePaths)) {
                 Storage::disk('public')->delete($storedFilePaths);
@@ -368,60 +382,57 @@ class DemandeController extends Controller
 
     public function storeDemandeReinsertion(StoreDemandeReinsertionRequest $request)
     {
-        DB::beginTransaction();
-
         try {
-            $validated = $request->validated();
- 
-            $validated['code'] = CodeGeneratorService::generateUniqueRequestCode(
-                TypeDemandeEnum::DEMANDE_REINSERTION->value,
-                (new Demande())->getTable()
-            );
-            $validated['status_id'] = Status::getStatusPending()->id;
-            $validated['created_by'] = auth()->id();
-            $validated['type'] = TypeDemandeEnum::DEMANDE_REINSERTION->value;
-            $serviceId = Service::where('code', Service::SECRETARIAT)
-                                  ->value('id');
-            if (! $serviceId) {
-                throw new \Exception('Service secrétariat introuvable');
-            }
-            $validated['current_service_id'] = $serviceId;
+            DB::transaction(function () use ($request) {
+                $validated = $request->validated();
+    
+                $validated['code'] = CodeGeneratorService::generateUniqueRequestCode(
+                    TypeDemandeEnum::DEMANDE_REINSERTION->value,
+                    (new Demande())->getTable()
+                );
+                $validated['status_id'] = Status::getStatusPending()->id;
+                $validated['created_by'] = auth()->id();
+                $validated['type'] = TypeDemandeEnum::DEMANDE_REINSERTION->value;
+                $serviceId = Service::where('code', Service::SECRETARIAT)
+                                    ->value('id');
+                if (! $serviceId) {
+                    throw new \Exception('Service secrétariat introuvable');
+                }
+                $validated['current_service_id'] = $serviceId;
 
-           $validated['data'] = collect($validated)->toArray();
+            $validated['data'] = collect($validated)->except([
+                    'consentement',
+                    'status_id',
+                    'created_by',
+                    'type',
+                    'current_service_id',
+                    'code'
+                ])->toArray();
 
 
-           $demande = Demande::create($validated);
+            $demande = Demande::create($validated);
 
-           DemandeHistory::create([
-               'demande_id' => $demande->id,
-               'statut' => $demande->status->code,
-               'commentaire' => 'Demande créée',
-               'changed_by' => auth()->id(),
-               'data' => $demande->data
-           ]);
-            $demande->workflows()->create([
-                'from_service_id' => null,
-                'to_service_id'   => $demande->service->id,
-                'status_id'       => $demande->status->id,
-                'action_by'       => auth()->id(),
-                'commentaire'     => 'Soumission de la demande',
+            DemandeHistory::create([
+                'demande_id' => $demande->id,
+                'statut' => $demande->status->code,
+                'commentaire' => 'Demande créée',
+                'changed_by' => auth()->id(),
+                'data' => $demande->data
             ]);
+                $demande->workflows()->create([
+                    'from_service_id' => null,
+                    'to_service_id'   => $demande->current_service_id,
+                    'status_id'       => $demande->status->id,
+                    'action_by'       => auth()->id(),
+                    'commentaire'     => 'Soumission de la demande',
+                ]);
 
-           DB::commit();
+            });
 
            return back()->with('success', 'Demande enregistrée avec succès.');
-        } catch (ValidationException $e) {
-            DB::rollBack();
-
+        } catch (\Throwable $e) {
             return back()
                 ->withErrors($e->validator)
-                ->withInput();
-        } catch (\Exception $e) {
-            DB::rollBack();
-            Log::error($e);
-
-            return back()
-                ->with('error', 'Une erreur inattendue est survenue.')
                 ->withInput();
         }
     }
@@ -433,57 +444,67 @@ class DemandeController extends Controller
 
     public function storeDemandeArretVirement(StoreDemandeArretVirementRequest $request)
     {
-        DB::beginTransaction();
-
         try {
-            // ✅ Données déjà validées par le FormRequest
-            $validated = $request->validated();
+            DB::transaction(function () use ($request) {
+                // ✅ Données déjà validées par le FormRequest
+                $validated = $request->validated();
 
-            // Génération du code
-            $validated['code'] = CodeGeneratorService::generateUniqueRequestCode(
-                TypeDemandeEnum::DEMANDE_ARRET_VIREMENT->value,
-                (new Demande())->getTable()
-            );
+                // Génération du code
+                $validated['code'] = CodeGeneratorService::generateUniqueRequestCode(
+                    TypeDemandeEnum::DEMANDE_ARRET_VIREMENT->value,
+                    (new Demande())->getTable()
+                );
 
-            $validated['status_id']  = Status::getStatusPending()->id;
-            $validated['created_by'] = auth()->id();
-            $validated['type']       = TypeDemandeEnum::DEMANDE_ARRET_VIREMENT->value;
+                $validated['status_id']  = Status::getStatusPending()->id;
+                $validated['created_by'] = auth()->id();
+                $validated['type']       = TypeDemandeEnum::DEMANDE_ARRET_VIREMENT->value;
 
-            /**
-             * 📦 Payload métier stocké dans la colonne data (JSON)
-             * On exclut les champs techniques
-             */
-            $validated['data'] = collect($validated)
-                ->except(['status_id', 'created_by', 'type'])
-                ->toArray();
+                $serviceId = Service::where('code', Service::SECRETARIAT)
+                                    ->value('id');
+                if (! $serviceId) {
+                    throw new \Exception('Service secrétariat introuvable');
+                }
+                $validated['current_service_id'] = $serviceId;
 
-            // Création de la demande
-            $demande = Demande::create($validated);
+                /**
+                 * 📦 Payload métier stocké dans la colonne data (JSON)
+                 * On exclut les champs techniques
+                 */
+                $validated['data'] = collect($validated)
+                    ->except([
+                        'consentement',
+                        'status_id',
+                        'created_by',
+                        'type',
+                        'current_service_id',
+                        'code'
+                    ])
+                    ->toArray();
 
-            // Historique
-            DemandeHistory::create([
-                'demande_id' => $demande->id,
-                'statut'     => $demande->status->code,
-                'commentaire'=> 'Demande créée',
-                'changed_by' => auth()->id(),
-                'data'       => $demande->data,
-            ]);
+                // Création de la demande
+                $demande = Demande::create($validated);
 
-            $demande->workflows()->create([
-                'from_service_id' => null,
-                'to_service_id'   => $demande->service->id,
-                'status_id'       => $demande->status->id,
-                'action_by'       => auth()->id(),
-                'commentaire'     => 'Soumission de la demande',
-            ]);
+                // Historique
+                DemandeHistory::create([
+                    'demande_id' => $demande->id,
+                    'statut'     => $demande->status->code,
+                    'commentaire'=> 'Demande créée',
+                    'changed_by' => auth()->id(),
+                    'data'       => $demande->data,
+                ]);
 
-            DB::commit();
+                $demande->workflows()->create([
+                    'from_service_id' => null,
+                    'to_service_id'   => $demande->current_service_id,
+                    'status_id'       => $demande->status->id,
+                    'action_by'       => auth()->id(),
+                    'commentaire'     => 'Soumission de la demande',
+                ]);
+            });
 
             return back()->with('success', 'Demande enregistrée avec succès.');
 
         } catch (\Throwable $e) {
-            DB::rollBack();
-
             Log::error('Erreur Demande Arrêt Virement', [
                 'error' => $e->getMessage(),
                 'trace' => $e->getTraceAsString(),
@@ -506,74 +527,83 @@ class DemandeController extends Controller
 
     public function storePreuveExistence(StorePreuveExistenceRequest $request)
     {
-        DB::beginTransaction();
         $storedFilePaths = [];
 
         try {
-            $validated = $request->validated();
+            DB::transaction(function () use ($request, &$storedFilePaths) {
+                $validated = $request->validated();
 
-            $validated['code'] = CodeGeneratorService::generateUniqueRequestCode(
-                TypeDemandeEnum::DEMANDE_PREUVE_EXISTENCE->value,
-                (new Demande())->getTable()
-            );
+                $validated['code'] = CodeGeneratorService::generateUniqueRequestCode(
+                    TypeDemandeEnum::DEMANDE_PREUVE_EXISTENCE->value,
+                    (new Demande())->getTable()
+                );
 
-            $validated['status_id'] = Status::getStatusPending()->id;
-            $validated['created_by'] = auth()->id();
-            $validated['type'] = TypeDemandeEnum::DEMANDE_PREUVE_EXISTENCE->value;
-            $serviceId = Service::where('code', Service::SECRETARIAT)
-                                  ->value('id');
-            if (! $serviceId) {
-                throw new \Exception('Service secrétariat introuvable');
-            }
-            $validated['current_service_id'] = $serviceId;
+                $validated['status_id'] = Status::getStatusPending()->id;
+                $validated['created_by'] = auth()->id();
+                $validated['type'] = TypeDemandeEnum::DEMANDE_PREUVE_EXISTENCE->value;
+                $serviceId = Service::where('code', Service::SECRETARIAT)
+                                    ->value('id');
+                if (! $serviceId) {
+                    throw new \Exception('Service secrétariat introuvable');
+                }
+                $validated['current_service_id'] = $serviceId;
 
-            // Files
-            $uploadedFiles = [];
-            $basePath = 'demandes/preuve-existence/' . now()->format('Y/m');
+                // Files
+                $uploadedFiles = [];
+                $basePath = 'demandes/preuve-existence/' . now()->format('Y/m');
 
-            if ($request->hasFile('profile_photo')) {
-                $path = $request->file('profile_photo')->store($basePath, 'public');
-                $uploadedFiles['profile_photo'] = $path;
-                $storedFilePaths[] = $path;
-            }
+                if ($request->hasFile('profile_photo')) {
+                    $path = $request->file('profile_photo')->store($basePath, 'public');
+                    $uploadedFiles['profile_photo'] = $path;
+                    $storedFilePaths[] = $path;
+                }
 
-            // Data payload
-            $validated['data'] = array_merge(
-                collect($validated)->except(['profile_photo'])->toArray(),
-                ['documents' => $uploadedFiles]
-            );
+                // Data payload
+                $validated['data'] = array_merge(
+                    collect($validated)->except([
+                        'profile_photo',
+                        'consentement',
+                        'status_id',
+                        'created_by',
+                        'type',
+                        'current_service_id',
+                        'code'
+                        ])->toArray(),
+                    ['documents' => $uploadedFiles]
+                );
 
-            unset($validated['profile_photo']);
+                unset($validated['profile_photo']);
 
-            $demande = Demande::create($validated);
+                $demande = Demande::create($validated);
 
-            DemandeHistory::create([
-                'demande_id' => $demande->id,
-                'statut' => $demande->status->code,
-                'commentaire' => 'Demande créée',
-                'changed_by' => auth()->id(),
-                'data' => $demande->data
-            ]);
-            $demande->workflows()->create([
-                'from_service_id' => null,
-                'to_service_id'   => $demande->service->id,
-                'status_id'       => $demande->status->id,
-                'action_by'       => auth()->id(),
-                'commentaire'     => 'Soumission de la demande',
-            ]);
-
-            DB::commit();
+                DemandeHistory::create([
+                    'demande_id' => $demande->id,
+                    'statut' => $demande->status->code,
+                    'commentaire' => 'Demande créée',
+                    'changed_by' => auth()->id(),
+                    'data' => $demande->data
+                ]);
+                $demande->workflows()->create([
+                    'from_service_id' => null,
+                    'to_service_id'   => $demande->current_service_id,
+                    'status_id'       => $demande->status->id,
+                    'action_by'       => auth()->id(),
+                    'commentaire'     => 'Soumission de la demande',
+                ]);
+            });
 
             return back()->with('success', 'Demande enregistrée avec succès.');
 
-        } catch (\Exception $e) {
-            DB::rollBack();
+        }catch (\Exception $e) {
 
             if (!empty($storedFilePaths)) {
                 Storage::disk('public')->delete($storedFilePaths);
             }
 
-            Log::error($e);
+            Log::error('Erreur demande arrêt paiement', [
+                'message' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+            ]);
 
             return back()
                 ->with('error', 'Une erreur inattendue est survenue.')
@@ -589,126 +619,128 @@ class DemandeController extends Controller
 
     public function storeDemandeEtatCarriere(StoreEtatCarriereRequest $request)
     {
-
-        DB::beginTransaction();
-
         // 👉 Tableau pour tracer tous les fichiers stockés
         $storedFilePaths = [];
 
         try {
-            $validated = $request->validated();
- 
-            // ----------------------------------
-            // Generate request metadata
-            // ----------------------------------
-            $validated['code'] = CodeGeneratorService::generateUniqueRequestCode(
-                TypeDemandeEnum::DEMANDE_ETAT_CARRIERE->value,
-                (new Demande())->getTable()
-            );
-            $validated['status_id'] = Status::getStatusPending()->id;
-            $validated['created_by'] = auth()->id();
-            $validated['type'] = TypeDemandeEnum::DEMANDE_ETAT_CARRIERE->value;
-                        $serviceId = Service::where('code', Service::SECRETARIAT)
-                                  ->value('id');
-            if (! $serviceId) {
-                throw new \Exception('Service secrétariat introuvable');
-            }
-            $validated['current_service_id'] = $serviceId;
-
-            // ----------------------------------
-            // Handle file uploads
-            // ----------------------------------
-            $uploadedFiles = [];
-            $basePath = 'demandes/etat_carriere/'. now()->format('Y/m');
-
-            // Helper pour fichiers multiples
-            $storeMultiple = function ($files) use ($basePath, &$storedFilePaths) {
-                if (!$files) {
-                    return [];
+            DB::transaction(function () use ($request, &$storedFilePaths) {
+                $validated = $request->validated();
+    
+                // ----------------------------------
+                // Generate request metadata
+                // ----------------------------------
+                $validated['code'] = CodeGeneratorService::generateUniqueRequestCode(
+                    TypeDemandeEnum::DEMANDE_ETAT_CARRIERE->value,
+                    (new Demande())->getTable()
+                );
+                $validated['status_id'] = Status::getStatusPending()->id;
+                $validated['created_by'] = auth()->id();
+                $validated['type'] = TypeDemandeEnum::DEMANDE_ETAT_CARRIERE->value;
+                $serviceId = Service::where('code', Service::SECRETARIAT)
+                                    ->value('id');
+                if (! $serviceId) {
+                    throw new \Exception('Service secrétariat introuvable');
                 }
+                $validated['current_service_id'] = $serviceId;
 
-                return collect($files)->map(function ($file) use ($basePath, &$storedFilePaths) {
-                    $path = $file->store($basePath, 'public');
-                    $storedFilePaths[] = $path;
-                    return $path;
-                })->toArray();
-            };
+                // ----------------------------------
+                // Handle file uploads
+                // ----------------------------------
+                $uploadedFiles = [];
+                $basePath = 'demandes/etat_carriere/'. now()->format('Y/m');
 
-            // ================================
-            // 1️⃣ FICHIERS MULTIPLES
-            // ================================
-            $multipleFields = [
-                'bulletins_salaire',
-                'documents_carriere'
-            ];
+                // Helper pour fichiers multiples
+                $storeMultiple = function ($files) use ($basePath, &$storedFilePaths) {
+                    if (!$files) {
+                        return [];
+                    }
 
-            foreach ($multipleFields as $field) {
-                $uploadedFiles[$field] = $storeMultiple($request->file($field));
-            }
+                    return collect($files)->map(function ($file) use ($basePath, &$storedFilePaths) {
+                        $path = $file->store($basePath, 'public');
+                        $storedFilePaths[] = $path;
+                        return $path;
+                    })->toArray();
+                };
 
-            // ================================
-            // 2️⃣ FICHIERS SIMPLES
-            // ================================
-            $singleFields = [
-                'copie_piece_identite',
-                'lettre_nomination',
-                'acte_mariage_acte_deces'
-            ];
-
-            foreach ($singleFields as $field) {
-                if ($request->hasFile($field)) {
-                    $path = $request->file($field)->store($basePath, 'public');
-                    $uploadedFiles[$field] = $path;
-                    $storedFilePaths[] = $path;
-                }
-            }
-
-            // ----------------------------------
-            // Build data payload
-            // ----------------------------------
-            $validated['data'] = array_merge(
-                collect($validated)->except([
+                // ================================
+                // 1️⃣ FICHIERS MULTIPLES
+                // ================================
+                $multipleFields = [
                     'bulletins_salaire',
-                    'documents_carriere',
+                    'documents_carriere'
+                ];
+
+                foreach ($multipleFields as $field) {
+                    $uploadedFiles[$field] = $storeMultiple($request->file($field));
+                }
+
+                // ================================
+                // 2️⃣ FICHIERS SIMPLES
+                // ================================
+                $singleFields = [
                     'copie_piece_identite',
                     'lettre_nomination',
                     'acte_mariage_acte_deces'
-                ])->toArray(),
-                ['documents' => $uploadedFiles]
-            );
+                ];
 
-            // Nettoyage avant création
-            unset(
-                $validated['bulletins_salaire'],
-                $validated['documents_carriere'],
-                $validated['copie_piece_identite'],
-                $validated['lettre_nomination'],
-                $validated['acte_mariage_acte_deces'],
-            );
+                foreach ($singleFields as $field) {
+                    if ($request->hasFile($field)) {
+                        $path = $request->file($field)->store($basePath, 'public');
+                        $uploadedFiles[$field] = $path;
+                        $storedFilePaths[] = $path;
+                    }
+                }
 
-           $demande = Demande::create($validated);
+                // ----------------------------------
+                // Build data payload
+                // ----------------------------------
+                $validated['data'] = array_merge(
+                    collect($validated)->except([
+                        'consentement',
+                        'status_id',
+                        'created_by',
+                        'type',
+                        'current_service_id',
+                        'code',
+                        'bulletins_salaire',
+                        'documents_carriere',
+                        'copie_piece_identite',
+                        'lettre_nomination',
+                        'acte_mariage_acte_deces'
+                    ])->toArray(),
+                    ['documents' => $uploadedFiles]
+                );
 
-           DemandeHistory::create([
-               'demande_id' => $demande->id,
-               'statut' => $demande->status->code,
-               'commentaire' => 'Demande créée',
-               'changed_by' => auth()->id(),
-               'data' => $demande->data
-           ]);
+                // Nettoyage avant création
+                unset(
+                    $validated['bulletins_salaire'],
+                    $validated['documents_carriere'],
+                    $validated['copie_piece_identite'],
+                    $validated['lettre_nomination'],
+                    $validated['acte_mariage_acte_deces'],
+                );
 
-            $demande->workflows()->create([
-                'from_service_id' => null,
-                'to_service_id'   => $demande->service->id,
-                'status_id'       => $demande->status->id,
-                'action_by'       => auth()->id(),
-                'commentaire'     => 'Soumission de la demande',
-            ]);
+                $demande = Demande::create($validated);
 
-           DB::commit();
+                DemandeHistory::create([
+                    'demande_id' => $demande->id,
+                    'statut' => $demande->status->code,
+                    'commentaire' => 'Demande créée',
+                    'changed_by' => auth()->id(),
+                    'data' => $demande->data
+                ]);
+
+                $demande->workflows()->create([
+                    'from_service_id' => null,
+                    'to_service_id'   => $demande->current_service_id,
+                    'status_id'       => $demande->status->id,
+                    'action_by'       => auth()->id(),
+                    'commentaire'     => 'Soumission de la demande',
+                ]);
+            });
 
            return back()->with('success', 'Demande enregistrée avec succès.');
         } catch (ValidationException $e) {
-            DB::rollBack();
 
             // ❌ Supprimer les fichiers stockés
             if (!empty($storedFilePaths)) {
@@ -719,9 +751,7 @@ class DemandeController extends Controller
                 ->withErrors($e->validator)
                 ->withInput();
         } catch (\Exception $e) {
-            DB::rollBack();
-
-                        // ❌ Supprimer les fichiers stockés
+            // ❌ Supprimer les fichiers stockés
             if (!empty($storedFilePaths)) {
                 Storage::disk('public')->delete($storedFilePaths);
             }
@@ -735,22 +765,21 @@ class DemandeController extends Controller
 
     // demandePension
     public function demandePension(){
-        return view('fonctionnaire.demande-pension');
+        return view('institution.demande-pension');
     }
 
     // DEMANDE DE PENSION Standard
     public function createDemandePensionStandard(){
-        return view('fonctionnaire.demande-pension-standard');
+        return view('institution.demande-pension-standard');
     }
 
     public function storeDemandePensionStandard(StoreDemandePensionRequest $request)
     {
-        DB::beginTransaction();
-
         // 👉 Tableau pour tracer tous les fichiers stockés
         $storedFilePaths = [];
 
         try {
+            DB::transaction(function () use ($request, &$storedFilePaths) {
             $validated = $request->validated();
 
             // ----------------------------------
@@ -827,6 +856,12 @@ class DemandeController extends Controller
             // ----------------------------------
             $validated['data'] = array_merge(
                 collect($validated)->except([
+                    'consentement',
+                    'status_id',
+                    'created_by',
+                    'type',
+                    'current_service_id',
+                    'code',
                     'career_certificates',
                     'marriage_certificates',
                     'birth_certificates',
@@ -870,19 +905,18 @@ class DemandeController extends Controller
             ]);
             $demande->workflows()->create([
                 'from_service_id' => null,
-                'to_service_id'   => $demande->service->id,
+                'to_service_id'   => $demande->current_service_id,
                 'status_id'       => $demande->status->id,
                 'action_by'       => auth()->id(),
                 'commentaire'     => 'Soumission de la demande',
             ]);
 
-            DB::commit();
+            });
 
             return back()->with('success', 'Demande enregistrée avec succès.');
 
         }catch (\Exception $e) {
 
-            DB::rollBack();
 
             // ❌ Supprimer les fichiers stockés
             if (!empty($storedFilePaths)) {
@@ -899,103 +933,72 @@ class DemandeController extends Controller
 
     // DEMANDE DE PENSION DE REVERSION
     public function createDemandePensionReversion(){
-        return view('fonctionnaire.demande-pension-reversion');
+        return view('institution.demande-pension-reversion');
     }
 
     public function storeDemandePensionReversion(StoreDemandePensionReversionRequest $request)
     {
-
-        DB::beginTransaction();
-
         // 👉 Tableau pour tracer tous les fichiers stockés
         $storedFilePaths = [];
 
-        try {
-            $validated = $request->validated();
- 
-            // ----------------------------------
-            // Generate request metadata
-            // ----------------------------------
-            $validated['code'] = CodeGeneratorService::generateUniqueRequestCode(
-                TypeDemandeEnum::DEMANDE_PENSION_REVERSION->value,
-                (new Demande())->getTable()
-            );
-            $validated['status_id'] = Status::getStatusPending()->id;
-            $validated['created_by'] = auth()->id();
-            $validated['type'] = TypeDemandeEnum::DEMANDE_PENSION_REVERSION->value;
-                        $serviceId = Service::where('code', Service::SECRETARIAT)
-                                  ->value('id');
-            if (! $serviceId) {
-                throw new \Exception('Service secrétariat introuvable');
-            }
-            $validated['current_service_id'] = $serviceId;
-
-            // ----------------------------------
-            // Handle file uploads
-            // ----------------------------------
-            $uploadedFiles = [];
-            $basePath = 'demandes/pension-reversion/'. now()->format('Y/m');
-
-            // Helper pour fichiers multiples
-            $storeMultiple = function ($files) use ($basePath, &$storedFilePaths) {
-                if (!$files) {
-                    return [];
+         try {
+            DB::transaction(function () use ($request, &$storedFilePaths) {
+                $validated = $request->validated();
+    
+                // ----------------------------------
+                // Generate request metadata
+                // ----------------------------------
+                $validated['code'] = CodeGeneratorService::generateUniqueRequestCode(
+                    TypeDemandeEnum::DEMANDE_PENSION_REVERSION->value,
+                    (new Demande())->getTable()
+                );
+                $validated['status_id'] = Status::getStatusPending()->id;
+                $validated['created_by'] = auth()->id();
+                $validated['type'] = TypeDemandeEnum::DEMANDE_PENSION_REVERSION->value;
+                $serviceId = Service::where('code', Service::SECRETARIAT)
+                                    ->value('id');
+                if (! $serviceId) {
+                    throw new \Exception('Service secrétariat introuvable');
                 }
+                $validated['current_service_id'] = $serviceId;
 
-                return collect($files)->map(function ($file) use ($basePath, &$storedFilePaths) {
-                    $path = $file->store($basePath, 'public');
-                    $storedFilePaths[] = $path;
-                    return $path;
-                })->toArray();
-            };
+                // ----------------------------------
+                // Handle file uploads
+                // ----------------------------------
+                $uploadedFiles = [];
+                $basePath = 'demandes/pension-reversion/'. now()->format('Y/m');
 
-            // ================================
-            // 1️⃣ FICHIERS MULTIPLES
-            // ================================
-            $multipleFields = [
-                'acte_deces',
-                'photos_identite',
-                'attestation_scolaires',
-            ];
+                // Helper pour fichiers multiples
+                $storeMultiple = function ($files) use ($basePath, &$storedFilePaths) {
+                    if (!$files) {
+                        return [];
+                    }
 
-            foreach ($multipleFields as $field) {
-                $uploadedFiles[$field] = $storeMultiple($request->file($field));
-            }
+                    return collect($files)->map(function ($file) use ($basePath, &$storedFilePaths) {
+                        $path = $file->store($basePath, 'public');
+                        $storedFilePaths[] = $path;
+                        return $path;
+                    })->toArray();
+                };
 
-
-            // ================================
-            // 2️⃣ FICHIERS SIMPLES
-            // ================================
-            $singleFields = [
-                'certificat_carriere',
-                'certificat_non_dissolution',
-                'carte_pension',
-                'souche_cheque',
-                'extrait_acte_mariage',
-                'extrait_acte_naissance',
-                'matricule_fiscal',
-                'carte_electorale',
-                'pv_tutelle',
-                'certificat_medical',
-                'copie_moniteur'
-            ];
-
-            foreach ($singleFields as $field) {
-                if ($request->hasFile($field)) {
-                    $path = $request->file($field)->store($basePath, 'public');
-                    $uploadedFiles[$field] = $path;
-                    $storedFilePaths[] = $path;
-                }
-            }
-
-            // ----------------------------------
-            // Build data payload
-            // ----------------------------------
-            $validated['data'] = array_merge(
-                collect($validated)->except([
+                // ================================
+                // 1️⃣ FICHIERS MULTIPLES
+                // ================================
+                $multipleFields = [
                     'acte_deces',
-                    'photos_identite',
-                    'attestation_scolaires',
+                    'photos_identites',
+                    'attestations_scolaires',
+                ];
+
+                foreach ($multipleFields as $field) {
+                    $uploadedFiles[$field] = $storeMultiple($request->file($field));
+                }
+
+
+                // ================================
+                // 2️⃣ FICHIERS SIMPLES
+                // ================================
+                $singleFields = [
                     'certificat_carriere',
                     'certificat_non_dissolution',
                     'carte_pension',
@@ -1007,57 +1010,90 @@ class DemandeController extends Controller
                     'pv_tutelle',
                     'certificat_medical',
                     'copie_moniteur'
-                ])->toArray(),
-                ['documents' => $uploadedFiles]
-            );
+                ];
 
-            // Nettoyage avant création
-            unset(
-                $validated['acte_deces'],
-                $validated['photos_identite'],
-                $validated['attestation_scolaires'],
-                $validated['certificat_carriere'],
-                $validated['certificat_non_dissolution'],
-                $validated['carte_pension'],
-                $validated['souche_cheque'],
-                $validated['extrait_acte_mariage'],
-                $validated['extrait_acte_naissance'],
-                $validated['matricule_fiscal'],
-                $validated['carte_electorale'],
-                $validated['pv_tutelle'],
-                $validated['certificat_medical'],
-                $validated['copie_moniteur']
-            );
+                foreach ($singleFields as $field) {
+                    if ($request->hasFile($field)) {
+                        $path = $request->file($field)->store($basePath, 'public');
+                        $uploadedFiles[$field] = $path;
+                        $storedFilePaths[] = $path;
+                    }
+                }
 
-            // ----------------------------------
-            // Create Demande
-            // ----------------------------------
-           $demande = Demande::create($validated);
+                // ----------------------------------
+                // Build data payload
+                // ----------------------------------
+                $validated['data'] = array_merge(
+                    collect($validated)->except([
+                        'consentement',
+                        'status_id',
+                        'created_by',
+                        'type',
+                        'current_service_id',
+                        'code',
+                        'acte_deces',
+                        'photos_identites',
+                        'attestations_scolaires',
+                        'certificat_carriere',
+                        'certificat_non_dissolution',
+                        'carte_pension',
+                        'souche_cheque',
+                        'extrait_acte_mariage',
+                        'extrait_acte_naissance',
+                        'matricule_fiscal',
+                        'carte_electorale',
+                        'pv_tutelle',
+                        'certificat_medical',
+                        'copie_moniteur'
+                    ])->toArray(),
+                    ['documents' => $uploadedFiles]
+                );
 
-            // ----------------------------------
-            // History
-            // ----------------------------------
-           DemandeHistory::create([
-               'demande_id' => $demande->id,
-               'statut' => $demande->status->code,
-               'commentaire' => 'Demande créée',
-               'changed_by' => auth()->id(),
-               'data' => $demande->data
-           ]);
-            $demande->workflows()->create([
-                'from_service_id' => null,
-                'to_service_id'   => $demande->service->id,
-                'status_id'       => $demande->status->id,
-                'action_by'       => auth()->id(),
-                'commentaire'     => 'Soumission de la demande',
-            ]);
+                // Nettoyage avant création
+                unset(
+                    $validated['acte_deces'],
+                    $validated['photos_identites'],
+                    $validated['attestations_scolaires'],
+                    $validated['certificat_carriere'],
+                    $validated['certificat_non_dissolution'],
+                    $validated['carte_pension'],
+                    $validated['souche_cheque'],
+                    $validated['extrait_acte_mariage'],
+                    $validated['extrait_acte_naissance'],
+                    $validated['matricule_fiscal'],
+                    $validated['carte_electorale'],
+                    $validated['pv_tutelle'],
+                    $validated['certificat_medical'],
+                    $validated['copie_moniteur']
+                );
 
-           DB::commit();
+                // ----------------------------------
+                // Create Demande
+                // ----------------------------------
+                $demande = Demande::create($validated);
+
+                // ----------------------------------
+                // History
+                // ----------------------------------
+                DemandeHistory::create([
+                    'demande_id' => $demande->id,
+                    'statut' => $demande->status->code,
+                    'commentaire' => 'Demande créée',
+                    'changed_by' => auth()->id(),
+                    'data' => $demande->data
+                ]);
+                $demande->workflows()->create([
+                    'from_service_id' => null,
+                    'to_service_id'   => $demande->current_service_id,
+                    'status_id'       => $demande->status->id,
+                    'action_by'       => auth()->id(),
+                    'commentaire'     => 'Soumission de la demande',
+                ]);
+
+           });
 
            return back()->with('success', 'Demande enregistrée avec succès.');
         } catch (ValidationException $e) {
-            DB::rollBack();
-
             // ❌ Supprimer les fichiers stockés
             if (!empty($storedFilePaths)) {
                 Storage::disk('public')->delete($storedFilePaths);
@@ -1067,8 +1103,6 @@ class DemandeController extends Controller
                 ->withErrors($e->validator)
                 ->withInput();
         } catch (\Exception $e) {
-            DB::rollBack();
-
             // ❌ Supprimer les fichiers stockés
             if (!empty($storedFilePaths)) {
                 Storage::disk('public')->delete($storedFilePaths);
@@ -1091,76 +1125,84 @@ class DemandeController extends Controller
 
     public function storeDemandeAdhesion(StoreDemandeAdhesionRequest $request)
     {
-        DB::beginTransaction();
-
         // 👉 Tableau pour tracer tous les fichiers stockés
         $storedFilePaths = [];
 
         try {
-            $validated = $request->validated();
+            DB::transaction(function () use ($request, &$storedFilePaths) {
+                $validated = $request->validated();
 
-            $basePath = 'demandes/adhesion/' . now()->format('Y/m');
+                $basePath = 'demandes/adhesion/' . now()->format('Y/m');
 
-            // =========================
-            // Upload photo de profil
-            // =========================
-            if ($request->hasFile('profile_photo')) {
-                $path = $request
-                    ->file('profile_photo')
-                    ->store($basePath, 'public');
+                $serviceId = Service::where('code', Service::SECRETARIAT)
+                                    ->value('id');
+                if (! $serviceId) {
+                    throw new \Exception('Service secrétariat introuvable');
+                }
+                $validated['current_service_id'] = $serviceId;
 
-                $validated['profile_picture'] = $path;
-                $storedFilePaths[] = $path;
-            }
+                // =========================
+                // Upload photo de profil
+                // =========================
+                if ($request->hasFile('profile_photo')) {
+                    $path = $request
+                        ->file('profile_photo')
+                        ->store($basePath, 'public');
 
-            // =========================
-            // Séparer data métier
-            // =========================
-            $data = collect($validated)->except([
-                'profile_photo',
-                'consentement',
-            ])->toArray();
+                    $validated['profile_picture'] = $path;
+                    $storedFilePaths[] = $path;
+                }
 
-            // =========================
-            // Création demande
-            // =========================
-            $demande = Demande::create([
-                'code'       => CodeGeneratorService::generateUniqueRequestCode(
-                    TypeDemandeEnum::DEMANDE_ADHESION->value,
-                    (new Demande())->getTable()
-                ),
-                'status_id'  => Status::getStatusPending()->id,
-                'created_by' => auth()->id(),
-                'type'       => TypeDemandeEnum::DEMANDE_ADHESION->value,
-                'data'       => $data,
-            ]);
+                // =========================
+                // Séparer data métier
+                // =========================
+                $data = collect($validated)->except([
+                    'profile_photo',
+                    'consentement',
+                    'status_id',
+                    'created_by',
+                    'type',
+                    'current_service_id',
+                    'code'
+                ])->toArray();
 
-            // =========================
-            // Historique
-            // =========================
-            DemandeHistory::create([
-                'demande_id' => $demande->id,
-                'statut'     => $demande->status->code,
-                'commentaire'=> 'Demande créée',
-                'changed_by' => auth()->id(),
-                'data'       => $demande->data,
-            ]);
+                // =========================
+                // Création demande
+                // =========================
+                $demande = Demande::create([
+                    'code'       => CodeGeneratorService::generateUniqueRequestCode(
+                        TypeDemandeEnum::DEMANDE_ADHESION->value,
+                        (new Demande())->getTable()
+                    ),
+                    'status_id'  => Status::getStatusPending()->id,
+                    'created_by' => auth()->id(),
+                    'type'       => TypeDemandeEnum::DEMANDE_ADHESION->value,
+                    'data'       => $data,
+                    'current_service_id' =>  $validated['current_service_id']
+                ]);
 
-            $demande->workflows()->create([
-                'from_service_id' => null,
-                'to_service_id'   => $demande->service->id,
-                'status_id'       => $demande->status->id,
-                'action_by'       => auth()->id(),
-                'commentaire'     => 'Soumission de la demande',
-            ]);
+                // =========================
+                // Historique
+                // =========================
+                DemandeHistory::create([
+                    'demande_id' => $demande->id,
+                    'statut'     => $demande->status->code,
+                    'commentaire'=> 'Demande créée',
+                    'changed_by' => auth()->id(),
+                    'data'       => $demande->data,
+                ]);
 
-            DB::commit();
+                $demande->workflows()->create([
+                    'from_service_id' => null,
+                    'to_service_id'   => $demande->current_service_id,
+                    'status_id'       => $demande->status->id,
+                    'action_by'       => auth()->id(),
+                    'commentaire'     => 'Soumission de la demande',
+                ]);
+            });
 
             return back()->with('success', 'Demande enregistrée avec succès.');
         } catch (\Throwable $e) {
-
-            DB::rollBack();
-
             // ❌ Supprimer les fichiers stockés
             if (!empty($storedFilePaths)) {
                 Storage::disk('public')->delete($storedFilePaths);

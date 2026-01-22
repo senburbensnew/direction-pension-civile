@@ -3,6 +3,7 @@
 namespace App\Http;
 
 use App\Http\Middleware\Authenticate;
+use App\Http\Middleware\CorbeilleAccess;
 use Illuminate\Auth\Middleware\Authorize;
 use App\Http\Middleware\ValidateSignature;
 use Illuminate\Auth\Middleware\RequirePassword;
@@ -84,5 +85,6 @@ class Kernel extends HttpKernel
         'role' => RoleMiddleware::class,
         'permission' => PermissionMiddleware::class,
         'role_or_permission' => RoleOrPermissionMiddleware::class,
+        'corbeille.access' => CorbeilleAccess::class,
     ];
 }

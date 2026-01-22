@@ -2,7 +2,7 @@
 
 @section('content')
 <div class="container mx-auto px-4">
-        <h1 class="text-2xl font-bold mb-6">Permissions</h1>
+        <h1 class="text-2xl font-bold mb-6">Roles</h1>
 <div class="container mx-auto bg-white p-5 shadow rounded">
 
     {{-- Message succès --}}
@@ -18,14 +18,14 @@
             <thead class="bg-neutral-secondary-medium border-b border-t border-default-medium">
                 <tr>
                     <th class="px-6 py-3 font-medium">#</th>
-                    <th class="px-6 py-3 font-medium">Permission</th>
-                    <th class="px-6 py-3 font-medium"># Roles</th>
+                    <th class="px-6 py-3 font-medium">Role</th>
+                    <th class="px-6 py-3 font-medium">Permissions</th>
                     <th class="px-6 py-3 font-medium"># Utilisateurs</th>
                     <th class="px-6 py-3 font-medium">Actions</th>
                 </tr>
             </thead>
             <tbody>
-                @forelse ($permissions as $index => $permission)
+                @forelse ($roles as $index => $role)
                     <tr class="bg-neutral-primary-soft border-b border-default hover:bg-neutral-secondary-medium">
                         <td class="px-6 py-4">
                             {{ $index + 1}}
@@ -40,14 +40,30 @@
                                         text-sm font-semibold text-fg-brand-strong
                                         shadow-sm
                                         transition hover:bg-brand-soft">
-                                {{ $permission->name }}</span>
-                            </span>
+                                {{ $role->name }}</span>
                         </td>
                         <td class="px-6 py-4">
-                            {{ $permission->roles->count() }}
+                            @forelse ($role->permissions as $permission)
+                                <span
+                                    id="badge-dismiss-brand"
+                                    class="inline-flex items-center gap-1.5
+                                        rounded-full border border-brand-subtle
+                                        bg-brand-softer
+                                        px-3 py-1 my-1
+                                        text-sm font-semibold text-fg-brand-strong
+                                        shadow-sm
+                                        transition hover:bg-brand-soft">
+                                    {{ $permission->name }}
+                                </span>
+                            @empty
+                                <span class="px-3 italic">
+                                    Aucune permission.
+                                </span>
+                                
+                            @endforelse
                         </td>
                         <td class="px-6 py-4">
-                            {{ $permission->users->count() }}
+                            {{ $role->users->count() }}
                         </td>
                         <td class="px-6 py-4">
                             <div class="flex justify-start items-center">
@@ -56,7 +72,7 @@
 
                                 <form action=""
                                     method="POST"
-                                    onsubmit="return confirm('Supprimer cette permission ?')">
+                                    onsubmit="return confirm('Supprimer ce role ?')">
                                     @csrf
                                     @method('DELETE')
                                     <button class="text-red-500">Supprimer</button>
@@ -67,7 +83,7 @@
                 @empty
                     <tr>
                         <td colspan="4" class="p-4 text-center text-gray-500">
-                            Aucune permission.
+                            Aucun role.
                         </td>
                     </tr>
                 @endforelse
@@ -75,7 +91,7 @@
         </table>
     </div>
     <div class="mt-4">
-        {{ $permissions->links() }}
+        {{ $roles->links() }}
     </div>
 </div>
 </div>

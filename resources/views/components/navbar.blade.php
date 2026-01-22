@@ -89,7 +89,7 @@
                                         {{ __('Profile') }}
                                     </x-dropdown-link>
                                     @role('admin')
-                                        <x-dropdown-link :href="route('admin.carousels.index')">
+                                        <x-dropdown-link :href="route('admin.dashboard.index')">
                                             <i class="fas fa-cog mr-2 text-gray-400"></i>
                                             {{ __('messages.admin_panel') }}
                                         </x-dropdown-link>

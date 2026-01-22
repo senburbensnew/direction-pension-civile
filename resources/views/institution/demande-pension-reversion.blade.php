@@ -28,6 +28,17 @@
                 </div>
             @endif
 
+            @if ($errors->any())
+                <div class="alert alert-danger">
+                    <ul class="mb-0">
+                        @foreach ($errors->all() as $error)
+                            <li>{{ $error }}</li>
+                        @endforeach
+                    </ul>
+                </div>
+            @endif
+
+
             <!-- Document Upload Form -->
             <form class="space-y-6" method="POST" action="{{route('demandes.demande-pension-reversion.store')}}" enctype="multipart/form-data">
                 @csrf
@@ -366,13 +377,13 @@
 
                                 <input
                                     type="file"
-                                    name="photos_identite[]"
+                                    name="photos_identites[]"
                                     multiple
                                     class="mt-1 block w-full text-sm text-gray-500
                                         file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0
                                         file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700
                                         hover:file:bg-blue-100
-                                        @error('photos_identite') border border-red-500 @enderror"
+                                        @error('photos_identites') border border-red-500 @enderror"
                                     
                                 >
 
@@ -380,7 +391,7 @@
                                     Veuillez télécharger exactement deux photos
                                 </p>
 
-                                @error('photos_identite')
+                                @error('photos_identites')
                                     <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
                                 @enderror
                             </div>
@@ -475,15 +486,15 @@
                             <input
                                 type="file"
                                 multiple
-                                name="attestation_scolaires[]"
+                                name="attestations_scolaires[]"
                                 class="mt-1 block w-full text-sm text-gray-500
                                     file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0
                                     file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700
                                     hover:file:bg-blue-100
-                                    @error('attestation_scolaire') border border-red-500 @enderror"
+                                    @error('attestations_scolaires') border border-red-500 @enderror"
                             >
 
-                            @error('attestation_scolaire')
+                            @error('attestations_scolaires')
                                 <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
                             @enderror
                         </div>
@@ -499,7 +510,6 @@
                                 name="consentement"
                                 type="checkbox"
                                 value="1"
-                                {{ old('consentement') ? 'checked' : '' }}
                                 class="h-4 w-4 rounded border-gray-300 text-blue-600
                                     focus:ring-blue-500
                                     @error('consentement') border-red-500 @enderror"

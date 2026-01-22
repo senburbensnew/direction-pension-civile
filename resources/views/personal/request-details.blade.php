@@ -1276,10 +1276,9 @@
                             <h3 class="text-lg font-semibold mb-4 text-gray-700">Données techniques (data)</h3>
 
                             <dl class="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
-                                <div><dt class="text-gray-500">Code</dt><dd>{{ $request->data['code'] }}</dd></div>
-                                <div><dt class="text-gray-500">Type</dt><dd>{{ $request->data['type'] }}</dd></div>
-                                <div><dt class="text-gray-500">Status ID</dt><dd>{{ $request->data['status_id'] }}</dd></div>
-                                <div><dt class="text-gray-500">Created by</dt><dd>{{ $request->data['created_by'] }}</dd></div>
+                                <div><dt class="text-gray-500">Code</dt><dd>{{ $request->code }}</dd></div>
+                                <div><dt class="text-gray-500">Type</dt><dd>{{ $request->type }}</dd></div>
+                                <div><dt class="text-gray-500">Created by</dt><dd>{{ $request->user->name }}</dd></div>
                             </dl>
                         </div>
 
@@ -2104,8 +2103,8 @@
     </div>
 
     @if(!empty($services))
-        <div id="transferModal"
-            class="fixed inset-0 z-[20000] hidden flex items-center justify-center bg-black/50 border  border-red-600">
+<div id="transferModal" class="absolute inset-0 z-[99999] flex items-center justify-center bg-black/50
+            {{ $errors->any() ? '' : 'hidden' }}">
 
             <div class="bg-white w-full max-w-md rounded shadow p-6">
 
@@ -2113,8 +2112,10 @@
                     Transférer la demande
                 </h2>
 
-                <form method="POST" action="">
+                <form method="POST" action="{{ route('demande.transfert') }}">
                     @csrf
+
+                    <input type="hidden" name="demande_id" value="{{ $request->id }}">
 
                     {{-- Service cible --}}
                     <div class="mb-4">
@@ -2123,7 +2124,7 @@
                         </label>
 
                         <select name="service_id"
-                                required
+                                
                                 class="w-full border rounded px-3 py-2">
                             <option value="">-- Choisir un service --</option>
                             @foreach($services as $service)
