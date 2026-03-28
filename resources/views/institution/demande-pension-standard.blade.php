@@ -4,21 +4,17 @@
     <div class="max-w-6xl mx-auto p-6">
         <!-- Contenu Principal -->
         <div class="bg-white shadow-md rounded-xl p-6 border border-gray-200">
+            <x-breadcrumb :items="[
+                ['label' => 'Page demandes pension', 'url' => route('demandes.demande-pension.index')],
+                ['label' => 'Demande de pension']
+            ]" />
             <!-- Header Section -->
-            <div class="flex flex-col md:flex-row justify-between items-center mb-12 gap-8">
+            <div class="flex flex-col md:flex-row justify-between items-center mt-12 mb-12 gap-8">
                 <div class="text-center mb-6 flex flex-col md:flex-row items-center justify-center w-full gap-4 md:gap-8">
-                    <img src="{{ asset('images/setting-logo-1-M13oPLiYoM.png') }}"
-                        alt="Logo de la Direction de la Pension Civile"
-                        class="w-16 h-16 md:w-24 md:h-24 object-cover shrink-0" loading="lazy">
-
                     <div class="px-4">
                         <h1 class="text-lg md:text-xl font-bold mb-1">Demande de Pension</h1>
                         <p class="text-sm text-gray-600">Direction de la Pension Civile (DPC)</p>
                     </div>
-
-                    <img src="{{ asset('images/setting-logo-1-M13oPLiYoM.png') }}" alt=""
-                        class="w-16 h-16 md:w-24 md:h-24 object-cover shrink-0 hidden md:block" role="presentation"
-                        loading="lazy">
                 </div>
             </div>
 
@@ -28,236 +24,455 @@
                 </div>
             @endif
 
+            @if ($errors->any())
+                <div class="mb-4 rounded bg-red-100 p-4 text-red-700">
+                    <ul class="list-disc list-inside">
+                        @foreach ($errors->all() as $error)
+                            <li>{{ $error }}</li>
+                        @endforeach
+                    </ul>
+                </div>
+            @endif
+
             <!-- Formulaire de Téléchargement -->
-            <form class="space-y-6" method="POST" action="{{ route('demandes.demande-pension-standard.store') }}"
-                enctype="multipart/form-data">
+            <form class="space-y-6" method="POST" action="{{ route('demandes.demande-pension-standard.store') }}" enctype="multipart/form-data">
                 @csrf
 
-                <!-- Informations Personnelles -->
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div>
-                        <label for="name" class="block text-sm font-medium text-gray-700">
-                            Nom complet
+                        <label for="title" class="block text-sm font-medium text-gray-700">
+                            Titre personnalisé de la demande
                         </label>
-
                         <input
-                            id="name"
+                            id="title"
                             type="text"
-                            name="name"
-                            value="{{ old('name') }}"
-                            placeholder="Ex : Pierre Rubens Milorme"
-                            class="mt-1 block w-full rounded-md shadow-sm
-                                @error('name') border-red-500 focus:border-red-500 focus:ring-red-500
+                            name="title"
+                            value="{{ old('title', data_get($demande, 'title', '')) }}"
+                            placeholder=""
+                            {{ $demande && !empty($demande->title) ? 'readonly' : '' }}
+                            class="mt-1 block w-full rounded-md shadow-sm {{ $demande && !empty($demande->title) ? 'border-gray-200 bg-gray-100' : 'border-gray-300' }}
+                                @error('title') border-red-500 focus:border-red-500 focus:ring-red-500
                                 @else border-gray-300 focus:border-blue-500 focus:ring-blue-500
                                 @enderror"
-                        >
-
-                        @error('name')
+                        />
+                        @error('title')
                             <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
                         @enderror
                     </div>
-
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700">Matricule</label>
-                        <input type="text" name="nif" value="{{ old('nif') }}"
-                        placeholder="ex:345-667-222-5"
-                            class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
-                        @error('nif')
-                                <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
-                            @enderror
-                    </div>
+                    @if($demande)
+                        <input
+                            type="hidden"
+                            name="demande_id"
+                            value="{{ $demande->id }}"
+                        >
+                    @endif
                 </div>
 
-                <!-- Documents Requis -->
-                <div class="space-y-4">
-                    <h2 class="text-lg font-semibold text-gray-800 mb-4">Documents requis :</h2>
+                <table class="w-full text-sm text-left text-body">
+                        <thead class="bg-gray-100 border-b border-t border-default-medium">
+                            <tr>
+                                <th class="px-6 py-3 text-blue-900 font-bold">Nom du document</th>
+                                <th class="px-6 py-3 text-blue-900 font-bold">Piece jointes</th>
+                                <th class="px-6 py-3 text-blue-900 font-bold">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                                <tr class="bg-neutral-primary-soft border-b border-default hover:bg-neutral-secondary-medium">
+                                    <td class="px-6 py-4 text-blue-900 font-bold">
+                                            <!-- Certificat de Carrière -->
+                                            <div class="document-upload rounded-lg p-3">
+                                                <label class="block text-sm font-medium text-gray-700">
+                                                    Original du Certificat de Carrière (autant de certificats que d'employeurs) (pdf)
+                                                    <span class="text-red-500">*</span>
+                                                </label>
+                                        
+                                            </div>
+                                    </td>
+                                    <td class="px-6 py-4">
+                                        @if($demande)
+                                            @foreach ($demande->documents as $document)
+                                                @if($document->type === 'career_certificates')
+                                                    <p class="mb-2 text-sm text-gray-600">
+                                                        <a href="{{ Storage::url($document->path) }}" target="_blank" class="text-blue-600 underline">
+                                                            {{ $document->original_name }}
+                                                        </a>
+                                                        
+                                                            <button type="button"
+                                                                    class="text-red-500 hover:text-red-700 p-2"
+                                                                    onclick="deleteDocument({{ $document->id }})">
+                                                                <i class="fas fa-trash-alt"></i>
+                                                            </button>
+                                                    </p>
+                                                @endif
+                                            @endforeach
+                                        @endif
+                                    </td>
+                                    <td class="px-6 py-4">
+                                                <input type="file" name="career_certificates[]" multiple accept="application/pdf"
+                                                    class="mt-1 block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100">
+                                                <div class="preview-container mt-2"></div>
+                                                @error('career_certificates')
+                                                    <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                                                @enderror
+                                                @error('career_certificates.*')
+                                                    <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                                                @enderror
+                                    </td>
+                                </tr>
+                                <tr class="bg-neutral-primary-soft border-b border-default hover:bg-neutral-secondary-medium">
+                                    <td class="px-6 py-4 text-blue-900 font-bold">
+                                        <div class="document-upload rounded-lg p-3">
+                                            <label class="block text-sm font-medium text-gray-700">
+                                                Copie du Moniteur (pour les Grands Commis) (pdf)
+                                            </label>
+                                        </div>
+                                    </td>
+                                    <td class="px-6 py-4">
+                                        @if($demande)
+                                            @foreach ($demande->documents as $document)
+                                                @if($document->type == 'monitor_copy')
+                                                    <p class="mb-2 text-sm text-gray-600">
+                                                        <a href="{{ Storage::url($document->path) }}" target="_blank" class="text-blue-600 underline">
+                                                            {{ $document->original_name }}
+                                                        </a>
+                                                             
+                                                            <button type="button"
+                                                                    class="text-red-500 hover:text-red-700 p-2"
+                                                                    onclick="deleteDocument({{ $document->id }})">
+                                                                <i class="fas fa-trash-alt"></i>
+                                                            </button>
+                                                    </p>
+                                                @endif
+                                            @endforeach
+                                        @endif
+                                    </td>
+                                    <td class="px-6 py-4">
+                                            <input type="file" name="monitor_copy" accept="application/pdf"
+                                                class="mt-1 block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100">
+                                            <div class="preview-container mt-2"></div>
+                                            @error('monitor_copy')
+                                                <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                                            @enderror
+                                    </td>
+                                </tr>
+                                <tr class="bg-neutral-primary-soft border-b border-default hover:bg-neutral-secondary-medium">
+                                    <td class="px-6 py-4 text-blue-900 font-bold">
+                                        <!-- Acte de Mariage -->
+                                        <div class="document-upload rounded-lg p-3">
+                                            <label class="block text-sm font-medium text-gray-700">
+                                                Extrait récent de l'Acte de Mariage (Copie + Original pour les femmes mariées) (pdf)
+                                            </label>
+                                        </div>
+                                    </td>
+                                    <td class="px-6 py-4">
+                                        @if($demande)
+                                            @foreach ($demande->documents as $document)
+                                                @if($document->type === 'marriage_certificates')
+                                                    <p class="mb-2 text-sm text-gray-600">
+                                                        <a href="{{ Storage::url($document->path) }}" target="_blank" class="text-blue-600 underline">
+                                                            {{ $document->original_name }}
+                                                        </a>
+                                                           <button type="button"
+                                                                    class="text-red-500 hover:text-red-700 p-2"
+                                                                    onclick="deleteDocument({{ $document->id }})">
+                                                                <i class="fas fa-trash-alt"></i>
+                                                            </button>
 
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <!-- Certificat de Carrière -->
-                        <div class="document-upload border rounded-lg p-3">
-                            <label class="block text-sm font-medium text-gray-700">
-                                Original du Certificat de Carrière (autant de certificats que d'employeurs) (pdf)
-                                <span class="text-red-500">*</span>
-                            </label>
-                            <input type="file" name="career_certificates[]" multiple accept="application/pdf"
-                                class="mt-1 block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100">
-                            <div class="preview-container mt-2"></div>
-                            @error('career_certificates')
-                                <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
-                            @enderror
-                            @error('career_certificates.*')
-                                <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
-                            @enderror
-                        </div>
+                                                       
+                                                    </p>
+                                                @endif
+                                            @endforeach
+                                        @endif
+                                    </td>
+                                    <td class="px-6 py-4">
+                                        <input type="file" name="marriage_certificates[]" multiple  accept="application/pdf"
+                                            class="mt-1 block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100">
+                                        <div class="preview-container mt-2"></div>
+                                        <p class="mt-1 text-sm text-gray-500">
+                                            Si vous fournissez un acte de mariage, veuillez joindre obligatoirement la copie et l’original.
+                                        </p>
 
-                        <!-- Copie du Moniteur -->
-                        <div class="document-upload border rounded-lg p-3">
-                            <label class="block text-sm font-medium text-gray-700">
-                                Copie du Moniteur (pour les Grands Commis) (pdf)
-                            </label>
-                            <input type="file" name="monitor_copy" accept="application/pdf"
-                                class="mt-1 block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100">
-                            <div class="preview-container mt-2"></div>
-                            @error('monitor_copy')
-                                <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
-                            @enderror
-                        </div>
+                                        @error('marriage_certificates')
+                                            <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                                        @enderror
 
-                        <!-- Acte de Mariage -->
-                        <div class="document-upload border rounded-lg p-3">
-                            <label class="block text-sm font-medium text-gray-700">
-                                Extrait récent de l'Acte de Mariage (Copie + Original pour les femmes mariées) (pdf)
-                            </label>
-                            <input type="file" name="marriage_certificates[]" multiple  accept="application/pdf"
-                                class="mt-1 block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100">
-                            <div class="preview-container mt-2"></div>
-                            <p class="mt-1 text-sm text-gray-500">
-                                Si vous fournissez un acte de mariage, veuillez joindre obligatoirement la copie et l’original.
-                            </p>
+                                        @error('marriage_certificates.*')
+                                            <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                                        @enderror
+                                    </td>
+                                </tr>
+                                <tr class="bg-neutral-primary-soft border-b border-default hover:bg-neutral-secondary-medium">
+                                    <td class="px-6 py-4 text-blue-900 font-bold">
+                                        <!-- Acte de Naissance -->
+                                        <div class="document-upload rounded-lg p-3">
+                                            <label class="block text-sm font-medium text-gray-700">
+                                                Extrait récent de l'Acte de Naissance (Copie + Original) (pdf)
+                                                <span class="text-red-500">*</span>
+                                            </label>
+                                        </div>
+                                    </td>
+                                    <td class="px-6 py-4">
+                                        @if($demande)
+                                            @foreach ($demande->documents as $document)
+                                                @if($document->type == 'birth_certificates')
+                                                    <p class="mb-2 text-sm text-gray-600">
+                                                        <a href="{{ Storage::url($document->path) }}" target="_blank" class="text-blue-600 underline">
+                                                            {{ $document->original_name }}
+                                                        </a>
+                                                        
+                                                           <button type="button"
+                                                                    class="text-red-500 hover:text-red-700 p-2"
+                                                                    onclick="deleteDocument({{ $document->id }})">
+                                                                <i class="fas fa-trash-alt"></i>
+                                                            </button>
 
-                            @error('marriage_certificates')
-                                <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
-                            @enderror
+                                                      
+                                                    </p>
+                                                @endif
+                                            @endforeach
+                                        @endif
+                                    </td>
+                                    <td class="px-6 py-4">
+                                        <input type="file" name="birth_certificates[]"  multiple accept="application/pdf"
+                                            class="mt-1 block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100">
+                                        <div class="preview-container mt-2"></div>
+                                        @error('birth_certificates')
+                                            <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                                        @enderror
+                                        @error('birth_certificates.*')
+                                            <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                                        @enderror
+                                    </td>
+                                </tr>
+                                <tr class="bg-neutral-primary-soft border-b border-default hover:bg-neutral-secondary-medium">
+                                    <td class="px-6 py-4 text-blue-900 font-bold">
+                                        <!-- Acte de divorce -->
+                                        <div class="document-upload rounded-lg p-3">
+                                            <label class="block text-sm font-medium text-gray-700">
+                                                Acte de divorce (le cas échéant) (pdf)
+                                            </label>
 
-                            @error('marriage_certificates.*')
-                                <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
-                            @enderror
-                        </div>
+                                        </div>
+                                    </td>
+                                    <td class="px-6 py-4">
+                                        @if($demande)
+                                            @foreach ($demande->documents as $document)
+                                                @if($document->type == 'divorce_certificate')
+                                                    <p class="mb-2 text-sm text-gray-600">
+                                                        <a href="{{ Storage::url($document->path) }}" target="_blank" class="text-blue-600 underline">
+                                                            {{ $document->original_name }}
+                                                        </a>
+                                                       
+                                                          <button type="button"
+                                                                class="text-red-500 hover:text-red-700 p-2"
+                                                                onclick="deleteDocument({{ $document->id }})">
+                                                            <i class="fas fa-trash-alt"></i>
+                                                        </button>
 
-                        <!-- Acte de Naissance -->
-                        <div class="document-upload border rounded-lg p-3">
-                            <label class="block text-sm font-medium text-gray-700">
-                                Extrait récent de l'Acte de Naissance (Copie + Original) (pdf)
-                                <span class="text-red-500">*</span>
-                            </label>
-                            <input type="file" name="birth_certificates[]"  multiple accept="application/pdf"
-                                class="mt-1 block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100">
-                            <div class="preview-container mt-2"></div>
-                            @error('birth_certificates')
-                                <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
-                            @enderror
-                            @error('birth_certificates.*')
-                                <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
-                            @enderror
-                        </div>
+                                                    
+                                                    </p>
+                                                @endif
+                                            @endforeach
+                                        @endif
+                                    </td>
+                                    <td class="px-6 py-4">
+                                        <input type="file" name="divorce_certificate" accept="application/pdf"
+                                            class="mt-1 block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100">
+                                        <div class="preview-container mt-2"></div>
+                                        @error('divorce_certificate')
+                                            <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                                        @enderror
+                                    </td>
+                                </tr>
+                                <tr class="bg-neutral-primary-soft border-b border-default hover:bg-neutral-secondary-medium">
+                                    <td class="px-6 py-4 text-blue-900 font-bold">                                        
+                                        <!-- Matricule fiscal + CIN -->
+                                        <div class="document-upload rounded-lg p-3">
+                                            <label class="block text-sm font-medium text-gray-700">
+                                                Copie du Matricule fiscal accompagné de la Carte d’Identification Nationale (CIN) (pdf, jpg, png)
+                                                <span class="text-red-500">*</span>
+                                            </label>
+                                        </div>
+                                    </td>
+                                    <td class="px-6 py-4">
+                                        @if($demande)
+                                            @foreach ($demande->documents as $document)
+                                                @if($document->type == 'tax_id_numbers')
+                                                    <p class="mb-2 text-sm text-gray-600">
+                                                        <a href="{{ Storage::url($document->path) }}" target="_blank" class="text-blue-600 underline">
+                                                            {{ $document->original_name }}
+                                                        </a>
+                                                           
+                                                            <button type="button"
+                                                                    class="text-red-500 hover:text-red-700 p-2"
+                                                                    onclick="deleteDocument({{ $document->id }})">
+                                                                <i class="fas fa-trash-alt"></i>
+                                                            </button>
 
-                        <!-- Acte de divorce -->
-                        <div class="document-upload border rounded-lg p-3">
-                            <label class="block text-sm font-medium text-gray-700">
-                                Acte de divorce (le cas échéant) (pdf)
-                            </label>
-                            <input type="file" name="divorce_certificate" accept="application/pdf"
-                                class="mt-1 block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100">
-                            <div class="preview-container mt-2"></div>
-                            @error('divorce_certificate')
-                                <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
-                            @enderror
-                        </div>
+                                                       
+                                                    </p>
+                                                @endif
+                                            @endforeach
+                                        @endif
+                                    </td>
+                                    <td class="px-6 py-4">
+                                        <input type="file" name="tax_id_numbers[]"  multiple  accept="application/pdf"
+                                            class="mt-1 block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100">
+                                        <div class="preview-container mt-2"></div>
+                                        @error('tax_id_numbers')
+                                            <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                                        @enderror
+                                        @error('tax_id_numbers.*')
+                                            <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                                        @enderror
+                                    </td>
+                                </tr>
+                                <tr class="bg-neutral-primary-soft border-b border-default hover:bg-neutral-secondary-medium">
+                                    <td class="px-6 py-4 text-blue-900 font-bold">
+                                        <!-- Photos d'identité -->
+                                        <div class="document-upload rounded-lg p-3">
+                                            <label class="block text-sm font-medium text-gray-700">
+                                                Photos d'identité récentes (2 exemplaires) (jpeg, png, jpg)
+                                                <span class="text-red-500">*</span>
+                                            </label>
+                                        </div>
+                                    </td>
+                                    <td class="px-6 py-4">
+                                        @if($demande)
+                                            @foreach ($demande->documents as $document)
+                                                @if($document->type == 'photos')
+                                                    <p class="mb-2 text-sm text-gray-600">
+                                                        <a href="{{ Storage::url($document->path) }}" target="_blank" class="text-blue-600 underline">
+                                                            {{ $document->original_name }}
+                                                        </a>
+                                                                                    
+                                                            <button type="button"
+                                                                    class="text-red-500 hover:text-red-700 p-2"
+                                                                    onclick="deleteDocument({{ $document->id }})">
+                                                                <i class="fas fa-trash-alt"></i>
+                                                            </button>
 
-                        <!-- Matricule fiscal + CIN -->
-                        <div class="document-upload border rounded-lg p-3">
-                            <label class="block text-sm font-medium text-gray-700">
-                                Copie du Matricule fiscal accompagné de la Carte d’Identification Nationale (CIN) (pdf, jpg, png)
-                                <span class="text-red-500">*</span>
-                            </label>
-                            <input type="file" name="tax_id_numbers[]"  multiple  accept=".pdf,.jpg,.png"
-                                class="mt-1 block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100">
-                            <div class="preview-container mt-2"></div>
-                            @error('tax_id_numbers')
-                                <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
-                            @enderror
-                            @error('tax_id_numbers.*')
-                                <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
-                            @enderror
-                        </div>
-
-                        <!-- Photos d'identité -->
-                        <div class="document-upload border rounded-lg p-3">
-                            <label class="block text-sm font-medium text-gray-700">
-                                Photos d'identité récentes (2 exemplaires) (jpeg, png, jpg)
-                                <span class="text-red-500">*</span>
-                            </label>
-                            <input type="file" name="photos[]" multiple accept="image/jpeg, image/png, image/jpg"
-                                class="mt-1 block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100">
-                            <div class="preview-container mt-2"></div>
-                            @error('photos')
-                                <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
-                            @enderror
-                            @error('photos.*')
-                                <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
-                            @enderror
-                            <p class="mt-1 text-sm text-gray-500">Format accepté: JPEG, PNG (Max 1MB par photo)</p>
-                        </div>
-
-                        <!-- Certificat Médical -->
-                        <div class="document-upload border rounded-lg p-3">
-                            <label class="block text-sm font-medium text-gray-700">
-                                Certificat Médical (pour cause d'incapacité) (pdf)
-                            </label>
-                            <input type="file" name="medical_certificate" accept="application/pdf"
-                                class="mt-1 block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100">
-                            <div class="preview-container mt-2"></div>
-                            @error('medical_certificate')
-                                <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
-                            @enderror
-                        </div>
-
-                        <!-- Souche de chèque -->
-                        <div class="document-upload border rounded-lg p-3">
-                            <label class="block text-sm font-medium text-gray-700">
-                                Souche de chèque ou preuve de paiement (pdf, jpg, png)
-                                <span class="text-red-500">*</span>
-                            </label>
-                            <input type="file" name="check_stub" accept=".pdf,.jpg,.png"
-                                class="mt-1 block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100">
-                            <div class="preview-container mt-2"></div>
-                            @error('check_stub')
-                                <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
-                            @enderror
-                        </div>
-                    </div>
-                </div>
-
-                {{-- Consentement --}}
-                <div class="mt-6">
-                    <div class="flex items-start">
-                        <div class="flex items-center h-5">
-                            <input
-                                id="consentement"
-                                name="consentement"
-                                type="checkbox"
-                                value="1"
-                                {{ old('consentement') ? 'checked' : '' }}
-                                class="h-4 w-4 rounded border-gray-300 text-blue-600
-                                    focus:ring-blue-500
-                                    @error('consentement') border-red-500 @enderror"
-                                
-                            >
-                        </div>
-
-                        <div class="ml-3 text-sm">
-                            <label for="consentement" class="font-medium text-gray-700">
-                                Je certifie que les informations fournies sont exactes
-                            </label>
-                            <p class="text-gray-500">
-                                Je reconnais que toute fausse déclaration peut entraîner le rejet
-                                de la demande ou des sanctions prévues par la loi.
-                            </p>
-                        </div>
-                    </div>
-
-                    @error('consentement')
-                        <p class="mt-2 text-sm text-red-600">{{ $message }}</p>
-                    @enderror
-                </div>
+                                                       
+                                                    </p>
+                                                @endif
+                                            @endforeach
+                                        @endif
+                                    </td>
+                                    <td class="px-6 py-4">
+                                        <input type="file" name="photos[]" multiple accept="image/jpeg, image/png, image/jpg"
+                                            class="mt-1 block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100">
+                                        <div class="preview-container mt-2"></div>
+                                        @error('photos')
+                                            <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                                        @enderror
+                                        @error('photos.*')
+                                            <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                                        @enderror
+                                        <p class="mt-1 text-sm text-gray-500">Format accepté: JPEG, PNG (Max 1MB par photo)</p>
+                                    </td>
+                                </tr>
+                                <tr class="bg-neutral-primary-soft border-b border-default hover:bg-neutral-secondary-medium">
+                                    <td class="px-6 py-4 text-blue-900 font-bold">
+                                        <!-- Certificat Médical -->
+                                        <div class="document-upload  rounded-lg p-3">
+                                            <label class="block text-sm font-medium text-gray-700">
+                                                Certificat Médical (pour cause d'incapacité) (pdf)
+                                            </label>
+                                        </div>
+                                    </td>
+                                    <td class="px-6 py-4">
+                                        @if($demande)
+                                            @foreach ($demande->documents as $document)
+                                                @if($document->type == 'medical_certificate')
+                                                    <p class="mb-2 text-sm text-gray-600">
+                                                        <a href="{{ Storage::url($document->path) }}" target="_blank" class="text-blue-600 underline">
+                                                            {{ $document->original_name }}
+                                                        </a>
+                                                            <button type="button"
+                                                                    class="text-red-500 hover:text-red-700 p-2"
+                                                                    onclick="deleteDocument({{ $document->id }})">
+                                                                <i class="fas fa-trash-alt"></i>
+                                                            </button>
+                                                    </p>
+                                                @endif
+                                            @endforeach
+                                        @endif
+                                    </td>
+                                    <td class="px-6 py-4">
+                                        <input type="file" name="medical_certificate" accept="application/pdf"
+                                            class="mt-1 block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100">
+                                        <div class="preview-container mt-2"></div>
+                                        @error('medical_certificate')
+                                            <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                                        @enderror
+                                    </td>
+                                </tr>
+                                <tr class="bg-neutral-primary-soft border-b border-default hover:bg-neutral-secondary-medium">
+                                    <td class="px-6 py-4 text-blue-900 font-bold">
+                                        <!-- Souche de chèque -->
+                                        <div class="document-upload rounded-lg p-3">
+                                            <label class="block text-sm font-medium text-gray-700">
+                                                Souche de chèque ou preuve de paiement (pdf, jpg, png)
+                                                <span class="text-red-500">*</span>
+                                            </label>
+                                        </div>
+                                    </td>
+                                    <td class="px-6 py-4">                                                                                
+                                        @if($demande)
+                                            @foreach ($demande->documents as $document)
+                                                @if($document->type == 'check_stub')
+                                                    <p class="mb-2 text-sm text-gray-600">
+                                                        <a href="{{ Storage::url($document->path) }}" target="_blank" class="text-blue-600 underline">
+                                                            {{ $document->original_name }}
+                                                        </a>
+                                                                
+                                                        <button type="button"
+                                                                class="text-red-500 hover:text-red-700 p-2"
+                                                                onclick="deleteDocument({{ $document->id }})">
+                                                            <i class="fas fa-trash-alt"></i>
+                                                        </button>
+                                                    </p>
+                                                @endif
+                                            @endforeach
+                                        @endif
+                                    </td>
+                                    <td class="px-6 py-4">
+                                        <input type="file" name="check_stub" accept="application/pdf"
+                                            class="mt-1 block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100">
+                                        <div class="preview-container mt-2"></div>
+                                        @error('check_stub')
+                                            <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                                        @enderror
+                                    </td>
+                                </tr>
+                    </tbody>
+                </table>
 
                 <!-- Soumission -->
-                <div class="mt-8">
-                    <button type="submit"
-                        class="inline-flex items-center justify-center px-3 py-3 border border-transparent text-base font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
-                        Soumettre
-                    </button>
-                </div>
+                    <div class="mt-8 flex gap-5 justify-end">
+                        @if (!$demande || $demande->isDraft())  
+                            <button
+                                type="submit"
+                                name="action"
+                                value="draft"
+                                class="inline-flex items-center justify-center p-2 border border-transparent text-base font-medium rounded-md text-white bg-gray-600 hover:bg-gray-700">
+                                Sauvegarder
+                            </button>
+                        @endif
+                        @if (!$demande || $demande->isDraft())
+                                <button
+                                    type="submit"
+                                    name="action"
+                                    value="submit"
+                                    class="inline-flex items-center justify-center p-2 border border-transparent text-base font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700">
+                                    Soumettre
+                                </button>
+                        @endif
+                    </div>
+            </form>
+            <form id="delete-document-form" method="POST" style="display:none;">
+                @csrf
+                @method('DELETE')
             </form>
         </div>
     </div>
@@ -397,3 +612,13 @@
         });
     });
 </script>
+<script>
+function deleteDocument(documentId) {
+    if (!confirm('Are you sure you want to delete this file?')) return;
+
+    const form = document.getElementById('delete-document-form');
+    form.action = `/demandedocument/${documentId}`;
+    form.submit();
+}
+</script>
+

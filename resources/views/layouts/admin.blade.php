@@ -146,8 +146,8 @@
                     Ministre
                 </a>
                 <!-- Rapports -->
-                <a href="{{ route('reports.create') }}"
-                    class="flex items-center px-4 py-2 text-gray-300 hover:bg-gray-700 {{ request()->routeIs('reports.*') ? 'bg-gray-700' : '' }}">
+                <a href="{{ route('admin.reports.create') }}"
+                    class="flex items-center px-4 py-2 text-gray-300 hover:bg-gray-700 {{ request()->routeIs('admin.reports.*') ? 'bg-gray-700' : '' }}">
                     <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                             d="M9 17v-4m3 4v-6m3 6v-2M5 21h14a2 2 0 002-2V5a2 2 0 00-2-2H9L5 7v12a2 2 0 002 2z"/>
@@ -164,8 +164,8 @@
                     Newsletter
                 </a>
                 <!-- Actualités -->
-                <a href="{{ route('actualites.admin.index') }}"
-                    class="flex items-center px-4 py-2 text-gray-300 hover:bg-gray-700 {{ request()->routeIs('actualites.admin.*') ? 'bg-gray-700' : '' }}">
+                <a href="{{ route('admin.actualites.admin.index') }}"
+                    class="flex items-center px-4 py-2 text-gray-300 hover:bg-gray-700 {{ request()->routeIs('admin.actualites.*') ? 'bg-gray-700' : '' }}">
                     <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                             d="M19 7h-1a2 2 0 00-2 2v10H6a2 2 0 01-2-2V5a2 2 0 012-2h9l4 4z"/>

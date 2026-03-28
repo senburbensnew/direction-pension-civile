@@ -22,7 +22,7 @@
             </div>
             <!-- Message -->
             <h1 class="text-6xl md:text-8xl lg:text-9xl font-bold text-[#173152] mt-6">403</h1>
-            <p class="text-base md:text-lg lg:text-xl text-gray-300 mt-2">{{ __('errors.permission_denied') }}</p>
+            <p class="text-base md:text-lg lg:text-xl text-gray-300 mt-2">{{ $exception->getMessage() ?: __('Forbidden') }}</p>
             <a href="{{ route('home') }}"
                 class="mt-6 inline-block px-6 py-3 bg-[#FFD700] text-[#173152] rounded-lg hover:bg-[#FFC107] transition duration-300 font-semibold hover:scale-105">{{ __('errors.back_to_home') }}</a>
         </div>

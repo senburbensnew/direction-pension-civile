@@ -19,7 +19,7 @@
 
     {{-- Update Actualité Form --}}
     <form id="update-actualite-form"
-        action="{{ route('actualites.update', ['actualite' => $actualiteEdit->id]) }}"
+        action="{{ route('admin.actualites.update', ['actualite' => $actualiteEdit->id]) }}"
         method="POST" enctype="multipart/form-data" class="space-y-4 mb-8">
 
         @csrf

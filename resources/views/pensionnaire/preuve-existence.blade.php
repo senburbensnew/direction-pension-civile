@@ -1,5 +1,5 @@
 @extends('layouts.main')
 
 @section('content')
-    <x-existence-proof :pensionCategories="$pensionCategories" :genders="$genders" :civilStatuses="$civilStatuses" />
+    <x-existence-proof :pensionCategories="$pensionCategories" :genders="$genders" :civilStatuses="$civilStatuses" :demande="$demande" :isDemandeReadyForSubmission="$isDemandeReadyForSubmission" />
 @endsection

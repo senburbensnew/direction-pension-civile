@@ -1,0 +1,247 @@
+@startuml flux
+' ============================================================
+'  Diagramme d'activité (Flux) — Cycle de vie d'une Demande
+'  Système de Gestion des Pensions Civiles
+'  Date : 2026-03-28
+' ============================================================
+
+skinparam activityBackgroundColor #FEFEFE
+skinparam activityBorderColor #2C5F8A
+skinparam activityArrowColor #444444
+skinparam activityStartColor #1A3A5C
+skinparam activityEndColor #1A3A5C
+skinparam activityDiamondBackgroundColor #FFF8DC
+skinparam activityDiamondBorderColor #B8860B
+skinparam shadowing false
+skinparam DefaultFontName Arial
+skinparam DefaultFontSize 12
+skinparam partitionBorderColor #2C5F8A
+skinparam partitionBackgroundColor #F0F7FF
+
+title Flux du Cycle de Vie d'une Demande\nSystème de Gestion des Pensions Civiles
+
+|#D9EAF7| Usager |
+|#D4EDDA| Réception / Secrétariat |
+|#FFF3CD| Direction |
+|#F8D7DA| Services Internes |
+
+|Usager|
+start
+
+:Choisir le type de demande\n(selon son rôle : Pensionnaire /\nFonctionnaire / Institution);
+
+:Remplir le formulaire\nen ligne;
+
+:Joindre les documents\nrequis (pièces justificatives);
+
+fork
+  :Enregistrer\nen brouillon;
+  note right
+    Statut : **BROUILLON**
+    L'usager peut modifier
+    ou supprimer le dossier
+  end note
+  :Reprendre et compléter\nle formulaire;
+fork again
+  :Soumettre directement;
+end fork
+
+:Soumettre la demande;
+
+note right
+  Statut passe à : **SOUMISE**
+  Horodatage de soumission enregistré
+  Notification envoyée à la Réception
+end note
+
+|Réception / Secrétariat|
+
+:Réceptionner la demande\ndans la corbeille;
+
+:Examiner le dossier\n(complétude, conformité);
+
+if (Dossier complet\net conforme ?) then (Non)
+
+  :Envoyer une demande de\ncomplément d'information;
+
+  note right
+    Statut : **COMPLEMENT_REQUIS**
+    Message envoyé à l'usager
+    via la messagerie interne
+  end note
+
+  |Usager|
+
+  :Recevoir la notification\nde complément requis;
+
+  :Compléter le dossier\n(modifier formulaire\nou ajouter documents);
+
+  :Re-soumettre la demande;
+
+  note right
+    Statut repasse à : **SOUMISE**
+    Nouvelle notification à la Réception
+  end note
+
+  |Réception / Secrétariat|
+
+  :Réceptionner\nla demande complétée;
+
+else (Oui)
+endif
+
+:Transmettre le dossier\nà la Direction;
+
+note right
+  Statut : **EN_TRAITEMENT**
+  Workflow enregistré :
+  Réception → Direction
+end note
+
+|Direction|
+
+:Consulter et analyser\nle dossier;
+
+if (Action de la Direction ?) then (Annotation)
+
+  :Annoter le dossier\n(commentaire directorial +\ncatégorie de classement);
+
+  note right
+    Champs mis à jour :
+    annotation, annotated_by, annotated_at
+    L'annotation est obligatoire avant
+    tout transfert ou impression
+  end note
+
+  if (Complément\nnécessaire ?) then (Oui)
+
+    :Demander un complément\nà l'usager;
+
+    note right
+      Statut : **COMPLEMENT_REQUIS**
+    end note
+
+    |Usager|
+    :Compléter et re-soumettre;
+    |Direction|
+    :Réceptionner le dossier\ncomplémentaire;
+
+  else (Non)
+  endif
+
+  :Transférer le dossier\nvers le Secrétariat;
+
+  note right
+    Statut : **TRANSFEREE**
+    La Direction ne peut\ntransférer qu'au Secrétariat
+  end note
+
+else (Rejet direct)
+
+  :Rejeter le dossier\navec motif;
+
+  note right
+    Statut : **REJETEE**
+    Notification envoyée à l'usager
+  end note
+
+  |Usager|
+  :Recevoir la notification\nde rejet;
+  stop
+
+endif
+
+|Services Internes|
+
+:Secrétariat reçoit\nle dossier;
+
+:Distribuer vers le\nservice compétent;
+
+note right
+  Services disponibles :
+  - Liquidation
+  - Formalité
+  - Contrôle & Placement
+  - Comptabilité
+  - Assurance
+  - Administration
+end note
+
+repeat
+
+  :Service concerné\ntraite le dossier;
+
+  if (Action du service ?) then (Complément requis)
+
+    :Demander des\ninformations complémentaires;
+
+    note right
+      Statut : **COMPLEMENT_REQUIS**
+    end note
+
+    |Usager|
+    :Fournir les compléments;
+    |Services Internes|
+    :Reprendre le traitement;
+
+  else if (Transférer vers\naun autre service) then (Transfert)
+
+    :Transférer vers\nle service suivant;
+
+    note right
+      Nouveau workflow enregistré
+      Notification au service destinataire
+    end note
+
+  else (Traitement terminé)
+
+  endif
+
+repeat while (Traitement\ncontinue ?) is (Oui)
+->Non;
+
+if (Décision finale ?) then (Approuvée)
+
+  :Approuver le dossier;
+
+  note right
+    Statut : **APPROUVEE**
+    Notification à l'usager
+  end note
+
+  :Clôturer le dossier;
+
+  note right
+    Statut : **CLOTUREE**
+    Dossier archivé
+  end note
+
+else (Rejetée)
+
+  :Rejeter le dossier\navec motif;
+
+  note right
+    Statut : **REJETEE**
+    Notification à l'usager
+  end note
+
+endif
+
+|Usager|
+
+:Recevoir la notification\nde décision finale;
+
+:Consulter le résultat\ndans son espace personnel;
+
+if (Demande clôturée ?) then (Oui)
+  :Télécharger le document\nou courrier de réponse;
+else (Rejetée)
+  :Consulter le motif\nde rejet;
+  note right
+    L'usager peut\nsoumettre une nouvelle demande
+  end note
+endif
+
+stop
+
+@enduml

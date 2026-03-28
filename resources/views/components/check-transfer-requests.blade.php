@@ -1,3 +1,4 @@
+@props(['pensionCategories', 'demande' => null, 'isDemandeReadyForSubmission' => false])
 <div class="max-w-6xl mx-auto p-6 m-2">
     <!-- Form Section -->
     <div id="form-section" class="max-w-7xl mx-auto bg-white p-6 shadow-md rounded-lg relative m-2">
@@ -26,15 +27,39 @@
             </div>
         @endif
 
+        @if ($demande)
+            <div class="mb-4 p-3 bg-yellow-50 border border-yellow-200 text-yellow-800 rounded text-sm">
+                Brouillon en cours — dernière sauvegarde {{ $demande->updated_at->diffForHumans() }}
+            </div>
+        @endif
+
         <form method="POST" action="{{ route('demandes.transfert-cheque.store') }}" id="check-transfert-form">
             @csrf
+            <input type="hidden" name="demande_id" value="{{ $demande?->id }}">
+            <input type="hidden" name="action" id="action-input" value="draft">
+
+            {{-- Titre personnalisé --}}
+            <div class="mb-4">
+                <label for="title" class="block text-sm font-medium text-gray-700">
+                    Titre personnalisé <span class="text-gray-400 font-normal">(optionnel)</span>
+                </label>
+                <input
+                    id="title"
+                    type="text"
+                    name="title"
+                    value="{{ old('title', $demande?->title ?? '') }}"
+                    placeholder="ex : Transfert de chèque — 2026"
+                    class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                >
+            </div>
+
             <fieldset class="shadow-md rounded-lg p-5 border mb-6">
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
                         <label for="fiscal_year" class="block text-sm font-medium text-gray-700 mb-1">
                             Année fiscale
                         </label>
-                        <input type="text" name="annee_fiscale" id="annee_fiscale" value="{{ old('annee_fiscale') }}"
+                        <input type="text" name="annee_fiscale" id="annee_fiscale" value="{{ old('annee_fiscale', $demande?->data['annee_fiscale'] ?? '') }}"
                             placeholder="ex:2025/2026" class="w-full rounded-md @error('annee_fiscale') border-red-500 @else border-gray-300 @enderror focus:border-blue-500 focus:ring-blue-500">
                         @error('annee_fiscale')
                             <p class="mt-2 text-sm text-red-600">{{ $message }}</p>
@@ -51,7 +76,7 @@
                         <label for="mois_debut" class="block text-sm font-medium text-gray-700 mb-1">
                             À partir du mois de *
                         </label>
-                        <input type="month" name="mois_debut" id="mois_debut" value="{{ old('mois_debut') }}"
+                        <input type="month" name="mois_debut" id="mois_debut" value="{{ old('mois_debut', $demande?->data['mois_debut'] ?? '') }}"
                             class="w-full rounded-md @error('mois_debut') border-red-500 @else border-gray-300 @enderror focus:border-blue-500 focus:ring-blue-500">
                         @error('mois_debut')
                             <p class="mt-2 text-sm text-red-600">{{ $message }}</p>
@@ -61,7 +86,7 @@
                         <label for="date_demande" class="block text-sm font-medium text-gray-700 mb-1">
                             Date de demande *
                         </label>
-                        <input type="date" name="date_demande" id="date_demande" value="{{ old('date_demande') }}"
+                        <input type="date" name="date_demande" id="date_demande" value="{{ old('date_demande', $demande?->data['date_demande'] ?? '') }}"
                             class="w-full rounded-md @error('date_demande') border-red-500 @else border-gray-300 @enderror focus:border-blue-500 focus:ring-blue-500">
                         @error('date_demande')
                             <p class="mt-2 text-sm text-red-600">{{ $message }}</p>
@@ -80,7 +105,7 @@
                             <input type="radio" name="categorie_pension_id"
                                 value="{{ $type['id'] }}"
                                 class="h-4 w-4 text-blue-600 border-gray-300 focus:ring-blue-500"
-                                @checked(old('categorie_pension_id') == $type['id'])>
+                                @checked(old('categorie_pension_id', $demande?->data['categorie_pension_id'] ?? '') == $type['id'])>
                             <label class="ml-2 text-sm text-gray-700">
                                 {{ $type['name'] }}
                             </label>
@@ -100,7 +125,7 @@
                             Code pension *
                         </label>
                         <input type="text" name="code_pension" id="code_pension"
-                            value="{{ old('code_pension', auth()->user()->pension_code) }}"
+                            value="{{ old('code_pension', $demande?->data['code_pension'] ?? auth()->user()->pension_code) }}"
 
                             class="w-full rounded-md @error('code_pension') border-red-500 @else border-gray-300 @enderror focus:border-blue-500 focus:ring-blue-500"
                             >
@@ -112,7 +137,7 @@
                         <label for="montant" class="block text-sm font-medium text-gray-700 mb-1">
                             Montant (en Gdes) *
                         </label>
-                        <input type="number" name="montant" id="montant" value="{{ old('montant') }}"
+                        <input type="number" name="montant" id="montant" value="{{ old('montant', $demande?->data['montant'] ?? '') }}"
                             class="w-full rounded-md @error('montant') border-red-500 @else border-gray-300 @enderror focus:border-blue-500 focus:ring-blue-500"
                             step="0.01" min="0">
                         @error('montant')
@@ -130,7 +155,7 @@
                         <label for="nom" class="block text-sm font-medium text-gray-700 mb-1">
                             Nom *
                         </label>
-                        <input type="text" name="nom" id="nom" value="{{ old('nom') }}"
+                        <input type="text" name="nom" id="nom" value="{{ old('nom', $demande?->data['nom'] ?? '') }}"
                             class="w-full rounded-md @error('nom') border-red-500 @else border-gray-300 @enderror focus:border-blue-500 focus:ring-blue-500">
                         @error('nom')
                             <p class="mt-2 text-sm text-red-600">{{ $message }}</p>
@@ -140,7 +165,7 @@
                         <label for="prenom" class="block text-sm font-medium text-gray-700 mb-1">
                             Prénom *
                         </label>
-                        <input type="text" name="prenom" id="prenom" value="{{ old('prenom') }}"
+                        <input type="text" name="prenom" id="prenom" value="{{ old('prenom', $demande?->data['prenom'] ?? '') }}"
                             class="w-full rounded-md @error('prenom') border-red-500 @else border-gray-300 @enderror focus:border-blue-500 focus:ring-blue-500">
                         @error('prenom')
                             <p class="mt-2 text-sm text-red-600">{{ $message }}</p>
@@ -151,7 +176,7 @@
                             Nom de Jeune Fille
                         </label>
                         <input type="text" name="nom_jeune_fille" id="nom_jeune_fille"
-                            value="{{ old('nom_jeune_fille') }}"
+                            value="{{ old('nom_jeune_fille', $demande?->data['nom_jeune_fille'] ?? '') }}"
                             class="w-full rounded-md border-gray-300 focus:border-blue-500 focus:ring-blue-500 @error('nom_jeune_fille') border-red-500 @else border-gray-300 @enderror">
                         @error('nom_jeune_fille')
                             <p class="mt-2 text-sm text-red-600">{{ $message }}</p>
@@ -167,7 +192,7 @@
                         <label for="nif" class="block text-sm font-medium text-gray-700 mb-1">
                             NIF *
                         </label>
-                        <input placeholder="998-369-226-3" type="text" name="nif" id="nif" value="{{ auth()->user()->nif }}"
+                        <input placeholder="998-369-226-3" type="text" name="nif" id="nif" value="{{ old('nif', $demande?->data['nif'] ?? auth()->user()->nif) }}"
                             class="w-full rounded-md @error('nif') border-red-500 @else border-gray-300 @enderror focus:border-blue-500 focus:ring-blue-500"
                             >
                         @error('nif')
@@ -178,7 +203,7 @@
                         <label for="ninu" class="block text-sm font-medium text-gray-700 mb-1">
                             NINU *
                         </label>
-                        <input type="text" name="ninu" id="ninu" value="{{ old('ninu') }}"
+                        <input type="text" name="ninu" id="ninu" value="{{ old('ninu', $demande?->data['ninu'] ?? '') }}"
                             class="w-full rounded-md @error('ninu') border-red-500 @else border-gray-300 @enderror focus:border-blue-500 focus:ring-blue-500">
                         @error('ninu')
                             <p class="mt-2 text-sm text-red-600">{{ $message }}</p>
@@ -188,7 +213,7 @@
                         <label for="adresse" class="block text-sm font-medium text-gray-700 mb-1">
                             Adresse *
                         </label>
-                        <input type="text" name="adresse" id="adresse" value="{{ old('adresse') }}"
+                        <input type="text" name="adresse" id="adresse" value="{{ old('adresse', $demande?->data['adresse'] ?? '') }}"
                             class="w-full rounded-md @error('adresse') border-red-500 @else border-gray-300 @enderror focus:border-blue-500 focus:ring-blue-500">
                         @error('adresse')
                             <p class="mt-2 text-sm text-red-600">{{ $message }}</p>
@@ -198,7 +223,7 @@
                         <label for="telephone" class="block text-sm font-medium text-gray-700 mb-1">
                             Téléphone *
                         </label>
-                        <input placeholder="+509 XXXX-XXXX" type="tel" name="telephone" id="telephone" value="{{ old('telephone') }}"
+                        <input placeholder="+509 XXXX-XXXX" type="tel" name="telephone" id="telephone" value="{{ old('telephone', $demande?->data['telephone'] ?? '') }}"
                             class="w-full rounded-md @error('telephone') border-red-500 @else border-gray-300 @enderror focus:border-blue-500 focus:ring-blue-500"
                             >
                         @error('telephone')
@@ -209,7 +234,7 @@
                         <label for="email" class="block text-sm font-medium text-gray-700 mb-1">
                             Courriel
                         </label>
-                        <input placeholder="nom.prenom@example.com" type="email" name="email" id="email" value="{{ old('email') }}"
+                        <input placeholder="nom.prenom@example.com" type="email" name="email" id="email" value="{{ old('email', $demande?->data['email'] ?? '') }}"
                             class="w-full rounded-md border-gray-300 focus:border-blue-500 focus:ring-blue-500 @error('email') border-red-500 @else border-gray-300 @enderror">
                         @error('email')
                             <p class="mt-2 text-sm text-red-600">{{ $message }}</p>
@@ -226,7 +251,7 @@
                         <label for="from" class="block text-sm font-medium text-gray-700 mb-1">
                             De *
                         </label>
-                        <input type="date" name="de" id="de" value="{{ old('de') }}"
+                        <input type="date" name="de" id="de" value="{{ old('de', $demande?->data['de'] ?? '') }}"
                             class="w-full rounded-md @error('de') border-red-500 @else border-gray-300 @enderror focus:border-blue-500 focus:ring-blue-500">
                         @error('de')
                             <p class="mt-2 text-sm text-red-600">{{ $message }}</p>
@@ -236,7 +261,7 @@
                         <label for="to" class="block text-sm font-medium text-gray-700 mb-1">
                             À *
                         </label>
-                        <input type="date" name="a" id="a" value="{{ old('a') }}"
+                        <input type="date" name="a" id="a" value="{{ old('a', $demande?->data['a'] ?? '') }}"
                             class="w-full rounded-md @error('a') border-red-500 @else border-gray-300 @enderror focus:border-blue-500 focus:ring-blue-500">
                         @error('a')
                             <p class="mt-2 text-sm text-red-600">{{ $message }}</p>
@@ -248,7 +273,7 @@
                         Motif du transfert *
                     </label>
                     <textarea name="raison_transfert" id="raison_transfert" rows="3"
-                        class="w-full rounded-md @error('raison_transfert') border-red-500 @else border-gray-300 @enderror focus:border-blue-500 focus:ring-blue-500">{{ old('raison_transfert') }}</textarea>
+                        class="w-full rounded-md @error('raison_transfert') border-red-500 @else border-gray-300 @enderror focus:border-blue-500 focus:ring-blue-500">{{ old('raison_transfert', $demande?->data['raison_transfert'] ?? '') }}</textarea>
                     @error('raison_transfert')
                         <p class="mt-2 text-sm text-red-600">{{ $message }}</p>
                     @enderror
@@ -272,20 +297,15 @@
                 </div>
             </fieldset> --}}
 
-            <!-- DECLARATION -->
-            <fieldset class="mb-6 p-5 border rounded-lg">
-                <label class="flex items-start">
-                    <input type="checkbox" name="consentement" value="1">
-                    <span class="ml-2 text-sm">Je certifie l’exactitude des informations</span>
-                </label>
-                @error('consentement')
-                    <p class="text-red-600 text-sm mt-2">{{ $message }}</p>
-                @enderror
-            </fieldset>
-
             <!-- Submit Section -->
-            <div class="mt-8 text-right">
-                <button type="submit"
+            <div class="mt-8 flex justify-end gap-3">
+                <button type="button"
+                    onclick="document.getElementById('action-input').value='draft'; document.getElementById('check-transfert-form').submit();"
+                    class="bg-gray-200 text-gray-700 px-6 py-2 rounded hover:bg-gray-300 transition-colors">
+                    Sauvegarder en brouillon
+                </button>
+                <button type="button"
+                    onclick="document.getElementById('action-input').value='submit'; document.getElementById('check-transfert-form').submit();"
                     class="bg-blue-600 text-white px-6 py-2 rounded hover:bg-blue-700 transition-colors">
                     Soumettre
                 </button>

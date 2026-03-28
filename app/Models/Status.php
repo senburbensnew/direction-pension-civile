@@ -15,6 +15,7 @@ class Status extends Model
    const STATUS_REJECTED = 'REJETEE';
    const STATUS_COMPLETED = 'FINALISEE';
    const STATUS_CANCELED = 'ANNULEE';
+   const STATUS_COMPLEMENT_REQUIS = 'COMPLEMENT_REQUIS';
 
     protected $fillable = [
         'name',
@@ -28,8 +29,14 @@ class Status extends Model
             self::STATUS_IN_PROGRESS => 'bg-purple-100 text-purple-800',
             self::STATUS_REJECTED => 'bg-red-100 text-red-800',
             self::STATUS_COMPLETED => 'bg-green-100 text-green-800',
+            self::STATUS_COMPLEMENT_REQUIS => 'bg-orange-100 text-orange-800',
             default => 'bg-gray-100 text-gray-800'
         };
+    }
+
+    public static function getStatusComplementRequis(): Status
+    {
+        return self::getStatus(self::STATUS_COMPLEMENT_REQUIS);
     } 
 
     public static function getStatusOptions()

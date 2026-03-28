@@ -1,20 +1,44 @@
+@props(['pensionCategories', 'genders', 'civilStatuses', 'demande' => null, 'isDemandeReadyForSubmission' => false])
 <div class="max-w-6xl mx-auto p-4 md:p-6 m-2 ">
+    @if ($demande)
+        <div class="mb-4 p-3 bg-yellow-50 border border-yellow-200 text-yellow-800 rounded text-sm">
+            Brouillon en cours — dernière sauvegarde {{ $demande->updated_at->diffForHumans() }}
+        </div>
+    @endif
     <form method="POST" action="{{ route('demandes.preuve-existence.store') }}"
-        class="p-4 md:p-5 bg-white shadow-md rounded-lg border" enctype="multipart/form-data">
+        class="p-4 md:p-5 bg-white shadow-md rounded-lg border" enctype="multipart/form-data" id="preuve-existence-form">
         @csrf
+        <input type="hidden" name="demande_id" value="{{ $demande?->id }}">
+        <input type="hidden" name="action" id="action-input" value="draft">
+
+        {{-- Titre personnalisé --}}
+        <div class="mb-4">
+            <label for="title" class="block text-sm font-medium text-gray-700">
+                Titre personnalisé <span class="text-gray-400 font-normal">(optionnel)</span>
+            </label>
+            <input
+                id="title"
+                type="text"
+                name="title"
+                value="{{ old('title', $demande?->title ?? '') }}"
+                placeholder="ex : Preuve d'existence — Mars 2026"
+                class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+            >
+        </div>
+
         <!-- Header Section -->
         <div class="flex flex-col md:flex-row items-center mb-8 gap-6">
 
             <!-- Organization Info (CENTRE) -->
             <div class="order-1 md:order-2 text-center flex-1">
                 <h1 class="text-lg md:text-xl font-bold leading-tight">
-                    MINISTERE DE L’ECONOMIE ET DES FINANCES
+                    MINISTERE DE L'ECONOMIE ET DES FINANCES
                 </h1>
                 <h2 class="text-md md:text-lg font-bold mb-1">
                     Direction de la Pension Civile (DPC)
                 </h2>
                 <h3 class="text-sm md:text-md font-semibold">
-                    FICHE D’IDENTIFICATION DU PENSIONNÉ
+                    FICHE D'IDENTIFICATION DU PENSIONNÉ
                 </h3>
             </div>
 
@@ -25,7 +49,7 @@
                         type="text"
                         name="numero_identite"
                         id="numero_identite"
-                        value="{{ old('numero_identite') }}"
+                        value="{{ old('numero_identite', $demande?->data['numero_identite'] ?? '') }}"
                         placeholder="003-456-789-0"
                         aria-label="Numéro d'identité"
                         class="
@@ -38,7 +62,7 @@
                         for="numero_identite"
                         class="absolute left-0 -top-4 text-gray-500 text-sm"
                     >
-                        NO D’IDENTITÉ
+                        NO D'IDENTITÉ
                     </label>
 
                     @error('numero_identite')
@@ -436,7 +460,7 @@
                     <div class="flex-1 p-4 space-y-6">
                         <div>
                             <p class="font-semibold text-gray-700">La Direction de la Pension Civile certifie que</p>
-                            <p class="mt-2 text-gray-600">a rempli les formalités pour l’année fiscale</p>
+                            <p class="mt-2 text-gray-600">a rempli les formalités pour l'année fiscale</p>
                         </div>
                         <div class="mt-6 flex justify-between text-gray-700">
                             <span>Le</span>
@@ -454,7 +478,7 @@
                     <div class="flex-1 p-4 space-y-6">
                         <div>
                             <p class="font-semibold text-gray-700">La Direction de la Pension Civile certifie que</p>
-                            <p class="mt-2 text-gray-600">a rempli les formalités pour l’année fiscale</p>
+                            <p class="mt-2 text-gray-600">a rempli les formalités pour l'année fiscale</p>
                         </div>
                         <div class="mt-6 flex justify-between text-gray-700">
                             <span>Le</span>
@@ -467,9 +491,15 @@
                 <!-- Footer Note -->
                 <p class="text-xs text-right font-bold mt-6 text-gray-500 tracking-wide">mefd/dpc/sicp/jr</p>
             </fieldset> --}}
-            <!-- Submit Button -->
-            <div class="mt-6 text-right">
-                <button type="submit"
+            <!-- Submit Buttons -->
+            <div class="mt-6 flex justify-end gap-3">
+                <button type="button"
+                    onclick="document.getElementById('action-input').value='draft'; document.getElementById('preuve-existence-form').submit();"
+                    class="bg-gray-200 text-gray-700 px-6 py-2 rounded hover:bg-gray-300 transition-colors text-sm md:text-base">
+                    Sauvegarder en brouillon
+                </button>
+                <button type="button"
+                    onclick="document.getElementById('action-input').value='submit'; document.getElementById('preuve-existence-form').submit();"
                     class="bg-blue-600 text-white px-6 py-2 rounded hover:bg-blue-700 transition-colors text-sm md:text-base">
                     Soumettre
                 </button>

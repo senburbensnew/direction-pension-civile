@@ -14,9 +14,20 @@ class StoreDemandeReinsertionRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'prenom' => 'required|string|max:255',
-            'nom'  => 'required|string|max:255',
-            'raison'    => 'required|string|max:255',
+            'title'      => 'nullable|string|max:255',
+            'action'     => 'required|in:draft,submit',
+            'demande_id' => 'sometimes|nullable|exists:demandes,id',
+            'prenom' => ['nullable', 'required_if:action,submit', 'string', 'max:255'],
+            'nom'    => ['nullable', 'required_if:action,submit', 'string', 'max:255'],
+            'raison' => ['nullable', 'required_if:action,submit', 'string', 'max:255'],
+        ];
+    }
+
+    public function messages(): array
+    {
+        return [
+            'required'    => 'Le champ :attribute est obligatoire.',
+            'required_if' => 'Le champ :attribute est obligatoire pour soumettre la demande.',
         ];
     }
 
@@ -24,8 +35,8 @@ class StoreDemandeReinsertionRequest extends FormRequest
     {
         return [
             'prenom' => 'Prénom',
-            'nom'  => 'Nom',
-            'raison'    => 'Motif',
+            'nom'    => 'Nom',
+            'raison' => 'Motif',
         ];
     }
 }

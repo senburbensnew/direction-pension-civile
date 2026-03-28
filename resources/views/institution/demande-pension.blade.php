@@ -1,9 +1,9 @@
 @extends('layouts.main')
 
 @section('content')
-    <div class="max-w-6xl mx-auto my-5">
+    <div class="mx-auto my-5 px-5">
         <!-- Main Content -->
-        <main class="max-w-6xl mx-auto bg-white p-6 shadow-md rounded-lg relative">
+        <main class="mx-auto bg-white p-6 shadow-md rounded-lg relative">
             <!-- Header Section -->
             <div class="flex flex-col md:flex-row justify-between items-center mb-12 gap-8">
                 <div class="text-center mb-6 flex flex-col md:flex-row items-center justify-center w-full gap-4 md:gap-8">

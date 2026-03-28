@@ -2,28 +2,28 @@
 
 @section('content')
 @if($role === 'ministre')
-    <div class="flex flex-col md:flex-row items-center md:items-start gap-8 md:gap-12 lg:gap-16 p-6 md:p-8">
+    <div class="flex flex-col md:flex-row items-center md:items-start gap-8 md:gap-12 lg:gap-16 p-6 md:p-8 py-10 md:py-16 ">
         <!-- Director's Image -->
         <div>
-            <x-presentation role="Le Ministre" nom="Alfred Fils METELLUS" sexe="M"
+            <x-presentation role="Le Ministre" nom="Serge Gabriel COLLIN" sexe="M"
                 lien-profil="{{ route('quisommesnous.profil', ['role' => 'ministre']) }}"
                 lien-discours="{{ route('quisommesnous.mots', ['role' => 'ministre']) }}"
-                mobile-image="images/photo-metelus.png" desktop-image="images/photo-metelus.png" :showProfileLink="true"
+                mobile-image="images/ministre.png" desktop-image="images/ministre.png" :showProfileLink="true"
                 :showSpeechLink="false" />
         </div>
 
         <!-- Content Card -->
-        <div class="w-full md:w-2/3 bg-white rounded-xl shadow-xs transition-shadow p-8 md:p-12">
-            <div class="mb-8 border-b-2 border-primary-100 pb-6">
+        <div class="w-full md:w-2/3 bg-gray-50 rounded-2xl shadow-xs border border-gray-200 p-8 md:p-12">
+            <div class="mb-8 border-b border-gray-200 pb-6">
                 <h2 class="text-4xl font-bold text-gray-900 mb-4 font-serif tracking-tight">
                     Mots du Ministre
                 </h2>
-                <p class="text-lg text-gray-600 italic">
+{{--                 <p class="text-lg text-gray-600 italic">
                     "La Pension Civile est le reflet de la gratitude de la Nation envers ceux qui l’ont servi avec
                     honneur."
-                </p>
+                </p> --}}
             </div>
-            <div class="prose-lg text-gray-700 space-y-6">
+{{--             <div class="prose-lg text-gray-700 space-y-6">
                 <p class="leading-relaxed">
                     Chers collaborateurs, partenaires et citoyens,
                 </p>
@@ -77,7 +77,8 @@
                         <span class="text-sm text-gray-500">Ministère de l’Économie et des Finances</span>
                     </p>
                 </div>
-            </div>
+            </div> --}}
+            Aucun discours pour le moment
         </div>
     </div>
 @elseif($role === 'directeur-general')
@@ -93,7 +94,7 @@
 
         <!-- Content Card -->
         <div class="w-full md:w-2/3 bg-white rounded-xl shadow-lg hover:shadow-xl transition-shadow p-8 md:p-12">
-            <div class="mb-8 border-b-2 border-primary-100 pb-6">
+            <div class="mb-8 border-b border-gray-200 pb-6">
                 <h2 class="text-4xl font-bold text-gray-900 mb-4 font-serif tracking-tight">
                     Mots du Directeur Général
                 </h2>

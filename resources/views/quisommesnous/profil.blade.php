@@ -2,19 +2,19 @@
 
 @section('content')
 @if($role === 'ministre')
-    <section class="py-10 md:py-16 bg-gray-50">
+    <section class="py-10 md:py-16 ">
         <div class="container mx-auto px-6 md:px-10 flex flex-col md:flex-row items-start gap-5">
             <!-- Director's Image -->
             <div class="md:w-1/3 lg:w-1/4">
-                <x-presentation role="Le Ministre" nom="Alfred Fils METELLUS" sexe="M"
+                <x-presentation role="Le Ministre" nom="Serge Gabriel COLLIN" sexe="M"
                     lien-profil="{{ route('quisommesnous.profil', ['role' => 'ministre']) }}"
                     lien-discours="{{ route('quisommesnous.mots', ['role' => 'ministre']) }}"
-                    mobile-image="images/photo-metelus.png" desktop-image="images/photo-metelus.png"
+                    mobile-image="images/ministre.png" desktop-image="images/ministre.png"
                     :showProfileLink="false" :showSpeechLink="true" />
             </div>
 
             <!-- Content Card -->
-            <div class="w-full bg-white rounded-2xl shadow-xs border border-gray-200 p-8 md:p-12">
+            <div class="w-full  rounded-2xl shadow-xs border border-gray-200 p-8 md:p-12 bg-gray-50">
 
                 <!-- Header -->
                 <div class="mb-8 pb-6 border-b border-gray-200">
@@ -22,12 +22,12 @@
                         Présentation du Ministre
                     </h1>
                     <p class="text-lg text-gray-600">
-                        M. Alfred Fils Metellus — Ministère de l'Economie et des Finances
+                        Serge Gabriel COLLIN — Ministère de l'Economie et des Finances
                     </p>
                 </div>
 
                 <!-- Biography -->
-                <div class="prose prose-lg max-w-none text-gray-700 space-y-6">
+{{--                 <div class="prose prose-lg max-w-none text-gray-700 space-y-6">
                     <!-- Mission Section -->
                     <div class="pt-8 space-y-4">
                         <p>
@@ -38,7 +38,9 @@
                             <p>La nomination de M. Alfred Fils METELLUS comme Ministre de l’Economie et des Finances marque son retour au sein de la grande famille du MEF ou, en sa qualité de Directeur des études Economiques, il était responsable d'élaborer le cadre macroéconomique du Budget de la République, de coordonner les négociations avec les institutions financières internationales et de suivre les programmes financiers conclus avec le FMI. Il était également responsable des négociations et de la coordination des missions d'appui budgétaire fournies par des bailleurs de fonds tels que la BID, la Banque mondiale et l'Union Européenne (UE). Ainsi, grâce aux appuis budgétaires fournis par les bailleurs de fonds, diverses réformes dans les domaines des finances publiques, du climat des affaires, de la lutte contre la corruption, de la transparence dans la gestion des finances publiques et de la reddition des comptes ont été mises en œuvre. Il est à noter, cependant, que M. Alfred Fils Metellus également servi le MEF, successivement comme Directeur de Cabinet de plusieurs Ministres et comme Secrétaire d'État à l'Économie, chargé d'élaborer et de mettre en œuvre un ensemble de mesures politiques visant à stimuler l'activité économique et à moderniser ses structures.</p>
                         </p>
                     </div>
-                </div>
+                </div> --}}
+
+                Notice biographique à venir
 
             </div>
         </div>

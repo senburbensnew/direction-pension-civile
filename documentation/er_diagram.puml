@@ -1,0 +1,352 @@
+@startuml er_diagram
+' ============================================================
+'  Diagramme Entite-Association (ERD)
+'  Systeme de Gestion des Pensions Civiles
+'  Date : 2026-03-28
+' ============================================================
+
+skinparam entity {
+    BackgroundColor #FEFEFE
+    BorderColor #2C5F8A
+    ArrowColor #444444
+    FontName Arial
+    FontSize 11
+}
+skinparam linetype ortho
+skinparam shadowing false
+skinparam DefaultFontName Arial
+skinparam DefaultFontSize 11
+skinparam noteBackgroundColor #FFFDE7
+skinparam noteBorderColor #B8860B
+skinparam packageBorderColor #2C5F8A
+skinparam packageBackgroundColor #F0F7FF
+
+title Diagramme Entite-Association\nSysteme de Gestion des Pensions Civiles
+
+' ============================================================
+'  ENTITES PRINCIPALES
+' ============================================================
+
+package "Gestion des Utilisateurs" {
+
+    entity "users" as USER {
+        * id : bigint <<PK>>
+        --
+        * name : varchar(255)
+        * email : varchar(255) <<unique>>
+        * password : varchar(255)
+          type : enum(pensionnaire,fonctionnaire,institution)
+          nif : varchar(20) <<nullable>>
+          ninu : varchar(20) <<nullable>>
+          telephone : varchar(20) <<nullable>>
+          service_id : bigint <<FK, nullable>>
+          email_verified_at : timestamp
+        * created_at : timestamp
+        * updated_at : timestamp
+    }
+
+    entity "roles" as ROLE {
+        * id : bigint <<PK>>
+        --
+        * name : varchar(255)
+          guard_name : varchar(255)
+        * created_at : timestamp
+        * updated_at : timestamp
+    }
+
+    entity "permissions" as PERM {
+        * id : bigint <<PK>>
+        --
+        * name : varchar(255)
+          guard_name : varchar(255)
+        * created_at : timestamp
+        * updated_at : timestamp
+    }
+
+    entity "model_has_roles" as MHR {
+        * role_id : bigint <<FK>>
+        * model_type : varchar(255)
+        * model_id : bigint
+    }
+
+    entity "model_has_permissions" as MHP {
+        * permission_id : bigint <<FK>>
+        * model_type : varchar(255)
+        * model_id : bigint
+    }
+
+    entity "role_has_permissions" as RHP {
+        * role_id : bigint <<FK>>
+        * permission_id : bigint <<FK>>
+    }
+
+}
+
+package "Organisation Interne" {
+
+    entity "services" as SERVICE {
+        * id : bigint <<PK>>
+        --
+        * code : varchar(50) <<unique>>
+        * nom : varchar(255)
+          description : text <<nullable>>
+        * created_at : timestamp
+        * updated_at : timestamp
+    }
+
+    note right of SERVICE
+        Codes : direction, secretariat,
+        service_liquidation, service_formalite,
+        service_controle_placement,
+        service_comptabilite,
+        service_assurance, administration
+    end note
+
+}
+
+package "Referentiel des Demandes" {
+
+    entity "types_demandes" as TYPEDEM {
+        * id : bigint <<PK>>
+        --
+        * code : varchar(100) <<unique>>
+        * label : varchar(255)
+          description : text <<nullable>>
+          active : boolean <<default true>>
+        * created_at : timestamp
+        * updated_at : timestamp
+    }
+
+    entity "statuses" as STATUS {
+        * id : bigint <<PK>>
+        --
+        * code : varchar(50) <<unique>>
+          name : varchar(255)
+          color : varchar(50) <<nullable>>
+        * created_at : timestamp
+        * updated_at : timestamp
+    }
+
+    note right of STATUS
+        Codes : BROUILLON, SOUMISE,
+        EN_TRAITEMENT, COMPLEMENT_REQUIS,
+        TRANSFEREE, APPROUVEE,
+        REJETEE, ANNULEE, CLOTUREE
+    end note
+
+}
+
+package "Gestion des Demandes" {
+
+    entity "demandes" as DEMANDE {
+        * id : bigint <<PK>>
+        --
+        * code : varchar(50) <<unique>>
+          title : varchar(255) <<nullable>>
+        * type : varchar(50) <<index>>
+        * created_by : bigint <<FK>>
+        * status_id : bigint <<FK>>
+          current_service_id : bigint <<FK, nullable>>
+          data : json <<nullable>>
+          submitted_at : timestamp <<nullable>>
+          expires_at : timestamp <<nullable>>
+          annotation : text <<nullable>>
+          annotated_by : bigint <<FK, nullable>>
+          annotated_at : timestamp <<nullable>>
+          folder : enum(pension,urgent,suivi,...) <<nullable>>
+        * created_at : timestamp
+        * updated_at : timestamp
+    }
+
+    note right of DEMANDE
+        Types : DEMANDE_VIREMENT_BANCAIRE,
+        DEMANDE_ATTESTATION,
+        DEMANDE_TRANSFERT_CHEQUE,
+        DEMANDE_ARRET_PAIEMENT,
+        DEMANDE_REINSERTION,
+        DEMANDE_ARRET_VIREMENT,
+        DEMANDE_PREUVE_EXISTENCE,
+        DEMANDE_PENSION_REVERSION,
+        DEMANDE_ETAT_CARRIERE,
+        DEMANDE_PENSION,
+        DEMANDE_ADHESION
+    end note
+
+    entity "demande_documents" as DEMDOC {
+        * id : bigint <<PK>>
+        --
+        * demande_id : bigint <<FK>>
+        * type : varchar(100)
+          label : varchar(255) <<nullable>>
+          disk : varchar(50) <<default public>>
+        * path : varchar(500)
+        * original_name : varchar(255)
+          mime_type : varchar(100) <<nullable>>
+          size : bigint <<nullable>>
+        * created_at : timestamp
+        * updated_at : timestamp
+    }
+
+    entity "demande_messages" as DEMMSG {
+        * id : bigint <<PK>>
+        --
+        * demande_id : bigint <<FK>>
+        * sender_id : bigint <<FK>>
+        * body : text
+          read_at : timestamp <<nullable>>
+        * created_at : timestamp
+        * updated_at : timestamp
+    }
+
+    entity "demande_history" as DEMHIST {
+        * id : bigint <<PK>>
+        --
+        * demande_id : bigint <<FK>>
+        * statut : varchar(50)
+          commentaire : text <<nullable>>
+          changed_by : bigint <<FK, nullable>>
+          data : json <<nullable>>
+        * created_at : timestamp
+        * updated_at : timestamp
+    }
+
+    entity "demande_workflows" as DEMWF {
+        * id : bigint <<PK>>
+        --
+        * demande_id : bigint <<FK>>
+          from_service_id : bigint <<FK, nullable>>
+        * to_service_id : bigint <<FK>>
+        * status_id : bigint <<FK>>
+        * action_by_user_id : bigint <<FK>>
+          commentaire : text <<nullable>>
+          action_at : timestamp <<nullable>>
+        * created_at : timestamp
+        * updated_at : timestamp
+    }
+
+    entity "demande_activity_logs" as DEMAL {
+        * id : bigint <<PK>>
+        --
+        * demande_id : bigint <<FK>>
+        * user_id : bigint <<FK>>
+        * action : varchar(100)
+          metadata : json <<nullable>>
+        * created_at : timestamp
+        * updated_at : timestamp
+    }
+
+    note right of DEMWF
+        Trace chaque transfert
+        entre services.
+        from_service_id=NULL
+        a la soumission initiale.
+    end note
+
+}
+
+package "Contenu et Communication" {
+
+    entity "actualites" as ACTU {
+        * id : bigint <<PK>>
+        --
+        * titre : varchar(255)
+        * contenu : text
+          image : varchar(500) <<nullable>>
+          published_at : timestamp <<nullable>>
+          active : boolean <<default true>>
+        * created_at : timestamp
+        * updated_at : timestamp
+    }
+
+    entity "carousels" as CAROUSEL {
+        * id : bigint <<PK>>
+        --
+        * titre : varchar(255)
+          sous_titre : varchar(255) <<nullable>>
+          image : varchar(500)
+          lien : varchar(500) <<nullable>>
+          ordre : integer <<default 0>>
+          active : boolean <<default true>>
+        * created_at : timestamp
+        * updated_at : timestamp
+    }
+
+    entity "newsletters" as NEWSLETTER {
+        * id : bigint <<PK>>
+        --
+        * email : varchar(255) <<unique>>
+          confirmed_at : timestamp <<nullable>>
+        * created_at : timestamp
+        * updated_at : timestamp
+    }
+
+}
+
+package "Notifications (Laravel)" {
+
+    entity "notifications" as NOTIFENT {
+        * id : char(36) <<PK, UUID>>
+        --
+        * type : varchar(255)
+        * notifiable_type : varchar(255)
+        * notifiable_id : bigint
+        * data : text (json)
+          read_at : timestamp <<nullable>>
+        * created_at : timestamp
+        * updated_at : timestamp
+    }
+
+    note right of NOTIFENT
+        Types :
+        DemandeSubmittedNotification
+        DemandeStatusChangedNotification
+        DemandeTransferredNotification
+    end note
+
+}
+
+' ============================================================
+'  RELATIONS
+' ============================================================
+
+' --- Utilisateurs et Roles/Permissions (Spatie) ---
+USER ||--o{ MHR : "a les roles"
+ROLE ||--o{ MHR : "attribue via"
+USER ||--o{ MHP : "a les permissions"
+PERM ||--o{ MHP : "attribuee via"
+ROLE ||--o{ RHP : "inclut"
+PERM ||--o{ RHP : "incluse dans"
+
+' --- Utilisateurs et Service ---
+SERVICE ||--o{ USER : "emploie (service_id)"
+
+' --- Demandes : relations principales ---
+USER ||--o{ DEMANDE : "cree (created_by)"
+STATUS ||--o{ DEMANDE : "qualifie (status_id)"
+SERVICE |o--o{ DEMANDE : "traite (current_service_id)"
+USER |o--o{ DEMANDE : "annote (annotated_by)"
+
+' --- Sous-entites de la Demande ---
+DEMANDE ||--o{ DEMDOC : "possede"
+DEMANDE ||--o{ DEMMSG : "contient"
+DEMANDE ||--o{ DEMHIST : "trace les changements"
+DEMANDE ||--o{ DEMWF : "trace les transferts"
+DEMANDE ||--o{ DEMAL : "journalise les actions"
+
+' --- Workflow et Services et Status ---
+SERVICE |o--o{ DEMWF : "service source"
+SERVICE ||--o{ DEMWF : "service cible"
+STATUS ||--o{ DEMWF : "statut au transfert"
+USER ||--o{ DEMWF : "effectue par"
+
+' --- History et ActivityLog et Users ---
+USER |o--o{ DEMHIST : "modifie par"
+USER ||--o{ DEMAL : "realise par"
+
+' --- Messages et Users ---
+USER ||--o{ DEMMSG : "envoie"
+
+' --- Notifications et Users (polymorphique) ---
+USER ||--o{ NOTIFENT : "recoit (notifiable_id)"
+
+@enduml

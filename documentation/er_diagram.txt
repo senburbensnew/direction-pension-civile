@@ -1,0 +1,249 @@
+============================================================
+  DIAGRAMME ENTITE-ASSOCIATION (ERD)
+  Système de Gestion des Pensions Civiles
+  Direction de la Pension Civile — Haiti
+  Date : 2026-03-28
+============================================================
+
+PACKAGES / GROUPES D'ENTITES
+─────────────────────────────
+
+  [Gestion des Utilisateurs]
+    users
+    roles
+    permissions
+    model_has_roles
+    model_has_permissions
+    role_has_permissions
+
+  [Organisation Interne]
+    services
+
+  [Referentiel des Demandes]
+    types_demandes
+    statuses
+
+  [Gestion des Demandes]
+    demandes
+    demande_documents
+    demande_messages
+    demande_history
+    demande_workflows
+    demande_activity_logs
+
+  [Contenu et Communication]
+    actualites
+    carousels
+    newsletters
+
+  [Notifications (Laravel)]
+    notifications
+
+════════════════════════════════════════════════════════════
+  ENTITE : users
+════════════════════════════════════════════════════════════
+  PK  id               bigint
+      name             varchar(255)
+      email            varchar(255) UNIQUE
+      password         varchar(255)
+      type             enum(pensionnaire, fonctionnaire, institution)
+      nif              varchar(20) nullable
+      ninu             varchar(20) nullable
+      telephone        varchar(20) nullable
+  FK  service_id       bigint nullable → services.id
+      email_verified_at timestamp
+      created_at       timestamp
+      updated_at       timestamp
+
+════════════════════════════════════════════════════════════
+  ENTITE : roles  [Spatie Permission]
+════════════════════════════════════════════════════════════
+  PK  id               bigint
+      name             varchar(255)
+      guard_name       varchar(255)
+      created_at / updated_at
+
+════════════════════════════════════════════════════════════
+  ENTITE : permissions  [Spatie Permission]
+════════════════════════════════════════════════════════════
+  PK  id               bigint
+      name             varchar(255)
+      guard_name       varchar(255)
+      created_at / updated_at
+
+════════════════════════════════════════════════════════════
+  ENTITE : services
+════════════════════════════════════════════════════════════
+  PK  id               bigint
+      code             varchar(50) UNIQUE
+      nom              varchar(255)
+      description      text nullable
+      created_at / updated_at
+
+  Codes disponibles :
+    direction, secretariat, service_liquidation,
+    service_formalite, service_controle_placement,
+    service_comptabilite, service_assurance, administration
+
+════════════════════════════════════════════════════════════
+  ENTITE : statuses
+════════════════════════════════════════════════════════════
+  PK  id               bigint
+      code             varchar(50) UNIQUE
+      name             varchar(255)
+      color            varchar(50) nullable
+      created_at / updated_at
+
+  Codes disponibles :
+    BROUILLON, SOUMISE, EN_TRAITEMENT, COMPLEMENT_REQUIS,
+    TRANSFEREE, APPROUVEE, REJETEE, ANNULEE, CLOTUREE
+
+════════════════════════════════════════════════════════════
+  ENTITE : types_demandes
+════════════════════════════════════════════════════════════
+  PK  id               bigint
+      code             varchar(100) UNIQUE
+      label            varchar(255)
+      description      text nullable
+      active           boolean default true
+      created_at / updated_at
+
+════════════════════════════════════════════════════════════
+  ENTITE : demandes  [TABLE CENTRALE]
+════════════════════════════════════════════════════════════
+  PK  id               bigint
+      code             varchar(50) UNIQUE
+      title            varchar(255) nullable
+      type             varchar(50) INDEX
+  FK  created_by       bigint → users.id
+  FK  status_id        bigint → statuses.id
+  FK  current_service_id  bigint nullable → services.id
+      data             json nullable      (champs spécifiques par type)
+      submitted_at     timestamp nullable
+      expires_at       timestamp nullable
+      annotation       text nullable
+  FK  annotated_by     bigint nullable → users.id
+      annotated_at     timestamp nullable
+      folder           enum(pension, urgent, suivi, correspondances, rencontre) nullable
+      created_at / updated_at
+
+  Types de demande :
+    DEMANDE_VIREMENT_BANCAIRE   DEMANDE_ATTESTATION
+    DEMANDE_TRANSFERT_CHEQUE    DEMANDE_ARRET_PAIEMENT
+    DEMANDE_REINSERTION         DEMANDE_ARRET_VIREMENT
+    DEMANDE_PREUVE_EXISTENCE    DEMANDE_PENSION_REVERSION
+    DEMANDE_ETAT_CARRIERE       DEMANDE_PENSION
+    DEMANDE_ADHESION
+
+════════════════════════════════════════════════════════════
+  ENTITE : demande_documents
+════════════════════════════════════════════════════════════
+  PK  id               bigint
+  FK  demande_id       bigint → demandes.id
+      type             varchar(100)
+      label            varchar(255) nullable
+      disk             varchar(50) default 'public'
+      path             varchar(500)
+      original_name    varchar(255)
+      mime_type        varchar(100) nullable
+      size             bigint nullable
+      created_at / updated_at
+
+════════════════════════════════════════════════════════════
+  ENTITE : demande_messages
+════════════════════════════════════════════════════════════
+  PK  id               bigint
+  FK  demande_id       bigint → demandes.id
+  FK  sender_id        bigint → users.id
+      body             text
+      read_at          timestamp nullable
+      created_at / updated_at
+
+════════════════════════════════════════════════════════════
+  ENTITE : demande_history
+════════════════════════════════════════════════════════════
+  PK  id               bigint
+  FK  demande_id       bigint → demandes.id
+      statut           varchar(50)
+      commentaire      text nullable
+  FK  changed_by       bigint nullable → users.id
+      data             json nullable
+      created_at / updated_at
+
+════════════════════════════════════════════════════════════
+  ENTITE : demande_workflows
+════════════════════════════════════════════════════════════
+  PK  id               bigint
+  FK  demande_id       bigint → demandes.id
+  FK  from_service_id  bigint nullable → services.id  (NULL à la soumission initiale)
+  FK  to_service_id    bigint → services.id
+  FK  status_id        bigint → statuses.id
+  FK  action_by_user_id bigint → users.id
+      commentaire      text nullable
+      action_at        timestamp nullable
+      created_at / updated_at
+
+════════════════════════════════════════════════════════════
+  ENTITE : demande_activity_logs
+════════════════════════════════════════════════════════════
+  PK  id               bigint
+  FK  demande_id       bigint → demandes.id
+  FK  user_id          bigint → users.id
+      action           varchar(100)
+      metadata         json nullable
+      created_at / updated_at
+
+════════════════════════════════════════════════════════════
+  ENTITE : notifications  [Laravel Notifications]
+════════════════════════════════════════════════════════════
+  PK  id               char(36) UUID
+      type             varchar(255)
+      notifiable_type  varchar(255)
+      notifiable_id    bigint
+      data             text (json)
+      read_at          timestamp nullable
+      created_at / updated_at
+
+  Types utilisés :
+    DemandeSubmittedNotification
+    DemandeStatusChangedNotification
+    DemandeTransferredNotification
+
+════════════════════════════════════════════════════════════
+  RELATIONS (CARDINALITES)
+════════════════════════════════════════════════════════════
+
+  users             ||--o{  model_has_roles         (a les rôles)
+  roles             ||--o{  model_has_roles         (attribué via)
+  users             ||--o{  model_has_permissions   (a les permissions)
+  permissions       ||--o{  model_has_permissions   (attribuée via)
+  roles             ||--o{  role_has_permissions    (inclut)
+  permissions       ||--o{  role_has_permissions    (incluse dans)
+
+  services          ||--o{  users                   (emploie — service_id)
+
+  users             ||--o{  demandes                (crée — created_by)
+  statuses          ||--o{  demandes                (qualifie — status_id)
+  services          |o--o{  demandes                (traite — current_service_id)
+  users             |o--o{  demandes                (annote — annotated_by)
+
+  demandes          ||--o{  demande_documents       (possède)
+  demandes          ||--o{  demande_messages        (contient)
+  demandes          ||--o{  demande_history         (trace les changements)
+  demandes          ||--o{  demande_workflows       (trace les transferts)
+  demandes          ||--o{  demande_activity_logs   (journalise les actions)
+
+  services          |o--o{  demande_workflows       (service source)
+  services          ||--o{  demande_workflows       (service cible)
+  statuses          ||--o{  demande_workflows       (statut au transfert)
+  users             ||--o{  demande_workflows       (effectué par)
+
+  users             |o--o{  demande_history         (modifié par)
+  users             ||--o{  demande_activity_logs   (réalisé par)
+  users             ||--o{  demande_messages        (envoie)
+  users             ||--o{  notifications           (reçoit — polymorphique)
+
+============================================================
+  Source : documentation/er_diagram.puml
+  Image  : documentation/er_diagram.png
+============================================================

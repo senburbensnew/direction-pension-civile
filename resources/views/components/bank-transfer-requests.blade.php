@@ -31,7 +31,7 @@
 
                 <div class="mx-4 md:mx-12 text-center flex-grow">
                     <h1 class="text-xl md:text-2xl font-bold">
-                        MINISTERE DE L’ECONOMIE ET DES FINANCES <br />
+                        MINISTERE DE L'ECONOMIE ET DES FINANCES <br />
                         <span class="underline">PENSION CIVILE</span><br />
                         <span>PAIEMENT PAR VIREMENT BANCAIRE</span><br />
                         <span class="underline font-normal text-base md:text-lg">

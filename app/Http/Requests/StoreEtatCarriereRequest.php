@@ -2,11 +2,12 @@
 
 namespace App\Http\Requests;
 
+use App\Helpers\RegexExpressions;
 use App\Rules\Cin;
 use App\Rules\NifNinu;
 use App\Rules\Telephone;
-use App\Helpers\RegexExpressions;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 
 class StoreEtatCarriereRequest extends FormRequest
 {
@@ -24,53 +25,59 @@ class StoreEtatCarriereRequest extends FormRequest
     public function rules(): array
     {
         return [
+            'title' => ['required', 'string', 'max:255'],
+            'action' => ['required', Rule::in(['draft', 'submit'])],
+
+            'demande_id' => [
+                'sometimes',
+                'nullable',
+                'required_if:action,submit',
+                'exists:demandes,id',
+            ],
 
             // ================= INFORMATIONS PERSONNELLES =================
-            'nom'               => ['required', 'string', 'max:255'],
-            'prenom'            => ['required', 'string', 'max:255'],
+            'nom'               => ['nullable', 'required_if:action,submit', 'string', 'max:255'],
+            'prenom'            => ['nullable', 'required_if:action,submit', 'string', 'max:255'],
             'nom_jeune_fille'   => ['nullable', 'string', 'max:255'],
-            'date_naissance'    => ['required', 'date', 'before_or_equal:today'],
-            'lieu_naissance'    => ['required', 'string', 'max:255'],
-            'etat_civil'        => ['required', 'in:celibataire,marie,veuf,divorce'],
+            'date_naissance'    => ['nullable', 'required_if:action,submit', 'date', 'before_or_equal:today'],
+            'lieu_naissance'    => ['nullable', 'required_if:action,submit', 'string', 'max:255'],
+            'etat_civil'        => ['nullable', 'required_if:action,submit', 'in:celibataire,marie,veuf,divorce'],
 
             // ================= IDENTIFICATION =================
             'nif_ninu'          => [
-                'required', 
+                'nullable', 'required_if:action,submit', 
                 new NifNinu()
             ],
-            'cin'               => ['required', new Cin()],
+            'cin'               => ['nullable', 'required_if:action,submit', new Cin()],
 
             // ================= INFORMATIONS PROFESSIONNELLES =================
-            'statut'            => ['required', 'in:fonctionnaire,contractuel,salarie,pensionne'],
-            'employeur'         => ['required', 'string', 'max:255'],
-            'fonction'          => ['required', 'string', 'max:255'],
-            'date_debut_service'=> ['required', 'date', 'before_or_equal:today'],
-            'date_fin_service'  => ['nullable', 'date', 'after_or_equal:date_debut_service'],
-            'numero_dossier'    => ['nullable', 'string', 'max:100'],
+            'statut'            => ['nullable', 'required_if:action,submit', 'in:fonctionnaire,contractuel,salarie,pensionne'],
+            'employeur'         => ['nullable', 'required_if:action,submit', 'string', 'max:255'],
+            'fonction'          => ['nullable', 'required_if:action,submit', 'string', 'max:255'],
+            'date_debut_service'=> ['nullable', 'required_if:action,submit', 'date', 'before_or_equal:today'],
+            'date_fin_service'  => ['nullable', 'required_if:action,submit', 'date', 'after_or_equal:date_debut_service'],
+            'numero_dossier'    => ['nullable', 'required_if:action,submit', 'string', 'max:100'],
 
             // ================= COORDONNÉES =================
-            'adresse'           => ['required', 'string', 'max:255'],
-            'telephone'         => ['required', new Telephone()],
-            'email'             => ['required', 'email', 'max:255'],
+            'adresse'           => ['nullable', 'required_if:action,submit', 'string', 'max:255'],
+            'telephone'         => ['nullable', 'required_if:action,submit', new Telephone()],
+            'email'             => ['nullable', 'required_if:action,submit', 'email', 'max:255'],
 
             // ================= PIÈCES JOINTES =================
-            'copie_piece_identite' => ['required', 'file', 'mimes:pdf,jpg,jpeg,png', 'max:5120'],
+            'copie_piece_identite' => ['nullable', 'file', 'mimes:pdf,jpg,jpeg,png', 'max:5120'],
 
-            'lettre_nomination'    => ['required', 'file', 'mimes:pdf,jpg,jpeg,png', 'max:5120'],
+            'lettre_nomination'    => ['nullable', 'file', 'mimes:pdf,jpg,jpeg,png', 'max:5120'],
 
-            'bulletins_salaire'     => ['required', 'array'],
+            'bulletins_salaire'     => ['nullable', 'array'],
             'bulletins_salaire.*'   => ['file', 'mimes:pdf,jpg,jpeg,png', 'max:5120'],
 
-            'documents_carriere'    => ['required', 'array'],
+            'documents_carriere'    => ['nullable', 'array'],
             'documents_carriere.*'  => ['file', 'mimes:pdf,jpg,jpeg,png', 'max:5120'],
 
             'acte_mariage_acte_deces' => ['nullable', 'file', 'mimes:pdf,jpg,jpeg,png', 'max:5120'],
 
             // ================= OBJET =================
-            'raison'            => ['required', 'string', 'min:10'],
-
-            // ================= CONSENTEMENT =================
-            'consentement'      => ['required', 'accepted'],
+            'raison'            => ['nullable', 'required_if:action,submit', 'string', 'min:10']
         ];
     }
 

@@ -21,19 +21,6 @@
 
 <div class="max-w-6xl mx-auto p-6 m-2 ">
 
-    <!-- ✅ Breadcrumb -->
-{{--     <nav aria-label="Breadcrumb" class="mb-4">
-        <ol class="flex items-center space-x-2 text-sm text-gray-600">
-            <li><span class="text-gray-800">Formalité</span></li>
-            <li class="flex items-center">
-                <span class="mx-2">›</span>
-            </li>
-            <li aria-current="page">
-                <span class="text-gray-800 font-medium">Formulaire</span>
-            </li>
-        </ol>
-    </nav> --}}
-
     <!-- ✅ Main Card -->
     <main class="max-w-7xl mx-auto bg-white p-6 shadow-md rounded-lg relative m-2">
 
@@ -47,7 +34,7 @@
 
                 <div class="px-4">
                     <h1 class="text-lg md:text-xl font-bold mb-1">Formalité administrative</h1>
-                    <p class="text-base md:text-lg font-semibold mb-2">Formulaire d’enregistrement</p>
+                    <p class="text-base md:text-lg font-semibold mb-2">Formulaire d'enregistrement</p>
                     <p class="text-sm text-gray-600">Remplissez soigneusement les informations demandées</p>
                 </div>
 
@@ -57,9 +44,57 @@
             </div>
         </div>
 
+        @if (session('success'))
+            <div class="mb-4 p-4 bg-green-50 border border-green-200 text-green-700 rounded">
+                {{ session('success') }}
+            </div>
+        @endif
+
+        @if ($errors->any())
+            <div class="mb-4 rounded bg-red-100 p-4 text-red-700">
+                <ul class="list-disc list-inside">
+                    @foreach ($errors->all() as $error)
+                        <li>{{ $error }}</li>
+                    @endforeach
+                </ul>
+            </div>
+        @endif
+
+        @if ($demande)
+            <div class="mb-4 p-3 bg-yellow-50 border border-yellow-200 text-yellow-800 rounded text-sm">
+                Brouillon en cours — dernière sauvegarde {{ $demande->updated_at->diffForHumans() }}
+            </div>
+        @endif
+
         <!-- ✅ Form -->
-        <form action="{{ route('demandes.demande-pension-reversion.store') }}" method="POST" class="space-y-8">
+        <form action="{{ route('demandes.pension-pensionnaire.store') }}" method="POST" class="space-y-8">
             @csrf
+
+            {{-- Title + hidden demande_id --}}
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                    <label for="title" class="block text-sm font-medium text-gray-700">
+                        Titre personnalisé de la demande <span class="text-red-500">*</span>
+                    </label>
+                    <input
+                        id="title"
+                        type="text"
+                        name="title"
+                        value="{{ old('title', data_get($demande, 'title', '')) }}"
+                        {{ $demande && !empty($demande->title) ? 'readonly' : '' }}
+                        class="mt-1 block w-full rounded-md shadow-sm
+                            {{ $demande && !empty($demande->title) ? 'border-gray-200 bg-gray-100' : 'border-gray-300' }}
+                            @error('title') border-red-500 focus:border-red-500 focus:ring-red-500
+                            @else border-gray-300 focus:border-blue-500 focus:ring-blue-500 @enderror"
+                    />
+                    @error('title')
+                        <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                    @enderror
+                </div>
+                @if ($demande)
+                    <input type="hidden" name="demande_id" value="{{ $demande->id }}">
+                @endif
+            </div>
 
             {{-- ✅ Identité --}}
             <section class="bg-white shadow-md rounded-xl p-6 border border-gray-200 mb-8">
@@ -72,33 +107,51 @@
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
 
                     <div>
-                        <label class="block mb-1 font-medium text-gray-700">NIF <span class="text-red-500">*</span></label>
-                        <input type="text" name="nif" class="input mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500" >
+                        <label class="block mb-1 font-medium text-gray-700">NIF</label>
+                        <input type="text" name="nif"
+                            value="{{ old('nif', data_get($demande, 'data.nif', '')) }}"
+                            class="input mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                        @error('nif') <p class="error-message">{{ $message }}</p> @enderror
                     </div>
 
                     <div>
-                        <label class="block mb-1 font-medium text-gray-700">Nom <span class="text-red-500">*</span></label>
-                        <input type="text" name="nom" class="input mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500" >
+                        <label class="block mb-1 font-medium text-gray-700">Nom</label>
+                        <input type="text" name="nom"
+                            value="{{ old('nom', data_get($demande, 'data.nom', '')) }}"
+                            class="input mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                        @error('nom') <p class="error-message">{{ $message }}</p> @enderror
                     </div>
 
                     <div>
-                        <label class="block mb-1 font-medium text-gray-700">Prénom <span class="text-red-500">*</span></label>
-                        <input type="text" name="prenom" class="input mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500" >
+                        <label class="block mb-1 font-medium text-gray-700">Prénom</label>
+                        <input type="text" name="prenom"
+                            value="{{ old('prenom', data_get($demande, 'data.prenom', '')) }}"
+                            class="input mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                        @error('prenom') <p class="error-message">{{ $message }}</p> @enderror
                     </div>
 
                     <div>
                         <label class="block mb-1 font-medium text-gray-700">Nom complet</label>
-                        <input type="text" name="nom_complet" class="input mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                        <input type="text" name="nom_complet"
+                            value="{{ old('nom_complet', data_get($demande, 'data.nom_complet', '')) }}"
+                            class="input mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                        @error('nom_complet') <p class="error-message">{{ $message }}</p> @enderror
                     </div>
 
                     <div>
                         <label class="block mb-1 font-medium text-gray-700">Téléphone</label>
-                        <input type="text" name="telephone" class="input mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                        <input type="text" name="telephone"
+                            value="{{ old('telephone', data_get($demande, 'data.telephone', '')) }}"
+                            class="input mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                        @error('telephone') <p class="error-message">{{ $message }}</p> @enderror
                     </div>
 
                     <div>
                         <label class="block mb-1 font-medium text-gray-700">Email</label>
-                        <input type="email" name="email" class="input mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                        <input type="email" name="email"
+                            value="{{ old('email', data_get($demande, 'data.email', '')) }}"
+                            class="input mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                        @error('email') <p class="error-message">{{ $message }}</p> @enderror
                     </div>
 
                 </div>
@@ -113,12 +166,18 @@
 
                     <div>
                         <label class="block mb-1 font-medium text-gray-700">Date de naissance</label>
-                        <input type="date" name="date_naissance" class="input mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                        <input type="date" name="date_naissance"
+                            value="{{ old('date_naissance', data_get($demande, 'data.date_naissance', '')) }}"
+                            class="input mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                        @error('date_naissance') <p class="error-message">{{ $message }}</p> @enderror
                     </div>
 
                     <div>
                         <label class="block mb-1 font-medium text-gray-700">Lieu de naissance</label>
-                        <input type="text" name="lieu_naissance" class="input mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                        <input type="text" name="lieu_naissance"
+                            value="{{ old('lieu_naissance', data_get($demande, 'data.lieu_naissance', '')) }}"
+                            class="input mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                        @error('lieu_naissance') <p class="error-message">{{ $message }}</p> @enderror
                     </div>
 
                 </div>
@@ -133,17 +192,26 @@
 
                     <div>
                         <label class="block mb-1 font-medium text-gray-700">Département</label>
-                        <input type="text" name="departement" class="input mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                        <input type="text" name="departement"
+                            value="{{ old('departement', data_get($demande, 'data.departement', '')) }}"
+                            class="input mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                        @error('departement') <p class="error-message">{{ $message }}</p> @enderror
                     </div>
 
                     <div>
                         <label class="block mb-1 font-medium text-gray-700">Commune</label>
-                        <input type="text" name="commune" class="input mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                        <input type="text" name="commune"
+                            value="{{ old('commune', data_get($demande, 'data.commune', '')) }}"
+                            class="input mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                        @error('commune') <p class="error-message">{{ $message }}</p> @enderror
                     </div>
 
                     <div>
                         <label class="block mb-1 font-medium text-gray-700">Adresse</label>
-                        <input type="text" name="adresse" class="input mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                        <input type="text" name="adresse"
+                            value="{{ old('adresse', data_get($demande, 'data.adresse', '')) }}"
+                            class="input mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                        @error('adresse') <p class="error-message">{{ $message }}</p> @enderror
                     </div>
 
                 </div>
@@ -158,17 +226,26 @@
 
                     <div>
                         <label class="block mb-1 font-medium text-gray-700">CIN</label>
-                        <input type="text" name="cin" class="input mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                        <input type="text" name="cin"
+                            value="{{ old('cin', data_get($demande, 'data.cin', '')) }}"
+                            class="input mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                        @error('cin') <p class="error-message">{{ $message }}</p> @enderror
                     </div>
 
                     <div>
                         <label class="block mb-1 font-medium text-gray-700">Date délivrance</label>
-                        <input type="date" name="date_delivrance_cin" class="input mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                        <input type="date" name="date_delivrance_cin"
+                            value="{{ old('date_delivrance_cin', data_get($demande, 'data.date_delivrance_cin', '')) }}"
+                            class="input mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                        @error('date_delivrance_cin') <p class="error-message">{{ $message }}</p> @enderror
                     </div>
 
                     <div>
                         <label class="block mb-1 font-medium text-gray-700">Lieu délivrance</label>
-                        <input type="text" name="lieu_delivrance_cin" class="input mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                        <input type="text" name="lieu_delivrance_cin"
+                            value="{{ old('lieu_delivrance_cin', data_get($demande, 'data.lieu_delivrance_cin', '')) }}"
+                            class="input mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                        @error('lieu_delivrance_cin') <p class="error-message">{{ $message }}</p> @enderror
                     </div>
 
                 </div>
@@ -183,34 +260,59 @@
 
                     <div>
                         <label class="block mb-1 font-medium text-gray-700">Passeport</label>
-                        <input type="text" name="passeport" class="input mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                        <input type="text" name="passeport"
+                            value="{{ old('passeport', data_get($demande, 'data.passeport', '')) }}"
+                            class="input mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                        @error('passeport') <p class="error-message">{{ $message }}</p> @enderror
                     </div>
 
                     <div>
                         <label class="block mb-1 font-medium text-gray-700">Date délivrance</label>
-                        <input type="date" name="date_delivrance_passeport" class="input mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                        <input type="date" name="date_delivrance_passeport"
+                            value="{{ old('date_delivrance_passeport', data_get($demande, 'data.date_delivrance_passeport', '')) }}"
+                            class="input mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                        @error('date_delivrance_passeport') <p class="error-message">{{ $message }}</p> @enderror
                     </div>
 
                     <div>
                         <label class="block mb-1 font-medium text-gray-700">Lieu délivrance</label>
-                        <input type="text" name="lieu_delivrance_passeport" class="input mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                        <input type="text" name="lieu_delivrance_passeport"
+                            value="{{ old('lieu_delivrance_passeport', data_get($demande, 'data.lieu_delivrance_passeport', '')) }}"
+                            class="input mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                        @error('lieu_delivrance_passeport') <p class="error-message">{{ $message }}</p> @enderror
                     </div>
 
                     <div>
                         <label class="block mb-1 font-medium text-gray-700">Date expiration</label>
-                        <input type="date" name="date_expiration_passeport" class="input mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                        <input type="date" name="date_expiration_passeport"
+                            value="{{ old('date_expiration_passeport', data_get($demande, 'data.date_expiration_passeport', '')) }}"
+                            class="input mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                        @error('date_expiration_passeport') <p class="error-message">{{ $message }}</p> @enderror
                     </div>
 
                 </div>
             </section>
 
-
             <!-- ✅ Submit -->
-            <div class="text-right">
-                <button type="submit"
-                    class="px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg shadow">
-                    Enregistrer
-                </button>
+            <div class="mt-8 flex gap-5 justify-end">
+                @if (!$demande || $demande->isDraft())
+                    <button
+                        type="submit"
+                        name="action"
+                        value="draft"
+                        class="inline-flex items-center justify-center p-2 border border-transparent text-base font-medium rounded-md text-white bg-gray-600 hover:bg-gray-700">
+                        Sauvegarder
+                    </button>
+                @endif
+                @if (!$demande || $demande->isDraft())
+                    <button
+                        type="submit"
+                        name="action"
+                        value="submit"
+                        class="inline-flex items-center justify-center p-2 border border-transparent text-base font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700">
+                        Soumettre
+                    </button>
+                @endif
             </div>
 
         </form>

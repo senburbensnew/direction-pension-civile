@@ -1,0 +1,130 @@
+============================================================
+  DIAGRAMME DE CAS D'UTILISATION
+  Système de Gestion des Pensions Civiles
+  Direction de la Pension Civile — Haiti
+  Date : 2026-03-28
+============================================================
+
+ACTEURS
+-------
+  - Pensionnaire (Retraité)
+  - Fonctionnaire (Agent actif)
+  - Institution
+  - Agent / Secrétariat
+  - Direction
+  - Service (Liquidation, Formalité, Comptabilité, etc.)
+  - Administrateur (Admin)
+
+────────────────────────────────────────────
+  PORTAIL USAGER
+────────────────────────────────────────────
+
+  [Demandes Pensionnaire]
+    UC_VB   Demander un virement bancaire
+    UC_ATT  Demander une attestation de pension
+    UC_TC   Demander un transfert de chèque
+    UC_AP   Demander l'arrêt de paiement
+    UC_RI   Demander la réinsertion au paiement
+    UC_AV   Demander l'arrêt de virement
+    UC_PE   Soumettre une preuve d'existence
+    UC_PR   Demander une pension de réversion
+
+  [Demandes Fonctionnaire]
+    UC_EC   Demander un état de carrière
+    UC_DP   Demander la mise en retraite (pension)
+
+  [Demandes Institution]
+    UC_ADH  Soumettre une demande d'adhésion
+
+  [Gestion du dossier usager]
+    UC_BROUILLON  Créer un brouillon de demande
+    UC_SOUMETTRE  Soumettre une demande
+    UC_DOCS       Joindre des documents
+    UC_COMPL      Compléter un dossier (suite demande de complément)
+    UC_SUIVI      Consulter l'état d'avancement
+    UC_ANNULER    Annuler une demande
+    UC_MSG_USR    Consulter les messages du service
+
+  [Compte & Profil]
+    UC_AUTH   S'inscrire / Se connecter
+    UC_PROFIL Modifier son profil
+    UC_MDP    Changer de mot de passe
+
+────────────────────────────────────────────
+  ESPACE AGENT & DIRECTION
+────────────────────────────────────────────
+
+  [Gestion des demandes reçues]
+    UC_CORBEILLE  Consulter la corbeille des demandes
+    UC_DETAILS    Voir les détails d'une demande
+    UC_ANNOT      Annoter un dossier (Direction uniquement)
+    UC_TRANSFER   Transférer un dossier vers un service
+    UC_REQ_COMPL  Demander un complément d'information
+    UC_STATUS     Mettre à jour le statut
+    UC_CLOTURE    Clôturer un dossier
+    UC_REJETER    Rejeter un dossier
+    UC_MSG_SVC    Envoyer un message à l'usager
+
+  [Consultation & Reporting]
+    UC_LOGS  Consulter les journaux d'activité
+    UC_PDF   Imprimer / Télécharger un dossier (PDF)
+    UC_HIST  Consulter l'historique du workflow
+
+────────────────────────────────────────────
+  ADMINISTRATION SYSTÈME
+────────────────────────────────────────────
+    UC_USERS     Gérer les utilisateurs (CRUD)
+    UC_ROLES     Gérer les rôles et permissions
+    UC_SERVICES  Gérer les services internes
+    UC_STATUTS   Gérer les statuts de demandes
+    UC_SYS_LOGS  Consulter les logs système
+    UC_CONTENU   Gérer le contenu du site (actualités, carousel)
+
+────────────────────────────────────────────
+  RELATIONS ACTEUR → CAS D'UTILISATION
+────────────────────────────────────────────
+
+  Pensionnaire  →  UC_AUTH, UC_PROFIL, UC_MDP, UC_BROUILLON,
+                   UC_SOUMETTRE, UC_DOCS, UC_COMPL, UC_SUIVI,
+                   UC_ANNULER, UC_MSG_USR,
+                   UC_VB, UC_ATT, UC_TC, UC_AP, UC_RI, UC_AV, UC_PE, UC_PR
+
+  Fonctionnaire →  UC_AUTH, UC_PROFIL, UC_MDP, UC_BROUILLON,
+                   UC_SOUMETTRE, UC_DOCS, UC_COMPL, UC_SUIVI,
+                   UC_ANNULER, UC_MSG_USR, UC_EC, UC_DP
+
+  Institution   →  UC_AUTH, UC_PROFIL, UC_BROUILLON, UC_SOUMETTRE,
+                   UC_DOCS, UC_SUIVI, UC_MSG_USR, UC_ADH
+
+  Agent         →  UC_CORBEILLE, UC_DETAILS, UC_TRANSFER, UC_REQ_COMPL,
+                   UC_STATUS, UC_MSG_SVC, UC_LOGS, UC_PDF, UC_HIST, UC_CLOTURE
+
+  Direction     →  UC_CORBEILLE, UC_DETAILS, UC_ANNOT, UC_TRANSFER,
+                   UC_REQ_COMPL, UC_STATUS, UC_REJETER, UC_CLOTURE,
+                   UC_MSG_SVC, UC_LOGS, UC_PDF, UC_HIST
+
+  Service       →  UC_CORBEILLE, UC_DETAILS, UC_STATUS, UC_TRANSFER,
+                   UC_REQ_COMPL, UC_MSG_SVC, UC_PDF, UC_CLOTURE
+
+  Admin         →  UC_USERS, UC_ROLES, UC_SERVICES, UC_STATUTS,
+                   UC_SYS_LOGS, UC_CONTENU, UC_CORBEILLE, UC_DETAILS
+
+────────────────────────────────────────────
+  RELATIONS <<include>> / <<extend>>
+────────────────────────────────────────────
+
+  Toutes les demandes spécifiques  <<include>>  UC_BROUILLON
+    (UC_VB, UC_ATT, UC_TC, UC_AP, UC_RI, UC_AV, UC_PE, UC_PR,
+     UC_EC, UC_DP, UC_ADH)
+
+  UC_SOUMETTRE  <<include>>  UC_DOCS
+
+  UC_TRANSFER   <<include>>  UC_ANNOT
+  UC_PDF        <<include>>  UC_ANNOT
+
+  UC_COMPL      <<extend>>   UC_SOUMETTRE
+
+============================================================
+  Source : documentation/use_case.puml
+  Image  : documentation/use_case.png
+============================================================

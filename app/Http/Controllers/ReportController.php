@@ -80,7 +80,7 @@ public function create(Request $request)
             'created_by' => auth()->id(),
         ]);
 
-        return redirect()->route('reports.create')->with('success','Rapport créé avec succès.');
+        return redirect()->route('admin.reports.create')->with('success','Rapport créé avec succès.');
     }
 
     public function show(Report $report)
@@ -148,7 +148,7 @@ public function edit(Request $request, Report $report)
         $report->published_at = $report->status === 'published' && !$report->published_at ? Carbon::now() : $report->published_at;
         $report->save();
 
-        return redirect()->route('reports.create')->with('success','Rapport mis à jour.');
+        return redirect()->route('admin.reports.create')->with('success','Rapport mis à jour.');
     }
 
     public function destroy(Report $report)

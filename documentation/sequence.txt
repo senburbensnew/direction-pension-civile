@@ -1,0 +1,147 @@
+============================================================
+  DIAGRAMME DE SÉQUENCE
+  Flux : Soumission → Annotation → Transfert → Complément
+  Système de Gestion des Pensions Civiles
+  Direction de la Pension Civile — Haiti
+  Date : 2026-03-28
+============================================================
+
+PARTICIPANTS
+------------
+  USR   Usager (Pensionnaire / Fonctionnaire / Institution)
+  NAV   Navigateur (Blade/Alpine.js)
+  DC    DemandeController
+  DS    DemandeService
+  DWS   DemandeWorkflowService
+  DMC   DemandeManagementController
+  NOTIF Système de Notifications
+  DB    Base de Données
+  DIR   Agent Direction
+  AGT   Agent Service
+
+════════════════════════════════════════════════════════════
+  PHASE 1 : Création et sauvegarde en brouillon
+════════════════════════════════════════════════════════════
+
+  USR  → NAV   Accéder au formulaire de demande
+  NAV  → DC    GET /demandes/virement-bancaire
+  DC   → DB    Charger données auxiliaires
+  DB   → DC    Données de référence
+  DC   → NAV   Afficher le formulaire (vue Blade)
+
+  USR  → NAV   Remplir le formulaire et cliquer "Enregistrer comme brouillon"
+  NAV  → DC    POST /demandes/virement-bancaire [action=save]
+  DC   → DC    Valider la requête (StoreDemandeVirementBancaireRequest)
+  DC   → DS    createOrUpdate(validated_data, type=VIREMENT_BANCAIRE)
+  DS   → DB    INSERT INTO demandes (code, type, created_by, status_id=BROUILLON, data={...})
+  DB   → DS    Demande créée (id, code)
+  DS   → DC    $demande
+  DC   → NAV   Redirection vers formulaire avec $demande->id (mode édition)
+
+  [NOTE] Statut = BROUILLON — L'usager peut modifier le dossier
+
+════════════════════════════════════════════════════════════
+  PHASE 2 : Soumission de la demande
+════════════════════════════════════════════════════════════
+
+  USR  → NAV   Joindre les documents requis et cliquer "Soumettre"
+  NAV  → DC    POST /demandes/virement-bancaire [action=submit, demande_id=X]
+  DC   → DC    Vérifier autorisations (owned by user + status BROUILLON/COMPLEMENT_REQUIS)
+  DC   → DS    submit($demande, $user)
+  DS   → DWS   submit($demande, $user)
+  DWS  → DB    UPDATE demandes SET status_id=SOUMISE, current_service_id=RECEPTION, submitted_at=now()
+  DWS  → DB    INSERT INTO demande_workflows (from_service_id=NULL, to_service_id=RECEPTION, ...)
+  DWS  → DS    OK
+  DS   → DB    INSERT INTO demande_history (statut=SOUMISE, ...)
+  DS   → DC    $demande (statut=SOUMISE)
+  DC   → NOTIF Envoyer DemandeSubmittedNotification (à la Direction / Réception)
+  NOTIF→ DB    INSERT INTO notifications (notifiable_id, data={demande_code, type, ...})
+  DC   → NAV   Redirection tableau de bord avec message de succès
+  NAV  → USR   Confirmation de soumission (code de suivi affiché)
+
+  [NOTE] Statut = SOUMISE — Dossier visible dans la corbeille de la Direction
+
+════════════════════════════════════════════════════════════
+  PHASE 3 : Annotation par la Direction
+════════════════════════════════════════════════════════════
+
+  DIR  → NAV   Consulter la corbeille (espace personnel Direction)
+  NAV  → DMC   GET /personal/corbeille
+  DMC  → DB    SELECT * FROM demandes WHERE current_service_id=RECEPTION ORDER BY submitted_at ASC
+  DB   → DMC   Liste des demandes
+  DMC  → NAV   Afficher la liste (vue Blade)
+
+  DIR  → NAV   Ouvrir le dossier et cliquer "Annoter"
+  NAV  → DMC   POST /demandes/{id}/annotate [annotation="...", folder="pension"]
+  DMC  → DMC   abort_unless(user->hasRole('direction'), 403)
+  DMC  → DB    UPDATE demandes SET annotation=..., annotated_by=DIR_ID, annotated_at=now()
+  DMC  → DB    INSERT INTO demande_history (commentaire="Annotation par la Direction : ...")
+  DMC  → NAV   Redirection avec succès
+
+  [NOTE] annotated_at non-null → déblocage du bouton "Transférer"
+
+════════════════════════════════════════════════════════════
+  PHASE 4 : Transfert vers un service
+════════════════════════════════════════════════════════════
+
+  DIR  → NAV   Sélectionner un service cible et cliquer "Transférer"
+  NAV  → DMC   POST /demandes/transferer [demande_id=X, service_id=SECRETARIAT, commentaire="..."]
+  DMC  → DB    SELECT * FROM demandes WHERE id=X
+  DMC  → DMC   Vérifier isAnnotated() — abort_if(!annotated, 403)
+  DMC  → DMC   Si rôle=direction, vérifier toService.code=SECRETARIAT
+  DMC  → DB    UPDATE demandes SET current_service_id=SECRETARIAT
+  DMC  → DB    INSERT INTO demande_workflows (from_service_id=RECEPTION, to_service_id=SECRETARIAT, ...)
+  DMC  → DB    INSERT INTO demande_history (commentaire="Dossier transféré vers : Secrétariat")
+  DMC  → DB    INSERT INTO demande_activity_logs (action=transferred, metadata={to_service, ...})
+  DMC  → NOTIF Envoyer DemandeTransferredNotification (aux agents du Secrétariat)
+  NOTIF→ DB    SELECT * FROM users WHERE service_id=SECRETARIAT
+  NOTIF→ DB    INSERT INTO notifications (pour chaque agent du Secrétariat)
+  DMC  → NAV   Redirection corbeille avec message de succès
+
+  [NOTE] Statut = TRANSFEREE — Dossier dans la corbeille du Secrétariat
+
+════════════════════════════════════════════════════════════
+  PHASE 5 : Demande de complément d'information
+════════════════════════════════════════════════════════════
+
+  AGT  → NAV   Consulter le dossier et cliquer "Demander un complément"
+  NAV  → DMC   POST /demandes/{id}/complement [message="Merci de fournir..."]
+  DMC  → DB    SELECT code FROM statuses WHERE code=COMPLEMENT_REQUIS
+  DMC  → DB    UPDATE demandes SET status_id=COMPLEMENT_REQUIS
+  DMC  → DB    INSERT INTO demande_messages (sender_id=AGT_ID, body="Merci de fournir...")
+  DMC  → DB    INSERT INTO demande_history (statut=COMPLEMENT_REQUIS, ...)
+  DMC  → NOTIF Envoyer DemandeStatusChangedNotification (à l'usager propriétaire du dossier)
+  NOTIF→ DB    INSERT INTO notifications (notifiable_id=USER_ID, data={status, message})
+  DMC  → NAV   Redirection avec message de succès
+
+  [NOTE] Statut = COMPLEMENT_REQUIS — Dossier éditable par l'usager
+
+════════════════════════════════════════════════════════════
+  PHASE 6 : L'usager soumet le complément
+════════════════════════════════════════════════════════════
+
+  USR  → NAV   Recevoir notification et ouvrir le dossier
+  NAV  → DC    GET /demandes/virement-bancaire/{demande_id}
+  DC   → DB    SELECT * FROM demandes WHERE id=X AND created_by=USER_ID
+  DB   → DC    $demande (status=COMPLEMENT_REQUIS)
+  DC   → NAV   Afficher formulaire pré-rempli + message du service visible
+
+  USR  → NAV   Ajouter les documents manquants et re-soumettre
+  NAV  → DC    POST /demandes/virement-bancaire [action=submit, demande_id=X]
+  DC   → DC    Vérifier canBeEditedByUser() (statut BROUILLON ou COMPLEMENT_REQUIS)
+  DC   → DS    submit($demande, $user)
+  DS   → DWS   submit($demande, $user)
+  DWS  → DB    UPDATE demandes SET status_id=SOUMISE, submitted_at=now()
+  DWS  → DB    INSERT INTO demande_workflows (nouveau cycle de workflow)
+  DS   → DC    OK
+  DC   → NOTIF Envoyer DemandeStatusChangedNotification (au service ayant demandé le complément)
+  NOTIF→ DB    INSERT INTO notifications
+  DC   → NAV   Redirection tableau de bord
+  NAV  → USR   Confirmation de re-soumission
+
+  [NOTE] Statut = SOUMISE — Cycle de traitement reprend
+
+============================================================
+  Source : documentation/sequence.puml
+  Image  : documentation/sequence.png
+============================================================

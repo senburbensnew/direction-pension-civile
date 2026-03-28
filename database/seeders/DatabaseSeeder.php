@@ -3,7 +3,6 @@
 namespace Database\Seeders;
 
 use Illuminate\Database\Seeder;
-use Database\Seeders\ServiceSeeder;
 use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 
 class DatabaseSeeder extends Seeder
@@ -25,5 +24,6 @@ class DatabaseSeeder extends Seeder
         $this->call(PensionCategoriesSeeder::class);
         $this->call(RequestTypeSeeder::class);
         $this->call(ParametersSeeder::class);
+        $this->call(TypeDemandeSeeder::class);
     }
 }

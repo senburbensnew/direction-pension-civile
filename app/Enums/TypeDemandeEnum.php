@@ -20,4 +20,21 @@ enum TypeDemandeEnum: string
 
     // INSTITUTION
     case DEMANDE_ADHESION = 'DEMANDE_ADHESION';
+
+    public function label(): string
+    {
+        return match($this) {
+            self::DEMANDE_VIREMENT_BANCAIRE => 'Demande de virement bancaire',
+            self::DEMANDE_ATTESTATION       => "Demande d'attestation",
+            self::DEMANDE_TRANSFERT_CHEQUE  => 'Demande de transfert de chèque',
+            self::DEMANDE_ARRET_PAIEMENT    => "Demande d'arrêt de paiement",
+            self::DEMANDE_REINSERTION       => 'Demande de réinsertion',
+            self::DEMANDE_ARRET_VIREMENT    => "Demande d'arrêt de virement",
+            self::DEMANDE_PREUVE_EXISTENCE  => "Preuve d'existence",
+            self::DEMANDE_PENSION_REVERSION => 'Demande de pension de réversion',
+            self::DEMANDE_ETAT_CARRIERE     => "Demande d'état de carrière",
+            self::DEMANDE_PENSION           => 'Demande de pension',
+            self::DEMANDE_ADHESION          => "Demande d'adhésion",
+        };
+    }
 }

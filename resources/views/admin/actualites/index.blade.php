@@ -20,7 +20,7 @@
 
         <!-- Create button -->
         <a
-            href="{{ route('actualites.create') }}"
+            href="{{ route('admin.actualites.create') }}"
             class="inline-flex items-center justify-center text-green-600 whitespace-nowrap"
         >
             + Ajouter
@@ -55,14 +55,14 @@
                     </td>
                     <td class="px-4 py-2 border gap-3">
                         <a
-                            href="{{ route('actualites.edit', $actualite->id) }}"
+                            href="{{ route('admin.actualites.edit', $actualite->id) }}"
                             class="text-yellow-600 hover:underline"
                         >
                             Éditer
                         </a>
 
                         <form
-                            action="{{ route('actualites.destroy', $actualite->id) }}"
+                            action="{{ route('admin.actualites.destroy', $actualite->id) }}"
                             method="POST"
                             onsubmit="return confirm('Supprimer cette actualité ?')"
                         >

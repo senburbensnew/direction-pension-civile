@@ -1,0 +1,213 @@
+@startuml use_case
+' ============================================================
+'  Diagramme de cas d'utilisation — Système de Gestion
+'  des Pensions Civiles (Direction de la Pension Civile)
+'  Date : 2026-03-28
+' ============================================================
+
+skinparam actorStyle awesome
+skinparam packageStyle rectangle
+skinparam ArrowColor #444444
+skinparam ActorBorderColor #2C5F8A
+skinparam ActorBackgroundColor #D9EAF7
+skinparam UsecaseBorderColor #2C5F8A
+skinparam UsecaseBackgroundColor #FEFEFE
+skinparam PackageBorderColor #888888
+skinparam PackageBackgroundColor #F9F9F9
+skinparam shadowing false
+skinparam DefaultFontName Arial
+
+title Diagramme de Cas d'Utilisation\nSystème de Gestion des Pensions Civiles
+
+' ──────────────── ACTEURS ────────────────
+actor "Pensionnaire\n(Retraité)" as Pensionnaire
+actor "Fonctionnaire\n(Agent actif)" as Fonctionnaire
+actor "Institution" as Institution
+actor "Agent /\nSecrétariat" as Agent
+actor "Direction" as Direction
+actor "Service\n(Liquidation, Formalité,\nComptabilité, etc.)" as Service
+actor "Administrateur\n(Admin)" as Admin
+
+' ──────────────── PORTAIL USAGER ────────────────
+package "Portail Usager" {
+
+    package "Demandes Pensionnaire" {
+        usecase "Demander un virement\nbancaire" as UC_VB
+        usecase "Demander une attestation\nde pension" as UC_ATT
+        usecase "Demander un transfert\nde chèque" as UC_TC
+        usecase "Demander l'arrêt\nde paiement" as UC_AP
+        usecase "Demander la réinsertion\nau paiement" as UC_RI
+        usecase "Demander l'arrêt\nde virement" as UC_AV
+        usecase "Soumettre une preuve\nd'existence" as UC_PE
+        usecase "Demander une pension\nde réversion" as UC_PR
+    }
+
+    package "Demandes Fonctionnaire" {
+        usecase "Demander un état\nde carrière" as UC_EC
+        usecase "Demander la mise\nen retraite (pension)" as UC_DP
+    }
+
+    package "Demandes Institution" {
+        usecase "Soumettre une demande\nd'adhésion" as UC_ADH
+    }
+
+    package "Gestion du dossier usager" {
+        usecase "Créer un brouillon\nde demande" as UC_BROUILLON
+        usecase "Soumettre une demande" as UC_SOUMETTRE
+        usecase "Joindre des documents" as UC_DOCS
+        usecase "Compléter un dossier\n(suite demande de complément)" as UC_COMPL
+        usecase "Consulter l'état\nd'avancement" as UC_SUIVI
+        usecase "Annuler une demande" as UC_ANNULER
+        usecase "Consulter les messages\ndu service" as UC_MSG_USR
+    }
+
+    package "Compte & Profil" {
+        usecase "S'inscrire / Se connecter" as UC_AUTH
+        usecase "Modifier son profil" as UC_PROFIL
+        usecase "Changer de mot\nde passe" as UC_MDP
+    }
+}
+
+' ──────────────── ESPACE AGENT / DIRECTION ────────────────
+package "Espace Agent & Direction" {
+
+    package "Gestion des demandes reçues" {
+        usecase "Consulter la corbeille\ndes demandes" as UC_CORBEILLE
+        usecase "Voir les détails\nd'une demande" as UC_DETAILS
+        usecase "Annoter un dossier\n(Direction uniquement)" as UC_ANNOT
+        usecase "Transférer un dossier\nvers un service" as UC_TRANSFER
+        usecase "Demander un complément\nd'information" as UC_REQ_COMPL
+        usecase "Mettre à jour\nle statut" as UC_STATUS
+        usecase "Clôturer un dossier" as UC_CLOTURE
+        usecase "Rejeter un dossier" as UC_REJETER
+        usecase "Envoyer un message\nà l'usager" as UC_MSG_SVC
+    }
+
+    package "Consultation & Reporting" {
+        usecase "Consulter les journaux\nd'activité" as UC_LOGS
+        usecase "Imprimer / Télécharger\nun dossier (PDF)" as UC_PDF
+        usecase "Consulter l'historique\ndu workflow" as UC_HIST
+    }
+}
+
+' ──────────────── ADMINISTRATION ────────────────
+package "Administration Système" {
+    usecase "Gérer les utilisateurs\n(CRUD)" as UC_USERS
+    usecase "Gérer les rôles\net permissions" as UC_ROLES
+    usecase "Gérer les services\ninternes" as UC_SERVICES
+    usecase "Gérer les statuts\nde demandes" as UC_STATUTS
+    usecase "Consulter les\nlogs système" as UC_SYS_LOGS
+    usecase "Gérer le contenu\ndu site (actualités, carousel)" as UC_CONTENU
+}
+
+' ──────────────── RELATIONS PENSIONNAIRE ────────────────
+Pensionnaire --> UC_AUTH
+Pensionnaire --> UC_PROFIL
+Pensionnaire --> UC_MDP
+Pensionnaire --> UC_BROUILLON
+Pensionnaire --> UC_SOUMETTRE
+Pensionnaire --> UC_DOCS
+Pensionnaire --> UC_COMPL
+Pensionnaire --> UC_SUIVI
+Pensionnaire --> UC_ANNULER
+Pensionnaire --> UC_MSG_USR
+Pensionnaire --> UC_VB
+Pensionnaire --> UC_ATT
+Pensionnaire --> UC_TC
+Pensionnaire --> UC_AP
+Pensionnaire --> UC_RI
+Pensionnaire --> UC_AV
+Pensionnaire --> UC_PE
+Pensionnaire --> UC_PR
+
+' ──────────────── RELATIONS FONCTIONNAIRE ────────────────
+Fonctionnaire --> UC_AUTH
+Fonctionnaire --> UC_PROFIL
+Fonctionnaire --> UC_MDP
+Fonctionnaire --> UC_BROUILLON
+Fonctionnaire --> UC_SOUMETTRE
+Fonctionnaire --> UC_DOCS
+Fonctionnaire --> UC_COMPL
+Fonctionnaire --> UC_SUIVI
+Fonctionnaire --> UC_ANNULER
+Fonctionnaire --> UC_MSG_USR
+Fonctionnaire --> UC_EC
+Fonctionnaire --> UC_DP
+
+' ──────────────── RELATIONS INSTITUTION ────────────────
+Institution --> UC_AUTH
+Institution --> UC_PROFIL
+Institution --> UC_BROUILLON
+Institution --> UC_SOUMETTRE
+Institution --> UC_DOCS
+Institution --> UC_SUIVI
+Institution --> UC_MSG_USR
+Institution --> UC_ADH
+
+' ──────────────── RELATIONS AGENT / SECRETARIAT ────────────────
+Agent --> UC_CORBEILLE
+Agent --> UC_DETAILS
+Agent --> UC_TRANSFER
+Agent --> UC_REQ_COMPL
+Agent --> UC_STATUS
+Agent --> UC_MSG_SVC
+Agent --> UC_LOGS
+Agent --> UC_PDF
+Agent --> UC_HIST
+Agent --> UC_CLOTURE
+
+' ──────────────── RELATIONS DIRECTION ────────────────
+Direction --> UC_CORBEILLE
+Direction --> UC_DETAILS
+Direction --> UC_ANNOT
+Direction --> UC_TRANSFER
+Direction --> UC_REQ_COMPL
+Direction --> UC_STATUS
+Direction --> UC_REJETER
+Direction --> UC_CLOTURE
+Direction --> UC_MSG_SVC
+Direction --> UC_LOGS
+Direction --> UC_PDF
+Direction --> UC_HIST
+
+' ──────────────── RELATIONS SERVICE ────────────────
+Service --> UC_CORBEILLE
+Service --> UC_DETAILS
+Service --> UC_STATUS
+Service --> UC_TRANSFER
+Service --> UC_REQ_COMPL
+Service --> UC_MSG_SVC
+Service --> UC_PDF
+Service --> UC_CLOTURE
+
+' ──────────────── RELATIONS ADMIN ────────────────
+Admin --> UC_USERS
+Admin --> UC_ROLES
+Admin --> UC_SERVICES
+Admin --> UC_STATUTS
+Admin --> UC_SYS_LOGS
+Admin --> UC_CONTENU
+Admin --> UC_CORBEILLE
+Admin --> UC_DETAILS
+
+' ──────────────── INCLUSIONS / EXTENSIONS ────────────────
+UC_VB       ..> UC_BROUILLON : <<include>>
+UC_ATT      ..> UC_BROUILLON : <<include>>
+UC_TC       ..> UC_BROUILLON : <<include>>
+UC_AP       ..> UC_BROUILLON : <<include>>
+UC_RI       ..> UC_BROUILLON : <<include>>
+UC_AV       ..> UC_BROUILLON : <<include>>
+UC_PE       ..> UC_BROUILLON : <<include>>
+UC_PR       ..> UC_BROUILLON : <<include>>
+UC_EC       ..> UC_BROUILLON : <<include>>
+UC_DP       ..> UC_BROUILLON : <<include>>
+UC_ADH      ..> UC_BROUILLON : <<include>>
+
+UC_SOUMETTRE ..> UC_DOCS     : <<include>>
+
+UC_TRANSFER  ..> UC_ANNOT    : <<include>>
+UC_PDF       ..> UC_ANNOT    : <<include>>
+
+UC_COMPL    ..> UC_SOUMETTRE : <<extend>>
+
+@enduml

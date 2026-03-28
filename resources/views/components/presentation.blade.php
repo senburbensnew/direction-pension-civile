@@ -8,10 +8,10 @@
         : 'https://ui-avatars.com/api/?name=' . urlencode($nom) . '&background=0D8ABC&color=fff';
 @endphp
 
-<div class="relative w-full md:w-60 bg-gray-50 text-center p-3 border-t border-r border-b border-blue-600">
+<div class="relative w-full md:w-60  bg-inherit text-center p-3 border-t border-r border-b border-blue-600">
 
     <!-- ROLE -->
-    <span class="relative -top-8 bg-gray-50 px-1 text-lg font-bold text-blue-600">
+    <span class="relative -top-9  bg-inherit px-1 text-lg font-bold text-blue-600">
         {{ $role }}
     </span>
 
@@ -37,7 +37,7 @@
 
     <!-- FULL NAME WITH PREFIX -->
     <p class="text-base font-bold text-blue-600">
-        {{ $prefix }} {{ $nom }}
+         {{ $nom }}
     </p>
 
     <!-- LINKS -->

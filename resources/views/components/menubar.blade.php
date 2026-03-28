@@ -343,14 +343,14 @@
             @endauth
 
             <!-- rapports -->
-            <li class="w-full md:w-auto border-b md:border-none">
+{{--             <li class="w-full md:w-auto border-b md:border-none">
                 <a href="{{  route('reports.index') }}"
                     class="block px-4 py-3 text-slate-600 hover:text-blue-600
                            text-base md:text-sm truncate-text
                            focus:outline-none focus:ring-2 ">
                     Rapports
                 </a>
-            </li>
+            </li> --}}
         </ul>
     </nav>
 

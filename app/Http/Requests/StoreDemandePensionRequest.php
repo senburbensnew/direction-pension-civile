@@ -2,8 +2,8 @@
 
 namespace App\Http\Requests;
 
-use App\Rules\Nif;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 
 class StoreDemandePensionRequest extends FormRequest
 {
@@ -15,45 +15,46 @@ class StoreDemandePensionRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'name' => ['required', 'string', 'max:255'],
-            'nif'  => ['required', new Nif()],
+            'title' => ['required', 'string', 'max:255'],
+            'action' => ['required', Rule::in(['draft', 'submit'])],
+
+            'demande_id' => [
+                'sometimes',
+                'nullable',
+                'exists:demandes,id',
+            ],
 
             // Attestations de carrière
-            'career_certificates'   => ['required', 'array', 'min:1'],
+            'career_certificates'   => ['nullable', 'array'],
             'career_certificates.*' => ['file', 'mimes:pdf', 'max:5120'],
 
             // Dernier bulletin
             'monitor_copy' => ['nullable', 'file', 'mimes:pdf', 'max:5120'],
 
-            // Acte de mariage (optionnel mais min 2 si fourni)
-            'marriage_certificates'   => ['nullable', 'array', 'min:2'],
+            // Acte de mariage
+            'marriage_certificates'   => ['nullable', 'array'],
             'marriage_certificates.*' => ['file', 'mimes:pdf', 'max:5120'],
 
             // Extrait récent de naissance
-            'birth_certificates'   => ['required', 'array', 'min:2'],
+            'birth_certificates'   => ['nullable', 'array'],
             'birth_certificates.*' => ['file', 'mimes:pdf', 'max:5120'],
 
-            // Divorce (optionnel)
+            // Divorce
             'divorce_certificate' => ['nullable', 'file', 'mimes:pdf', 'max:5120'],
 
             // Matricule fiscal + CIN
-            'tax_id_numbers'   => ['required', 'array', 'min:2'],
+            'tax_id_numbers'   => ['nullable', 'array'],
             'tax_id_numbers.*' => ['file', 'mimes:pdf,jpg,jpeg,png', 'max:5120'],
 
             // Photos
-            'photos'   => ['required', 'array', 'min:2'],
+            'photos'   => ['nullable', 'array'],
             'photos.*' => ['image', 'mimes:jpg,jpeg,png', 'max:1024'],
 
-            // Certificat médical (optionnel)
+            // Certificat médical
             'medical_certificate' => ['nullable', 'file', 'mimes:pdf', 'max:5120'],
 
             // Fiche de paie
-            'check_stub' => ['required', 'file', 'mimes:pdf,jpg,jpeg,png', 'max:5120'],
-
-            // -----------------------------
-            // Consentement
-            // -----------------------------
-            'consentement'        => ['required', 'accepted']
+            'check_stub' => ['nullable', 'file', 'mimes:pdf,jpg,jpeg,png', 'max:5120'],
         ];
     }
 
@@ -63,6 +64,8 @@ class StoreDemandePensionRequest extends FormRequest
             'marriage_certificates.array' => 'L’acte de mariage doit être envoyé sous forme de fichiers.',
             'marriage_certificates.min'   => 'Si vous fournissez un acte de mariage, veuillez joindre au moins 2 fichiers (copie et original).',
             'marriage_certificates.*.mimes' => 'Les actes de mariage doivent être au format PDF.',
+            'title.required' => 'Le titre est obligatoire.',
+            'action.in' => "L'action doit être 'draft' ou 'submit'.",
         ];
     }
 
@@ -72,8 +75,8 @@ class StoreDemandePensionRequest extends FormRequest
     public function attributes(): array
     {
         return [
-            'name' => 'nom complet',
-            'nif'  => 'matricule',
+            'title' => 'titre',
+            'action'  => 'action',
 
             'career_certificates'   => 'attestation(s) de carrière',
             'career_certificates.*' => 'attestation de carrière',

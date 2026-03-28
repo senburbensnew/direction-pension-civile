@@ -16,7 +16,7 @@
     </div>
 @endif
 
-    <form action="{{ route('actualites.store') }}"
+    <form action="{{ route('admin.actualites.store') }}"
           method="POST"
           enctype="multipart/form-data"
           class="space-y-4 mb-8">

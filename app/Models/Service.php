@@ -11,6 +11,7 @@ class Service extends Model
     use HasFactory;
 
     // Codes des services
+    public const DIRECTION            = 'direction';
     public const SECRETARIAT          = 'secretariat';
     public const LIQUIDATION          = 'service_liquidation';
     public const CONTROLE_PLACEMENT   = 'service_controle_placement';

@@ -3,8 +3,15 @@
 @section('content')
 
 <div id="bank-transfer-request" class="max-w-6xl mx-auto p-6 m-2">
-    <form method="POST" action="{{ route('demandes.virements.store') }}" enctype="multipart/form-data">
+    @if ($demande)
+        <div class="mb-4 p-3 bg-yellow-50 border border-yellow-200 text-yellow-800 rounded text-sm">
+            Brouillon en cours — dernière sauvegarde {{ $demande->updated_at->diffForHumans() }}
+        </div>
+    @endif
+    <form method="POST" action="{{ route('demandes.virements.store') }}" enctype="multipart/form-data" id="virement-form">
         @csrf
+        <input type="hidden" name="demande_id" value="{{ $demande?->id }}">
+        <input type="hidden" name="action" id="action-input" value="draft">
 
         <div class="max-w-7xl mx-auto bg-white p-6 shadow-md rounded-lg relative m-2">
 
@@ -12,7 +19,7 @@
             <div class="flex flex-col md:flex-row justify-around items-center mb-12 gap-8">
                 <img src="{{ asset('images/setting-logo-1-M13oPLiYoM.png') }}" class="w-24 h-24 object-cover">
                 <h1 class="text-xl md:text-2xl font-bold text-center">
-                    MINISTERE DE L’ECONOMIE ET DES FINANCES<br>
+                    MINISTERE DE L'ECONOMIE ET DES FINANCES<br>
                     <span class="underline">PENSION CIVILE</span><br>
                     PAIEMENT PAR VIREMENT BANCAIRE
                 </h1>
@@ -27,6 +34,21 @@
                 </div>
             @endif
 
+            {{-- Titre personnalisé --}}
+            <div class="mb-4">
+                <label for="title" class="block text-sm font-medium text-gray-700">
+                    Titre personnalisé <span class="text-gray-400 font-normal">(optionnel)</span>
+                </label>
+                <input
+                    id="title"
+                    type="text"
+                    name="title"
+                    value="{{ old('title', $demande?->title ?? '') }}"
+                    placeholder="ex : Demande virement — Janvier 2026"
+                    class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                >
+            </div>
+
             <!-- PENSIONER INFO -->
             <fieldset class="mb-4 p-5 border rounded-lg">
                 <div class="grid md:grid-cols-2 gap-4">
@@ -35,7 +57,7 @@
                     <div>
                         <label>Code du pensionné *</label>
                         <input type="text" name="code_pension"
-                            value="{{ old('code_pension', auth()->user()->pension_code) }}"
+                            value="{{ old('code_pension', $demande?->data['code_pension'] ?? auth()->user()->pension_code) }}"
                             class="mt-1 w-full rounded-md border @error('code_pension') border-red-500 @else border-gray-300 @enderror">
                         @error('code_pension') <p class="text-red-600 text-sm">{{ $message }}</p> @enderror
                     </div>
@@ -47,7 +69,7 @@
                             @foreach($pensionTypes as $type)
                                 <label class="flex items-center">
                                     <input type="radio" name="type_pension_id" value="{{ $type['id'] }}"
-                                        @checked(old('type_pension_id') == $type['id'])>
+                                        @checked(old('type_pension_id', $demande?->data['type_pension_id'] ?? '') == $type['id'])>
                                     <span class="ml-2">{{ $type['name'] }}</span>
                                 </label>
                             @endforeach
@@ -87,7 +109,7 @@
                             }}"
                             type="{{ $name === 'date_naissance' ? 'date' : 'text' }}"
                             name="{{ $name }}"
-                            value="{{ old($name, auth()->user()->$name ?? '') }}"
+                            value="{{ old($name, $demande?->data[$name] ?? auth()->user()->$name ?? '') }}"
                             class="mt-1 w-full rounded-md border
                                 @error($name) border-red-500 @else border-gray-300 @enderror"
                                 
@@ -104,7 +126,7 @@
                     <!-- Address -->
                     <div class="md:col-span-2">
                         <label>Adresse *</label>
-                        <input type="text" name="adresse" value="{{ old('adresse') }}"
+                        <input type="text" name="adresse" value="{{ old('adresse', $demande?->data['adresse'] ?? '') }}"
                             class="mt-1 w-full rounded-md border @error('adresse') border-red-500 @else border-gray-300 @enderror">
                         @error('adresse') <p class="text-red-600 text-sm">{{ $message }}</p> @enderror
                     </div>
@@ -116,7 +138,7 @@
                             class="mt-1 w-full rounded-md border @error('statut_civil_id') border-red-500 @else border-gray-300 @enderror">
                             <option value="">-- Sélectionner --</option>
                             @foreach($civilStatuses as $civil)
-                                <option value="{{ $civil->id }}" @selected(old('statut_civil_id') == $civil->id)>
+                                <option value="{{ $civil->id }}" @selected(old('statut_civil_id', $demande?->data['statut_civil_id'] ?? '') == $civil->id)>
                                     {{ $civil->name }}
                                 </option>
                             @endforeach
@@ -131,7 +153,7 @@
                             class="mt-1 w-full rounded-md border @error('sexe_id') border-red-500 @else border-gray-300 @enderror">
                             <option value="">-- Sélectionner --</option>
                             @foreach($genders as $gender)
-                                <option value="{{ $gender->id }}" @selected(old('sexe_id') == $gender->id)>
+                                <option value="{{ $gender->id }}" @selected(old('sexe_id', $demande?->data['sexe_id'] ?? '') == $gender->id)>
                                     {{ $gender->name }}
                                 </option>
                             @endforeach
@@ -148,7 +170,7 @@
                 @foreach($pensionCategories as $cat)
                     <label class="flex items-center">
                         <input type="radio" name="categorie_pension_id" value="{{ $cat->id }}"
-                            @checked(old('categorie_pension_id') == $cat->id)>
+                            @checked(old('categorie_pension_id', $demande?->data['categorie_pension_id'] ?? '') == $cat->id)>
                         <span class="ml-2">{{ $cat->name }}</span>
                     </label>
                 @endforeach
@@ -162,26 +184,28 @@
                 @foreach(['nom_banque' => 'Banque', 'numero_compte' => 'Numéro de compte', 'nom_compte' => 'Nom du compte'] as $name => $label)
                     <div class="mb-4">
                         <label>{{ $label }}</label>
-                        <input type="text" name="{{ $name }}" value="{{ old($name) }}"
+                        <input type="text" name="{{ $name }}" value="{{ old($name, $demande?->data[$name] ?? '') }}"
                             class="mt-1 w-full rounded-md border @error($name) border-red-500 @else border-gray-300 @enderror">
                         @error($name) <p class="text-red-600 text-sm">{{ $message }}</p> @enderror
                     </div>
                 @endforeach
             </fieldset>
 
-            <!-- DECLARATION -->
-            <fieldset class="mb-6 p-5 border rounded-lg">
-                <label class="flex items-start">
-                    <input type="checkbox" name="consentement" value="1">
-                    <span class="ml-2 text-sm">Je certifie l’exactitude des informations</span>
-                </label>
-                @error('consentement')
-                    <p class="text-red-600 text-sm mt-2">{{ $message }}</p>
-                @enderror
-            </fieldset>
+            @if (!empty($demande?->data['profile_photo']))
+                <div class="mb-4 text-sm text-green-700">
+                    Photo déjà uploadée. Sélectionner un nouveau fichier pour la remplacer.
+                </div>
+            @endif
 
-            <div class="text-right">
-                <button class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded">
+            <div class="flex justify-end gap-3">
+                <button type="button"
+                    onclick="document.getElementById('action-input').value='draft'; document.getElementById('virement-form').submit();"
+                    class="bg-gray-200 text-gray-700 px-6 py-2 rounded hover:bg-gray-300">
+                    Sauvegarder en brouillon
+                </button>
+                <button type="button"
+                    onclick="document.getElementById('action-input').value='submit'; document.getElementById('virement-form').submit();"
+                    class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded">
                     Soumettre
                 </button>
             </div>

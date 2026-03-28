@@ -4,7 +4,6 @@ namespace App\Http\Requests;
 
 use App\Rules\Nif;
 use App\Rules\CodePension;
-use App\Helpers\RegexExpressions;
 use Illuminate\Foundation\Http\FormRequest;
 
 class StoreDemandeAttestationRequest extends FormRequest
@@ -17,11 +16,13 @@ class StoreDemandeAttestationRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'code_pension' => ['required', new CodePension()],
-            'nif'            => ['required', new Nif()],
-            'prenom'      => ['required', 'string', 'max:255'],
-            'nom'       => ['required', 'string', 'max:255'],
-            'consentement'   => ['required', 'accepted'],
+            'title'        => 'nullable|string|max:255',
+            'action'       => 'required|in:draft,submit',
+            'demande_id'   => 'sometimes|nullable|exists:demandes,id',
+            'code_pension' => ['nullable', 'required_if:action,submit', new CodePension()],
+            'nif'          => ['nullable', 'required_if:action,submit', new Nif()],
+            'prenom'       => ['nullable', 'required_if:action,submit', 'string', 'max:255'],
+            'nom'          => ['nullable', 'required_if:action,submit', 'string', 'max:255'],
         ];
     }
 
@@ -29,18 +30,16 @@ class StoreDemandeAttestationRequest extends FormRequest
     {
         return [
             'code_pension' => 'code du pensionné',
-            'nif'            => 'NIF',
-            'prenom'      => 'Prénom',
-            'nom'       => 'Nom',
-            'consentement'   => 'déclaration et engagement',
+            'nif'          => 'NIF',
+            'prenom'       => 'Prénom',
+            'nom'          => 'Nom',
         ];
     }
 
     public function messages(): array
     {
         return [
-            'required' => 'Le champ :attribute est obligatoire.',
-            'accepted' => 'Vous devez accepter la :attribute.',
+            'required'         => 'Le champ :attribute est obligatoire.',
         ];
     }
 }

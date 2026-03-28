@@ -110,16 +110,6 @@
                         <h2 class="text-2xl font-bold">Calcul de votre pension</h2>
                         <p class="text-blue-100 mt-1">Saisissez vos informations salariales pour obtenir une estimation</p>
                     </div>
-                    <div class="mt-4 md:mt-0">
-                        <div class="flex space-x-2">
-                            <button onclick="exportToPDF()" class="bg-white text-blue-600 px-4 py-2 rounded-lg font-medium hover:bg-blue-50 transition-colors flex items-center">
-                                <i class="fas fa-file-pdf mr-2"></i> Exporter PDF
-                            </button>
-                            <button onclick="resetTable()" class="bg-white text-red-600 px-4 py-2 rounded-lg font-medium hover:bg-red-50 transition-colors flex items-center">
-                                <i class="fas fa-redo mr-2"></i> Réinitialiser
-                            </button>
-                        </div>
-                    </div>
                 </div>
             </div>
 
@@ -158,13 +148,6 @@
 
                 <!-- Salary Table -->
                 <div class="mb-6">
-{{--                     <div class="flex justify-between items-center mb-4">
-                        <h3 class="text-lg font-semibold text-gray-800">Saisie des salaires</h3>
-                        <button onclick="addRow()" class="bg-accent text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors flex items-center">
-                            <i class="fas fa-plus mr-2"></i> Ajouter une ligne
-                        </button>
-                    </div> --}}
-
                     <div class="overflow-x-auto rounded-lg border border-gray-200">
                         <table class="w-full">
                             <thead class="bg-gray-50">
@@ -202,7 +185,10 @@
                 </div>
 
                 <!-- Progress Indicator -->
-                <div class="flex justify-end mb-5">
+                <div class="flex justify-end mb-5 gap-5">
+                    <button onclick="resetTable()" class="bg-white text-red-600 px-4 py-2 rounded-lg font-medium hover:bg-red-50 transition-colors flex items-center">
+                        <i class="fas fa-redo mr-2"></i> Réinitialiser
+                    </button>
 					<button onclick="addRow()" class="bg-accent text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors flex items-center">
 						<i class="fas fa-plus mr-2"></i> Ajouter une ligne
 					</button>
@@ -569,17 +555,6 @@
             };
 
             updateProgress(100);
-        }
-
-        // Fonction d'export PDF
-        function exportToPDF() {
-            if (currentResults.allEntries.length === 0) {
-                alert("Veuillez d'abord saisir des données et effectuer un calcul.");
-                return;
-            }
-
-            alert("Fonctionnalité d'export PDF - Cette fonctionnalité sera implémentée avec les bibliothèques appropriées.");
-            // Ici vous pouvez intégrer la logique d'export PDF avec html2canvas et jsPDF
         }
 
         // Initialisation - S'assurer que le DOM est complètement chargé

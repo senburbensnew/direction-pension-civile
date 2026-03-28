@@ -1,54 +1,41 @@
 <?php
 
-use App\Models\Report;
-use App\Models\Actualite;
-use Illuminate\Support\Facades\Route;
-use Illuminate\Support\Facades\Artisan;
-use Illuminate\Support\Facades\Storage;
-use App\Http\Controllers\PostController;
-use App\Http\Controllers\RoleController;
-use App\Http\Controllers\UserController;
-use App\Http\Controllers\AdminController;
-use App\Http\Controllers\MediaController;
-use App\Http\Controllers\LocaleController;
-use App\Http\Controllers\ReportController;
-use App\Http\Controllers\DemandeController;
-use App\Http\Controllers\ProfileController;
-use App\Http\Controllers\ServiceController;
-use App\Http\Controllers\CarouselController;
-use App\Http\Controllers\DocumentController;
-use App\Http\Controllers\PersonalController;
 use App\Http\Controllers\ActualiteController;
-use App\Http\Controllers\NewsletterController;
-use App\Http\Controllers\PermissionController;
-use App\Http\Controllers\InstitutionController;
-use App\Http\Controllers\PensionnaireController;
-use App\Http\Controllers\FonctionnaireController;
-use App\Http\Controllers\QuiSommesNousController;
+use App\Http\Controllers\AdminController;
 use App\Http\Controllers\AdminDashboardController;
+use App\Http\Controllers\CarouselController;
+use App\Http\Controllers\DemandeController;
+use App\Http\Controllers\DemandeDocumentController;
 use App\Http\Controllers\DemandeManagementController;
-use App\Http\Controllers\EnregistrementPensionnaireController;
+use App\Http\Controllers\DemandePdfController;
+use App\Http\Controllers\DocumentController;
+use App\Http\Controllers\LocaleController;
+use App\Http\Controllers\MediaController;
+use App\Http\Controllers\NewsletterController;
+use App\Http\Controllers\NotificationController;
+use App\Http\Controllers\PermissionController;
+use App\Http\Controllers\PersonalController;
+use App\Http\Controllers\PostController;
+use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\QuiSommesNousController;
+use App\Http\Controllers\ReportController;
+use App\Http\Controllers\RoleController;
+use App\Http\Controllers\ServiceController;
+use App\Http\Controllers\UserController;
+use App\Models\Actualite;
+use App\Models\Report;
+use Illuminate\Support\Facades\Route;
 
-
-/*
-    |--------------------------------------------------------------------------
-    | Web Routes
-    |--------------------------------------------------------------------------
-    |
-    | Here is where you can register web routes for your application. These
-    | routes are loaded by the RouteServiceProvider and all of them will
-    | be assigned to the "web" middleware group. Make something great!
-    |
-*/
+// ============================================================
+// PUBLIC ROUTES
+// ============================================================
 
 Route::get('/', function () {
-    // Latest 6 published actualités
     $latestActualites = Actualite::where('published', true)
         ->orderBy('created_at', 'desc')
         ->take(6)
         ->get();
 
-    // Latest 3 published reports
     $recentReports = Report::where('status', 'published')
         ->orderBy('published_at', 'desc')
         ->take(3)
@@ -57,530 +44,246 @@ Route::get('/', function () {
     return view('home', compact('latestActualites', 'recentReports'));
 })->name('home');
 
-Route::prefix('quisommesnous')->name('quisommesnous.')->group(function () {
-    // Get routes
-    Route::get('/mots', [QuiSommesNousController::class, 'mots'])->name('mots');
-    Route::get('/profil', [QuiSommesNousController::class, 'profil'])->name('profil');
-    Route::get('/missions', [QuiSommesNousController::class, 'missions'])->name('missions');
-    Route::get('/historique', [QuiSommesNousController::class, 'historique'])->name('historique');
-    Route::get('/structure-organique', [QuiSommesNousController::class, 'structureOrganique'])->name('structure-organique');
-    Route::get('/financement', [QuiSommesNousController::class, 'financement'])->name('financement');
-});
-
-Route::post('/newsletter/souscription', [NewsletterController::class, 'souscription'])->name('newsletter.souscription');
-
-Route::get('/glossaire', function () {
-    return view('glossaire.index');
-})->name('glossaire');
-
-Route::get('/simulateur-calcul', function () {
-    return view('simulateur-calcul');
-})->name('simulateur-calcul');
-
-Route::get('/textes_documents_legaux', function () {
-    return view('communication.textes_publication');
-})->name('textes_documents_legaux');
-
-Route::get('/mediatheque', [MediaController::class, 'index'])->name('mediatheque');
-
-Route::get('/faq', function () {
-    return view('faq.index');
-})->name('faq.index');
+// Static pages
+Route::get('/glossaire',                fn () => view('glossaire.index'))->name('glossaire');
+Route::get('/simulateur-calcul',        fn () => view('fonctionnaire.simulateur-calcul'))->name('simulateur-calcul');
+Route::get('/textes_documents_legaux',  fn () => view('communication.textes_publication'))->name('textes_documents_legaux');
+Route::get('/faq',                      fn () => view('faq.index'))->name('faq.index');
+Route::get('/contact',                  fn () => view('contact.index'))->name('contact');
+Route::get('/politique-confidentialite',fn () => view('privacy'))->name('privacy.policy');
 
 Route::get('/liens-utiles', function () {
-    $links_fr = [
-        [
-            'name' => "Ministère de l'Economie et des Finances",
-            'abbr' => "MEF",
-            'link' => "https://mef.gouv.ht/"
-        ],
-        [
-            'name' => "Direction Générale du Budget",
-            'abbr' => "DGB",
-            'link' => "https://budget.gouv.ht/"
-        ],
-        [
-            'name' => "Administration Générale des Douanes",
-            'abbr' => "AGD",
-            'link' => "https://www.douane.gouv.ht/"
-        ],
-        [
-            'name' => "Banque de la République d’Haïti",
-            'abbr' => "BRH",
-            'link' => "https://www.brh.ht/"
-        ],
-        [
-            'name' => "Bureau de Monétisation des Programmes d'Aide au Développement",
-            'abbr' => "BMPAD",
-            'link' => "https://bmpad.gouv.ht/"
-        ],
-        [
-            'name' => "Direction Générale des Impôts",
-            'abbr' => "DGI",
-            'link' => "https://dgi.gouv.ht/"
-        ],
-        [
-            'name' => "Inspection Générale des Finances",
-            'abbr' => "IGF",
-            'link' => "https://igf.gouv.ht/"
-        ],
-        [
-            'name' => "Institut Haïtien de Statistique et d'Informatique",
-            'abbr' => "IHSI",
-            'link' => "https://ihsi.gouv.ht/"
-        ],
-        [
-            'name' => "Office d'Assurance Véhicules Contre Tiers",
-            'abbr' => "OAVCT",
-            'link' => "https://oavct.gouv.ht/"
-        ],
-        [
-            'name' => "Société Nationale des Parcs Industriels",
-            'abbr' => "SONAPI",
-            'link' => "https://sonapi.gouv.ht/"
-        ],
-        [
-            'name' => "Banque Nationale de Crédit",
-            'abbr' => "BNC",
-            'link' => "https://www.bnconline.com/"
-        ],
+    $links = [
+        ['name' => "Ministère de l'Economie et des Finances",                     'abbr' => 'MEF',   'link' => 'https://mef.gouv.ht/'],
+        ['name' => "Direction Générale du Budget",                                 'abbr' => 'DGB',   'link' => 'https://budget.gouv.ht/'],
+        ['name' => "Administration Générale des Douanes",                          'abbr' => 'AGD',   'link' => 'https://www.douane.gouv.ht/'],
+        ['name' => "Banque de la République d'Haïti",                              'abbr' => 'BRH',   'link' => 'https://www.brh.ht/'],
+        ['name' => "Bureau de Monétisation des Programmes d'Aide au Développement",'abbr' => 'BMPAD', 'link' => 'https://bmpad.gouv.ht/'],
+        ['name' => "Direction Générale des Impôts",                                'abbr' => 'DGI',   'link' => 'https://dgi.gouv.ht/'],
+        ['name' => "Inspection Générale des Finances",                             'abbr' => 'IGF',   'link' => 'https://igf.gouv.ht/'],
+        ['name' => "Institut Haïtien de Statistique et d'Informatique",            'abbr' => 'IHSI',  'link' => 'https://ihsi.gouv.ht/'],
+        ["name" => "Office d'Assurance Véhicules Contre Tiers",                    'abbr' => 'OAVCT', 'link' => 'https://oavct.gouv.ht/'],
+        ['name' => "Société Nationale des Parcs Industriels",                      'abbr' => 'SONAPI','link' => 'https://sonapi.gouv.ht/'],
+        ['name' => "Banque Nationale de Crédit",                                   'abbr' => 'BNC',   'link' => 'https://www.bnconline.com/'],
     ];
-
-    $links_en = [
-        [
-            'name' => "Ministry of Economy and Finance",
-            'abbr' => "MEF",
-            'link' => "https://mef.gouv.ht/"
-        ],
-        [
-            'name' => "General Directorate of Budget",
-            'abbr' => "DGB",
-            'link' => "https://budget.gouv.ht/"
-        ],
-        [
-            'name' => "General Administration of Customs",
-            'abbr' => "AGD",
-            'link' => "https://www.douane.gouv.ht/"
-        ],
-        [
-            'name' => "Bank of the Republic of Haiti",
-            'abbr' => "BRH",
-            'link' => "https://www.brh.ht/"
-        ],
-        [
-            'name' => "Office of Monetization of Development Aid Programs",
-            'abbr' => "BMPAD",
-            'link' => "https://bmpad.gouv.ht/"
-        ],
-        [
-            'name' => "General Directorate of Taxes",
-            'abbr' => "DGI",
-            'link' => "https://dgi.gouv.ht/"
-        ],
-        [
-            'name' => "General Inspectorate of Finance",
-            'abbr' => "IGF",
-            'link' => "https://igf.gouv.ht/"
-        ],
-        [
-            'name' => "Haitian Institute of Statistics and Informatics",
-            'abbr' => "IHSI",
-            'link' => "https://ihsi.gouv.ht/"
-        ],
-        [
-            'name' => "Office of Vehicle Insurance Against Third Parties",
-            'abbr' => "OAVCT",
-            'link' => "https://oavct.gouv.ht/"
-        ],
-        [
-            'name' => "National Society of Industrial Parks",
-            'abbr' => "SONAPI",
-            'link' => "https://sonapi.gouv.ht/"
-        ],
-        [
-            'name' => "National Credit Bank",
-            'abbr' => "BNC",
-            'link' => "https://www.bnconline.com/"
-        ],
-    ];
-
-    // Check the current language
-    if (App::getLocale() == 'fr') {
-        $links = $links_fr;
-    } else {
-        $links = $links_en;
-    }
-
     return view('liens-utiles.index', compact('links'));
 })->name('liens-utiles');
 
-Route::get('/contact', function () {
-    return view('contact.index');
-})->name('contact');
-
-Route::get('/politique-confidentialite', function () {
-    return view('privacy'); 
-})->name('privacy.policy');
-
-Route::get('/locale/{locale}', [LocaleController::class, 'switch'])
-    ->name('locale');
-
-Route::middleware('auth')
-    ->prefix('demandes')
-    ->name('demandes.')
-    ->group(function () {
-
-        // ======================
-        // Demandes de Virement
-        // ======================
-        Route::prefix('virements')
-            ->name('virements.')
-            ->controller(DemandeController::class)
-            ->group(function () {
-                Route::get('/create', 'createDemandeVirement')->name('create');
-                Route::post('/', 'storeDemandeVirement')->name('store');
-            });
-
-        // ======================
-        // Demandes d’Attestation
-        // ======================
-        Route::prefix('attestations')
-            ->name('attestations.')
-            ->controller(DemandeController::class)
-            ->group(function () {
-                Route::get('/create', 'createDemandeAttestation')->name('create');
-                Route::post('/', 'storeDemandeAttestation')->name('store');
-            });
-
-        // ======================
-        // Demandes de transfert de cheques
-        // ======================
-        Route::prefix('transfert-cheque')
-            ->name('transfert-cheque.')
-            ->controller(DemandeController::class)
-            ->group(function () {
-                Route::get('/create', 'createDemandeTransfertCheque')->name('create');
-                Route::post('/', 'storeDemandeTransfertCheque')->name('store');
-            });
-
-        // ======================
-        // Demandes d'arret de paiement
-        // ======================
-        Route::prefix('arret-paiement')
-            ->name('arret-paiement.')
-            ->controller(DemandeController::class)
-            ->group(function () {
-                Route::get('/create', 'createDemandeArretPaiement')->name('create');
-                Route::post('/', 'storeDemandeArretPaiement')->name('store');
-            });
-
-        // ======================
-        // Demandes de reinsertion
-        // ======================
-        Route::prefix('demande-reinsertion')
-            ->name('demande-reinsertion.')
-            ->controller(DemandeController::class)
-            ->group(function () {
-                Route::get('/create', 'createDemandeReinsertion')->name('create');
-                Route::post('/', 'storeDemandeReinsertion')->name('store');
-            });
-
-
-        // ======================
-        // Demandes d'arret de virement
-        // ======================
-        Route::prefix('demande-arret-virement')
-            ->name('demande-arret-virement.')
-            ->controller(DemandeController::class)
-            ->group(function () {
-                Route::get('/create', 'createDemandeArretVirement')->name('create');
-                Route::post('/', 'storeDemandeArretVirement')->name('store');
-            });
-
-
-        // ======================
-        // Preuve d'existence
-        // ======================
-        Route::prefix('preuve-existence')
-            ->name('preuve-existence.')
-            ->controller(DemandeController::class)
-            ->group(function () {
-                Route::get('/create', 'createPreuveExistence')->name('create');
-                Route::post('/', 'storePreuveExistence')->name('store');
-            });
-
-        // ======================
-        // Demande d'etat de carriere
-        // ======================
-        Route::prefix('demande-etat-carriere')
-            ->name('demande-etat-carriere.')
-            ->controller(DemandeController::class)
-            ->group(function () {
-                Route::get('/create', 'createDemandeEtatCarriere')->name('create');
-                Route::post('/', 'storeDemandeEtatCarriere')->name('store');
-            });
-
-        // ======================
-        // Demande de pension page
-        // ======================
-        Route::prefix('demande-pension')
-            ->name('demande-pension.')
-            ->controller(DemandeController::class)
-            ->group(function () {
-                Route::get('/', 'demandePension')->name('index');
-            });
-
-        // ======================
-        // Demande de pension
-        // ======================
-        Route::prefix('demande-pension-standard')
-            ->name('demande-pension-standard.')
-            ->controller(DemandeController::class)
-            ->group(function () {
-                Route::get('/create', 'createDemandePensionStandard')->name('create');
-                Route::post('/', 'storeDemandePensionStandard')->name('store');
-            });
-
-        // ======================
-        // Demande de pension de reversion
-        // ======================
-        Route::prefix('demande-pension-reversion')
-            ->name('demande-pension-reversion.')
-            ->controller(DemandeController::class)
-            ->group(function () {
-                Route::get('/create', 'createDemandePensionReversion')->name('create');
-                Route::post('/', 'storeDemandePensionReversion')->name('store');
-            });
-
-        // ======================
-        // Demande adhesion
-        // ======================
-        Route::prefix('demande-adhesion')
-            ->name('demande-adhesion.')
-            ->controller(DemandeController::class)
-            ->group(function () {
-                Route::get('/create', 'createDemandeAdhesion')->name('create');
-                Route::post('/', 'storeDemandeAdhesion')->name('store');
-            });   
+// Qui sommes-nous
+Route::prefix('quisommesnous')->name('quisommesnous.')->group(function () {
+    Route::get('/mots',                [QuiSommesNousController::class, 'mots'])->name('mots');
+    Route::get('/profil',              [QuiSommesNousController::class, 'profil'])->name('profil');
+    Route::get('/missions',            [QuiSommesNousController::class, 'missions'])->name('missions');
+    Route::get('/historique',          [QuiSommesNousController::class, 'historique'])->name('historique');
+    Route::get('/structure-organique', [QuiSommesNousController::class, 'structureOrganique'])->name('structure-organique');
+    Route::get('/financement',         [QuiSommesNousController::class, 'financement'])->name('financement');
 });
 
-Route::post('transfert-demande', [DemandeManagementController::class,'transfererDemande'])->name('demande.transfert');
+// Media & content
+Route::get('/mediatheque', [MediaController::class, 'index'])->name('mediatheque');
 
-Route::get('rapports', [ReportController::class,'index'])->name('reports.index');
+// Reports (public)
+Route::get('rapports',                  [ReportController::class, 'index'])->name('reports.index');
+Route::get('rapports/{report}',         [ReportController::class, 'show'])->name('reports.show');
+Route::get('rapports/{report}/download',[ReportController::class, 'download'])->name('reports.download');
+Route::get('/reports/view/{report}',    fn (Report $report) => response()->file(storage_path('app/public/' . $report->file_path)))->name('reports.view');
 
-Route::get('/toggle-construction', function () {
-    session()->put('site_under_construction', !session()->get('site_under_construction', true));
+// Actualités (public)
+Route::get('actualites',                   [ActualiteController::class, 'index'])->name('actualites.index');
+Route::get('actualites/{actualite}',       [ActualiteController::class, 'show'])->name('actualites.show');
+Route::get('actualites/{actualite}/download',[ActualiteController::class, 'download'])->name('actualites.download');
 
-    return redirect()->back();
-})->name('toggle.construction');
+// Utilities
+Route::post('/newsletter/souscription', [NewsletterController::class, 'souscription'])->name('newsletter.souscription');
+Route::get('/locale/{locale}',          [LocaleController::class, 'switch'])->name('locale');
 
-
-Route::middleware('auth')->group(function () {
-    Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
-    Route::patch('/profile/profile-photo', [ProfileController::class, 'updateProfilePhoto'])->name('profile.profile-photo.update');
-    Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
-    Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
-});
-
-Route::prefix('personal')->middleware('auth')->group(function () {
-    Route::get('/', [PersonalController::class, 'index'])->name('personal.index');
-    Route::get('/dashboard', [PersonalController::class, 'dashboard'])->name('personal.dashboard');
-    Route::get('/requestsDashboard', [PersonalController::class, 'requestsDashboard'])->name('personal.requests-dashboard');
-    Route::get('/corbeille', [PersonalController::class, 'corbeille'])
-        // ->middleware(['role:secretariat|direction|service_liquidation|service_formalite|service_controle_placement|service_comptabilite|service_assurance|administration|admin'])
-        ->middleware('corbeille.access')
-        ->name('personal.cart');
-    Route::get('/dashboard-corbeille', [PersonalController::class, 'requestsDashboardCorbeille'])->name('personal.requests-dashboard-corbeille');
-    Route::prefix('request')->group(function () {
-        Route::get('/{id}', [PersonalController::class, 'showRequest'])->name('personal.request.show');
-        Route::get('/auth/{id}', [PersonalController::class, 'showRequestForAuthenticatedUser'])->name('personal.request.authenticated-user-request.show');
-        // Route::put('/{id}', [PersonalController::class, 'updateRequest'])->name('personal.request.update');
-        // Route::delete('/{id}/cancel', action: [PersonalController::class, 'cancelRequest'])->name('personal.request.cancel');
-    });
-});
-
+// Document serving
 Route::get('/documents/{filename}', function ($filename) {
     $path = storage_path("app/public/documents/$filename");
-
-    if (!file_exists($path)) {
-        abort(404);
-    }
-
+    abort_unless(file_exists($path), 404);
     return response()->file($path);
 })->name('documents.view');
 
 Route::get('/documents/download/{filename}', function ($filename) {
     $path = storage_path("app/public/documents/$filename");
-
-    if (!file_exists($path)) {
-        abort(404);
-    }
-
+    abort_unless(file_exists($path), 404);
     return response()->download($path);
 })->name('documents.download');
 
+// ============================================================
+// AUTHENTICATED ROUTES
+// ============================================================
 
-Route::prefix('admin')
-    ->name('admin.')
-    ->middleware(['auth', 'role:admin'])
-    ->group(function () {
+Route::middleware('auth')->group(function () {
 
-        // Dashboard
-        Route::get('/dashboard', [AdminController::class, 'dashboard'])->name('dashboard');
+    // ----------------------------------------------------------
+    // Profile
+    // ----------------------------------------------------------
+    Route::get('/profile',               [ProfileController::class, 'edit'])->name('profile.edit');
+    Route::patch('/profile',             [ProfileController::class, 'update'])->name('profile.update');
+    Route::patch('/profile/profile-photo',[ProfileController::class, 'updateProfilePhoto'])->name('profile.profile-photo.update');
+    Route::delete('/profile',            [ProfileController::class, 'destroy'])->name('profile.destroy');
 
-        // Carousels
-        Route::resource('carousels', CarouselController::class);
+    // ----------------------------------------------------------
+    // Personal dashboard & demande tracking
+    // ----------------------------------------------------------
+    Route::prefix('personal')->name('personal.')->group(function () {
+        Route::get('/',                    [PersonalController::class, 'index'])->name('index');
+        Route::get('/dashboard',           [PersonalController::class, 'dashboard'])->name('dashboard');
+        Route::get('/requestsDashboard',   [PersonalController::class, 'requestsDashboard'])->name('requests-dashboard');
+        Route::get('/dashboard-corbeille', [PersonalController::class, 'requestsDashboardCorbeille'])->name('requests-dashboard-corbeille');
 
-        // Documents
-        Route::controller(DocumentController::class)->group(function () {
-            Route::get('/documents/upload', 'index')->name('documents.index');
-            Route::post('/documents/upload', 'upload')->name('documents.upload');
+        Route::middleware('corbeille.access')->group(function () {
+            Route::get('/corbeille',        [PersonalController::class, 'corbeille'])->name('cart');
+            Route::get('/corbeille/folder', [PersonalController::class, 'corbeilleByFolder'])->name('cart.folder');
         });
 
-        // Users & Posts
-        Route::resource('users', UserController::class);
-        Route::resource('posts', PostController::class);
-        
-        Route::get('/dashboard', [AdminDashboardController::class, 'index'])->name('dashboard.index');
-        Route::get('/services', [ServiceController::class, 'index'])->name('services.index');
-        Route::get('/roles', [RoleController::class, 'index'])->name('roles.index');
-        Route::get('/permissions', [PermissionController::class, 'index'])->name('permissions.index');
-
-        // Settings
-        Route::get('/settings', [AdminController::class, 'settings'])->name('settings');
+        Route::prefix('request')->group(function () {
+            Route::get('/{id}',      [PersonalController::class, 'showRequest'])->name('request.show');
+            Route::get('/auth/{id}', [PersonalController::class, 'showRequestForAuthenticatedUser'])->name('request.authenticated-user-request.show');
+        });
     });
 
-Route::middleware(['auth'])->group(function(){
-    Route::get('admin/rapports', [ReportController::class,'adminIndex'])->name('reports.admin.index');
-    Route::get('admin/rapports/create', [ReportController::class,'create'])->name('reports.create');
-    Route::post('admin/rapports', [ReportController::class,'store'])->name('reports.store');
-    Route::get('admin/rapports/{report}/edit', [ReportController::class,'edit'])->name('reports.edit');
-    Route::put('admin/rapports/{report}', [ReportController::class,'update'])->name('reports.update');
-    Route::delete('admin/rapports/{report}', [ReportController::class,'destroy'])->name('reports.destroy');
-    Route::post('admin/rapports/{report}/toggle', [ReportController::class,'togglePublish'])->name('reports.toggle');
-});
+    // ----------------------------------------------------------
+    // Demandes — create / store (all types)
+    // ----------------------------------------------------------
+    Route::prefix('demandes')->name('demandes.')->middleware('auth')->group(function () {
 
-Route::get('/php-info', function () {
-    phpinfo();
-});
+        // Pensionnaire
+        Route::prefix('virements')->name('virements.')->controller(DemandeController::class)->group(function () {
+            Route::get('/create/{demandeId?}', 'createDemandeVirement')->name('create');
+            Route::post('/',                   'storeDemandeVirement')->name('store');
+        });
+        Route::prefix('attestations')->name('attestations.')->controller(DemandeController::class)->group(function () {
+            Route::get('/create/{demandeId?}', 'createDemandeAttestation')->name('create');
+            Route::post('/',                   'storeDemandeAttestation')->name('store');
+        });
+        Route::prefix('transfert-cheque')->name('transfert-cheque.')->controller(DemandeController::class)->group(function () {
+            Route::get('/create/{demandeId?}', 'createDemandeTransfertCheque')->name('create');
+            Route::post('/',                   'storeDemandeTransfertCheque')->name('store');
+        });
+        Route::prefix('arret-paiement')->name('arret-paiement.')->controller(DemandeController::class)->group(function () {
+            Route::get('/create/{demandeId?}', 'createDemandeArretPaiement')->name('create');
+            Route::post('/',                   'storeDemandeArretPaiement')->name('store');
+        });
+        Route::prefix('demande-reinsertion')->name('demande-reinsertion.')->controller(DemandeController::class)->group(function () {
+            Route::get('/create/{demandeId?}', 'createDemandeReinsertion')->name('create');
+            Route::post('/',                   'storeDemandeReinsertion')->name('store');
+        });
+        Route::prefix('demande-arret-virement')->name('demande-arret-virement.')->controller(DemandeController::class)->group(function () {
+            Route::get('/create/{demandeId?}', 'createDemandeArretVirement')->name('create');
+            Route::post('/',                   'storeDemandeArretVirement')->name('store');
+        });
+        Route::prefix('preuve-existence')->name('preuve-existence.')->controller(DemandeController::class)->group(function () {
+            Route::get('/create/{demandeId?}', 'createPreuveExistence')->name('create');
+            Route::post('/',                   'storePreuveExistence')->name('store');
+        });
+        Route::prefix('pension-pensionnaire')->name('pension-pensionnaire.')->controller(DemandeController::class)->group(function () {
+            Route::get('/create/{demandeId?}', 'createDemandePensionPensionnaire')->name('create');
+            Route::post('/',                   'storeDemandePensionPensionnaire')->name('store');
+        });
 
-Route::get('/reports/view/{report}', function (Report $report) {
-    return response()->file(storage_path('app/public/' . $report->file_path));
-})->name('reports.view');
+        // Fonctionnaire
+        Route::prefix('demande-etat-carriere')->name('demande-etat-carriere.')->controller(DemandeController::class)->group(function () {
+            Route::get('/create/{demandeId?}', 'createDemandeEtatCarriere')->name('create');
+            Route::post('/',                   'storeDemandeEtatCarriere')->name('store');
+        });
 
-Route::get('rapports/{report}', [ReportController::class,'show'])->name('reports.show');
-Route::get('rapports/{report}/download', [ReportController::class,'download'])->name('reports.download');
+        // Institution
+        Route::prefix('demande-adhesion')->name('demande-adhesion.')->controller(DemandeController::class)->group(function () {
+            Route::get('/create/{demandeId?}', 'createDemandeAdhesion')->name('create');
+            Route::post('/',                   'storeDemandeAdhesion')->name('store');
+        });
 
-// Actualites routes
-Route::get('actualites', [ActualiteController::class, 'index'])->name('actualites.index');
-Route::get('actualites/{actualite}', [ActualiteController::class, 'show'])->name('actualites.show');
-Route::get('actualites/{actualite}/download', [ActualiteController::class, 'download'])->name('actualites.download');
-Route::middleware(['auth'])->group(function() {
-    Route::get('admin/actualites', [ActualiteController::class, 'adminIndex'])->name('actualites.admin.index');
-    Route::get('admin/actualites/create', [ActualiteController::class, 'create'])->name('actualites.create');
-    Route::post('admin/actualites', [ActualiteController::class, 'store'])->name('actualites.store');
-    Route::get('admin/actualites/{actualite}/edit', [ActualiteController::class, 'edit'])->name('actualites.edit');
-    Route::put('admin/actualites/{actualite}', [ActualiteController::class, 'update'])->name('actualites.update');
-    Route::delete('admin/actualites/{actualite}', [ActualiteController::class, 'destroy'])->name('actualites.destroy');
-    Route::post('admin/actualites/{actualite}/toggle', [ActualiteController::class, 'togglePublish'])->name('actualites.toggle');
-});
+        // Pension (fonctionnaire / institution)
+        Route::get('/demande-pension',     [DemandeController::class, 'showDemandesPensionPage'])->name('demande-pension.index');
+        Route::prefix('demande-pension-standard')->name('demande-pension-standard.')->controller(DemandeController::class)->group(function () {
+            Route::get('/create/{demandeId?}', 'createDemandePensionStandard')->name('create');
+            Route::post('/',                   'storeDemandePensionStandard')->name('store');
+        });
+        Route::prefix('demande-pension-reversion')->name('demande-pension-reversion.')->controller(DemandeController::class)->group(function () {
+            Route::get('/create/{demandeId?}', 'createDemandePensionReversion')->name('create');
+            Route::post('/',                   'storeDemandePensionReversion')->name('store');
+        });
 
-// #####################################################################################################################
+        // Lifecycle
+        Route::delete('/{demande}', [DemandeController::class, 'destroyDemande'])->name('destroy');
+    });
 
-/* 
-Route::middleware(['auth'])->group(function(){
-    // Usagers (pensionnaires / fonctionnaires)
-    Route::get('/mes-demandes', [DemandeController::class,'index'])->name('demandes.index');
-    Route::get('/mes-demandes/{demande}', [DemandeController::class,'show'])->name('demandes.show');
+    // Demande actions — kept in a separate group with no name prefix to preserve legacy names
+    Route::prefix('demandes')->group(function () {
+        Route::post('/{demande}/documents',           [DemandeDocumentController::class, 'store'])->name('demandedocument.store');
+        Route::delete('/documents/{document}',        [DemandeDocumentController::class, 'destroy'])->name('demandedocument.destroy');
+        Route::get('/{demande}/pdf',                  [DemandePdfController::class, 'download'])->name('demande.pdf');
+        Route::post('/{demande}/annotation',          [DemandeManagementController::class, 'annotate'])->name('demande.annotate');
+        Route::post('/{demande}/complement',          [DemandeManagementController::class, 'requestComplement'])->name('demande.complement');
+        Route::post('/{demande}/repondre-complement', [PersonalController::class, 'repondreComplement'])->name('demande.repondre-complement');
+        Route::post('/transfert',                     [DemandeManagementController::class, 'transfererDemande'])->name('demande.transfert');
+    });
 
-
-    // Admin / agents
-    Route::prefix('admin')->name('admin.')->middleware('can:access-admin')->group(function(){
-    Route::get('/demandes', [DemandeManagementController::class,'index'])->name('demandes.index');
-    Route::get('/demandes/{demande}/edit', [DemandeManagementController::class,'edit'])->name('demandes.edit');
-    Route::post('/demandes/{demande}/update-status', [DemandeManagementController::class,'updateStatus'])->name('demandes.updateStatus');
+    // ----------------------------------------------------------
+    // Notifications
+    // ----------------------------------------------------------
+    Route::prefix('notifications')->name('notifications.')->group(function () {
+        Route::get('/',                  [NotificationController::class, 'index'])->name('index');
+        Route::post('/{id}/mark-read',   [NotificationController::class, 'markAsRead'])->name('markAsRead');
+        Route::post('/mark-all-read',    [NotificationController::class, 'markAllAsRead'])->name('markAllAsRead');
+        Route::delete('/{id}',           [NotificationController::class, 'destroy'])->name('destroy');
     });
 });
 
-Route::middleware('auth:sanctum')->group(function(){
-    Route::get('/demandes/{demande}/progress', [DemandeApiController::class,'progress']);
+// ============================================================
+// ADMIN ROUTES
+// ============================================================
+
+Route::prefix('admin')->name('admin.')->middleware(['auth', 'role:admin'])->group(function () {
+
+    // Dashboard
+    Route::get('/dashboard', [AdminDashboardController::class, 'index'])->name('dashboard.index');
+
+    // Settings & dev tools
+    Route::get('/settings',            [AdminController::class, 'settings'])->name('settings');
+    Route::get('/toggle-construction', function () {
+        session()->put('site_under_construction', ! session()->get('site_under_construction', true));
+        return redirect()->back();
+    })->name('toggle.construction');
+
+    // Users, carousels, posts
+    Route::resource('users',     UserController::class);
+    Route::resource('carousels', CarouselController::class);
+    Route::resource('posts',     PostController::class);
+
+    // Services, roles, permissions
+    Route::get('/services',    [ServiceController::class, 'index'])->name('services.index');
+    Route::get('/roles',       [RoleController::class, 'index'])->name('roles.index');
+    Route::get('/permissions', [PermissionController::class, 'index'])->name('permissions.index');
+
+    // Document uploads
+    Route::get('/documents/upload',  [DocumentController::class, 'index'])->name('documents.index');
+    Route::post('/documents/upload', [DocumentController::class, 'upload'])->name('documents.upload');
+
+    // Demande management (agent / direction)
+    Route::get('/demandes',                          [DemandeManagementController::class, 'index'])->name('demandes.index');
+    Route::get('/demandes/{demande}',                [DemandeManagementController::class, 'edit'])->name('demandes.show');
+    Route::post('/demandes/{demande}/update-status', [DemandeManagementController::class, 'updateStatus'])->name('demandes.updateStatus');
+
+    // Reports management (keeps original route names)
+    Route::get('rapports',                   [ReportController::class, 'adminIndex'])->name('reports.admin.index');
+    Route::get('rapports/create',            [ReportController::class, 'create'])->name('reports.create');
+    Route::post('rapports',                  [ReportController::class, 'store'])->name('reports.store');
+    Route::get('rapports/{report}/edit',     [ReportController::class, 'edit'])->name('reports.edit');
+    Route::put('rapports/{report}',          [ReportController::class, 'update'])->name('reports.update');
+    Route::delete('rapports/{report}',       [ReportController::class, 'destroy'])->name('reports.destroy');
+    Route::post('rapports/{report}/toggle',  [ReportController::class, 'togglePublish'])->name('reports.toggle');
+
+    // Actualités management (keeps original route names)
+    Route::get('actualites',                     [ActualiteController::class, 'adminIndex'])->name('actualites.admin.index');
+    Route::get('actualites/create',              [ActualiteController::class, 'create'])->name('actualites.create');
+    Route::post('actualites',                    [ActualiteController::class, 'store'])->name('actualites.store');
+    Route::get('actualites/{actualite}/edit',    [ActualiteController::class, 'edit'])->name('actualites.edit');
+    Route::put('actualites/{actualite}',         [ActualiteController::class, 'update'])->name('actualites.update');
+    Route::delete('actualites/{actualite}',      [ActualiteController::class, 'destroy'])->name('actualites.destroy');
+    Route::post('actualites/{actualite}/toggle', [ActualiteController::class, 'togglePublish'])->name('actualites.toggle');
 });
-
-Route::get('/enregistrement-pensionnaire/create', [EnregistrementPensionnaireController::class, 'create'])->name('enregistrement-pensionnaire.create');
-Route::post('/enregistrement-pensionnaire', [EnregistrementPensionnaireController::class, 'store'])->name('enregistrement-pensionnaire.store');
-
-// Pensionnaire Routes
-Route::prefix('pensionnaire')
-    ->name('pensionnaire.')
-    ->middleware('auth')
-    ->group(function () {
-        Route::get('/demande-virement', [PensionnaireController::class, 'demandeVirement'])->name('virement-request-form');
-        Route::get('/demande-attestation', [PensionnaireController::class, 'demandeAttestation'])->name('attestation-request-form');
-        Route::get('/demande-transfert-cheque', [PensionnaireController::class, 'demandeTransfertCheque'])->name('check-transfer-request-form');
-        Route::get('/demande-arret-paiement', [PensionnaireController::class, 'demandeArretPaiement'])->name('payment-stop-request-form');
-        Route::get('/demande-reinsertion', [PensionnaireController::class, 'demandeReinsertion'])->name('reinstatement-request-form');
-        Route::get('/demande-arret-virement', [PensionnaireController::class, 'demandeArretVirement'])->name('transfer-stop-request-form');
-        Route::get('/preuve-existence', [PensionnaireController::class, 'preuveExistence'])->name('preuve-existence');
-        Route::get('/demande-pension', [PensionnaireController::class, 'demandePension'])
-        ->name('pension-request-form');
-        Route::get('/demande-pension-reversion', [PensionnaireController::class, 'showPensionReversionForm'])
-        ->name('pension-reversion-form');
-
-        Route::post('/demande-virement', [PensionnaireController::class, 'processVirementRequest'])->name('process-virement-request');
-        Route::post('/demande-attestation', [PensionnaireController::class, 'processAttestationRequest'])->name('process-attestation-request');
-        Route::post('/demande-transfert-cheque', [PensionnaireController::class, 'processCheckTransferRequest'])->name('process-check-transfer-request');
-        Route::post('/demande-arret-paiement', [PensionnaireController::class, 'processPaymentStopRequest'])->name('process-payment-stop-request');
-        Route::post('/demande-reinsertion', [PensionnaireController::class, 'processReinstatementRequest'])->name('process-reinstatement-request');
-        Route::post('/demande-arret-virement', [PensionnaireController::class, 'processTransferStopRequest'])->name('process-transfer-stop-request');
-        Route::post('/preuve-existence', [PensionnaireController::class, 'processExistenceProofRequest'])->name('process-existence-proof-request');
-    });
-
-    Route::prefix('fonctionnaire')->name('fonctionnaire.')->middleware('auth')->group(function () {
-        // Get routes
-        Route::get('/demande-etat-de-carriere', [FonctionnaireController::class, 'demandeEtatCarriere'])
-            ->name('career-state-form');
-
-        Route::get('/simulation-retraite', [FonctionnaireController::class, 'retirementSimulation'])
-            ->name('retirement-simulation-form');
-
-        Route::get('/demande-pension', [FonctionnaireController::class, 'demandePension'])
-            ->name('pension-request-form');
-
-        Route::get('/demande-pension-standard', [FonctionnaireController::class, 'showPensionStandardForm'])
-            ->name('pension-standard-form');
-
-        // Post routes
-        Route::post('/demande-etat-de-carriere', [FonctionnaireController::class, 'processCareerStateRequest'])
-            ->name('process-career-state-request');
-
-        Route::post('/simulation-retraite', [FonctionnaireController::class, 'processRetirementSimulation'])
-            ->name('process-retirement-simulation');
-
-        Route::post('/demande-pension', [FonctionnaireController::class, 'processPensionRequest'])
-            ->name('process-pension-request');
-
-        Route::post('/demande-pension-standard', [FonctionnaireController::class, 'processPensionStandard'])
-            ->name('process-pension-standard');
-
-        Route::post('/demande-pension-reversion', [FonctionnaireController::class, 'processPensionReversion'])
-            ->name('process-pension-reversion');
-    });
-
-    Route::prefix('institution')->name('institution.')->middleware('auth')->group(function () {
-        // Get routes
-        Route::get('/demande-adhesion', [InstitutionController::class, 'demandeAdhesion'])
-            ->name('demande-adhesion-form');
-
-        // Post routes
-        Route::post('/demande-adhesion', [InstitutionController::class, 'processDemandeAdhesion'])
-            ->name('process-demande-adhesion');
-    });
-
-
-// Qui sommes nous Routes
-
-Route::get('/dashboard', function () {
-    return view('dashboard');
-})->middleware(['auth', 'verified'])->name('dashboard'); */
 
 require __DIR__ . '/auth.php';

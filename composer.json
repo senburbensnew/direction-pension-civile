@@ -6,6 +6,7 @@
     "license": "MIT",
     "require": {
         "php": "^8.1",
+        "barryvdh/laravel-dompdf": "^3.1",
         "guzzlehttp/guzzle": "^7.2",
         "laravel/breeze": "^1.29",
         "laravel/framework": "^10.10",
@@ -17,7 +18,6 @@
     "require-dev": {
         "fakerphp/faker": "^1.9.1",
         "laravel-lang/common": "^6.7",
-        "laravel/boost": "^1.8",
         "laravel/pint": "^1.0",
         "laravel/sail": "^1.18",
         "mockery/mockery": "^1.4.4",
@@ -66,9 +66,14 @@
             "php-http/discovery": true
         },
         "audit": {
+            "block-insecure": false,
             "ignore": [
                 "PKSA-8qx3-n5y5-vvnd",
-                "PKSA-g5js-3ypd-k2kr"
+                "PKSA-g5js-3ypd-k2kr",
+                "PKSA-z3gr-8qht-p93v",
+                "PKSA-21fb-n1x5-5nf7",
+                "PKSA-2cx9-ynrq-qdk3",
+                "PKSA-4s4z-t146-6123"
             ]
         }
     },

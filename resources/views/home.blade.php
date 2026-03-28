@@ -305,10 +305,10 @@
             </div>
         </x-carousel>
         <div class="w-full lg:w-auto mt-4 lg:mt-0">
-            <x-presentation role="Le Ministre" nom="Alfred Fils METELLUS" sexe="M"
+            <x-presentation role="Le Ministre" nom="Serge Gabriel COLLIN" sexe="M"
                 lien-profil="{{ route('quisommesnous.profil', ['role' => 'ministre']) }}"
                 lien-discours="{{ route('quisommesnous.mots', ['role' => 'ministre']) }}"
-                mobile-image="images/photo-metelus.png" desktop-image="images/photo-metelus.png" :showProfileLink="true"
+                mobile-image="images/ministre.png" desktop-image="images/ministre.png" :showProfileLink="true"
                 :showSpeechLink="true" />
         </div>
     </section>

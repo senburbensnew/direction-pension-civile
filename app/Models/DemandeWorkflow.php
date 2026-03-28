@@ -4,13 +4,11 @@ namespace App\Models;
 
 use App\Models\User;
 use App\Models\Status;
-use App\Models\Demande;
 use App\Models\Service;
 use Illuminate\Database\Eloquent\Model;
 
 class DemandeWorkflow extends Model
 {
-
     protected $fillable = [
         'demande_id',
         'from_service_id',
@@ -20,10 +18,9 @@ class DemandeWorkflow extends Model
         'commentaire',
     ];
 
-    public function demande()
-    {
-        return $this->belongsTo(Demande::class);
-    }
+    protected $casts = [
+        'action_at' => 'datetime',
+    ];
 
     public function fromService()
     {
@@ -35,13 +32,13 @@ class DemandeWorkflow extends Model
         return $this->belongsTo(Service::class, 'to_service_id');
     }
 
+    public function user()
+    {
+        return $this->belongsTo(User::class, 'action_by_user_id');
+    }
+
     public function status()
     {
         return $this->belongsTo(Status::class);
-    }
-
-    public function actionBy()
-    {
-        return $this->belongsTo(User::class, 'action_by_user_id');
     }
 }

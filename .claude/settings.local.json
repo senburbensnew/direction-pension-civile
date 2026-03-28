@@ -1,0 +1,16 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(find /c/Users/rubens/Documents/projects/direction-pension-civile -type f \\\\\\(-name composer.json -o -name web.php -o -name CorbeilleAccess.php -o -name DemandeManagementController.php -o -name *Workflow* -o -name *History* \\\\\\))",
+      "Bash(find /c/Users/rubens/Documents/projects/direction-pension-civile/database/migrations -type f -name *demande* -o -name *workflow* -o -name *history*)",
+      "Bash(find /c/Users/rubens/Documents/projects/direction-pension-civile/resources/views -name *request*details* -o -name *show*)",
+      "Bash(php -l app/Http/Requests/StoreDemandeVirementBancaireRequest.php)",
+      "Bash(php -l app/Http/Requests/StoreArretPaiementRequest.php)",
+      "Bash(php -l app/Http/Requests/StorePreuveExistenceRequest.php)",
+      "Bash(php artisan:*)",
+      "Bash(python3 -c \":*)",
+      "Bash(php -r \":*)",
+      "Bash(php -l app/Models/Demande.php app/Http/Controllers/DemandeController.php)"
+    ]
+  }
+}

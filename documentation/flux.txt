@@ -1,0 +1,137 @@
+============================================================
+  DIAGRAMME DE FLUX — CYCLE DE VIE D'UNE DEMANDE
+  Système de Gestion des Pensions Civiles
+  Direction de la Pension Civile — Haiti
+  Date : 2026-03-28
+============================================================
+
+STATUTS POSSIBLES
+-----------------
+  BROUILLON          Dossier sauvegardé, non soumis
+  SOUMISE            Dossier soumis par l'usager
+  EN_TRAITEMENT      Dossier transmis à la Direction
+  COMPLEMENT_REQUIS  Un complément est demandé à l'usager
+  TRANSFEREE         Dossier transféré vers un service interne
+  APPROUVEE          Dossier approuvé par le service traitant
+  REJETEE            Dossier rejeté (avec motif)
+  ANNULEE            Dossier annulé par l'usager
+  CLOTUREE           Dossier clôturé et archivé
+
+────────────────────────────────────────────
+  SWIMLANE : USAGER
+────────────────────────────────────────────
+
+  1. Choisir le type de demande (selon rôle : Pensionnaire / Fonctionnaire / Institution)
+  2. Remplir le formulaire en ligne
+  3. Joindre les documents requis (pièces justificatives)
+  4a. [Option A] Enregistrer en brouillon  →  Statut : BROUILLON
+         L'usager peut modifier ou supprimer le dossier
+         Reprendre et compléter le formulaire
+  4b. [Option B] Soumettre directement
+  5. Soumettre la demande
+         Statut : SOUMISE
+         Horodatage enregistré
+         Notification envoyée à la Réception
+
+────────────────────────────────────────────
+  SWIMLANE : RÉCEPTION / SECRÉTARIAT
+────────────────────────────────────────────
+
+  6. Réceptionner la demande dans la corbeille
+  7. Examiner le dossier (complétude, conformité)
+
+  [Si dossier incomplet / non conforme]
+    8a. Envoyer une demande de complément
+          Statut : COMPLEMENT_REQUIS
+          Message envoyé à l'usager via messagerie interne
+        → [Usager] Recevoir notification
+        → [Usager] Compléter le dossier (modifier formulaire ou ajouter documents)
+        → [Usager] Re-soumettre  →  Statut : SOUMISE
+        → [Réception] Réceptionner la demande complétée
+
+  [Si dossier complet]
+    8b. Transmettre le dossier à la Direction
+          Statut : EN_TRAITEMENT
+          Workflow enregistré : Réception → Direction
+
+────────────────────────────────────────────
+  SWIMLANE : DIRECTION
+────────────────────────────────────────────
+
+  9. Consulter et analyser le dossier
+
+  [Action : Annotation]
+    10a. Annoter le dossier (commentaire directorial + catégorie de classement)
+           Champs : annotation, annotated_by, annotated_at
+           L'annotation est obligatoire avant tout transfert ou impression
+
+         [Si complément nécessaire]
+           Demander un complément à l'usager  →  Statut : COMPLEMENT_REQUIS
+           [Usager] Compléter et re-soumettre
+           [Direction] Réceptionner le dossier complémentaire
+
+         Transférer le dossier vers le Secrétariat
+           Statut : TRANSFEREE
+           La Direction ne peut transférer qu'au Secrétariat
+
+  [Action : Rejet direct]
+    10b. Rejeter le dossier avec motif
+           Statut : REJETEE
+           [Usager] Recevoir notification de rejet  →  FIN
+
+────────────────────────────────────────────
+  SWIMLANE : SERVICES INTERNES
+────────────────────────────────────────────
+
+  11. Secrétariat reçoit le dossier
+  12. Distribuer vers le service compétent
+        Services disponibles :
+          - Liquidation
+          - Formalité
+          - Contrôle & Placement
+          - Comptabilité
+          - Assurance
+          - Administration
+
+  [Boucle de traitement]
+    13. Service concerné traite le dossier
+
+    [Si complément requis]
+      Demander des informations complémentaires  →  Statut : COMPLEMENT_REQUIS
+      [Usager] Fournir les compléments
+      Reprendre le traitement
+
+    [Si transfert vers un autre service]
+      Transférer vers le service suivant
+      Nouveau workflow enregistré
+      Notification au service destinataire
+
+    [Si traitement terminé]
+      Sortie de la boucle
+
+  [Décision finale]
+    [Approuvée]
+      Approuver le dossier  →  Statut : APPROUVEE
+      Clôturer le dossier   →  Statut : CLOTUREE  (archivé)
+
+    [Rejetée]
+      Rejeter le dossier avec motif  →  Statut : REJETEE
+
+────────────────────────────────────────────
+  SWIMLANE : USAGER (FIN)
+────────────────────────────────────────────
+
+  14. Recevoir la notification de décision finale
+  15. Consulter le résultat dans son espace personnel
+
+  [Si clôturée]
+    Télécharger le document ou courrier de réponse
+
+  [Si rejetée]
+    Consulter le motif de rejet
+    L'usager peut soumettre une nouvelle demande
+
+============================================================
+  Source : documentation/flux.puml
+  Image  : documentation/flux.png
+============================================================

@@ -11,7 +11,7 @@ class StorePreuveExistenceRequest extends FormRequest
 {
     public function authorize(): bool
     {
-        return auth()->check(); // sécurité
+        return auth()->check();
     }
 
     protected function prepareForValidation(): void
@@ -24,50 +24,42 @@ class StorePreuveExistenceRequest extends FormRequest
     public function rules(): array
     {
         return [
+            'title'                => 'nullable|string|max:255',
+            'action'               => 'required|in:draft,submit',
+            'demande_id'           => 'sometimes|nullable|exists:demandes,id',
 
-            // Identification
-            'numero_identite' => 'required|string|max:50',
-            'profile_photo'  => 'required|image|mimes:jpeg,png,jpg,gif,webp|max:2048',
-            'annee_fiscale'   => ['required', new AnneeFiscale()],
-
-            // Identité pensionné
-            'nif'        => ['required', new Nif()],
-            'nom'        => 'required|string|max:100',
-            'prenom'     => 'required|string|max:100',
-            'adresse'    => 'required|string|max:255',
-            'localisation' => 'required|string|max:150',
-
-            'date_naissance' => 'required|date|before:today',
-            'etat_civil_id'  => 'required|exists:civil_statuses,id',
-            'sexe_id'        => 'required|exists:genders,id',
-
-            // Contact
-            'adresse_postale' => 'required|string|max:100',
-            'telephone'       => ['required', new Telephone()],
-
-            // Pension
-            'montant_pension' => 'required|numeric|min:0',
-            'no_moniteur'     => 'required|string|max:50',
-            'date_moniteur'   => 'required|date',
-            'debut_pension'   => 'required|date|before_or_equal:fin_pension',
-            'fin_pension'     => 'nullable|date|after_or_equal:debut_pension',
-            'categorie_pension_id' => 'required|exists:pension_categories,id',
-
-            // Dépendants
-            'dependants' => 'nullable|array|min:1',
-
-            'dependants.*.nom'       => 'required|string|max:150',
-            'dependants.*.relation'   => 'required|string|max:100',
-            'dependants.*.date_naissance' => 'required|date|before:today',
-            'dependants.*.sexe_id'  => 'required|exists:genders,id',
+            'numero_identite'      => ['nullable', 'string', 'max:50'],
+            'profile_photo'        => ['nullable', 'sometimes', 'image', 'mimes:jpeg,png,jpg,gif,webp', 'max:2048'],
+            'annee_fiscale'        => ['nullable', 'required_if:action,submit', new AnneeFiscale()],
+            'nif'                  => ['nullable', 'required_if:action,submit', new Nif()],
+            'nom'                  => ['nullable', 'required_if:action,submit', 'string', 'max:100'],
+            'prenom'               => ['nullable', 'required_if:action,submit', 'string', 'max:100'],
+            'adresse'              => ['nullable', 'required_if:action,submit', 'string', 'max:255'],
+            'localisation'         => ['nullable', 'string', 'max:150'],
+            'date_naissance'       => ['nullable', 'required_if:action,submit', 'date', 'before:today'],
+            'etat_civil_id'        => ['nullable', 'required_if:action,submit', 'exists:civil_statuses,id'],
+            'sexe_id'              => ['nullable', 'required_if:action,submit', 'exists:genders,id'],
+            'adresse_postale'      => ['nullable', 'string', 'max:100'],
+            'telephone'            => ['nullable', 'required_if:action,submit', new Telephone()],
+            'montant_pension'      => ['nullable', 'required_if:action,submit', 'numeric', 'min:0'],
+            'no_moniteur'          => ['nullable', 'string', 'max:50'],
+            'date_moniteur'        => ['nullable', 'date'],
+            'debut_pension'        => ['nullable', 'required_if:action,submit', 'date'],
+            'fin_pension'          => ['nullable', 'date', 'after_or_equal:debut_pension'],
+            'categorie_pension_id' => ['nullable', 'required_if:action,submit', 'exists:pension_categories,id'],
+            'dependants'           => 'nullable|array',
+            'dependants.*.nom'           => 'nullable|string|max:150',
+            'dependants.*.relation'      => 'nullable|string|max:100',
+            'dependants.*.date_naissance'=> 'nullable|date|before:today',
+            'dependants.*.sexe_id'       => 'nullable|exists:genders,id',
         ];
     }
 
     public function messages(): array
     {
         return [
-            'required'  => 'Ce champ est obligatoire.',
-            'annee_fiscale.regex' => 'Le format doit être YYYY/YYYY (ex: 2025/2026).',
+            'required'             => 'Ce champ est obligatoire.',
+            'annee_fiscale.regex'  => 'Le format doit être YYYY/YYYY (ex: 2025/2026).',
         ];
     }
 }

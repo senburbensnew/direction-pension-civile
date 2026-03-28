@@ -116,6 +116,9 @@
                     <button class="filter-btn px-4 py-2 bg-gray-100 text-gray-700 rounded-lg text-sm font-medium" data-filter="legal">
                         Documents légaux
                     </button>
+                    <button class="filter-btn px-4 py-2 bg-gray-100 text-gray-700 rounded-lg text-sm font-medium" data-filter="avis">
+                        Avis de publication
+                    </button>
                     <button class="filter-btn px-4 py-2 bg-gray-100 text-gray-700 rounded-lg text-sm font-medium" data-filter="other">
                         Autres documents
                     </button>
@@ -123,18 +126,22 @@
             </div>
         </header>
 
+
         <!-- Legal Documents Section -->
-        <section id="legal-documents" class="mb-12 fade-in">
-            <div class="bg-white rounded-2xl card-shadow overflow-hidden">
+        <section id="legal-documents"  class="mb-12 fade-in">
+            <div class="bg-white rounded-2xl shadow-lg overflow-hidden">
+                
                 <!-- Section Header -->
-                <div class="gradient-bg text-white p-6">
+                <div class="bg-gray-100 text-gray-800 p-6 border-b">
                     <div class="flex items-center">
-                        <div class="bg-white bg-opacity-20 rounded-lg p-3 mr-4">
-                            <i class="fas fa-gavel text-white text-xl"></i>
+                        <div class="bg-gray-200 rounded-lg p-3 mr-4">
+                            <i class="fas fa-gavel text-gray-700 text-xl"></i>
                         </div>
                         <div>
                             <h2 class="text-2xl font-bold">Documents Légaux Officiels</h2>
-                            <p class="text-blue-100 mt-1">Textes réglementaires et décrets en vigueur</p>
+                            <p class="text-gray-500 mt-1">
+                                Textes réglementaires et décrets en vigueur
+                            </p>
                         </div>
                     </div>
                 </div>
@@ -142,149 +149,303 @@
                 <!-- Documents Grid -->
                 <div class="p-6">
                     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+
                         <!-- CARD 1 -->
-                        <div class="document-card bg-white border border-gray-200 rounded-xl p-5 card-shadow" data-category="legal">
-                            <span class="category-badge bg-purple-100 text-purple-800">Comptabilité</span>
-                            <div class="flex items-start mb-4">
-                                <div class="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center mr-4 flex-shrink-0">
-                                    <i class="fas fa-file-invoice text-purple-600 text-lg"></i>
-                                </div>
-                                <h3 class="text-md font-semibold text-gray-800 leading-tight">
+                        <div class="document-card bg-white border border-gray-200 rounded-xl p-5 shadow-sm hover:shadow-md transition" data-category="legal">
+                            <span class="bg-purple-100 text-purple-800 text-xs px-2 py-1 rounded">Comptabilité</span>
+                            <div class="flex items-start mb-4 mt-2">
+                                <h3 class="text-sm font-semibold text-gray-800">
                                     Arrêté sur la comptabilité publique
                                 </h3>
                             </div>
-                            <div class="mt-4 flex space-x-2">
-                                <a href="{{ route('documents.view', 'Arrete_sur_la_Comptabilite_Pub.pdf') }}"
-                                   target="_blank"
-                                   class="flex-1 bg-blue-600 text-white py-2 px-3 rounded-lg hover:bg-blue-700 transition-colors text-sm text-center flex items-center justify-center">
-                                    <i class="fas fa-eye mr-2"></i> Voir PDF
+                            <div class="flex space-x-2 mt-4">
+                                <a href="{{ route('documents.view', 'arrete-sur-la-comptabilite-pub.pdf') }}"
+                                target="_blank"
+                                class="flex-1 bg-blue-500 text-white py-2 rounded-lg text-sm text-center hover:bg-emerald-600 transition">
+                                    <i class="fas fa-eye mr-1"></i> Voir
                                 </a>
-                                <a href="{{ route('documents.download', 'Arrete_sur_la_Comptabilite_Pub.pdf') }}"
-                                   class="bg-gray-100 text-gray-700 py-2 px-3 rounded-lg hover:bg-gray-200 transition-colors text-sm flex items-center justify-center">
-                                    <i class="fas fa-download mr-2"></i>
+                                <a href="{{ route('documents.download', 'arrete-sur-la-comptabilite-pub.pdf') }}"
+                                class="bg-gray-100 px-3 rounded-lg hover:bg-gray-200 flex items-center">
+                                    <i class="fas fa-download"></i>
                                 </a>
                             </div>
                         </div>
 
                         <!-- CARD 2 -->
-                        <div class="document-card bg-white border border-gray-200 rounded-xl p-5 card-shadow" data-category="legal">
-                            <span class="category-badge bg-indigo-100 text-indigo-800">Organisation</span>
-                            <div class="flex items-start mb-4">
-                                <div class="w-12 h-12 bg-indigo-100 rounded-lg flex items-center justify-center mr-4 flex-shrink-0">
-                                    <i class="fas fa-sitemap text-indigo-600 text-lg"></i>
-                                </div>
-                                <h3 class="text-md font-semibold text-gray-800 leading-tight">
+                        <div class="document-card bg-white border border-gray-200 rounded-xl p-5 shadow-sm hover:shadow-md transition">
+                            <span class="bg-indigo-100 text-indigo-800 text-xs px-2 py-1 rounded">Organisation</span>
+                            <div class="flex items-start mb-4 mt-2">
+ 
+                                <h3 class="text-sm font-semibold text-gray-800">
                                     Décret portant organisation de l'administration centrale de l'État
                                 </h3>
                             </div>
-                            <div class="mt-4 flex space-x-2">
-                                <a href="{{ route('documents.view', 'Decret_portant_organisation_de_l_Administration_centrale_de_l_Etat.pdf') }}"
-                                   target="_blank"
-                                   class="flex-1 bg-blue-600 text-white py-2 px-3 rounded-lg hover:bg-blue-700 transition-colors text-sm text-center flex items-center justify-center">
-                                    <i class="fas fa-eye mr-2"></i> Voir PDF
+                            <div class="flex space-x-2 mt-4">
+                                <a href="{{ route('documents.view', 'decret-portant-organisation-de-l-administration-centrale-de-l-etat.pdf') }}"
+                                target="_blank"
+                                class="flex-1 bg-blue-500 text-white py-2 rounded-lg text-sm text-center hover:bg-emerald-600 transition">
+                                    <i class="fas fa-eye mr-1"></i> Voir
                                 </a>
-                                <a href="{{ route('documents.download', 'Decret_portant_organisation_de_l_Administration_centrale_de_l_Etat.pdf') }}"
-                                   class="bg-gray-100 text-gray-700 py-2 px-3 rounded-lg hover:bg-gray-200 transition-colors text-sm flex items-center justify-center">
-                                    <i class="fas fa-download mr-2"></i>
+                                <a href="{{ route('documents.download', 'decret-portant-organisation-de-l-administration-centrale-de-l-etat.pdf') }}"
+                                class="bg-gray-100 px-3 rounded-lg hover:bg-gray-200 flex items-center">
+                                    <i class="fas fa-download"></i>
                                 </a>
                             </div>
                         </div>
 
                         <!-- CARD 3 -->
-                        <div class="document-card bg-white border border-gray-200 rounded-xl p-5 card-shadow" data-category="legal">
-                            <span class="category-badge bg-blue-100 text-blue-800">Déontologie</span>
-                            <div class="flex items-start mb-4">
-                                <div class="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center mr-4 flex-shrink-0">
-                                    <i class="fas fa-balance-scale text-blue-600 text-lg"></i>
-                                </div>
-                                <h3 class="text-md font-semibold text-gray-800 leading-tight">
+                        <div class="document-card bg-white border border-gray-200 rounded-xl p-5 shadow-sm hover:shadow-md transition">
+                            <span class="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded">Déontologie</span>
+                            <div class="flex items-start mb-4 mt-2">
+     
+                                <h3 class="text-sm font-semibold text-gray-800">
                                     Arrêté définissant la règle déontologique applicable aux agents de la fonction publique
                                 </h3>
                             </div>
-                            <div class="mt-4 flex space-x-2">
-                                <a href="{{ route('documents.view', 'Arrete_definissant_la_regle_deontologique_applicable_aux_agents_de_la_FP.pdf') }}"
-                                   target="_blank"
-                                   class="flex-1 bg-blue-600 text-white py-2 px-3 rounded-lg hover:bg-blue-700 transition-colors text-sm text-center flex items-center justify-center">
-                                    <i class="fas fa-eye mr-2"></i> Voir PDF
+                            <div class="flex space-x-2 mt-4">
+                                <a href="{{ route('documents.view', 'arrete-definissant-la-regle-deontologique-applicable-aux-agents-de-la-fp.pdf') }}"
+                                target="_blank"
+                                class="flex-1 bg-blue-500 text-white py-2 rounded-lg text-sm text-center hover:bg-emerald-600 transition">
+                                    <i class="fas fa-eye mr-1"></i> Voir
                                 </a>
-                                <a href="{{ route('documents.download', 'Arrete_definissant_la_regle_deontologique_applicable_aux_agents_de_la_FP.pdf') }}"
-                                   class="bg-gray-100 text-gray-700 py-2 px-3 rounded-lg hover:bg-gray-200 transition-colors text-sm flex items-center justify-center">
-                                    <i class="fas fa-download mr-2"></i>
+                                <a href="{{ route('documents.download', 'arrete-definissant-la-regle-deontologique-applicable-aux-agents-de-la-fp.pdf') }}"
+                                class="bg-gray-100 px-3 rounded-lg hover:bg-gray-200 flex items-center">
+                                    <i class="fas fa-download"></i>
                                 </a>
                             </div>
                         </div>
 
                         <!-- CARD 4 -->
-                        <div class="document-card bg-white border border-gray-200 rounded-xl p-5 card-shadow" data-category="legal">
-                            <span class="category-badge bg-green-100 text-green-800">Ministère</span>
-                            <div class="flex items-start mb-4">
-                                <div class="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center mr-4 flex-shrink-0">
-                                    <i class="fas fa-landmark text-green-600 text-lg"></i>
-                                </div>
-                                <h3 class="text-md font-semibold text-gray-800 leading-tight">
+                        <div class="document-card bg-white border border-gray-200 rounded-xl p-5 shadow-sm hover:shadow-md transition">
+                            <span class="bg-green-100 text-green-800 text-xs px-2 py-1 rounded">Ministère</span>
+                            <div class="flex items-start mb-4 mt-2">
+                              
+                                <h3 class="text-sm font-semibold text-gray-800">
                                     Décret réorganisant le ministère de l'Économie et des Finances
                                 </h3>
                             </div>
-                            <div class="mt-4 flex space-x-2">
-                                <a href="{{ route('documents.view', 'Decret_reorganisant_le_MEF.pdf') }}"
-                                   target="_blank"
-                                   class="flex-1 bg-blue-600 text-white py-2 px-3 rounded-lg hover:bg-blue-700 transition-colors text-sm text-center flex items-center justify-center">
-                                    <i class="fas fa-eye mr-2"></i> Voir PDF
+                            <div class="flex space-x-2 mt-4">
+                                <a href="{{ route('documents.view', 'decret-reorganisant-le-mef.pdf') }}"
+                                target="_blank"
+                                class="flex-1 bg-blue-500 text-white py-2 rounded-lg text-sm text-center hover:bg-emerald-600 transition">
+                                    <i class="fas fa-eye mr-1"></i> Voir
                                 </a>
-                                <a href="{{ route('documents.download', 'Decret_reorganisant_le_MEF.pdf') }}"
-                                   class="bg-gray-100 text-gray-700 py-2 px-3 rounded-lg hover:bg-gray-200 transition-colors text-sm flex items-center justify-center">
-                                    <i class="fas fa-download mr-2"></i>
+                                <a href="{{ route('documents.download', 'decret-reorganisant-le-mef.pdf') }}"
+                                class="bg-gray-100 px-3 rounded-lg hover:bg-gray-200 flex items-center">
+                                    <i class="fas fa-download"></i>
                                 </a>
                             </div>
                         </div>
 
                         <!-- CARD 5 -->
-                        <div class="document-card bg-white border border-gray-200 rounded-xl p-5 card-shadow" data-category="legal">
-                            <span class="category-badge bg-amber-100 text-amber-800">Pension</span>
-                            <div class="flex items-start mb-4">
-                                <div class="w-12 h-12 bg-amber-100 rounded-lg flex items-center justify-center mr-4 flex-shrink-0">
-                                    <i class="fas fa-piggy-bank text-amber-600 text-lg"></i>
-                                </div>
-                                <h3 class="text-md font-semibold text-gray-800 leading-tight">
+                        <div class="document-card bg-white border border-gray-200 rounded-xl p-5 shadow-sm hover:shadow-md transition">
+                            <span class="bg-amber-100 text-amber-800 text-xs px-2 py-1 rounded">Pension</span>
+                            <div class="flex items-start mb-4 mt-2">
+                              
+                                <h3 class="text-sm font-semibold text-gray-800">
                                     Décret du 09 octobre 2015 sur la pension civile de retraite
                                 </h3>
                             </div>
-                            <div class="mt-4 flex space-x-2">
-                                <a href="{{ route('documents.view', 'decret_su_09_octobre_2015_sur_la_Pension_Civile_de_retraite.pdf') }}"
-                                   target="_blank"
-                                   class="flex-1 bg-blue-600 text-white py-2 px-3 rounded-lg hover:bg-blue-700 transition-colors text-sm text-center flex items-center justify-center">
-                                    <i class="fas fa-eye mr-2"></i> Voir PDF
+                            <div class="flex space-x-2 mt-4">
+                                <a href="{{ route('documents.view', 'decret-su-09-octobre-2015-sur-la-pension-civile-de-retraite.pdf') }}"
+                                target="_blank"
+                                class="flex-1 bg-blue-500 text-white py-2 rounded-lg text-sm text-center hover:bg-emerald-600 transition">
+                                    <i class="fas fa-eye mr-1"></i> Voir
                                 </a>
-                                <a href="{{ route('documents.download', 'decret_su_09_octobre_2015_sur_la_Pension_Civile_de_retraite.pdf') }}"
-                                   class="bg-gray-100 text-gray-700 py-2 px-3 rounded-lg hover:bg-gray-200 transition-colors text-sm flex items-center justify-center">
-                                    <i class="fas fa-download mr-2"></i>
+                                <a href="{{ route('documents.download', 'decret-su-09-octobre-2015-sur-la-pension-civile-de-retraite.pdf') }}"
+                                class="bg-gray-100 px-3 rounded-lg hover:bg-gray-200 flex items-center">
+                                    <i class="fas fa-download"></i>
                                 </a>
                             </div>
                         </div>
 
                         <!-- CARD 6 -->
-                        <div class="document-card bg-white border border-gray-200 rounded-xl p-5 card-shadow" data-category="legal">
-                            <span class="category-badge bg-amber-100 text-amber-800">Statut</span>
-                            <div class="flex items-start mb-4">
-                                <div class="w-12 h-12 bg-amber-100 rounded-lg flex items-center justify-center mr-4 flex-shrink-0">
-                                    <i class="fas fa-user-tie text-amber-600 text-lg"></i>
-                                </div>
-                                <h3 class="text-md font-semibold text-gray-800 leading-tight">
+                        <div class="document-card bg-white border border-gray-200 rounded-xl p-5 shadow-sm hover:shadow-md transition">
+                            <span class="bg-amber-100 text-amber-800 text-xs px-2 py-1 rounded">Statut</span>
+                            <div class="flex items-start mb-4 mt-2">
+                             
+                                <h3 class="text-sm font-semibold text-gray-800">
                                     Décret portant révision du Statut Général de la Fonction Publique
                                 </h3>
                             </div>
-                            <div class="mt-4 flex space-x-2">
-                                <a href="{{ route('documents.view', 'Décret_portant_révision_du_Statut_Général_de_la_Fonction_Publique.pdf') }}"
-                                   target="_blank"
-                                   class="flex-1 bg-blue-600 text-white py-2 px-3 rounded-lg hover:bg-blue-700 transition-colors text-sm text-center flex items-center justify-center">
-                                    <i class="fas fa-eye mr-2"></i> Voir PDF
+                            <div class="flex space-x-2 mt-4">
+                                <a href="{{ route('documents.view', 'statut-general-fonction-publique-2005.pdf') }}"
+                                target="_blank"
+                                class="flex-1 bg-blue-500 text-white py-2 rounded-lg text-sm text-center hover:bg-emerald-600 transition">
+                                    <i class="fas fa-eye mr-1"></i> Voir
                                 </a>
-                                <a href="{{ route('documents.download', 'Décret_portant_révision_du_Statut_Général_de_la_Fonction_Publique.pdf') }}"
-                                   class="bg-gray-100 text-gray-700 py-2 px-3 rounded-lg hover:bg-gray-200 transition-colors text-sm flex items-center justify-center">
-                                    <i class="fas fa-download mr-2"></i>
+                                <a href="{{ route('documents.download', 'statut-general-fonction-publique-2005.pdf') }}"
+                                class="bg-gray-100 px-3 rounded-lg hover:bg-gray-200 flex items-center">
+                                    <i class="fas fa-download"></i>
                                 </a>
                             </div>
                         </div>
+
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Section Divider -->
+        <div class="section-divider"></div>
+        
+        <!-- Avis de Publication Section -->
+        <section id="avis-publication" data-category="avis" class="mb-12 fade-in">
+            <div class="bg-white rounded-2xl shadow-lg overflow-hidden">
+                
+                <!-- Section Header -->
+                <div class="bg-gray-100 text-gray-800 p-6 border-b">
+                    <div class="flex items-center">
+                        <div class="bg-gray-200 rounded-lg p-3 mr-4">
+                            <i class="fas fa-bullhorn text-gray-700 text-xl"></i>
+                        </div>
+                        <div>
+                            <h2 class="text-2xl font-bold">Avis de Publication</h2>
+                            <p class="text-gray-500 mt-1">
+                                Avis officiels publiés par la Direction de la Pension Civile
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Documents Grid -->
+                <div class="p-6">
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+
+                        <!-- SAMPLE CARD -->
+                        <div class="document-card bg-white border border-gray-200 rounded-xl p-5 shadow-sm hover:shadow-md transition" data-category="avis">
+                            
+                            <span class="bg-red-100 text-red-800 text-xs px-2 py-1 rounded">
+                                Avis Officiel
+                            </span>
+
+                            <div class="flex items-start mb-4 mt-2">
+                               
+                                <h3 class="text-sm font-semibold text-gray-800">
+                                    Avis de liquidation No 2 publié le 4 janivier 2024
+                                </h3>
+                            </div>
+
+                            <div class="flex space-x-2 mt-4">
+                                <a href="{{ route('documents.view', 'avis-de-liquidation-no-2-publie-le-4-janvier-2024.pdf') }}"
+                                target="_blank"
+                                class="flex-1 bg-blue-500 text-white py-2 rounded-lg text-sm text-center hover:bg-emerald-600 transition">
+                                    <i class="fas fa-eye mr-1"></i> Voir
+                                </a>
+
+                                <a href="{{ route('documents.download', 'avis-de-liquidation-no-2-publie-le-4-janvier-2024.pdf') }}"
+                                class="bg-gray-100 px-3 rounded-lg hover:bg-gray-200 flex items-center">
+                                    <i class="fas fa-download"></i>
+                                </a>
+                            </div>
+                        </div>
+                        <div class="document-card bg-white border border-gray-200 rounded-xl p-5 shadow-sm hover:shadow-md transition" data-category="avis">
+                            
+                            <span class="bg-red-100 text-red-800 text-xs px-2 py-1 rounded">
+                                Avis Officiel
+                            </span>
+
+                            <div class="flex items-start mb-4 mt-2">
+                               
+                                <h3 class="text-sm font-semibold text-gray-800">
+                                    Avis de liquidation No 4 publié le 10 fevrier 2026
+                                </h3>
+                            </div>
+
+                            <div class="flex space-x-2 mt-4">
+                                <a href="{{ route('documents.view', 'avis-de-liquidation-no-4-publie-le-10-fevrier-2026.pdf') }}"
+                                target="_blank"
+                                class="flex-1 bg-blue-500 text-white py-2 rounded-lg text-sm text-center hover:bg-emerald-600 transition">
+                                    <i class="fas fa-eye mr-1"></i> Voir
+                                </a>
+
+                                <a href="{{ route('documents.download', 'avis-de-liquidation-no-4-publie-le-10-fevrier-2026.pdf') }}"
+                                class="bg-gray-100 px-3 rounded-lg hover:bg-gray-200 flex items-center">
+                                    <i class="fas fa-download"></i>
+                                </a>
+                            </div>
+                        </div>
+                        <div class="document-card bg-white border border-gray-200 rounded-xl p-5 shadow-sm hover:shadow-md transition" data-category="avis">
+                            
+                            <span class="bg-red-100 text-red-800 text-xs px-2 py-1 rounded">
+                                Avis Officiel
+                            </span>
+
+                            <div class="flex items-start mb-4 mt-2">
+                               
+                                <h3 class="text-sm font-semibold text-gray-800">
+                                    Avis de liquidation No 56 publié le 28 août 2025
+                                </h3>
+                            </div>
+
+                            <div class="flex space-x-2 mt-4">
+                                <a href="{{ route('documents.view', 'avis-de-liquidation-no-56-publie-le-28-aout-2025.pdf') }}"
+                                target="_blank"
+                                class="flex-1 bg-blue-500 text-white py-2 rounded-lg text-sm text-center hover:bg-emerald-600 transition">
+                                    <i class="fas fa-eye mr-1"></i> Voir
+                                </a>
+
+                                <a href="{{ route('documents.download', 'avis-de-liquidation-no-56-publie-le-28-aout-2025.pdf') }}"
+                                class="bg-gray-100 px-3 rounded-lg hover:bg-gray-200 flex items-center">
+                                    <i class="fas fa-download"></i>
+                                </a>
+                            </div>
+                        </div>
+                        <div class="document-card bg-white border border-gray-200 rounded-xl p-5 shadow-sm hover:shadow-md transition" data-category="avis">
+                            
+                            <span class="bg-red-100 text-red-800 text-xs px-2 py-1 rounded">
+                                Avis Officiel
+                            </span>
+
+                            <div class="flex items-start mb-4 mt-2">
+                               
+                                <h3 class="text-sm font-semibold text-gray-800">
+                                    Avis rectificatif No 2 publié le  6 Jan 2026
+                                </h3>
+                            </div>
+
+                            <div class="flex space-x-2 mt-4">
+                                <a href="{{ route('documents.view', 'avis-rectificatif-no-2-publie-le-6-jan-2026.pdf') }}"
+                                target="_blank"
+                                class="flex-1 bg-blue-500 text-white py-2 rounded-lg text-sm text-center hover:bg-emerald-600 transition">
+                                    <i class="fas fa-eye mr-1"></i> Voir
+                                </a>
+
+                                <a href="{{ route('documents.download', 'avis-rectificatif-no-2-publie-le-6-jan-2026.pdf') }}"
+                                class="bg-gray-100 px-3 rounded-lg hover:bg-gray-200 flex items-center">
+                                    <i class="fas fa-download"></i>
+                                </a>
+                            </div>
+                        </div>
+                        <div class="document-card bg-white border border-gray-200 rounded-xl p-5 shadow-sm hover:shadow-md transition" data-category="avis">
+                            
+                            <span class="bg-red-100 text-red-800 text-xs px-2 py-1 rounded">
+                                Avis Officiel
+                            </span>
+
+                            <div class="flex items-start mb-4 mt-2">
+                               
+                                <h3 class="text-sm font-semibold text-gray-800">
+                                    Avis Rectificatif No 22 publié le 24 mai  2024
+                                </h3>
+                            </div>
+
+                            <div class="flex space-x-2 mt-4">
+                                <a href="{{ route('documents.view', 'avis-rectificatif-no-22-publie-le-24-mai-2024.pdf') }}"
+                                target="_blank"
+                                class="flex-1 bg-blue-500 text-white py-2 rounded-lg text-sm text-center hover:bg-emerald-600 transition">
+                                    <i class="fas fa-eye mr-1"></i> Voir
+                                </a>
+
+                                <a href="{{ route('documents.download', 'avis-rectificatif-no-22-publie-le-24-mai-2024.pdf') }}"
+                                class="bg-gray-100 px-3 rounded-lg hover:bg-gray-200 flex items-center">
+                                    <i class="fas fa-download"></i>
+                                </a>
+                            </div>
+                        </div>
+
+                        <!-- 👉 Duplicate this card dynamically for each PDF -->
+
                     </div>
                 </div>
             </div>
@@ -294,17 +455,20 @@
         <div class="section-divider"></div>
 
         <!-- Other Documents Section -->
-        <section id="other-documents" class="mb-12 fade-in">
-            <div class="bg-white rounded-2xl card-shadow overflow-hidden">
+        <section id="other-documents" data-category="other" class="mb-12 fade-in">
+            <div class="bg-white rounded-2xl shadow-lg overflow-hidden">
+                
                 <!-- Section Header -->
-                <div class="gradient-bg text-white p-6">
+                <div class="bg-gray-100 text-gray-800 p-6 border-b">
                     <div class="flex items-center">
-                        <div class="bg-white bg-opacity-20 rounded-lg p-3 mr-4">
-                            <i class="fas fa-info-circle text-white text-xl"></i>
+                        <div class="bg-gray-200 rounded-lg p-3 mr-4">
+                            <i class="fas fa-info-circle text-gray-700 text-xl"></i>
                         </div>
                         <div>
                             <h2 class="text-2xl font-bold">Guides et Informations</h2>
-                            <p class="text-blue-100 mt-1">Documents d'information et conseils pratiques</p>
+                            <p class="text-gray-500 mt-1">
+                                Documents d'information et conseils pratiques
+                            </p>
                         </div>
                     </div>
                 </div>
@@ -312,75 +476,61 @@
                 <!-- Documents Grid -->
                 <div class="p-6">
                     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+
                         <!-- CARD 1 -->
-                        <div class="document-card bg-white border border-gray-200 rounded-xl p-5 card-shadow" data-category="other">
-                            <span class="category-badge bg-purple-100 text-purple-800">Conseils</span>
-                            <div class="flex items-start mb-4">
-                                <div class="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center mr-4 flex-shrink-0">
-                                    <i class="fas fa-lightbulb text-purple-600 text-lg"></i>
-                                </div>
-                                <h3 class="text-md font-semibold text-gray-800 leading-tight">
+                        <div class="document-card bg-white border border-gray-200 rounded-xl p-5 shadow-sm hover:shadow-md transition" data-category="other">
+                            <span class="bg-purple-100 text-purple-800 text-xs px-2 py-1 rounded">Conseils</span>
+                            
+                            <div class="flex items-start mb-4 mt-2">
+                                
+                                <h3 class="text-sm font-semibold text-gray-800">
                                     Conseils pour les Retraités et Futurs Retraités
                                 </h3>
                             </div>
-                            <div class="mt-4 flex space-x-2">
+
+                            <div class="flex space-x-2 mt-4">
                                 <a href="{{ route('documents.view', 'Conseils_pour_les_Retraités_et_Futurs_Retraites.pdf') }}"
-                                   target="_blank"
-                                   class="flex-1 bg-blue-600 text-white py-2 px-3 rounded-lg hover:bg-blue-700 transition-colors text-sm text-center flex items-center justify-center">
-                                    <i class="fas fa-eye mr-2"></i> Voir PDF
+                                target="_blank"
+                                class="flex-1 bg-blue-500 text-white py-2 rounded-lg text-sm text-center hover:bg-emerald-600 transition">
+                                    <i class="fas fa-eye mr-1"></i> Voir
                                 </a>
+
                                 <a href="{{ route('documents.download', 'Conseils_pour_les_Retraités_et_Futurs_Retraites.pdf') }}"
-                                   class="bg-gray-100 text-gray-700 py-2 px-3 rounded-lg hover:bg-gray-200 transition-colors text-sm flex items-center justify-center">
-                                    <i class="fas fa-download mr-2"></i>
+                                class="bg-gray-100 px-3 rounded-lg hover:bg-gray-200 flex items-center">
+                                    <i class="fas fa-download"></i>
                                 </a>
                             </div>
                         </div>
 
                         <!-- CARD 2 -->
-                        <div class="document-card bg-white border border-gray-200 rounded-xl p-5 card-shadow" data-category="other">
-                            <span class="category-badge bg-purple-100 text-purple-800">Droits</span>
-                            <div class="flex items-start mb-4">
-                                <div class="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center mr-4 flex-shrink-0">
-                                    <i class="fas fa-hand-holding-heart text-purple-600 text-lg"></i>
-                                </div>
-                                <h3 class="text-md font-semibold text-gray-800 leading-tight">
+                        <div class="document-card bg-white border border-gray-200 rounded-xl p-5 shadow-sm hover:shadow-md transition">
+                            <span class="bg-indigo-100 text-indigo-800 text-xs px-2 py-1 rounded">Droits</span>
+                            
+                            <div class="flex items-start mb-4 mt-2">
+                               
+                                <h3 class="text-sm font-semibold text-gray-800">
                                     Vos droits à la retraite
                                 </h3>
                             </div>
-                            <div class="mt-4 flex space-x-2">
+
+                            <div class="flex space-x-2 mt-4">
                                 <a href="{{ route('documents.view', 'VOS_DROITS_A_LA_RETRAITE.pdf') }}"
-                                   target="_blank"
-                                   class="flex-1 bg-blue-600 text-white py-2 px-3 rounded-lg hover:bg-blue-700 transition-colors text-sm text-center flex items-center justify-center">
-                                    <i class="fas fa-eye mr-2"></i> Voir PDF
+                                target="_blank"
+                                class="flex-1 bg-blue-500 text-white py-2 rounded-lg text-sm text-center hover:bg-emerald-600 transition">
+                                    <i class="fas fa-eye mr-1"></i> Voir
                                 </a>
+
                                 <a href="{{ route('documents.download', 'VOS_DROITS_A_LA_RETRAITE.pdf') }}"
-                                   class="bg-gray-100 text-gray-700 py-2 px-3 rounded-lg hover:bg-gray-200 transition-colors text-sm flex items-center justify-center">
-                                    <i class="fas fa-download mr-2"></i>
+                                class="bg-gray-100 px-3 rounded-lg hover:bg-gray-200 flex items-center">
+                                    <i class="fas fa-download"></i>
                                 </a>
                             </div>
                         </div>
+
                     </div>
                 </div>
             </div>
         </section>
-
-        <!-- Information Notice -->
-        <div class="bg-blue-50 border border-blue-200 rounded-xl p-5 mb-8 fade-in">
-            <div class="flex items-start">
-                <div class="bg-blue-100 rounded-lg p-3 mr-4 flex-shrink-0">
-                    <i class="fas fa-info-circle text-blue-600 text-lg"></i>
-                </div>
-                <div>
-                    <h4 class="text-blue-800 font-semibold mb-2 text-lg">Information importante</h4>
-                    <p class="text-blue-700">
-                        Tous les documents sont au format PDF. Vous aurez besoin d'un lecteur PDF pour les consulter.
-                        <a href="https://get.adobe.com/fr/reader/" target="_blank" class="underline hover:no-underline font-medium">
-                            Télécharger Adobe Reader
-                        </a>
-                    </p>
-                </div>
-            </div>
-        </div>
     </div>
 
     <script>

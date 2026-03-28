@@ -1,0 +1,240 @@
+@startuml sequence
+' ============================================================
+'  Diagramme de séquence — Soumission, Transfert & Complément
+'  Système de Gestion des Pensions Civiles
+'  Date : 2026-03-28
+' ============================================================
+
+skinparam sequenceArrowThickness 1.5
+skinparam sequenceParticipantBackgroundColor #FEFEFE
+skinparam sequenceParticipantBorderColor #2C5F8A
+skinparam sequenceLifeLineBorderColor #2C5F8A
+skinparam sequenceLifeLineBackgroundColor #EAF4FF
+skinparam sequenceActorBackgroundColor #D9EAF7
+skinparam sequenceActorBorderColor #2C5F8A
+skinparam sequenceGroupBorderColor #888888
+skinparam sequenceGroupBackgroundColor #F9F9F9
+skinparam sequenceDividerBackgroundColor #E8E8E8
+skinparam shadowing false
+skinparam DefaultFontName Arial
+skinparam DefaultFontSize 11
+skinparam noteBackgroundColor #FFFDE7
+skinparam noteBorderColor #B8860B
+
+title Diagramme de Séquence\nFlux : Soumission → Annotation → Transfert → Complément
+
+actor "Usager" as USR
+participant "Navigateur\n(Blade/Alpine.js)" as NAV
+participant "DemandeController" as DC
+participant "DemandeService" as DS
+participant "DemandeWorkflow\nService" as DWS
+participant "DemandeManagement\nController" as DMC
+participant "Système de\nNotifications" as NOTIF
+database "Base de\nDonnées" as DB
+
+== Phase 1 : Création et sauvegarde en brouillon ==
+
+USR -> NAV : Accéder au formulaire de demande\n(ex. Demande de virement bancaire)
+NAV -> DC : GET /demandes/virement-bancaire
+DC -> DB : Charger données auxiliaires\n(Gender, CivilStatus, PensionType, etc.)
+DB --> DC : Données de référence
+DC --> NAV : Afficher le formulaire (vue Blade)
+
+USR -> NAV : Remplir le formulaire et\ncliquer "Enregistrer comme brouillon"
+NAV -> DC : POST /demandes/virement-bancaire\n[action=save]
+activate DC
+
+DC -> DC : Valider la requête\n(StoreDemandeVirementBancaireRequest)
+DC -> DS : createOrUpdate(validated_data, type=VIREMENT_BANCAIRE)
+activate DS
+
+DS -> DB : INSERT INTO demandes\n(code, type, created_by, status_id=BROUILLON, data={...})
+DB --> DS : Demande créée (id, code)
+DS --> DC : $demande
+deactivate DS
+
+DC --> NAV : Redirection vers le formulaire\navec $demande->id (mode édition)
+deactivate DC
+
+note over NAV : Statut = BROUILLON\nL'usager peut modifier le dossier
+
+== Phase 2 : Soumission de la demande ==
+
+USR -> NAV : Joindre les documents requis\net cliquer "Soumettre"
+NAV -> DC : POST /demandes/virement-bancaire\n[action=submit, demande_id=X]
+activate DC
+
+DC -> DC : Vérifier autorisations\n(owned by user + status BROUILLON/COMPLEMENT_REQUIS)
+DC -> DS : submit($demande, $user)
+activate DS
+
+DS -> DWS : submit($demande, $user)
+activate DWS
+
+DWS -> DB : UPDATE demandes\nSET status_id=SOUMISE,\ncurrent_service_id=RECEPTION,\nsubmitted_at=now()
+DB --> DWS : OK
+
+DWS -> DB : INSERT INTO demande_workflows\n(demande_id, from_service_id=NULL,\nto_service_id=RECEPTION, status_id=SOUMISE,\naction_by_user_id, created_at)
+DB --> DWS : Workflow enregistré
+
+DWS --> DS : OK
+deactivate DWS
+
+DS -> DB : INSERT INTO demande_history\n(demande_id, statut=SOUMISE, commentaire, changed_by)
+DB --> DS : OK
+DS --> DC : $demande (statut=SOUMISE)
+deactivate DS
+
+DC -> NOTIF : Envoyer DemandeSubmittedNotification\n(à la Direction / Réception)
+activate NOTIF
+NOTIF -> DB : INSERT INTO notifications\n(notifiable_id, data={demande_code, type, ...})
+DB --> NOTIF : OK
+NOTIF --> DC : Notification envoyée
+deactivate NOTIF
+
+DC --> NAV : Redirection tableau de bord\navec message de succès
+deactivate DC
+
+NAV --> USR : Confirmation de soumission\n(code de suivi affiché)
+
+note over DB : Statut = SOUMISE\nDossier visible dans la corbeille\nde la Direction
+
+== Phase 3 : Annotation par la Direction ==
+
+actor "Agent Direction" as DIR
+DIR -> NAV : Consulter la corbeille\n(espace personnel Direction)
+NAV -> DMC : GET /personal/corbeille
+activate DMC
+DMC -> DB : SELECT * FROM demandes\nWHERE current_service_id=RECEPTION\nORDER BY submitted_at ASC
+DB --> DMC : Liste des demandes
+DMC --> NAV : Afficher la liste (vue Blade)
+deactivate DMC
+
+DIR -> NAV : Ouvrir le dossier et\ncliquer "Annoter"
+NAV -> DMC : POST /demandes/{id}/annotate\n[annotation="...", folder="pension"]
+activate DMC
+
+DMC -> DMC : abort_unless(user->hasRole('direction'), 403)
+DMC -> DB : UPDATE demandes\nSET annotation=..., annotated_by=DIR_ID,\nannotated_at=now(), folder=pension
+DB --> DMC : OK
+
+DMC -> DB : INSERT INTO demande_history\n(statut=SOUMISE,\ncommentaire="Annotation par la Direction : ...")
+DB --> DMC : OK
+DMC --> NAV : Redirection avec succès
+deactivate DMC
+
+note over DB : Champ annotated_at non-null\nDéblocage du bouton "Transférer"
+
+== Phase 4 : Transfert vers un service ==
+
+DIR -> NAV : Sélectionner un service\ncible et cliquer "Transférer"
+NAV -> DMC : POST /demandes/transferer\n[demande_id=X, service_id=SECRETARIAT, commentaire="..."]
+activate DMC
+
+DMC -> DB : SELECT * FROM demandes WHERE id=X (with status)
+DB --> DMC : $demande
+
+DMC -> DMC : Vérifier isAnnotated()\nabort_if(!annotated, 403)
+DMC -> DMC : Si rôle=direction, vérifier\ntoService.code=SECRETARIAT
+
+DMC -> DB : UPDATE demandes\nSET current_service_id=SECRETARIAT
+DB --> DMC : OK
+
+DMC -> DB : INSERT INTO demande_workflows\n(from_service_id=RECEPTION,\nto_service_id=SECRETARIAT, status_id,\naction_by_user_id=DIR_ID, commentaire)
+DB --> DMC : Workflow enregistré
+
+DMC -> DB : INSERT INTO demande_history\n(statut, commentaire="Dossier transféré vers : Secrétariat")
+DB --> DMC : OK
+
+DMC -> DB : INSERT INTO demande_activity_logs\n(action=transferred, metadata={to_service, commentaire})
+DB --> DMC : OK
+
+DMC -> NOTIF : Envoyer DemandeTransferredNotification\n(aux agents du Secrétariat)
+activate NOTIF
+NOTIF -> DB : SELECT * FROM users\nWHERE service_id=SECRETARIAT
+DB --> NOTIF : Liste des agents
+NOTIF -> DB : INSERT INTO notifications\n(pour chaque agent du Secrétariat)
+DB --> NOTIF : OK
+NOTIF --> DMC : Notifications envoyées
+deactivate NOTIF
+
+DMC --> NAV : Redirection corbeille\navec message de succès
+deactivate DMC
+
+note over DB : Statut = TRANSFEREE\nDossier dans la corbeille\ndu Secrétariat
+
+== Phase 5 : Demande de complément d'information ==
+
+actor "Agent Service" as AGT
+AGT -> NAV : Consulter le dossier et\ncliquer "Demander un complément"
+NAV -> DMC : POST /demandes/{id}/complement\n[message="Merci de fournir..."]
+activate DMC
+
+DMC -> DB : SELECT code FROM statuses\nWHERE code=COMPLEMENT_REQUIS
+DB --> DMC : $complementStatusId
+
+DMC -> DB : UPDATE demandes\nSET status_id=COMPLEMENT_REQUIS
+DB --> DMC : OK
+
+DMC -> DB : INSERT INTO demande_messages\n(demande_id, sender_id=AGT_ID, body="Merci de fournir...")
+DB --> DMC : Message créé
+
+DMC -> DB : INSERT INTO demande_history\n(statut=COMPLEMENT_REQUIS,\ncommentaire="Complément requis : ...")
+DB --> DMC : OK
+
+DMC -> NOTIF : Envoyer DemandeStatusChangedNotification\n(à l'usager propriétaire du dossier)
+activate NOTIF
+NOTIF -> DB : INSERT INTO notifications\n(notifiable_id=USER_ID, data={status, message})
+DB --> NOTIF : OK
+NOTIF --> DMC : Notification envoyée
+deactivate NOTIF
+
+DMC --> NAV : Redirection avec\nmessage de succès
+deactivate DMC
+
+note over DB : Statut = COMPLEMENT_REQUIS\nDossier éditable par l'usager
+
+== Phase 6 : L'usager soumet le complément ==
+
+USR -> NAV : Recevoir notification\net ouvrir le dossier
+NAV -> DC : GET /demandes/virement-bancaire/{demande_id}
+DC -> DB : SELECT * FROM demandes\nWHERE id=X AND created_by=USER_ID
+DB --> DC : $demande (status=COMPLEMENT_REQUIS)
+DC --> NAV : Afficher formulaire pré-rempli\n+ message du service visible
+
+USR -> NAV : Ajouter les documents manquants\net re-soumettre
+NAV -> DC : POST /demandes/virement-bancaire\n[action=submit, demande_id=X]
+activate DC
+
+DC -> DC : Vérifier canBeEditedByUser()\n(statut BROUILLON ou COMPLEMENT_REQUIS)
+DC -> DS : submit($demande, $user)
+activate DS
+DS -> DWS : submit($demande, $user)
+activate DWS
+
+DWS -> DB : UPDATE demandes\nSET status_id=SOUMISE,\nsubmitted_at=now()
+DB --> DWS : OK
+
+DWS -> DB : INSERT INTO demande_workflows\n(nouveau cycle de workflow)
+DB --> DWS : OK
+DWS --> DS : OK
+deactivate DWS
+
+DS --> DC : OK
+deactivate DS
+
+DC -> NOTIF : Envoyer DemandeStatusChangedNotification\n(au service ayant demandé le complément)
+activate NOTIF
+NOTIF -> DB : INSERT INTO notifications
+DB --> NOTIF : OK
+NOTIF --> DC : OK
+deactivate NOTIF
+
+DC --> NAV : Redirection tableau de bord
+deactivate DC
+
+NAV --> USR : Confirmation de re-soumission
+
+note over DB : Statut = SOUMISE\nCycle de traitement reprend
+
+@enduml

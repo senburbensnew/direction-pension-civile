@@ -4,8 +4,8 @@ namespace App\Http\Requests;
 
 use App\Rules\Nif;
 use App\Rules\Ninu;
-use App\Helpers\RegexExpressions;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 
 class StoreDemandeAdhesionRequest extends FormRequest
 {
@@ -23,55 +23,47 @@ class StoreDemandeAdhesionRequest extends FormRequest
     public function rules(): array
     {
         return [
-            // =========================
-            // Informations personnelles
-            // =========================
-            'institution'           => ['required', 'string', 'max:255'],
-            'lastname'              => ['required', 'string', 'max:255'],
-            'firstname'             => ['required', 'string', 'max:255'],
-            'mother_lastname'       => ['required', 'string', 'max:255'],
-            'mother_firstname'      => ['required', 'string', 'max:255'],
-            'birth_place'           => ['required', 'string', 'max:255'],
-            'birth_date'            => ['required', 'date', 'before:today'],
+            'title' => ['required', 'string', 'max:255'],
+            'action' => ['required', Rule::in(['draft', 'submit'])],
 
-            'nif'                   => ['required', new Nif()],
-            'ninu'                  => ['required', new Ninu()],
+            'demande_id' => [
+                'sometimes',
+                'nullable',
+                'exists:demandes,id',
+            ],
 
-            'gender_id'             => ['required', 'integer'],
-            'civil_status_id'       => ['required', 'integer'],
+            'institution'           => ['nullable', 'string', 'max:255', 'required_if:action,submit',],
+            'lastname'              => ['nullable', 'string', 'max:255', 'required_if:action,submit',],
+            'firstname'             => ['nullable', 'string', 'max:255', 'required_if:action,submit',],
+            'mother_lastname'       => ['nullable', 'string', 'max:255', 'required_if:action,submit',],
+            'mother_firstname'      => ['nullable', 'string', 'max:255', 'required_if:action,submit',],
+            'birth_place'           => ['nullable', 'string', 'max:255', 'required_if:action,submit',],
+            'birth_date'            => ['nullable', 'date', 'before:today', 'required_if:action,submit',],
+
+            'nif'                   => ['nullable', new Nif(), 'required_if:action,submit',],
+            'ninu'                  => ['nullable', new Ninu(), 'required_if:action,submit',],
+
+            'gender_id'             => ['nullable', 'integer', 'required_if:action,submit',],
+            'civil_status_id'       => ['nullable', 'integer', 'required_if:action,submit',],
 
             'spouse_lastname'       => ['nullable', 'string', 'max:255'],
             'spouse_firstname'      => ['nullable', 'string', 'max:255'],
 
-            'profile_photo'       => ['required', 'image', 'max:2048'],
+            'profile_photo'       => ['nullable', 'image', 'max:2048'],
 
-            // =========================
-            // Enfants à charge
-            // =========================
             'dependents'                         => ['nullable', 'array'],
             'dependents.*.lastname'              => ['required', 'string', 'max:255'],
             'dependents.*.firstname'             => ['required', 'string', 'max:255'],
             'dependents.*.birthdate'             => ['required', 'date', 'before:today'],
             'dependents.*.relation'              => ['required', 'in:fils,fille'],
 
-            // =========================
-            // Emplois antérieurs
-            // =========================
             'previous_jobs'                      => ['nullable', 'array'],
             'previous_jobs.*.institution'        => ['required', 'string', 'max:255'],
             'previous_jobs.*.start_date'         => ['required', 'date'],
             'previous_jobs.*.end_date'           => ['nullable', 'date', 'after_or_equal:previous_jobs.*.start_date'],
 
-            // =========================
-            // Informations professionnelles
-            // =========================
-            'entry_date'            => ['required', 'date'],
-            'current_salary'        => ['required', 'numeric', 'min:0'],
-
-            // =========================
-            // Consentement
-            // =========================
-            'consentement'          => ['required', 'accepted'],
+            'entry_date'            => ['nullable', 'date', 'required_if:action,submit',],
+            'current_salary'        => ['nullable', 'numeric', 'min:0', 'required_if:action,submit',],
         ];
     }
 
@@ -82,7 +74,6 @@ class StoreDemandeAdhesionRequest extends FormRequest
     {
         return [
             'required' => 'Ce champ est obligatoire.',
-            'accepted' => 'Vous devez accepter cette déclaration.',
             'before'   => 'La date doit être antérieure à aujourd’hui.',
             'numeric'  => 'Ce champ doit être un nombre valide.',
             'min'      => 'La valeur doit être positive.',

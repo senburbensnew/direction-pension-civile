@@ -5,8 +5,16 @@
         <!-- Form Section -->
         <div id="form-section" class="max-w-7xl mx-auto bg-white p-6 shadow-md rounded-lg relative m-2">
 
-            <form method="POST" action="{{ route('demandes.demande-arret-virement.store') }}">
+            @if ($demande)
+                <div class="mb-4 p-3 bg-yellow-50 border border-yellow-200 text-yellow-800 rounded text-sm">
+                    Brouillon en cours — dernière sauvegarde {{ $demande->updated_at->diffForHumans() }}
+                </div>
+            @endif
+
+            <form method="POST" action="{{ route('demandes.demande-arret-virement.store') }}" id="main-form">
                 @csrf
+                <input type="hidden" name="demande_id" value="{{ $demande?->id }}">
+                <input type="hidden" name="action" id="action-input" value="draft">
 
                 <!-- Header Section -->
                 <div class="text-center mb-8">
@@ -21,11 +29,26 @@
                     </div>
                 @endif
 
+                {{-- Titre personnalisé --}}
+                <div class="mb-4">
+                    <label for="title" class="block text-sm font-medium text-gray-700">
+                        Titre personnalisé <span class="text-gray-400 font-normal">(optionnel)</span>
+                    </label>
+                    <input
+                        id="title"
+                        type="text"
+                        name="title"
+                        value="{{ old('title', $demande?->title ?? '') }}"
+                        placeholder="ex : Arrêt de virement — 2026"
+                        class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                    >
+                </div>
+
                 <!-- Date & Code -->
                 <div class="grid grid-cols-2 gap-4 mb-6">
                     <div>
                         <label class="block text-sm font-medium">Date :</label>
-                        <input type="date" name="date" value="{{ old('date') }}"
+                        <input type="date" name="date" value="{{ old('date', $demande?->data['date'] ?? '') }}"
                             class="w-full rounded-md border-gray-300 focus:border-blue-500 focus:ring-blue-500 @error('date') border-red-500 @enderror">
                         @error('date')
                             <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
@@ -33,7 +56,7 @@
                     </div>
                     <div>
                         <label class="block text-sm font-medium">Code :</label>
-                        <input type="text" name="code" value="{{ old('code') }}"
+                        <input type="text" name="code" value="{{ old('code', $demande?->data['code'] ?? '') }}"
                             class="w-full rounded-md border-gray-300 focus:border-blue-500 focus:ring-blue-500 @error('code') border-red-500 @enderror"
                             placeholder="">
                         @error('code')
@@ -48,7 +71,7 @@
                     <div class="space-y-6">
                         <div>
                             <label class="block text-sm font-medium">Nom :</label>
-                            <input type="text" name="nom" value="{{ old('nom') }}"
+                            <input type="text" name="nom" value="{{ old('nom', $demande?->data['nom'] ?? '') }}"
                                 class="w-full rounded-md border-gray-300 focus:border-blue-500 focus:ring-blue-500 @error('nom') border-red-500 @enderror"
                                 placeholder="">
                             @error('nom')
@@ -57,7 +80,7 @@
                         </div>
                         <div>
                             <label class="block text-sm font-medium">Prénom :</label>
-                            <input type="text" name="prenom" value="{{ old('prenom') }}"
+                            <input type="text" name="prenom" value="{{ old('prenom', $demande?->data['prenom'] ?? '') }}"
                                 class="w-full rounded-md border-gray-300 focus:border-blue-500 focus:ring-blue-500 @error('prenom') border-red-500 @enderror"
                                 placeholder="">
                             @error('prenom')
@@ -66,7 +89,7 @@
                         </div>
                         <div>
                             <label class="block text-sm font-medium">Téléphone (WhatsApp) :</label>
-                            <input type="text" name="telephone" value="{{ old('telephone') }}"
+                            <input type="text" name="telephone" value="{{ old('telephone', $demande?->data['telephone'] ?? '') }}"
                                 class="w-full rounded-md border-gray-300 focus:border-blue-500 focus:ring-blue-500 @error('telephone') border-red-500 @enderror"
                                 placeholder="+509XXXXXXXX">
                             @error('telephone')
@@ -75,7 +98,7 @@
                         </div>
                         <div>
                             <label class="block text-sm font-medium">Courriel :</label>
-                            <input type="email" name="courriel" value="{{ old('courriel') }}"
+                            <input type="email" name="courriel" value="{{ old('courriel', $demande?->data['courriel'] ?? '') }}"
                                 class="w-full rounded-md border-gray-300 focus:border-blue-500 focus:ring-blue-500 @error('courriel') border-red-500 @enderror"
                                 placeholder="">
                             @error('courriel')
@@ -90,7 +113,7 @@
                     <legend class="text-sm font-medium text-gray-700 mb-2">VIREMENT</legend>
                     <div class="mb-4">
                         <label class="block text-sm font-medium">Mois non reçu(s) :</label>
-                        <input type="text" name="mois_non_recu" value="{{ old('mois_non_recu') }}"
+                        <input type="text" name="mois_non_recu" value="{{ old('mois_non_recu', $demande?->data['mois_non_recu'] ?? '') }}"
                             class="w-full rounded-md border-gray-300 focus:border-blue-500 focus:ring-blue-500 @error('mois_non_recu') border-red-500 @enderror"
                             placeholder="">
                         @error('mois_non_recu')
@@ -105,7 +128,7 @@
                                 <div class="flex items-center">
                                     <input type="checkbox" id="motif{{ $key }}" name="motifs[]"
                                         value="{{ $motif }}"
-                                        {{ in_array($motif, old('motifs', [])) ? 'checked' : '' }}
+                                        {{ in_array($motif, old('motifs', $demande?->data['motifs'] ?? [])) ? 'checked' : '' }}
                                         class="h-4 w-4 text-blue-600 border-gray-300 focus:ring-blue-500 @error('motifs') border-red-500 @enderror">
                                     <label for="motif{{ $key }}" class="ml-2 text-sm text-gray-700">
                                         {{ $motif }}
@@ -121,7 +144,7 @@
                     <div class="grid grid-cols-2 gap-4">
                         <div>
                             <label class="block text-sm font-medium">Nouveau numéro de compte :</label>
-                            <input type="text" name="nouveau_numero" value="{{ old('nouveau_numero') }}"
+                            <input type="text" name="nouveau_numero" value="{{ old('nouveau_numero', $demande?->data['nouveau_numero'] ?? '') }}"
                                 class="w-full rounded-md border-gray-300 focus:border-blue-500 focus:ring-blue-500 @error('nouveau_numero') border-red-500 @enderror"
                                 placeholder="">
                             @error('nouveau_numero')
@@ -130,7 +153,7 @@
                         </div>
                         <div>
                             <label class="block text-sm font-medium">Nom du compte :</label>
-                            <input type="text" name="nom_du_compte" value="{{ old('nom_du_compte') }}"
+                            <input type="text" name="nom_du_compte" value="{{ old('nom_du_compte', $demande?->data['nom_du_compte'] ?? '') }}"
                                 class="w-full rounded-md border-gray-300 focus:border-blue-500 focus:ring-blue-500 @error('nom_du_compte') border-red-500 @enderror"
                                 placeholder="">
                             @error('nom_du_compte')
@@ -145,7 +168,7 @@
                     <legend class="text-sm font-medium text-gray-700 mb-2">CHEQUES (RECLAMATION/ TRANSFERT)</legend>
                     <textarea name="cheques"
                         class="w-full rounded-md border-gray-300 focus:border-blue-500 focus:ring-blue-500 @error('cheques') border-red-500 @enderror h-24"
-                        placeholder="Décrivez votre réclamation...">{{ old('cheques') }}</textarea>
+                        placeholder="Décrivez votre réclamation...">{{ old('cheques', $demande?->data['cheques'] ?? '') }}</textarea>
                     @error('cheques')
                         <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
                     @enderror
@@ -156,7 +179,7 @@
                     <legend class="text-sm font-medium text-gray-700 mb-2">INFORMATIONS TRANSMISES</legend>
                     <textarea name="informations"
                         class="w-full rounded-md border-gray-300 focus:border-blue-500 focus:ring-blue-500 @error('informations') border-red-500 @enderror h-16"
-                        placeholder="Informations supplémentaires...">{{ old('informations') }}</textarea>
+                        placeholder="Informations supplémentaires...">{{ old('informations', $demande?->data['informations'] ?? '') }}</textarea>
                     @error('informations')
                         <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
                     @enderror
@@ -187,19 +210,14 @@
                         </div>
                     </div>
                 </fieldset> --}}
-            <!-- DECLARATION -->
-            <fieldset class="mb-6 p-5 border rounded-lg">
-                <label class="flex items-start">
-                    <input type="checkbox" name="consentement" value="1">
-                    <span class="ml-2 text-sm">Je certifie l’exactitude des informations</span>
-                </label>
-                @error('consentement')
-                    <p class="text-red-600 text-sm mt-2">{{ $message }}</p>
-                @enderror
-            </fieldset>
-
-                <div class="mt-8 text-right">
-                    <button type="submit"
+                <div class="mt-8 flex justify-end gap-3">
+                    <button type="button"
+                        onclick="document.getElementById('action-input').value='draft'; document.getElementById('main-form').submit();"
+                        class="bg-gray-200 text-gray-700 px-6 py-2 rounded hover:bg-gray-300 transition-colors">
+                        Sauvegarder en brouillon
+                    </button>
+                    <button type="button"
+                        onclick="document.getElementById('action-input').value='submit'; document.getElementById('main-form').submit();"
                         class="bg-blue-600 text-white px-6 py-2 rounded hover:bg-blue-700 transition-colors">
                         Soumettre
                     </button>

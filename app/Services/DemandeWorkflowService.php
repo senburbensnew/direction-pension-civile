@@ -1,10 +1,11 @@
 <?php
 
-namespace App\Models;
+namespace App\Services;
 
-use App\Models\User;
-use App\Models\Status;
 use App\Models\Demande;
+use App\Models\Service;
+use App\Models\Status;
+use App\Models\User;
 
 class DemandeWorkflowService
 {
@@ -19,7 +20,7 @@ class DemandeWorkflowService
             'from_service_id' => null,
             'to_service_id'   => Service::RECEPTION,
             'status_id'       => Status::SUBMITTED,
-            'action_by'       => $user->id,
+            'action_by_user_id' => $user->id,
         ]);
     }
 
@@ -40,7 +41,7 @@ class DemandeWorkflowService
             'from_service_id' => $fromService,
             'to_service_id'   => $toService->id,
             'status_id'       => Status::TRANSFERRED,
-            'action_by'       => $user->id,
+            'action_by_user_id' => $user->id,
             'commentaire'     => $commentaire,
         ]);
     }

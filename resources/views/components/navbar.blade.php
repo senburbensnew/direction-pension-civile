@@ -49,6 +49,69 @@
 
                     <!-- User Section -->
                     <div class="flex items-center gap-4">
+                        <!-- Notification Bell -->
+                        @auth
+                            @php $unreadCount = auth()->user()->unreadNotifications()->count(); @endphp
+                            <div x-data="{ open: false }" class="relative">
+                                <button @click="open = !open" @click.outside="open = false"
+                                        class="relative text-white hover:text-orange-400 transition-colors focus:outline-none"
+                                        aria-label="Notifications">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                              d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6 6 0 10-12 0v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+                                    </svg>
+                                    @if ($unreadCount > 0)
+                                        <span class="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-4 w-4 flex items-center justify-center font-bold leading-none">
+                                            {{ $unreadCount > 9 ? '9+' : $unreadCount }}
+                                        </span>
+                                    @endif
+                                </button>
+
+                                <!-- Dropdown panel -->
+                                <div x-show="open" x-cloak x-transition
+                                     class="absolute right-0 mt-2 w-80 bg-white rounded-lg shadow-xl z-50 overflow-hidden">
+                                    <div class="flex items-center justify-between px-4 py-3 bg-gray-50 border-b">
+                                        <span class="font-semibold text-gray-700 text-sm">Notifications</span>
+                                        @if ($unreadCount > 0)
+                                            <form method="POST" action="{{ route('notifications.markAllAsRead') }}">
+                                                @csrf
+                                                <button type="submit" class="text-xs text-blue-600 hover:underline">
+                                                    Tout marquer comme lu
+                                                </button>
+                                            </form>
+                                        @endif
+                                    </div>
+                                    <ul class="divide-y divide-gray-100 max-h-72 overflow-y-auto">
+                                        @forelse (auth()->user()->notifications()->latest()->take(8)->get() as $notification)
+                                            @php $data = $notification->data; @endphp
+                                            <li class="{{ is_null($notification->read_at) ? 'bg-blue-50' : 'bg-white' }}">
+                                                <form method="POST" action="{{ route('notifications.markAsRead', $notification->id) }}">
+                                                    @csrf
+                                                    <button type="submit" class="w-full text-left px-4 py-3 hover:bg-gray-50 transition-colors">
+                                                        <p class="text-sm text-gray-800 font-medium leading-snug">
+                                                            {{ $data['message'] ?? 'Notification' }}
+                                                        </p>
+                                                        <p class="text-xs text-gray-400 mt-1">
+                                                            {{ $notification->created_at->diffForHumans() }}
+                                                        </p>
+                                                    </button>
+                                                </form>
+                                            </li>
+                                        @empty
+                                            <li class="px-4 py-6 text-center text-sm text-gray-400">
+                                                Aucune notification
+                                            </li>
+                                        @endforelse
+                                    </ul>
+                                    <div class="px-4 py-2 bg-gray-50 border-t text-center">
+                                        <a href="{{ route('notifications.index') }}" class="text-xs text-blue-600 hover:underline">
+                                            Voir toutes les notifications
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                        @endauth
+
                         <!-- Login/User Info -->
                         @guest
                             <a href="{{ route('login') }}" class="inline-block">
@@ -99,7 +162,7 @@
                                         @can('viewDashboard')
                                             <x-dropdown-link :href="route('personal.index')">
                                                 <i class="fas fa-tachometer-alt mr-2 text-gray-400"></i>
-                                                Mon Dashboard
+                                                Mes demandes
                                             </x-dropdown-link>
                                         @endcan
                                     @endauth

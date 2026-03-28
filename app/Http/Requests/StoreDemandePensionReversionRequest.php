@@ -4,6 +4,7 @@ namespace App\Http\Requests;
 
 use App\Rules\CodePension;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 
 class StoreDemandePensionReversionRequest extends FormRequest
 {
@@ -28,38 +29,47 @@ class StoreDemandePensionReversionRequest extends FormRequest
     public function rules(): array
     {
         return [
+            'title' => ['required', 'string', 'max:255'],
+            'action' => ['required', Rule::in(['draft', 'submit'])],
+
+            'demande_id' => [
+                'sometimes',
+                'nullable',
+                'exists:demandes,id',
+            ],
+
             // -----------------------------
             // Informations du défunt
             // -----------------------------
-            'nom_complet_defunt'      => ['required', 'string', 'max:255'],
-            'numero_pension'     => ['required', new CodePension()],
+            'nom_complet_defunt' => ['nullable', 'required_if:action,submit', 'string', 'max:255'],
+            'numero_pension'     => ['nullable', 'required_if:action,submit', new CodePension()],
 
             // -----------------------------
             // Documents du défunt (obligatoires)
             // -----------------------------
-            'certificat_carriere'        => ['required', 'file', 'mimes:pdf,jpg,jpeg,png', 'max:5120'],
-            'acte_deces'                 => ['required', 'array', 'min:2'],
+            'certificat_carriere'        => ['nullable', 'file', 'mimes:pdf,jpg,jpeg,png', 'max:5120'],
+            'acte_deces'                 => ['nullable', 'array'],
             'acte_deces.*'               => ['file', 'mimes:pdf,jpg,jpeg,png', 'max:5120'],
-            'certificat_non_dissolution' => ['required', 'file', 'mimes:pdf,jpg,jpeg,png', 'max:5120'],
-            'carte_pension'              => ['required', 'file', 'mimes:pdf,jpg,jpeg,png', 'max:5120'],
-            'souche_cheque'              => ['required', 'file', 'mimes:pdf,jpg,jpeg,png', 'max:5120'],
+            'certificat_non_dissolution' => ['nullable', 'file', 'mimes:pdf,jpg,jpeg,png', 'max:5120'],
+            'carte_pension'              => ['nullable', 'file', 'mimes:pdf,jpg,jpeg,png', 'max:5120'],
+            'souche_cheque'              => ['nullable', 'file', 'mimes:pdf,jpg,jpeg,png', 'max:5120'],
 
             // -----------------------------
             // Informations du bénéficiaire
             // -----------------------------
-            'nom_beneficiaire'   => ['required', 'string', 'max:255'],
-            'relation_defunt'       => ['required'],
+            'nom_beneficiaire' => ['nullable', 'required_if:action,submit', 'string', 'max:255'],
+            'relation_defunt'  => ['nullable', 'required_if:action,submit'],
 
             // -----------------------------
             // Documents du bénéficiaire
             // -----------------------------
-            'extrait_acte_mariage'   => ['required', 'file', 'mimes:pdf,jpg,jpeg,png', 'max:5120'],
-            'extrait_acte_naissance' => ['required', 'file', 'mimes:pdf,jpg,jpeg,png', 'max:5120'],
-            'matricule_fiscal'       => ['required', 'file', 'mimes:pdf,jpg,jpeg,png', 'max:5120'],
-            'carte_electorale'       => ['required', 'file', 'mimes:pdf,jpg,jpeg,png', 'max:5120'],
+            'extrait_acte_mariage'   => ['nullable', 'file', 'mimes:pdf,jpg,jpeg,png', 'max:5120'],
+            'extrait_acte_naissance' => ['nullable', 'file', 'mimes:pdf,jpg,jpeg,png', 'max:5120'],
+            'matricule_fiscal'       => ['nullable', 'file', 'mimes:pdf,jpg,jpeg,png', 'max:5120'],
+            'carte_electorale'       => ['nullable', 'file', 'mimes:pdf,jpg,jpeg,png', 'max:5120'],
 
             // Photos (2 minimum)
-            'photos_identites'        => ['required', 'array', 'min:2'],
+            'photos_identites'        => ['nullable', 'array'],
             'photos_identites.*'      => ['file', 'image', 'mimes:jpg,jpeg,png', 'max:2048'],
 
             // -----------------------------
@@ -70,12 +80,6 @@ class StoreDemandePensionReversionRequest extends FormRequest
             'copie_moniteur'      => ['nullable', 'file', 'mimes:pdf,jpg,jpeg,png', 'max:5120'],
             'attestations_scolaires' => ['nullable', 'array'],
             'attestations_scolaires.*' => ['file', 'mimes:pdf,jpg,jpeg,png', 'max:5120'], 
-
-
-            // -----------------------------
-            // Consentement
-            // -----------------------------
-            'consentement'        => ['required', 'accepted']
         ];
     }
 

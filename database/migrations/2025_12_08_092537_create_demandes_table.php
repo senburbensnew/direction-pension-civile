@@ -9,15 +9,15 @@ return new class extends Migration
     public function up()
     {
         Schema::create('demandes', function (Blueprint $table) {
-            $table->id();
+            $table->id();            
             $table->string('code')->unique();
-            $table->string('type', 50)->index();
-            $table->foreignId('created_by')
-                    ->constrained('users')
-                    ->restrictOnDelete();
-            $table->foreignId('status_id')
-                    ->constrained('statuses');
+            $table->string('title')->nullable();
+            $table->string('type', 50)->index(); // maybe should be a foreign key to a dedicated table
+            $table->foreignId('created_by')->constrained('users')->restrictOnDelete();
+            $table->foreignId('status_id')->constrained('statuses');
             $table->json('data')->nullable();
+            $table->timestamp('submitted_at')->nullable();
+            $table->timestamp('expires_at')->nullable();
             $table->timestamps();
         });
     }

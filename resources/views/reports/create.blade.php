@@ -5,7 +5,7 @@
     <h1 class="text-2xl font-bold mb-4">
         {{ isset($reportEdit) ? 'Éditer le rapport' : 'Ajouter un rapport' }}
     </h1>
-    <form action="{{ isset($reportEdit) ? route('reports.update', $reportEdit->id) : route('reports.store') }}"
+    <form action="{{ isset($reportEdit) ? route('admin.reports.update', $reportEdit->id) : route('admin.reports.store') }}"
           method="POST" enctype="multipart/form-data" class="space-y-4 mb-8">
         @csrf
         @if(isset($reportEdit))
@@ -84,13 +84,13 @@
                         </td>
                         <td class="px-4 py-2 border">{{ $report->status === 'published' ? 'Publié' : 'Brouillon' }}</td>
                         <td class="px-4 py-2 border space-x-2">
-                            <a href="{{ route('reports.edit', $report->id) }}" class="px-2 py-1 bg-yellow-500 text-white rounded">Éditer</a>
-                            <form action="{{ route('reports.destroy', $report->id) }}" method="POST" class="inline">
+                            <a href="{{ route('admin.reports.edit', $report->id) }}" class="px-2 py-1 bg-yellow-500 text-white rounded">Éditer</a>
+                            <form action="{{ route('admin.reports.destroy', $report->id) }}" method="POST" class="inline">
                                 @csrf
                                 @method('DELETE')
                                 <button type="submit" onclick="return confirm('Êtes-vous sûr de vouloir supprimer ce rapport ?')" class="px-2 py-1 bg-red-600 text-white rounded">Supprimer</button>
                             </form>
-                            <form action="{{ route('reports.toggle', $report->id) }}" method="POST" class="inline">
+                            <form action="{{ route('admin.reports.toggle', $report->id) }}" method="POST" class="inline">
                                 @csrf
                                 <button type="submit" class="px-2 py-1 bg-blue-600 text-white rounded">
                                     {{ $report->status === 'published' ? 'Mettre en brouillon' : 'Publier' }}

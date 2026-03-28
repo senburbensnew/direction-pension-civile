@@ -81,7 +81,7 @@ class ActualiteController extends Controller
             DB::commit();
 
             return redirect()
-                ->route('actualites.admin.index')
+                ->route('admin.actualites.admin.index')
                 ->with('success', 'Actualité créée avec succès.');
 
         } catch (\Throwable $e) {
@@ -169,7 +169,7 @@ class ActualiteController extends Controller
             }
         }
 
-        return redirect()->route('actualites.edit', $actualite->id)
+        return redirect()->route('admin.actualites.edit', $actualite->id)
             ->with('success', 'Actualité mise à jour avec succès.');
     }
 
@@ -185,7 +185,7 @@ class ActualiteController extends Controller
 
         $actualite->delete();
 
-        return redirect()->route('actualites.admin.index')
+        return redirect()->route('admin.actualites.admin.index')
             ->with('success', 'Actualité supprimée avec succès.');
     }
 }

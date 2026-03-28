@@ -6,7 +6,7 @@
             [
                 'title' => 'Formulaires de pension simplifiés',
                 'date' => '1 Nov 2025',
-                'content' => 'Vos démarches administratives n’ont jamais été aussi simples ! Remplissez et soumettez vos formulaires en ligne facilement.',
+                'content' => 'Vos démarches administratives n'ont jamais été aussi simples ! Remplissez et soumettez vos formulaires en ligne facilement.',
                 'icon' => 'fas fa-file-alt',
                 'color' => 'bg-blue-100 text-blue-600',
             ],
