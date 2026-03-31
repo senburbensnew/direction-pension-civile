@@ -28,6 +28,12 @@ class DemandeManagementController extends Controller
 
     public function edit(Demande $demande)
     {
+        DemandeActivityLog::create([
+            'demande_id' => $demande->id,
+            'user_id'    => auth()->id(),
+            'action'     => 'viewed',
+        ]);
+
         return view('demandes.admin.edit', compact('demande'));
     }
 

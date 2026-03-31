@@ -354,7 +354,23 @@
             <div class="section-body">
                 <table class="info">
                     @foreach($demande->data as $key => $value)
-                        @if(!is_array($value) && !is_null($value) && $value !== '')
+                        @if($key === 'documents' || $key === 'pieces')
+                            {{-- skip embedded file paths --}}
+                        @elseif(is_array($value) && count($value) > 0)
+                            <tr>
+                                <td class="label">{{ str_replace('_', ' ', ucwords($key, '_')) }}</td>
+                                <td class="value">
+                                    @foreach($value as $i => $item)
+                                        @if(is_array($item))
+                                            {{ implode(', ', array_filter($item, fn($v) => !is_array($v) && $v !== '')) }}
+                                        @else
+                                            {{ $item }}
+                                        @endif
+                                        @if(!$loop->last) — @endif
+                                    @endforeach
+                                </td>
+                            </tr>
+                        @elseif(!is_array($value) && !is_null($value) && $value !== '')
                             <tr>
                                 <td class="label">{{ str_replace('_', ' ', ucwords($key, '_')) }}</td>
                                 <td class="value">{{ $value }}</td>

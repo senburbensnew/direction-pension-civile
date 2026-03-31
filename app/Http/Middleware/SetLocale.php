@@ -15,7 +15,7 @@ class SetLocale
         $locale = Session::get('locale', $request->cookie('locale', config('app.locale')));
 
         // Validate against supported locales
-        if (!in_array($locale, ['en', 'fr'])) {
+        if (!in_array($locale, config('app.supported_locales', ['fr']))) {
             $locale = config('app.locale');
         }
 

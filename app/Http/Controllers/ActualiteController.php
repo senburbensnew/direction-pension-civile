@@ -28,8 +28,9 @@ class ActualiteController extends Controller
         }
 
         $actualites = $query
+            ->withCount('images')
             ->orderBy('created_at', 'desc')
-            ->paginate(5);
+            ->paginate(10);
 
         return view('admin.actualites.index', compact('actualites'));
     }
@@ -176,16 +177,25 @@ class ActualiteController extends Controller
     // Remove the specified resource from storage
     public function destroy($id)
     {
-        $actualite = Actualite::findOrFail($id);
+        $actualite = Actualite::with('images')->findOrFail($id);
 
-        // Delete image if exists
-        if ($actualite->image && \Storage::disk('public')->exists($actualite->image)) {
-            \Storage::disk('public')->delete($actualite->image);
+        // Delete all associated image files
+        foreach ($actualite->images as $image) {
+            Storage::disk('public')->delete($image->image_path);
         }
 
-        $actualite->delete();
+        $actualite->delete(); // images cascade-deleted via FK
 
         return redirect()->route('admin.actualites.admin.index')
             ->with('success', 'Actualité supprimée avec succès.');
+    }
+
+    public function togglePublish($id)
+    {
+        $actualite = Actualite::findOrFail($id);
+        $actualite->published = !$actualite->published;
+        $actualite->save();
+
+        return back()->with('success', $actualite->published ? 'Actualité publiée.' : 'Actualité dépubliée.');
     }
 }

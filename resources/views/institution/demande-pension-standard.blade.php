@@ -41,23 +41,16 @@
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div>
                         <label for="title" class="block text-sm font-medium text-gray-700">
-                            Titre personnalisé de la demande
+                            Titre personnalisé <span class="text-gray-400 font-normal">(optionnel)</span>
                         </label>
                         <input
                             id="title"
                             type="text"
                             name="title"
-                            value="{{ old('title', data_get($demande, 'title', '')) }}"
-                            placeholder=""
-                            {{ $demande && !empty($demande->title) ? 'readonly' : '' }}
-                            class="mt-1 block w-full rounded-md shadow-sm {{ $demande && !empty($demande->title) ? 'border-gray-200 bg-gray-100' : 'border-gray-300' }}
-                                @error('title') border-red-500 focus:border-red-500 focus:ring-red-500
-                                @else border-gray-300 focus:border-blue-500 focus:ring-blue-500
-                                @enderror"
-                        />
-                        @error('title')
-                            <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
-                        @enderror
+                            value="{{ old('title', $demande?->title ?? '') }}"
+                            placeholder="ex : Demande de pension standard — 2026"
+                            class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                        >
                     </div>
                     @if($demande)
                         <input
@@ -108,15 +101,8 @@
                                         @endif
                                     </td>
                                     <td class="px-6 py-4">
-                                                <input type="file" name="career_certificates[]" multiple accept="application/pdf"
-                                                    class="mt-1 block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100">
+                                                <x-file-input name="career_certificates[]" accept="application/pdf" multiple />
                                                 <div class="preview-container mt-2"></div>
-                                                @error('career_certificates')
-                                                    <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
-                                                @enderror
-                                                @error('career_certificates.*')
-                                                    <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
-                                                @enderror
                                     </td>
                                 </tr>
                                 <tr class="bg-neutral-primary-soft border-b border-default hover:bg-neutral-secondary-medium">
@@ -147,12 +133,8 @@
                                         @endif
                                     </td>
                                     <td class="px-6 py-4">
-                                            <input type="file" name="monitor_copy" accept="application/pdf"
-                                                class="mt-1 block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100">
+                                            <x-file-input name="monitor_copy" accept="application/pdf" />
                                             <div class="preview-container mt-2"></div>
-                                            @error('monitor_copy')
-                                                <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
-                                            @enderror
                                     </td>
                                 </tr>
                                 <tr class="bg-neutral-primary-soft border-b border-default hover:bg-neutral-secondary-medium">
@@ -185,20 +167,9 @@
                                         @endif
                                     </td>
                                     <td class="px-6 py-4">
-                                        <input type="file" name="marriage_certificates[]" multiple  accept="application/pdf"
-                                            class="mt-1 block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100">
+                                        <x-file-input name="marriage_certificates[]" accept="application/pdf" multiple
+                                            hint="Si vous fournissez un acte de mariage, veuillez joindre obligatoirement la copie et l’original." />
                                         <div class="preview-container mt-2"></div>
-                                        <p class="mt-1 text-sm text-gray-500">
-                                            Si vous fournissez un acte de mariage, veuillez joindre obligatoirement la copie et l’original.
-                                        </p>
-
-                                        @error('marriage_certificates')
-                                            <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
-                                        @enderror
-
-                                        @error('marriage_certificates.*')
-                                            <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
-                                        @enderror
                                     </td>
                                 </tr>
                                 <tr class="bg-neutral-primary-soft border-b border-default hover:bg-neutral-secondary-medium">
@@ -233,15 +204,8 @@
                                         @endif
                                     </td>
                                     <td class="px-6 py-4">
-                                        <input type="file" name="birth_certificates[]"  multiple accept="application/pdf"
-                                            class="mt-1 block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100">
+                                        <x-file-input name="birth_certificates[]" accept="application/pdf" multiple />
                                         <div class="preview-container mt-2"></div>
-                                        @error('birth_certificates')
-                                            <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
-                                        @enderror
-                                        @error('birth_certificates.*')
-                                            <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
-                                        @enderror
                                     </td>
                                 </tr>
                                 <tr class="bg-neutral-primary-soft border-b border-default hover:bg-neutral-secondary-medium">
@@ -276,12 +240,8 @@
                                         @endif
                                     </td>
                                     <td class="px-6 py-4">
-                                        <input type="file" name="divorce_certificate" accept="application/pdf"
-                                            class="mt-1 block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100">
+                                        <x-file-input name="divorce_certificate" accept="application/pdf" />
                                         <div class="preview-container mt-2"></div>
-                                        @error('divorce_certificate')
-                                            <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
-                                        @enderror
                                     </td>
                                 </tr>
                                 <tr class="bg-neutral-primary-soft border-b border-default hover:bg-neutral-secondary-medium">
@@ -316,15 +276,8 @@
                                         @endif
                                     </td>
                                     <td class="px-6 py-4">
-                                        <input type="file" name="tax_id_numbers[]"  multiple  accept="application/pdf"
-                                            class="mt-1 block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100">
+                                        <x-file-input name="tax_id_numbers[]" accept="application/pdf" multiple />
                                         <div class="preview-container mt-2"></div>
-                                        @error('tax_id_numbers')
-                                            <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
-                                        @enderror
-                                        @error('tax_id_numbers.*')
-                                            <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
-                                        @enderror
                                     </td>
                                 </tr>
                                 <tr class="bg-neutral-primary-soft border-b border-default hover:bg-neutral-secondary-medium">
@@ -359,16 +312,9 @@
                                         @endif
                                     </td>
                                     <td class="px-6 py-4">
-                                        <input type="file" name="photos[]" multiple accept="image/jpeg, image/png, image/jpg"
-                                            class="mt-1 block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100">
+                                        <x-file-input name="photos[]" accept="image/jpeg, image/png, image/jpg" multiple
+                                            hint="Format accepté: JPEG, PNG (Max 1MB par photo)" />
                                         <div class="preview-container mt-2"></div>
-                                        @error('photos')
-                                            <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
-                                        @enderror
-                                        @error('photos.*')
-                                            <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
-                                        @enderror
-                                        <p class="mt-1 text-sm text-gray-500">Format accepté: JPEG, PNG (Max 1MB par photo)</p>
                                     </td>
                                 </tr>
                                 <tr class="bg-neutral-primary-soft border-b border-default hover:bg-neutral-secondary-medium">
@@ -399,12 +345,8 @@
                                         @endif
                                     </td>
                                     <td class="px-6 py-4">
-                                        <input type="file" name="medical_certificate" accept="application/pdf"
-                                            class="mt-1 block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100">
+                                        <x-file-input name="medical_certificate" accept="application/pdf" />
                                         <div class="preview-container mt-2"></div>
-                                        @error('medical_certificate')
-                                            <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
-                                        @enderror
                                     </td>
                                 </tr>
                                 <tr class="bg-neutral-primary-soft border-b border-default hover:bg-neutral-secondary-medium">
@@ -437,38 +379,15 @@
                                         @endif
                                     </td>
                                     <td class="px-6 py-4">
-                                        <input type="file" name="check_stub" accept="application/pdf"
-                                            class="mt-1 block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100">
+                                        <x-file-input name="check_stub" accept="application/pdf" />
                                         <div class="preview-container mt-2"></div>
-                                        @error('check_stub')
-                                            <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
-                                        @enderror
                                     </td>
                                 </tr>
                     </tbody>
                 </table>
 
                 <!-- Soumission -->
-                    <div class="mt-8 flex gap-5 justify-end">
-                        @if (!$demande || $demande->isDraft())  
-                            <button
-                                type="submit"
-                                name="action"
-                                value="draft"
-                                class="inline-flex items-center justify-center p-2 border border-transparent text-base font-medium rounded-md text-white bg-gray-600 hover:bg-gray-700">
-                                Sauvegarder
-                            </button>
-                        @endif
-                        @if (!$demande || $demande->isDraft())
-                                <button
-                                    type="submit"
-                                    name="action"
-                                    value="submit"
-                                    class="inline-flex items-center justify-center p-2 border border-transparent text-base font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700">
-                                    Soumettre
-                                </button>
-                        @endif
-                    </div>
+                <x-demande-actions :demande="$demande" />
             </form>
             <form id="delete-document-form" method="POST" style="display:none;">
                 @csrf

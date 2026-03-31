@@ -1,7 +1,7 @@
 <x-app-layout>
     <x-slot name="header">
         <h2 class="font-semibold text-xl text-gray-800 leading-tight">
-            {{ __('Suivi des demandes') }}
+            {{ __('messages.my_requests_title') }}
         </h2>
     </x-slot>
 
@@ -9,7 +9,7 @@
         {{-- ===================== MES DEMANDES ===================== --}}
         <fieldset class="border-2 border-gray-200 rounded-lg mt-8 pl-3 ml-1 mr-1">
             <legend class="text-lg font-semibold ml-4 px-4 text-gray-700 bg-white rounded-full shadow-sm">
-                <i class="fas fa-tachometer-alt mr-2 text-gray-400"></i> Mes demandes
+                <i class="fas fa-tachometer-alt mr-2 text-gray-400"></i> {{ __('messages.my_requests') }}
             </legend>
 
             <div class="py-6 pl-5 pr-5">
@@ -40,7 +40,7 @@
 
                                         @if ($request['count'] > 0)
                                             <div class="mt-2 text-sm text-blue-600 opacity-0 group-hover:opacity-100 transition-opacity">
-                                                Voir la liste →
+                                                    {{ __('messages.see_details') }} →
                                             </div>
                                         @endif
 
@@ -80,7 +80,7 @@
 
                                         @if ($request['count'] > 0)
                                             <div class="mt-2 text-sm text-blue-600 opacity-0 group-hover:opacity-100 transition-opacity">
-                                                Voir la liste →
+                                                    {{ __('messages.see_details') }} →
                                             </div>
                                         @endif
 
@@ -120,7 +120,7 @@
 
                                         @if ($request['count'] > 0)
                                             <div class="mt-2 text-sm text-blue-600 opacity-0 group-hover:opacity-100 transition-opacity">
-                                                Voir la liste →
+                                                    {{ __('messages.see_details') }} →
                                             </div>
                                         @endif
 

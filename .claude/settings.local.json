@@ -10,7 +10,8 @@
       "Bash(php artisan:*)",
       "Bash(python3 -c \":*)",
       "Bash(php -r \":*)",
-      "Bash(php -l app/Models/Demande.php app/Http/Controllers/DemandeController.php)"
+      "Bash(php -l app/Models/Demande.php app/Http/Controllers/DemandeController.php)",
+      "Bash(xargs ls:*)"
     ]
   }
 }

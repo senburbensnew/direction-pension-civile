@@ -114,18 +114,18 @@
 
                             <div class="pt-6">
                                 <h3 class="text-xl font-semibold text-gray-800 mb-6">Rejoignez notre communauté</h3>
-                                <div class="flex gap-4">
-                                    <a href="#" class="social-icon w-12 h-12 flex items-center justify-center rounded-xl bg-blue-600 text-white hover:bg-blue-700" aria-label="Page Facebook">
-                                        <i class="fab fa-facebook-f text-lg"></i>
+                                <div class="flex gap-3">
+                                    <a href="#" class="social-icon w-11 h-11 flex items-center justify-center rounded-full hover:opacity-90 shadow-sm" style="background:#1877F2;" aria-label="Page Facebook">
+                                        <i class="fab fa-facebook-f text-base" style="color:white;"></i>
                                     </a>
-                                    <a href="#" class="social-icon w-12 h-12 flex items-center justify-center rounded-xl bg-blue-400 text-white hover:bg-blue-500" aria-label="Profil Twitter">
-                                        <i class="fab fa-twitter text-lg"></i>
+                                    <a href="#" class="social-icon w-11 h-11 flex items-center justify-center rounded-full hover:opacity-90 shadow-sm" style="background:#000;" aria-label="Profil X (Twitter)">
+                                        <i class="fab fa-x-twitter text-base" style="color:white;"></i>
                                     </a>
-                                    <a href="#" class="social-icon w-12 h-12 flex items-center justify-center rounded-xl bg-blue-700 text-white hover:bg-blue-800" aria-label="Profil LinkedIn">
-                                        <i class="fab fa-linkedin-in text-lg"></i>
+                                    <a href="#" class="social-icon w-11 h-11 flex items-center justify-center rounded-full hover:opacity-90 shadow-sm" style="background:#0A66C2;" aria-label="Profil LinkedIn">
+                                        <i class="fab fa-linkedin-in text-base" style="color:white;"></i>
                                     </a>
-                                    <a href="#" class="social-icon w-12 h-12 flex items-center justify-center rounded-xl bg-red-600 text-white hover:bg-red-700" aria-label="Chaîne YouTube">
-                                        <i class="fab fa-youtube text-lg"></i>
+                                    <a href="#" class="social-icon w-11 h-11 flex items-center justify-center rounded-full hover:opacity-90 shadow-sm" style="background:#FF0000;" aria-label="Chaîne YouTube">
+                                        <i class="fab fa-youtube text-base" style="color:white;"></i>
                                     </a>
                                 </div>
                             </div>
@@ -138,24 +138,46 @@
                                 <p class="text-gray-600">Remplissez le formulaire ci-dessous et nous vous répondrons dans les plus brefs délais</p>
                             </div>
 
-                            <form class="space-y-6" method="POST" action="">
+                            {{-- Success message --}}
+                            @if(session('success'))
+                                <div class="mb-6 flex items-start gap-3 bg-green-50 border border-green-300 text-green-800 rounded-lg p-4">
+                                    <i class="fas fa-check-circle text-green-500 mt-0.5 flex-shrink-0"></i>
+                                    <p class="text-sm">{{ session('success') }}</p>
+                                </div>
+                            @endif
+
+                            {{-- Validation errors summary --}}
+                            @if($errors->any())
+                                <div class="mb-6 flex items-start gap-3 bg-red-50 border border-red-300 text-red-800 rounded-lg p-4">
+                                    <i class="fas fa-exclamation-circle text-red-500 mt-0.5 flex-shrink-0"></i>
+                                    <ul class="text-sm list-disc list-inside space-y-1">
+                                        @foreach($errors->all() as $error)
+                                            <li>{{ $error }}</li>
+                                        @endforeach
+                                    </ul>
+                                </div>
+                            @endif
+
+                            <form class="space-y-6" method="POST" action="{{ route('contact.store') }}">
                                 @csrf
                                 <div class="grid grid-cols-1 gap-6 md:grid-cols-2">
                                     <div>
-                                        <label for="first-name" class="block text-sm font-medium text-gray-700 mb-2">Prénom</label>
+                                        <label for="first_name" class="block text-sm font-medium text-gray-700 mb-2">Prénom <span class="text-red-500">*</span></label>
                                         <div class="relative">
-                                            <input type="text" id="first-name" name="first-name" required
-                                                class="w-full px-4 py-3 border border-gray-300 rounded-lg input-focus focus:outline-none transition-colors">
+                                            <input type="text" id="first_name" name="first_name"
+                                                value="{{ old('first_name') }}" required
+                                                class="w-full px-4 py-3 border {{ $errors->has('first_name') ? 'border-red-400 bg-red-50' : 'border-gray-300' }} rounded-lg input-focus focus:outline-none transition-colors">
                                             <div class="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
                                                 <i class="fas fa-user text-gray-400"></i>
                                             </div>
                                         </div>
                                     </div>
                                     <div>
-                                        <label for="last-name" class="block text-sm font-medium text-gray-700 mb-2">Nom</label>
+                                        <label for="last_name" class="block text-sm font-medium text-gray-700 mb-2">Nom <span class="text-red-500">*</span></label>
                                         <div class="relative">
-                                            <input type="text" id="last-name" name="last-name" required
-                                                class="w-full px-4 py-3 border border-gray-300 rounded-lg input-focus focus:outline-none transition-colors">
+                                            <input type="text" id="last_name" name="last_name"
+                                                value="{{ old('last_name') }}" required
+                                                class="w-full px-4 py-3 border {{ $errors->has('last_name') ? 'border-red-400 bg-red-50' : 'border-gray-300' }} rounded-lg input-focus focus:outline-none transition-colors">
                                             <div class="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
                                                 <i class="fas fa-user text-gray-400"></i>
                                             </div>
@@ -164,10 +186,11 @@
                                 </div>
 
                                 <div>
-                                    <label for="email" class="block text-sm font-medium text-gray-700 mb-2">Adresse e-mail</label>
+                                    <label for="email" class="block text-sm font-medium text-gray-700 mb-2">Adresse e-mail <span class="text-red-500">*</span></label>
                                     <div class="relative">
-                                        <input type="email" id="email" name="email" required
-                                            class="w-full px-4 py-3 border border-gray-300 rounded-lg input-focus focus:outline-none transition-colors">
+                                        <input type="email" id="email" name="email"
+                                            value="{{ old('email') }}" required
+                                            class="w-full px-4 py-3 border {{ $errors->has('email') ? 'border-red-400 bg-red-50' : 'border-gray-300' }} rounded-lg input-focus focus:outline-none transition-colors">
                                         <div class="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
                                             <i class="fas fa-envelope text-gray-400"></i>
                                         </div>
@@ -175,15 +198,15 @@
                                 </div>
 
                                 <div>
-                                    <label for="subject" class="block text-sm font-medium text-gray-700 mb-2">Sujet</label>
+                                    <label for="subject" class="block text-sm font-medium text-gray-700 mb-2">Sujet <span class="text-red-500">*</span></label>
                                     <div class="relative">
                                         <select id="subject" name="subject" required
-                                            class="w-full px-4 py-3 border border-gray-300 rounded-lg input-focus focus:outline-none transition-colors appearance-none">
-                                            <option value="" disabled selected>Sélectionnez un sujet</option>
-                                            <option value="pension">Question sur les pensions</option>
-                                            <option value="documents">Demande de documents</option>
-                                            <option value="rendezvous">Prise de rendez-vous</option>
-                                            <option value="autre">Autre</option>
+                                            class="w-full px-4 py-3 border {{ $errors->has('subject') ? 'border-red-400 bg-red-50' : 'border-gray-300' }} rounded-lg input-focus focus:outline-none transition-colors appearance-none">
+                                            <option value="" disabled {{ old('subject') ? '' : 'selected' }}>Sélectionnez un sujet</option>
+                                            <option value="pension"    {{ old('subject') === 'pension'    ? 'selected' : '' }}>Question sur les pensions</option>
+                                            <option value="documents"  {{ old('subject') === 'documents'  ? 'selected' : '' }}>Demande de documents</option>
+                                            <option value="rendezvous" {{ old('subject') === 'rendezvous' ? 'selected' : '' }}>Prise de rendez-vous</option>
+                                            <option value="autre"      {{ old('subject') === 'autre'      ? 'selected' : '' }}>Autre</option>
                                         </select>
                                         <div class="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
                                             <i class="fas fa-chevron-down text-gray-400"></i>
@@ -192,10 +215,10 @@
                                 </div>
 
                                 <div>
-                                    <label for="message" class="block text-sm font-medium text-gray-700 mb-2">Votre message</label>
+                                    <label for="message" class="block text-sm font-medium text-gray-700 mb-2">Votre message <span class="text-red-500">*</span></label>
                                     <div class="relative">
                                         <textarea id="message" name="message" rows="5" required
-                                            class="w-full px-4 py-3 border border-gray-300 rounded-lg input-focus focus:outline-none transition-colors resize-none"></textarea>
+                                            class="w-full px-4 py-3 border {{ $errors->has('message') ? 'border-red-400 bg-red-50' : 'border-gray-300' }} rounded-lg input-focus focus:outline-none transition-colors resize-none">{{ old('message') }}</textarea>
                                         <div class="absolute top-3 right-3 pointer-events-none">
                                             <i class="fas fa-pen text-gray-400"></i>
                                         </div>

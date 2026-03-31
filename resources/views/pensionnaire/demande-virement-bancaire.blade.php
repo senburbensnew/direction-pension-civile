@@ -197,15 +197,15 @@
                 </div>
             @endif
 
-            <div class="flex justify-end gap-3">
+            <div class="mt-8 flex justify-end gap-3">
                 <button type="button"
                     onclick="document.getElementById('action-input').value='draft'; document.getElementById('virement-form').submit();"
                     class="bg-gray-200 text-gray-700 px-6 py-2 rounded hover:bg-gray-300">
-                    Sauvegarder en brouillon
+                    Sauvegarder
                 </button>
                 <button type="button"
                     onclick="document.getElementById('action-input').value='submit'; document.getElementById('virement-form').submit();"
-                    class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded">
+                    class="bg-blue-600 text-white px-6 py-2 rounded hover:bg-blue-700">
                     Soumettre
                 </button>
             </div>

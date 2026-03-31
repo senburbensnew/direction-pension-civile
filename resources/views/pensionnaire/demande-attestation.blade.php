@@ -110,15 +110,15 @@
                 @enderror
             </div>
 
-            <div class="mt-6 flex justify-end gap-3">
+            <div class="mt-8 flex justify-end gap-3">
                 <button type="button"
                     onclick="document.getElementById('action-input').value='draft'; document.getElementById('main-form').submit();"
-                    class="bg-gray-200 text-gray-700 py-2 px-4 rounded-md shadow-sm hover:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-400">
-                    Sauvegarder en brouillon
+                    class="bg-gray-200 text-gray-700 px-6 py-2 rounded hover:bg-gray-300">
+                    Sauvegarder
                 </button>
                 <button type="button"
                     onclick="document.getElementById('action-input').value='submit'; document.getElementById('main-form').submit();"
-                    class="bg-blue-600 text-white py-2 px-4 rounded-md shadow-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50">
+                    class="bg-blue-600 text-white px-6 py-2 rounded hover:bg-blue-700">
                     Soumettre
                 </button>
             </div>

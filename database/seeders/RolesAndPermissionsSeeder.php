@@ -113,6 +113,6 @@ class RolesAndPermissionsSeeder extends Seeder
         );
 
         // Assign roles to the admin user
-        $adminUser->assignRole(['admin', 'fonctionnaire']);
+        $adminUser->assignRole(['admin']);
     }
 }

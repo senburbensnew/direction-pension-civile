@@ -492,15 +492,15 @@
                 <p class="text-xs text-right font-bold mt-6 text-gray-500 tracking-wide">mefd/dpc/sicp/jr</p>
             </fieldset> --}}
             <!-- Submit Buttons -->
-            <div class="mt-6 flex justify-end gap-3">
+            <div class="mt-8 flex justify-end gap-3">
                 <button type="button"
                     onclick="document.getElementById('action-input').value='draft'; document.getElementById('preuve-existence-form').submit();"
-                    class="bg-gray-200 text-gray-700 px-6 py-2 rounded hover:bg-gray-300 transition-colors text-sm md:text-base">
-                    Sauvegarder en brouillon
+                    class="bg-gray-200 text-gray-700 px-6 py-2 rounded hover:bg-gray-300">
+                    Sauvegarder
                 </button>
                 <button type="button"
                     onclick="document.getElementById('action-input').value='submit'; document.getElementById('preuve-existence-form').submit();"
-                    class="bg-blue-600 text-white px-6 py-2 rounded hover:bg-blue-700 transition-colors text-sm md:text-base">
+                    class="bg-blue-600 text-white px-6 py-2 rounded hover:bg-blue-700">
                     Soumettre
                 </button>
             </div>

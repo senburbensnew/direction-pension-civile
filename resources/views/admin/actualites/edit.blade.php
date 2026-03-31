@@ -63,13 +63,8 @@
 
         {{-- File Upload --}}
         <div class="mb-4">
-            <label class="block text-sm mb-1">
-                Images (une ou plusieurs)
-            </label>
-            <input type="file" name="images[]" multiple accept="image/*" class="w-full border rounded px-3 py-2">
-            <p class="text-xs text-gray-500 mt-1">
-                Formats acceptés : JPG, PNG, WEBP
-            </p>
+            <x-file-input name="images[]" label="Images (une ou plusieurs)" accept="image/*" multiple
+                hint="Formats acceptés : JPG, PNG, WEBP" />
         </div>
 
         {{-- Existing Images --}}

@@ -285,7 +285,8 @@ class PersonalController extends Controller
 
     public function showRequestForAuthenticatedUser(Request $request, int $id)
     {
-        $demande = Demande::where('created_by', auth()->id())
+        $demande = Demande::with(['service', 'workflows.toService'])
+            ->where('created_by', auth()->id())
             ->findOrFail($id);
 
         $requestHistories = DemandeHistory::where('demande_id', $demande->id)

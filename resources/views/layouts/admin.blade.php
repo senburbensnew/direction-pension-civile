@@ -1,273 +1,240 @@
 <!DOCTYPE html>
 <html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
-
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Admin Panel - {{ config('app.name', 'Laravel') }}</title>
+    <title>@yield('title', 'Administration') — DPC</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css" />
+    @vite(['resources/css/app.css', 'resources/js/app.js'])
     <style>
-        .sidebar {
-            transform: translateX(-100%);
-            transition: transform 0.3s ease-in-out;
-        }
+        :root { --sidebar-w: 15rem; }
 
-        .sidebar-open .sidebar {
-            transform: translateX(0);
+        /* Sidebar slide */
+        #sidebar {
+            width: var(--sidebar-w);
+            transform: translateX(calc(-1 * var(--sidebar-w)));
+            transition: transform .25s ease;
         }
-
-        .overlay {
-            display: none;
-            background-color: rgba(0, 0, 0, 0.5);
-        }
-
-        .sidebar-open .overlay {
-            display: block;
-        }
-
         @media (min-width: 1024px) {
-            .sidebar {
-                transform: translateX(0);
-            }
+            #sidebar { transform: translateX(0); }
+            #main     { margin-left: var(--sidebar-w); }
+            #overlay  { display: none !important; }
+            #hamburger { display: none; }
+        }
+        body.sidebar-open #sidebar  { transform: translateX(0); }
+        body.sidebar-open #overlay  { display: block; }
 
-            .main-content {
-                margin-left: 16rem;
-            }
+        /* Nav links */
+        .nav-link {
+            display: flex; align-items: center; gap: .625rem;
+            padding: .45rem .9rem; border-radius: .4rem;
+            color: #94a3b8; font-size: .825rem; font-weight: 500;
+            transition: background .15s, color .15s;
+            white-space: nowrap;
+        }
+        .nav-link:hover { background: rgba(255,255,255,.07); color: #e2e8f0; }
+        .nav-link.active { background: rgba(255,255,255,.12); color: #fff; }
+        .nav-link i { width: 1rem; text-align: center; font-size: .85rem; }
 
-            .hamburger {
-                display: none;
-            }
+        .nav-section {
+            padding: .5rem .75rem .25rem;
+            font-size: .65rem; font-weight: 700; letter-spacing: .07em;
+            color: #64748b; text-transform: uppercase;
         }
     </style>
-    @vite(['resources/css/app.css', 'resources/js/app.js'])
-    {{-- <link href="{{ asset('build/assets/app-CFGfTGFn.css') }}" rel="stylesheet"> --}}
 </head>
 
-<body class="bg-gray-100">
-    <noscript>
-        <div class="fixed inset-0 z-[10001] flex items-center justify-center bg-black bg-opacity-80">
-            <div class="bg-white max-w-md w-full mx-4 p-6 rounded-xl shadow-xl text-center">
-                <div class="text-red-500 text-5xl mb-4">
-                    <i class="fas fa-exclamation-triangle"></i>
-                </div>
+<body class="bg-gray-100 antialiased">
 
-                <h2 class="text-2xl font-bold text-gray-800 mb-2">
-                    JavaScript désactivé
-                </h2>
+    <!-- Overlay (mobile) -->
+    <div id="overlay" class="hidden fixed inset-0 bg-black/50 z-40" onclick="closeSidebar()"></div>
 
-                <p class="text-gray-600 mb-4">
-                    Ce site nécessite JavaScript pour fonctionner correctement.
-                    Veuillez activer JavaScript dans votre navigateur et recharger la page.
-                </p>
+    <!-- Sidebar -->
+    <aside id="sidebar" class="fixed inset-y-0 left-0 z-50 flex flex-col"
+        style="background: #0f2340;">
 
-                <p class="text-sm text-gray-500">
-                    Sans JavaScript, certaines fonctionnalités ne seront pas disponibles.
-                </p>
+        {{-- Brand --}}
+        <div class="flex items-center gap-3 px-4 py-4 border-b border-white/10">
+            <img src="{{ asset('images/setting-logo-1-M13oPLiYoM.png') }}" alt="Logo" class="w-8 h-8 rounded">
+            <div class="leading-tight">
+                <p class="text-white text-sm font-semibold leading-none">DPC</p>
+                <p class="text-slate-400 text-xs">Administration</p>
             </div>
         </div>
-    </noscript>
 
-    <div class="min-h-screen" id="wrapper">
-        <!-- Mobile overlay -->
-        <div class="overlay fixed inset-0 z-40 lg:hidden" onclick="toggleSidebar()"></div>
+        {{-- Nav --}}
+        <nav class="flex-1 overflow-y-auto py-3 px-2 space-y-0.5">
 
-        <!-- Sidebar -->
-        <aside class="sidebar fixed inset-y-0 left-0 z-50 w-64 bg-[#173152] overflow-y-auto">
-            <div class="p-4">
-                <h2 class="text-white text-xl font-semibold">Administration</h2>
+            {{-- Overview --}}
+            <p class="nav-section">Vue d'ensemble</p>
+            <a href="{{ route('admin.dashboard.index') }}"
+               class="nav-link {{ request()->routeIs('admin.dashboard.*') ? 'active' : '' }}">
+               <i class="fas fa-chart-pie"></i> Tableau de bord
+            </a>
+
+            {{-- Utilisateurs & Accès --}}
+            <p class="nav-section mt-2">Utilisateurs & Accès</p>
+            <a href="{{ route('admin.users.index') }}"
+               class="nav-link {{ request()->routeIs('admin.users.*') ? 'active' : '' }}">
+               <i class="fas fa-users"></i> Utilisateurs
+            </a>
+            <a href="{{ route('admin.roles.index') }}"
+               class="nav-link {{ request()->routeIs('admin.roles.*') ? 'active' : '' }}">
+               <i class="fas fa-shield-alt"></i> Rôles
+            </a>
+            <a href="{{ route('admin.permissions.index') }}"
+               class="nav-link {{ request()->routeIs('admin.permissions.*') ? 'active' : '' }}">
+               <i class="fas fa-key"></i> Permissions
+            </a>
+            <a href="{{ route('admin.services.index') }}"
+               class="nav-link {{ request()->routeIs('admin.services.*') ? 'active' : '' }}">
+               <i class="fas fa-sitemap"></i> Services
+            </a>
+
+            {{-- Contenu --}}
+            <p class="nav-section mt-2">Contenu</p>
+            <a href="{{ route('admin.actualites.admin.index') }}"
+               class="nav-link {{ request()->routeIs('admin.actualites.*') ? 'active' : '' }}">
+               <i class="fas fa-newspaper"></i> Actualités
+            </a>
+            <a href="{{ route('admin.reports.admin.index') }}"
+               class="nav-link {{ request()->routeIs('admin.reports.*') ? 'active' : '' }}">
+               <i class="fas fa-file-pdf"></i> Rapports
+            </a>
+            <a href="{{ route('admin.carousels.index') }}"
+               class="nav-link {{ request()->routeIs('admin.carousels.*') ? 'active' : '' }}">
+               <i class="fas fa-images"></i> Carrousel
+            </a>
+
+            {{-- Communications --}}
+            <p class="nav-section mt-2">Communications</p>
+            <a href="{{ route('admin.contacts.index') }}"
+               class="nav-link {{ request()->routeIs('admin.contacts.*') ? 'active' : '' }}">
+               <i class="fas fa-envelope"></i> Messages
+               @php $unread = \App\Models\Contact::where('read', false)->count(); @endphp
+               @if($unread > 0)
+                   <span class="ml-auto bg-red-500 text-white text-xs rounded-full px-1.5 py-0.5 leading-none">{{ $unread }}</span>
+               @endif
+            </a>
+            <a href="{{ route('admin.newsletter.admin.index') }}"
+               class="nav-link {{ request()->routeIs('admin.newsletter.*') ? 'active' : '' }}">
+               <i class="fas fa-paper-plane"></i> Newsletter
+            </a>
+
+        </nav>
+
+        {{-- Footer: user info + profile + logout --}}
+        <div class="border-t border-white/10 px-3 py-3 space-y-2">
+            <a href="{{ route('profile.edit') }}"
+                class="nav-link {{ request()->routeIs('profile.*') ? 'active' : '' }} text-xs">
+                <i class="fas fa-user-circle"></i> Mon profil
+            </a>
+            <div class="flex items-center gap-2 px-2">
+                @if(Auth::user()->profile_photo)
+                    <img src="{{ Storage::url(Auth::user()->profile_photo) }}"
+                         class="w-7 h-7 rounded-full object-cover flex-shrink-0">
+                @else
+                    <div class="w-7 h-7 rounded-full bg-slate-600 flex items-center justify-center flex-shrink-0">
+                        <i class="fas fa-user text-slate-300 text-xs"></i>
+                    </div>
+                @endif
+                <div class="flex-1 min-w-0">
+                    <p class="text-white text-xs font-medium truncate">{{ Auth::user()->name }}</p>
+                    <p class="text-slate-500 text-xs truncate">Administrateur</p>
+                </div>
+                <form method="POST" action="{{ route('logout') }}">
+                    @csrf
+                    <button type="submit" title="Déconnexion"
+                        class="text-slate-500 hover:text-red-400 transition-colors">
+                        <i class="fas fa-sign-out-alt text-sm"></i>
+                    </button>
+                </form>
             </div>
-            <nav class="mt-4">
+        </div>
+    </aside>
 
-                <!-- Dashboard -->
-                 <a href="{{ route('admin.dashboard.index') }}"
-                    class="flex items-center px-4 py-2 text-gray-300 hover:bg-gray-700 {{ request()->routeIs('admin.dashboard.*') ? 'bg-gray-700' : '' }}">
-                    <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                            d="M3 12l2-2m0 0l7-7 7 7m-9 9V9m4 12V9m5 3l2 2"/>
-                    </svg>
-                    Dashboard
-                </a> 
-                <!-- Utilisateurs -->
-                <a href="{{ route('admin.users.index') }}"
-                    class="flex items-center px-4 py-2 text-gray-300 hover:bg-gray-700 {{ request()->routeIs('admin.users.*') ? 'bg-gray-700' : '' }}">
-                    <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                            d="M17 20h5v-2a4 4 0 00-4-4h-1M9 20H4v-2a4 4 0 014-4h1m4-4a4 4 0 100-8 4 4 0 000 8zm6 0a3 3 0 100-6 3 3 0 000 6z"/>
-                    </svg>
-                    Utilisateurs
-                </a>
-                <!-- Services -->
-                <a href="{{ route('admin.services.index') }}"
-                    class="flex items-center px-4 py-2 text-gray-300 hover:bg-gray-700 {{ request()->routeIs('admin.services.*') ? 'bg-gray-700' : '' }}">
-                    <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                            d="M17 20h5v-2a4 4 0 00-4-4h-1M9 20H4v-2a4 4 0 014-4h1m4-4a4 4 0 100-8 4 4 0 000 8zm6 0a3 3 0 100-6 3 3 0 000 6z"/>
-                    </svg>
-                    Services
-                </a>
-                <!-- Permissions -->
-                <a href="{{ route('admin.permissions.index') }}"
-                    class="flex items-center px-4 py-2 text-gray-300 hover:bg-gray-700 {{ request()->routeIs('admin.permissions.*') ? 'bg-gray-700' : '' }}">
-                    <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                            d="M12 11c1.657 0 3-1.343 3-3S13.657 5 12 5 9 6.343 9 8s1.343 3 3 3z"/>
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                            d="M19 11v6a2 2 0 01-2 2H7a2 2 0 01-2-2v-6"/>
-                    </svg>
-                    Permissions
-                </a>
-                <!-- Rôles -->
-                <a href="{{ route('admin.roles.index') }}"
-                    class="flex items-center px-4 py-2 text-gray-300 hover:bg-gray-700 {{ request()->routeIs('admin.roles.*') ? 'bg-gray-700' : '' }}">
-                    <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                            d="M9 12l2 2 4-4M12 3l7 4v5c0 5-3.5 9-7 9s-7-4-7-9V7l7-4z"/>
-                    </svg>
-                    Rôles
-                </a>
-                <!-- Carrousel -->
-                <a href="{{ route('admin.carousels.index') }}"
-                    class="flex items-center px-4 py-2 text-gray-300 hover:bg-gray-700 {{ request()->routeIs('admin.carousels.*') ? 'bg-gray-700' : '' }}">
-                    <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <rect x="3" y="5" width="18" height="14" rx="2" ry="2" stroke-width="2"/>
-                        <circle cx="8" cy="10" r="2"/>
-                        <path stroke-width="2" d="M21 15l-5-5-4 4-2-2-5 5"/>
-                    </svg>
-                    Carrousel
-                </a>
-                <!-- Ministre -->
-                <a href="#"
-                    class="flex items-center px-4 py-2 text-gray-300 hover:bg-gray-700 {{ request()->routeIs('admin.services.*') ? 'bg-gray-700' : '' }}">
-                    <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                            d="M12 14a4 4 0 100-8 4 4 0 000 8z"/>
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                            d="M4 20a8 8 0 0116 0"/>
-                    </svg>
-                    Ministre
-                </a>
-                <!-- Rapports -->
-                <a href="{{ route('admin.reports.create') }}"
-                    class="flex items-center px-4 py-2 text-gray-300 hover:bg-gray-700 {{ request()->routeIs('admin.reports.*') ? 'bg-gray-700' : '' }}">
-                    <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                            d="M9 17v-4m3 4v-6m3 6v-2M5 21h14a2 2 0 002-2V5a2 2 0 00-2-2H9L5 7v12a2 2 0 002 2z"/>
-                    </svg>
-                    Rapports
-                </a>
-                <!-- Newsletter -->
-                <a href="#"
-                    class="flex items-center px-4 py-2 text-gray-300 hover:bg-gray-700 {{ request()->routeIs('admin.services.*') ? 'bg-gray-700' : '' }}">
-                    <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                            d="M3 8l9 6 9-6M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
-                    </svg>
-                    Newsletter
-                </a>
-                <!-- Actualités -->
-                <a href="{{ route('admin.actualites.admin.index') }}"
-                    class="flex items-center px-4 py-2 text-gray-300 hover:bg-gray-700 {{ request()->routeIs('admin.actualites.*') ? 'bg-gray-700' : '' }}">
-                    <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                            d="M19 7h-1a2 2 0 00-2 2v10H6a2 2 0 01-2-2V5a2 2 0 012-2h9l4 4z"/>
-                        <path stroke-width="2" d="M8 13h8M8 17h6"/>
-                    </svg>
-                    Actualités
-                </a>
+    <!-- Main -->
+    <div id="main" class="flex flex-col min-h-screen">
 
-            </nav>
-        </aside>
+        {{-- Top bar --}}
+        <header class="bg-white border-b border-gray-200 sticky top-0 z-30">
+            <div class="flex items-center justify-between px-4 py-3">
+                <div class="flex items-center gap-3">
+                    <button id="hamburger" onclick="toggleSidebar()"
+                        class="text-gray-500 hover:text-gray-700 lg:hidden">
+                        <i class="fas fa-bars text-lg"></i>
+                    </button>
 
-        <!-- Main Content -->
-        <div class="main-content">
-            <!-- Top Navigation -->
-            <header class="bg-white shadow">
-                <div class="flex items-center justify-between px-4 py-3 sm:px-6 sm:py-4">
-                    <div class="flex items-center space-x-4">
-                        <!-- Hamburger Menu -->
-                        <button class="hamburger text-gray-500 hover:text-gray-600 lg:hidden" onclick="toggleSidebar()"
-                            aria-label="Toggle navigation">
-                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                    d="M4 6h16M4 12h16M4 18h16" />
-                            </svg>
-                        </button>
+                    {{-- Breadcrumb --}}
+                    <div class="text-sm text-gray-500 hidden sm:flex items-center gap-1.5">
+                        <a href="{{ route('admin.dashboard.index') }}" class="hover:text-gray-800">Admin</a>
+                        @hasSection('breadcrumb')
+                            <i class="fas fa-chevron-right text-xs text-gray-300"></i>
+                            @yield('breadcrumb')
+                        @endif
+                    </div>
+                </div>
 
-                        <!-- Home Link -->
-                        <a href="{{ route('home') }}"
-                            class="flex items-center px-2 py-1 text-gray-700 hover:text-gray-900 transition-colors duration-200">
-                            <svg class="w-5 h-5 mr-2 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                    d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
-                            </svg>
-                            <span class="hidden sm:inline">Accueil</span>
+                <div class="flex items-center gap-3">
+                    {{-- Site link --}}
+                    <a href="{{ route('home') }}" target="_blank"
+                        class="text-xs text-gray-500 hover:text-gray-700 flex items-center gap-1">
+                        <i class="fas fa-external-link-alt"></i>
+                        <span class="hidden sm:inline">Voir le site</span>
+                    </a>
+
+                    {{-- Notifications badge --}}
+                    @if(isset($unread) && $unread > 0)
+                        <a href="{{ route('admin.contacts.index') }}"
+                            class="relative text-gray-500 hover:text-gray-700">
+                            <i class="fas fa-bell text-lg"></i>
+                            <span class="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-4 h-4 flex items-center justify-center leading-none">
+                                {{ $unread > 9 ? '9+' : $unread }}
+                            </span>
                         </a>
-                    </div>
-
-                    <!-- User Dropdown -->
-                    <div class="flex items-center">
-                        <x-dropdown align="right" width="48" class="z-50">
-                            <x-slot name="trigger">
-                                <button
-                                    class="flex items-center space-x-1 text-sm font-medium text-gray-500 hover:text-gray-700 transition-colors duration-200">
-                                    <span
-                                        class="truncate max-w-[120px] sm:max-w-[160px]">{{ Auth::user()->name }}</span>
-                                    <svg class="fill-current h-4 w-4 shrink-0" viewBox="0 0 20 20">
-                                        <path fill-rule="evenodd"
-                                            d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"
-                                            clip-rule="evenodd" />
-                                    </svg>
-                                </button>
-                            </x-slot>
-
-                            <x-slot name="content">
-                                <form method="POST" action="{{ route('logout') }}">
-                                    @csrf
-                                    <x-dropdown-link :href="route('logout')"
-                                        onclick="event.preventDefault(); this.closest('form').submit();"
-                                        class="block w-full text-left px-4 py-2 text-sm hover:bg-gray-100">
-                                        {{ __('Log Out') }}
-                                    </x-dropdown-link>
-                                </form>
-                            </x-slot>
-                        </x-dropdown>
-                    </div>
+                    @endif
                 </div>
-            </header>
+            </div>
+        </header>
 
-            <!-- Page Content -->
-            <main class="p-4">
-                @yield('content')
-            </main>
-        </div>
+        {{-- Flash messages --}}
+        @if(session('success') || session('error'))
+            <div class="px-4 pt-3">
+                @if(session('success'))
+                    <div class="flex items-center gap-2 bg-green-50 border border-green-300 text-green-800 rounded-lg px-4 py-2.5 text-sm">
+                        <i class="fas fa-check-circle text-green-500 flex-shrink-0"></i>
+                        {{ session('success') }}
+                    </div>
+                @endif
+                @if(session('error'))
+                    <div class="flex items-center gap-2 bg-red-50 border border-red-300 text-red-800 rounded-lg px-4 py-2.5 text-sm">
+                        <i class="fas fa-exclamation-circle text-red-500 flex-shrink-0"></i>
+                        {{ session('error') }}
+                    </div>
+                @endif
+            </div>
+        @endif
+
+        {{-- Page content --}}
+        <main class="flex-1 p-4 sm:p-6">
+            @yield('content')
+        </main>
+
+        <footer class="px-6 py-3 text-xs text-gray-400 border-t border-gray-200 bg-white">
+            DPC Administration &mdash; {{ date('Y') }}
+        </footer>
     </div>
 
     <script>
         function toggleSidebar() {
-            const wrapper = document.getElementById('wrapper');
-            wrapper.classList.toggle('sidebar-open');
+            document.body.classList.toggle('sidebar-open');
         }
-
-        // Close sidebar when clicking outside on mobile
-        document.addEventListener('click', (event) => {
-            const sidebar = document.querySelector('.sidebar');
-            const hamburger = document.querySelector('.hamburger');
-
-            if (window.innerWidth < 1024 &&
-                !sidebar.contains(event.target) &&
-                !hamburger.contains(event.target)) {
-                document.getElementById('wrapper').classList.remove('sidebar-open');
-            }
-        });
-
-        // Handle window resize
+        function closeSidebar() {
+            document.body.classList.remove('sidebar-open');
+        }
         window.addEventListener('resize', () => {
-            const wrapper = document.getElementById('wrapper');
-            if (window.innerWidth >= 1024) {
-                wrapper.classList.remove('sidebar-open');
-            }
+            if (window.innerWidth >= 1024) closeSidebar();
         });
     </script>
-    {{-- <script src="{{ asset('build/assets/app-CbEvcXly.js') }}"></script> --}}
 </body>
-
 </html>

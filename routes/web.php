@@ -21,6 +21,7 @@ use App\Http\Controllers\QuiSommesNousController;
 use App\Http\Controllers\ReportController;
 use App\Http\Controllers\RoleController;
 use App\Http\Controllers\ServiceController;
+use App\Http\Controllers\ContactController;
 use App\Http\Controllers\UserController;
 use App\Models\Actualite;
 use App\Models\Report;
@@ -49,7 +50,8 @@ Route::get('/glossaire',                fn () => view('glossaire.index'))->name(
 Route::get('/simulateur-calcul',        fn () => view('fonctionnaire.simulateur-calcul'))->name('simulateur-calcul');
 Route::get('/textes_documents_legaux',  fn () => view('communication.textes_publication'))->name('textes_documents_legaux');
 Route::get('/faq',                      fn () => view('faq.index'))->name('faq.index');
-Route::get('/contact',                  fn () => view('contact.index'))->name('contact');
+Route::get('/contact',  [ContactController::class, 'index'])->name('contact');
+Route::post('/contact', [ContactController::class, 'store'])->name('contact.store');
 Route::get('/politique-confidentialite',fn () => view('privacy'))->name('privacy.policy');
 
 Route::get('/liens-utiles', function () {
@@ -94,7 +96,8 @@ Route::get('actualites/{actualite}',       [ActualiteController::class, 'show'])
 Route::get('actualites/{actualite}/download',[ActualiteController::class, 'download'])->name('actualites.download');
 
 // Utilities
-Route::post('/newsletter/souscription', [NewsletterController::class, 'souscription'])->name('newsletter.souscription');
+Route::post('/newsletter/souscription',          [NewsletterController::class, 'souscription'])->name('newsletter.souscription');
+Route::get('/newsletter/unsubscribe/{token}',    [NewsletterController::class, 'unsubscribe'])->name('newsletter.unsubscribe');
 Route::get('/locale/{locale}',          [LocaleController::class, 'switch'])->name('locale');
 
 // Document serving
@@ -127,7 +130,7 @@ Route::middleware('auth')->group(function () {
     // ----------------------------------------------------------
     // Personal dashboard & demande tracking
     // ----------------------------------------------------------
-    Route::prefix('personal')->name('personal.')->group(function () {
+    Route::prefix('personal')->name('personal.')->middleware('not.admin')->group(function () {
         Route::get('/',                    [PersonalController::class, 'index'])->name('index');
         Route::get('/dashboard',           [PersonalController::class, 'dashboard'])->name('dashboard');
         Route::get('/requestsDashboard',   [PersonalController::class, 'requestsDashboard'])->name('requests-dashboard');
@@ -147,7 +150,7 @@ Route::middleware('auth')->group(function () {
     // ----------------------------------------------------------
     // Demandes — create / store (all types)
     // ----------------------------------------------------------
-    Route::prefix('demandes')->name('demandes.')->middleware('auth')->group(function () {
+    Route::prefix('demandes')->name('demandes.')->middleware('not.admin')->group(function () {
 
         // Pensionnaire
         Route::prefix('virements')->name('virements.')->controller(DemandeController::class)->group(function () {
@@ -211,10 +214,11 @@ Route::middleware('auth')->group(function () {
     });
 
     // Demande actions — kept in a separate group with no name prefix to preserve legacy names
-    Route::prefix('demandes')->group(function () {
+    Route::prefix('demandes')->middleware('not.admin')->group(function () {
         Route::post('/{demande}/documents',           [DemandeDocumentController::class, 'store'])->name('demandedocument.store');
         Route::delete('/documents/{document}',        [DemandeDocumentController::class, 'destroy'])->name('demandedocument.destroy');
         Route::get('/{demande}/pdf',                  [DemandePdfController::class, 'download'])->name('demande.pdf');
+        Route::get('/{demande}/print',                [DemandePdfController::class, 'print'])->name('demande.print');
         Route::post('/{demande}/annotation',          [DemandeManagementController::class, 'annotate'])->name('demande.annotate');
         Route::post('/{demande}/complement',          [DemandeManagementController::class, 'requestComplement'])->name('demande.complement');
         Route::post('/{demande}/repondre-complement', [PersonalController::class, 'repondreComplement'])->name('demande.repondre-complement');
@@ -224,7 +228,7 @@ Route::middleware('auth')->group(function () {
     // ----------------------------------------------------------
     // Notifications
     // ----------------------------------------------------------
-    Route::prefix('notifications')->name('notifications.')->group(function () {
+    Route::prefix('notifications')->name('notifications.')->middleware('not.admin')->group(function () {
         Route::get('/',                  [NotificationController::class, 'index'])->name('index');
         Route::post('/{id}/mark-read',   [NotificationController::class, 'markAsRead'])->name('markAsRead');
         Route::post('/mark-all-read',    [NotificationController::class, 'markAllAsRead'])->name('markAllAsRead');
@@ -284,6 +288,18 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'role:admin'])->grou
     Route::put('actualites/{actualite}',         [ActualiteController::class, 'update'])->name('actualites.update');
     Route::delete('actualites/{actualite}',      [ActualiteController::class, 'destroy'])->name('actualites.destroy');
     Route::post('actualites/{actualite}/toggle', [ActualiteController::class, 'togglePublish'])->name('actualites.toggle');
+
+    // Newsletter admin
+    Route::get('newsletter',                         [NewsletterController::class, 'adminIndex'])->name('newsletter.admin.index');
+    Route::delete('newsletter/{newsletter}',         [NewsletterController::class, 'destroy'])->name('newsletter.destroy');
+    Route::get('newsletter/export',                  [NewsletterController::class, 'export'])->name('newsletter.export');
+
+    // Contact admin
+    Route::get('contacts',                           [ContactController::class, 'adminIndex'])->name('contacts.index');
+    Route::get('contacts/{contact}',                 [ContactController::class, 'adminShow'])->name('contacts.show');
+    Route::post('contacts/{contact}/read',           [ContactController::class, 'markRead'])->name('contacts.markRead');
+    Route::post('contacts/mark-all-read',            [ContactController::class, 'markAllRead'])->name('contacts.markAllRead');
+    Route::delete('contacts/{contact}',              [ContactController::class, 'adminDestroy'])->name('contacts.destroy');
 });
 
 require __DIR__ . '/auth.php';

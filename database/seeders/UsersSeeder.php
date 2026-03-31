@@ -131,6 +131,18 @@ class UsersSeeder extends Seeder
 
 
         $multiRoleUser = User::updateOrCreate(
+            ['email' => 'secretariat@example.com'],
+            [
+                'name' => 'Secrétariat',
+                'password' => $defaultPassword,
+                'nif' => fake()->unique()->numerify('###-###-###-#'),
+                'user_type_id' => $fonctionnaireType->id,
+                'service_id' => Service::where('code', 'secretariat')->value('id'),
+            ]
+        );
+        $multiRoleUser->syncRoles(['fonctionnaire', 'secretariat']);
+
+        $dagrinUser = User::updateOrCreate(
             ['email' => 'dagrin@example.com'],
             [
                 'name' => 'Secrétaire Dagrin',
@@ -140,7 +152,7 @@ class UsersSeeder extends Seeder
                 'service_id' => Service::where('code', 'secretariat')->value('id'),
             ]
         );
+        $dagrinUser->syncRoles(['fonctionnaire', 'secretariat']);
 
-        $multiRoleUser->syncRoles(['fonctionnaire', 'secretariat']);
     }
 }

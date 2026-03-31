@@ -27,23 +27,23 @@
                     <nav class="flex flex-wrap gap-4 md:gap-6 text-sm md:text-base">
                         <a href="{{ route('home') }}"
                            class="hover:text-orange-500 transition-colors py-1 border-b-2 border-transparent hover:border-orange-500">
-                            Accueil
+                            {{ __('messages.home') }}
                         </a>
                         <a href="{{ route('liens-utiles') }}"
                            class="hover:text-orange-500 transition-colors py-1 border-b-2 border-transparent hover:border-orange-500">
-                            Liens
+                            {{ __('messages.links') }}
                         </a>
                         <a href="{{ route('contact') }}"
                            class="hover:text-orange-500 transition-colors py-1 border-b-2 border-transparent hover:border-orange-500">
-                            Contact
+                            {{ __('messages.contact') }}
                         </a>
                         <a href="{{ route('faq.index') }}"
                            class="hover:text-orange-500 transition-colors py-1 border-b-2 border-transparent hover:border-orange-500">
-                            FAQ
+                            {{ __('messages.faq') }}
                         </a>
                         <a href="{{ route('glossaire') }}"
                            class="hover:text-orange-500 transition-colors py-1 border-b-2 border-transparent hover:border-orange-500">
-                            Glossaire
+                            {{ __('messages.glossaire') }}
                         </a>
                     </nav>
 
@@ -51,6 +51,7 @@
                     <div class="flex items-center gap-4">
                         <!-- Notification Bell -->
                         @auth
+                            @unlessrole('admin')
                             @php $unreadCount = auth()->user()->unreadNotifications()->count(); @endphp
                             <div x-data="{ open: false }" class="relative">
                                 <button @click="open = !open" @click.outside="open = false"
@@ -71,12 +72,12 @@
                                 <div x-show="open" x-cloak x-transition
                                      class="absolute right-0 mt-2 w-80 bg-white rounded-lg shadow-xl z-50 overflow-hidden">
                                     <div class="flex items-center justify-between px-4 py-3 bg-gray-50 border-b">
-                                        <span class="font-semibold text-gray-700 text-sm">Notifications</span>
+                                        <span class="font-semibold text-gray-700 text-sm">{{ __('messages.notifications') }}</span>
                                         @if ($unreadCount > 0)
                                             <form method="POST" action="{{ route('notifications.markAllAsRead') }}">
                                                 @csrf
                                                 <button type="submit" class="text-xs text-blue-600 hover:underline">
-                                                    Tout marquer comme lu
+                                                    {{ __('messages.mark_all_as_read') }}
                                                 </button>
                                             </form>
                                         @endif
@@ -99,24 +100,25 @@
                                             </li>
                                         @empty
                                             <li class="px-4 py-6 text-center text-sm text-gray-400">
-                                                Aucune notification
+                                                {{ __('messages.no_notification') }}
                                             </li>
                                         @endforelse
                                     </ul>
                                     <div class="px-4 py-2 bg-gray-50 border-t text-center">
                                         <a href="{{ route('notifications.index') }}" class="text-xs text-blue-600 hover:underline">
-                                            Voir toutes les notifications
+                                            {{ __('messages.see_all_notifications') }}
                                         </a>
                                     </div>
                                 </div>
                             </div>
+                            @endunlessrole
                         @endauth
 
                         <!-- Login/User Info -->
                         @guest
                             <a href="{{ route('login') }}" class="inline-block">
                                 <button class="bg-orange-500 hover:bg-orange-600 text-white px-4 py-2 rounded transition-colors text-sm md:text-base shadow-md hover:shadow-lg">
-                                    Connexion
+                                    {{ __('messages.login') }}
                                 </button>
                             </a>
                         @else
@@ -159,17 +161,18 @@
                                     @endrole
 
                                     @auth
-                                        @can('viewDashboard')
-                                            <x-dropdown-link :href="route('personal.index')">
-                                                <i class="fas fa-tachometer-alt mr-2 text-gray-400"></i>
-                                                Mes demandes
-                                            </x-dropdown-link>
-                                        @endcan
+                                        @unlessrole('admin')
+                                            @can('viewDashboard')
+                                                <x-dropdown-link :href="route('personal.index')">
+                                                    <i class="fas fa-tachometer-alt mr-2 text-gray-400"></i>
+                                                    {{ __('messages.my_requests') }}
+                                                </x-dropdown-link>
+                                            @endcan
+                                        @endunlessrole
                                     @endauth
 
                                     @auth
-                                        @role([ 'admin',
-                                                'direction',
+                                        @role([ 'direction',
                                                 'secretariat',
                                                 'service_liquidation',
                                                 'service_formalite',
@@ -180,7 +183,7 @@
                                         ])
                                             <x-dropdown-link :href="route('personal.cart')">
                                                 <i class="fas fa-shopping-cart mr-2 text-gray-400"></i>
-                                                Corbeille
+                                                {{ __('messages.basket') }}
                                             </x-dropdown-link>
                                         @endrole
                                     @endauth
@@ -202,7 +205,7 @@
                         @endguest
 
                         <!-- Language Selector -->
-                        {{--  <div class="flex items-center gap-2">
+                        <div class="flex items-center gap-2">
                             @if (App::getLocale() !== 'fr')
                                 <a href="{{ route('locale', 'fr') }}" class="hover:opacity-75 transition-opacity" title="Français">
                                     <img src="{{ asset('images/france-flag-icon.svg') }}" alt="French Flag" class="w-4 h-4 rounded-sm">
@@ -214,7 +217,7 @@
                                     <img src="{{ asset('images/haiti-flag-icon.svg') }}" alt="Haitian Flag Flag" class="w-4 h-4 rounded-sm">
                                 </a>
                             @endif
-                        </div> --}}
+                        </div>
                     </div>
                 </div>
             </div>

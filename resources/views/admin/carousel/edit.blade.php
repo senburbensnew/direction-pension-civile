@@ -24,9 +24,7 @@
         </div>
 
         <div class="mb-6">
-            <label for="image" class="block text-lg font-medium text-gray-700">New Image</label>
-            <input type="file" name="image" id="image"
-                class="mt-1 p-3 w-full border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500">
+            <x-file-input name="image" label="New Image" />
         </div>
 
         <div class="mb-6">

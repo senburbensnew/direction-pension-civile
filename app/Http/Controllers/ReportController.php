@@ -42,18 +42,9 @@ class ReportController extends Controller
         return view('reports.admin.index', compact('reports'));
     }
 
-public function create(Request $request)
+public function create()
 {
-    $query = Report::query();
-
-    if ($request->filled('q')) {
-        $query->where('title', 'like', "%{$request->q}%")
-              ->orWhere('year', 'like', "%{$request->q}%");
-    }
-
-    $reports = $query->orderBy('created_at', 'desc')->paginate(10);
-
-    return view('reports.create', compact('reports'));
+    return view('reports.create');
 }
 
     public function store(StoreReportRequest $request)
@@ -80,7 +71,7 @@ public function create(Request $request)
             'created_by' => auth()->id(),
         ]);
 
-        return redirect()->route('admin.reports.create')->with('success','Rapport créé avec succès.');
+        return redirect()->route('admin.reports.admin.index')->with('success','Rapport créé avec succès.');
     }
 
     public function show(Report $report)
@@ -92,30 +83,11 @@ public function create(Request $request)
         return view('reports.show', compact('report'));
     }
 
-public function edit(Request $request, Report $report)
+public function edit(Report $report)
 {
-
-    // Vérifie si l'utilisateur est autorisé à mettre à jour ce rapport
     $this->authorize('update', $report);
 
-    // Prépare la requête pour récupérer les rapports
-    $query = Report::query();
-
-    // Filtre si une recherche est effectuée
-    if ($request->filled('q')) {
-        $query->where('title', 'like', "%{$request->q}%")
-              ->orWhere('year', 'like', "%{$request->q}%");
-    }
-
-    // Pagination des rapports, ordonnés par date de création
-    $reports = $query->orderBy('created_at', 'desc')->paginate(10);
-
-    // Retourne la vue de formulaire pour éditer, en passant le rapport et la liste
-    return view('reports.create', [
-        'reportEdit' => $report,
-        'reports' => $reports,
-        'searchQuery' => $request->q ?? ''
-    ]);
+    return view('reports.create', ['reportEdit' => $report]);
 }
 
 
@@ -148,7 +120,7 @@ public function edit(Request $request, Report $report)
         $report->published_at = $report->status === 'published' && !$report->published_at ? Carbon::now() : $report->published_at;
         $report->save();
 
-        return redirect()->route('admin.reports.create')->with('success','Rapport mis à jour.');
+        return redirect()->route('admin.reports.admin.index')->with('success','Rapport mis à jour.');
     }
 
     public function destroy(Report $report)

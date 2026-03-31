@@ -38,4 +38,32 @@ class DemandePdfController extends Controller
 
         return $pdf->download($demande->code . '.pdf');
     }
+
+    public function print(Demande $demande)
+    {
+        abort_if(
+            !$demande->isAnnotated(),
+            403,
+            'Le dossier doit être annoté par la Direction avant d\'être imprimé.'
+        );
+
+        $demande->load(['user', 'status', 'documents', 'annotatedBy', 'service']);
+
+        $viewName = 'demandes.pdf.' . strtolower($demande->type);
+        $view     = View::exists($viewName) ? $viewName : 'demandes.pdf.generic';
+
+        $pdf = Pdf::loadView($view, ['demande' => $demande])
+            ->setPaper('a4', 'portrait')
+            ->setOption('defaultFont', 'DejaVu Sans')
+            ->setOption('isHtml5ParserEnabled', true);
+
+        DemandeActivityLog::create([
+            'demande_id' => $demande->id,
+            'user_id'    => auth()->id(),
+            'action'     => 'printed',
+            'metadata'   => ['filename' => $demande->code . '.pdf'],
+        ]);
+
+        return $pdf->stream($demande->code . '.pdf');
+    }
 }

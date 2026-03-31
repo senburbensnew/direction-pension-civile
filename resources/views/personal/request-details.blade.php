@@ -32,12 +32,12 @@
                     <a href="{{ url()->previous() }}" class="hover:underline">Liste</a>
                 @endif --}}
                 <span class="mx-2">/</span>
-                <span class="text-gray-700 font-semibold">Détails de la demande</span>
+                <span class="text-gray-700 font-semibold">{{ __('messages.request_details') }}</span>
             </nav>
             <div>
-                <div class="flex justify-between items-center">
-                    <h2 class="font-semibold text-xl text-gray-800 leading-tight">#{{ $request->code }}</h2>
-                    <div class="flex items-center space-x-4">
+                <div class="flex flex-wrap justify-between items-start gap-3">
+                    <h2 class="font-semibold text-xl text-gray-800 leading-tight break-all">#{{ $request->code }}</h2>
+                    <div class="flex flex-wrap items-center gap-2 justify-end ml-auto">
                         {{-- <a href=""
                                             class="bg-yellow-500 hover:bg-yellow-600 text-white px-4 py-2 rounded-md flex items-center transition-colors">
                                             <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -85,15 +85,15 @@
                                         class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded"
                                         onclick="document.getElementById('transferModal').classList.remove('hidden')"
                                     >
-                                        Transférer le dossier
+                                        {{ __('messages.transfer_file') }}
                                     </button>
                                 @else
                                     <button
                                         class="px-4 py-2 bg-gray-300 text-gray-500 rounded cursor-not-allowed"
-                                        title="La Direction doit annoter le dossier avant le transfert"
+                                        title="{{ __('messages.transfer_file') }}"
                                         disabled
                                     >
-                                        Transférer le dossier
+                                        {{ __('messages.transfer_file') }}
                                     </button>
                                 @endif
 
@@ -101,34 +101,43 @@
                                     <button
                                         class="px-4 py-2 bg-orange-500 hover:bg-orange-600 text-white rounded flex items-center gap-1"
                                         onclick="document.getElementById('complementModal').classList.remove('hidden'); document.getElementById('complementModal').closest('.bg-white').classList.remove('hidden')"
-                                        title="Demander un complément à l'usager"
                                     >
                                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                                   d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
                                         </svg>
-                                        Demander complément
+                                        {{ __('messages.request_complement') }}
                                     </button>
                                 @else
                                     <span class="px-4 py-2 bg-orange-100 text-orange-700 rounded text-sm font-medium">
-                                        En attente de complément
+                                        {{ __('messages.awaiting_complement') }}
                                     </span>
                                 @endif
                             @endhasanyrole
 
                             @if($request->isAnnotated())
+                                <a href="{{ route('demande.print', $request->id) }}" target="_blank"
+                                   class="px-4 py-2 bg-gray-700 hover:bg-gray-800 text-white rounded flex items-center gap-1">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                              d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/>
+                                    </svg>
+                                    {{ __('messages.print') }}
+                                </a>
                                 <a href="{{ route('demande.pdf', $request->id) }}"
                                    class="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded flex items-center gap-1">
                                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                               d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
                                     </svg>
-                                    Télécharger PDF
+                                    {{ __('messages.download_pdf') }}
                                 </a>
                             @else
-                                <button class="px-4 py-2 bg-gray-300 text-gray-500 rounded cursor-not-allowed"
-                                        title="La Direction doit annoter le dossier avant le téléchargement" disabled>
-                                    Télécharger PDF
+                                <button class="px-4 py-2 bg-gray-300 text-gray-500 rounded cursor-not-allowed" disabled>
+                                    {{ __('messages.print') }}
+                                </button>
+                                <button class="px-4 py-2 bg-gray-300 text-gray-500 rounded cursor-not-allowed" disabled>
+                                    {{ __('messages.download_pdf') }}
                                 </button>
                             @endif
                         @endif
@@ -141,7 +150,7 @@
                                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                                         d="M3 10h10M3 14h10m5-4v8m-9-6h10M3 10l5 5m0 0l5-5" />
                                                 </svg>
-                                                Mes demandes
+                                                {{ __('messages.back_to_dashboard') }}
                         </a>
                     @elseif ($from === 'cart')
                         <a href="{{ route('personal.cart') }}"
@@ -150,7 +159,7 @@
                                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                                         d="M3 10h10M3 14h10m5-4v8m-9-6h10M3 10l5 5m0 0l5-5" />
                                                 </svg>
-                                                Corbeille
+                                                {{ __('messages.back_to_basket') }}
                         </a>
                     @endif
                     </div>
@@ -158,6 +167,55 @@
             </div>
         </div>
     </div>
+
+    {{-- ====================== LOCALISATION DU DOSSIER (vue usager) ====================== --}}
+    @if($from === 'dashboard' && !$request->isDraft())
+        <div class="max-w-7xl mx-auto mt-4 sm:px-6 lg:px-8">
+            <div class="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                <div class="flex items-start gap-3">
+                    <svg class="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                              d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/>
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                              d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/>
+                    </svg>
+                    <div class="flex-1">
+                        <p class="text-sm font-semibold text-blue-800 mb-1">{{ __('messages.file_location') }}</p>
+                        <p class="text-sm text-blue-700">
+                            {{ __('messages.file_currently_at') }}
+                            <span class="font-semibold">{{ $request->service?->nom ?? 'Direction des Pensions Civiles' }}</span>
+                        </p>
+
+                        {{-- Parcours / historique des transferts --}}
+                        @if($request->workflows->isNotEmpty())
+                            <div class="mt-3">
+                                <p class="text-xs text-blue-600 font-medium mb-2 uppercase tracking-wide">{{ __('messages.file_circuit') }}</p>
+                                <div class="flex flex-wrap items-center gap-1">
+                                    @foreach($request->workflows as $wf)
+                                        @if($loop->first && $wf->fromService === null)
+                                            <span class="text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded">{{ __('messages.submission') }}</span>
+                                            <svg class="w-3 h-3 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+                                            </svg>
+                                        @endif
+                                        <span class="text-xs {{ $loop->last ? 'bg-blue-600 text-white font-semibold' : 'bg-white border border-blue-200 text-blue-700' }} px-2 py-0.5 rounded">
+                                            {{ $wf->toService?->nom ?? '—' }}
+                                        </span>
+                                        @if(!$loop->last)
+                                            <svg class="w-3 h-3 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+                                            </svg>
+                                        @endif
+                                    @endforeach
+                                </div>
+                            </div>
+                        @endif
+                    </div>
+                </div>
+            </div>
+        </div>
+    @endif
+    {{-- ================================================================ --}}
 
     {{-- ====================== PANNEAU ANNOTATION ====================== --}}
     @if($from === 'cart')
@@ -175,7 +233,7 @@
                         </div>
                         <div class="flex-1">
                             <p class="text-sm font-semibold text-amber-800 mb-1">
-                                Annotation de la Direction
+                                {{ __('messages.annotation_direction') }}
                                 @if($request->folder)
                                     — <span class="capitalize">{{ str_replace('_', ' ', $request->folder) }}</span>
                                 @endif
@@ -200,10 +258,7 @@
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                               d="M12 9v2m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/>
                     </svg>
-                    <p class="text-sm text-yellow-800">
-                        Ce dossier n'a pas encore été annoté par la Direction.
-                        Le transfert, l'impression et le téléchargement sont bloqués jusqu'à l'annotation.
-                    </p>
+                    <p class="text-sm text-yellow-800">{{ __('messages.not_annotated_msg') }}</p>
                 </div>
             @endif
 
@@ -212,7 +267,7 @@
                 <div id="annotationModal"
                      class="{{ $request->isAnnotated() ? 'hidden' : '' }} bg-white border border-gray-200 rounded-lg shadow p-5 mb-4">
                     <h3 class="text-base font-semibold text-gray-800 mb-3">
-                        {{ $request->isAnnotated() ? 'Modifier l\'annotation' : 'Annoter le dossier' }}
+                        {{ $request->isAnnotated() ? __('messages.modify_annotation') : __('messages.annotate_file') }}
                     </h3>
                     <form method="POST" action="{{ route('demande.annotate', $request->id) }}">
                         @csrf
@@ -225,7 +280,7 @@
                             @error('annotation')<p class="text-red-500 text-xs mt-1">{{ $message }}</p>@enderror
                         </div>
                         <div class="mb-4">
-                            <label class="block text-sm font-medium text-gray-700 mb-1">Dossier / Classement</label>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">{{ __('messages.folder_label') }}</label>
                             <select name="folder" class="w-full border border-gray-300 rounded px-3 py-2 text-sm">
                                 <option value="">-- Sélectionner un dossier --</option>
                                 <option value="pension" {{ old('folder', $request->folder) === 'pension' ? 'selected' : '' }}>Demandes de pension</option>
@@ -238,7 +293,7 @@
                         <div class="flex gap-2">
                             <button type="submit"
                                     class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm rounded">
-                                Enregistrer l'annotation
+                                {{ __('messages.save_annotation') }}
                             </button>
                             @if($request->isAnnotated())
                                 <button type="button"
@@ -287,12 +342,12 @@
                             <div class="flex gap-2">
                                 <button type="submit"
                                         class="px-4 py-2 bg-orange-500 hover:bg-orange-600 text-white text-sm rounded">
-                                    Envoyer la demande de complément
+                                    {{ __('messages.send_complement') }}
                                 </button>
                                 <button type="button"
                                         onclick="document.getElementById('complementModal').classList.add('hidden')"
                                         class="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 text-sm rounded">
-                                    Annuler
+                                    {{ __('Cancel') }}
                                 </button>
                             </div>
                         </form>
@@ -312,10 +367,8 @@
                               d="M12 9v2m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/>
                     </svg>
                     <div>
-                        <p class="font-semibold text-orange-800 text-base">Complément requis</p>
-                        <p class="text-sm text-orange-700 mt-1">
-                            Le service a besoin de compléments sur votre dossier. Lisez le message ci-dessous et répondez ou modifiez votre demande.
-                        </p>
+                        <p class="font-semibold text-orange-800 text-base">{{ __('messages.complement_required') }}</p>
+                        <p class="text-sm text-orange-700 mt-1">{{ __('messages.complement_info') }}</p>
                     </div>
                 </div>
 
@@ -328,7 +381,7 @@
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                       d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
                             </svg>
-                            Modifier ma demande
+                            {{ __('messages.edit_my_request') }}
                         </a>
                     @endif
                     <button onclick="document.getElementById('responseForm').classList.toggle('hidden')"
@@ -337,7 +390,7 @@
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                   d="M3 10h10M3 14h10m5-4v8m-9-6h10M3 10l5 5m0 0l5-5"/>
                         </svg>
-                        Répondre par message
+                        {{ __('messages.reply') }}
                     </button>
                 </div>
 
@@ -359,23 +412,18 @@
                             <label class="block text-sm font-medium text-gray-700 mb-1">
                                 Documents joints <span class="text-xs text-gray-400">(optionnel)</span>
                             </label>
-                            <input type="file" name="documents[]" multiple
-                                   accept=".pdf,.jpg,.jpeg,.png,.doc,.docx"
-                                   class="w-full text-sm text-gray-500 border border-gray-300 rounded px-3 py-2
-                                          file:mr-3 file:py-1 file:px-3 file:rounded file:border-0
-                                          file:text-sm file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100">
-                            <p class="text-xs text-gray-400 mt-1">PDF, JPG, PNG, Word — max 5 Mo par fichier</p>
-                            @error('documents.*')<p class="text-red-500 text-xs mt-1">{{ $message }}</p>@enderror
+                            <x-file-input name="documents[]" accept=".pdf,.jpg,.jpeg,.png,.doc,.docx" multiple
+                                hint="PDF, JPG, PNG, Word — max 5 Mo par fichier" />
                         </div>
                         <div class="flex gap-2">
                             <button type="submit"
                                     class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm rounded">
-                                Envoyer ma réponse
+                                {{ __('messages.send_reply') }}
                             </button>
                             <button type="button"
                                     onclick="document.getElementById('responseForm').classList.add('hidden')"
                                     class="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 text-sm rounded">
-                                Annuler
+                                {{ __('Cancel') }}
                             </button>
                         </div>
                     </form>
@@ -395,7 +443,7 @@
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                   d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/>
                         </svg>
-                        Messages du dossier
+                        {{ __('messages.messages_thread') }}
                         <span class="text-xs font-normal text-gray-400">({{ $messages->count() }})</span>
                     </span>
                     <svg class="w-4 h-4 text-gray-400 transition-transform duration-200" :class="open ? 'rotate-180' : ''" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -431,7 +479,7 @@
                     <div class="mt-4 pt-4 border-t border-gray-100">
                         <button onclick="document.getElementById('serviceReplyForm').classList.toggle('hidden')"
                                 class="text-sm text-orange-600 hover:underline">
-                            + Ajouter un message de suivi
+                            + {{ __('messages.add_followup') }}
                         </button>
                         <div id="serviceReplyForm" class="hidden mt-3">
                             <form method="POST" action="{{ route('demande.complement', $request->id) }}">
@@ -441,7 +489,7 @@
                                           placeholder="Message de suivi..."></textarea>
                                 <button type="submit"
                                         class="px-3 py-1.5 bg-orange-500 hover:bg-orange-600 text-white text-sm rounded">
-                                    Envoyer
+                                    {{ __('Send') }}
                                 </button>
                             </form>
                         </div>
@@ -2560,7 +2608,7 @@
         <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg px-6" x-data="{ open: false }">
             <button type="button" @click="open = !open"
                     class="w-full flex items-center justify-between mt-5 ml-1 mb-4">
-                <h3 class="text-xl font-semibold text-gray-800">Historique de la demande</h3>
+                <h3 class="text-xl font-semibold text-gray-800">{{ __('messages.history_label') }}</h3>
                 <svg class="w-5 h-5 text-gray-400 transition-transform duration-200" :class="open ? 'rotate-180' : ''" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
                 </svg>
@@ -2598,7 +2646,7 @@
                     </div>
                 @empty
                     <div class="p-4 text-center text-gray-500">
-                        Aucun historique disponible pour cette demande
+                        {{ __('messages.no_history') }}
                     </div>
                 @endforelse
             </div>
@@ -2617,7 +2665,7 @@
             <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg px-6 py-5" x-data="{ open: false }">
                 <button type="button" @click="open = !open"
                         class="w-full flex items-center justify-between mb-4">
-                    <h3 class="text-xl font-semibold text-gray-800">Journal d'activité</h3>
+                    <h3 class="text-xl font-semibold text-gray-800">{{ __('messages.activity_log') }}</h3>
                     <svg class="w-5 h-5 text-gray-400 transition-transform duration-200" :class="open ? 'rotate-180' : ''" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
                     </svg>

@@ -7,10 +7,26 @@ use Illuminate\Http\Request;
 
 class UserController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
-        $users = User::with('userType')->paginate(10);
-        return view('admin.users.index', compact('users'));
+        $query = User::with(['userType', 'roles', 'service']);
+
+        if ($request->filled('q')) {
+            $query->where(function ($q) use ($request) {
+                $q->where('name',  'like', '%' . $request->q . '%')
+                  ->orWhere('email', 'like', '%' . $request->q . '%');
+            });
+        }
+
+        if ($request->filled('role')) {
+            $query->role($request->role);
+        }
+
+        $users = $query->paginate(15);
+
+        $roles = \Spatie\Permission\Models\Role::orderBy('name')->get();
+
+        return view('admin.users.index', compact('users', 'roles'));
     }
 
     public function create()

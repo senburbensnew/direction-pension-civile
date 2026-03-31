@@ -230,23 +230,8 @@
                         Télécharger les documents justificatifs *
                     </label>
 
-                    <input
-                        type="file"
-                        name="pieces[]"
-                        multiple
-                        accept=".pdf,.jpg,.jpeg,.png"
-                        class="block w-full text-sm text-gray-700
-                            file:mr-4 file:py-2 file:px-4
-                            file:rounded-md file:border-0
-                            file:text-sm file:font-semibold
-                            file:bg-blue-50 file:text-blue-700
-                            hover:file:bg-blue-100
-                            @error('pieces') border-red-500 @enderror
-                            @error('pieces.*') border-red-500 @enderror">
-
-                    <p class="text-sm text-gray-500 mt-2">
-                        Formats acceptés : PDF, JPG, PNG — plusieurs fichiers autorisés.
-                    </p>
+                    <x-file-input name="pieces[]" accept=".pdf,.jpg,.jpeg,.png" multiple
+                        hint="Formats acceptés : PDF, JPG, PNG — plusieurs fichiers autorisés." />
 
                     @if (!empty($demande?->data['pieces']))
                         <p class="text-sm text-green-700 mt-2">
@@ -265,11 +250,11 @@
             </fieldset>
 
             {{-- Boutons --}}
-            <div class="flex justify-end gap-3 mt-6">
+            <div class="mt-8 flex justify-end gap-3">
                 <button type="button"
                     onclick="document.getElementById('action-input').value='draft'; document.getElementById('arret-paiement-form').submit();"
                     class="bg-gray-200 text-gray-700 px-6 py-2 rounded hover:bg-gray-300">
-                    Sauvegarder en brouillon
+                    Sauvegarder
                 </button>
                 <button type="button"
                     onclick="document.getElementById('action-input').value='submit'; document.getElementById('arret-paiement-form').submit();"

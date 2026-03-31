@@ -4,68 +4,36 @@ namespace App\Http\Controllers;
 
 use App\Models\User;
 use App\Models\Report;
-use App\Models\Demande;
+use App\Models\Contact;
 use App\Models\Service;
 use App\Models\Actualite;
-use Illuminate\Http\Request;
+use App\Models\Newsletter;
 use Spatie\Permission\Models\Role;
-use App\Http\Controllers\Controller;
 use Spatie\Permission\Models\Permission;
 
 class AdminDashboardController extends Controller
 {
-    /**
-     * Liste des roles
-     */
-
-public function index()
-{
-    $stats = [
-        'users'        => User::count(),
-        'demandes'     => Demande::count(),
-        'services'     => Service::count(),
-        'roles'        => Role::count(),
-        'permissions'  => Permission::count(),
-        'actualites'   => Actualite::count(),
-        'reports'      => Report::count(),
-    ];
-
-    return view('admin.dashboard', compact('stats'));
-}
-
-
-    /**
-     * Formulaire de création
-     */
-    public function create()
+    public function index()
     {
-    }
+        $stats = [
+            'users'           => User::count(),
+            'services'        => Service::count(),
+            'roles'           => Role::count(),
+            'permissions'     => Permission::count(),
+            'actualites'      => Actualite::count(),
+            'reports'         => Report::count(),
+            'newsletter'      => Newsletter::count(),
+            'contacts'        => Contact::count(),
+            'contacts_unread' => Contact::where('read', false)->count(),
+        ];
 
-    /**
-     * Enregistrer une permission
-     */
-    public function store(Request $request)
-    {
-    }
+        $recentContacts = Contact::where('read', false)
+            ->latest()
+            ->take(6)
+            ->get();
 
-    /**
-     * Formulaire d’édition
-     */
-    public function edit(Permission $permission)
-    {
-    }
+        $recentActualites = Actualite::latest()->take(5)->get();
 
-    /**
-     * Mettre à jour la permission
-     */
-    public function update(Request $request, Permission $permission)
-    {
-    }
-
-    /**
-     * Supprimer une permission
-     */
-    public function destroy(Permission $permission)
-    {
+        return view('admin.dashboard', compact('stats', 'recentContacts', 'recentActualites'));
     }
 }
