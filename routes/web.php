@@ -22,6 +22,7 @@ use App\Http\Controllers\ReportController;
 use App\Http\Controllers\RoleController;
 use App\Http\Controllers\ServiceController;
 use App\Http\Controllers\ContactController;
+use App\Http\Controllers\DemandeRencontreController;
 use App\Http\Controllers\UserController;
 use App\Models\Actualite;
 use App\Models\Report;
@@ -96,6 +97,10 @@ Route::get('actualites/{actualite}',       [ActualiteController::class, 'show'])
 Route::get('actualites/{actualite}/download',[ActualiteController::class, 'download'])->name('actualites.download');
 
 // Utilities
+// Demande de visioconférence (public — no auth required)
+Route::get('/demande-rencontre',  [DemandeRencontreController::class, 'create'])->name('demandes.rencontre.create');
+Route::post('/demande-rencontre', [DemandeRencontreController::class, 'store'])->name('demandes.rencontre.store');
+
 Route::post('/newsletter/souscription',          [NewsletterController::class, 'souscription'])->name('newsletter.souscription');
 Route::get('/newsletter/unsubscribe/{token}',    [NewsletterController::class, 'unsubscribe'])->name('newsletter.unsubscribe');
 Route::get('/locale/{locale}',          [LocaleController::class, 'switch'])->name('locale');

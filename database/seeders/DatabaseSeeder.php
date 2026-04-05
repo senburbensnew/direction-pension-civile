@@ -22,7 +22,6 @@ class DatabaseSeeder extends Seeder
         $this->call(CivilStatusesSeeder::class);
         $this->call(PensionTypesSeeder::class);
         $this->call(PensionCategoriesSeeder::class);
-        $this->call(RequestTypeSeeder::class);
         $this->call(ParametersSeeder::class);
         $this->call(TypeDemandeSeeder::class);
     }

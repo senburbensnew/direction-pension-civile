@@ -13,7 +13,7 @@ return new class extends Migration
             $table->string('code')->unique();
             $table->string('title')->nullable();
             $table->string('type', 50)->index(); // maybe should be a foreign key to a dedicated table
-            $table->foreignId('created_by')->constrained('users')->restrictOnDelete();
+            $table->foreignId('created_by')->nullable()->constrained('users')->nullOnDelete();
             $table->foreignId('status_id')->constrained('statuses');
             $table->json('data')->nullable();
             $table->timestamp('submitted_at')->nullable();

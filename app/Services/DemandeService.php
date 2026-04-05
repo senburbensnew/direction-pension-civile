@@ -127,11 +127,14 @@ class DemandeService
             TypeDemandeEnum::DEMANDE_ADHESION->value =>
                 'demandes/adhesion',
 
-            TypeDemandeEnum::DEMANDE_ETAT_CARRIERE->value => 
-                'demandes/etat-carrierre',
+            TypeDemandeEnum::DEMANDE_ETAT_CARRIERE->value =>
+                'demandes/etat-carriere',
+
+            TypeDemandeEnum::DEMANDE_RENCONTRE->value =>
+                'demandes/rencontre',
 
             default =>
-                throw new InvalidArgumentException('Type de demande inconnu'),
+                'demandes/autres',
         } . '/' . now()->format('Y/m');
     }
 

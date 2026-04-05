@@ -32,6 +32,8 @@ class Demande extends Model
         'annotated_by',
         'annotated_at',
         'folder',
+        'categorie',
+        'is_urgent',
     ];
 
     protected $casts = [
@@ -39,6 +41,7 @@ class Demande extends Model
         'submitted_at' => 'datetime',
         'expires_at'   => 'datetime',
         'annotated_at' => 'datetime',
+        'is_urgent'    => 'boolean',
     ];
 
     protected static function booted()
@@ -49,6 +52,13 @@ class Demande extends Model
             }
             if (empty($demande->title) && $demande->type) {
                 $demande->title = \App\Enums\TypeDemandeEnum::from($demande->type)->label();
+            }
+            // Auto-classify: urgence prime sur le type
+            if ($demande->type) {
+                $typeCat = \App\Enums\TypeDemandeEnum::from($demande->type)->categorie()->value;
+                $demande->categorie = $demande->is_urgent
+                    ? \App\Enums\CategorieDossierEnum::DOSSIERS_URGENTS->value
+                    : $typeCat;
             }
         });
     }
@@ -140,6 +150,29 @@ class Demande extends Model
     public function isExpired()
     {
         return $this->status->code === 'BROUILLON' && $this->expires_at && $this->expires_at->isPast();
+    }
+
+    /**
+     * Urgent if manually flagged OR pending for more than 30 days.
+     */
+    public function isUrgent(): bool
+    {
+        if ($this->is_urgent) {
+            return true;
+        }
+        return $this->submitted_at && $this->submitted_at->diffInDays(now()) > 30;
+    }
+
+    public function categorieEnum(): ?\App\Enums\CategorieDossierEnum
+    {
+        return $this->categorie
+            ? \App\Enums\CategorieDossierEnum::tryFrom($this->categorie)
+            : null;
+    }
+
+    public function categorieLabel(): string
+    {
+        return $this->categorieEnum()?->label() ?? '—';
     }
 
     public function documentsByType(string $type)

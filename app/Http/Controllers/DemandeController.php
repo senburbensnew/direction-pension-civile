@@ -118,6 +118,7 @@ class DemandeController extends Controller
                         'current_service_id' => $serviceId,
                         'submitted_at'       => now(),
                         'expires_at'         => null,
+                        'is_urgent'          => $request->boolean('is_urgent'),
                     ]);
                     $demande->refresh();
 
@@ -270,6 +271,7 @@ class DemandeController extends Controller
                         'current_service_id' => $serviceId,
                         'submitted_at'       => now(),
                         'expires_at'         => null,
+                        'is_urgent'          => $request->boolean('is_urgent'),
                     ]);
                     $demande->refresh();
 
@@ -409,6 +411,7 @@ class DemandeController extends Controller
                         'current_service_id' => $serviceId,
                         'submitted_at'       => now(),
                         'expires_at'         => null,
+                        'is_urgent'          => $request->boolean('is_urgent'),
                     ]);
                     $demande->refresh();
 
@@ -548,6 +551,7 @@ class DemandeController extends Controller
                         'current_service_id' => $serviceId,
                         'submitted_at'       => now(),
                         'expires_at'         => null,
+                        'is_urgent'          => $request->boolean('is_urgent'),
                     ]);
                     $demande->refresh();
 
@@ -707,6 +711,7 @@ class DemandeController extends Controller
                         'current_service_id' => $serviceId,
                         'submitted_at'       => now(),
                         'expires_at'         => null,
+                        'is_urgent'          => $request->boolean('is_urgent'),
                     ]);
                     $demande->refresh();
 
@@ -845,6 +850,7 @@ class DemandeController extends Controller
                         'current_service_id' => $serviceId,
                         'submitted_at'       => now(),
                         'expires_at'         => null,
+                        'is_urgent'          => $request->boolean('is_urgent'),
                     ]);
                     $demande->refresh();
 
@@ -960,6 +966,7 @@ class DemandeController extends Controller
                         'current_service_id' => $serviceId,
                         'submitted_at'       => now(),
                         'expires_at'         => null,
+                        'is_urgent'          => $request->boolean('is_urgent'),
                     ]);
                     $demande->refresh();
 
@@ -1103,6 +1110,7 @@ class DemandeController extends Controller
                         'current_service_id' => $serviceId,
                         'submitted_at'       => now(),
                         'expires_at'         => null,
+                        'is_urgent'          => $request->boolean('is_urgent'),
                     ]);
 
                     $demande->refresh();
@@ -1453,6 +1461,7 @@ class DemandeController extends Controller
                         'current_service_id' => $serviceId,
                         'submitted_at'       => now(),
                         'expires_at'         => null,
+                        'is_urgent'          => $request->boolean('is_urgent'),
                     ]);
 
                     $demande->refresh();
@@ -1645,6 +1654,7 @@ class DemandeController extends Controller
                         'current_service_id' => $serviceId,
                         'submitted_at'       => now(),
                         'expires_at'         => null,
+                        'is_urgent'          => $request->boolean('is_urgent'),
                     ]);
 
                     $demande->refresh();
@@ -1848,6 +1858,7 @@ class DemandeController extends Controller
                         'current_service_id' => $serviceId,
                         'submitted_at'       => now(),
                         'expires_at'         => null,
+                        'is_urgent'          => $request->boolean('is_urgent'),
                     ]);
 
                     $demande->refresh();
@@ -2090,6 +2101,7 @@ class DemandeController extends Controller
                         'current_service_id' => $serviceId,
                         'submitted_at'       => now(),
                         'expires_at'         => null,
+                        'is_urgent'          => $request->boolean('is_urgent'),
                     ]);
 
                     $demande->refresh();

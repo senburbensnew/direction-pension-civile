@@ -367,141 +367,30 @@ class PersonalController extends Controller
     {
         $serviceId = $this->resolveServiceId();
 
-        // PENSIONNAIRE
-        $bankTransferRequestCounts = Demande::where('type', 'DEMANDE_VIREMENT_BANCAIRE')
-            ->where('current_service_id', $serviceId)
-            ->count();
-
-        $certificateRequestCounts = Demande::where('type', 'DEMANDE_ATTESTATION')
-            ->where('current_service_id', $serviceId)
-            ->count();
-
-        $checkTransferRequestCounts = Demande::where('type', 'DEMANDE_TRANSFERT_CHEQUE')
-            ->where('current_service_id', $serviceId)
-            ->count();
-
-        $paymentStopRequestCounts = Demande::where('type', 'DEMANDE_ARRET_PAIEMENT')
-            ->where('current_service_id', $serviceId)
-            ->count();
-
-        $reinstateRequestCounts = Demande::where('type', 'DEMANDE_REINSERTION')
-            ->where('current_service_id', $serviceId)
-            ->count();
-
-        $transferStopRequestCounts = Demande::where('type', 'DEMANDE_ARRET_VIREMENT')
-            ->where('current_service_id', $serviceId)
-            ->count();
-
-        $existenceProofRequestCounts = Demande::where('type', 'DEMANDE_PREUVE_EXISTENCE')
-            ->where('current_service_id', $serviceId)
-            ->count();
-
-        $reversionaryPensionRequestCounts = Demande::where('type', 'DEMANDE_PENSION_REVERSION')
-            ->where('current_service_id', $serviceId)
-            ->count();
-
-        // FONCTIONNAIRE
-        $carreerStateRequestCounts = Demande::where('type', 'DEMANDE_ETAT_CARRIERE')
-            ->where('current_service_id', $serviceId)
-            ->count();
-
-        $pensionRequestCounts = Demande::where('type', 'DEMANDE_PENSION')
-            ->where('current_service_id', $serviceId)
-            ->count();
-
-        // INSTITUTION
-        $adhesionRequestCounts = Demande::where('type', 'DEMANDE_ADHESION')
-            ->where('current_service_id', $serviceId)
-            ->count();
-
-
-        $stats = [
-            'pensionnaire' => [
-                [
-                    'label' => 'Demande de virement',
-                    'count' => $bankTransferRequestCounts,
-                    'type' => 'bankTransferRequest'
-                ],
-                [
-                    'label' => 'Demande d\'attestation',
-                    'count' => $certificateRequestCounts,
-                    'type' => 'certificateRequest'
-                ],
-                [
-                    'label' => 'Demande de transfert de chèques',
-                    'count' => $checkTransferRequestCounts,
-                    'type' => 'checkTransferRequest'
-                ],
-                [
-                    'label' => 'Demande d\'arrêt de paiement',
-                    'count' => $paymentStopRequestCounts,
-                    'type' => 'paymentStopRequest'
-                ],
-                [
-                    'label' => 'Demande de réinsertion',
-                    'count' => $reinstateRequestCounts,
-                    'type' => 'reinstateRequest'
-                ],
-                [
-                    'label' => 'Demande d\'arrêt de virement',
-                    'count' => $transferStopRequestCounts,
-                    'type' => 'transferStopRequest'
-                ],
-                [
-                    'label' => 'Preuve d\'existence',
-                    'count' => $existenceProofRequestCounts,
-                    'type' => 'existenceProofRequest'
-                ],
-            ],
-            'fonctionnaire' => [
-                [
-                    'label' => 'Demande d\'état de carrière',
-                    'count' => $carreerStateRequestCounts,
-                    'type' => 'careerStateRequest'
-                ],
-                [
-                    'label' => 'Demande de pension',
-                    'count' => $pensionRequestCounts,
-                    'type' => 'pensionRequest'
-                ],
-            ],
-            'institution' => [
-                [
-                    'label' => 'Demande d\'adhésion',
-                    'count' => $adhesionRequestCounts,
-                    'type' => 'adhesionRequest'
-                ],
-                [
-                    'label' => 'Demande de pension',
-                    'count' => $pensionRequestCounts,
-                    'type' => 'pensionRequest'
-                ],
-                [
-                    'label' => 'Demande de pension de réversion',
-                    'count' => $reversionaryPensionRequestCounts,
-                    'type' => 'reversionaryPensionRequest'
-                ],
-            ],
-        ];
-
-        $serviceId = $this->resolveServiceId();
-
         $folderStats = [
-            ['key' => 'pension',         'label' => 'Demandes de pension',    'icon' => 'fa-file-alt',   'color' => 'blue'],
-            ['key' => 'urgent',          'label' => 'Dossiers urgents',       'icon' => 'fa-exclamation-triangle', 'color' => 'red'],
-            ['key' => 'suivi',           'label' => 'Suivi de dossiers',      'icon' => 'fa-tasks',      'color' => 'yellow'],
-            ['key' => 'correspondances', 'label' => 'Correspondances',        'icon' => 'fa-envelope',   'color' => 'purple'],
-            ['key' => 'rencontre',       'label' => 'Demandes de rencontre',  'icon' => 'fa-calendar',   'color' => 'green'],
+            ['key' => 'urgent',          'label' => 'Dossiers urgents',           'icon' => 'fa-exclamation-triangle', 'color' => 'red'],
+            ['key' => 'pension',         'label' => 'Demandes de pension',        'icon' => 'fa-file-alt',             'color' => 'blue'],
+            ['key' => 'prestations',     'label' => 'Demandes de prestations',    'icon' => 'fa-money-bill-wave',      'color' => 'yellow'],
+            ['key' => 'administratif',   'label' => 'Dossiers administratifs',    'icon' => 'fa-folder',               'color' => 'indigo'],
+            ['key' => 'correspondances', 'label' => 'Correspondances',            'icon' => 'fa-envelope',             'color' => 'purple'],
+            ['key' => 'rencontre',       'label' => 'Demandes de rencontre',      'icon' => 'fa-video',                'color' => 'green'],
         ];
 
         foreach ($folderStats as &$folder) {
-            $folder['count'] = Demande::where('folder', $folder['key'])
-                ->where('current_service_id', $serviceId)
-                ->count();
+            $query = Demande::where('current_service_id', $serviceId);
+            if ($folder['key'] === 'urgent') {
+                $query->where(fn($q) => $q
+                    ->where('is_urgent', true)
+                    ->orWhere('submitted_at', '<=', now()->subDays(30))
+                );
+            } else {
+                $query->where('categorie', $folder['key']);
+            }
+            $folder['count'] = $query->count();
         }
         unset($folder);
 
-        return view('personal.corbeille', compact('stats', 'folderStats'));
+        return view('personal.corbeille', compact('folderStats'));
     }
 
     public function requestsDashboardCorbeille(Request $request)
@@ -553,6 +442,10 @@ class PersonalController extends Controller
             'adhesionRequest' => [
                 'enum' => TypeDemandeEnum::DEMANDE_ADHESION,
                 'label' => 'Demande d\'adhésion',
+            ],
+            'rencontreRequest' => [
+                'enum' => TypeDemandeEnum::DEMANDE_RENCONTRE,
+                'label' => 'Demande de visioconférence',
             ],
         ];
 
@@ -631,19 +524,29 @@ class PersonalController extends Controller
         $folder    = $request->input('folder');
 
         $folders = [
-            'pension'         => 'Demandes de pension',
             'urgent'          => 'Dossiers urgents',
-            'suivi'           => 'Suivi de dossiers',
+            'pension'         => 'Demandes de pension',
+            'prestations'     => 'Demandes de prestations',
+            'administratif'   => 'Dossiers administratifs',
             'correspondances' => 'Correspondances',
             'rencontre'       => 'Demandes de rencontre',
         ];
 
         abort_unless(isset($folders[$folder]), 404);
 
-        $baseQuery = Demande::where('folder', $folder)
-            ->where('current_service_id', $serviceId);
+        $folderScope = function ($q) use ($folder, $serviceId) {
+            $q->where('current_service_id', $serviceId);
+            if ($folder === 'urgent') {
+                $q->where(fn($q2) => $q2
+                    ->where('is_urgent', true)
+                    ->orWhere('submitted_at', '<=', now()->subDays(30))
+                );
+            } else {
+                $q->where('categorie', $folder);
+            }
+        };
 
-        $requests = $baseQuery->latest()->paginate(10);
+        $requests = Demande::where(fn($q) => $folderScope($q))->latest()->paginate(10);
         $type     = $folders[$folder];
 
         $statusCodes = [
@@ -657,8 +560,7 @@ class PersonalController extends Controller
 
         $stats = [];
         foreach ($statusCodes as $key => $code) {
-            $stats[$key] = Demande::where('folder', $folder)
-                ->where('current_service_id', $serviceId)
+            $stats[$key] = Demande::where(fn($q) => $folderScope($q))
                 ->whereHas('status', fn($q) => $q->where('code', $code))
                 ->count();
         }

@@ -152,7 +152,7 @@ class UsersSeeder extends Seeder
                 'service_id' => Service::where('code', 'secretariat')->value('id'),
             ]
         );
-        $dagrinUser->syncRoles(['fonctionnaire', 'secretariat']);
+        $dagrinUser->syncRoles(['secretariat']);
 
     }
 }

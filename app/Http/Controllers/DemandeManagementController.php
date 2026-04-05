@@ -81,7 +81,6 @@ class DemandeManagementController extends Controller
 
         $request->validate([
             'annotation' => 'required|string|max:2000',
-            'folder'     => 'nullable|in:pension,urgent,suivi,correspondances,rencontre',
         ]);
 
         DB::transaction(function () use ($demande, $request) {
@@ -89,7 +88,6 @@ class DemandeManagementController extends Controller
                 'annotation'   => $request->annotation,
                 'annotated_by' => auth()->id(),
                 'annotated_at' => now(),
-                'folder'       => $request->folder,
             ]);
 
             DemandeHistory::create([

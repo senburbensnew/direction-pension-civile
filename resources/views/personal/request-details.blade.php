@@ -234,8 +234,9 @@
                         <div class="flex-1">
                             <p class="text-sm font-semibold text-amber-800 mb-1">
                                 {{ __('messages.annotation_direction') }}
-                                @if($request->folder)
-                                    — <span class="capitalize">{{ str_replace('_', ' ', $request->folder) }}</span>
+                                — <span class="badge badge-sm {{ $request->categorieEnum()?->badgeClass() ?? 'badge-ghost' }}">{{ $request->categorieLabel() }}</span>
+                                @if($request->isUrgent())
+                                    <span class="badge badge-sm badge-error ml-1">Urgent</span>
                                 @endif
                             </p>
                             <p class="text-sm text-amber-900">{{ $request->annotation }}</p>
@@ -279,16 +280,15 @@
                                       required>{{ old('annotation', $request->annotation) }}</textarea>
                             @error('annotation')<p class="text-red-500 text-xs mt-1">{{ $message }}</p>@enderror
                         </div>
-                        <div class="mb-4">
-                            <label class="block text-sm font-medium text-gray-700 mb-1">{{ __('messages.folder_label') }}</label>
-                            <select name="folder" class="w-full border border-gray-300 rounded px-3 py-2 text-sm">
-                                <option value="">-- Sélectionner un dossier --</option>
-                                <option value="pension" {{ old('folder', $request->folder) === 'pension' ? 'selected' : '' }}>Demandes de pension</option>
-                                <option value="urgent" {{ old('folder', $request->folder) === 'urgent' ? 'selected' : '' }}>Dossiers urgents</option>
-                                <option value="suivi" {{ old('folder', $request->folder) === 'suivi' ? 'selected' : '' }}>Suivi de dossiers</option>
-                                <option value="correspondances" {{ old('folder', $request->folder) === 'correspondances' ? 'selected' : '' }}>Correspondances</option>
-                                <option value="rencontre" {{ old('folder', $request->folder) === 'rencontre' ? 'selected' : '' }}>Demandes de rencontre</option>
-                            </select>
+                        {{-- Catégorie auto-classifiée (lecture seule) --}}
+                        <div class="mb-4 p-3 bg-gray-50 rounded border border-gray-200">
+                            <p class="text-xs text-gray-500 mb-1">Catégorie (classifiée automatiquement)</p>
+                            <span class="badge {{ $request->categorieEnum()?->badgeClass() ?? 'badge-ghost' }}">
+                                {{ $request->categorieLabel() }}
+                            </span>
+                            @if($request->isUrgent())
+                                <span class="badge badge-error ml-2">Urgent</span>
+                            @endif
                         </div>
                         <div class="flex gap-2">
                             <button type="submit"

@@ -47,6 +47,11 @@
         }
     </style>
 
+    @php
+        $internalRoles = ['admin','direction','secretariat','service_liquidation','service_formalite','service_controle_placement','service_comptabilite','service_assurance'];
+        $isInternalUser = auth()->check() && auth()->user()->hasAnyRole($internalRoles);
+    @endphp
+
     <nav id="menu" class="container mx-auto bg-white relative z-[1000] shadow-sm border-b nav-container"
         aria-label="Navigation Principale">
         <!-- Mobile Menu Toggle -->
@@ -128,7 +133,7 @@
             </li>
 
             <!-- Pensionaire Dropdown -->
-            @if (auth()->guest() || auth()->user()?->can('viewPensionnaireMenu'))
+            @if (!$isInternalUser && (auth()->guest() || auth()->user()?->can('viewPensionnaireMenu')))
                 <li class="relative w-full md:w-auto border-b md:border-none group">
                     <button
                         class="dropdown-toggle flex w-full items-center justify-between px-4 py-3
@@ -205,7 +210,7 @@
             @endif
 
             <!-- Fonctionnaire Dropdown -->
-            @if (auth()->guest() || auth()->user()?->can('viewFonctionnaireMenu'))
+            @if (!$isInternalUser && (auth()->guest() || auth()->user()?->can('viewFonctionnaireMenu')))
                 <li class="relative w-full md:w-auto border-b md:border-none group">
                     <button
                         class="dropdown-toggle flex w-full items-center justify-between px-4 py-3
@@ -250,7 +255,7 @@
             @endif
 
             <!-- Institution Dropdown -->
-            @if (auth()->guest() || auth()->user()?->can('viewInstitutionMenu'))
+            @if (!$isInternalUser && (auth()->guest() || auth()->user()?->can('viewInstitutionMenu')))
                 <li class="relative w-full md:w-auto border-b md:border-none group">
                     <button
                         class="dropdown-toggle flex w-full items-center justify-between px-4 py-3
@@ -323,6 +328,14 @@
                                                transition-colors text-sm truncate-text
                                                focus:outline-none focus:ring-2 ">
                             {{ __('messages.media_libraries') }}
+                        </a>
+                    </li>
+                    <li>
+                        <a href="{{ route('demandes.rencontre.create') }}"
+                            class="text-slate-600 block px-4 py-3 hover:bg-gray-100
+                                               transition-colors text-sm truncate-text
+                                               focus:outline-none focus:ring-2 ">
+                            Demande de visioconférence
                         </a>
                     </li>
                 </ul>

@@ -161,13 +161,11 @@
                                     @endrole
 
                                     @auth
-                                        @unlessrole('admin')
-                                            @can('viewDashboard')
-                                                <x-dropdown-link :href="route('personal.index')">
-                                                    <i class="fas fa-tachometer-alt mr-2 text-gray-400"></i>
-                                                    {{ __('messages.my_requests') }}
-                                                </x-dropdown-link>
-                                            @endcan
+                                        @unlessrole('admin|direction|secretariat|service_liquidation|service_formalite|service_controle_placement|service_comptabilite|service_assurance')
+                                            <x-dropdown-link :href="route('personal.index')">
+                                                <i class="fas fa-tachometer-alt mr-2 text-gray-400"></i>
+                                                {{ __('messages.my_requests') }}
+                                            </x-dropdown-link>
                                         @endunlessrole
                                     @endauth
 

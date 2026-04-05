@@ -120,6 +120,36 @@ The app supports French/English. Language files are in `lang/`. The `SetLocale` 
 **Architecture diagrams**
 - Generated 4 PlantUML files in `documentation/`: `use_case.puml`, `flux.puml`, `sequence.puml`, `entity_association.puml`.
 
+## Session Log — 2026-04-05
+
+### Completed
+
+**Dossier categorization system**
+- Added `app/Enums/CategorieDossierEnum.php` — 6 categories: `pension`, `urgent`, `prestations`, `administratif`, `correspondances`, `rencontre`, each with `label()` and `badgeClass()`.
+- Added `categorie()` method to `TypeDemandeEnum` mapping every request type to its default `CategorieDossierEnum`.
+- Migration `2026_04_05_000001_add_categorie_and_urgence_to_demandes_table.php` adds `categorie` (string, nullable) and `is_urgent` (boolean, default false) to `demandes`.
+- `Demande::booted()` auto-classifies on save: `is_urgent` flag overrides type-derived category → `DOSSIERS_URGENTS`. Added `isUrgent()`, `categorieEnum()`, `categorieLabel()` helpers.
+
+**Demande de rencontre (public videoconference request)**
+- `DEMANDE_RENCONTRE` added to `TypeDemandeEnum` as a general (non-role-specific) request type.
+- New `DemandeRencontreController` (`create` / `store`) — public routes, no auth required, stores directly as a submitted demande.
+- New view `resources/views/demandes/rencontre/create.blade.php`.
+- Routes: `GET|POST /demande-rencontre` → `demandes.rencontre.{create,store}`.
+- Link added to `menubar.blade.php`.
+
+**Corbeille / folder directory improvements**
+- Flash success message displayed at top of `corbeille.blade.php`.
+- Grid expanded to `xl:grid-cols-6` to accommodate 6 folder categories.
+- Added `indigo` color variant to folder color map.
+- Folder icon color grays out when count is 0.
+- Removed the redundant "Mes demandes" table section from `corbeille` (demandes are accessed via the folder cards).
+
+**Cleanup**
+- Deleted `RequestTypeSeeder` (superseded by `TypeDemandeSeeder`) and removed it from `DatabaseSeeder`.
+- Deleted obsolete migration `2026_03_29_221916_add_subject_to_contacts_table.php`.
+- Simplified `TypeDemandeSeeder`.
+- Refactored `PersonalController` (significant size reduction).
+
 ### What's Next
 
 - [ ] Write feature tests for the demande workflow (submission → transfer → complement → approval)
@@ -129,3 +159,5 @@ The app supports French/English. Language files are in `lang/`. The `SetLocale` 
 - [ ] Handle file preview/download for attached documents in `request-details`
 - [ ] Add pagination or infinite scroll to the messages thread
 - [ ] Render the PlantUML diagrams and add them to project documentation
+- [ ] Admin view for `DEMANDE_RENCONTRE` — schedule confirmation, accept/decline flow
+- [ ] Display `categorie` and `is_urgent` badge in `request-details` and management list views
