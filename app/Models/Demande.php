@@ -36,6 +36,10 @@ class Demande extends Model
         'is_urgent',
     ];
 
+    protected $attributes = [
+        'data' => '[]',
+    ];
+
     protected $casts = [
         'data'         => 'array',
         'submitted_at' => 'datetime',
@@ -52,6 +56,14 @@ class Demande extends Model
             }
             if (empty($demande->title) && $demande->type) {
                 $demande->title = \App\Enums\TypeDemandeEnum::from($demande->type)->label();
+            }
+            if (empty($demande->code) && $demande->type) {
+                $prefix = $demande->type . '-' . now()->format('Ymd') . '-';
+                do {
+                    $random = str_pad(mt_rand(1, 999999), 6, '0', STR_PAD_LEFT);
+                    $code   = $prefix . $random;
+                } while (static::where('code', $code)->exists());
+                $demande->code = $code;
             }
             // Auto-classify: urgence prime sur le type
             if ($demande->type) {
@@ -88,6 +100,11 @@ class Demande extends Model
     public function histories()
     {
         return $this->hasMany(DemandeHistory::class);
+    }
+
+    public function affectations()
+    {
+        return $this->hasMany(Affectation::class);
     }
 
     public function status()

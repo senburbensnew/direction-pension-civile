@@ -4,14 +4,20 @@ use App\Http\Controllers\ActualiteController;
 use App\Http\Controllers\AdminController;
 use App\Http\Controllers\AdminDashboardController;
 use App\Http\Controllers\CarouselController;
+use App\Http\Controllers\InstitutionImageController;
+use App\Http\Controllers\PartenaireController;
 use App\Http\Controllers\DemandeController;
 use App\Http\Controllers\DemandeDocumentController;
 use App\Http\Controllers\DemandeManagementController;
 use App\Http\Controllers\DemandePdfController;
 use App\Http\Controllers\DocumentController;
+use App\Http\Controllers\FaqController;
+use App\Http\Controllers\GlossaireController;
+use App\Http\Controllers\LienUtileController;
 use App\Http\Controllers\LocaleController;
-use App\Http\Controllers\MediaController;
+use App\Http\Controllers\MediathequeController;
 use App\Http\Controllers\NewsletterController;
+use App\Http\Controllers\PublicationController;
 use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\PermissionController;
 use App\Http\Controllers\PersonalController;
@@ -20,6 +26,7 @@ use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\QuiSommesNousController;
 use App\Http\Controllers\ReportController;
 use App\Http\Controllers\RoleController;
+use App\Http\Controllers\FluxTransitionController;
 use App\Http\Controllers\ServiceController;
 use App\Http\Controllers\ContactController;
 use App\Http\Controllers\DemandeRencontreController;
@@ -43,34 +50,23 @@ Route::get('/', function () {
         ->take(3)
         ->get();
 
-    return view('home', compact('latestActualites', 'recentReports'));
+    $carousels = \App\Models\Carousel::where('status', true)->ordered()->get();
+
+    return view('home', compact('latestActualites', 'recentReports', 'carousels'));
 })->name('home');
 
 // Static pages
-Route::get('/glossaire',                fn () => view('glossaire.index'))->name('glossaire');
-Route::get('/simulateur-calcul',        fn () => view('fonctionnaire.simulateur-calcul'))->name('simulateur-calcul');
-Route::get('/textes_documents_legaux',  fn () => view('communication.textes_publication'))->name('textes_documents_legaux');
-Route::get('/faq',                      fn () => view('faq.index'))->name('faq.index');
+Route::get('/simulateur-calcul',         fn () => view('fonctionnaire.simulateur-calcul'))->name('simulateur-calcul');
+Route::get('/politique-confidentialite', fn () => view('privacy'))->name('privacy.policy');
+
+// Content pages (DB-backed)
+Route::get('/glossaire',               [GlossaireController::class,   'publicIndex'])->name('glossaire');
+Route::get('/faq',                     [FaqController::class,          'publicIndex'])->name('faq.index');
+Route::get('/textes_documents_legaux', [PublicationController::class,  'publicIndex'])->name('textes_documents_legaux');
+Route::get('/liens-utiles',            [LienUtileController::class,    'publicIndex'])->name('liens-utiles');
+
 Route::get('/contact',  [ContactController::class, 'index'])->name('contact');
 Route::post('/contact', [ContactController::class, 'store'])->name('contact.store');
-Route::get('/politique-confidentialite',fn () => view('privacy'))->name('privacy.policy');
-
-Route::get('/liens-utiles', function () {
-    $links = [
-        ['name' => "Ministère de l'Economie et des Finances",                     'abbr' => 'MEF',   'link' => 'https://mef.gouv.ht/'],
-        ['name' => "Direction Générale du Budget",                                 'abbr' => 'DGB',   'link' => 'https://budget.gouv.ht/'],
-        ['name' => "Administration Générale des Douanes",                          'abbr' => 'AGD',   'link' => 'https://www.douane.gouv.ht/'],
-        ['name' => "Banque de la République d'Haïti",                              'abbr' => 'BRH',   'link' => 'https://www.brh.ht/'],
-        ['name' => "Bureau de Monétisation des Programmes d'Aide au Développement",'abbr' => 'BMPAD', 'link' => 'https://bmpad.gouv.ht/'],
-        ['name' => "Direction Générale des Impôts",                                'abbr' => 'DGI',   'link' => 'https://dgi.gouv.ht/'],
-        ['name' => "Inspection Générale des Finances",                             'abbr' => 'IGF',   'link' => 'https://igf.gouv.ht/'],
-        ['name' => "Institut Haïtien de Statistique et d'Informatique",            'abbr' => 'IHSI',  'link' => 'https://ihsi.gouv.ht/'],
-        ["name" => "Office d'Assurance Véhicules Contre Tiers",                    'abbr' => 'OAVCT', 'link' => 'https://oavct.gouv.ht/'],
-        ['name' => "Société Nationale des Parcs Industriels",                      'abbr' => 'SONAPI','link' => 'https://sonapi.gouv.ht/'],
-        ['name' => "Banque Nationale de Crédit",                                   'abbr' => 'BNC',   'link' => 'https://www.bnconline.com/'],
-    ];
-    return view('liens-utiles.index', compact('links'));
-})->name('liens-utiles');
 
 // Qui sommes-nous
 Route::prefix('quisommesnous')->name('quisommesnous.')->group(function () {
@@ -83,7 +79,7 @@ Route::prefix('quisommesnous')->name('quisommesnous.')->group(function () {
 });
 
 // Media & content
-Route::get('/mediatheque', [MediaController::class, 'index'])->name('mediatheque');
+Route::get('/mediatheque', [MediathequeController::class, 'publicIndex'])->name('mediatheque');
 
 // Reports (public)
 Route::get('rapports',                  [ReportController::class, 'index'])->name('reports.index');
@@ -236,6 +232,7 @@ Route::middleware('auth')->group(function () {
     Route::prefix('notifications')->name('notifications.')->middleware('not.admin')->group(function () {
         Route::get('/',                  [NotificationController::class, 'index'])->name('index');
         Route::post('/{id}/mark-read',   [NotificationController::class, 'markAsRead'])->name('markAsRead');
+        Route::get('/{id}/open',         [NotificationController::class, 'open'])->name('open');
         Route::post('/mark-all-read',    [NotificationController::class, 'markAllAsRead'])->name('markAllAsRead');
         Route::delete('/{id}',           [NotificationController::class, 'destroy'])->name('destroy');
     });
@@ -259,6 +256,8 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'role:admin'])->grou
 
     // Users, carousels, posts
     Route::resource('users',     UserController::class);
+    Route::patch('users/{user}/toggle-active', [UserController::class, 'toggleActive'])->name('users.toggle-active');
+    Route::post('carousels/reorder', [CarouselController::class, 'reorder'])->name('carousels.reorder');
     Route::resource('carousels', CarouselController::class);
     Route::resource('posts',     PostController::class);
 
@@ -266,6 +265,14 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'role:admin'])->grou
     Route::get('/services',    [ServiceController::class, 'index'])->name('services.index');
     Route::get('/roles',       [RoleController::class, 'index'])->name('roles.index');
     Route::get('/permissions', [PermissionController::class, 'index'])->name('permissions.index');
+
+    // Flux transitions (workflow circuit)
+    Route::get('/flux-transitions',                               [FluxTransitionController::class, 'index'])->name('flux-transitions.index');
+    Route::post('/flux-transitions',                              [FluxTransitionController::class, 'store'])->name('flux-transitions.store');
+    Route::patch('/flux-transitions/{fluxTransition}',            [FluxTransitionController::class, 'update'])->name('flux-transitions.update');
+    Route::post('/flux-transitions/{fluxTransition}/move-up',     [FluxTransitionController::class, 'moveUp'])->name('flux-transitions.move-up');
+    Route::post('/flux-transitions/{fluxTransition}/move-down',   [FluxTransitionController::class, 'moveDown'])->name('flux-transitions.move-down');
+    Route::delete('/flux-transitions/{fluxTransition}',           [FluxTransitionController::class, 'destroy'])->name('flux-transitions.destroy');
 
     // Document uploads
     Route::get('/documents/upload',  [DocumentController::class, 'index'])->name('documents.index');
@@ -275,6 +282,20 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'role:admin'])->grou
     Route::get('/demandes',                          [DemandeManagementController::class, 'index'])->name('demandes.index');
     Route::get('/demandes/{demande}',                [DemandeManagementController::class, 'edit'])->name('demandes.show');
     Route::post('/demandes/{demande}/update-status', [DemandeManagementController::class, 'updateStatus'])->name('demandes.updateStatus');
+
+    // Transfer reception
+    Route::post('/workflows/{workflow}/accepter', [DemandeManagementController::class, 'accepterReception'])->name('workflows.accepter');
+    Route::post('/workflows/{workflow}/refuser',  [DemandeManagementController::class, 'refuserReception'])->name('workflows.refuser');
+
+    // Décision finale Direction
+    Route::post('/demandes/{demande}/approuver', [DemandeManagementController::class, 'approuver'])->name('admin.demandes.approuver');
+    Route::post('/demandes/{demande}/cloturer',  [DemandeManagementController::class, 'cloturer'])->name('admin.demandes.cloturer');
+    Route::post('/demandes/{demande}/rejeter',   [DemandeManagementController::class, 'rejeter'])->name('admin.demandes.rejeter');
+    Route::post('/demandes/{demande}/annuler',   [DemandeManagementController::class, 'annuler'])->name('admin.demandes.annuler');
+
+    // Affectations
+    Route::post('/demandes/{demande}/affecter',         [DemandeManagementController::class, 'affecterServices'])->name('admin.demandes.affecter');
+    Route::post('/affectations/{affectation}/repondre', [DemandeManagementController::class, 'repondreAffectation'])->name('admin.affectations.repondre');
 
     // Reports management (keeps original route names)
     Route::get('rapports',                   [ReportController::class, 'adminIndex'])->name('reports.admin.index');
@@ -295,16 +316,73 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'role:admin'])->grou
     Route::post('actualites/{actualite}/toggle', [ActualiteController::class, 'togglePublish'])->name('actualites.toggle');
 
     // Newsletter admin
-    Route::get('newsletter',                         [NewsletterController::class, 'adminIndex'])->name('newsletter.admin.index');
-    Route::delete('newsletter/{newsletter}',         [NewsletterController::class, 'destroy'])->name('newsletter.destroy');
-    Route::get('newsletter/export',                  [NewsletterController::class, 'export'])->name('newsletter.export');
+    Route::get('newsletter',                                    [NewsletterController::class, 'adminIndex'])->name('newsletter.admin.index');
+    Route::get('newsletter/compose',                           [NewsletterController::class, 'compose'])->name('newsletter.compose');
+    Route::post('newsletter/send',                             [NewsletterController::class, 'send'])->name('newsletter.send');
+    Route::get('newsletter/export',                            [NewsletterController::class, 'export'])->name('newsletter.export');
+    Route::delete('newsletter/{newsletter}',                   [NewsletterController::class, 'destroy'])->name('newsletter.destroy');
+    Route::delete('newsletter/campaigns/{campaign}',           [NewsletterController::class, 'destroyCampaign'])->name('newsletter.campaigns.destroy');
 
     // Contact admin
     Route::get('contacts',                           [ContactController::class, 'adminIndex'])->name('contacts.index');
     Route::get('contacts/{contact}',                 [ContactController::class, 'adminShow'])->name('contacts.show');
     Route::post('contacts/{contact}/read',           [ContactController::class, 'markRead'])->name('contacts.markRead');
+    Route::post('contacts/{contact}/unread',         [ContactController::class, 'markUnread'])->name('contacts.markUnread');
     Route::post('contacts/mark-all-read',            [ContactController::class, 'markAllRead'])->name('contacts.markAllRead');
     Route::delete('contacts/{contact}',              [ContactController::class, 'adminDestroy'])->name('contacts.destroy');
+
+    // FAQ admin
+    Route::get('faq',                               [FaqController::class, 'adminIndex'])->name('faq.index');
+    Route::post('faq',                              [FaqController::class, 'store'])->name('faq.store');
+    Route::put('faq/{faqItem}',                     [FaqController::class, 'update'])->name('faq.update');
+    Route::delete('faq/{faqItem}',                  [FaqController::class, 'destroy'])->name('faq.destroy');
+    Route::post('faq/{faqItem}/toggle',             [FaqController::class, 'togglePublish'])->name('faq.toggle');
+
+    // Glossaire admin
+    Route::get('glossaire',                         [GlossaireController::class, 'adminIndex'])->name('glossaire.index');
+    Route::post('glossaire',                        [GlossaireController::class, 'store'])->name('glossaire.store');
+    Route::put('glossaire/{glossaireTerm}',         [GlossaireController::class, 'update'])->name('glossaire.update');
+    Route::delete('glossaire/{glossaireTerm}',      [GlossaireController::class, 'destroy'])->name('glossaire.destroy');
+    Route::post('glossaire/{glossaireTerm}/toggle', [GlossaireController::class, 'togglePublish'])->name('glossaire.toggle');
+
+    // Liens utiles admin
+    Route::get('liens-utiles',                      [LienUtileController::class, 'adminIndex'])->name('liens-utiles.index');
+    Route::post('liens-utiles',                     [LienUtileController::class, 'store'])->name('liens-utiles.store');
+    Route::put('liens-utiles/{lienUtile}',          [LienUtileController::class, 'update'])->name('liens-utiles.update');
+    Route::delete('liens-utiles/{lienUtile}',       [LienUtileController::class, 'destroy'])->name('liens-utiles.destroy');
+    Route::post('liens-utiles/{lienUtile}/toggle',  [LienUtileController::class, 'togglePublish'])->name('liens-utiles.toggle');
+
+    // Publications admin
+    Route::get('publications',                      [PublicationController::class, 'adminIndex'])->name('publications.index');
+    Route::post('publications',                     [PublicationController::class, 'store'])->name('publications.store');
+    Route::put('publications/{publication}',        [PublicationController::class, 'update'])->name('publications.update');
+    Route::delete('publications/{publication}',     [PublicationController::class, 'destroy'])->name('publications.destroy');
+    Route::post('publications/{publication}/toggle',[PublicationController::class, 'togglePublish'])->name('publications.toggle');
+
+    // Médiathèque admin
+    Route::get('mediatheque',                           [MediathequeController::class, 'adminIndex'])->name('mediatheque.index');
+    Route::post('mediatheque',                          [MediathequeController::class, 'store'])->name('mediatheque.store');
+    Route::put('mediatheque/{mediathequeItem}',         [MediathequeController::class, 'update'])->name('mediatheque.update');
+    Route::delete('mediatheque/{mediathequeItem}',      [MediathequeController::class, 'destroy'])->name('mediatheque.destroy');
+    Route::post('mediatheque/{mediathequeItem}/toggle', [MediathequeController::class, 'togglePublish'])->name('mediatheque.toggle');
+
+    // Institution en Images admin
+    Route::get('institution-images',                          [InstitutionImageController::class, 'index'])->name('institution-images.index');
+    Route::get('institution-images/create',                   [InstitutionImageController::class, 'create'])->name('institution-images.create');
+    Route::post('institution-images',                         [InstitutionImageController::class, 'store'])->name('institution-images.store');
+    Route::get('institution-images/{institutionImage}/edit',  [InstitutionImageController::class, 'edit'])->name('institution-images.edit');
+    Route::put('institution-images/{institutionImage}',       [InstitutionImageController::class, 'update'])->name('institution-images.update');
+    Route::delete('institution-images/{institutionImage}',    [InstitutionImageController::class, 'destroy'])->name('institution-images.destroy');
+    Route::post('institution-images/reorder',                 [InstitutionImageController::class, 'reorder'])->name('institution-images.reorder');
+
+    // Partenaires admin
+    Route::get('partenaires',                        [PartenaireController::class, 'index'])->name('partenaires.index');
+    Route::get('partenaires/create',                 [PartenaireController::class, 'create'])->name('partenaires.create');
+    Route::post('partenaires',                       [PartenaireController::class, 'store'])->name('partenaires.store');
+    Route::get('partenaires/{partenaire}/edit',      [PartenaireController::class, 'edit'])->name('partenaires.edit');
+    Route::put('partenaires/{partenaire}',           [PartenaireController::class, 'update'])->name('partenaires.update');
+    Route::delete('partenaires/{partenaire}',        [PartenaireController::class, 'destroy'])->name('partenaires.destroy');
+    Route::post('partenaires/reorder',               [PartenaireController::class, 'reorder'])->name('partenaires.reorder');
 });
 
 require __DIR__ . '/auth.php';

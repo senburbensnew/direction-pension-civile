@@ -7,6 +7,7 @@ use App\Models\User;
 use App\Models\UserType;
 use Illuminate\View\View;
 use App\Enums\UserTypeEnum;
+use App\Helpers\RegexExpressions;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rules;
 use Illuminate\Support\Facades\DB;
@@ -123,8 +124,8 @@ class RegisteredUserController extends Controller
         $user->assignRole($userType);
     
         event(new Registered($user));
-        Auth::login($user);
-    
-        return redirect('/');
+
+        return redirect()->route('admin.dashboard.index')
+            ->with('success', 'Utilisateur créé avec succès.');
     } 
 }

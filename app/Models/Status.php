@@ -16,9 +16,14 @@ class Status extends Model
    const STATUS_COMPLETED = 'FINALISEE';
    const STATUS_CANCELED = 'ANNULEE';
    const STATUS_COMPLEMENT_REQUIS = 'COMPLEMENT_REQUIS';
+   const STATUS_TRANSFERT_EN_ATTENTE = 'TRANSFERT_EN_ATTENTE';
+   const STATUS_TRANSFERT_REFUSE = 'TRANSFERT_REFUSE';
 
     protected $fillable = [
+        'code',
         'name',
+        'label',
+        'description',
     ];
 
     public static function getStatusStyle($status)
@@ -30,6 +35,8 @@ class Status extends Model
             self::STATUS_REJECTED => 'bg-red-100 text-red-800',
             self::STATUS_COMPLETED => 'bg-green-100 text-green-800',
             self::STATUS_COMPLEMENT_REQUIS => 'bg-orange-100 text-orange-800',
+            self::STATUS_TRANSFERT_EN_ATTENTE => 'bg-sky-100 text-sky-800',
+            self::STATUS_TRANSFERT_REFUSE => 'bg-red-100 text-red-800',
             default => 'bg-gray-100 text-gray-800'
         };
     }

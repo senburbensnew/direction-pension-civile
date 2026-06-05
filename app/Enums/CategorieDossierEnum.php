@@ -10,6 +10,7 @@ enum CategorieDossierEnum: string
     case ADMINISTRATIF       = 'administratif';
     case CORRESPONDANCES     = 'correspondances';
     case DEMANDE_RENCONTRE   = 'rencontre';
+    case AUTRES              = 'autres';
 
     public function label(): string
     {
@@ -20,6 +21,7 @@ enum CategorieDossierEnum: string
             self::ADMINISTRATIF     => 'Dossiers administratifs',
             self::CORRESPONDANCES   => 'Correspondances',
             self::DEMANDE_RENCONTRE => 'Demandes de rencontre',
+            self::AUTRES            => 'Autres',
         };
     }
 
@@ -32,6 +34,7 @@ enum CategorieDossierEnum: string
             self::ADMINISTRATIF     => 'badge-warning',
             self::CORRESPONDANCES   => 'badge-secondary',
             self::DEMANDE_RENCONTRE => 'badge-success',
+            self::AUTRES            => 'badge-neutral',
         };
     }
 }

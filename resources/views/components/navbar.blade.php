@@ -3,57 +3,59 @@
         <div class="absolute inset-0 bg-blue-900 bg-opacity-70"></div>
 
         <div class="container mx-auto px-4 py-4 relative z-10">
-            <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-                <!-- Logo and Title -->
-                <div class="flex items-center">
+            <div class="flex flex-wrap lg:flex-nowrap justify-between lg:justify-start items-center gap-x-3 gap-y-0">
+                <!-- Logo — lg:mr-auto pushes nav+user to the right on large screens -->
+                <div class="flex items-center flex-shrink-0 lg:mr-auto">
                     <a href="{{ route('home') }}" class="flex items-center gap-3 group">
                         <img src="{{ asset('images/setting-logo-1-M13oPLiYoM.png') }}"
                              alt="Logo"
                              class="w-10 h-10 md:w-16 md:h-16 transition-transform group-hover:scale-105">
                         <div class="flex flex-col">
-                            <span class="font-semibold text-sm md:text-lg leading-tight group-hover:text-orange-500 transition-colors">
+                            <span class="font-semibold text-base md:text-lg leading-tight group-hover:text-orange-500 transition-colors">
                                 {{ __('messages.direction') }}
                             </span>
-                            <span class="text-xs md:text-sm leading-tight">
+                            <span class="text-sm leading-tight">
                                 {{ __('messages.republic') }}
                             </span>
                         </div>
                     </a>
                 </div>
 
-                <!-- Navigation and User Menu -->
-                <div class="flex flex-col lg:flex-row items-center lg:items-center justify-center gap-4 lg:gap-6 w-full lg:w-auto">
-                    <!-- Main Navigation -->
-                    <nav class="flex flex-wrap gap-4 md:gap-6 text-sm md:text-base">
-                        <a href="{{ route('home') }}"
-                           class="hover:text-orange-500 transition-colors py-1 border-b-2 border-transparent hover:border-orange-500">
-                            {{ __('messages.home') }}
-                        </a>
-                        <a href="{{ route('liens-utiles') }}"
-                           class="hover:text-orange-500 transition-colors py-1 border-b-2 border-transparent hover:border-orange-500">
-                            {{ __('messages.links') }}
-                        </a>
-                        <a href="{{ route('contact') }}"
-                           class="hover:text-orange-500 transition-colors py-1 border-b-2 border-transparent hover:border-orange-500">
-                            {{ __('messages.contact') }}
-                        </a>
-                        <a href="{{ route('faq.index') }}"
-                           class="hover:text-orange-500 transition-colors py-1 border-b-2 border-transparent hover:border-orange-500">
-                            {{ __('messages.faq') }}
-                        </a>
-                        <a href="{{ route('glossaire') }}"
-                           class="hover:text-orange-500 transition-colors py-1 border-b-2 border-transparent hover:border-orange-500">
-                            {{ __('messages.glossaire') }}
-                        </a>
-                    </nav>
+                <!-- Main Navigation
+                     Mobile: order-3 + w-full → drops to its own full-width row below logo & user section
+                     Desktop: order-2 + w-auto → sits inline, to the left of the user section -->
+                <nav class="order-3 lg:order-2 w-full lg:w-auto flex flex-wrap lg:flex-nowrap justify-center gap-3 lg:gap-5 text-base
+                            mt-3 pt-3 lg:mt-0 lg:pt-0 border-t border-white/20 lg:border-0">
+                    <a href="{{ route('home') }}"
+                       class="hover:text-orange-500 transition-colors py-1 border-b-2 border-transparent hover:border-orange-500">
+                        {{ __('messages.home') }}
+                    </a>
+                    <a href="{{ route('liens-utiles') }}"
+                       class="hover:text-orange-500 transition-colors py-1 border-b-2 border-transparent hover:border-orange-500">
+                        {{ __('messages.links') }}
+                    </a>
+                    <a href="{{ route('contact') }}"
+                       class="hover:text-orange-500 transition-colors py-1 border-b-2 border-transparent hover:border-orange-500">
+                        {{ __('messages.contact') }}
+                    </a>
+                    <a href="{{ route('faq.index') }}"
+                       class="hover:text-orange-500 transition-colors py-1 border-b-2 border-transparent hover:border-orange-500">
+                        {{ __('messages.faq') }}
+                    </a>
+                    <a href="{{ route('glossaire') }}"
+                       class="hover:text-orange-500 transition-colors py-1 border-b-2 border-transparent hover:border-orange-500">
+                        {{ __('messages.glossaire') }}
+                    </a>
+                </nav>
 
-                    <!-- User Section -->
-                    <div class="flex items-center gap-4">
+                <!-- User Section: order-2 on sm/md (beside logo), order-3 on lg+ (rightmost) -->
+                <div class="order-2 lg:order-3 flex-shrink-0 flex items-center gap-4">
                         <!-- Notification Bell -->
                         @auth
-                            @unlessrole('admin')
                             @php $unreadCount = auth()->user()->unreadNotifications()->count(); @endphp
-                            <div x-data="{ open: false }" class="relative">
+                            <div x-data="{ open: false, unreadCount: {{ $unreadCount }} }"
+                                 @notification-read.window="unreadCount = Math.max(0, unreadCount - 1)"
+                                 class="relative">
                                 <button @click="open = !open" @click.outside="open = false"
                                         class="relative text-white hover:text-orange-400 transition-colors focus:outline-none"
                                         aria-label="Notifications">
@@ -61,11 +63,11 @@
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                               d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6 6 0 10-12 0v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
                                     </svg>
-                                    @if ($unreadCount > 0)
-                                        <span class="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-4 w-4 flex items-center justify-center font-bold leading-none">
-                                            {{ $unreadCount > 9 ? '9+' : $unreadCount }}
-                                        </span>
-                                    @endif
+                                    <span x-show="unreadCount > 0"
+                                          x-text="unreadCount > 9 ? '9+' : unreadCount"
+                                          x-cloak
+                                          class="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-4 w-4 flex items-center justify-center font-bold leading-none">
+                                    </span>
                                 </button>
 
                                 <!-- Dropdown panel -->
@@ -73,37 +75,82 @@
                                      class="absolute right-0 mt-2 w-80 bg-white rounded-lg shadow-xl z-50 overflow-hidden">
                                     <div class="flex items-center justify-between px-4 py-3 bg-gray-50 border-b">
                                         <span class="font-semibold text-gray-700 text-sm">{{ __('messages.notifications') }}</span>
-                                        @if ($unreadCount > 0)
-                                            <form method="POST" action="{{ route('notifications.markAllAsRead') }}">
-                                                @csrf
-                                                <button type="submit" class="text-xs text-blue-600 hover:underline">
-                                                    {{ __('messages.mark_all_as_read') }}
-                                                </button>
-                                            </form>
+                                        <form x-show="unreadCount > 0" method="POST" action="{{ route('notifications.markAllAsRead') }}">
+                                            @csrf
+                                            <button type="submit" class="text-xs text-blue-600 hover:underline">
+                                                {{ __('messages.mark_all_as_read') }}
+                                            </button>
+                                        </form>
+                                    </div>
+                                    @php $bellNotifications = auth()->user()->notifications()->latest()->take(8)->get(); @endphp
+                                    <div x-data="{ visible: {{ $bellNotifications->count() }} }">
+                                        <ul class="divide-y divide-gray-100 max-h-72 overflow-y-auto">
+                                            @forelse ($bellNotifications as $notification)
+                                                @php $data = $notification->data; @endphp
+                                                <li x-data="{ read: {{ is_null($notification->read_at) ? 'false' : 'true' }}, gone: false }"
+                                                    x-show="!gone"
+                                                    x-init="
+                                                        $watch('read', v => { if (v) window.dispatchEvent(new Event('notification-read')) });
+                                                        $watch('gone', v => { if (v) $dispatch('item-removed') });
+                                                    "
+                                                    @notification-deleted.window="if ($event.detail.id === '{{ $notification->id }}') gone = true"
+                                                    :class="read ? 'bg-white' : 'bg-blue-50'"
+                                                    class="cursor-pointer px-4 py-3 hover:bg-gray-50 transition-colors"
+                                                    @click="fetch('{{ route('notifications.markAsRead', $notification->id) }}', {
+                                                        method: 'POST',
+                                                        headers: {
+                                                            'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                                                            'Accept': 'application/json',
+                                                            'Content-Type': 'application/json'
+                                                        }
+                                                    }).then(r => r.json()).then(d => { if (d.ok) read = true; })">
+                                                    <div class="flex items-start justify-between gap-2">
+                                                        <div class="flex-1 min-w-0">
+                                                            <p class="text-sm text-gray-800 font-medium leading-snug">
+                                                                {{ $data['message'] ?? 'Notification' }}
+                                                            </p>
+                                                            <p class="text-xs text-gray-400 mt-1">
+                                                                {{ $notification->created_at->diffForHumans() }}
+                                                            </p>
+                                                        </div>
+                                                        <button type="button"
+                                                                x-show="read"
+                                                                class="flex-shrink-0 text-gray-300 hover:text-red-500 transition-colors text-lg leading-none"
+                                                                title="Supprimer"
+                                                                @click.stop="fetch('{{ route('notifications.destroy', $notification->id) }}', {
+                                                                    method: 'DELETE',
+                                                                    headers: {
+                                                                        'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                                                                        'Accept': 'application/json'
+                                                                    }
+                                                                }).then(r => r.json()).then(d => {
+                                                                    if (d.ok) window.dispatchEvent(new CustomEvent('notification-deleted', { detail: { id: '{{ $notification->id }}' } }))
+                                                                })">
+                                                            &times;
+                                                        </button>
+                                                    </div>
+                                                </li>
+                                            @empty
+                                            @endforelse
+                                        </ul>
+
+                                        {{-- Empty state: shown when DB had no items, or all were deleted in-session --}}
+                                        <div @item-removed.window="visible = Math.max(0, visible - 1)"
+                                             x-show="visible === 0"
+                                             x-cloak
+                                             class="py-8 px-4 flex flex-col items-center text-center gap-2">
+                                            <div class="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center mb-1">
+                                                <svg class="w-5 h-5 text-gray-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6 6 0 10-12 0v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/>
+                                                </svg>
+                                            </div>
+                                            <p class="text-sm font-medium text-gray-500">{{ __('messages.no_notification') }}</p>
+                                            <p class="text-xs text-gray-400">Vous êtes à jour !</p>
+                                        </div>
+                                        @if ($bellNotifications->count() > 0)
+                                            <div x-show="visible > 0" class="border-t"></div>
                                         @endif
                                     </div>
-                                    <ul class="divide-y divide-gray-100 max-h-72 overflow-y-auto">
-                                        @forelse (auth()->user()->notifications()->latest()->take(8)->get() as $notification)
-                                            @php $data = $notification->data; @endphp
-                                            <li class="{{ is_null($notification->read_at) ? 'bg-blue-50' : 'bg-white' }}">
-                                                <form method="POST" action="{{ route('notifications.markAsRead', $notification->id) }}">
-                                                    @csrf
-                                                    <button type="submit" class="w-full text-left px-4 py-3 hover:bg-gray-50 transition-colors">
-                                                        <p class="text-sm text-gray-800 font-medium leading-snug">
-                                                            {{ $data['message'] ?? 'Notification' }}
-                                                        </p>
-                                                        <p class="text-xs text-gray-400 mt-1">
-                                                            {{ $notification->created_at->diffForHumans() }}
-                                                        </p>
-                                                    </button>
-                                                </form>
-                                            </li>
-                                        @empty
-                                            <li class="px-4 py-6 text-center text-sm text-gray-400">
-                                                {{ __('messages.no_notification') }}
-                                            </li>
-                                        @endforelse
-                                    </ul>
                                     <div class="px-4 py-2 bg-gray-50 border-t text-center">
                                         <a href="{{ route('notifications.index') }}" class="text-xs text-blue-600 hover:underline">
                                             {{ __('messages.see_all_notifications') }}
@@ -111,7 +158,6 @@
                                     </div>
                                 </div>
                             </div>
-                            @endunlessrole
                         @endauth
 
                         <!-- Login/User Info -->
@@ -216,7 +262,6 @@
                                 </a>
                             @endif
                         </div>
-                    </div>
                 </div>
             </div>
         </div>

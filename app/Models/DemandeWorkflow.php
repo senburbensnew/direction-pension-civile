@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Models\Demande;
 use App\Models\User;
 use App\Models\Status;
 use App\Models\Service;
@@ -16,11 +17,21 @@ class DemandeWorkflow extends Model
         'status_id',
         'action_by_user_id',
         'commentaire',
+        'reception_status',
+        'reception_motif',
+        'reception_at',
+        'reception_by_user_id',
     ];
 
     protected $casts = [
-        'action_at' => 'datetime',
+        'action_at'    => 'datetime',
+        'reception_at' => 'datetime',
     ];
+
+    public function demande()
+    {
+        return $this->belongsTo(Demande::class);
+    }
 
     public function fromService()
     {
@@ -40,5 +51,25 @@ class DemandeWorkflow extends Model
     public function status()
     {
         return $this->belongsTo(Status::class);
+    }
+
+    public function receptionBy()
+    {
+        return $this->belongsTo(User::class, 'reception_by_user_id');
+    }
+
+    public function isPending(): bool
+    {
+        return $this->reception_status === 'pending';
+    }
+
+    public function isAccepted(): bool
+    {
+        return $this->reception_status === 'accepted';
+    }
+
+    public function isRefused(): bool
+    {
+        return $this->reception_status === 'refused';
     }
 }

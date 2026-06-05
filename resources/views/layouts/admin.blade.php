@@ -3,9 +3,11 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>@yield('title', 'Administration') — DPC</title>
+    <meta name="csrf-token" content="{{ csrf_token() }}">
+    <title>@yield('title', 'Administration') — Direction de la Pension Civile</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css" />
     @vite(['resources/css/app.css', 'resources/js/app.js'])
+    {{-- <link href="{{ asset('build/assets/app-CFGfTGFn.css') }}" rel="stylesheet"> --}}
     <style>
         :root { --sidebar-w: 15rem; }
 
@@ -42,6 +44,7 @@
             color: #64748b; text-transform: uppercase;
         }
     </style>
+    @stack('styles')
 </head>
 
 <body class="bg-gray-100 antialiased">
@@ -57,7 +60,7 @@
         <div class="flex items-center gap-3 px-4 py-4 border-b border-white/10">
             <img src="{{ asset('images/setting-logo-1-M13oPLiYoM.png') }}" alt="Logo" class="w-8 h-8 rounded">
             <div class="leading-tight">
-                <p class="text-white text-sm font-semibold leading-none">DPC</p>
+                <p class="text-white text-sm font-semibold leading-none">Direction de la Pension Civile</p>
                 <p class="text-slate-400 text-xs">Administration</p>
             </div>
         </div>
@@ -65,61 +68,141 @@
         {{-- Nav --}}
         <nav class="flex-1 overflow-y-auto py-3 px-2 space-y-0.5">
 
-            {{-- Overview --}}
-            <p class="nav-section">Vue d'ensemble</p>
-            <a href="{{ route('admin.dashboard.index') }}"
-               class="nav-link {{ request()->routeIs('admin.dashboard.*') ? 'active' : '' }}">
-               <i class="fas fa-chart-pie"></i> Tableau de bord
-            </a>
+            {{-- Vue d'ensemble — open by default --}}
+            <div x-data="{ open: true }">
+                <button @click="open = !open"
+                    class="nav-section w-full flex items-center justify-between cursor-pointer hover:text-slate-300 transition-colors">
+                    <span>Vue d'ensemble</span>
+                    <i class="fas fa-chevron-down text-[9px] transition-transform duration-200"
+                       :class="open ? '' : '-rotate-90'"></i>
+                </button>
+                <div x-show="open" x-transition.duration.150ms>
+                    <a href="{{ route('admin.dashboard.index') }}"
+                       class="nav-link {{ request()->routeIs('admin.dashboard.*') ? 'active' : '' }}">
+                       <i class="fas fa-chart-pie"></i> Tableau de bord
+                    </a>
+                </div>
+            </div>
 
             {{-- Utilisateurs & Accès --}}
-            <p class="nav-section mt-2">Utilisateurs & Accès</p>
-            <a href="{{ route('admin.users.index') }}"
-               class="nav-link {{ request()->routeIs('admin.users.*') ? 'active' : '' }}">
-               <i class="fas fa-users"></i> Utilisateurs
-            </a>
-            <a href="{{ route('admin.roles.index') }}"
-               class="nav-link {{ request()->routeIs('admin.roles.*') ? 'active' : '' }}">
-               <i class="fas fa-shield-alt"></i> Rôles
-            </a>
-            <a href="{{ route('admin.permissions.index') }}"
-               class="nav-link {{ request()->routeIs('admin.permissions.*') ? 'active' : '' }}">
-               <i class="fas fa-key"></i> Permissions
-            </a>
-            <a href="{{ route('admin.services.index') }}"
-               class="nav-link {{ request()->routeIs('admin.services.*') ? 'active' : '' }}">
-               <i class="fas fa-sitemap"></i> Services
-            </a>
+            <div x-data="{ open: {{ request()->routeIs('admin.users.*', 'admin.roles.*', 'admin.permissions.*', 'admin.services.*', 'admin.flux-transitions.*') ? 'true' : 'false' }} }">
+                <button @click="open = !open"
+                    class="nav-section mt-2 w-full flex items-center justify-between cursor-pointer hover:text-slate-300 transition-colors">
+                    <span>Utilisateurs &amp; Accès</span>
+                    <i class="fas fa-chevron-down text-[9px] transition-transform duration-200"
+                       :class="open ? '' : '-rotate-90'"></i>
+                </button>
+                <div x-show="open" x-transition.duration.150ms>
+                    <a href="{{ route('admin.users.index') }}"
+                       class="nav-link {{ request()->routeIs('admin.users.*') ? 'active' : '' }}">
+                       <i class="fas fa-users"></i> Utilisateurs
+                    </a>
+                    <a href="{{ route('admin.roles.index') }}"
+                       class="nav-link {{ request()->routeIs('admin.roles.*') ? 'active' : '' }}">
+                       <i class="fas fa-shield-alt"></i> Rôles
+                    </a>
+                    <a href="{{ route('admin.permissions.index') }}"
+                       class="nav-link {{ request()->routeIs('admin.permissions.*') ? 'active' : '' }}">
+                       <i class="fas fa-key"></i> Permissions
+                    </a>
+                    <a href="{{ route('admin.services.index') }}"
+                       class="nav-link {{ request()->routeIs('admin.services.*') ? 'active' : '' }}">
+                       <i class="fas fa-sitemap"></i> Services
+                    </a>
+                    <a href="{{ route('admin.flux-transitions.index') }}"
+                       class="nav-link {{ request()->routeIs('admin.flux-transitions.*') ? 'active' : '' }}">
+                       <i class="fas fa-route"></i> Circuit de traitement
+                    </a>
+                </div>
+            </div>
 
             {{-- Contenu --}}
-            <p class="nav-section mt-2">Contenu</p>
-            <a href="{{ route('admin.actualites.admin.index') }}"
-               class="nav-link {{ request()->routeIs('admin.actualites.*') ? 'active' : '' }}">
-               <i class="fas fa-newspaper"></i> Actualités
-            </a>
-            <a href="{{ route('admin.reports.admin.index') }}"
-               class="nav-link {{ request()->routeIs('admin.reports.*') ? 'active' : '' }}">
-               <i class="fas fa-file-pdf"></i> Rapports
-            </a>
-            <a href="{{ route('admin.carousels.index') }}"
-               class="nav-link {{ request()->routeIs('admin.carousels.*') ? 'active' : '' }}">
-               <i class="fas fa-images"></i> Carrousel
-            </a>
+            <div x-data="{ open: {{ request()->routeIs('admin.actualites.*', 'admin.reports.*', 'admin.publications.*', 'admin.mediatheque.*', 'admin.carousels.*', 'admin.institution-images.*', 'admin.partenaires.*') ? 'true' : 'false' }} }">
+                <button @click="open = !open"
+                    class="nav-section mt-2 w-full flex items-center justify-between cursor-pointer hover:text-slate-300 transition-colors">
+                    <span>Contenu</span>
+                    <i class="fas fa-chevron-down text-[9px] transition-transform duration-200"
+                       :class="open ? '' : '-rotate-90'"></i>
+                </button>
+                <div x-show="open" x-transition.duration.150ms>
+                    <a href="{{ route('admin.actualites.admin.index') }}"
+                       class="nav-link {{ request()->routeIs('admin.actualites.*') ? 'active' : '' }}">
+                       <i class="fas fa-newspaper"></i> Actualités
+                    </a>
+                    <a href="{{ route('admin.reports.admin.index') }}"
+                       class="nav-link {{ request()->routeIs('admin.reports.*') ? 'active' : '' }}">
+                       <i class="fas fa-file-pdf"></i> Rapports
+                    </a>
+                    <a href="{{ route('admin.publications.index') }}"
+                       class="nav-link {{ request()->routeIs('admin.publications.*') ? 'active' : '' }}">
+                       <i class="fas fa-file-contract"></i> Publications légales
+                    </a>
+                    <a href="{{ route('admin.mediatheque.index') }}"
+                       class="nav-link {{ request()->routeIs('admin.mediatheque.*') ? 'active' : '' }}">
+                       <i class="fas fa-photo-film"></i> Informations utiles
+                    </a>
+                    <a href="{{ route('admin.institution-images.index') }}"
+                       class="nav-link {{ request()->routeIs('admin.institution-images.*') ? 'active' : '' }}">
+                       <i class="fas fa-camera"></i> Notre Institution en Images
+                    </a>
+                    <a href="{{ route('admin.partenaires.index') }}"
+                       class="nav-link {{ request()->routeIs('admin.partenaires.*') ? 'active' : '' }}">
+                       <i class="fas fa-handshake"></i> Nos Partenaires
+                    </a>
+                    <a href="{{ route('admin.carousels.index') }}"
+                       class="nav-link {{ request()->routeIs('admin.carousels.*') ? 'active' : '' }}">
+                       <i class="fas fa-images"></i> Carrousel
+                    </a>
+                </div>
+            </div>
+
+            {{-- Informations --}}
+            <div x-data="{ open: {{ request()->routeIs('admin.faq.*', 'admin.glossaire.*', 'admin.liens-utiles.*') ? 'true' : 'false' }} }">
+                <button @click="open = !open"
+                    class="nav-section mt-2 w-full flex items-center justify-between cursor-pointer hover:text-slate-300 transition-colors">
+                    <span>Informations</span>
+                    <i class="fas fa-chevron-down text-[9px] transition-transform duration-200"
+                       :class="open ? '' : '-rotate-90'"></i>
+                </button>
+                <div x-show="open" x-transition.duration.150ms>
+                    <a href="{{ route('admin.faq.index') }}"
+                       class="nav-link {{ request()->routeIs('admin.faq.*') ? 'active' : '' }}">
+                       <i class="fas fa-question-circle"></i> FAQ
+                    </a>
+                    <a href="{{ route('admin.glossaire.index') }}"
+                       class="nav-link {{ request()->routeIs('admin.glossaire.*') ? 'active' : '' }}">
+                       <i class="fas fa-book"></i> Glossaire
+                    </a>
+                    <a href="{{ route('admin.liens-utiles.index') }}"
+                       class="nav-link {{ request()->routeIs('admin.liens-utiles.*') ? 'active' : '' }}">
+                       <i class="fas fa-link"></i> Liens utiles
+                    </a>
+                </div>
+            </div>
 
             {{-- Communications --}}
-            <p class="nav-section mt-2">Communications</p>
-            <a href="{{ route('admin.contacts.index') }}"
-               class="nav-link {{ request()->routeIs('admin.contacts.*') ? 'active' : '' }}">
-               <i class="fas fa-envelope"></i> Messages
-               @php $unread = \App\Models\Contact::where('read', false)->count(); @endphp
-               @if($unread > 0)
-                   <span class="ml-auto bg-red-500 text-white text-xs rounded-full px-1.5 py-0.5 leading-none">{{ $unread }}</span>
-               @endif
-            </a>
-            <a href="{{ route('admin.newsletter.admin.index') }}"
-               class="nav-link {{ request()->routeIs('admin.newsletter.*') ? 'active' : '' }}">
-               <i class="fas fa-paper-plane"></i> Newsletter
-            </a>
+            <div x-data="{ open: {{ request()->routeIs('admin.contacts.*', 'admin.newsletter.*') ? 'true' : 'false' }} }">
+                <button @click="open = !open"
+                    class="nav-section mt-2 w-full flex items-center justify-between cursor-pointer hover:text-slate-300 transition-colors">
+                    <span>Communications</span>
+                    <i class="fas fa-chevron-down text-[9px] transition-transform duration-200"
+                       :class="open ? '' : '-rotate-90'"></i>
+                </button>
+                <div x-show="open" x-transition.duration.150ms>
+                    <a href="{{ route('admin.contacts.index') }}"
+                       class="nav-link {{ request()->routeIs('admin.contacts.*') ? 'active' : '' }}">
+                       <i class="fas fa-envelope"></i> Messages
+                       @php $unread = \App\Models\Contact::where('read', false)->count(); @endphp
+                       @if($unread > 0)
+                           <span class="ml-auto bg-red-500 text-white text-xs rounded-full px-1.5 py-0.5 leading-none">{{ $unread }}</span>
+                       @endif
+                    </a>
+                    <a href="{{ route('admin.newsletter.admin.index') }}"
+                       class="nav-link {{ request()->routeIs('admin.newsletter.*') ? 'active' : '' }}">
+                       <i class="fas fa-paper-plane"></i> Newsletter
+                    </a>
+                </div>
+            </div>
 
         </nav>
 
@@ -139,7 +222,10 @@
                     </div>
                 @endif
                 <div class="flex-1 min-w-0">
-                    <p class="text-white text-xs font-medium truncate">{{ Auth::user()->name }}</p>
+                    <p class="text-white text-xs font-medium truncate flex items-center gap-1.5">
+                        {{ Auth::user()->name }}
+                        <span class="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-semibold bg-blue-500/20 text-blue-300 leading-none flex-shrink-0">Moi</span>
+                    </p>
                     <p class="text-slate-500 text-xs truncate">Administrateur</p>
                 </div>
                 <form method="POST" action="{{ route('logout') }}">
@@ -183,16 +269,20 @@
                         <span class="hidden sm:inline">Voir le site</span>
                     </a>
 
-                    {{-- Notifications badge --}}
-                    @if(isset($unread) && $unread > 0)
-                        <a href="{{ route('admin.contacts.index') }}"
-                            class="relative text-gray-500 hover:text-gray-700">
-                            <i class="fas fa-bell text-lg"></i>
+                    {{-- Notifications bell --}}
+                    @php
+                        $bellCount = \App\Models\Contact::where('read', false)->count()
+                                   + Auth::user()->unreadNotifications->count();
+                    @endphp
+                    <a href="{{ route('admin.contacts.index') }}"
+                        class="relative text-gray-500 hover:text-gray-700">
+                        <i class="fas fa-bell text-lg"></i>
+                        @if($bellCount > 0)
                             <span class="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-4 h-4 flex items-center justify-center leading-none">
-                                {{ $unread > 9 ? '9+' : $unread }}
+                                {{ $bellCount > 9 ? '9+' : $bellCount }}
                             </span>
-                        </a>
-                    @endif
+                        @endif
+                    </a>
                 </div>
             </div>
         </header>
@@ -221,7 +311,7 @@
         </main>
 
         <footer class="px-6 py-3 text-xs text-gray-400 border-t border-gray-200 bg-white">
-            DPC Administration &mdash; {{ date('Y') }}
+            Direction de la Pension Civile &mdash; {{ date('Y') }}
         </footer>
     </div>
 
@@ -236,5 +326,7 @@
             if (window.innerWidth >= 1024) closeSidebar();
         });
     </script>
+    {{-- <script src="{{ asset('build/assets/app-CbEvcXly.js') }}"></script> --}}
+    @stack('scripts')
 </body>
 </html>

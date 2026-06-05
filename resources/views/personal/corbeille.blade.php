@@ -18,7 +18,7 @@
                 <i class="fas fa-folder-open mr-2 text-blue-400"></i> Répertoire de dossiers
             </legend>
             <div class="py-6 px-5">
-                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4">
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-7 gap-4">
                     @foreach($folderStats as $folder)
                         @php
                             $colorMap = [
@@ -28,6 +28,7 @@
                                 'indigo' => ['bg' => 'bg-indigo-50', 'border' => 'border-indigo-200', 'text' => 'text-indigo-700', 'badge' => 'bg-indigo-600'],
                                 'purple' => ['bg' => 'bg-purple-50', 'border' => 'border-purple-200', 'text' => 'text-purple-700', 'badge' => 'bg-purple-600'],
                                 'green'  => ['bg' => 'bg-green-50',  'border' => 'border-green-200',  'text' => 'text-green-700',  'badge' => 'bg-green-600'],
+                                'gray'   => ['bg' => 'bg-gray-50',   'border' => 'border-gray-300',   'text' => 'text-gray-700',   'badge' => 'bg-gray-500'],
                             ];
                             $c = $colorMap[$folder['color']];
                         @endphp

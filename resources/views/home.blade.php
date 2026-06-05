@@ -1,5 +1,10 @@
 @extends('layouts.main')
 
+@push('styles')
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=Oswald:wght@400;600&display=swap" rel="stylesheet">
+@endpush
+
 @section('title', 'Accueil')
 
 @section('content')
@@ -261,14 +266,14 @@
 </style>
 
 <div class="py-0">
-    <section class="py-0 gap-4 flex flex-col lg:flex-row lg:justify-between items-center bg-gray-50 w-full">
+    <section class="py-0 gap-4 flex flex-col lg:flex-row lg:justify-between items-center bg-gray-100 w-full overflow-hidden">
         <x-carousel>
             <!-- Slide 1 -->
             <div class="swiper-slide">
                 <div class="gradient-bg w-full h-full flex items-center justify-center">
                     <div class="carousel-text-content fade-in">
-                        <h1 class="text-4xl md:text-6xl font-bold mb-6 text-white">Direction de la Pension Civile</h1>
-                        <p class="text-xl md:text-2xl text-blue-100 mb-8 max-w-3xl mx-auto">
+                        <h1 class="text-2xl sm:text-4xl md:text-6xl font-bold mb-4 md:mb-6 text-white">Direction de la Pension Civile</h1>
+                        <p class="text-base sm:text-xl md:text-2xl text-blue-100 mb-5 md:mb-8 max-w-3xl mx-auto">
                             Votre partenaire de confiance pour une retraite sereine et sécurisée
                         </p>
 
@@ -284,27 +289,81 @@
                 </div>
             </div>
 
-            <div class="swiper-slide relative">
-                <img src="{{ asset('images/carousel/KEV_6804.jpg') }}" alt="Direction"
-                    class="h-80 w-auto object-cover mx-auto">
-            </div>
+            @foreach($carousels as $slide)
+                @php
+                    $pos = $slide->overlay_position ?? 'bottom-left';
+                    $gradientClass = match(true) {
+                        str_starts_with($pos, 'bottom') => 'bg-gradient-to-t from-black/65 via-black/20 to-transparent',
+                        str_starts_with($pos, 'top')    => 'bg-gradient-to-b from-black/65 via-black/20 to-transparent',
+                        default                         => 'bg-black/35',
+                    };
+                    $alignClass = match($pos) {
+                        'bottom-left'   => 'items-end justify-start text-left',
+                        'bottom-center' => 'items-end justify-center text-center',
+                        'bottom-right'  => 'items-end justify-end text-right',
+                        'center'        => 'items-center justify-center text-center',
+                        'top-left'      => 'items-start justify-start text-left',
+                        'top-center'    => 'items-start justify-center text-center',
+                        default         => 'items-end justify-start text-left',
+                    };
+                    $size = $slide->text_size ?? 'md';
+                    [$titleClass, $descClass] = match($size) {
+                        'sm' => ['text-base sm:text-lg md:text-xl',        'text-xs sm:text-sm'],
+                        'md' => ['text-xl sm:text-3xl md:text-4xl',        'text-sm sm:text-base md:text-lg'],
+                        'lg' => ['text-2xl sm:text-4xl md:text-5xl',       'text-base sm:text-lg md:text-xl'],
+                        'xl' => ['text-3xl sm:text-5xl md:text-6xl',       'text-lg sm:text-xl md:text-2xl'],
+                        default => ['text-xl sm:text-3xl md:text-4xl',     'text-sm sm:text-base md:text-lg'],
+                    };
+                    $textColor  = $slide->text_color ?? '#ffffff';
+                    $textStyles = $slide->text_styles ?? [];
+                    $fontCss    = \App\Models\Carousel::FONT_CSS[$slide->font_family ?? 'sans'] ?? \App\Models\Carousel::FONT_CSS['sans'];
+                    $styleExtra = $slide->textStyleClasses();
+                    $titleStyle = "color: {$textColor}; font-family: {$fontCss};";
+                    $descStyle  = "color: {$textColor}; font-family: {$fontCss}; opacity: 0.85;";
+                    $hasOverlay = $slide->title || $slide->description || $slide->cta_label;
+                @endphp
+                <div class="swiper-slide">
+                    <img src="{{ $slide->imageUrl() }}"
+                         alt="{{ $slide->title ?? 'Direction de la Pension Civile' }}"
+                         loading="lazy">
 
-            <div class="swiper-slide relative">
-                <img src="{{ asset('images/carousel/KEV_7157.jpg') }}" alt="Direction"
-                    class="h-80 w-auto object-cover mx-auto">
-            </div>
+                    @if($hasOverlay)
+                        {{-- Gradient overlay --}}
+                        <div class="absolute inset-0 {{ $gradientClass }} pointer-events-none"></div>
 
-            <div class="swiper-slide relative">
-                <img src="{{ asset('images/carousel/KEV_7055.jpg') }}" alt="Direction"
-                    class="h-80 w-auto object-cover mx-auto">
-            </div>
-
-            <div class="swiper-slide relative">
-                <img src="{{ asset('images/carousel/KEV_7043.jpg') }}" alt="Direction"
-                    class="h-80 w-auto object-cover mx-auto">
-            </div>
+                        {{-- Text overlay --}}
+                        <div class="absolute inset-0 flex p-6 sm:p-10 {{ $alignClass }}">
+                            <div class="max-w-xl">
+                                @if($slide->title)
+                                    <h2 class="{{ $titleClass }} {{ $styleExtra }} leading-tight drop-shadow-lg mb-2"
+                                        style="{{ $titleStyle }}">
+                                        {{ $slide->title }}
+                                    </h2>
+                                @endif
+                                @if($slide->description)
+                                    <p class="{{ $descClass }} leading-relaxed drop-shadow mb-4"
+                                       style="{{ $descStyle }}">
+                                        {{ $slide->description }}
+                                    </p>
+                                @endif
+                                @if($slide->cta_label && $slide->link)
+                                    <a href="{{ $slide->link }}"
+                                       class="inline-flex items-center gap-2 bg-white text-gray-900 font-semibold text-sm px-5 py-2.5 rounded-full shadow-lg hover:bg-blue-50 transition-colors">
+                                        {{ $slide->cta_label }}
+                                        <i class="fas fa-arrow-right text-xs"></i>
+                                    </a>
+                                @elseif($slide->cta_label)
+                                    <span class="inline-flex items-center gap-2 bg-white text-gray-900 font-semibold text-sm px-5 py-2.5 rounded-full shadow-lg">
+                                        {{ $slide->cta_label }}
+                                    </span>
+                                @endif
+                            </div>
+                        </div>
+                    @endif
+                </div>
+            @endforeach
         </x-carousel>
-        <div class="w-full lg:w-auto mt-4 lg:mt-0">
+        <div class="w-full lg:w-auto mt-0 lg:mt-0 px-4 lg:px-0">
             <x-presentation role="Le Ministre" nom="Serge Gabriel COLLIN" sexe="M"
                 lien-profil="{{ route('quisommesnous.profil', ['role' => 'ministre']) }}"
                 lien-discours="{{ route('quisommesnous.mots', ['role' => 'ministre']) }}"
@@ -313,7 +372,7 @@
         </div>
     </section>
 
-    <section class="py-8 bg-white fade-in">
+    <section class="py-8 bg-gray-50 fade-in">
         <div class="container mx-auto px-4">
             <div class="flex flex-col lg:flex-row items-center gap-12">
                 <!-- Image -->
@@ -428,7 +487,7 @@
         </div>
     </section>
 
-    <section class="py-8 bg-gray-50 fade-in">
+    <section class="py-8 bg-gray-100 fade-in">
         <div class="container mx-auto px-6">
             <h2 class="text-4xl font-bold text-center gradient-text mb-4">
                 Nos Services
@@ -552,7 +611,7 @@
         </div>
     </section> --}}
 
-    <section class="py-8 bg-gray-50 fade-in">
+    <section class="py-8 bg-gray-100 fade-in">
         <div class="container mx-auto px-4">
             <h2 class="text-3xl md:text-4xl font-bold mb-12 text-center gradient-text">
                 Notre Institution en Images
@@ -583,7 +642,7 @@
         </div>
     </section>
 
-    <section class="py-12 bg-gray-50 fade-in">
+    <section class="py-12 bg-gray-100 fade-in">
         <div class="container mx-auto px-6">
 
             <h2 class="text-4xl font-bold text-center gradient-text mb-4">
@@ -648,7 +707,7 @@
         </div>
     </section>
 
-    <section class="py-16 bg-white fade-in">
+    <section class="py-16 bg-gray-50 fade-in">
         <div class="container mx-auto px-6 max-w-4xl text-center">
 
             <h2 class="text-3xl md:text-4xl font-bold gradient-text mb-4">
@@ -682,7 +741,7 @@
         </div>
     </section>
 
-    <section class="py-8 bg-gray-50 fade-in">
+    <section class="py-8 bg-gray-100 fade-in">
         <div class="container mx-auto px-4">
 
             <h2 class="text-3xl md:text-4xl font-bold mb-12 text-center gradient-text">
@@ -765,7 +824,7 @@
         </div>
     </section>
 
-    <section class="py-12 bg-white fade-in">
+    <section class="py-12 bg-gray-50 fade-in">
         <div class="container mx-auto px-4">
             <h2 class="text-3xl md:text-4xl font-bold mb-8 text-center gradient-text">
                 Actualités pour les Retraités
@@ -783,7 +842,7 @@
         </div>
     </section>
 
-    <section class="pt-8 bg-gray-50 fade-in">
+    <section class="pt-8 bg-gray-100 fade-in">
         <div class="container mx-auto">
             <h2 class="text-3xl md:text-4xl font-bold mb-8 text-center gradient-text">
                 Informations utiles
@@ -792,7 +851,7 @@
         </div>
     </section>
 
-    <section class="pt-8 bg-white fade-in">
+    <section class="pt-8 bg-gray-50 fade-in">
         <div class="container mx-auto">
             <h2 class="text-3xl md:text-4xl font-bold mb-8 text-center gradient-text">
                 Nos institutions partenaires

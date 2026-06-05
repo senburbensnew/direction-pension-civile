@@ -56,6 +56,16 @@ class StatusesSeeder extends Seeder
                 'label' => 'Complément requis',
                 'description' => 'Un complément d\'information ou de documents est requis de la part de l\'usager',
             ],
+            [
+                'code' => 'TRANSFERT_EN_ATTENTE',
+                'label' => 'Transfert en attente',
+                'description' => 'Le dossier a été transféré vers un service et est en attente de confirmation de réception',
+            ],
+            [
+                'code' => 'TRANSFERT_REFUSE',
+                'label' => 'Transfert refusé',
+                'description' => 'Le service destinataire a refusé la réception du dossier',
+            ],
         ];
 
         DB::table('statuses')->insert($statuses);

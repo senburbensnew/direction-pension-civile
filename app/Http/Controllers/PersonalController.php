@@ -16,8 +16,12 @@ use App\Models\PensionRequest;
 use App\Models\Service;
 use App\Models\Status;
 use App\Models\TypeDemande;
+use App\Models\User;
+use App\Models\FluxTransition;
+use App\Notifications\DemandeComplementSoumisNotification;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 class PersonalController extends Controller
 {
@@ -74,7 +78,7 @@ class PersonalController extends Controller
 
         $demandes = $query->latest()->get();
 
-        $statuses = Status::orderBy('libelle')->get();
+        $statuses = Status::orderBy('label')->get();
         $typesDemandes = TypeDemande::orderBy('label')->get();
 
         return view('personal.index2', compact(
@@ -360,6 +364,20 @@ class PersonalController extends Controller
             ]);
         });
 
+        // Notify direction users that the complement has been submitted
+        try {
+            $demande->loadMissing('status');
+            $directionUsers = User::whereHas('service', fn ($q) => $q->where('code', Service::DIRECTION))
+                ->orWhereHas('roles', fn ($q) => $q->where('name', 'direction'))
+                ->get();
+
+            foreach ($directionUsers as $user) {
+                $user->notify(new DemandeComplementSoumisNotification($demande));
+            }
+        } catch (\Throwable $e) {
+            Log::error('repondreComplement: direction notification failed', ['error' => $e->getMessage()]);
+        }
+
         return redirect()->back()->with('success', 'Votre réponse a été envoyée. Le dossier est retourné en traitement.');
     }
 
@@ -374,6 +392,7 @@ class PersonalController extends Controller
             ['key' => 'administratif',   'label' => 'Dossiers administratifs',    'icon' => 'fa-folder',               'color' => 'indigo'],
             ['key' => 'correspondances', 'label' => 'Correspondances',            'icon' => 'fa-envelope',             'color' => 'purple'],
             ['key' => 'rencontre',       'label' => 'Demandes de rencontre',      'icon' => 'fa-video',                'color' => 'green'],
+            ['key' => 'autres',          'label' => 'Autres',                     'icon' => 'fa-ellipsis-h',            'color' => 'gray'],
         ];
 
         foreach ($folderStats as &$folder) {
@@ -479,8 +498,11 @@ class PersonalController extends Controller
 
     public function showRequest($id)
     {
-        $requestModel = Demande::with(['status', 'activityLogs.user'])->findOrFail($id);
-        $services = Service::all();
+        $requestModel = Demande::with(['status', 'activityLogs.user', 'affectations.service'])->findOrFail($id);
+        $allowedServices = $requestModel->current_service_id
+            ? FluxTransition::destinationsFor($requestModel->current_service_id, $requestModel->type)
+            : collect();
+        $affectations = $requestModel->affectations()->with('service', 'affectePar')->get();
 
         // Tracer la consultation
         DemandeActivityLog::create([
@@ -512,7 +534,8 @@ class PersonalController extends Controller
             'from'             => 'cart',
             'request'          => $requestModel,
             'requestHistories' => $requestHistories,
-            'services'         => $services,
+            'allowedServices'  => $allowedServices,
+            'affectations'     => $affectations,
             'activityLogs'     => $activityLogs,
             'messages'         => $messages,
         ]);
