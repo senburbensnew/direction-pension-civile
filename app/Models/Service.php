@@ -23,6 +23,8 @@ class Service extends Model
         'code',
         'nom',
         'description',
+        'icon',
+        'color',
     ];
 
     public function demandes()

@@ -1,46 +1,29 @@
 @php
-    // Prefix based on gender
     $prefix = $sexe === 'F' ? 'Mme' : 'M.';
 
-    // Dynamic fallback avatar color based on sexe
     $avatar = $sexe === 'F'
         ? 'https://ui-avatars.com/api/?name=' . urlencode($nom) . '&background=E91E63&color=fff'
         : 'https://ui-avatars.com/api/?name=' . urlencode($nom) . '&background=0D8ABC&color=fff';
 @endphp
 
-<div class="relative w-full md:w-60  bg-inherit text-center p-3 border-t border-r border-b border-blue-600">
-
-    <!-- ROLE -->
-    <span class="relative -top-9  bg-inherit px-1 text-lg font-bold text-blue-600">
+<div class="relative w-full bg-inherit text-center p-3">
+    <span class="text-lg font-bold text-blue-600 block mb-2">
         {{ $role }}
     </span>
 
-    <!-- IMAGES -->
     <div class="flex justify-center mb-2">
-        <!-- MOBILE -->
         <img
-            src="{{ asset($mobileImage) }}"
+            src="{{ asset($desktopImage) }}"
             alt="{{ $nom }}"
-            class="block md:hidden w-full h-auto max-h-64 object-contain rounded-lg"
+            class="w-full h-auto max-h-96 object-contain rounded-lg"
             onerror="this.onerror=null; this.src='{{ $avatar }}';"
         />
-
-<!-- DESKTOP -->
-<img
-    src="{{ asset($desktopImage) }}"
-    alt="{{ $nom }}"
-    class="hidden md:block w-full h-auto max-h-72 object-contain rounded-lg"
-    onerror="this.onerror=null; this.src='{{ $avatar }}';"
-/>
-
     </div>
 
-    <!-- FULL NAME WITH PREFIX -->
     <p class="text-base font-bold text-blue-600">
-         {{ $nom }}
+        {{ $nom }}
     </p>
 
-    <!-- LINKS -->
     <div class="mt-2 text-gray-500">
         @if($showProfileLink)
             <a href="{{ $lienProfil }}" class="block hover:underline">

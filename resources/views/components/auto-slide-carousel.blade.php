@@ -46,7 +46,7 @@
         x-transition:leave-start="opacity-100"
         x-transition:leave-end="opacity-0"
         @click.self="lbOpen = false"
-        class="fixed inset-0 z-50 flex items-center justify-center bg-black/75 p-4"
+        class="fixed inset-0 z-[9999] flex items-center justify-center bg-black/75 p-4"
         x-cloak
     >
         <div

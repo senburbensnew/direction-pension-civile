@@ -2,38 +2,31 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Official;
 use Illuminate\Http\Request;
 
 class QuiSommesNousController extends Controller
 {
     public function mots(Request $request)
     {
-        $role = $request->query('role');
+        $official = Official::findBySlug($request->query('role', ''));
 
-        // Allowed roles
-        $allowed = ['ministre', 'directeur-general', 'directeur'];
-
-        // If role NOT allowed → redirect to home
-        if (!in_array($role, $allowed)) {
+        if (!$official || !$official->active) {
             return redirect()->route('home');
         }
 
-        return view('quisommesnous.mots', compact('role'));
+        return view('quisommesnous.mots', compact('official'));
     }
 
-   public function profil(Request $request)
+    public function profil(Request $request)
     {
-        $role = $request->query('role');
+        $official = Official::findBySlug($request->query('role', ''));
 
-        // Allowed roles
-        $allowed = ['ministre', 'directeur-general', 'directeur'];
-
-        // If role NOT allowed → redirect to home
-        if (!in_array($role, $allowed)) {
+        if (!$official || !$official->active) {
             return redirect()->route('home');
         }
 
-        return view('quisommesnous.profil', compact('role'));
+        return view('quisommesnous.profil', compact('official'));
     }
 
     public function missions()

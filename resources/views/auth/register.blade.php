@@ -1,161 +1,212 @@
 <x-guest-layout>
     @php
-        // Get the pensionnaire type ID
         $pensionnaireType = $userTypes->firstWhere('name', 'pensionnaire');
-        $pensionnaireId = $pensionnaireType ? $pensionnaireType->id : null;
+        $pensionnaireId   = $pensionnaireType ? $pensionnaireType->id : null;
     @endphp
 
-    {{--     @if ($errors->any())
-        <div class="bg-red-50 border-l-4 border-red-500 text-red-700 p-4 mb-4 rounded-md shadow-md">
-            <ul class="list-disc pl-5 space-y-2">
-                @foreach ($errors->all() as $error)
-                    <li>{{ $error }}</li>
-                @endforeach
-            </ul>
-        </div>
-    @endif --}}
+    <div class="mb-5 text-center">
+        <h2 class="text-xl font-bold text-gray-800">Créer un compte</h2>
+        <p class="text-sm text-gray-500 mt-0.5">Remplissez les informations ci-dessous pour vous inscrire.</p>
+    </div>
 
-    <form method="POST" action="{{ route('register') }}" enctype="multipart/form-data">
+    <form method="POST" action="{{ route('register') }}" enctype="multipart/form-data" class="space-y-4">
         @csrf
-        <!-- Profile Picture -->
-        <div class="border-b pb-2">
-            <x-profile-picture :showLabel="false" />
-        </div>
 
-        <!-- User Type Selection -->
-        <div class="mt-4">
-            <x-input-label for="user_type" :value="__('Qui êtes-vous ?')" />
-            <div class="flex justify-between">
-                @foreach ($userTypes as $type)
-                    <label for="user_type_{{ $type->name }}" class="{{ $loop->last ? 'ml-4' : '' }}">
-                        <input type="radio" id="user_type_{{ $type->name }}" name="user_type_id"
-                            value="{{ $type->id }}" data-type-name="{{ $type->name }}"
-                            {{ old('user_type_id', request()->isMethod('get') ? $pensionnaireId : null) == $type->id ? 'checked' : '' }} />
-                        {{ ucfirst($type->name) }}
-                    </label>
-                @endforeach
+        {{-- Row 1 : avatar + user type side by side --}}
+        <div class="flex items-center gap-4 pb-4 border-b border-gray-100">
+            <div class="flex-shrink-0">
+                <x-profile-picture :showLabel="false" />
             </div>
-            <x-input-error :messages="$errors->get('user_type_id')" class="mt-2" />
+            <div class="flex-1">
+                <p class="text-sm font-medium text-gray-700 mb-2">Qui êtes-vous ?</p>
+                <div class="flex flex-col gap-2">
+                    @foreach ($userTypes as $type)
+                        @php
+                            $icons   = ['pensionnaire' => 'fa-user-clock', 'fonctionnaire' => 'fa-briefcase', 'institution' => 'fa-building'];
+                            $icon    = $icons[$type->name] ?? 'fa-user';
+                            $checked = old('user_type_id', request()->isMethod('get') ? $pensionnaireId : null) == $type->id;
+                        @endphp
+                        <label for="user_type_{{ $type->name }}"
+                               class="user-type-card flex items-center gap-2 cursor-pointer border-2 rounded-lg px-3 py-2 transition-all select-none {{ $checked ? 'border-blue-500 bg-blue-50 text-blue-700' : 'border-gray-200 text-gray-600 hover:border-gray-300' }}"
+                               data-type="{{ $type->name }}">
+                            <input type="radio" id="user_type_{{ $type->name }}" name="user_type_id"
+                                   value="{{ $type->id }}" data-type-name="{{ $type->name }}"
+                                   {{ $checked ? 'checked' : '' }} class="sr-only">
+                            <i class="fas {{ $icon }} text-sm w-4 text-center"></i>
+                            <span class="text-xs font-medium">{{ ucfirst($type->name) }}</span>
+                        </label>
+                    @endforeach
+                </div>
+                <x-input-error :messages="$errors->get('user_type_id')" class="mt-1" />
+            </div>
         </div>
 
-        <!-- Institution Name Field -->
-        <div id="name_container" class="hidden mt-4">
-            <x-input-label for="name" :value="__('Nom')" />
-            <x-text-input id="name" class="block mt-1 w-full" type="text" name="name" :value="old('name')"
-                autocomplete="name" placeholder="Nom de l'institution" />
-            <x-input-error :messages="$errors->get('name')" class="mt-2" />
+        {{-- Institution name --}}
+        <div id="name_container" class="hidden">
+            <label for="name" class="block text-sm font-medium text-gray-700 mb-1">Nom de l'institution</label>
+            <div class="relative">
+                <span class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-400">
+                    <i class="fas fa-building text-sm"></i>
+                </span>
+                <input id="name" type="text" name="name" value="{{ old('name') }}" autocomplete="name"
+                       placeholder="Nom de l'institution"
+                       class="w-full py-2.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 transition"
+                       style="padding-left:2.25rem;padding-right:1rem;">
+            </div>
+            <x-input-error :messages="$errors->get('name')" class="mt-1" />
         </div>
 
-        <!-- Lastname Field -->
-        <div class="mt-4" id="lastname_container">
-            <x-input-label for="lastname" :value="__('Nom')" />
-            <x-text-input id="lastname" autofocus class="block mt-1 w-full" type="text" name="lastname"
-                :value="old('lastname')" autocomplete="lastname" placeholder="ex: MILORME" />
-            <x-input-error :messages="$errors->get('lastname')" class="mt-2" />
+        {{-- Last name + First name --}}
+        <div id="lastname_container" class="grid grid-cols-2 gap-3">
+            <div>
+                <label for="lastname" class="block text-sm font-medium text-gray-700 mb-1">Nom</label>
+                <input id="lastname" type="text" name="lastname" value="{{ old('lastname') }}" autofocus
+                       autocomplete="family-name" placeholder="MILORME"
+                       class="w-full py-2.5 px-3 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 transition">
+                <x-input-error :messages="$errors->get('lastname')" class="mt-1" />
+            </div>
+            <div>
+                <label for="firstname" class="block text-sm font-medium text-gray-700 mb-1">Prénom(s)</label>
+                <input id="firstname" type="text" name="firstname" value="{{ old('firstname') }}"
+                       autocomplete="given-name" placeholder="Pierre Rubens"
+                       class="w-full py-2.5 px-3 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 transition">
+                <x-input-error :messages="$errors->get('firstname')" class="mt-1" />
+            </div>
         </div>
 
-        <!-- Firstname Field -->
-        <div class="mt-4" id="firstname_container">
-            <x-input-label for="firstname" :value="__('Prenom')" />
-            <x-text-input id="firstname" class="block mt-1 w-full" type="text" name="firstname" :value="old('firstname')"
-                autocomplete="firstname" placeholder="ex: Pierre Rubens" />
-            <x-input-error :messages="$errors->get('firstname')" class="mt-2" />
+        {{-- Email --}}
+        <div>
+            <label for="email" class="block text-sm font-medium text-gray-700 mb-1">Adresse e-mail</label>
+            <div class="relative">
+                <span class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-400">
+                    <i class="fas fa-envelope text-sm"></i>
+                </span>
+                <input id="email" type="email" name="email" value="{{ old('email') }}" autocomplete="email"
+                       placeholder="exemple@gmail.com"
+                       class="w-full py-2.5 border {{ $errors->has('email') ? 'border-red-400 focus:ring-red-400' : 'border-gray-300 focus:ring-blue-500' }} rounded-lg text-sm focus:outline-none focus:ring-2 transition"
+                       style="padding-left:2.25rem;padding-right:1rem;">
+            </div>
+            <x-input-error :messages="$errors->get('email')" class="mt-1" />
         </div>
 
-        <!-- Email Address -->
-        <div class="mt-4">
-            <x-input-label for="email" :value="__('Email')" />
-            <x-text-input id="email" class="block mt-1 w-full" type="email" name="email" :value="old('email')"
-                autocomplete="email" placeholder="ex: example@gmail.com" />
-            <x-input-error :messages="$errors->get('email')" class="mt-2" />
+        {{-- Password + Confirm side by side --}}
+        <div class="grid grid-cols-2 gap-3">
+            <div x-data="{ show: false }">
+                <label for="password" class="block text-sm font-medium text-gray-700 mb-1">Mot de passe</label>
+                <div class="relative">
+                    <span class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-400">
+                        <i class="fas fa-lock text-sm"></i>
+                    </span>
+                    <input id="password" :type="show ? 'text' : 'password'" name="password"
+                           autocomplete="new-password" placeholder="••••••••"
+                           class="w-full py-2.5 border {{ $errors->has('password') ? 'border-red-400 focus:ring-red-400' : 'border-gray-300 focus:ring-blue-500' }} rounded-lg text-sm focus:outline-none focus:ring-2 transition"
+                           style="padding-left:2.25rem;padding-right:2.25rem;">
+                    <button type="button" @click="show=!show"
+                            class="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-600">
+                        <i :class="show?'fas fa-eye-slash':'fas fa-eye'" class="text-sm"></i>
+                    </button>
+                </div>
+                <x-input-error :messages="$errors->get('password')" class="mt-1" />
+            </div>
+            <div x-data="{ show: false }">
+                <label for="password_confirmation" class="block text-sm font-medium text-gray-700 mb-1">Confirmer</label>
+                <div class="relative">
+                    <span class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-400">
+                        <i class="fas fa-lock text-sm"></i>
+                    </span>
+                    <input id="password_confirmation" :type="show ? 'text' : 'password'" name="password_confirmation"
+                           autocomplete="new-password" placeholder="••••••••"
+                           class="w-full py-2.5 border {{ $errors->has('password_confirmation') ? 'border-red-400 focus:ring-red-400' : 'border-gray-300 focus:ring-blue-500' }} rounded-lg text-sm focus:outline-none focus:ring-2 transition"
+                           style="padding-left:2.25rem;padding-right:2.25rem;">
+                    <button type="button" @click="show=!show"
+                            class="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-600">
+                        <i :class="show?'fas fa-eye-slash':'fas fa-eye'" class="text-sm"></i>
+                    </button>
+                </div>
+                <x-input-error :messages="$errors->get('password_confirmation')" class="mt-1" />
+            </div>
         </div>
 
-        <!-- Password -->
-        <div class="mt-4">
-            <x-input-label for="password" :value="__('Password')" />
-            <x-text-input id="password" class="block mt-1 w-full" type="password" name="password"
-                autocomplete="new-password" placeholder="********" />
-            <x-input-error :messages="$errors->get('password')" class="mt-2" />
+        {{-- NIF + Pension code side by side --}}
+        <div class="grid grid-cols-2 gap-3">
+            <div>
+                <label for="nif" class="block text-sm font-medium text-gray-700 mb-1">NIF</label>
+                <div class="relative">
+                    <span class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-400">
+                        <i class="fas fa-hashtag text-sm"></i>
+                    </span>
+                    <input id="nif" type="text" name="nif" value="{{ old('nif') }}"
+                           placeholder="123-456-789-0"
+                           class="w-full py-2.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 transition"
+                           style="padding-left:2.25rem;padding-right:1rem;">
+                </div>
+                <x-input-error :messages="$errors->get('nif')" class="mt-1" />
+            </div>
+            <div id="pension_code_container" class="hidden">
+                <label for="pension_code" class="block text-sm font-medium text-gray-700 mb-1">Code pension</label>
+                <div class="relative">
+                    <span class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-400">
+                        <i class="fas fa-id-card text-sm"></i>
+                    </span>
+                    <input id="pension_code" type="text" name="pension_code" value="{{ old('pension_code') }}"
+                           placeholder="PEN-987654321"
+                           class="w-full py-2.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 transition"
+                           style="padding-left:2.25rem;padding-right:1rem;">
+                </div>
+                <x-input-error :messages="$errors->get('pension_code')" class="mt-1" />
+            </div>
         </div>
 
-        <!-- Confirm Password -->
-        <div class="mt-4">
-            <x-input-label for="password_confirmation" :value="__('Confirm Password')" />
-            <x-text-input id="password_confirmation" class="block mt-1 w-full" type="password"
-                name="password_confirmation" autocomplete="new-password" placeholder="********" />
-            <x-input-error :messages="$errors->get('password_confirmation')" class="mt-2" />
-        </div>
+        {{-- Submit --}}
+        <button type="submit"
+                class="w-full py-2.5 px-4 bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white font-semibold text-sm rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2">
+            <i class="fas fa-user-plus mr-2"></i>Créer mon compte
+        </button>
 
-        <!-- Pension Code Field -->
-        <div id="pension_code_container" class="mt-4 hidden">
-            <x-input-label for="pension_code" :value="__('Code de pension')" />
-            <x-text-input id="pension_code" class="block mt-1 w-full" type="text" name="pension_code"
-                :value="old('pension_code')" placeholder="ex: PEN-987654321" />
-            <x-input-error :messages="$errors->get('pension_code')" class="mt-2" />
-        </div>
-
-        <!-- NIF Field -->
-        <div class="mt-4">
-            <x-input-label for="nif" :value="__('NIF')" />
-            <x-text-input id="nif" class="block mt-1 w-full" type="text" name="nif" :value="old('nif')"
-                placeholder="ex: 123-456-789-0" />
-            <x-input-error :messages="$errors->get('nif')" class="mt-2" />
-        </div>
-
-        <!-- Form Submission -->
-        <div class="flex items-center justify-end mt-4">
-            <a class="underline text-sm text-gray-600 hover:text-gray-900 rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
-                href="{{ route('login') }}">
-                {{ __('Already registered?') }}
-            </a>
-            <x-primary-button class="ms-4">
-                {{ __('Register') }}
-            </x-primary-button>
-        </div>
+        <p class="text-center text-sm text-gray-500">
+            Déjà inscrit ?
+            <a href="{{ route('login') }}" class="text-blue-600 hover:text-blue-800 font-medium transition-colors">Se connecter</a>
+        </p>
     </form>
 
     <script>
-        // Name field management
-        function updateNameField() {
-            const selectedRadio = document.querySelector('input[name="user_type_id"]:checked');
-            if (selectedRadio?.dataset.typeName === 'institution') return;
-
-            const lastname = document.getElementById('lastname').value.trim();
-            const firstname = document.getElementById('firstname').value.trim();
-            document.getElementById('name').value = [firstname, lastname].filter(Boolean).join(' ');
-        }
-
-        // User type change handler
         document.querySelectorAll('input[name="user_type_id"]').forEach(radio => {
-            radio.addEventListener('change', function() {
-                const typeName = this.dataset.typeName;
-                const isInstitution = typeName === 'institution';
-                const isPensionnaire = typeName === 'pensionnaire';
+            radio.addEventListener('change', function () {
+                document.querySelectorAll('.user-type-card').forEach(card => {
+                    card.classList.remove('border-blue-500', 'bg-blue-50', 'text-blue-700');
+                    card.classList.add('border-gray-200', 'text-gray-600');
+                });
+                const activeCard = document.querySelector(`.user-type-card[data-type="${this.dataset.typeName}"]`);
+                if (activeCard) {
+                    activeCard.classList.add('border-blue-500', 'bg-blue-50', 'text-blue-700');
+                    activeCard.classList.remove('border-gray-200', 'text-gray-600');
+                }
 
-                // Toggle pension code visibility
-                document.getElementById('pension_code_container').classList.toggle('hidden', !
-                    isPensionnaire);
+                const isInstitution  = this.dataset.typeName === 'institution';
+                const isPensionnaire = this.dataset.typeName === 'pensionnaire';
 
-                // Toggle name fields visibility
-                document.getElementById('name_container').style.display = isInstitution ? 'block' : 'none';
-                document.getElementById('lastname_container').style.display = isInstitution ? 'none' :
-                    'block';
-                document.getElementById('firstname_container').style.display = isInstitution ? 'none' :
-                    'block';
+                document.getElementById('pension_code_container').classList.toggle('hidden', !isPensionnaire);
+                document.getElementById('name_container').style.display     = isInstitution ? 'block' : 'none';
+                document.getElementById('lastname_container').style.display = isInstitution ? 'none'  : 'grid';
 
-                // Manage name field state
                 const nameInput = document.getElementById('name');
-                nameInput.readOnly = !isInstitution;
-                nameInput.placeholder = isInstitution ? 'Nom de l\'institution' : 'Pierre Rubens MILORME';
-
-                // Update name value if not institution
+                nameInput.readOnly    = !isInstitution;
+                nameInput.placeholder = isInstitution ? "Nom de l'institution" : 'Pierre Rubens MILORME';
                 if (!isInstitution) updateNameField();
             });
         });
 
-        // Initial setup
+        function updateNameField() {
+            const selected = document.querySelector('input[name="user_type_id"]:checked');
+            if (selected?.dataset.typeName === 'institution') return;
+            const last  = document.getElementById('lastname')?.value.trim()  ?? '';
+            const first = document.getElementById('firstname')?.value.trim() ?? '';
+            const name  = document.getElementById('name');
+            if (name) name.value = [first, last].filter(Boolean).join(' ');
+        }
+
+        document.getElementById('lastname')?.addEventListener('input', updateNameField);
+        document.getElementById('firstname')?.addEventListener('input', updateNameField);
         document.querySelector('input[name="user_type_id"]:checked')?.dispatchEvent(new Event('change'));
-        document.getElementById('lastname').addEventListener('input', updateNameField);
-        document.getElementById('firstname').addEventListener('input', updateNameField);
     </script>
 </x-guest-layout>

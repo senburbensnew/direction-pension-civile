@@ -11,6 +11,7 @@ use App\Models\DemandeHistory;
 use App\Models\DemandeMessage;
 use App\Models\DemandeWorkflow;
 use App\Models\FluxTransition;
+use App\Models\RequiredCircuitService;
 use App\Models\Service;
 use App\Models\Status;
 use App\Notifications\DemandeStatusChangedNotification;
@@ -257,6 +258,27 @@ class DemandeManagementController extends Controller
             ->exists();
     }
 
+    private function missingRequiredServices(Demande $demande): array
+    {
+        $requiredServiceIds = RequiredCircuitService::where(function ($q) use ($demande) {
+            $q->where('type_demande', $demande->type)
+              ->orWhereNull('type_demande');
+        })->pluck('service_id')->unique();
+
+        if ($requiredServiceIds->isEmpty()) return [];
+
+        $visitedServiceIds = $demande->workflows()
+            ->where('reception_status', 'accepted')
+            ->whereNotNull('to_service_id')
+            ->pluck('to_service_id')
+            ->unique();
+
+        return Service::whereIn('id', $requiredServiceIds)
+            ->whereNotIn('id', $visitedServiceIds)
+            ->pluck('nom')
+            ->all();
+    }
+
     public function approuver(Demande $demande)
     {
         abort_unless(auth()->user()->hasRole('direction'), 403);
@@ -265,6 +287,19 @@ class DemandeManagementController extends Controller
             $this->hasBeenProcessedByAService($demande),
             403,
             'Ce dossier doit avoir été traité et acheminé par un autre service avant d\'être approuvé par la Direction.'
+        );
+
+        abort_if(
+            $demande->affectations()->where('statut', 'EN_ATTENTE')->exists(),
+            403,
+            'Des avis sont encore en attente. Veuillez les traiter avant d\'approuver le dossier.'
+        );
+
+        $missing = $this->missingRequiredServices($demande);
+        abort_if(
+            count($missing) > 0,
+            403,
+            'Le circuit de traitement n\'est pas complet. Services manquants : ' . implode(', ', $missing) . '.'
         );
 
         $statusId = Status::where('code', Status::STATUS_APPROVED)->value('id');
@@ -305,6 +340,19 @@ class DemandeManagementController extends Controller
             'Ce dossier doit avoir été traité et acheminé par un autre service avant d\'être clôturé par la Direction.'
         );
 
+        abort_if(
+            $demande->affectations()->where('statut', 'EN_ATTENTE')->exists(),
+            403,
+            'Des avis sont encore en attente. Veuillez les traiter avant de clôturer le dossier.'
+        );
+
+        $missing = $this->missingRequiredServices($demande);
+        abort_if(
+            count($missing) > 0,
+            403,
+            'Le circuit de traitement n\'est pas complet. Services manquants : ' . implode(', ', $missing) . '.'
+        );
+
         $statusId = Status::where('code', Status::STATUS_COMPLETED)->value('id');
 
         DB::transaction(function () use ($demande, $statusId) {
@@ -338,6 +386,12 @@ class DemandeManagementController extends Controller
         abort_unless(auth()->user()->hasRole('direction'), 403);
         $request->validate(['motif' => 'nullable|string|max:2000']);
 
+        abort_if(
+            $demande->affectations()->where('statut', 'EN_ATTENTE')->exists(),
+            403,
+            'Des avis sont encore en attente. Veuillez les traiter avant de rejeter le dossier.'
+        );
+
         $statusId = Status::where('code', Status::STATUS_REJECTED)->value('id');
 
         DB::transaction(function () use ($demande, $statusId, $request) {
@@ -369,6 +423,12 @@ class DemandeManagementController extends Controller
     {
         abort_unless(auth()->user()->hasRole('direction'), 403);
         $request->validate(['motif' => 'nullable|string|max:2000']);
+
+        abort_if(
+            $demande->affectations()->where('statut', 'EN_ATTENTE')->exists(),
+            403,
+            'Des avis sont encore en attente. Veuillez les traiter avant d\'annuler le dossier.'
+        );
 
         $statusId = Status::where('code', Status::STATUS_CANCELED)->value('id');
 

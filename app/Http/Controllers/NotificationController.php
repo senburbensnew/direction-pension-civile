@@ -36,6 +36,19 @@ class NotificationController extends Controller
         return redirect()->route('notifications.index');
     }
 
+    public function open(Request $request, string $id)
+    {
+        $notification = $request->user()
+            ->notifications()
+            ->findOrFail($id);
+
+        $notification->markAsRead();
+
+        $url = $notification->data['url'] ?? null;
+
+        return $url ? redirect($url) : redirect()->route('notifications.index');
+    }
+
     public function markAllAsRead(Request $request)
     {
         $request->user()->unreadNotifications->markAsRead();

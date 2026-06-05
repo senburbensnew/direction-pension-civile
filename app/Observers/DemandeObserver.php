@@ -20,14 +20,22 @@ class DemandeObserver
             return;
         }
 
-        $demande->loadMissing('status', 'user');
+        $demande->load('status', 'user');
 
         $newCode = $demande->status->code;
         $owner   = $demande->user;
 
-        // Notify direction users when a demande is first submitted
+        // Notify direction users when a demande is first submitted.
+        // Skip if transitioning from COMPLEMENT_REQUIS — that is a complement response, not a new submission.
         if ($newCode === 'SOUMISE') {
-            $this->notifyDirectionUsers($demande);
+            $previousStatusId = $demande->getOriginal('status_id');
+            $previousCode = $previousStatusId
+                ? \App\Models\Status::find($previousStatusId)?->code
+                : null;
+
+            if ($previousCode !== 'COMPLEMENT_REQUIS') {
+                $this->notifyDirectionUsers($demande);
+            }
             return;
         }
 

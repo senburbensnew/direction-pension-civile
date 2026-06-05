@@ -1,0 +1,20 @@
+{
+  "permissions": {
+    "allow": [
+      "PowerShell(cd \"c:\\\\Users\\\\rubens\\\\Documents\\\\projects\\\\direction-pension-civile\"; php -r \"require 'vendor/autoload.php'; \\\\$app = require 'bootstrap/app.php'; echo 'OK';\" 2>&1)",
+      "Bash(xargs grep -l \"d3\\\\|cytoscape\\\\|chart\\\\|graph\")",
+      "Bash(git add *)",
+      "Bash(php -r ' *)",
+      "Bash(Get-ChildItem -Path \"c:\\\\Users\\\\rubens\\\\Documents\\\\projects\\\\direction-pension-civile\" -Force)",
+      "Bash(Select-Object Name, PSIsContainer)",
+      "Bash(Format-Table -AutoSize)",
+      "Bash(grep -n '$request->data\\\\['\\\\''' 'c:\\\\Users\\\\rubens\\\\Documents\\\\projects\\\\direction-pension-civile\\\\resources\\\\views\\\\personal\\\\request-details.blade.php')",
+      "Bash(git push *)",
+      "Bash(php -l database/seeders/ServiceSeeder.php)",
+      "Bash(php -l database/seeders/StatusesSeeder.php)",
+      "Bash(php -r \"echo is_link\\('public/storage'\\) ? 'symlink exists' : 'NO symlink';\")",
+      "Bash(php -r \"echo is_dir\\('public/storage'\\) ? 'directory exists' : 'not a directory';\")",
+      "Bash(grep -v \"^[[:space:]]*//\")"
+    ]
+  }
+}

@@ -107,7 +107,7 @@
 <div class="container mx-auto py-6 px-4 sm:px-6 lg:px-8 text-white border-t-2 border-white bg-[#064991]">
     <div class="flex flex-col md:flex-row justify-between items-center space-y-4 md:space-y-0">
         <div class="w-full md:w-1/3 text-center md:text-left">
-            <p class="text-sm">&copy;2025 {{ __('messages.direction') }}. Tous droits réservés.</p>
+            <p class="text-sm">&copy;{{ date('Y') }} {{ __('messages.direction') }}. Tous droits réservés.</p>
         </div>
         <div class="w-full md:w-1/3 text-center">
             <p class="text-sm">        <a href="{{ route('privacy.policy') }}" class="text-sm md:text-base text-white hover:text-orange-500 transition text-center md:text-right">

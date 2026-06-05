@@ -32,6 +32,7 @@ class User extends Authenticatable
         'user_type_id',
         'service_id',
         'pension_code',
+        'is_active',
         "created_at",
         "updated_at",
         "profile_photo",
@@ -55,6 +56,7 @@ class User extends Authenticatable
     protected $casts = [
         'email_verified_at' => 'datetime',
         'password' => 'hashed',
+        'is_active' => 'boolean',
     ];
 
     public function userType()

@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\FluxTransition;
+use App\Models\RequiredCircuitService;
 use App\Models\Service;
 use Illuminate\Http\Request;
 
@@ -17,7 +18,12 @@ class FluxTransitionController extends Controller
 
         $services = Service::orderBy('nom')->get();
 
-        return view('admin.flux-transitions.index', compact('transitions', 'services'));
+        $requiredServices = RequiredCircuitService::with('service')
+            ->orderBy('type_demande')
+            ->orderBy('service_id')
+            ->get();
+
+        return view('admin.flux-transitions.index', compact('transitions', 'services', 'requiredServices'));
     }
 
     public function store(Request $request)
@@ -47,15 +53,31 @@ class FluxTransitionController extends Controller
 
     public function update(Request $request, FluxTransition $fluxTransition)
     {
-        $request->validate([
-            'action'       => 'required|string|max:100',
-            'type_demande' => 'nullable|string',
-        ]);
+        $isInit = $fluxTransition->service_source_id === null;
 
-        $fluxTransition->update([
-            'action'       => $request->action,
-            'type_demande' => $request->type_demande ?: null,
-        ]);
+        $rules = [
+            'action'                 => 'required|string|max:100',
+            'type_demande'           => 'nullable|string',
+            'service_destination_id' => 'required|exists:services,id',
+        ];
+
+        if (! $isInit) {
+            $rules['service_source_id'] = 'nullable|exists:services,id';
+        }
+
+        $request->validate($rules);
+
+        $data = [
+            'action'         => $request->action,
+            'type_demande'   => $request->type_demande ?: null,
+            'service_destination_id' => $request->service_destination_id,
+        ];
+
+        if (! $isInit) {
+            $data['service_source_id'] = $request->service_source_id ?: null;
+        }
+
+        $fluxTransition->update($data);
 
         return redirect()->back()->with('success', 'Transition mise à jour.');
     }
@@ -90,8 +112,42 @@ class FluxTransitionController extends Controller
         return redirect()->back();
     }
 
+    public function storeRequired(Request $request)
+    {
+        $request->validate([
+            'service_id'   => 'required|exists:services,id',
+            'type_demande' => 'nullable|string|max:100',
+        ]);
+
+        $exists = RequiredCircuitService::where('service_id', $request->service_id)
+            ->where('type_demande', $request->type_demande ?: null)
+            ->exists();
+
+        if ($exists) {
+            return redirect()->back()->with('error', 'Cette entrée existe déjà.');
+        }
+
+        RequiredCircuitService::create([
+            'service_id'   => $request->service_id,
+            'type_demande' => $request->type_demande ?: null,
+        ]);
+
+        return redirect()->back()->with('success', 'Étape obligatoire ajoutée.');
+    }
+
+    public function destroyRequired(RequiredCircuitService $requiredCircuitService)
+    {
+        $requiredCircuitService->delete();
+
+        return redirect()->back()->with('success', 'Étape obligatoire supprimée.');
+    }
+
     public function destroy(FluxTransition $fluxTransition)
     {
+        if ($fluxTransition->service_source_id === null) {
+            return redirect()->back()->with('error', 'La transition de soumission initiale ne peut pas être supprimée.');
+        }
+
         $fluxTransition->delete();
 
         return redirect()->back()->with('success', 'Transition supprimée.');

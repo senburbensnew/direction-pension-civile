@@ -5,6 +5,7 @@ use App\Http\Controllers\AdminController;
 use App\Http\Controllers\AdminDashboardController;
 use App\Http\Controllers\CarouselController;
 use App\Http\Controllers\InstitutionImageController;
+use App\Http\Controllers\OfficialController;
 use App\Http\Controllers\PartenaireController;
 use App\Http\Controllers\DemandeController;
 use App\Http\Controllers\DemandeDocumentController;
@@ -29,6 +30,8 @@ use App\Http\Controllers\RoleController;
 use App\Http\Controllers\FluxTransitionController;
 use App\Http\Controllers\ServiceController;
 use App\Http\Controllers\ContactController;
+use App\Http\Controllers\ContactParameterController;
+use App\Http\Controllers\DirectionDepartementaleController;
 use App\Http\Controllers\DemandeRencontreController;
 use App\Http\Controllers\UserController;
 use App\Models\Actualite;
@@ -62,7 +65,8 @@ Route::get('/politique-confidentialite', fn () => view('privacy'))->name('privac
 // Content pages (DB-backed)
 Route::get('/glossaire',               [GlossaireController::class,   'publicIndex'])->name('glossaire');
 Route::get('/faq',                     [FaqController::class,          'publicIndex'])->name('faq.index');
-Route::get('/textes_documents_legaux', [PublicationController::class,  'publicIndex'])->name('textes_documents_legaux');
+Route::get('/textes_documents_legaux',              [PublicationController::class, 'publicIndex'])->name('textes_documents_legaux');
+Route::get('/publications/{publication}/download',  [PublicationController::class, 'download'])->name('publications.download');
 Route::get('/liens-utiles',            [LienUtileController::class,    'publicIndex'])->name('liens-utiles');
 
 Route::get('/contact',  [ContactController::class, 'index'])->name('contact');
@@ -272,7 +276,9 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'role:admin'])->grou
     Route::patch('/flux-transitions/{fluxTransition}',            [FluxTransitionController::class, 'update'])->name('flux-transitions.update');
     Route::post('/flux-transitions/{fluxTransition}/move-up',     [FluxTransitionController::class, 'moveUp'])->name('flux-transitions.move-up');
     Route::post('/flux-transitions/{fluxTransition}/move-down',   [FluxTransitionController::class, 'moveDown'])->name('flux-transitions.move-down');
-    Route::delete('/flux-transitions/{fluxTransition}',           [FluxTransitionController::class, 'destroy'])->name('flux-transitions.destroy');
+    Route::delete('/flux-transitions/{fluxTransition}',                              [FluxTransitionController::class, 'destroy'])->name('flux-transitions.destroy');
+    Route::post('/flux-transitions/required',                                         [FluxTransitionController::class, 'storeRequired'])->name('flux-transitions.required.store');
+    Route::delete('/flux-transitions/required/{requiredCircuitService}',              [FluxTransitionController::class, 'destroyRequired'])->name('flux-transitions.required.destroy');
 
     // Document uploads
     Route::get('/documents/upload',  [DocumentController::class, 'index'])->name('documents.index');
@@ -288,14 +294,14 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'role:admin'])->grou
     Route::post('/workflows/{workflow}/refuser',  [DemandeManagementController::class, 'refuserReception'])->name('workflows.refuser');
 
     // Décision finale Direction
-    Route::post('/demandes/{demande}/approuver', [DemandeManagementController::class, 'approuver'])->name('admin.demandes.approuver');
-    Route::post('/demandes/{demande}/cloturer',  [DemandeManagementController::class, 'cloturer'])->name('admin.demandes.cloturer');
-    Route::post('/demandes/{demande}/rejeter',   [DemandeManagementController::class, 'rejeter'])->name('admin.demandes.rejeter');
-    Route::post('/demandes/{demande}/annuler',   [DemandeManagementController::class, 'annuler'])->name('admin.demandes.annuler');
+    Route::post('/demandes/{demande}/approuver', [DemandeManagementController::class, 'approuver'])->name('demandes.approuver');
+    Route::post('/demandes/{demande}/cloturer',  [DemandeManagementController::class, 'cloturer'])->name('demandes.cloturer');
+    Route::post('/demandes/{demande}/rejeter',   [DemandeManagementController::class, 'rejeter'])->name('demandes.rejeter');
+    Route::post('/demandes/{demande}/annuler',   [DemandeManagementController::class, 'annuler'])->name('demandes.annuler');
 
     // Affectations
-    Route::post('/demandes/{demande}/affecter',         [DemandeManagementController::class, 'affecterServices'])->name('admin.demandes.affecter');
-    Route::post('/affectations/{affectation}/repondre', [DemandeManagementController::class, 'repondreAffectation'])->name('admin.affectations.repondre');
+    Route::post('/demandes/{demande}/affecter',         [DemandeManagementController::class, 'affecterServices'])->name('demandes.affecter');
+    Route::post('/affectations/{affectation}/repondre', [DemandeManagementController::class, 'repondreAffectation'])->name('affectations.repondre');
 
     // Reports management (keeps original route names)
     Route::get('rapports',                   [ReportController::class, 'adminIndex'])->name('reports.admin.index');
@@ -374,6 +380,24 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'role:admin'])->grou
     Route::put('institution-images/{institutionImage}',       [InstitutionImageController::class, 'update'])->name('institution-images.update');
     Route::delete('institution-images/{institutionImage}',    [InstitutionImageController::class, 'destroy'])->name('institution-images.destroy');
     Route::post('institution-images/reorder',                 [InstitutionImageController::class, 'reorder'])->name('institution-images.reorder');
+
+    // Officiels / Présentations admin
+    Route::get('officiels',                          [OfficialController::class, 'index'])->name('officials.index');
+    Route::get('officiels/create',                   [OfficialController::class, 'create'])->name('officials.create');
+    Route::post('officiels',                         [OfficialController::class, 'store'])->name('officials.store');
+    Route::get('officiels/{official}/edit',          [OfficialController::class, 'edit'])->name('officials.edit');
+    Route::put('officiels/{official}',               [OfficialController::class, 'update'])->name('officials.update');
+    Route::delete('officiels/{official}',            [OfficialController::class, 'destroy'])->name('officials.destroy');
+
+    // Directions Départementales admin
+    Route::get('directions',                            [DirectionDepartementaleController::class, 'index'])->name('directions.index');
+    Route::post('directions',                           [DirectionDepartementaleController::class, 'store'])->name('directions.store');
+    Route::put('directions/{direction}',                [DirectionDepartementaleController::class, 'update'])->name('directions.update');
+    Route::delete('directions/{direction}',             [DirectionDepartementaleController::class, 'destroy'])->name('directions.destroy');
+
+    // Contact parameters admin
+    Route::get('contact-parameters',                   [ContactParameterController::class, 'index'])->name('contact-parameters.index');
+    Route::put('contact-parameters',                   [ContactParameterController::class, 'update'])->name('contact-parameters.update');
 
     // Partenaires admin
     Route::get('partenaires',                        [PartenaireController::class, 'index'])->name('partenaires.index');

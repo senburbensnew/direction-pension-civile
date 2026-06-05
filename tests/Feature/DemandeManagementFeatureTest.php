@@ -69,14 +69,30 @@ class DemandeManagementFeatureTest extends TestCase
 
     private function makeDemandeThatHasBeenProcessed(User $owner): Demande
     {
-        $demande   = $this->makeDemande($owner, 'EN_COURS');
+        // DEMANDE_ATTESTATION requires: secretariat → service_formalite
+        $demande    = $this->makeDemande($owner, 'EN_COURS');
         $direction  = Service::where('code', Service::DIRECTION)->first();
-        $liquidation = Service::where('code', Service::LIQUIDATION)->first();
-        $statusId  = Status::where('code', 'EN_COURS')->value('id');
+        $secretariat = Service::where('code', Service::SECRETARIAT)->first();
+        $formalite  = Service::where('code', Service::FORMALITE)->first();
+        $statusId   = Status::where('code', 'EN_COURS')->value('id');
 
+        foreach ([$secretariat, $formalite] as $service) {
+            DemandeWorkflow::create([
+                'demande_id'           => $demande->id,
+                'from_service_id'      => $direction->id,
+                'to_service_id'        => $service->id,
+                'status_id'            => $statusId,
+                'action_by_user_id'    => $owner->id,
+                'reception_status'     => 'accepted',
+                'reception_by_user_id' => $owner->id,
+                'reception_at'         => now(),
+            ]);
+        }
+
+        // Final return to Direction
         DemandeWorkflow::create([
             'demande_id'           => $demande->id,
-            'from_service_id'      => $liquidation->id,
+            'from_service_id'      => $formalite->id,
             'to_service_id'        => $direction->id,
             'status_id'            => $statusId,
             'action_by_user_id'    => $owner->id,

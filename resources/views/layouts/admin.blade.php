@@ -85,7 +85,7 @@
             </div>
 
             {{-- Utilisateurs & Accès --}}
-            <div x-data="{ open: {{ request()->routeIs('admin.users.*', 'admin.roles.*', 'admin.permissions.*', 'admin.services.*', 'admin.flux-transitions.*') ? 'true' : 'false' }} }">
+            <div x-data="{ open: {{ request()->routeIs('admin.users.*', 'admin.roles.*', 'admin.permissions.*', 'admin.services.*', 'admin.flux-transitions.*', 'admin.directions.*') ? 'true' : 'false' }} }">
                 <button @click="open = !open"
                     class="nav-section mt-2 w-full flex items-center justify-between cursor-pointer hover:text-slate-300 transition-colors">
                     <span>Utilisateurs &amp; Accès</span>
@@ -112,6 +112,10 @@
                     <a href="{{ route('admin.flux-transitions.index') }}"
                        class="nav-link {{ request()->routeIs('admin.flux-transitions.*') ? 'active' : '' }}">
                        <i class="fas fa-route"></i> Circuit de traitement
+                    </a>
+                    <a href="{{ route('admin.directions.index') }}"
+                       class="nav-link {{ request()->routeIs('admin.directions.*') ? 'active' : '' }}">
+                       <i class="fas fa-map-marker-alt"></i> Directions Départementales
                     </a>
                 </div>
             </div>
@@ -149,6 +153,10 @@
                        class="nav-link {{ request()->routeIs('admin.partenaires.*') ? 'active' : '' }}">
                        <i class="fas fa-handshake"></i> Nos Partenaires
                     </a>
+                    <a href="{{ route('admin.officials.index') }}"
+                       class="nav-link {{ request()->routeIs('admin.officials.*') ? 'active' : '' }}">
+                       <i class="fas fa-user-tie"></i> Présentations officielles
+                    </a>
                     <a href="{{ route('admin.carousels.index') }}"
                        class="nav-link {{ request()->routeIs('admin.carousels.*') ? 'active' : '' }}">
                        <i class="fas fa-images"></i> Carrousel
@@ -181,7 +189,7 @@
             </div>
 
             {{-- Communications --}}
-            <div x-data="{ open: {{ request()->routeIs('admin.contacts.*', 'admin.newsletter.*') ? 'true' : 'false' }} }">
+            <div x-data="{ open: {{ request()->routeIs('admin.contacts.*', 'admin.newsletter.*', 'admin.contact-parameters.*') ? 'true' : 'false' }} }">
                 <button @click="open = !open"
                     class="nav-section mt-2 w-full flex items-center justify-between cursor-pointer hover:text-slate-300 transition-colors">
                     <span>Communications</span>
@@ -200,6 +208,10 @@
                     <a href="{{ route('admin.newsletter.admin.index') }}"
                        class="nav-link {{ request()->routeIs('admin.newsletter.*') ? 'active' : '' }}">
                        <i class="fas fa-paper-plane"></i> Newsletter
+                    </a>
+                    <a href="{{ route('admin.contact-parameters.index') }}"
+                       class="nav-link {{ request()->routeIs('admin.contact-parameters.*') ? 'active' : '' }}">
+                       <i class="fas fa-address-card"></i> Infos de contact
                     </a>
                 </div>
             </div>

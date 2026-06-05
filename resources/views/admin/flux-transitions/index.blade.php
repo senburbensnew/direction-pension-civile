@@ -10,21 +10,41 @@
 <script src="https://cdn.jsdelivr.net/npm/cytoscape@3.30.2/dist/cytoscape.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/dagre@0.8.5/dist/dagre.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/cytoscape-dagre@2.5.0/cytoscape-dagre.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
 <script>
 document.addEventListener('DOMContentLoaded', function () {
     cytoscape.use(cytoscapeDagre);
 
     @php
+        // Build required circuit map: serviceNodeId → [type_demande|null, ...]
+        $requiredMap = [];
+        foreach ($requiredServices as $req) {
+            $rid = 's' . $req->service_id;
+            $requiredMap[$rid][] = $req->type_demande;
+        }
+        $requiredLabel = function(string $rid) use ($requiredMap): string {
+            if (!isset($requiredMap[$rid])) return '';
+            $labels = array_map(function($t) {
+                if ($t === null) return 'Tous les types';
+                return \App\Enums\TypeDemandeEnum::tryFrom($t)?->label() ?? $t;
+            }, $requiredMap[$rid]);
+            return implode(', ', $labels);
+        };
+
         $nodes = collect();
         foreach ($transitions as $t) {
             if ($t->sourceService && !$nodes->contains('data.id', 's'.$t->sourceService->id)) {
-                $nodes->push(['data' => ['id' => 's'.$t->sourceService->id, 'label' => $t->sourceService->nom, 'type' => 'service']]);
+                $rid = 's'.$t->sourceService->id;
+                $nodes->push(['data' => ['id' => $rid, 'label' => $t->sourceService->nom, 'type' => 'service',
+                    'required' => isset($requiredMap[$rid]) ? 1 : 0, 'requiredLabel' => $requiredLabel($rid)]]);
             }
             if (!$t->sourceService && !$nodes->contains('data.id', 'INIT')) {
-                $nodes->push(['data' => ['id' => 'INIT', 'label' => "Soumission\ninitiale", 'type' => 'init']]);
+                $nodes->push(['data' => ['id' => 'INIT', 'label' => "Soumission\ninitiale", 'type' => 'init', 'required' => 0, 'requiredLabel' => '']]);
             }
             if (!$nodes->contains('data.id', 's'.$t->destinationService->id)) {
-                $nodes->push(['data' => ['id' => 's'.$t->destinationService->id, 'label' => $t->destinationService->nom, 'type' => 'service']]);
+                $rid = 's'.$t->destinationService->id;
+                $nodes->push(['data' => ['id' => $rid, 'label' => $t->destinationService->nom, 'type' => 'service',
+                    'required' => isset($requiredMap[$rid]) ? 1 : 0, 'requiredLabel' => $requiredLabel($rid)]]);
             }
         }
         $edges = $transitions->map(function ($t, $i) {
@@ -37,6 +57,20 @@ document.addEventListener('DOMContentLoaded', function () {
             }
             return ['data' => ['id' => 'e'.$i, 'source' => $src, 'target' => $dst, 'label' => $label]];
         });
+
+        $connectedServiceIds = collect();
+        foreach ($transitions as $t) {
+            if ($t->sourceService) $connectedServiceIds->push($t->sourceService->id);
+            $connectedServiceIds->push($t->destinationService->id);
+        }
+        $connectedServiceIds = $connectedServiceIds->unique();
+        foreach ($services as $service) {
+            if (!$connectedServiceIds->contains($service->id)) {
+                $rid = 's'.$service->id;
+                $nodes->push(['data' => ['id' => $rid, 'label' => $service->nom, 'type' => 'orphan',
+                    'required' => isset($requiredMap[$rid]) ? 1 : 0, 'requiredLabel' => $requiredLabel($rid)]]);
+            }
+        }
     @endphp
 
     const elements = {!! json_encode(['nodes' => $nodes->values(), 'edges' => $edges->values()]) !!};
@@ -74,8 +108,8 @@ document.addEventListener('DOMContentLoaded', function () {
                 selector: 'node[type="init"]',
                 style: {
                     'label': 'data(label)', 'text-wrap': 'wrap',
-                    'background-color': '#f1f5f9', 'border-color': '#94a3b8', 'border-width': 2,
-                    'border-style': 'dashed', 'color': '#475569', 'font-size': '10px', 'font-style': 'italic',
+                    'background-color': '#000000', 'border-color': '#000000', 'border-width': 2,
+                    'border-style': 'solid', 'color': '#ffffff', 'font-size': '10px', 'font-style': 'italic',
                     'text-valign': 'center', 'text-halign': 'center',
                     'width': '100px', 'height': '40px', 'shape': 'round-rectangle',
                 },
@@ -108,10 +142,40 @@ document.addEventListener('DOMContentLoaded', function () {
             },
             { selector: 'edge[target="FIN_APPROUVE"], edge[target="FIN_FINALISE"]', style: { 'line-color': '#4ade80', 'target-arrow-color': '#4ade80', 'line-style': 'dashed' } },
             { selector: 'edge[target="FIN_REJETE"], edge[target="FIN_ANNULE"]', style: { 'line-color': '#f87171', 'target-arrow-color': '#f87171', 'line-style': 'dashed' } },
+            {
+                selector: 'node[required=1]',
+                style: {
+                    'background-color': '#fff7ed', 'border-color': '#f97316', 'border-width': 3,
+                },
+            },
+            { selector: 'node[required=1]:selected, node[required=1].highlighted', style: { 'background-color': '#ffedd5', 'border-color': '#ea580c', 'border-width': 4 } },
             { selector: 'node:selected, node.highlighted', style: { 'background-color': '#dbeafe', 'border-color': '#3b82f6', 'border-width': 3 } },
             { selector: 'edge:selected, edge.highlighted', style: { 'line-color': '#3b82f6', 'target-arrow-color': '#3b82f6', 'width': 3 } },
             { selector: '.faded', style: { 'opacity': 0.2 } },
+            {
+                selector: 'node[type="orphan"]',
+                style: {
+                    'label': 'data(label)', 'text-wrap': 'wrap', 'text-max-width': '110px',
+                    'background-color': '#f9fafb', 'border-color': '#d1d5db', 'border-width': 2,
+                    'border-style': 'dashed', 'color': '#6b7280', 'font-size': '11px',
+                    'text-valign': 'center', 'text-halign': 'center',
+                    'width': '120px', 'height': '44px', 'shape': 'round-rectangle', 'padding': '8px',
+                },
+            },
         ],
+    });
+
+    cy.on('mouseover', 'node[required=1]', function (e) {
+        const node = e.target;
+        const oe   = e.originalEvent;
+        const tip  = document.getElementById('cy-tooltip');
+        tip.querySelector('[data-tip]').textContent = 'Requis pour : ' + node.data('requiredLabel');
+        tip.style.left = (oe.clientX + 14) + 'px';
+        tip.style.top  = (oe.clientY - 36) + 'px';
+        tip.classList.remove('hidden');
+    });
+    cy.on('mouseout', 'node', function () {
+        document.getElementById('cy-tooltip').classList.add('hidden');
     });
 
     cy.on('tap', 'node', function (e) {
@@ -129,6 +193,21 @@ document.addEventListener('DOMContentLoaded', function () {
         cy.elements().removeClass('faded highlighted');
         cy.fit(undefined, 30);
     });
+    document.getElementById('cy-download').addEventListener('click', () => {
+        const link = document.createElement('a');
+        link.href = cy.png({ bg: 'white', scale: 2, full: true });
+        link.download = 'circuit-traitement.png';
+        link.click();
+    });
+    document.getElementById('swimlane-download').addEventListener('click', () => {
+        const el = document.getElementById('swimlane-container');
+        html2canvas(el, { scale: 2, backgroundColor: '#ffffff', useCORS: true }).then(canvas => {
+            const link = document.createElement('a');
+            link.href = canvas.toDataURL('image/png');
+            link.download = 'couloirs-traitement.png';
+            link.click();
+        });
+    });
 });
 </script>
 @endpush
@@ -139,6 +218,21 @@ document.addEventListener('DOMContentLoaded', function () {
 /* ──────────────────────────────────────────────
    Build swimlane data (ordered by first appearance)
    ────────────────────────────────────────────── */
+// Required circuit services for swimlane badges
+$swimRequiredMap = [];
+foreach ($requiredServices as $req) {
+    $rid = 's' . $req->service_id;
+    $swimRequiredMap[$rid][] = $req->type_demande;
+}
+$swimRequiredLabel = function(string $rid) use ($swimRequiredMap): string {
+    if (!isset($swimRequiredMap[$rid])) return '';
+    $labels = array_map(function($t) {
+        if ($t === null) return 'Tous';
+        return \App\Enums\TypeDemandeEnum::tryFrom($t)?->label() ?? $t;
+    }, $swimRequiredMap[$rid]);
+    return implode(', ', $labels);
+};
+
 $laneOrder = [];   // ordered list of node IDs
 $laneData  = [];   // ['nodeId' => ['label', 'incoming' => [], 'outgoing' => []]]
 
@@ -263,12 +357,36 @@ foreach ($laneOrder as $nodeId) {
                         class="text-xs px-3 py-1.5 border border-gray-300 rounded-lg hover:bg-gray-50 text-gray-600 transition-colors">
                         <i class="fas fa-redo mr-1"></i> Réinitialiser
                     </button>
+                    <button id="cy-download"
+                        class="text-xs px-3 py-1.5 border border-blue-300 rounded-lg hover:bg-blue-50 text-blue-600 transition-colors">
+                        <i class="fas fa-download mr-1"></i> Télécharger
+                    </button>
                 </div>
             </div>
             <p class="text-xs text-gray-400 mb-3">
                 Cliquez sur un nœud pour voir ses connexions · Glissez les nœuds pour les repositionner · Molette pour zoomer
             </p>
+            {{-- Legend --}}
+            <div class="flex items-center gap-4 mb-3 flex-wrap">
+                <div class="flex items-center gap-1.5 text-xs text-gray-500">
+                    <span class="inline-block w-4 h-4 rounded border-2 border-blue-300 bg-blue-50"></span>
+                    Service
+                </div>
+                <div class="flex items-center gap-1.5 text-xs text-orange-700 font-medium">
+                    <span class="inline-block w-4 h-4 rounded border-[3px] border-orange-400 bg-orange-50"></span>
+                    Étape obligatoire du circuit
+                </div>
+                <div class="flex items-center gap-1.5 text-xs text-gray-400">
+                    <span class="inline-block w-4 h-4 rounded border-2 border-dashed border-gray-300 bg-gray-50"></span>
+                    Service non connecté
+                </div>
+            </div>
             <div id="cy" class="w-full rounded-lg border border-gray-100" style="height: 420px;"></div>
+            {{-- Tooltip (fixed, hidden by default) --}}
+            <div id="cy-tooltip"
+                 class="hidden fixed z-50 pointer-events-none bg-orange-50 border border-orange-300 text-orange-800 text-xs rounded-lg px-3 py-1.5 shadow-lg max-w-[220px]">
+                <i class="fas fa-shield-alt text-orange-500 mr-1"></i><span data-tip></span>
+            </div>
         </div>
     </div>
 
@@ -281,13 +399,19 @@ foreach ($laneOrder as $nodeId) {
                 <h2 class="text-sm font-semibold text-gray-700">
                     <i class="fas fa-layer-group mr-2 text-blue-400"></i> Procédure en couloirs (Swimlane)
                 </h2>
-                <span class="text-xs text-gray-400 italic">Un couloir par service responsable · flux de haut en bas</span>
+                <div class="flex items-center gap-3">
+                    <span class="text-xs text-gray-400 italic">Un couloir par service responsable · flux de haut en bas</span>
+                    <button id="swimlane-download"
+                        class="text-xs px-3 py-1.5 border border-blue-300 rounded-lg hover:bg-blue-50 text-blue-600 transition-colors shrink-0">
+                        <i class="fas fa-download mr-1"></i> Télécharger
+                    </button>
+                </div>
             </div>
 
             @if(empty($laneOrder))
                 <p class="text-center text-gray-400 py-10 text-sm">Aucune transition définie.</p>
             @else
-                <div class="relative">
+                <div id="swimlane-container" class="relative">
                     {{-- Vertical spine line --}}
                     <div class="absolute left-6 top-8 bottom-8 w-px bg-gray-200 z-0"></div>
 
@@ -319,6 +443,16 @@ foreach ($laneOrder as $nodeId) {
                                             <span class="text-sm font-semibold {{ $c['ht'] }}">{{ $lane['label'] }}</span>
                                             @if($isInit)
                                                 <span class="text-[11px] text-gray-400 italic">— point d'entrée</span>
+                                            @endif
+                                            @if(!$isInit && isset($swimRequiredMap[$nodeId]))
+                                                <span class="inline-flex items-center gap-1 text-[10px] font-semibold px-2 py-0.5 rounded-full bg-orange-100 border border-orange-300 text-orange-700"
+                                                      title="Requis pour : {{ $swimRequiredLabel($nodeId) }}">
+                                                    <i class="fas fa-shield-alt text-[9px]"></i>
+                                                    Obligatoire
+                                                    @if(count($swimRequiredMap[$nodeId]) === 1 && $swimRequiredMap[$nodeId][0] !== null)
+                                                        · {{ $swimRequiredLabel($nodeId) }}
+                                                    @endif
+                                                </span>
                                             @endif
                                         </div>
 
@@ -428,7 +562,7 @@ foreach ($laneOrder as $nodeId) {
                     <label class="block text-sm font-medium text-gray-700 mb-1">Service source</label>
                     <select name="service_source_id" x-model="sourceId"
                         class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 min-w-[200px]">
-                        <option value="">— Soumission initiale —</option>
+                        <option value="" disabled selected>— Choisir un service —</option>
                         @foreach($services as $svc)
                             <option value="{{ $svc->id }}">{{ $svc->nom }}</option>
                         @endforeach
@@ -520,7 +654,7 @@ foreach ($laneOrder as $nodeId) {
                                     {{ $transition->sourceService->nom }}
                                 </span>
                             @else
-                                <span class="text-xs font-medium px-2 py-0.5 rounded-full bg-gray-100 text-gray-500 italic">
+                                <span class="text-xs font-medium px-2 py-0.5 rounded-full bg-black text-white italic">
                                     Soumission initiale
                                 </span>
                             @endif
@@ -550,6 +684,7 @@ foreach ($laneOrder as $nodeId) {
                         </td>
 
                         <td class="px-4 py-3 text-center">
+                            @if($transition->service_source_id !== null)
                             <div class="flex items-center justify-center gap-1">
                                 @unless($loop->first)
                                     <form method="POST" action="{{ route('admin.flux-transitions.move-up', $transition->id) }}">
@@ -568,6 +703,7 @@ foreach ($laneOrder as $nodeId) {
                                     </form>
                                 @endunless
                             </div>
+                            @endif
                         </td>
 
                         <td class="px-4 py-3">
@@ -579,17 +715,52 @@ foreach ($laneOrder as $nodeId) {
                                     <i class="fas fa-pencil-alt"></i>
                                 </button>
 
-                                <form method="POST"
-                                    action="{{ route('admin.flux-transitions.destroy', $transition->id) }}"
-                                    onsubmit="return confirm('Supprimer cette transition ?')">
-                                    @csrf
-                                    @method('DELETE')
-                                    <button type="submit"
-                                        class="px-2 py-1 bg-red-100 text-red-700 hover:bg-red-200 rounded text-xs font-medium transition-colors">
-                                        <i class="fas fa-trash"></i>
-                                    </button>
-                                </form>
+                                @if($transition->service_source_id !== null)
+                                <button type="button"
+                                    x-data
+                                    @click="$dispatch('open-delete-{{ $transition->id }}')"
+                                    class="px-2 py-1 bg-red-100 text-red-700 hover:bg-red-200 rounded text-xs font-medium transition-colors">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                                @endif
                             </div>
+
+                            @if($transition->service_source_id !== null)
+                            <div x-data="{ open: false }"
+                                 x-on:open-delete-{{ $transition->id }}.window="open = true"
+                                 x-show="open" x-cloak
+                                 class="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+                                <div class="bg-white w-full max-w-sm rounded-xl shadow-xl p-6" @click.stop>
+                                    <div class="flex items-center gap-3 mb-4">
+                                        <div class="w-10 h-10 rounded-full bg-red-100 flex items-center justify-center shrink-0">
+                                            <i class="fas fa-trash text-red-600"></i>
+                                        </div>
+                                        <div>
+                                            <h3 class="font-semibold text-gray-800">Supprimer la transition</h3>
+                                            <p class="text-xs text-gray-500 mt-0.5">Cette action est irréversible.</p>
+                                        </div>
+                                    </div>
+                                    <p class="text-sm text-gray-600 mb-5">
+                                        Voulez-vous vraiment supprimer la transition
+                                        <span class="font-medium text-gray-800">« {{ $transition->action }} »</span> ?
+                                    </p>
+                                    <div class="flex justify-end gap-2">
+                                        <button type="button" @click="open = false"
+                                            class="px-4 py-2 text-sm font-medium text-gray-600 hover:text-gray-800">
+                                            Annuler
+                                        </button>
+                                        <form method="POST" action="{{ route('admin.flux-transitions.destroy', $transition->id) }}">
+                                            @csrf
+                                            @method('DELETE')
+                                            <button type="submit"
+                                                class="px-4 py-2 bg-red-600 hover:bg-red-700 text-white text-sm font-medium rounded-lg transition-colors">
+                                                Supprimer
+                                            </button>
+                                        </form>
+                                    </div>
+                                </div>
+                            </div>
+                            @endif
 
                             <div x-data="{ open: false }"
                                  x-on:open-edit-{{ $transition->id }}.window="open = true"
@@ -602,6 +773,29 @@ foreach ($laneOrder as $nodeId) {
                                     <form method="POST" action="{{ route('admin.flux-transitions.update', $transition->id) }}">
                                         @csrf
                                         @method('PATCH')
+
+                                        @if($transition->service_source_id !== null)
+                                        <div class="mb-3">
+                                            <label class="block text-sm font-medium text-gray-700 mb-1">Service source</label>
+                                            <select name="service_source_id"
+                                                class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                                                @foreach($services as $svc)
+                                                    <option value="{{ $svc->id }}" @selected($transition->service_source_id === $svc->id)>{{ $svc->nom }}</option>
+                                                @endforeach
+                                            </select>
+                                        </div>
+                                        @endif
+
+                                        <div class="mb-3">
+                                            <label class="block text-sm font-medium text-gray-700 mb-1">Service destination <span class="text-red-500">*</span></label>
+                                            <select name="service_destination_id" required
+                                                class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                                                @foreach($services as $svc)
+                                                    <option value="{{ $svc->id }}" @selected($transition->service_destination_id === $svc->id)>{{ $svc->nom }}</option>
+                                                @endforeach
+                                            </select>
+                                        </div>
+
                                         <div class="mb-3">
                                             <label class="block text-sm font-medium text-gray-700 mb-1">Action</label>
                                             <input type="text" name="action" required value="{{ $transition->action }}"
@@ -640,6 +834,137 @@ foreach ($laneOrder as $nodeId) {
                         <td colspan="8" class="px-4 py-10 text-center text-gray-400">
                             <i class="fas fa-route text-3xl mb-2 block"></i>
                             Aucune transition définie.
+                        </td>
+                    </tr>
+                @endforelse
+            </tbody>
+        </table>
+    </div>
+
+    {{-- ═══════════════════════════════════════════
+         Étapes obligatoires (circuit enforcement)
+    ════════════════════════════════════════════ --}}
+    <div class="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
+        <div class="px-5 py-4 border-b border-gray-100 flex items-center justify-between">
+            <div>
+                <h2 class="text-sm font-semibold text-gray-700">
+                    <i class="fas fa-shield-alt mr-2 text-orange-400"></i> Étapes obligatoires du circuit
+                </h2>
+                <p class="text-xs text-gray-400 mt-0.5">
+                    Un dossier ne peut être approuvé ou clôturé que si tous ces services l'ont traité (réception acceptée).
+                </p>
+            </div>
+        </div>
+
+        {{-- Add form --}}
+        <div class="px-5 py-4 border-b border-gray-100 bg-gray-50">
+            <form method="POST" action="{{ route('admin.flux-transitions.required.store') }}"
+                  class="flex flex-wrap items-end gap-3">
+                @csrf
+
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">
+                        Service <span class="text-red-500">*</span>
+                    </label>
+                    <select name="service_id" required
+                        class="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 min-w-[180px]">
+                        <option value="">— Choisir —</option>
+                        @foreach($services as $svc)
+                            <option value="{{ $svc->id }}">{{ $svc->nom }}</option>
+                        @endforeach
+                    </select>
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Type de demande</label>
+                    <select name="type_demande"
+                        class="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 min-w-[200px]">
+                        <option value="">— Tous les types —</option>
+                        @foreach(\App\Enums\TypeDemandeEnum::cases() as $type)
+                            <option value="{{ $type->value }}">{{ $type->label() }}</option>
+                        @endforeach
+                    </select>
+                </div>
+
+                <div class="flex items-end">
+                    <button type="submit"
+                        class="px-4 py-2 bg-orange-600 hover:bg-orange-700 text-white text-sm font-medium rounded-lg transition-colors">
+                        <i class="fas fa-plus mr-1"></i> Ajouter
+                    </button>
+                </div>
+            </form>
+        </div>
+
+        {{-- Table --}}
+        <table class="w-full text-sm">
+            <thead class="bg-gray-50 border-b border-gray-200">
+                <tr>
+                    <th class="px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide text-left">Service requis</th>
+                    <th class="px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide text-left">Type de demande</th>
+                    <th class="px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide text-center w-20">Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                @forelse($requiredServices as $req)
+                    <tr class="border-b border-gray-100 last:border-0 hover:bg-gray-50">
+                        <td class="px-4 py-3">
+                            <span class="text-xs font-medium px-2 py-0.5 rounded-full bg-orange-100 text-orange-700">
+                                {{ $req->service->nom }}
+                            </span>
+                        </td>
+                        <td class="px-4 py-3">
+                            @if($req->type_demande)
+                                @php $enum = \App\Enums\TypeDemandeEnum::tryFrom($req->type_demande); @endphp
+                                <span class="text-xs font-medium px-2 py-0.5 rounded-full bg-purple-100 text-purple-700">
+                                    {{ $enum?->label() ?? $req->type_demande }}
+                                </span>
+                            @else
+                                <span class="text-xs text-gray-400 italic">Tous les types</span>
+                            @endif
+                        </td>
+                        <td class="px-4 py-3 text-center">
+                            <div x-data="{ open: false }">
+                                <button type="button" @click="open = true"
+                                    class="px-2 py-1 bg-red-100 text-red-700 hover:bg-red-200 rounded text-xs font-medium transition-colors">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                                <div x-show="open" x-cloak
+                                     class="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+                                    <div class="bg-white w-full max-w-sm rounded-xl shadow-xl p-6" @click.stop>
+                                        <h3 class="font-semibold text-gray-800 mb-3">Supprimer l'étape obligatoire</h3>
+                                        <p class="text-sm text-gray-600 mb-5">
+                                            Supprimer <span class="font-medium text-gray-800">{{ $req->service->nom }}</span>
+                                            @if($req->type_demande)
+                                                pour <span class="font-medium text-gray-800">{{ \App\Enums\TypeDemandeEnum::tryFrom($req->type_demande)?->label() ?? $req->type_demande }}</span>
+                                            @else
+                                                (tous les types)
+                                            @endif
+                                            ? Les dossiers pourront être approuvés sans passer par ce service.
+                                        </p>
+                                        <div class="flex justify-end gap-2">
+                                            <button type="button" @click="open = false"
+                                                class="px-4 py-2 text-sm font-medium text-gray-600 hover:text-gray-800">
+                                                Annuler
+                                            </button>
+                                            <form method="POST" action="{{ route('admin.flux-transitions.required.destroy', $req->id) }}">
+                                                @csrf
+                                                @method('DELETE')
+                                                <button type="submit"
+                                                    class="px-4 py-2 bg-red-600 hover:bg-red-700 text-white text-sm font-medium rounded-lg transition-colors">
+                                                    Supprimer
+                                                </button>
+                                            </form>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </td>
+                    </tr>
+                @empty
+                    <tr>
+                        <td colspan="3" class="px-4 py-10 text-center text-gray-400">
+                            <i class="fas fa-shield-alt text-3xl mb-2 block"></i>
+                            Aucune étape obligatoire définie. Tous les dossiers peuvent être approuvés librement.
                         </td>
                     </tr>
                 @endforelse

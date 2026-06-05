@@ -1,156 +1,166 @@
-@props(['books'])
-
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+{{-- No @props needed — this component takes no inputs --}}
 
 <style>
-    .book-card {
-        transition: all 0.3s ease;
-        transform-style: preserve-3d;
-    }
-
-    .book-card:hover {
-        transform: translateY(-5px) scale(1.02);
-        box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
-    }
-
-    .carousel-container {
+    .books-slider-track {
+        -ms-overflow-style: none;
+        scrollbar-width: none;
         scroll-behavior: smooth;
     }
-
-    .book-cover {
-        perspective: 1000px;
+    .books-slider-track::-webkit-scrollbar {
+        display: none;
     }
-
-    .book-cover img {
-        transform: rotateY(-10deg);
-        box-shadow: 10px 10px 15px rgba(0, 0, 0, 0.3);
-        transition: transform 0.3s ease;
+    .book-card {
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
     }
-
-    .book-cover:hover img {
-        transform: rotateY(0deg);
+    .book-card:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 20px 30px -8px rgba(0, 0, 0, 0.15);
     }
-
     @keyframes fadeIn {
-        from {
-            opacity: 0;
-        }
-
-        to {
-            opacity: 1;
-        }
+        from { opacity: 0; }
+        to   { opacity: 1; }
     }
-
     .animate-fadeIn {
         animation: fadeIn 0.5s ease-in-out;
     }
-
-    .hide-scrollbar {
-        -ms-overflow-style: none;
-        scrollbar-width: none;
-    }
-
-    .hide-scrollbar::-webkit-scrollbar {
-        display: none;
-    }
 </style>
 
-<!-- Book Carousel Section -->
-<div class="container mx-auto px-4 py-5">
-    <div class="w-full px-4 py-5">
+<div
+    x-data="{
+        current: 0,
+        pageCount: 0,
+        visibleCards: 3,
+        touchStartX: 0,
+        autoTimer: null,
+        lbOpen: false,
+        lbSrc: '',
+        lbAlt: '',
 
-    <div class="relative">
-        <!-- Navigation Buttons -->
-        <button id="prevBtn"
-            class="absolute left-0 top-1/2 -translate-y-1/2 z-10 bg-white rounded-full w-12 h-12 flex items-center justify-center shadow-lg hover:bg-indigo-100 transition-colors">
-            <i class="fas fa-chevron-left text-blue-900 text-xl"></i>
-        </button>
+        init() {
+            this.$nextTick(() => {
+                const cards = this.$refs.track.querySelectorAll('.book-card');
+                this.pageCount = Math.max(1, Math.ceil(cards.length / this.visibleCards));
+            });
+            this.startAuto();
+        },
 
-        <button id="nextBtn"
-            class="absolute right-0 top-1/2 -translate-y-1/2 z-10 bg-white rounded-full w-12 h-12 flex items-center justify-center shadow-lg hover:bg-indigo-100 transition-colors">
-            <i class="fas fa-chevron-right text-blue-900 text-xl"></i>
-        </button>
+        cardSlotWidth() {
+            const card = this.$refs.track.querySelector('.book-card');
+            if (!card) return 0;
+            const s = getComputedStyle(card);
+            return card.offsetWidth
+                + parseInt(s.marginLeft  || 0)
+                + parseInt(s.marginRight || 0);
+        },
 
-        <!-- Carousel Content -->
-        <div id="carousel"
-            class="carousel-container overflow-x-auto whitespace-nowrap px-4 scroll-smooth hide-scrollbar">
-                <x-carousel-item :imageUrls="[asset('images/photo_2025-11-18_23-36-39.jpg')]" />
-                <x-carousel-item :imageUrls="[asset('images/photo_2025-11-18_23-36-43.jpg')]" />
-                <x-carousel-item :imageUrls="[asset('images/photo_2025-11-18_23-36-46.jpg')]" />
-                <x-carousel-item :imageUrls="[asset('images/photo_2025-11-18_23-36-49.jpg')]" />
-                <x-carousel-item :imageUrls="[asset('images/photo_2025-11-18_23-36-52.jpg')]" />
-                <x-carousel-item :imageUrls="[asset('images/photo_2025-11-18_23-36-55.jpg')]" />
-        </div>
+        goTo(index) {
+            this.current = Math.max(0, Math.min(index, this.pageCount - 1));
+            this.$refs.track.scrollTo({
+                left: this.current * this.cardSlotWidth() * this.visibleCards,
+                behavior: 'smooth'
+            });
+        },
 
-        <!-- Carousel Indicators -->
-        <div class="flex justify-center mt-6 space-x-2">
-            <button class="indicator w-3 h-3 rounded-full bg-gray-300 hover:bg-blue-900 transition-colors"
-                data-index="0"></button>
-            <button class="indicator w-3 h-3 rounded-full bg-gray-300 hover:bg-blue-900 transition-colors"
-                data-index="1"></button>
+        next() { this.goTo(this.current < this.pageCount - 1 ? this.current + 1 : 0); },
+        prev() { this.goTo(this.current > 0 ? this.current - 1 : this.pageCount - 1); },
+
+        startAuto()   { this.autoTimer = setInterval(() => this.next(), 5000); },
+        stopAuto()    { clearInterval(this.autoTimer); },
+        restartAuto() { this.stopAuto(); this.startAuto(); },
+
+        onTouchStart(e) { this.touchStartX = e.touches[0].clientX; },
+        onTouchEnd(e) {
+            const delta = e.changedTouches[0].clientX - this.touchStartX;
+            if (delta < -50) this.next();
+            else if (delta > 50) this.prev();
+            this.restartAuto();
+        }
+    }"
+    @mouseenter="stopAuto()"
+    @mouseleave="restartAuto()"
+    @touchstart.passive="onTouchStart($event)"
+    @touchend.passive="onTouchEnd($event)"
+    @open-lightbox="lbOpen = true; lbSrc = $event.detail.src; lbAlt = $event.detail.alt"
+    @keydown.escape.window="lbOpen = false"
+    class="relative px-10 py-2"
+>
+    {{-- Prev button --}}
+    <button
+        @click="prev(); restartAuto()"
+        class="absolute left-0 top-1/2 -translate-y-1/2 z-10 bg-white rounded-full w-10 h-10 flex items-center justify-center shadow-md hover:bg-indigo-50 transition-colors"
+        aria-label="Précédent"
+    >
+        <i class="fas fa-chevron-left text-blue-900"></i>
+    </button>
+
+    {{-- Carousel track --}}
+    <div x-ref="track" class="books-slider-track overflow-x-auto whitespace-nowrap py-4">
+        @foreach($items as $item)
+            <x-carousel-item
+                src="{{ $item->fileUrl() }}"
+                alt="{{ $item->title ?? 'Informations utiles' }}"
+            />
+        @endforeach
+    </div>
+
+    {{-- Next button --}}
+    <button
+        @click="next(); restartAuto()"
+        class="absolute right-0 top-1/2 -translate-y-1/2 z-10 bg-white rounded-full w-10 h-10 flex items-center justify-center shadow-md hover:bg-indigo-50 transition-colors"
+        aria-label="Suivant"
+    >
+        <i class="fas fa-chevron-right text-blue-900"></i>
+    </button>
+
+    {{-- Dot indicators — rendered once pageCount is known --}}
+    <div class="flex justify-center mt-5 space-x-2" x-show="pageCount > 1">
+        <template x-for="i in pageCount" :key="i">
+            <button
+                @click="goTo(i - 1); restartAuto()"
+                :class="current === i - 1 ? 'bg-indigo-600 w-5' : 'bg-gray-300 w-3'"
+                class="h-3 rounded-full transition-all duration-300 hover:bg-indigo-400"
+                :aria-label="`Page ${i}`"
+            ></button>
+        </template>
+    </div>
+
+    {{-- Lightbox modal --}}
+    <div
+        x-show="lbOpen"
+        x-transition:enter="transition ease-out duration-200"
+        x-transition:enter-start="opacity-0"
+        x-transition:enter-end="opacity-100"
+        x-transition:leave="transition ease-in duration-150"
+        x-transition:leave-start="opacity-100"
+        x-transition:leave-end="opacity-0"
+        @click.self="lbOpen = false"
+        class="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4"
+        x-cloak
+    >
+        <div
+            x-show="lbOpen"
+            x-transition:enter="transition ease-out duration-200"
+            x-transition:enter-start="opacity-0 scale-95"
+            x-transition:enter-end="opacity-100 scale-100"
+            x-transition:leave="transition ease-in duration-150"
+            x-transition:leave-start="opacity-100 scale-100"
+            x-transition:leave-end="opacity-0 scale-95"
+            class="relative bg-white rounded-2xl shadow-2xl max-w-lg w-full max-h-[90vh] overflow-y-auto"
+        >
+            {{-- Close button --}}
+            <button
+                @click="lbOpen = false"
+                class="absolute top-3 right-3 z-10 bg-white/90 hover:bg-white rounded-full w-8 h-8 flex items-center justify-center shadow-md transition-colors"
+                aria-label="Fermer"
+            >
+                <i class="fas fa-times text-gray-600 text-sm"></i>
+            </button>
+
+            <img
+                :src="lbSrc"
+                :alt="lbAlt"
+                class="w-full h-auto block rounded-2xl"
+            >
         </div>
     </div>
 </div>
-
-<script>
-    document.addEventListener('DOMContentLoaded', function() {
-        const carousel = document.getElementById('carousel');
-        const prevBtn = document.getElementById('prevBtn');
-        const nextBtn = document.getElementById('nextBtn');
-        const indicators = document.querySelectorAll('.indicator');
-        const bookCards = document.querySelectorAll('.book-card');
-
-        // Calculate card width including margins
-        const cardStyle = window.getComputedStyle(bookCards[0]);
-        const cardWidth = bookCards[0].offsetWidth +
-            parseInt(cardStyle.marginLeft) +
-            parseInt(cardStyle.marginRight);
-
-        // Carousel configuration
-        const visibleCards = 3;
-        let currentIndex = 0;
-        const maxIndex = Math.ceil(bookCards.length / visibleCards) - 1;
-
-        function goToSlide(index) {
-            currentIndex = Math.max(0, Math.min(index, maxIndex));
-            const scrollPosition = currentIndex * cardWidth * visibleCards;
-            carousel.scrollTo({
-                left: scrollPosition,
-                behavior: 'smooth'
-            });
-            updateIndicators();
-        }
-
-        function updateIndicators() {
-            indicators.forEach((indicator, i) => {
-                indicator.classList.toggle('bg-indigo-600', i === currentIndex);
-                indicator.classList.toggle('bg-gray-300', i !== currentIndex);
-            });
-        }
-
-        // Event listeners
-        prevBtn.addEventListener('click', () => goToSlide(currentIndex - 1));
-        nextBtn.addEventListener('click', () => goToSlide(currentIndex + 1));
-
-        indicators.forEach(indicator => {
-            indicator.addEventListener('click', () => {
-                goToSlide(parseInt(indicator.dataset.index));
-            });
-        });
-
-        // Auto-scroll management
-        let autoScroll = setInterval(() => {
-            goToSlide((currentIndex + 1) % (maxIndex + 1));
-        }, 5000);
-
-        carousel.addEventListener('mouseenter', () => clearInterval(autoScroll));
-        carousel.addEventListener('mouseleave', () => {
-            autoScroll = setInterval(() => {
-                goToSlide((currentIndex + 1) % (maxIndex + 1));
-            }, 5000);
-        });
-
-        // Initial setup
-        updateIndicators();
-    });
-</script>

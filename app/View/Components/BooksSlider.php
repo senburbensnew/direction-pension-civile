@@ -2,24 +2,22 @@
 
 namespace App\View\Components;
 
-use Closure;
-use Illuminate\Contracts\View\View;
+use App\Models\MediathequeItem;
 use Illuminate\View\Component;
 
 class BooksSlider extends Component
 {
-    /**
-     * Create a new component instance.
-     */
+    public $items;
+
     public function __construct()
     {
-        //
+        $this->items = MediathequeItem::published()
+            ->where('type', 'image')
+            ->ordered()
+            ->get();
     }
 
-    /**
-     * Get the view / contents that represent the component.
-     */
-    public function render(): View|Closure|string
+    public function render()
     {
         return view('components.books-slider');
     }

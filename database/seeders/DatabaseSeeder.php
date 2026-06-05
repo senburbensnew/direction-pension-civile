@@ -18,6 +18,7 @@ class DatabaseSeeder extends Seeder
         $this->call(RolesAndPermissionsSeeder::class);
         $this->call(ServiceSeeder::class);
         $this->call(FluxTransitionSeeder::class);
+        $this->call(RequiredCircuitSeeder::class);
         $this->call(UsersSeeder::class);
         $this->call(StatusesSeeder::class);
         $this->call(CivilStatusesSeeder::class);
@@ -31,5 +32,12 @@ class DatabaseSeeder extends Seeder
         $this->call(NewsletterSeeder::class);
         $this->call(InstitutionImageSeeder::class);
         $this->call(PartenaireSeeder::class);
+        $this->call(OfficialSeeder::class);
+        $this->call(PublicationSeeder::class);
+        $this->call(MediathequeItemSeeder::class);
+        $this->call(GlossaireTermSeeder::class);
+        $this->call(FaqItemSeeder::class);
+        $this->call(LienUtileSeeder::class);
+        $this->call(DirectionDepartementaleSeeder::class);
     }
 }

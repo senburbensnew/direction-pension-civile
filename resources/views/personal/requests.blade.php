@@ -12,56 +12,6 @@
                 <span class="mx-2">/</span>
                 <span class="text-gray-700 font-semibold">{{ $type }}</span>
             </nav>
-            <!-- Statistiques -->
-            <div class="grid grid-cols-1 md:grid-cols-5 gap-4 mb-8"> <!-- Changé à 5 colonnes -->
-                <!-- En attente -->
-                <div class="bg-white p-6 rounded-lg shadow">
-                    <div class="text-gray-500">
-                        {{ App\Models\Status::getStatusPending(App\Models\Status::STATUS_PENDING)->label }}
-                    </div>
-                    <div class="text-3xl font-bold text-yellow-600">{{ $stats['pending'] }}</div>
-                </div>
-
-                <!-- En cours -->
-                <div class="bg-white p-6 rounded-lg shadow">
-                    <div class="text-gray-500">
-                        {{ App\Models\Status::getStatusInProgress(App\Models\Status::STATUS_IN_PROGRESS)->label }}
-                    </div>
-                    <div class="text-3xl font-bold text-purple-600">{{ $stats['in_progress'] }}</div>
-                </div>
-
-                <!-- Rejeté -->
-                <div class="bg-white p-6 rounded-lg shadow">
-                    <div class="text-gray-500">
-                        {{ App\Models\Status::getStatusRejected(App\Models\Status::STATUS_REJECTED)->label }}
-                    </div>
-                    <div class="text-3xl font-bold text-red-600">{{ $stats['rejected'] }}</div>
-                </div>
-
-                <!-- Annulé -->
-                <div class="bg-white p-6 rounded-lg shadow">
-                    <div class="text-gray-500">
-                        {{ App\Models\Status::getStatusCanceled(App\Models\Status::STATUS_CANCELED)->label }}
-                    </div>
-                    <div class="text-3xl font-bold text-red-600">{{ $stats['canceled'] }}</div>
-                </div>
-
-                <!-- Approuvé -->
-                <div class="bg-white p-6 rounded-lg shadow">
-                    <div class="text-gray-500">
-                        {{ App\Models\Status::getStatusApproved(App\Models\Status::STATUS_APPROVED)->label }}
-                    </div>
-                    <div class="text-3xl font-bold text-blue-600">{{ $stats['approved'] }}</div>
-                </div>
-
-                <!-- Traité -->
-                <div class="bg-white p-6 rounded-lg shadow">
-                    <div class="text-gray-500">
-                        {{ App\Models\Status::getStatusCompleted(App\Models\Status::STATUS_COMPLETED)->label }}
-                    </div>
-                    <div class="text-3xl font-bold text-green-600">{{ $stats['completed'] }}</div>
-                </div>
-            </div>
             <!-- Liste des demandes -->
             <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
                 <div class="p-6 bg-white border-b border-gray-200">

@@ -1,82 +1,50 @@
 @props(['actualite'])
 
-<article 
-    class="group relative h-72 rounded-xl overflow-hidden shadow-lg transition-all duration-300 hover:shadow-2xl"
-    aria-labelledby="actualite-{{ $actualite->id }}"
->
-    <!-- Background image with overlay -->
-    <div class="absolute inset-0">
-        <img 
-            src="{{ $actualite->images->isNotEmpty() ? Storage::url($actualite->images->first()->image_path) : asset('images/image_placeholder.png') }}"
-            alt="{{ $actualite->title }}"
-            class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
-            loading="lazy"
-        />
-        <!-- Gradient overlay for better text contrast -->
-        <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent"></div>
-    </div>
+<article class="group bg-white rounded-xl overflow-hidden border border-gray-100 shadow-sm hover:shadow-md transition-all duration-300 hover:-translate-y-0.5 flex flex-col">
 
-    <!-- Top metadata -->
-    <div class="absolute top-0 left-0 right-0 p-4 flex justify-between items-start z-20">
+    {{-- Cover image --}}
+    <a href="{{ route('actualites.show', $actualite->id) }}" class="block relative overflow-hidden bg-gray-100" style="aspect-ratio: 16/9;">
+        <img src="{{ $actualite->images->isNotEmpty() ? Storage::url($actualite->images->first()->image_path) : asset('images/image_placeholder.png') }}"
+             alt="{{ $actualite->title }}"
+             class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+             loading="lazy" />
         @if($actualite->category)
-            <span class="px-3 py-1.5 bg-white/90 backdrop-blur-sm text-gray-900 text-xs font-semibold rounded-full shadow-sm">
+            <span class="absolute top-3 left-3 px-2.5 py-1 bg-blue-600 text-white text-xs font-semibold rounded-full shadow-sm">
                 {{ $actualite->category }}
             </span>
         @endif
-        
-        @if($actualite->created_at)
-            <time 
-                datetime="{{ $actualite->created_at->toIso8601String() }}"
-                class="px-3 py-1.5 bg-black/60 backdrop-blur-sm text-white text-xs rounded-full"
-            >
+    </a>
+
+    {{-- Body --}}
+    <div class="flex flex-col flex-1 p-5">
+
+        {{-- Meta --}}
+        <div class="flex items-center gap-2 text-xs text-gray-400 mb-3">
+            <i class="far fa-calendar-alt text-gray-300"></i>
+            <time datetime="{{ $actualite->created_at->toIso8601String() }}">
                 {{ $actualite->created_at->translatedFormat('d M Y') }}
             </time>
-        @endif
-    </div>
+            @if($actualite->posted_in)
+                <span class="text-gray-200">·</span>
+                <span class="truncate">{{ $actualite->posted_in }}</span>
+            @endif
+        </div>
 
-    <!-- Content container -->
-    <div class="absolute bottom-0 left-0 right-0 p-6 z-10 transform translate-y-2 transition-transform duration-500 group-hover:translate-y-0">
-        <!-- Title -->
-        <h3 
-            id="actualite-{{ $actualite->id }}"
-            class="text-xl font-bold text-white mb-3 line-clamp-2 group-hover:line-clamp-none transition-all duration-300"
-        >
-            {{ $actualite->title }}
+        {{-- Title --}}
+        <h3 class="text-sm font-bold text-gray-900 mb-2 line-clamp-2 leading-snug group-hover:text-blue-700 transition-colors">
+            <a href="{{ route('actualites.show', $actualite->id) }}">{{ $actualite->title }}</a>
         </h3>
 
-        <!-- Description -->
-        <div class="overflow-hidden">
-            <p class="text-gray-200 text-sm leading-relaxed opacity-0 max-h-0 group-hover:opacity-100 group-hover:max-h-32 transition-all duration-500 delay-100">
-                {{ $actualite->description }}
-            </p>
-        </div>
+        {{-- Excerpt --}}
+        <p class="text-xs text-gray-500 leading-relaxed line-clamp-2 flex-1 mb-4">
+            {{ $actualite->description }}
+        </p>
 
-        <!-- Footer with link -->
-        <div class="flex items-center justify-between mt-4 pt-4 border-t border-white/20">
-            @if($actualite->posted_in)
-                <span class="text-xs text-gray-300 italic font-medium">
-                    {{ $actualite->posted_in }}
-                </span>
-            @endif
-            
-            <a 
-                href="{{ route('actualites.show', $actualite->id) }}"
-                class="inline-flex items-center text-white font-semibold text-sm hover:text-blue-300 transition-colors"
-                aria-label="Lire {{ $actualite->title }}"
-            >
-                Lire l'article
-                <svg 
-                    class="w-4 h-4 ml-2 transform transition-transform group-hover:translate-x-1" 
-                    fill="none" 
-                    stroke="currentColor" 
-                    viewBox="0 0 24 24"
-                >
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"/>
-                </svg>
-            </a>
-        </div>
+        {{-- CTA --}}
+        <a href="{{ route('actualites.show', $actualite->id) }}"
+           class="inline-flex items-center gap-1.5 text-xs font-semibold text-blue-600 hover:text-blue-800 transition-colors mt-auto">
+            Lire l'article
+            <i class="fas fa-arrow-right text-[10px] transition-transform duration-300 group-hover:translate-x-1"></i>
+        </a>
     </div>
-
-    <!-- Hover effect indicator -->
-    <div class="absolute inset-0 border-2 border-transparent group-hover:border-white/30 transition-all duration-300 rounded-xl pointer-events-none"></div>
 </article>

@@ -76,14 +76,13 @@
 
                             <!-- Contact Items -->
                             <div class="space-y-8">
-                                <!-- Siège principal -->
                                 <div class="contact-item flex items-start gap-4">
                                     <div class="icon-container w-14 h-14 bg-blue-100 rounded-xl flex items-center justify-center flex-shrink-0">
                                         <i class="fas fa-map-marker-alt text-blue-600 text-xl"></i>
                                     </div>
                                     <div>
                                         <h3 class="text-xl font-semibold text-gray-800 mb-1">Notre siège social</h3>
-                                        <p class="text-gray-600">5, Avenue Charles Sumner, Port-au-Prince, Haïti (W.I)</p>
+                                        <p class="text-gray-600">{{ $contact['contact_address'] ?? '' }}</p>
                                     </div>
                                 </div>
 
@@ -93,8 +92,8 @@
                                     </div>
                                     <div>
                                         <h3 class="text-xl font-semibold text-gray-800 mb-1">Numéro de contact</h3>
-                                        <p class="text-gray-600">+(509) 29 92 1007</p>
-                                        <p class="text-gray-600 text-sm mt-1">Lun–Ven : 8h00 - 16h00</p>
+                                        <p class="text-gray-600">{{ $contact['contact_phone'] ?? '' }}</p>
+                                        <p class="text-gray-600 text-sm mt-1">{{ $contact['contact_hours'] ?? '' }}</p>
                                     </div>
                                 </div>
 
@@ -104,8 +103,8 @@
                                     </div>
                                     <div>
                                         <h3 class="text-xl font-semibold text-gray-800 mb-1">Adresse e-mail</h3>
-                                        <a href="mailto:dpc.info@mef.gouv.ht" class="text-blue-600 hover:text-blue-800 transition-colors text-lg font-medium">
-                                            dpc.info@mef.gouv.ht
+                                        <a href="mailto:{{ $contact['contact_email'] ?? '' }}" class="text-blue-600 hover:text-blue-800 transition-colors text-lg font-medium">
+                                            {{ $contact['contact_email'] ?? '' }}
                                         </a>
                                     </div>
                                 </div>
@@ -115,18 +114,26 @@
                             <div class="pt-6">
                                 <h3 class="text-xl font-semibold text-gray-800 mb-6">Rejoignez notre communauté</h3>
                                 <div class="flex gap-3">
-                                    <a href="#" class="social-icon w-11 h-11 flex items-center justify-center rounded-full hover:opacity-90 shadow-sm" style="background:#1877F2;" aria-label="Page Facebook">
+                                    @if(!empty($contact['social_facebook']) && $contact['social_facebook'] !== '#')
+                                    <a href="{{ $contact['social_facebook'] }}" class="social-icon w-11 h-11 flex items-center justify-center rounded-full hover:opacity-90 shadow-sm" style="background:#1877F2;" aria-label="Page Facebook">
                                         <i class="fab fa-facebook-f text-base" style="color:white;"></i>
                                     </a>
-                                    <a href="#" class="social-icon w-11 h-11 flex items-center justify-center rounded-full hover:opacity-90 shadow-sm" style="background:#000;" aria-label="Profil X (Twitter)">
+                                    @endif
+                                    @if(!empty($contact['social_twitter']) && $contact['social_twitter'] !== '#')
+                                    <a href="{{ $contact['social_twitter'] }}" class="social-icon w-11 h-11 flex items-center justify-center rounded-full hover:opacity-90 shadow-sm" style="background:#000;" aria-label="Profil X (Twitter)">
                                         <i class="fab fa-x-twitter text-base" style="color:white;"></i>
                                     </a>
-                                    <a href="#" class="social-icon w-11 h-11 flex items-center justify-center rounded-full hover:opacity-90 shadow-sm" style="background:#0A66C2;" aria-label="Profil LinkedIn">
+                                    @endif
+                                    @if(!empty($contact['social_linkedin']) && $contact['social_linkedin'] !== '#')
+                                    <a href="{{ $contact['social_linkedin'] }}" class="social-icon w-11 h-11 flex items-center justify-center rounded-full hover:opacity-90 shadow-sm" style="background:#0A66C2;" aria-label="Profil LinkedIn">
                                         <i class="fab fa-linkedin-in text-base" style="color:white;"></i>
                                     </a>
-                                    <a href="#" class="social-icon w-11 h-11 flex items-center justify-center rounded-full hover:opacity-90 shadow-sm" style="background:#FF0000;" aria-label="Chaîne YouTube">
+                                    @endif
+                                    @if(!empty($contact['social_youtube']) && $contact['social_youtube'] !== '#')
+                                    <a href="{{ $contact['social_youtube'] }}" class="social-icon w-11 h-11 flex items-center justify-center rounded-full hover:opacity-90 shadow-sm" style="background:#FF0000;" aria-label="Chaîne YouTube">
                                         <i class="fab fa-youtube text-base" style="color:white;"></i>
                                     </a>
+                                    @endif
                                 </div>
                             </div>
                         </div>
@@ -237,6 +244,7 @@
                 </div>
             </div>
         </section>
+
         <!-- Section Carte -->
         <section class="max-w-7xl mx-auto px-6 pt-16 fade-in">
             <div class="text-center mb-10">
@@ -245,11 +253,12 @@
             </div>
             <div class="map-container">
                 <iframe
-                    src="https://www.google.com/maps/embed?pb=!1m14!1m8!1m3!1d15130.65651919688!2d-72.3400433!3d18.544074!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x0%3A0x410db1f320d7ae01!2sMinist%C3%A8re%20de%20l'%C3%89conomie%20et%20des%20Finances%20(MEF)!5e0!3m2!1sen!2sht!4v1592604157945!5m2!1sen!2sht"
+                    src="{{ $contact['contact_map_url'] ?? '' }}"
                     width="100%" height="450" style="border:0;" allowfullscreen="" loading="lazy"
                     referrerpolicy="no-referrer-when-downgrade"></iframe>
             </div>
         </section>
+
         <!-- Section Directions Départementales -->
         <section class="max-w-7xl mx-auto px-6 pt-16 fade-in">
             <div class="text-center mb-10">
@@ -260,99 +269,18 @@
             </div>
 
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-
-                <!-- OUEST -->
+                @foreach($directions as $dir)
                 <div class="bg-white p-6 rounded-xl border border-gray-200 text-center contact-card">
-                    <div class="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center mx-auto mb-4">
-                        <i class="fas fa-map-pin text-blue-600 text-xl"></i>
+                    <div class="w-12 h-12 bg-{{ $dir->color }}-100 rounded-lg flex items-center justify-center mx-auto mb-4">
+                        <i class="fas fa-map-pin text-{{ $dir->color }}-600 text-xl"></i>
                     </div>
-                    <h3 class="text-lg font-semibold text-gray-800 mb-2">Direction Départementale de l’Ouest (DDO)</h3>
-                    <p class="text-gray-600">Port-au-Prince</p>
-                    <p class="text-gray-600">Tel: +(509) 29 92 10XX</p>
+                    <h3 class="text-lg font-semibold text-gray-800 mb-2">{{ $dir->nom }} ({{ $dir->abbr }})</h3>
+                    <p class="text-gray-600">{{ $dir->ville }}</p>
                 </div>
-
-                <!-- ARTIBONITE -->
-                <div class="bg-white p-6 rounded-xl border border-gray-200 text-center contact-card">
-                    <div class="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center mx-auto mb-4">
-                        <i class="fas fa-map-pin text-green-600 text-xl"></i>
-                    </div>
-                    <h3 class="text-lg font-semibold text-gray-800 mb-2">Direction Départementale de l’Artibonite (DDA)</h3>
-                    <p class="text-gray-600">Gonaïves</p>
-                    <p class="text-gray-600">Tel: +(509) 29 92 10YY</p>
-                </div>
-
-                <!-- SUD -->
-                <div class="bg-white p-6 rounded-xl border border-gray-200 text-center contact-card">
-                    <div class="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center mx-auto mb-4">
-                        <i class="fas fa-map-pin text-purple-600 text-xl"></i>
-                    </div>
-                    <h3 class="text-lg font-semibold text-gray-800 mb-2">Direction Départementale du Sud (DDS)</h3>
-                    <p class="text-gray-600">Les Cayes</p>
-                    <p class="text-gray-600">Tel: +(509) 29 92 10ZZ</p>
-                </div>
-
-                <!-- NORD -->
-                <div class="bg-white p-6 rounded-xl border border-gray-200 text-center contact-card">
-                    <div class="w-12 h-12 bg-red-100 rounded-lg flex items-center justify-center mx-auto mb-4">
-                        <i class="fas fa-map-pin text-red-600 text-xl"></i>
-                    </div>
-                    <h3 class="text-lg font-semibold text-gray-800 mb-2">Direction Départementale du Nord (DDN)</h3>
-                    <p class="text-gray-600">Cap-Haïtien</p>
-                    <p class="text-gray-600">Tel: +(509) 29 92 10WW</p>
-                </div>
-
-                <!-- SUD-EST -->
-                <div class="bg-white p-6 rounded-xl border border-gray-200 text-center contact-card">
-                    <div class="w-12 h-12 bg-yellow-100 rounded-lg flex items-center justify-center mx-auto mb-4">
-                        <i class="fas fa-map-pin text-yellow-600 text-xl"></i>
-                    </div>
-                    <h3 class="text-lg font-semibold text-gray-800 mb-2">Direction Départementale du Sud-Est (DDSE)</h3>
-                    <p class="text-gray-600">Jacmel</p>
-                    <p class="text-gray-600">Tel: +(509) 29 92 10VV</p>
-                </div>
-
-                <!-- NORD-OUEST -->
-                <div class="bg-white p-6 rounded-xl border border-gray-200 text-center contact-card">
-                    <div class="w-12 h-12 bg-indigo-100 rounded-lg flex items-center justify-center mx-auto mb-4">
-                        <i class="fas fa-map-pin text-indigo-600 text-xl"></i>
-                    </div>
-                    <h3 class="text-lg font-semibold text-gray-800 mb-2">Direction Départementale du Nord-Ouest (DDNO)</h3>
-                    <p class="text-gray-600">Port-de-Paix</p>
-                    <p class="text-gray-600">Tel: +(509) 29 92 10UU</p>
-                </div>
-
-                <!-- NIPPES -->
-                <div class="bg-white p-6 rounded-xl border border-gray-200 text-center contact-card">
-                    <div class="w-12 h-12 bg-orange-100 rounded-lg flex items-center justify-center mx-auto mb-4">
-                        <i class="fas fa-map-pin text-orange-600 text-xl"></i>
-                    </div>
-                    <h3 class="text-lg font-semibold text-gray-800 mb-2">Direction Départementale des Nippes (DDNip)</h3>
-                    <p class="text-gray-600">Miragoâne</p>
-                    <p class="text-gray-600">Tel: +(509) 29 92 10TT</p>
-                </div>
-
-                <!-- CENTRE -->
-                <div class="bg-white p-6 rounded-xl border border-gray-200 text-center contact-card">
-                    <div class="w-12 h-12 bg-cyan-100 rounded-lg flex items-center justify-center mx-auto mb-4">
-                        <i class="fas fa-map-pin text-cyan-600 text-xl"></i>
-                    </div>
-                    <h3 class="text-lg font-semibold text-gray-800 mb-2">Direction Départementale du Centre (DDC)</h3>
-                    <p class="text-gray-600">Hinche</p>
-                    <p class="text-gray-600">Tel: +(509) 29 92 10SS</p>
-                </div>
-
-                <!-- GRAND'ANSE -->
-                <div class="bg-white p-6 rounded-xl border border-gray-200 text-center contact-card">
-                    <div class="w-12 h-12 bg-pink-100 rounded-lg flex items-center justify-center mx-auto mb-4">
-                        <i class="fas fa-map-pin text-pink-600 text-xl"></i>
-                    </div>
-                    <h3 class="text-lg font-semibold text-gray-800 mb-2">Direction Départementale de la Grand’Anse (DDGA)</h3>
-                    <p class="text-gray-600">Jérémie</p>
-                    <p class="text-gray-600">Tel: +(509) 29 92 10RR</p>
-                </div>
-
+                @endforeach
             </div>
         </section>
+
         <!-- Section Services -->
         <section class="max-w-7xl mx-auto px-6 pt-20 fade-in">
             <div class="text-center mb-10">
@@ -360,87 +288,15 @@
                 <p class="text-gray-600 max-w-2xl mx-auto">Les différents services opérationnels de la DPC / MEF.</p>
             </div>
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-
-                <!-- Secrétariat -->
+                @foreach($services as $service)
                 <div class="bg-white p-6 rounded-xl border border-gray-200 text-center contact-card">
-                    <div class="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center mx-auto mb-4">
-                        <i class="fas fa-building text-blue-600 text-xl"></i>
+                    <div class="w-12 h-12 bg-{{ $service->color ?? 'blue' }}-100 rounded-lg flex items-center justify-center mx-auto mb-4">
+                        <i class="fas {{ $service->icon ?? 'fa-building' }} text-{{ $service->color ?? 'blue' }}-600 text-xl"></i>
                     </div>
-                    <h3 class="text-lg font-semibold text-gray-800 mb-2">Secrétariat</h3>
+                    <h3 class="text-lg font-semibold text-gray-800 mb-2">{{ $service->nom }}</h3>
                     <p class="text-gray-600">Port-au-Prince</p>
-                    <p class="text-gray-600">Tel: +(509) 29 92 10XX</p>
                 </div>
-
-                <!-- Réception -->
-                <div class="bg-white p-6 rounded-xl border border-gray-200 text-center contact-card">
-                    <div class="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center mx-auto mb-4">
-                        <i class="fas fa-concierge-bell text-green-600 text-xl"></i>
-                    </div>
-                    <h3 class="text-lg font-semibold text-gray-800 mb-2">Réception</h3>
-                    <p class="text-gray-600">Port-au-Prince</p>
-                    <p class="text-gray-600">Tel: +(509) 29 92 10YY</p>
-                </div>
-
-                <!-- Service Contrôle et Placements (SCP) -->
-                <div class="bg-white p-6 rounded-xl border border-gray-200 text-center contact-card">
-                    <div class="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center mx-auto mb-4">
-                        <i class="fas fa-search text-purple-600 text-xl"></i>
-                    </div>
-                    <h3 class="text-lg font-semibold text-gray-800 mb-2">Service Contrôle et Placements (SCP)</h3>
-                    <p class="text-gray-600">Port-au-Prince</p>
-                    <p class="text-gray-600">Tel: +(509) 29 92 10ZZ</p>
-                </div>
-
-                <!-- Cellule Administration (CA) -->
-                <div class="bg-white p-6 rounded-xl border border-gray-200 text-center contact-card">
-                    <div class="w-12 h-12 bg-yellow-100 rounded-lg flex items-center justify-center mx-auto mb-4">
-                        <i class="fas fa-user-cog text-yellow-600 text-xl"></i>
-                    </div>
-                    <h3 class="text-lg font-semibold text-gray-800 mb-2">Cellule Administration (CA)</h3>
-                    <p class="text-gray-600">Port-au-Prince</p>
-                    <p class="text-gray-600">Tel: +(509) 29 92 10ZZ</p>
-                </div>
-
-                <!-- Service Liquidation de Pension (SLP) -->
-                <div class="bg-white p-6 rounded-xl border border-gray-200 text-center contact-card">
-                    <div class="w-12 h-12 bg-red-100 rounded-lg flex items-center justify-center mx-auto mb-4">
-                        <i class="fas fa-file-invoice-dollar text-red-600 text-xl"></i>
-                    </div>
-                    <h3 class="text-lg font-semibold text-gray-800 mb-2">Service Liquidation de Pension (SLP)</h3>
-                    <p class="text-gray-600">Port-au-Prince</p>
-                    <p class="text-gray-600">Tel: +(509) 29 92 10ZZ</p>
-                </div>
-
-                <!-- Service Comptabilité (SC) -->
-                <div class="bg-white p-6 rounded-xl border border-gray-200 text-center contact-card">
-                    <div class="w-12 h-12 bg-indigo-100 rounded-lg flex items-center justify-center mx-auto mb-4">
-                        <i class="fas fa-calculator text-indigo-600 text-xl"></i>
-                    </div>
-                    <h3 class="text-lg font-semibold text-gray-800 mb-2">Service Comptabilité (SC)</h3>
-                    <p class="text-gray-600">Port-au-Prince</p>
-                    <p class="text-gray-600">Tel: +(509) 29 92 10ZZ</p>
-                </div>
-
-                <!-- Service des Formalités (SF) -->
-                <div class="bg-white p-6 rounded-xl border border-gray-200 text-center contact-card">
-                    <div class="w-12 h-12 bg-teal-100 rounded-lg flex items-center justify-center mx-auto mb-4">
-                        <i class="fas fa-file-signature text-teal-600 text-xl"></i>
-                    </div>
-                    <h3 class="text-lg font-semibold text-gray-800 mb-2">Service des Formalités (SF)</h3>
-                    <p class="text-gray-600">Port-au-Prince</p>
-                    <p class="text-gray-600">Tel: +(509) 29 92 10ZZ</p>
-                </div>
-
-                <!-- Service Assurance (SA) -->
-                <div class="bg-white p-6 rounded-xl border border-gray-200 text-center contact-card">
-                    <div class="w-12 h-12 bg-pink-100 rounded-lg flex items-center justify-center mx-auto mb-4">
-                        <i class="fas fa-shield-alt text-pink-600 text-xl"></i>
-                    </div>
-                    <h3 class="text-lg font-semibold text-gray-800 mb-2">Service Assurance (SA)</h3>
-                    <p class="text-gray-600">Port-au-Prince</p>
-                    <p class="text-gray-600">Tel: +(509) 29 92 10ZZ</p>
-                </div>
-
+                @endforeach
             </div>
         </section>
     </div>

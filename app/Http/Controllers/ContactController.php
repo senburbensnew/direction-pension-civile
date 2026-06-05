@@ -4,7 +4,10 @@ namespace App\Http\Controllers;
 
 use App\Mail\ContactMail;
 use App\Models\Contact;
+use App\Models\DirectionDepartementale;
+use App\Models\Service;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 
@@ -12,7 +15,15 @@ class ContactController extends Controller
 {
     public function index()
     {
-        return view('contact.index');
+        $params = DB::table('parameters')
+            ->whereIn('name', ['contact_address','contact_phone','contact_hours','contact_email','contact_map_url','social_facebook','social_twitter','social_linkedin','social_youtube'])
+            ->pluck('value', 'name');
+
+        return view('contact.index', [
+            'contact'    => $params,
+            'directions' => DirectionDepartementale::ordered()->get(),
+            'services'   => Service::whereNotIn('code', ['direction'])->get(),
+        ]);
     }
 
     public function store(Request $request)
@@ -74,6 +85,12 @@ class ContactController extends Controller
     {
         $contact->update(['read' => true]);
         return back()->with('success', 'Message marqué comme lu.');
+    }
+
+    public function markUnread(Contact $contact)
+    {
+        $contact->update(['read' => false]);
+        return back();
     }
 
     public function markAllRead()

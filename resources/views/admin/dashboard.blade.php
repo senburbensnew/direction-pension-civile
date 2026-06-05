@@ -2,6 +2,10 @@
 
 @section('title', 'Tableau de bord')
 
+@section('breadcrumb')
+    <span class="text-gray-700 text-sm">Tableau de bord</span>
+@endsection
+
 @section('content')
 <div class="space-y-6">
 

@@ -23,7 +23,9 @@ class Report extends Model
         'created_by'
     ];
 
-    protected $dates = ['published_at'];
+    protected $casts = [
+        'published_at' => 'datetime',
+    ];
 
     // relation vers user
     public function author()

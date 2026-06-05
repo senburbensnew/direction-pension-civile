@@ -558,7 +558,7 @@
 
             <!-- Date de naissance -->
             <td class="px-4 py-2 text-sm text-gray-700 align-top">
-            <input type="date" 
+            <input type="date"
             name="dependants[${newIndex}][date_naissance]"
             class="w-full border rounded px-2 py-1">
             <div class="validation-message"></div>
@@ -589,6 +589,18 @@
 
         tbody.appendChild(newRow);
         rowCount++;
+
+        // Apply flatpickr to the new date input
+        const newDateInput = newRow.querySelector('input[type="date"]');
+        if (newDateInput && window.flatpickr) {
+            flatpickr(newDateInput, {
+                locale:     document.documentElement.lang === 'en' ? 'default' : window.French,
+                dateFormat: 'Y-m-d',
+                altInput:   true,
+                altFormat:  document.documentElement.lang === 'en' ? 'm/d/Y' : 'd/m/Y',
+                allowInput: true,
+            });
+        }
 
         // Afficher le tableau
         table.hidden = false;

@@ -3,93 +3,121 @@
 @section('title', $actu->title)
 
 @section('content')
-<section class="flex justify-center bg-gray-50 fade-in">
+
+{{-- Breadcrumb --}}
+<div class="bg-white border-b border-gray-100">
+    <div class="container mx-auto px-4 py-3">
+        <nav class="flex items-center gap-2 text-sm text-gray-500">
+            <a href="{{ url('/') }}" class="hover:text-blue-600 transition-colors">Accueil</a>
+            <i class="fas fa-chevron-right text-xs text-gray-300"></i>
+            <a href="{{ route('actualites.index') }}" class="hover:text-blue-600 transition-colors">Actualités</a>
+            <i class="fas fa-chevron-right text-xs text-gray-300"></i>
+            <span class="text-gray-700 font-medium truncate max-w-xs">{{ Str::limit($actu->title, 55) }}</span>
+        </nav>
+    </div>
+</div>
+
+<div class="bg-gray-50 min-h-screen py-10">
     <div class="container mx-auto px-4 max-w-4xl">
 
-        <!-- Card -->
-        <article class="bg-white shadow-sm overflow-hidden">
+        <article class="bg-white rounded-2xl shadow-sm overflow-hidden border border-gray-100">
 
-            <!-- Header -->
-            <div class="p-6 md:p-8 border-b border-gray-100">
-                <h1 class="text-2xl md:text-3xl font-bold text-gray-900 mb-3">
+            {{-- Hero image --}}
+            <div class="relative w-full bg-gray-100 overflow-hidden" style="aspect-ratio: 16/7;">
+                <img src="{{ $actu->images->isNotEmpty() ? Storage::url($actu->images->first()->image_path) : asset('images/image_placeholder.png') }}"
+                     alt="{{ $actu->title }}"
+                     class="w-full h-full object-cover">
+                {{-- Gradient overlay for meta readability --}}
+                <div class="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent"></div>
+                @if($actu->category)
+                    <span class="absolute top-4 left-4 px-3 py-1 bg-blue-600 text-white text-sm font-semibold rounded-full shadow">
+                        {{ $actu->category }}
+                    </span>
+                @endif
+            </div>
+
+            {{-- Article header --}}
+            <div class="px-8 pt-8 pb-6 border-b border-gray-100">
+                <h1 class="text-2xl md:text-3xl font-bold text-gray-900 leading-tight mb-5">
                     {{ $actu->title }}
                 </h1>
-
-                <!-- Meta info -->
-                <div class="flex flex-wrap items-center gap-4 text-sm text-gray-500">
-                    @if($actu->category)
-                        <span
-                            class="inline-flex items-center px-3 py-1 rounded-full bg-blue-50 text-blue-700 font-medium">
-                            {{ $actu->category }}
+                <div class="flex flex-wrap items-center gap-5 text-sm text-gray-500">
+                    <span class="flex items-center gap-2">
+                        <span class="w-7 h-7 rounded-full bg-blue-50 flex items-center justify-center">
+                            <i class="far fa-calendar-alt text-blue-500 text-xs"></i>
                         </span>
-                    @endif
-
-                    <span class="flex items-center gap-1">
-                        <i class="fa-regular fa-calendar"></i>
-                        {{ $actu->created_at->translatedFormat('d F Y') }}
+                        <time datetime="{{ $actu->created_at->toIso8601String() }}">
+                            {{ $actu->created_at->translatedFormat('d F Y') }}
+                        </time>
                     </span>
-
                     @if($actu->posted_in)
-                        <span class="flex items-center gap-1">
-                            <i class="fa-solid fa-building-columns"></i>
+                        <span class="flex items-center gap-2">
+                            <span class="w-7 h-7 rounded-full bg-blue-50 flex items-center justify-center">
+                                <i class="fas fa-map-marker-alt text-blue-500 text-xs"></i>
+                            </span>
                             {{ $actu->posted_in }}
                         </span>
+                    @endif
+                    <span class="flex items-center gap-2">
+                        <span class="w-7 h-7 rounded-full bg-blue-50 flex items-center justify-center">
+                            <i class="fas fa-clock text-blue-500 text-xs"></i>
+                        </span>
+                        Mise à jour le {{ $actu->updated_at->translatedFormat('d F Y') }}
+                    </span>
+                </div>
+            </div>
+
+            {{-- Lead paragraph --}}
+            @if($actu->description)
+                <div class="px-8 pt-7 pb-0">
+                    <p class="text-base md:text-lg text-gray-600 leading-relaxed font-medium border-l-4 border-blue-500 pl-5 italic">
+                        {{ $actu->description }}
+                    </p>
+                </div>
+            @endif
+
+            {{-- Additional images (if more than one) --}}
+            @if($actu->images->count() > 1)
+                <div class="mx-8 my-7 rounded-xl overflow-hidden border border-gray-100">
+                    <x-carousel>
+                        @foreach($actu->images as $image)
+                            <div class="swiper-slide">
+                                <img src="{{ Storage::url($image->image_path) }}"
+                                     class="w-full h-64 md:h-80 object-cover"
+                                     alt="Photo — {{ $actu->title }}" />
+                            </div>
+                        @endforeach
+                    </x-carousel>
+                </div>
+            @endif
+
+            {{-- Main content --}}
+            <div class="px-8 py-7">
+                <div class="prose prose-gray prose-base max-w-none text-gray-700 leading-relaxed">
+                    @if($actu->content_text)
+                        {!! nl2br(e($actu->content_text)) !!}
+                    @elseif(!$actu->description)
+                        <p class="text-gray-400 italic">Aucun contenu disponible.</p>
                     @endif
                 </div>
             </div>
 
-            <!-- Carousel -->
-            <div class="bg-gray-100">
-                <x-carousel>
-                    @if($actu->images->count())
-                        @foreach($actu->images as $image)
-                            <div class="swiper-slide">
-                                <img src="{{ Storage::url($image->image_path) }}"
-                                    class="w-full h-72 md:h-96 object-cover" alt="Image de l’actualité" />
-                            </div>
-                        @endforeach
-                    @else
-                        <div class="swiper-slide">
-                            <img src="{{ asset('images/image_placeholder.png') }}"
-                                class="w-full h-72 md:h-96 object-cover" alt="Image par défaut" />
-                        </div>
-                    @endif
-                </x-carousel>
-            </div>
-
-            <!-- Content -->
-            <div class="p-6 md:p-8 prose prose-gray max-w-none">
-                @if($actu->content_text)
-                    {!! nl2br(e($actu->content_text)) !!}
-                @else
-                    <p class="text-gray-700 leading-relaxed">
-                        {{ $actu->description }}
-                    </p>
-                @endif
-            </div>
-
-            <!-- Footer -->
-            <div class="px-6 md:px-8 py-4 bg-gray-50 border-t border-gray-100 flex justify-between items-center">
+            {{-- Footer --}}
+            <div class="px-8 py-5 bg-gray-50 border-t border-gray-100 flex items-center justify-between">
                 <a href="{{ route('actualites.index') }}"
-                    class="inline-flex items-center gap-2 text-blue-600 font-medium hover:text-blue-800">
-                    ← Retour aux actualités
+                   class="inline-flex items-center gap-2 text-sm font-medium text-gray-600 hover:text-blue-600 transition-colors">
+                    <i class="fas fa-arrow-left text-xs"></i>
+                    Retour aux actualités
                 </a>
-
-                <span class="text-xs text-gray-400">
-                    Dernière mise à jour :
-                    {{ $actu->updated_at->translatedFormat('d F Y') }}
-                </span>
+                <div class="flex items-center gap-2 text-xs text-gray-400">
+                    <i class="fas fa-share-alt"></i>
+                    <span>Partager</span>
+                </div>
             </div>
 
         </article>
 
     </div>
-    <div class="pt-5">
-        <x-presentation role="Le Ministre" nom="Alfred Fils METELLUS" sexe="M"
-            lien-profil="{{ route('quisommesnous.profil', ['role' => 'ministre']) }}"
-            lien-discours="{{ route('quisommesnous.mots', ['role' => 'ministre']) }}"
-            mobile-image="images/photo-metelus.png" desktop-image="images/photo-metelus.png" :showProfileLink="true"
-            :showSpeechLink="true" />
-    </div>
-</section>
+</div>
+
 @endsection
