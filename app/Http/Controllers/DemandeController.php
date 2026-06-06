@@ -1977,39 +1977,8 @@ class DemandeController extends Controller
             abort(403, 'Vous n\'êtes pas autorisé à supprimer cette demande.');
         }
 
-        $demande->load('documents');
-
-        // Delete files stored via DemandeDocument model
-        $parentDirectory = null;
-        foreach ($demande->documents as $document) {
-            if ($document->path) {
-                if (! $parentDirectory) {
-                    $parentDirectory = dirname($document->path);
-                }
-                Storage::disk('public')->delete($document->path);
-            }
-        }
-        if ($parentDirectory && empty(Storage::disk('public')->files($parentDirectory))) {
-            Storage::disk('public')->deleteDirectory($parentDirectory);
-        }
-
-        // Delete files stored directly in the data JSON column
-        $data = $demande->data ?? [];
-        $dataFiles = array_filter([
-            $data['profile_photo'] ?? null,
-            $data['documents']['profile_photo'] ?? null,
-        ]);
-        foreach ($data['pieces'] ?? [] as $piece) {
-            $dataFiles[] = $piece;
-        }
-        if ($dataFiles) {
-            Storage::disk('public')->delete(array_values($dataFiles));
-        }
-
-        DB::transaction(function () use ($demande) {
-            $demande->documents()->delete();
-            $demande->delete();
-        });
+        // Media Library automatically deletes associated files when the model is deleted
+        $demande->delete();
 
         return redirect()
             ->route('personal.index')

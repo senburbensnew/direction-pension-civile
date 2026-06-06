@@ -12,13 +12,14 @@ use App\Models\Status;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Relations\HasMany;
 use Spatie\Activitylog\LogOptions;
 use Spatie\Activitylog\Traits\LogsActivity;
+use Spatie\MediaLibrary\HasMedia;
+use Spatie\MediaLibrary\InteractsWithMedia;
 
-class Demande extends Model
+class Demande extends Model implements HasMedia
 {
-    use HasFactory, LogsActivity;
+    use HasFactory, LogsActivity, InteractsWithMedia;
 
     public function getActivitylogOptions(): LogOptions
     {
@@ -27,6 +28,25 @@ class Demande extends Model
             ->logOnlyDirty()
             ->dontSubmitEmptyLogs()
             ->useLogName('demande');
+    }
+
+    public function registerMediaCollections(): void
+    {
+        foreach (config('demandes') as $key => $typeConfig) {
+            if ($key === 'disk') {
+                continue;
+            }
+            foreach (['multiple', 'single'] as $group) {
+                foreach ($typeConfig['documents'][$group] ?? [] as $collectionName => $cfg) {
+                    $collection = $this->addMediaCollection($collectionName);
+                    if (!($cfg['multiple'] ?? true)) {
+                        $collection->singleFile();
+                    }
+                }
+            }
+        }
+        $this->addMediaCollection('complement');
+        $this->addMediaCollection('supplemental');
     }
 
     protected $fillable = [
@@ -78,7 +98,6 @@ class Demande extends Model
                 } while (static::where('code', $code)->exists());
                 $demande->code = $code;
             }
-            // Auto-classify: urgence prime sur le type
             if ($demande->type) {
                 $typeCat = \App\Enums\TypeDemandeEnum::from($demande->type)->categorie()->value;
                 $demande->categorie = $demande->is_urgent
@@ -89,7 +108,7 @@ class Demande extends Model
     }
 
     /* ================= Relations ================= */
-    
+
     public function user()
     {
         return $this->belongsTo(User::class, 'created_by');
@@ -98,11 +117,6 @@ class Demande extends Model
     public function service()
     {
         return $this->belongsTo(Service::class, 'current_service_id');
-    }
-
-    public function documents(): HasMany
-    {
-        return $this->hasMany(DemandeDocument::class);
     }
 
     public function workflows()
@@ -130,14 +144,14 @@ class Demande extends Model
         return $this->belongsTo(User::class, 'annotated_by');
     }
 
-
     public function messages()
     {
         return $this->hasMany(DemandeMessage::class)->orderBy('created_at', 'asc');
     }
 
-     /* ================= Helpers ================= */
-     public function addWorkflow($toServiceId, $statusId, $commentaire = null)
+    /* ================= Helpers ================= */
+
+    public function addWorkflow($toServiceId, $statusId, $commentaire = null)
     {
         return $this->workflows()->create([
             'from_service_id'   => $this->getOriginal('current_service_id'),
@@ -193,9 +207,6 @@ class Demande extends Model
         return $this->submitted_at ? (int) $this->submitted_at->diffInDays(now()) : null;
     }
 
-    /**
-     * Urgent if manually flagged OR pending for more than 30 days.
-     */
     public function isUrgent(): bool
     {
         if ($this->is_urgent) {
@@ -216,22 +227,11 @@ class Demande extends Model
         return $this->categorieEnum()?->label() ?? '—';
     }
 
-    public function documentsByType(string $type)
-    {
-        return $this->documents()->where('type', $type);
-    }
-
-    public function hasDocument(string $type): bool
-    {
-        return $this->documents()->where('type', $type)->exists();
-    }
-
-    public function civilStatus($name='civil_status_id')
+    public function civilStatus($name = 'civil_status_id')
     {
         if (!isset($this->data[$name])) {
             return null;
         }
-
         return CivilStatus::find($this->data[$name]);
     }
 
@@ -240,30 +240,21 @@ class Demande extends Model
         return Gender::find($sexeId);
     }
 
-    public function pensionType($name='pension_type_id')
+    public function pensionType($name = 'pension_type_id')
     {
         if (!isset($this->data[$name])) {
             return null;
         }
-
         return PensionType::find($this->data[$name]);
     }
 
-    public function pensionCategory($name='pension_category_id')
+    public function pensionCategory($name = 'pension_category_id')
     {
         if (!isset($this->data[$name])) {
             return null;
         }
-
         return PensionCategory::find($this->data[$name]);
     }
-
-    /* 
-        public function parseDate($date)
-        {
-            return $date ? Carbon::parse($date) : null;
-        } 
-    */
 
     public function scopeForUser($query)
     {

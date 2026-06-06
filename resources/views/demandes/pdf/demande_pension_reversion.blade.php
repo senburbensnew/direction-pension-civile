@@ -119,9 +119,9 @@
         </div>
     </div>
 
-    @if($demande->documents->isNotEmpty())
+    @if($demande->getMedia()->isNotEmpty())
         <div class="section">
-            <div class="section-header">Documents joints ({{ $demande->documents->count() }})</div>
+            <div class="section-header">Documents joints ({{ $demande->getMedia()->count() }})</div>
             <div class="section-body">
                 <table class="docs">
                     <tr>
@@ -129,10 +129,10 @@
                         <th style="width:25%">Type</th>
                         <th style="width:20%">Taille</th>
                     </tr>
-                    @foreach($demande->documents as $doc)
+                    @foreach($demande->getMedia() as $doc)
                         <tr>
-                            <td>{{ $doc->original_name }}</td>
-                            <td>{{ str_replace('_', ' ', ucwords($doc->label ?? $doc->type, '_')) }}</td>
+                            <td>{{ $doc->file_name }}</td>
+                            <td>{{ str_replace('_', ' ', ucwords($doc->collection_name, '_')) }}</td>
                             <td>{{ $doc->size ? number_format($doc->size / 1024, 1) . ' Ko' : '—' }}</td>
                         </tr>
                     @endforeach

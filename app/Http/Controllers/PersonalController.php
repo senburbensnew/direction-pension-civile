@@ -6,7 +6,6 @@ namespace App\Http\Controllers;
 use App\Enums\TypeDemandeEnum;
 use App\Models\CheckTransferRequests;
 use App\Models\Demande;
-use App\Models\DemandeDocument;
 use App\Models\DemandeHistory;
 use App\Models\DemandeMessage;
 use App\Models\ExistenceProofRequest;
@@ -340,17 +339,9 @@ class PersonalController extends Controller
 
             if ($request->hasFile('documents')) {
                 foreach ($request->file('documents') as $file) {
-                    $path = $file->store("demandes/{$demande->id}/complements", 'public');
-                    DemandeDocument::create([
-                        'demande_id'    => $demande->id,
-                        'type'          => 'complement',
-                        'label'         => 'Complément usager',
-                        'disk'          => 'public',
-                        'path'          => $path,
-                        'original_name' => $file->getClientOriginalName(),
-                        'mime_type'     => $file->getClientMimeType(),
-                        'size'          => $file->getSize(),
-                    ]);
+                    $demande->addMedia($file)
+                        ->usingFileName($file->getClientOriginalName())
+                        ->toMediaCollection('complement', 'public');
                 }
             }
 

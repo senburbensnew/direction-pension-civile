@@ -252,11 +252,10 @@
                         <div class="ml-4">
                             <x-profile-picture :showLabel="true" />
                                         @if($demande)
-                                            @foreach ($demande->documents as $document)
-                                                @if($document->type == 'profile_photo')
+                                            @foreach ($demande->getMedia('profile_photo') as $document)
                                                     <p class="mb-2 text-sm text-gray-600 flex justify-center items-center">
-                                                        <a href="{{ Storage::url($document->path) }}" target="_blank" class="text-blue-600 underline">
-                                                            {{-- {{ $document->original_name }} --}}
+                                                        <a href="{{ $document->getUrl() }}" target="_blank" class="text-blue-600 underline">
+                                                            {{-- {{ $document->file_name }} --}}
                                                             Voir photo
                                                         </a>
                                                                 
@@ -266,8 +265,7 @@
                                                             <i class="fas fa-trash-alt"></i>
                                                         </button>
                                                     </p>
-                                                @endif
-                                            @endforeach
+                                                @endforeach
                                         @endif                            
                             @error('profile_picture')
                                 <p class="mt-1 text-sm text-red-600">{{ $message }}</p>

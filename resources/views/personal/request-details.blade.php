@@ -2856,7 +2856,7 @@
 
     {{-- ====================== DOCUMENTS SUPPLÉMENTAIRES ====================== --}}
     @php
-        $supplementalDocs = $request->documents()->where('type', 'supplemental')->get();
+        $supplementalDocs = $request->getMedia('supplemental');
         $canAddDocs = auth()->id() === $request->created_by && $request->canBeEditedByUser();
     @endphp
 
@@ -2963,15 +2963,15 @@
                                 @endif
                                 @foreach($docs as $doc)
                                     <div class="flex items-center justify-between bg-gray-50 border border-gray-200 rounded px-3 py-2 text-sm">
-                                        <a href="{{ $doc->url() }}" target="_blank" class="flex items-center gap-2 text-blue-700 hover:underline truncate">
+                                        <a href="{{ $doc->getUrl() }}" target="_blank" class="flex items-center gap-2 text-blue-700 hover:underline truncate">
                                             <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                                       d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"/>
                                             </svg>
-                                            <span class="truncate">{{ $doc->original_name }}</span>
+                                            <span class="truncate">{{ $doc->file_name }}</span>
                                         </a>
                                         <div class="flex items-center gap-3 ml-3 flex-shrink-0">
-                                            <span class="text-gray-400 text-xs">{{ $doc->sizeInKo() }} Ko</span>
+                                            <span class="text-gray-400 text-xs">{{ round($doc->size / 1024, 1) }} Ko</span>
                                             @if($canAddDocs)
                                                 <form method="POST" action="{{ route('demandedocument.destroy', $doc->id) }}"
                                                       onsubmit="return confirm('Supprimer ce document ?')">

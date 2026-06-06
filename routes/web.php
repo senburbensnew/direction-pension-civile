@@ -33,6 +33,7 @@ use App\Http\Controllers\ContactController;
 use App\Http\Controllers\ContactParameterController;
 use App\Http\Controllers\DirectionDepartementaleController;
 use App\Http\Controllers\DemandeRencontreController;
+use App\Http\Controllers\StatusController;
 use App\Http\Controllers\UserController;
 use App\Models\Actualite;
 use App\Models\Report;
@@ -221,7 +222,7 @@ Route::middleware('auth')->group(function () {
     // Demande actions — kept in a separate group with no name prefix to preserve legacy names
     Route::prefix('demandes')->middleware('not.admin')->group(function () {
         Route::post('/{demande}/documents',           [DemandeDocumentController::class, 'store'])->name('demandedocument.store');
-        Route::delete('/documents/{document}',        [DemandeDocumentController::class, 'destroy'])->name('demandedocument.destroy');
+        Route::delete('/documents/{media}',           [DemandeDocumentController::class, 'destroy'])->name('demandedocument.destroy');
         Route::get('/{demande}/pdf',                  [DemandePdfController::class, 'download'])->name('demande.pdf');
         Route::get('/{demande}/print',                [DemandePdfController::class, 'print'])->name('demande.print');
         Route::post('/{demande}/annotation',          [DemandeManagementController::class, 'annotate'])->name('demande.annotate');
@@ -287,6 +288,12 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'role:admin'])->grou
     Route::get('/services',    [ServiceController::class, 'index'])->name('services.index');
     Route::get('/roles',       [RoleController::class, 'index'])->name('roles.index');
     Route::get('/permissions', [PermissionController::class, 'index'])->name('permissions.index');
+
+    // Statuses
+    Route::get('statuses',              [StatusController::class, 'index'])->name('statuses.index');
+    Route::post('statuses',             [StatusController::class, 'store'])->name('statuses.store');
+    Route::patch('statuses/{status}',   [StatusController::class, 'update'])->name('statuses.update');
+    Route::delete('statuses/{status}',  [StatusController::class, 'destroy'])->name('statuses.destroy');
 
     // Flux transitions (workflow circuit)
     Route::get('/flux-transitions',                               [FluxTransitionController::class, 'index'])->name('flux-transitions.index');

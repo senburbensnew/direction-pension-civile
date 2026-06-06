@@ -16,7 +16,7 @@ class DemandePdfController extends Controller
             'Le dossier doit être annoté par la Direction avant d\'être téléchargé.'
         );
 
-        $demande->load(['user', 'status', 'documents', 'annotatedBy', 'service']);
+        $demande->load(['user', 'status', 'media', 'annotatedBy', 'service']);
 
         // Vue spécifique au type si elle existe, sinon générique
         $viewName = 'demandes.pdf.' . strtolower($demande->type);
@@ -42,7 +42,7 @@ class DemandePdfController extends Controller
             'Le dossier doit être annoté par la Direction avant d\'être imprimé.'
         );
 
-        $demande->load(['user', 'status', 'documents', 'annotatedBy', 'service']);
+        $demande->load(['user', 'status', 'media', 'annotatedBy', 'service']);
 
         $viewName = 'demandes.pdf.' . strtolower($demande->type);
         $view     = View::exists($viewName) ? $viewName : 'demandes.pdf.generic';

@@ -300,11 +300,10 @@
                                     </td>
                                     <td class="px-6 py-4">
                                         @if($demande)
-                                            @foreach ($demande->documents as $document)
-                                                @if($document->type === 'copie_piece_identite')
+                                            @foreach ($demande->getMedia('copie_piece_identite') as $document)
                                                     <p class="mb-2 text-sm text-gray-600">
-                                                        <a href="{{ Storage::url($document->path) }}" target="_blank" class="text-blue-600 underline">
-                                                            {{ $document->original_name }}
+                                                        <a href="{{ $document->getUrl() }}" target="_blank" class="text-blue-600 underline">
+                                                            {{ $document->file_name }}
                                                         </a>
                                                         
                                                             <button type="button"
@@ -313,8 +312,7 @@
                                                                 <i class="fas fa-trash-alt"></i>
                                                             </button>
                                                     </p>
-                                                @endif
-                                            @endforeach
+                                                @endforeach
                                         @endif
                                     </td>
                                     <td class="px-6 py-4">
@@ -335,11 +333,10 @@
                                     </td>
                                     <td class="px-6 py-4">
                                         @if($demande)
-                                            @foreach ($demande->documents as $document)
-                                                @if($document->type === 'lettre_nomination')
+                                            @foreach ($demande->getMedia('lettre_nomination') as $document)
                                                     <p class="mb-2 text-sm text-gray-600">
-                                                        <a href="{{ Storage::url($document->path) }}" target="_blank" class="text-blue-600 underline">
-                                                            {{ $document->original_name }}
+                                                        <a href="{{ $document->getUrl() }}" target="_blank" class="text-blue-600 underline">
+                                                            {{ $document->file_name }}
                                                         </a>
                                                         
                                                             <button type="button"
@@ -348,8 +345,7 @@
                                                                 <i class="fas fa-trash-alt"></i>
                                                             </button>
                                                     </p>
-                                                @endif
-                                            @endforeach
+                                                @endforeach
                                         @endif
                                     </td>
                                     <td class="px-6 py-4">
@@ -370,11 +366,10 @@
                                     </td>
                                     <td class="px-6 py-4">
                                         @if($demande)
-                                            @foreach ($demande->documents as $document)
-                                                @if($document->type === 'bulletins_salaire')
+                                            @foreach ($demande->getMedia('bulletins_salaire') as $document)
                                                     <p class="mb-2 text-sm text-gray-600">
-                                                        <a href="{{ Storage::url($document->path) }}" target="_blank" class="text-blue-600 underline">
-                                                            {{ $document->original_name }}
+                                                        <a href="{{ $document->getUrl() }}" target="_blank" class="text-blue-600 underline">
+                                                            {{ $document->file_name }}
                                                         </a>
                                                         
                                                             <button type="button"
@@ -383,8 +378,7 @@
                                                                 <i class="fas fa-trash-alt"></i>
                                                             </button>
                                                     </p>
-                                                @endif
-                                            @endforeach
+                                                @endforeach
                                         @endif
                                     </td>
                                     <td class="px-6 py-4">
@@ -405,11 +399,10 @@
                                     </td>
                                     <td class="px-6 py-4">
                                         @if($demande)
-                                            @foreach ($demande->documents as $document)
-                                                @if($document->type === 'documents_carriere')
+                                            @foreach ($demande->getMedia('documents_carriere') as $document)
                                                     <p class="mb-2 text-sm text-gray-600">
-                                                        <a href="{{ Storage::url($document->path) }}" target="_blank" class="text-blue-600 underline">
-                                                            {{ $document->original_name }}
+                                                        <a href="{{ $document->getUrl() }}" target="_blank" class="text-blue-600 underline">
+                                                            {{ $document->file_name }}
                                                         </a>
                                                         
                                                             <button type="button"
@@ -418,8 +411,7 @@
                                                                 <i class="fas fa-trash-alt"></i>
                                                             </button>
                                                     </p>
-                                                @endif
-                                            @endforeach
+                                                @endforeach
                                         @endif
                                     </td>
                                     <td class="px-6 py-4">
@@ -439,11 +431,10 @@
                                     </td>
                                     <td class="px-6 py-4">
                                         @if($demande)
-                                            @foreach ($demande->documents as $document)
-                                                @if($document->type === 'acte_mariage_acte_deces')
+                                            @foreach ($demande->getMedia('acte_mariage_acte_deces') as $document)
                                                     <p class="mb-2 text-sm text-gray-600">
-                                                        <a href="{{ Storage::url($document->path) }}" target="_blank" class="text-blue-600 underline">
-                                                            {{ $document->original_name }}
+                                                        <a href="{{ $document->getUrl() }}" target="_blank" class="text-blue-600 underline">
+                                                            {{ $document->file_name }}
                                                         </a>
                                                         
                                                             <button type="button"
@@ -452,8 +443,7 @@
                                                                 <i class="fas fa-trash-alt"></i>
                                                             </button>
                                                     </p>
-                                                @endif
-                                            @endforeach
+                                                @endforeach
                                         @endif
                                     </td>
                                     <td class="px-6 py-4">

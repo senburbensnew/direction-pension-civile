@@ -4,7 +4,6 @@ namespace Tests\Unit\Services;
 
 use App\Enums\TypeDemandeEnum;
 use App\Models\Demande;
-use App\Models\DemandeDocument;
 use App\Models\Status;
 use App\Models\User;
 use App\Services\DemandeService;
@@ -41,7 +40,6 @@ class DemandeServiceTest extends TestCase
     {
         $demande = $this->makeDemande(TypeDemandeEnum::DEMANDE_ATTESTATION->value);
 
-        // DEMANDE_ATTESTATION has no doc config entry → no errors
         $errors = $this->service->validateDocumentsForSubmission($demande);
 
         $this->assertEmpty($errors);
@@ -50,7 +48,6 @@ class DemandeServiceTest extends TestCase
     /** @test */
     public function validateDocuments_returns_error_when_required_doc_missing(): void
     {
-        // DEMANDE_ADHESION requires at least 1 profile_photo per config
         $demande = $this->makeDemande(TypeDemandeEnum::DEMANDE_ADHESION->value);
 
         $errors = $this->service->validateDocumentsForSubmission($demande);
@@ -64,16 +61,8 @@ class DemandeServiceTest extends TestCase
     {
         $demande = $this->makeDemande(TypeDemandeEnum::DEMANDE_ADHESION->value);
 
-        // Insert a profile_photo document manually
-        DemandeDocument::create([
-            'demande_id'    => $demande->id,
-            'type'          => 'profile_photo',
-            'disk'          => 'public',
-            'path'          => 'demandes/adhesion/fake.jpg',
-            'original_name' => 'fake.jpg',
-            'mime_type'     => 'image/jpeg',
-            'size'          => 1024,
-        ]);
+        $file = UploadedFile::fake()->image('fake.jpg');
+        $demande->addMedia($file)->usingFileName('fake.jpg')->toMediaCollection('profile_photo', 'public');
 
         $errors = $this->service->validateDocumentsForSubmission($demande);
 
@@ -99,21 +88,17 @@ class DemandeServiceTest extends TestCase
     // ─── storeFiles ──────────────────────────────────────────────────────────
 
     /** @test */
-    public function storeFiles_persists_uploaded_file_and_creates_document_record(): void
+    public function storeFiles_persists_uploaded_file_as_media(): void
     {
-        // Override disk to public (fake)
         config(['demandes.disk' => 'public']);
         $service = new DemandeService();
 
         $demande = $this->makeDemande(TypeDemandeEnum::DEMANDE_ADHESION->value);
-        $file    = UploadedFile::fake()->create('photo.jpg', 50, 'image/jpeg');
+        $file    = UploadedFile::fake()->image('photo.jpg');
 
         $service->storeFiles($demande, ['profile_photo' => $file]);
 
-        $this->assertDatabaseHas('demande_documents', [
-            'demande_id' => $demande->id,
-            'type'       => 'profile_photo',
-        ]);
+        $this->assertCount(1, $demande->getMedia('profile_photo'));
     }
 
     /** @test */
@@ -124,32 +109,12 @@ class DemandeServiceTest extends TestCase
 
         $demande = $this->makeDemande(TypeDemandeEnum::DEMANDE_ADHESION->value);
         $files   = [
-            UploadedFile::fake()->create('photo1.jpg', 50, 'image/jpeg'),
-            UploadedFile::fake()->create('photo2.jpg', 50, 'image/jpeg'),
+            UploadedFile::fake()->image('photo1.jpg'),
+            UploadedFile::fake()->image('photo2.jpg'),
         ];
 
         $service->storeFiles($demande, ['career_certificates' => $files]);
 
-        $this->assertDatabaseCount('demande_documents', 2);
-    }
-
-    // ─── rollback ────────────────────────────────────────────────────────────
-
-    /** @test */
-    public function rollback_removes_stored_files_and_db_records(): void
-    {
-        config(['demandes.disk' => 'public']);
-        $service = new DemandeService();
-
-        $demande = $this->makeDemande(TypeDemandeEnum::DEMANDE_ADHESION->value);
-        $file    = UploadedFile::fake()->create('photo.jpg', 50, 'image/jpeg');
-
-        $service->storeFiles($demande, ['profile_photo' => $file]);
-
-        $this->assertDatabaseCount('demande_documents', 1);
-
-        $service->rollback();
-
-        $this->assertDatabaseCount('demande_documents', 0);
+        $this->assertCount(2, $demande->getMedia('career_certificates'));
     }
 }

@@ -19,7 +19,8 @@
       "Bash(php -l app/Http/Controllers/DemandeManagementController.php)",
       "Bash(php -r \"echo file_get_contents\\('resources/views/personal/request-details.blade.php'\\);\")",
       "Bash(awk 'NR>=113 && NR<=647 && /max-w-7xl/' resources/views/personal/request-details.blade.php)",
-      "Bash(awk 'NR>=113 && NR<=647 && /max-w-7xl/{print NR\": \"$0}' resources/views/personal/request-details.blade.php)"
+      "Bash(awk 'NR>=113 && NR<=647 && /max-w-7xl/{print NR\": \"$0}' resources/views/personal/request-details.blade.php)",
+      "Bash(git stash *)"
     ]
   }
 }

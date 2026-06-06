@@ -267,14 +267,14 @@ class DemandeModelTest extends TestCase
         $this->assertTrue($demande->isAnnotated());
     }
 
-    // ─── hasDocument ─────────────────────────────────────────────────────────
+    // ─── hasMedia ─────────────────────────────────────────────────────────
 
     /** @test */
-    public function hasDocument_returns_false_when_no_document_of_type(): void
+    public function hasMedia_returns_false_when_no_media_in_collection(): void
     {
         $user    = $this->makeUser();
         $demande = Demande::create(['type' => TypeDemandeEnum::DEMANDE_ATTESTATION->value, 'created_by' => $user->id]);
 
-        $this->assertFalse($demande->hasDocument('profile_photo'));
+        $this->assertFalse($demande->hasMedia('profile_photo'));
     }
 }
