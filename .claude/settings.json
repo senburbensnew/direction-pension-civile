@@ -14,7 +14,12 @@
       "Bash(php -l database/seeders/StatusesSeeder.php)",
       "Bash(php -r \"echo is_link\\('public/storage'\\) ? 'symlink exists' : 'NO symlink';\")",
       "Bash(php -r \"echo is_dir\\('public/storage'\\) ? 'directory exists' : 'not a directory';\")",
-      "Bash(grep -v \"^[[:space:]]*//\")"
+      "Bash(grep -v \"^[[:space:]]*//\")",
+      "Bash(git commit -m ' *)",
+      "Bash(php -l app/Http/Controllers/DemandeManagementController.php)",
+      "Bash(php -r \"echo file_get_contents\\('resources/views/personal/request-details.blade.php'\\);\")",
+      "Bash(awk 'NR>=113 && NR<=647 && /max-w-7xl/' resources/views/personal/request-details.blade.php)",
+      "Bash(awk 'NR>=113 && NR<=647 && /max-w-7xl/{print NR\": \"$0}' resources/views/personal/request-details.blade.php)"
     ]
   }
 }

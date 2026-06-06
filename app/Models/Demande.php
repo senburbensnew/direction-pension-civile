@@ -13,10 +13,21 @@ use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Spatie\Activitylog\LogOptions;
+use Spatie\Activitylog\Traits\LogsActivity;
 
 class Demande extends Model
 {
-    use HasFactory;
+    use HasFactory, LogsActivity;
+
+    public function getActivitylogOptions(): LogOptions
+    {
+        return LogOptions::defaults()
+            ->logOnly(['status_id', 'current_service_id', 'annotation', 'is_urgent'])
+            ->logOnlyDirty()
+            ->dontSubmitEmptyLogs()
+            ->useLogName('demande');
+    }
 
     protected $fillable = [
         'code',
@@ -119,10 +130,6 @@ class Demande extends Model
         return $this->belongsTo(User::class, 'annotated_by');
     }
 
-    public function activityLogs()
-    {
-        return $this->hasMany(DemandeActivityLog::class);
-    }
 
     public function messages()
     {

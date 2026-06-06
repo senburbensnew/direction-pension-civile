@@ -38,10 +38,12 @@ class FluxTransitionController extends Controller
             'service_source_id'      => 'nullable|exists:services,id',
             'service_destination_id' => 'required|exists:services,id',
             'action'                 => 'required|string|max:100',
+            'type_demande'           => 'nullable|string',
         ]);
 
         $exists = FluxTransition::where('service_source_id', $request->service_source_id ?: null)
             ->where('service_destination_id', $request->service_destination_id)
+            ->where('type_demande', $request->type_demande ?: null)
             ->exists();
 
         if ($exists) {
@@ -52,6 +54,7 @@ class FluxTransitionController extends Controller
             'service_source_id'      => $request->service_source_id ?: null,
             'service_destination_id' => $request->service_destination_id,
             'action'                 => $request->action,
+            'type_demande'           => $request->type_demande ?: null,
         ]);
 
         return redirect()->back()->with('success', 'Transition ajoutée.');

@@ -7,7 +7,6 @@ namespace App\Http\Controllers;
 use App\Models\Affectation;
 use App\Models\AgentDelegation;
 use App\Models\Demande;
-use App\Models\DemandeActivityLog;
 use App\Models\DemandeHistory;
 use App\Models\DemandeMessage;
 use App\Models\DemandeWorkflow;
@@ -34,11 +33,7 @@ class DemandeManagementController extends Controller
 
     public function edit(Demande $demande)
     {
-        DemandeActivityLog::create([
-            'demande_id' => $demande->id,
-            'user_id'    => auth()->id(),
-            'action'     => 'viewed',
-        ]);
+        activity('demande')->performedOn($demande)->causedBy(auth()->user())->log('viewed');
 
         return view('demandes.admin.edit', compact('demande'));
     }
@@ -236,15 +231,9 @@ class DemandeManagementController extends Controller
 
         $workflowService->transfer($demande, $toService, auth()->user(), $request->commentaire);
 
-        DemandeActivityLog::create([
-            'demande_id' => $demande->id,
-            'user_id'    => auth()->id(),
-            'action'     => 'transferred',
-            'metadata'   => [
-                'to_service'  => $toService->nom,
-                'commentaire' => $request->commentaire,
-            ],
-        ]);
+        activity('demande')->performedOn($demande)->causedBy(auth()->user())
+            ->withProperties(['to_service' => $toService->nom, 'commentaire' => $request->commentaire])
+            ->log('transferred');
 
         // Notify all users assigned to the target service
         try {
@@ -276,11 +265,7 @@ class DemandeManagementController extends Controller
 
         $workflowService->accepterReception($workflow, $user);
 
-        DemandeActivityLog::create([
-            'demande_id' => $workflow->demande_id,
-            'user_id'    => auth()->id(),
-            'action'     => 'reception_accepted',
-        ]);
+        activity('demande')->performedOn($workflow->demande)->causedBy(auth()->user())->log('reception_accepted');
 
         return redirect()->back()->with('success', 'Réception confirmée. Le dossier est maintenant en cours de traitement.');
     }
@@ -305,12 +290,9 @@ class DemandeManagementController extends Controller
 
         $workflowService->refuserReception($workflow, $user, $request->motif);
 
-        DemandeActivityLog::create([
-            'demande_id' => $workflow->demande_id,
-            'user_id'    => auth()->id(),
-            'action'     => 'reception_refused',
-            'metadata'   => ['motif' => $request->motif],
-        ]);
+        activity('demande')->performedOn($workflow->demande)->causedBy(auth()->user())
+            ->withProperties(['motif' => $request->motif])
+            ->log('reception_refused');
 
         return redirect()->back()->with('success', 'Transfert refusé. Le dossier a été retourné au service expéditeur.');
     }
@@ -578,12 +560,9 @@ class DemandeManagementController extends Controller
 
         $workflowService->affecterServices($demande, $request->service_ids, auth()->user());
 
-        DemandeActivityLog::create([
-            'demande_id' => $demande->id,
-            'user_id'    => auth()->id(),
-            'action'     => 'affectation_created',
-            'metadata'   => ['service_ids' => $request->service_ids],
-        ]);
+        activity('demande')->performedOn($demande)->causedBy(auth()->user())
+            ->withProperties(['service_ids' => $request->service_ids])
+            ->log('affectation_created');
 
         return redirect()->back()->with('success', 'Dossier affecté à ' . count($request->service_ids) . ' service(s) pour avis.');
     }
@@ -606,12 +585,9 @@ class DemandeManagementController extends Controller
 
         $workflowService->repondreAffectation($affectation, auth()->user(), $request->avis, $request->statut);
 
-        DemandeActivityLog::create([
-            'demande_id' => $affectation->demande_id,
-            'user_id'    => auth()->id(),
-            'action'     => 'affectation_responded',
-            'metadata'   => ['statut' => $request->statut],
-        ]);
+        activity('demande')->performedOn($affectation->demande)->causedBy(auth()->user())
+            ->withProperties(['statut' => $request->statut])
+            ->log('affectation_responded');
 
         // Final avis — redirect to corbeille so the agent doesn't hit the 403 on the dossier
         if (in_array($request->statut, ['TERMINE', 'REJETE'])) {

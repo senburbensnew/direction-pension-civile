@@ -3,7 +3,6 @@
 namespace App\Http\Controllers;
 
 use App\Models\Demande;
-use App\Models\DemandeActivityLog;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Support\Facades\View;
 
@@ -28,13 +27,9 @@ class DemandePdfController extends Controller
             ->setOption('defaultFont', 'DejaVu Sans')
             ->setOption('isHtml5ParserEnabled', true);
 
-        // Logger l'activité
-        DemandeActivityLog::create([
-            'demande_id' => $demande->id,
-            'user_id'    => auth()->id(),
-            'action'     => 'downloaded',
-            'metadata'   => ['filename' => $demande->code . '.pdf'],
-        ]);
+        activity('demande')->performedOn($demande)->causedBy(auth()->user())
+            ->withProperties(['filename' => $demande->code . '.pdf'])
+            ->log('downloaded');
 
         return $pdf->download($demande->code . '.pdf');
     }
@@ -57,12 +52,9 @@ class DemandePdfController extends Controller
             ->setOption('defaultFont', 'DejaVu Sans')
             ->setOption('isHtml5ParserEnabled', true);
 
-        DemandeActivityLog::create([
-            'demande_id' => $demande->id,
-            'user_id'    => auth()->id(),
-            'action'     => 'printed',
-            'metadata'   => ['filename' => $demande->code . '.pdf'],
-        ]);
+        activity('demande')->performedOn($demande)->causedBy(auth()->user())
+            ->withProperties(['filename' => $demande->code . '.pdf'])
+            ->log('printed');
 
         return $pdf->stream($demande->code . '.pdf');
     }

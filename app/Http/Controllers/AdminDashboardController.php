@@ -53,6 +53,7 @@ class AdminDashboardController extends Controller
 
         // Dossiers par statut
         $dossierParStatut = Status::withCount('demandes')
+            ->groupBy('statuses.id')
             ->having('demandes_count', '>', 0)
             ->orderByDesc('demandes_count')
             ->get();

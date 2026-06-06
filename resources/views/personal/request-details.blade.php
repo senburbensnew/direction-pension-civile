@@ -3045,29 +3045,39 @@
             </button>
             <div x-show="open" x-transition>
                 <div class="rounded-xl border border-gray-100 divide-y divide-gray-100 mb-4">
+                    @php
+                        $actionLabels = [
+                            'viewed'               => ['label' => 'Consulté',           'class' => 'bg-blue-100 text-blue-700'],
+                            'transferred'          => ['label' => 'Transféré',          'class' => 'bg-purple-100 text-purple-700'],
+                            'printed'              => ['label' => 'Imprimé',            'class' => 'bg-yellow-100 text-yellow-700'],
+                            'downloaded'           => ['label' => 'Téléchargé',         'class' => 'bg-green-100 text-green-700'],
+                            'reception_accepted'   => ['label' => 'Réception confirmée','class' => 'bg-teal-100 text-teal-700'],
+                            'reception_refused'    => ['label' => 'Réception refusée',  'class' => 'bg-red-100 text-red-700'],
+                            'affectation_created'  => ['label' => 'Affecté pour avis',  'class' => 'bg-indigo-100 text-indigo-700'],
+                            'affectation_responded'=> ['label' => 'Avis soumis',        'class' => 'bg-indigo-100 text-indigo-700'],
+                            'updated'              => ['label' => 'Modifié',            'class' => 'bg-gray-100 text-gray-700'],
+                            'created'              => ['label' => 'Créé',               'class' => 'bg-gray-100 text-gray-700'],
+                        ];
+                    @endphp
                     @foreach($activityLogs as $log)
+                        @php
+                            $al = $actionLabels[$log->description] ?? ['label' => $log->description, 'class' => 'bg-gray-100 text-gray-700'];
+                        @endphp
                         <div class="p-3 flex justify-between items-center">
-                            <div class="flex items-center gap-2">
-                                <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium
-                                    {{ match($log->action) {
-                                        'viewed'      => 'bg-blue-100 text-blue-700',
-                                        'transferred' => 'bg-purple-100 text-purple-700',
-                                        'printed'     => 'bg-yellow-100 text-yellow-700',
-                                        'downloaded'  => 'bg-green-100 text-green-700',
-                                        default       => 'bg-gray-100 text-gray-700',
-                                    } }}">
-                                    {{ \App\Models\DemandeActivityLog::actionLabel($log->action) }}
+                            <div class="flex items-center gap-2 flex-wrap">
+                                <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium {{ $al['class'] }}">
+                                    {{ $al['label'] }}
                                 </span>
-                                @if(!empty($log->metadata))
-                                    @foreach($log->metadata as $key => $val)
-                                        @if($val && is_string($val))
+                                @if($log->properties->isNotEmpty())
+                                    @foreach($log->properties as $key => $val)
+                                        @if($val && is_string($val) && $key !== 'attributes' && $key !== 'old')
                                             <span class="text-xs text-gray-500">{{ $val }}</span>
                                         @endif
                                     @endforeach
                                 @endif
                             </div>
-                            <div class="text-right text-xs text-gray-500">
-                                <p>{{ $log->user?->name ?? 'Système' }}</p>
+                            <div class="text-right text-xs text-gray-500 flex-shrink-0">
+                                <p>{{ $log->causer?->name ?? 'Système' }}</p>
                                 <p>{{ $log->created_at->format('d/m/Y H:i') }}</p>
                             </div>
                         </div>

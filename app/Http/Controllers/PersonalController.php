@@ -6,7 +6,6 @@ namespace App\Http\Controllers;
 use App\Enums\TypeDemandeEnum;
 use App\Models\CheckTransferRequests;
 use App\Models\Demande;
-use App\Models\DemandeActivityLog;
 use App\Models\DemandeDocument;
 use App\Models\DemandeHistory;
 use App\Models\DemandeMessage;
@@ -552,19 +551,14 @@ class PersonalController extends Controller
             abort_if($submittedAvis, 403, 'Votre avis a été soumis. Vous n\'avez plus accès à ce dossier.');
         }
 
-        // Tracer la consultation
-        DemandeActivityLog::create([
-            'demande_id' => $requestModel->id,
-            'user_id'    => auth()->id(),
-            'action'     => 'viewed',
-        ]);
+        activity('demande')->performedOn($requestModel)->causedBy(auth()->user())->log('viewed');
 
         $requestHistories = DemandeHistory::where('demande_id', $requestModel->id)
             ->orderBy('id', 'desc')
             ->paginate(10);
 
-        $activityLogs = $requestModel->activityLogs()
-            ->with('user')
+        $activityLogs = \Spatie\Activitylog\Models\Activity::forSubject($requestModel)
+            ->with('causer')
             ->latest()
             ->take(20)
             ->get();
