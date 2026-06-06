@@ -12,7 +12,14 @@ class Kernel extends ConsoleKernel
      */
     protected function schedule(Schedule $schedule): void
     {
-        // $schedule->command('inspire')->hourly();
+        // Relancer les dossiers inactifs depuis 7 jours, tous les jours à 8h
+        $schedule->command('dossiers:relancer --jours=7')->dailyAt('08:00');
+
+        // Vérifier les dépassements de délai légal (30 jours), tous les jours à 8h
+        $schedule->command('dossiers:verifier-delai-legal')->dailyAt('08:00');
+
+        // Vérifier les SLA par service, tous les jours à 8h30
+        $schedule->command('dossiers:verifier-sla')->dailyAt('08:30');
     }
 
     /**

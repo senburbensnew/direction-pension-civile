@@ -18,161 +18,329 @@
 @endphp
 
 <x-app-layout>
-    <!-- Common Header -->
+    {{-- ══ HEADER UNIFIÉ ══ --}}
     <div class="max-w-7xl mx-auto pt-5 sm:px-6 lg:px-8">
-        <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg p-6">
-            <nav class="text-sm text-gray-500 flex items-center mb-5">
-                @if ($from === 'dashboard')
-                    <a href="{{ route('personal.dashboard') }}" class="hover:underline">Mes demandes</a>
-                @elseif ($from === 'cart')
-                    <a href="{{ route('personal.cart') }}" class="hover:underline">Corbeille</a>
-                @endif
-                {{--                 <span class="mx-2">/</span>
-                @if(url()->previous() !== url()->current())
-                    <a href="{{ url()->previous() }}" class="hover:underline">Liste</a>
-                @endif --}}
-                <span class="mx-2">/</span>
-                <span class="text-gray-700 font-semibold">{{ __('messages.request_details') }}</span>
-            </nav>
-            <div>
-                <div class="flex flex-wrap justify-between items-start gap-3">
-                    <h2 class="font-semibold text-xl text-gray-800 leading-tight break-all">#{{ $request->code }}</h2>
-                    <div class="flex flex-wrap items-center gap-2 justify-end ml-auto">
-                        {{-- <a href=""
-                                            class="bg-yellow-500 hover:bg-yellow-600 text-white px-4 py-2 rounded-md flex items-center transition-colors">
-                                            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                                    d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 114.95 0 2.5 2.5 0 01-4.95 0M12 15v3m0 0h3m-3 0H9m6-12a3 3 0 11-6 0 3 3 0 016 0z" />
-                                            </svg>
-                                            Modifier
-                        </a>
-                        <a href=""
-                                            class="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-md flex items-center transition-colors">
-                                            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                                    d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 114.95 0 2.5 2.5 0 01-4.95 0M12 15v3m0 0h3m-3 0H9m6-12a3 3 0 11-6 0 3 3 0 016 0z" />
-                                            </svg>
-                                            Annuler
-                        </a> --}}
 
-                        @if($from === 'dashboard' && $editRoute && $request->canBeEditedByUser())
-                            <a href="{{ route($editRoute, $request->id) }}"
-                               class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md flex items-center transition-colors text-sm">
-                                <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                          d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
-                                </svg>
-                                Modifier
-                            </a>
-                        @endif
+        {{-- Fil d'Ariane --}}
+        <nav class="flex items-center gap-1.5 text-xs text-gray-400 mb-3 px-1">
+            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/>
+            </svg>
+            @if($from === 'dashboard')
+                <a href="{{ route('personal.dashboard') }}" class="hover:text-gray-600 transition-colors">Mes demandes</a>
+            @elseif($from === 'cart')
+                <a href="{{ route('personal.cart') }}" class="hover:text-gray-600 transition-colors">Corbeille</a>
+            @endif
+            <svg class="w-3 h-3 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+            </svg>
+            <span class="text-gray-500 font-medium">Détail du dossier</span>
+        </nav>
 
-                        @if($from === 'dashboard' && $request->isDraft())
-                            <button type="button"
-                                    onclick="document.getElementById('deleteConfirmModal').classList.remove('hidden')"
-                                    class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-md flex items-center transition-colors text-sm">
-                                <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                          d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
-                                </svg>
-                                Supprimer
-                            </button>
-                        @endif
+        {{-- Carte header principale --}}
+        <div class="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden">
+
+            {{-- Bande colorée supérieure --}}
+            <div class="h-1 w-full bg-gradient-to-r from-blue-600 via-indigo-500 to-purple-500"></div>
+
+            <div class="px-6 py-5">
+                <div class="flex flex-wrap justify-between items-start gap-4">
+
+                    {{-- Identité du dossier --}}
+                    <div class="flex items-start gap-4">
+                        <div class="w-12 h-12 rounded-xl bg-blue-50 border border-blue-100 flex items-center justify-center flex-shrink-0">
+                            <svg class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                            </svg>
+                        </div>
+                        <div>
+                            <div class="flex flex-wrap items-center gap-2 mb-1">
+                                <h1 class="text-lg font-bold text-gray-900 font-mono tracking-tight">#{{ $request->code }}</h1>
+                                @if($request->status)
+                                    @php
+                                        $statusColors = [
+                                            'BROUILLON'         => 'bg-gray-100 text-gray-600 ring-gray-200',
+                                            'SOUMISE'           => 'bg-blue-50 text-blue-700 ring-blue-200',
+                                            'TRANSFEREE'        => 'bg-indigo-50 text-indigo-700 ring-indigo-200',
+                                            'EN_COURS'          => 'bg-violet-50 text-violet-700 ring-violet-200',
+                                            'COMPLEMENT_REQUIS' => 'bg-orange-50 text-orange-700 ring-orange-200',
+                                            'APPROUVEE'         => 'bg-green-50 text-green-700 ring-green-200',
+                                            'REJETEE'           => 'bg-red-50 text-red-700 ring-red-200',
+                                            'CLOTUREE'          => 'bg-slate-100 text-slate-600 ring-slate-200',
+                                        ];
+                                        $sc = $statusColors[$request->status->code] ?? 'bg-gray-100 text-gray-600 ring-gray-200';
+                                    @endphp
+                                    <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold ring-1 {{ $sc }}">
+                                        <span class="w-1.5 h-1.5 rounded-full bg-current opacity-70"></span>
+                                        {{ $request->status->label ?? $request->status->code }}
+                                    </span>
+                                @endif
+                                @if($request->is_urgent ?? false)
+                                    <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-bold bg-red-100 text-red-700 ring-1 ring-red-200">
+                                        <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/></svg>
+                                        URGENT
+                                    </span>
+                                @endif
+                            </div>
+                            <p class="text-sm text-gray-500">{{ str_replace('_', ' ', $request->type ?? '—') }}</p>
+                            <p class="text-xs text-gray-400 mt-0.5">Déposé le {{ $request->created_at->format('d/m/Y') }} à {{ $request->created_at->format('H:i') }}</p>
+                        </div>
+                    </div>
+
+                    {{-- Toolbar d'actions --}}
+                    <div class="flex flex-wrap items-center gap-2">
 
                         @if($from === 'cart')
                             @hasanyrole('secretariat|direction|service_liquidation|service_formalite|service_controle_placement|service_comptabilite|service_assurance|administration|admin')
-                                @if($request->isAnnotated())
-                                    <button
-                                        class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded"
-                                        onclick="document.getElementById('transferModal').classList.remove('hidden')"
-                                    >
-                                        {{ __('messages.transfer_file') }}
-                                    </button>
-                                @else
-                                    <button
-                                        class="px-4 py-2 bg-gray-300 text-gray-500 rounded cursor-not-allowed"
-                                        title="{{ __('messages.transfer_file') }}"
-                                        disabled
-                                    >
-                                        {{ __('messages.transfer_file') }}
-                                    </button>
-                                @endif
 
-                                @if($request->status->code !== 'COMPLEMENT_REQUIS')
-                                    <button
-                                        class="px-4 py-2 bg-orange-500 hover:bg-orange-600 text-white rounded flex items-center gap-1"
-                                        onclick="document.getElementById('complementModal').classList.remove('hidden'); document.getElementById('complementModal').closest('.bg-white').classList.remove('hidden')"
-                                    >
-                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                                  d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                                @if(isset($isClosed) && $isClosed)
+                                    {{-- Dossier clôturé — aucune action possible --}}
+                                    <div class="flex items-center gap-2 bg-gray-50 border border-gray-300 rounded-xl px-3 py-2">
+                                        <svg class="w-4 h-4 text-gray-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
                                         </svg>
-                                        {{ __('messages.request_complement') }}
-                                    </button>
-                                @else
-                                    <span class="px-4 py-2 bg-orange-100 text-orange-700 rounded text-sm font-medium">
-                                        {{ __('messages.awaiting_complement') }}
-                                    </span>
-                                @endif
-                            @endhasanyrole
+                                        <div>
+                                            <p class="text-xs font-bold text-gray-700 leading-none">Dossier clôturé</p>
+                                            <p class="text-xs text-gray-500 mt-0.5">Aucune action disponible</p>
+                                        </div>
+                                    </div>
+                                    {{-- Imprimer / PDF toujours disponibles --}}
+                                    @if($request->isAnnotated())
+                                        <a href="{{ route('demande.print', $request->id) }}" target="_blank" title="Imprimer"
+                                           class="inline-flex items-center justify-center w-9 h-9 bg-gray-700 hover:bg-gray-800 text-white rounded-xl transition-all shadow-sm">
+                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/></svg>
+                                        </a>
+                                        <a href="{{ route('demande.pdf', $request->id) }}" target="_blank" title="Télécharger PDF"
+                                           class="inline-flex items-center justify-center w-9 h-9 bg-red-600 hover:bg-red-700 text-white rounded-xl transition-all shadow-sm">
+                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+                                        </a>
+                                    @endif
 
-                            @if($request->isAnnotated())
-                                <a href="{{ route('demande.print', $request->id) }}" target="_blank"
-                                   class="px-4 py-2 bg-gray-700 hover:bg-gray-800 text-white rounded flex items-center gap-1">
+                                @elseif(isset($pendingAffectation) && $pendingAffectation)
+                                    {{-- Mode consultation — seul l'avis est autorisé --}}
+                                    <div class="flex items-center gap-2 bg-indigo-50 border border-indigo-300 rounded-xl px-3 py-2">
+                                        <svg class="w-4 h-4 text-indigo-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/>
+                                        </svg>
+                                        <div>
+                                            <p class="text-xs font-bold text-indigo-800 leading-none">Mode consultation</p>
+                                            <p class="text-xs text-indigo-600 mt-0.5">Soumettez votre avis ci-contre</p>
+                                        </div>
+                                    </div>
+
+                                @elseif(isset($pendingWorkflow) && $pendingWorkflow)
+                                    {{-- Verrou — réception en attente --}}
+                                    <div class="flex items-center gap-2 bg-amber-50 border border-amber-300 rounded-xl px-3 py-2">
+                                        <svg class="w-4 h-4 text-amber-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
+                                        </svg>
+                                        <div>
+                                            <p class="text-xs font-bold text-amber-800 leading-none">Actions bloquées</p>
+                                            <p class="text-xs text-amber-600 mt-0.5">Confirmez d'abord la réception</p>
+                                        </div>
+                                    </div>
+
+                                @else
+                                    {{-- Transférer --}}
+                                    @if($request->isAnnotated())
+                                        <button onclick="document.getElementById('transferModal').classList.remove('hidden')"
+                                                class="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-xl transition-all shadow-sm hover:shadow">
+                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"/>
+                                            </svg>
+                                            Transférer
+                                        </button>
+                                    @else
+                                        <button disabled title="Annoter le dossier d'abord"
+                                                class="inline-flex items-center gap-2 px-4 py-2 bg-gray-100 text-gray-400 text-sm font-medium rounded-xl cursor-not-allowed">
+                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"/>
+                                            </svg>
+                                            Transférer
+                                        </button>
+                                    @endif
+
+                                    {{-- Complément --}}
+                                    @if($request->status->code !== 'COMPLEMENT_REQUIS')
+                                        <button onclick="document.getElementById('complementModal').classList.remove('hidden'); document.getElementById('complementModal').closest('.bg-white').classList.remove('hidden')"
+                                                class="inline-flex items-center gap-2 px-4 py-2 bg-orange-500 hover:bg-orange-600 text-white text-sm font-medium rounded-xl transition-all shadow-sm hover:shadow">
+                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                                            </svg>
+                                            Complément
+                                        </button>
+                                    @else
+                                        <span class="inline-flex items-center gap-1.5 px-3 py-2 bg-orange-50 text-orange-700 text-xs font-semibold rounded-xl ring-1 ring-orange-200">
+                                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                                            En attente complément
+                                        </span>
+                                    @endif
+
+                                    {{-- Séparateur --}}
+                                    <div class="w-px h-6 bg-gray-200"></div>
+
+                                    {{-- Imprimer --}}
+                                    @if($request->isAnnotated())
+                                        <a href="{{ route('demande.print', $request->id) }}" target="_blank"
+                                           title="Imprimer"
+                                           class="inline-flex items-center justify-center w-9 h-9 bg-gray-700 hover:bg-gray-800 text-white rounded-xl transition-all shadow-sm hover:shadow">
+                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/>
+                                            </svg>
+                                        </a>
+                                        <a href="{{ route('demande.pdf', $request->id) }}" target="_blank"
+                                           title="Télécharger PDF"
+                                           class="inline-flex items-center justify-center w-9 h-9 bg-red-600 hover:bg-red-700 text-white rounded-xl transition-all shadow-sm hover:shadow">
+                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                                            </svg>
+                                        </a>
+                                    @else
+                                        <button disabled title="Annoter d'abord pour imprimer"
+                                                class="inline-flex items-center justify-center w-9 h-9 bg-gray-100 text-gray-300 rounded-xl cursor-not-allowed">
+                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/>
+                                            </svg>
+                                        </button>
+                                        <button disabled title="Annoter d'abord pour télécharger"
+                                                class="inline-flex items-center justify-center w-9 h-9 bg-gray-100 text-gray-300 rounded-xl cursor-not-allowed">
+                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                                            </svg>
+                                        </button>
+                                    @endif
+                                @endif
+
+                            @endhasanyrole
+                        @endif
+
+                        @if($from === 'dashboard')
+                            @if($editRoute && $request->canBeEditedByUser())
+                                <a href="{{ route($editRoute, $request->id) }}"
+                                   class="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-xl transition-all shadow-sm hover:shadow">
                                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                              d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/>
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
                                     </svg>
-                                    {{ __('messages.print') }}
+                                    Modifier
                                 </a>
-                                <a href="{{ route('demande.pdf', $request->id) }}"
-                                   class="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded flex items-center gap-1">
+                            @endif
+                            @if($request->isDraft())
+                                <button type="button" onclick="document.getElementById('deleteConfirmModal').classList.remove('hidden')"
+                                        class="inline-flex items-center gap-2 px-4 py-2 bg-red-600 hover:bg-red-700 text-white text-sm font-medium rounded-xl transition-all shadow-sm hover:shadow">
                                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                              d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
                                     </svg>
-                                    {{ __('messages.download_pdf') }}
-                                </a>
-                            @else
-                                <button class="px-4 py-2 bg-gray-300 text-gray-500 rounded cursor-not-allowed" disabled>
-                                    {{ __('messages.print') }}
-                                </button>
-                                <button class="px-4 py-2 bg-gray-300 text-gray-500 rounded cursor-not-allowed" disabled>
-                                    {{ __('messages.download_pdf') }}
+                                    Supprimer
                                 </button>
                             @endif
                         @endif
 
+                        {{-- Bouton retour --}}
+                        @if($from === 'dashboard')
+                            <a href="{{ route('personal.dashboard') }}"
+                               title="{{ __('messages.back_to_dashboard') }}"
+                               class="inline-flex items-center justify-center w-9 h-9 bg-gray-100 hover:bg-gray-200 text-gray-600 rounded-xl transition-colors">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
+                                </svg>
+                            </a>
+                        @elseif($from === 'cart')
+                            <a href="{{ route('personal.cart') }}"
+                               title="{{ __('messages.back_to_basket') }}"
+                               class="inline-flex items-center justify-center w-9 h-9 bg-gray-100 hover:bg-gray-200 text-gray-600 rounded-xl transition-colors">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
+                                </svg>
+                            </a>
+                        @endif
 
-                    @if ($from === 'dashboard')
-                        <a href="{{ route('personal.dashboard') }}"
-                                                class="bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-2 rounded-md flex items-center transition-colors">
-                                                <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                                        d="M3 10h10M3 14h10m5-4v8m-9-6h10M3 10l5 5m0 0l5-5" />
-                                                </svg>
-                                                {{ __('messages.back_to_dashboard') }}
-                        </a>
-                    @elseif ($from === 'cart')
-                        <a href="{{ route('personal.cart') }}"
-                                                class="bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-2 rounded-md flex items-center transition-colors">
-                                                <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                                        d="M3 10h10M3 14h10m5-4v8m-9-6h10M3 10l5 5m0 0l5-5" />
-                                                </svg>
-                                                {{ __('messages.back_to_basket') }}
-                        </a>
-                    @endif
                     </div>
                 </div>
             </div>
         </div>
     </div>
 
+    {{-- ══════════════ LAYOUT DEUX COLONNES ══════════════ --}}
+    <div class="max-w-7xl mx-auto mt-5 sm:px-6 lg:px-8">
+        <div class="grid grid-cols-1 lg:grid-cols-6 gap-5 items-start">
+
+            {{-- ─── COLONNE DROITE (visuellement) : réception, annotation, messages ─── --}}
+            <div class="lg:col-span-2 lg:order-2 lg:sticky lg:top-4 space-y-4">
+
+    {{-- ====================== ALERTE RÉCEPTION EN ATTENTE ====================== --}}
+    @if($from === 'cart' && isset($pendingWorkflow) && $pendingWorkflow)
+        <div class="bg-white rounded-2xl border-2 border-amber-400 shadow-sm overflow-hidden" x-data="{ showRefus: false }">
+            <div class="bg-amber-400 px-4 py-2.5 flex items-center gap-2">
+                <svg class="w-4 h-4 text-white flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
+                </svg>
+                <span class="text-white font-bold text-sm tracking-wide">RÉCEPTION REQUISE</span>
+            </div>
+            <div class="p-4">
+                <p class="text-sm text-gray-700 mb-1">
+                    Dossier transféré
+                    @if($pendingWorkflow->fromService)
+                        depuis <strong class="text-gray-900">{{ $pendingWorkflow->fromService->nom }}</strong>
+                    @endif
+                    vers <strong class="text-gray-900">{{ $pendingWorkflow->toService?->nom ?? 'votre service' }}</strong>.
+                </p>
+                <p class="text-xs text-gray-400 mb-1">{{ $pendingWorkflow->created_at->diffForHumans() }}</p>
+                @if($pendingWorkflow->commentaire)
+                    <p class="text-xs text-gray-500 italic bg-gray-50 rounded-lg px-3 py-2 mb-3 border border-gray-100">"{{ $pendingWorkflow->commentaire }}"</p>
+                @endif
+                <p class="text-xs text-amber-800 font-semibold bg-amber-50 rounded-lg px-3 py-2 border border-amber-100 mb-4">
+                    Vous devez confirmer ou refuser la réception avant toute autre action sur ce dossier.
+                </p>
+
+                <div class="space-y-2">
+                    <form method="POST" action="{{ route('admin.workflows.accepter', $pendingWorkflow) }}">
+                        @csrf
+                        <button type="submit"
+                                class="w-full flex items-center justify-center gap-2 bg-green-600 hover:bg-green-700 text-white text-sm font-semibold py-2.5 rounded-xl transition-all shadow-sm hover:shadow">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                            </svg>
+                            Confirmer la réception
+                        </button>
+                    </form>
+                    <button type="button" @click="showRefus = !showRefus"
+                            class="w-full flex items-center justify-center gap-2 bg-white hover:bg-red-50 text-red-600 border border-red-200 hover:border-red-300 text-sm font-semibold py-2.5 rounded-xl transition-all">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                        </svg>
+                        Refuser la réception
+                    </button>
+                </div>
+
+                <div x-show="showRefus" x-cloak class="mt-3 bg-red-50 border border-red-200 rounded-xl p-4">
+                    <p class="text-xs font-semibold text-red-700 mb-2">
+                        Le dossier sera retourné à {{ $pendingWorkflow->fromService->nom ?? "l'expéditeur" }}.
+                    </p>
+                    <form method="POST" action="{{ route('admin.workflows.refuser', $pendingWorkflow) }}">
+                        @csrf
+                        <textarea name="motif" rows="2" placeholder="Motif du refus (optionnel)"
+                                  class="w-full border border-red-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-red-300 bg-white mb-2 resize-none"></textarea>
+                        <div class="flex gap-2">
+                            <button type="submit"
+                                    class="flex-1 bg-red-600 hover:bg-red-700 text-white text-sm font-semibold py-2 rounded-lg transition-colors">
+                                Confirmer
+                            </button>
+                            <button type="button" @click="showRefus = false"
+                                    class="px-4 text-gray-500 hover:text-gray-700 text-sm py-2 rounded-lg hover:bg-gray-100 transition-colors">
+                                Annuler
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    @endif
+    {{-- ================================================================ --}}
+
     {{-- ====================== LOCALISATION DU DOSSIER (vue usager) ====================== --}}
     @if($from === 'dashboard' && !$request->isDraft())
-        <div class="max-w-7xl mx-auto mt-4 sm:px-6 lg:px-8">
-            <div class="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                <div class="flex items-start gap-3">
+        <div class="bg-blue-50 border border-blue-200 rounded-2xl p-4">
+            <div class="flex items-start gap-3">
                     <svg class="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                               d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/>
@@ -213,7 +381,6 @@
                     </div>
                 </div>
             </div>
-        </div>
     @endif
     {{-- ================================================================ --}}
 
@@ -229,37 +396,88 @@
                 ->first();
         @endphp
         @if($lastIncoming)
-            <div class="max-w-7xl mx-auto mt-4 sm:px-6 lg:px-8">
-                <div class="bg-amber-50 border border-amber-200 rounded-lg p-4 flex items-start gap-3">
-                    <div class="w-8 h-8 rounded-full bg-amber-100 flex items-center justify-center flex-shrink-0">
-                        <i class="fas fa-arrow-right text-amber-600 text-sm"></i>
-                    </div>
-                    <div class="text-sm leading-relaxed">
-                        <p class="font-semibold text-amber-900">
-                            Transmis par <span class="text-amber-700">{{ $lastIncoming->fromService->nom }}</span>
-                        </p>
-                        <p class="text-amber-700 mt-0.5">
-                            Déclenché par <span class="font-medium">{{ $lastIncoming->user?->name ?? '—' }}</span>
-                            le {{ $lastIncoming->created_at->format('d/m/Y à H:i') }}
-                            <span class="text-amber-500 text-xs ml-1">({{ $lastIncoming->created_at->diffForHumans() }})</span>
-                        </p>
-                        @if($lastIncoming->commentaire)
-                            <p class="text-amber-600 italic mt-1">"{{ $lastIncoming->commentaire }}"</p>
-                        @endif
-                    </div>
+            <div class="bg-amber-50 border border-amber-200 rounded-2xl p-4 flex items-start gap-3">
+                <div class="w-8 h-8 rounded-xl bg-amber-100 flex items-center justify-center flex-shrink-0">
+                    <svg class="w-4 h-4 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 9l3 3m0 0l-3 3m3-3H8m13 0a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                    </svg>
+                </div>
+                <div class="text-sm leading-relaxed">
+                    <p class="font-semibold text-amber-900 text-xs uppercase tracking-wide mb-1">Transmis par</p>
+                    <p class="font-bold text-amber-800">{{ $lastIncoming->fromService->nom }}</p>
+                    <p class="text-amber-600 text-xs mt-1">
+                        Via <span class="font-medium">{{ $lastIncoming->user?->name ?? '—' }}</span>
+                        · {{ $lastIncoming->created_at->format('d/m/Y à H:i') }}
+                    </p>
+                    @if($lastIncoming->commentaire)
+                        <p class="text-amber-700 italic text-xs mt-1 bg-amber-100 rounded px-2 py-1">"{{ $lastIncoming->commentaire }}"</p>
+                    @endif
                 </div>
             </div>
         @endif
         @endrole
     @endif
 
+    {{-- ====================== PANNEAU AVIS (mode consultation) ====================== --}}
+    @if($from === 'cart' && isset($pendingAffectation) && $pendingAffectation)
+        <div class="bg-white border-2 border-indigo-300 rounded-2xl shadow-sm overflow-hidden">
+            <div class="bg-indigo-500 px-4 py-2.5 flex items-center gap-2">
+                <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/>
+                </svg>
+                <span class="text-white font-bold text-sm tracking-wide">VOTRE AVIS EST REQUIS</span>
+            </div>
+            <div class="p-4">
+                <p class="text-xs text-gray-500 mb-4">
+                    Ce dossier vous a été affecté pour consultation le
+                    <strong>{{ $pendingAffectation->date_affectation->format('d/m/Y à H:i') }}</strong>.
+                    Soumettez votre avis — c'est la seule action disponible pour votre service sur ce dossier.
+                </p>
+                <form method="POST" action="{{ route('admin.affectations.repondre', $pendingAffectation->id) }}">
+                    @csrf
+                    <div class="mb-3">
+                        <label class="block text-xs font-semibold text-gray-700 mb-1">Décision <span class="text-red-500">*</span></label>
+                        <select name="statut" required
+                                class="w-full border border-gray-300 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300 bg-white">
+                            <option value="">Choisir...</option>
+                            <option value="TERMINE">Favorable</option>
+                            <option value="REJETE">Défavorable</option>
+                            <option value="EN_COURS">En cours d'examen</option>
+                        </select>
+                    </div>
+                    <div class="mb-4">
+                        <label class="block text-xs font-semibold text-gray-700 mb-1">Commentaire <span class="text-gray-400 font-normal">(optionnel)</span></label>
+                        <textarea name="avis" rows="4" maxlength="3000"
+                                  class="w-full border border-gray-300 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300 resize-none"
+                                  placeholder="Détaillez votre avis, observations ou recommandations..."></textarea>
+                    </div>
+                    <button type="submit"
+                            class="w-full flex items-center justify-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-semibold py-2.5 rounded-xl transition-all shadow-sm hover:shadow">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                        </svg>
+                        Soumettre mon avis
+                    </button>
+                </form>
+            </div>
+        </div>
+    @endif
+    {{-- ================================================================ --}}
+
     {{-- ====================== PANNEAU ANNOTATION ====================== --}}
-    @if($from === 'cart')
-        <div class="max-w-7xl mx-auto mt-4 sm:px-6 lg:px-8">
+    @if($from === 'cart' && (!isset($pendingWorkflow) || !$pendingWorkflow) && (!isset($pendingAffectation) || !$pendingAffectation))
+        <div class="bg-white border border-gray-200 rounded-2xl shadow-sm overflow-hidden">
+            <div class="px-4 py-3 border-b border-gray-100 flex items-center gap-2">
+                <svg class="w-4 h-4 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
+                </svg>
+                <span class="text-sm font-semibold text-gray-700">Annotation</span>
+            </div>
+            <div class="p-4">
 
             {{-- Annotation existante --}}
             @if($request->isAnnotated())
-                <div class="bg-amber-50 border border-amber-300 rounded-lg p-4 mb-4">
+                <div class="bg-amber-50 border border-amber-200 rounded-xl p-4 mb-4">
                     <div class="flex items-start gap-3">
                         <div class="flex-shrink-0 mt-0.5">
                             <svg class="w-5 h-5 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -282,10 +500,12 @@
                             </p>
                         </div>
                         @role('direction')
-                            <button onclick="document.getElementById('annotationModal').classList.remove('hidden')"
-                                    class="text-xs text-amber-700 underline hover:text-amber-900">
-                                Modifier
-                            </button>
+                            @if(!isset($isClosed) || !$isClosed)
+                                <button onclick="document.getElementById('annotationModal').classList.remove('hidden')"
+                                        class="text-xs text-amber-700 underline hover:text-amber-900">
+                                    Modifier
+                                </button>
+                            @endif
                         @endrole
                     </div>
                 </div>
@@ -299,7 +519,8 @@
                 </div>
             @endif
 
-            {{-- Formulaire annotation (Direction uniquement) --}}
+            {{-- Formulaire annotation (Direction uniquement, dossier non clôturé) --}}
+            @if(!isset($isClosed) || !$isClosed)
             @role('direction')
                 <div id="annotationModal"
                      class="{{ $request->isAnnotated() ? 'hidden' : '' }} bg-white border border-gray-200 rounded-lg shadow p-5 mb-4">
@@ -342,7 +563,9 @@
                     </form>
                 </div>
             @endrole
-        </div>
+            @endif
+            </div>{{-- end p-4 --}}
+        </div>{{-- end card --}}
     @endif
     {{-- ================================================================ --}}
 
@@ -351,18 +574,24 @@
         $messages = $messages ?? collect();
     @endphp
 
-    {{-- Service panel: Demander un complément (cart view, non COMPLEMENT_REQUIS) --}}
-    @if($from === 'cart' && $request->status->code !== 'COMPLEMENT_REQUIS')
+
+    {{-- Service panel: Demander un complément (cart view, non COMPLEMENT_REQUIS, hors mode consultation) --}}
+    @if($from === 'cart' && (!isset($isClosed) || !$isClosed) && (!isset($pendingWorkflow) || !$pendingWorkflow) && (!isset($pendingAffectation) || !$pendingAffectation) && $request->status->code !== 'COMPLEMENT_REQUIS')
         @hasanyrole('secretariat|direction|service_liquidation|service_formalite|service_controle_placement|service_comptabilite|service_assurance|administration|admin')
-            <div class="max-w-7xl mx-auto mt-4 sm:px-6 lg:px-8">
-                <div class="bg-white border border-gray-200 rounded-lg shadow-sm p-5">
-                    <div class="flex items-center justify-between mb-3">
-                        <h3 class="text-base font-semibold text-gray-800">Demander un complément à l'usager</h3>
-                        <button onclick="document.getElementById('complementModal').classList.toggle('hidden')"
-                                class="text-sm text-blue-600 hover:underline">
-                            Ouvrir le formulaire
-                        </button>
+            <div class="bg-white border border-gray-200 rounded-2xl shadow-sm overflow-hidden">
+                <div class="px-4 py-3 border-b border-gray-100 flex items-center justify-between">
+                    <div class="flex items-center gap-2">
+                        <svg class="w-4 h-4 text-orange-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                        </svg>
+                        <span class="text-sm font-semibold text-gray-700">Demander un complément</span>
                     </div>
+                    <button onclick="document.getElementById('complementModal').classList.toggle('hidden')"
+                            class="text-xs text-blue-600 hover:text-blue-800 font-medium">
+                        Ouvrir
+                    </button>
+                </div>
+                <div class="p-4">
                     <div id="complementModal" class="hidden">
                         <form method="POST" action="{{ route('demande.complement', $request->id) }}">
                             @csrf
@@ -395,18 +624,15 @@
 
     {{-- User alert + response form (dashboard view, COMPLEMENT_REQUIS) --}}
     @if($from === 'dashboard' && $request->needsComplement())
-        <div class="max-w-7xl mx-auto mt-4 sm:px-6 lg:px-8">
-            <div class="bg-orange-50 border border-orange-300 rounded-lg p-5">
-                <div class="flex items-start gap-3 mb-4">
-                    <svg class="w-6 h-6 text-orange-500 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                              d="M12 9v2m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/>
-                    </svg>
-                    <div>
-                        <p class="font-semibold text-orange-800 text-base">{{ __('messages.complement_required') }}</p>
-                        <p class="text-sm text-orange-700 mt-1">{{ __('messages.complement_info') }}</p>
-                    </div>
-                </div>
+        <div class="bg-orange-50 border-2 border-orange-300 rounded-2xl overflow-hidden">
+            <div class="bg-orange-400 px-4 py-2.5 flex items-center gap-2">
+                <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/>
+                </svg>
+                <span class="text-white font-bold text-sm">COMPLÉMENT REQUIS</span>
+            </div>
+            <div class="p-4">
+                <p class="text-sm text-orange-800 mb-4">{{ __('messages.complement_info') }}</p>
 
                 {{-- Action buttons --}}
                 <div class="flex flex-wrap gap-3 mb-4">
@@ -470,23 +696,22 @@
 
     {{-- Message thread (visible in both views when there are messages) --}}
     @if($messages->isNotEmpty())
-        <div class="max-w-7xl mx-auto mt-4 sm:px-6 lg:px-8">
-            <div class="bg-white border border-gray-200 rounded-lg shadow-sm p-5" x-data="{ open: false }">
-                <button type="button" @click="open = !open"
-                        class="w-full flex items-center justify-between text-base font-semibold text-gray-800">
-                    <span class="flex items-center gap-2">
-                        <svg class="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                  d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/>
-                        </svg>
-                        {{ __('messages.messages_thread') }}
-                        <span class="text-xs font-normal text-gray-400">({{ $messages->count() }})</span>
-                    </span>
-                    <svg class="w-4 h-4 text-gray-400 transition-transform duration-200" :class="open ? 'rotate-180' : ''" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+        <div class="bg-white border border-gray-200 rounded-2xl shadow-sm overflow-hidden" x-data="{ open: false }">
+            <button type="button" @click="open = !open"
+                    class="w-full px-4 py-3 flex items-center justify-between border-b border-gray-100">
+                <span class="flex items-center gap-2">
+                    <svg class="w-4 h-4 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                              d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/>
                     </svg>
-                </button>
-                <div x-show="open" x-transition class="space-y-4 mt-4">
+                    <span class="text-sm font-semibold text-gray-700">{{ __('messages.messages_thread') }}</span>
+                    <span class="text-xs font-normal text-gray-400 bg-gray-100 rounded-full px-2 py-0.5">{{ $messages->count() }}</span>
+                </span>
+                <svg class="w-4 h-4 text-gray-400 transition-transform duration-200" :class="open ? 'rotate-180' : ''" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+                </svg>
+            </button>
+            <div x-show="open" x-transition class="p-4 space-y-3">
                     @foreach($messages as $msg)
                         @php $isService = $msg->isFromService(); @endphp
                         <div class="flex {{ $isService ? 'justify-start' : 'justify-end' }}">
@@ -531,44 +756,273 @@
                         </div>
                     </div>
                 @endif
-            </div>
         </div>
     @endif
     {{-- ================================================================ --}}
 
+    {{-- ── Affectations pour avis (sidebar) ──────────────────────── --}}
+    @if($from === 'cart')
+        <div class="bg-white border border-indigo-200 rounded-2xl overflow-hidden">
+            <div class="bg-indigo-50 px-4 py-3 flex items-center justify-between border-b border-indigo-100">
+                <div class="flex items-center gap-2">
+                    <svg class="w-4 h-4 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
+                    </svg>
+                    <h3 class="font-semibold text-indigo-800 text-sm">Affectations pour avis</h3>
+                    @if(isset($affectations) && $affectations->isNotEmpty())
+                        <span class="text-xs bg-indigo-200 text-indigo-800 font-semibold px-2 py-0.5 rounded-full">{{ $affectations->count() }}</span>
+                    @endif
+                </div>
+                @role('direction')
+                    @if(!isset($isClosed) || !$isClosed)
+                        <button type="button"
+                                onclick="document.getElementById('affectationPanel').classList.toggle('hidden')"
+                                class="text-xs font-medium text-indigo-600 hover:text-indigo-800 flex items-center gap-1">
+                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+                            </svg>
+                            Affecter
+                        </button>
+                    @endif
+                @endrole
+            </div>
+
+            @if(!isset($isClosed) || !$isClosed)
+            @role('direction')
+                <div id="affectationPanel" class="hidden border-b border-indigo-100 px-4 py-4 bg-indigo-50/30">
+                    <form method="POST" action="{{ route('admin.demandes.affecter', $request->id) }}">
+                        @csrf
+                        <p class="text-xs text-gray-500 mb-3">Sélectionnez les services à consulter simultanément :</p>
+                        <div class="grid grid-cols-2 gap-2 mb-4">
+                            @foreach(\App\Models\Service::all() as $svc)
+                                <label class="flex items-center gap-2 text-sm cursor-pointer">
+                                    <input type="checkbox" name="service_ids[]" value="{{ $svc->id }}"
+                                           class="rounded border-gray-300 text-indigo-600 focus:ring-indigo-400">
+                                    {{ $svc->nom }}
+                                </label>
+                            @endforeach
+                        </div>
+                        <div class="flex justify-end">
+                            <button type="submit"
+                                    class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium rounded-xl transition-colors">
+                                Affecter
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            @endrole
+            @endif
+
+            @if(isset($affectations) && $affectations->isNotEmpty())
+                <div class="divide-y divide-gray-100">
+                    @foreach($affectations as $aff)
+                        @php
+                            $statusMap = [
+                                'EN_ATTENTE' => ['label' => 'En attente',   'class' => 'bg-yellow-100 text-yellow-800'],
+                                'EN_COURS'   => ['label' => 'En cours',     'class' => 'bg-blue-100 text-blue-800'],
+                                'TERMINE'    => ['label' => 'Favorable',    'class' => 'bg-green-100 text-green-800'],
+                                'REJETE'     => ['label' => 'Défavorable',  'class' => 'bg-red-100 text-red-800'],
+                            ];
+                            $st = $statusMap[$aff->statut] ?? ['label' => $aff->statut, 'class' => 'bg-gray-100 text-gray-700'];
+                            $isMyService = auth()->user()->service_id === $aff->service_id;
+                            $canRespond  = $isMyService && !in_array($aff->statut, ['TERMINE', 'REJETE']);
+                        @endphp
+                        <div class="px-4 py-3 flex items-start justify-between gap-4">
+                            <div class="flex-1 min-w-0">
+                                <div class="flex items-center gap-2 flex-wrap">
+                                    <p class="font-medium text-sm text-gray-800">{{ $aff->service->nom }}</p>
+                                    @if($isMyService)
+                                        <span class="text-xs bg-indigo-100 text-indigo-600 px-1.5 py-0.5 rounded font-medium">Votre service</span>
+                                    @endif
+                                </div>
+                                @if($aff->avis)
+                                    <p class="text-xs text-gray-500 mt-1 italic">"{{ $aff->avis }}"</p>
+                                @endif
+                                <p class="text-xs text-gray-400 mt-0.5">
+                                    {{ $aff->date_affectation->format('d/m/Y') }}
+                                    @if($aff->date_reponse)
+                                        · répondu {{ $aff->date_reponse->format('d/m/Y') }}
+                                    @endif
+                                </p>
+                            </div>
+                            <div class="flex-shrink-0 flex flex-col items-end gap-1.5">
+                                <span class="text-xs px-2 py-0.5 rounded-full font-medium {{ $st['class'] }}">{{ $st['label'] }}</span>
+                                @if($canRespond && !auth()->user()->hasRole('direction'))
+                                    <button type="button"
+                                            onclick="document.getElementById('avisModal{{ $aff->id }}').classList.remove('hidden')"
+                                            class="text-xs text-indigo-600 hover:text-indigo-800 font-medium hover:underline">
+                                        Mettre à jour
+                                    </button>
+                                    <div id="avisModal{{ $aff->id }}"
+                                         class="hidden fixed inset-0 z-[99999] flex items-center justify-center bg-black/50">
+                                        <div class="bg-white w-full max-w-md rounded-2xl shadow-xl p-6">
+                                            <h3 class="font-semibold text-gray-800 mb-4">Avis — {{ $aff->service->nom }}</h3>
+                                            <form method="POST" action="{{ route('admin.affectations.repondre', $aff->id) }}">
+                                                @csrf
+                                                <div class="mb-3">
+                                                    <label class="block text-sm font-medium text-gray-700 mb-1">Décision <span class="text-red-500">*</span></label>
+                                                    <select name="statut" required class="w-full border border-gray-300 rounded-xl px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-300">
+                                                        <option value="EN_COURS" {{ $aff->statut === 'EN_COURS' ? 'selected' : '' }}>En cours d'examen</option>
+                                                        <option value="TERMINE">Favorable</option>
+                                                        <option value="REJETE">Défavorable</option>
+                                                    </select>
+                                                </div>
+                                                <div class="mb-5">
+                                                    <label class="block text-sm font-medium text-gray-700 mb-1">Commentaire</label>
+                                                    <textarea name="avis" rows="3"
+                                                              class="w-full border border-gray-300 rounded-xl px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-300 resize-none"
+                                                              placeholder="Observations, recommandations...">{{ $aff->avis }}</textarea>
+                                                </div>
+                                                <div class="flex justify-end gap-2">
+                                                    <button type="button"
+                                                            onclick="document.getElementById('avisModal{{ $aff->id }}').classList.add('hidden')"
+                                                            class="px-4 py-2 border border-gray-200 rounded-xl text-sm text-gray-600 hover:bg-gray-50">
+                                                        Annuler
+                                                    </button>
+                                                    <button type="submit"
+                                                            class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium rounded-xl">
+                                                        Enregistrer
+                                                    </button>
+                                                </div>
+                                            </form>
+                                        </div>
+                                    </div>
+                                @endif
+                            </div>
+                        </div>
+                    @endforeach
+                </div>
+            @else
+                <p class="px-4 py-4 text-sm text-gray-400 italic text-center">Aucune affectation pour ce dossier.</p>
+            @endif
+        </div>
+    @endif
+
+    {{-- ── Rouvrir (sidebar, Direction, dossier clôturé) ─────────── --}}
+    @if($from === 'cart' && isset($isClosed) && $isClosed)
+        @role('direction')
+            <div class="bg-white rounded-2xl border-2 border-gray-300 shadow-sm overflow-hidden" x-data="{ open: false }">
+                <div class="bg-gray-100 px-4 py-2.5 flex items-center gap-2">
+                    <svg class="w-4 h-4 text-gray-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+                    </svg>
+                    <span class="text-gray-700 font-bold text-sm tracking-wide">DOSSIER CLÔTURÉ</span>
+                </div>
+                <div class="p-4">
+                    <p class="text-sm text-gray-500 mb-3">Ce dossier a reçu une décision finale. Vous pouvez le réouvrir si nécessaire.</p>
+                    <button type="button" @click="open = !open"
+                            class="w-full px-4 py-2 bg-gray-700 hover:bg-gray-800 text-white text-sm font-medium rounded-xl flex items-center justify-center gap-2 transition-colors">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+                        </svg>
+                        Réouvrir le dossier
+                    </button>
+                    <div x-show="open" x-transition class="mt-3">
+                        <form method="POST" action="{{ route('admin.demandes.rouvrir', $request->id) }}"
+                              onsubmit="return confirm('Réouvrir ce dossier et annuler la décision finale ?')">
+                            @csrf
+                            <textarea name="motif" rows="2" placeholder="Motif de réouverture (optionnel)"
+                                      class="w-full border border-gray-300 rounded-xl px-3 py-2 text-sm focus:ring-2 focus:ring-gray-300 resize-none mb-2"></textarea>
+                            <button type="submit"
+                                    class="w-full px-4 py-2 bg-red-600 hover:bg-red-700 text-white text-sm font-medium rounded-xl transition-colors">
+                                Confirmer la réouverture
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        @endrole
+    @endif
+
+    {{-- ── Décision finale Direction (sidebar) ────────────────────── --}}
+    @if($from === 'cart')
+        @role('direction')
+            @php
+                $directionServiceId = \App\Models\Service::where('code', \App\Models\Service::DIRECTION)->value('id');
+                $isAtDirection = $request->current_service_id === $directionServiceId;
+                $isClosed = in_array($request->status->code, ['APPROUVEE', 'FINALISEE', 'REJETEE', 'ANNULEE']);
+                $canFinalize = $request->workflows()
+                    ->where('reception_status', 'accepted')
+                    ->whereNotNull('from_service_id')
+                    ->exists();
+            @endphp
+            @if($isAtDirection && !$isClosed)
+                <div class="bg-white rounded-2xl border-2 border-blue-300 shadow-sm overflow-hidden">
+                    <div class="bg-blue-600 px-4 py-2.5 flex items-center gap-2">
+                        <svg class="w-4 h-4 text-white flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                        </svg>
+                        <span class="text-white font-bold text-sm tracking-wide">DÉCISION FINALE</span>
+                    </div>
+                    <div class="p-4">
+                        <p class="text-sm text-gray-500 mb-3">Le dossier est revenu à la Direction pour décision finale.</p>
+
+                        @if(!$canFinalize)
+                            <div class="flex items-start gap-2 bg-yellow-50 border border-yellow-200 rounded-xl px-3 py-2 mb-3">
+                                <svg class="w-4 h-4 text-yellow-500 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/>
+                                </svg>
+                                <p class="text-xs text-yellow-800">Ce dossier doit d'abord être traité et acheminé par un autre service.</p>
+                            </div>
+                        @endif
+
+                        <div class="flex flex-col gap-2">
+                            <form method="POST" action="{{ route('admin.demandes.approuver', $request->id) }}"
+                                  onsubmit="return confirm('Approuver définitivement ce dossier ?')">
+                                @csrf
+                                <button type="submit" @disabled(!$canFinalize)
+                                        class="w-full {{ $canFinalize ? 'bg-blue-600 hover:bg-blue-700' : 'bg-gray-200 text-gray-400 cursor-not-allowed' }} px-4 py-2 text-white text-sm font-medium rounded-xl flex items-center justify-center gap-2 transition-colors">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                                    </svg>
+                                    Approuver
+                                </button>
+                            </form>
+                            <form method="POST" action="{{ route('admin.demandes.cloturer', $request->id) }}"
+                                  onsubmit="return confirm('Clôturer définitivement ce dossier ?')">
+                                @csrf
+                                <button type="submit" @disabled(!$canFinalize)
+                                        class="w-full {{ $canFinalize ? 'bg-green-600 hover:bg-green-700' : 'bg-gray-200 text-gray-400 cursor-not-allowed' }} px-4 py-2 text-white text-sm font-medium rounded-xl flex items-center justify-center gap-2 transition-colors">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                                    </svg>
+                                    Clôturer
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            @endif
+        @endrole
+    @endif
+
+            </div>{{-- end sidebar --}}
+
+            {{-- ─── COLONNE GAUCHE (visuellement) : données du dossier ─── --}}
+            <div class="lg:col-span-4 lg:order-1 min-w-0">
+
     @switch($request->type)
         {{-- Pensionnaire --}}
         @case('DEMANDE_VIREMENT_BANCAIRE')
-            <div class="py-5">
-                <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
-                    <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
-                        <div class="p-6 bg-white border-b border-gray-200">
+            <div>
+                <div>
+                    <div class="bg-white rounded-2xl border border-gray-200 shadow-sm mb-4">
+                        <div class="p-6">
 
                             <!-- ========================= -->
                             <!-- Status Banner -->
                             <!-- ========================= -->
-                            <div class="mb-6 p-4 rounded-lg {{ App\Models\Status::getStatusStyle($request->status->code) }}">
-                                <div class="flex items-center justify-between">
-                                    <div>
-                                        <span class="font-semibold">Statut actuel :</span>
-                                        {{ $request->status->code }}
-                                    </div>
-                                    <span class="text-sm">
-                                        Dernière mise à jour :
-                                        {{ $request->updated_at->format('d/m/Y H:i') }}
-                                    </span>
-                                </div>
-                            </div>
+                            {{-- Status shown in page header --}}
 
                             <!-- ========================= -->
                             <!-- Main Grid -->
                             <!-- ========================= -->
-                            <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                            <div class="space-y-5">
 
                                 <!-- ========================= -->
                                 <!-- Left Column -->
                                 <!-- ========================= -->
-                                <div class="lg:col-span-1 space-y-6">
+                                <div class="space-y-5">
 
                                     <!-- État civil -->
                                     <div class="p-4 bg-gray-50 rounded-lg">
@@ -663,7 +1117,7 @@
                                 <!-- ========================= -->
                                 <!-- Right Column -->
                                 <!-- ========================= -->
-                                <div class="lg:col-span-2 space-y-6">
+                                <div class="space-y-5">
 
                                     <!-- Allocation -->
                                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -760,30 +1214,19 @@
             </div>
             @break
         @case('DEMANDE_ATTESTATION')
-            <div class="py-5">
-                <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
-                    <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
-                        <div class="p-6 bg-white border-b border-gray-200">
+            <div>
+                <div>
+                    <div class="bg-white rounded-2xl border border-gray-200 shadow-sm mb-4">
+                        <div class="p-6">
 
                             <!-- Status Banner -->
-                            <div class="mb-6 p-4 rounded-lg {{ App\Models\Status::getStatusStyle($request->status->code) }}">
-                                <div class="flex items-center justify-between">
-                                    <div>
-                                        <span class="font-semibold">Statut actuel :</span>
-                                        {{ $request->status->code }}
-                                    </div>
-                                    <span class="text-sm">
-                                        Dernière mise à jour :
-                                        {{ $request->updated_at->format('d/m/Y H:i') }}
-                                    </span>
-                                </div>
-                            </div>
+                            {{-- Status shown in page header --}}
 
                             <!-- Main Content -->
-                            <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                            <div class="space-y-5">
 
                                 <!-- Left Column -->
-                                <div class="lg:col-span-1 space-y-6">
+                                <div class="space-y-5">
                                     <div class="p-4 bg-gray-50 rounded-lg">
                                         <h3 class="text-lg font-semibold mb-3 text-gray-700">
                                             Informations du pensionnaire
@@ -816,7 +1259,7 @@
                                 </div>
 
                                 <!-- Right Column -->
-                                <div class="lg:col-span-2 space-y-6">
+                                <div class="space-y-5">
 
                                     <!-- Request Details -->
                                     <div class="p-4 bg-gray-50 rounded-lg">
@@ -873,29 +1316,18 @@
             </div>
             @break
         @case('DEMANDE_TRANSFERT_CHEQUE')
-            <div class="py-5">
-                <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
-                    <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
-                        <div class="p-6 bg-white border-b border-gray-200">
+            <div>
+                <div>
+                    <div class="bg-white rounded-2xl border border-gray-200 shadow-sm mb-4">
+                        <div class="p-6">
 
                             <!-- Status Banner -->
-                            <div class="mb-6 p-4 rounded-lg {{ App\Models\Status::getStatusStyle($request->status->code) }}">
-                                <div class="flex items-center justify-between">
-                                    <div>
-                                        <span class="font-semibold">Statut actuel :</span>
-                                        {{ $request->status->code }}
-                                    </div>
-                                    <span class="text-sm">
-                                        Dernière mise à jour :
-                                        {{ $request->updated_at->format('d/m/Y H:i') }}
-                                    </span>
-                                </div>
-                            </div>
+                            {{-- Status shown in page header --}}
 
-                            <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                            <div class="space-y-5">
 
                                 <!-- COLONNE GAUCHE -->
-                                <div class="lg:col-span-1 space-y-6">
+                                <div class="space-y-5">
 
                                     <!-- Identité -->
                                     <div class="p-4 bg-gray-50 rounded-lg">
@@ -962,7 +1394,7 @@
                                 </div>
 
                                 <!-- COLONNE DROITE -->
-                                <div class="lg:col-span-2 space-y-6">
+                                <div class="space-y-5">
 
                                     <!-- Résumé -->
                                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -1070,31 +1502,20 @@
             </div>
             @break
         @case('DEMANDE_ARRET_PAIEMENT')
-            <div class="py-5">
-                <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
+            <div>
+                <div>
 
-                    <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
-                        <div class="p-6 bg-white border-b border-gray-200">
+                    <div class="bg-white rounded-2xl border border-gray-200 shadow-sm mb-4">
+                        <div class="p-6">
 
                             {{-- ================= STATUS BANNER ================= --}}
-                            <div class="mb-6 p-4 rounded-lg {{ App\Models\Status::getStatusStyle($request->status->code) }}">
-                                <div class="flex items-center justify-between">
-                                    <div>
-                                        <span class="font-semibold">Statut actuel :</span>
-                                        {{ $request->status->code }}
-                                    </div>
-                                    <span class="text-sm">
-                                        Dernière mise à jour :
-                                        {{ $request->updated_at->format('d/m/Y H:i') }}
-                                    </span>
-                                </div>
-                            </div>
+                            {{-- Status shown in page header --}}
 
                             {{-- ================= MAIN GRID ================= --}}
-                            <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                            <div class="space-y-5">
 
                                 {{-- ================= LEFT COLUMN ================= --}}
-                                <div class="lg:col-span-1 space-y-6">
+                                <div class="space-y-5">
 
                                     {{-- Pensionnaire --}}
                                     <div class="p-4 bg-gray-50 rounded-lg">
@@ -1171,7 +1592,7 @@
                                 </div>
 
                                 {{-- ================= RIGHT COLUMN ================= --}}
-                                <div class="lg:col-span-2 space-y-6">
+                                <div class="space-y-5">
 
                                     {{-- Détails de la demande --}}
                                     <div class="p-4 bg-gray-50 rounded-lg">
@@ -1288,30 +1709,19 @@
             </div>
             @break
         @case('DEMANDE_REINSERTION')
-            <div class="py-5">
-                <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
-                    <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
-                        <div class="p-6 bg-white border-b border-gray-200">
+            <div>
+                <div>
+                    <div class="bg-white rounded-2xl border border-gray-200 shadow-sm mb-4">
+                        <div class="p-6">
 
                             <!-- Status Banner -->
-                            <div class="mb-6 p-4 rounded-lg {{ App\Models\Status::getStatusStyle($request->status->code) }}">
-                                <div class="flex items-center justify-between">
-                                    <div>
-                                        <span class="font-semibold">Statut actuel :</span>
-                                        {{ $request->status->code }}
-                                    </div>
-                                    <span class="text-sm">
-                                        Dernière mise à jour :
-                                        {{ $request->updated_at->format('d/m/Y H:i') }}
-                                    </span>
-                                </div>
-                            </div>
+                            {{-- Status shown in page header --}}
 
                             <!-- Main Grid -->
-                            <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                            <div class="space-y-5">
 
                                 <!-- LEFT COLUMN -->
-                                <div class="lg:col-span-1 space-y-6">
+                                <div class="space-y-5">
 
                                     <!-- Identity -->
                                     <div class="p-4 bg-gray-50 rounded-lg">
@@ -1339,7 +1749,7 @@
                                 </div>
 
                                 <!-- RIGHT COLUMN -->
-                                <div class="lg:col-span-2 space-y-6">
+                                <div class="space-y-5">
 
                                     <!-- Request Info -->
                                     <div class="p-4 bg-gray-50 rounded-lg">
@@ -1407,37 +1817,26 @@
             </div>
             @break
         @case('DEMANDE_ARRET_VIREMENT')
-            <div class="py-5">
-                <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
+            <div>
+                <div>
 
-                    <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
-                        <div class="p-6 bg-white border-b border-gray-200">
+                    <div class="bg-white rounded-2xl border border-gray-200 shadow-sm mb-4">
+                        <div class="p-6">
 
                             {{-- ===================== --}}
                             {{-- BANNIÈRE DE STATUT --}}
                             {{-- ===================== --}}
-                            <div class="mb-6 p-4 rounded-lg {{ App\Models\Status::getStatusStyle($request->status->code) }}">
-                                <div class="flex items-center justify-between">
-                                    <div>
-                                        <span class="font-semibold">Statut actuel :</span>
-                                        {{ $request->status->code }}
-                                    </div>
-                                    <span class="text-sm">
-                                        Dernière mise à jour :
-                                        {{ $request->updated_at->format('d/m/Y H:i') }}
-                                    </span>
-                                </div>
-                            </div>
+                            {{-- Status shown in page header --}}
 
                             {{-- ===================== --}}
                             {{-- GRILLE PRINCIPALE --}}
                             {{-- ===================== --}}
-                            <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                            <div class="space-y-5">
 
                                 {{-- ===================== --}}
                                 {{-- COLONNE GAUCHE --}}
                                 {{-- ===================== --}}
-                                <div class="lg:col-span-1 space-y-6">
+                                <div class="space-y-5">
 
                                     {{-- Type de demande --}}
                                     <div class="p-4 bg-gray-50 rounded-lg">
@@ -1476,7 +1875,7 @@
                                 {{-- ===================== --}}
                                 {{-- COLONNE DROITE --}}
                                 {{-- ===================== --}}
-                                <div class="lg:col-span-2 space-y-6">
+                                <div class="space-y-5">
 
                                     {{-- Code --}}
                                     <div class="p-4 bg-gray-50 rounded-lg">
@@ -1751,30 +2150,19 @@
             @break
         {{-- Fonctionnaire --}}
         @case('DEMANDE_ETAT_CARRIERE')
-            <div class="py-5">
-                <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
-                    <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
-                        <div class="p-6 bg-white border-b border-gray-200">
+            <div>
+                <div>
+                    <div class="bg-white rounded-2xl border border-gray-200 shadow-sm mb-4">
+                        <div class="p-6">
 
                             {{-- ================= STATUS BANNER ================= --}}
-                            <div class="mb-6 p-4 rounded-lg {{ App\Models\Status::getStatusStyle($request->status->code) }}">
-                                <div class="flex items-center justify-between">
-                                    <div>
-                                        <span class="font-semibold">Statut actuel :</span>
-                                        {{ $request->status->code }}
-                                    </div>
-                                    <span class="text-sm">
-                                        Dernière mise à jour :
-                                        {{ $request->updated_at->format('d/m/Y H:i') }}
-                                    </span>
-                                </div>
-                            </div>
+                            {{-- Status shown in page header --}}
 
                             {{-- ================= MAIN GRID ================= --}}
-                            <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                            <div class="space-y-5">
 
                                 {{-- ========== LEFT COLUMN ========== --}}
-                                <div class="lg:col-span-1 space-y-6">
+                                <div class="space-y-5">
 
                                     {{-- Type de demande --}}
                                     <div class="p-4 bg-gray-50 rounded-lg">
@@ -1789,7 +2177,7 @@
                                 </div>
 
                                 {{-- ========== RIGHT COLUMN ========== --}}
-                                <div class="lg:col-span-2 space-y-6">
+                                <div class="space-y-5">
 
                                     {{-- Détails de la demande --}}
                                     <div class="p-4 bg-gray-50 rounded-lg">
@@ -1918,36 +2306,25 @@
 
         {{-- Institution --}}
         @case('DEMANDE_ADHESION')
-            <div class="py-5">
-                <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
-                    <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
-                        <div class="p-6 bg-white border-b border-gray-200">
+            <div>
+                <div>
+                    <div class="bg-white rounded-2xl border border-gray-200 shadow-sm mb-4">
+                        <div class="p-6">
 
                             <!-- ========================= -->
                             <!-- STATUS BANNER -->
                             <!-- ========================= -->
-                            <div class="mb-6 p-4 rounded-lg {{ App\Models\Status::getStatusStyle($request->status->code) }}">
-                                <div class="flex items-center justify-between">
-                                    <div>
-                                        <span class="font-semibold">Statut actuel :</span>
-                                        {{ $request->status->code }}
-                                    </div>
-                                    <span class="text-sm">
-                                        Dernière mise à jour :
-                                        {{ $request->updated_at->format('d/m/Y H:i') }}
-                                    </span>
-                                </div>
-                            </div>
+                            {{-- Status shown in page header --}}
 
                             <!-- ========================= -->
                             <!-- MAIN GRID -->
                             <!-- ========================= -->
-                            <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                            <div class="space-y-5">
 
                                 <!-- ========================= -->
                                 <!-- LEFT COLUMN -->
                                 <!-- ========================= -->
-                                <div class="lg:col-span-1 space-y-6">
+                                <div class="space-y-5">
 
                                     <!-- TYPE -->
                                     <div class="p-4 bg-gray-50 rounded-lg">
@@ -2007,7 +2384,7 @@
                                 <!-- ========================= -->
                                 <!-- RIGHT COLUMN -->
                                 <!-- ========================= -->
-                                <div class="lg:col-span-2 space-y-6">
+                                <div class="space-y-5">
 
                                     <!-- INFORMATIONS PERSONNELLES -->
                                     <div class="p-4 bg-gray-50 rounded-lg">
@@ -2154,30 +2531,19 @@
             </div>
             @break
         @case('DEMANDE_PENSION')
-            <div class="py-5">
-                <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
-                    <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
-                        <div class="p-6 bg-white border-b border-gray-200">
+            <div>
+                <div>
+                    <div class="bg-white rounded-2xl border border-gray-200 shadow-sm mb-4">
+                        <div class="p-6">
 
                             <!-- Status Banner -->
-                            <div class="mb-6 p-4 rounded-lg {{ App\Models\Status::getStatusStyle($request->status->code) }}">
-                                <div class="flex items-center justify-between">
-                                    <div>
-                                        <span class="font-semibold">Statut actuel :</span>
-                                        {{ $request->status->code }}
-                                    </div>
-                                    <span class="text-sm">
-                                        Dernière mise à jour :
-                                        {{ $request->updated_at->format('d/m/Y H:i') }}
-                                    </span>
-                                </div>
-                            </div>
+                            {{-- Status shown in page header --}}
 
                             <!-- Main Grid -->
-                            <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                            <div class="space-y-5">
 
                                 <!-- LEFT COLUMN -->
-                                <div class="lg:col-span-1 space-y-6">
+                                <div class="space-y-5">
                                     <!-- Type -->
                                     <div class="p-4 bg-gray-50 rounded-lg">
                                         <h3 class="text-lg font-semibold mb-3 text-gray-700">
@@ -2191,7 +2557,7 @@
                                 </div>
 
                                 <!-- RIGHT COLUMN -->
-                                <div class="lg:col-span-2 space-y-6">
+                                <div class="space-y-5">
 
                                     <!-- Request Details -->
                                     <div class="p-4 bg-gray-50 rounded-lg">
@@ -2305,36 +2671,25 @@
             </div>
             @break
         @case('DEMANDE_PENSION_REVERSION')
-            <div class="py-5">
-                <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
-                    <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
-                        <div class="p-6 bg-white border-b border-gray-200">
+            <div>
+                <div>
+                    <div class="bg-white rounded-2xl border border-gray-200 shadow-sm mb-4">
+                        <div class="p-6">
 
                             <!-- ===================== -->
                             <!-- STATUS BANNER -->
                             <!-- ===================== -->
-                            <div class="mb-6 p-4 rounded-lg {{ App\Models\Status::getStatusStyle($request->status->code) }}">
-                                <div class="flex items-center justify-between">
-                                    <div>
-                                        <span class="font-semibold">Statut actuel :</span>
-                                        {{ $request->status->code }}
-                                    </div>
-                                    <span class="text-sm">
-                                        Dernière mise à jour :
-                                        {{ $request->updated_at->format('d/m/Y H:i') }}
-                                    </span>
-                                </div>
-                            </div>
+                            {{-- Status shown in page header --}}
 
                             <!-- ===================== -->
                             <!-- MAIN GRID -->
                             <!-- ===================== -->
-                            <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                            <div class="space-y-5">
 
                                 <!-- ===================== -->
                                 <!-- LEFT COLUMN -->
                                 <!-- ===================== -->
-                                <div class="lg:col-span-1 space-y-6">
+                                <div class="space-y-5">
 
                                     <!-- TYPE -->
                                     <div class="p-4 bg-gray-50 rounded-lg">
@@ -2366,7 +2721,7 @@
                                 <!-- ===================== -->
                                 <!-- RIGHT COLUMN -->
                                 <!-- ===================== -->
-                                <div class="lg:col-span-2 space-y-6">
+                                <div class="space-y-5">
 
                                     <!-- REQUEST DETAILS -->
                                     <div class="p-4 bg-gray-50 rounded-lg">
@@ -2640,74 +2995,56 @@
     @endif
 
     <!-- Request History -->
-    <div class="max-w-7xl mx-auto pb-5 sm:px-6 lg:px-8">
-        <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg px-6" x-data="{ open: false }">
-            <button type="button" @click="open = !open"
-                    class="w-full flex items-center justify-between mt-5 ml-1 mb-4">
-                <h3 class="text-xl font-semibold text-gray-800">{{ __('messages.history_label') }}</h3>
-                <svg class="w-5 h-5 text-gray-400 transition-transform duration-200" :class="open ? 'rotate-180' : ''" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
-                </svg>
-            </button>
+    <div class="bg-white rounded-2xl border border-gray-200 shadow-sm mt-4 px-6" x-data="{ open: false }">
+        <button type="button" @click="open = !open"
+                class="w-full flex items-center justify-between py-4">
+            <h3 class="text-base font-semibold text-gray-800">{{ __('messages.history_label') }}</h3>
+            <svg class="w-4 h-4 text-gray-400 transition-transform duration-200" :class="open ? 'rotate-180' : ''" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+            </svg>
+        </button>
 
-            <div x-show="open" x-transition>
-            <div class="rounded-lg shadow-sm border border-gray-100">
+        <div x-show="open" x-transition>
+            <div class="rounded-xl border border-gray-100 mb-4">
                 @forelse ($requestHistories as $history)
                     <div class="p-4 border-b border-gray-100 last:border-b-0">
                         <div class="flex justify-between items-start">
                             <div class="flex-1">
                                 <div class="flex items-center gap-3 mb-1">
-                                    <span class="text-sm font-medium text-gray-700">
-                                        {{ $history->statut }}
-                                    </span>
-                                    <span class="text-xs text-gray-500">
-                                        {{ $history->created_at->format('d/m/Y à H:i') }}
-                                    </span>
+                                    <span class="text-sm font-medium text-gray-700">{{ $history->statut }}</span>
+                                    <span class="text-xs text-gray-400">{{ $history->created_at->format('d/m/Y à H:i') }}</span>
                                 </div>
                                 @if($history->commentaire)
                                     <p class="text-sm text-gray-600 italic">{{ $history->commentaire }}</p>
                                 @endif
                             </div>
-
-                            <div class="text-right">
-                                <p class="text-sm text-gray-500">
-                                    @if ($history->creator())
-                                        Par {{ $history->creator()->name }}
-                                    @else
-                                        Système
-                                    @endif
+                            <div class="text-right flex-shrink-0">
+                                <p class="text-xs text-gray-500">
+                                    @if ($history->creator()) Par {{ $history->creator()->name }} @else Système @endif
                                 </p>
                             </div>
                         </div>
                     </div>
                 @empty
-                    <div class="p-4 text-center text-gray-500">
-                        {{ __('messages.no_history') }}
-                    </div>
+                    <div class="p-4 text-center text-gray-400 text-sm">{{ __('messages.no_history') }}</div>
                 @endforelse
             </div>
-
-            <!-- Pagination -->
-            <div class="mt-4">
-                {{ $requestHistories->links() }}
-            </div>
-            </div>{{-- end x-show --}}
+            <div class="pb-4">{{ $requestHistories->links() }}</div>
         </div>
     </div>
 
     {{-- ====================== JOURNAL D'ACTIVITÉ ====================== --}}
     @if($from === 'cart' && isset($activityLogs) && $activityLogs->isNotEmpty())
-        <div class="max-w-7xl mx-auto pb-5 sm:px-6 lg:px-8">
-            <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg px-6 py-5" x-data="{ open: false }">
-                <button type="button" @click="open = !open"
-                        class="w-full flex items-center justify-between mb-4">
-                    <h3 class="text-xl font-semibold text-gray-800">{{ __('messages.activity_log') }}</h3>
-                    <svg class="w-5 h-5 text-gray-400 transition-transform duration-200" :class="open ? 'rotate-180' : ''" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
-                    </svg>
-                </button>
-                <div x-show="open" x-transition>
-                <div class="rounded-lg shadow-sm border border-gray-100 divide-y divide-gray-100">
+        <div class="bg-white rounded-2xl border border-gray-200 shadow-sm mt-4 px-6" x-data="{ open: false }">
+            <button type="button" @click="open = !open"
+                    class="w-full flex items-center justify-between py-4">
+                <h3 class="text-base font-semibold text-gray-800">{{ __('messages.activity_log') }}</h3>
+                <svg class="w-4 h-4 text-gray-400 transition-transform duration-200" :class="open ? 'rotate-180' : ''" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+                </svg>
+            </button>
+            <div x-show="open" x-transition>
+                <div class="rounded-xl border border-gray-100 divide-y divide-gray-100 mb-4">
                     @foreach($activityLogs as $log)
                         <div class="p-3 flex justify-between items-center">
                             <div class="flex items-center gap-2">
@@ -2723,7 +3060,7 @@
                                 </span>
                                 @if(!empty($log->metadata))
                                     @foreach($log->metadata as $key => $val)
-                                        @if($val)
+                                        @if($val && is_string($val))
                                             <span class="text-xs text-gray-500">{{ $val }}</span>
                                         @endif
                                     @endforeach
@@ -2736,7 +3073,6 @@
                         </div>
                     @endforeach
                 </div>
-                </div>{{-- end x-show --}}
             </div>
         </div>
     @endif
@@ -2744,59 +3080,6 @@
 
     @if($from === 'cart')
 
-        {{-- ── Décision finale Direction ────────────────────────────────── --}}
-        @role('direction')
-            @php
-                $directionServiceId = \App\Models\Service::where('code', \App\Models\Service::DIRECTION)->value('id');
-                $isAtDirection = $request->current_service_id === $directionServiceId;
-                $isClosed = in_array($request->status->code, ['APPROUVEE', 'FINALISEE', 'REJETEE', 'ANNULEE']);
-                $canFinalize = $request->workflows()
-                    ->where('reception_status', 'accepted')
-                    ->whereNotNull('from_service_id')
-                    ->exists();
-            @endphp
-            @if($isAtDirection && !$isClosed)
-                <div class="max-w-7xl mx-auto mt-4 sm:px-6 lg:px-8">
-                    <div class="bg-white border-2 border-blue-200 rounded-lg shadow-sm p-5">
-                        <h3 class="text-base font-semibold text-blue-800 mb-1">
-                            <i class="fas fa-gavel mr-2 text-blue-500"></i> Décision finale — Direction
-                        </h3>
-                        <p class="text-sm text-gray-500 mb-2">
-                            Le dossier est revenu à la Direction pour décision finale.
-                        </p>
-
-                        @if(!$canFinalize)
-                            <div class="flex items-start gap-2 bg-yellow-50 border border-yellow-300 rounded-lg px-3 py-2 mb-3">
-                                <i class="fas fa-exclamation-triangle text-yellow-500 mt-0.5 text-sm flex-shrink-0"></i>
-                                <p class="text-xs text-yellow-800">
-                                    Ce dossier doit d'abord être traité et acheminé par un autre service avant
-                                    de pouvoir être approuvé ou clôturé.
-                                </p>
-                            </div>
-                        @endif
-
-                        <div class="flex flex-wrap gap-3 mt-3">
-                            <form method="POST" action="{{ route('admin.demandes.approuver', $request->id) }}"
-                                  onsubmit="return confirm('Approuver définitivement ce dossier ?')">
-                                @csrf
-                                <button type="submit" @disabled(!$canFinalize)
-                                        class="{{ $canFinalize ? 'bg-blue-600 hover:bg-blue-700' : 'bg-gray-300 cursor-not-allowed' }} px-5 py-2 text-white text-sm font-medium rounded-lg flex items-center gap-2">
-                                    <i class="fas fa-check-circle"></i> Approuver
-                                </button>
-                            </form>
-                            <form method="POST" action="{{ route('admin.demandes.cloturer', $request->id) }}"
-                                  onsubmit="return confirm('Clôturer définitivement ce dossier ?')">
-                                @csrf
-                                <button type="submit" @disabled(!$canFinalize)
-                                        class="{{ $canFinalize ? 'bg-green-600 hover:bg-green-700' : 'bg-gray-300 cursor-not-allowed' }} px-5 py-2 text-white text-sm font-medium rounded-lg flex items-center gap-2">
-                                    <i class="fas fa-flag-checkered"></i> Clôturer
-                                </button>
-                            </form>
-                        </div>
-                    </div>
-                </div>
-            @endif
-        @endrole
 
         {{-- ── Transfert modal ─────────────────────────────────────────── --}}
         <div id="transferModal" class="absolute inset-0 z-[99999] flex items-center justify-center bg-black/50
@@ -2850,117 +3133,6 @@
             </div>
         </div>
 
-        {{-- ── Affectations ─────────────────────────────────────────────── --}}
-        <div class="mt-6 border border-indigo-200 rounded-lg">
-            <div class="bg-indigo-50 px-4 py-3 rounded-t-lg flex items-center justify-between">
-                <h3 class="font-semibold text-indigo-800">
-                    <i class="fas fa-tasks mr-1"></i> Affectations pour avis
-                </h3>
-                <button type="button"
-                        onclick="document.getElementById('affectationPanel').classList.toggle('hidden')"
-                        class="text-sm text-indigo-600 hover:underline">
-                    Affecter à des services
-                </button>
-            </div>
-
-            {{-- Formulaire d'affectation --}}
-            <div id="affectationPanel" class="hidden border-t border-indigo-100 px-4 py-4 bg-white">
-                <form method="POST" action="{{ route('admin.demandes.affecter', $request->id) }}">
-                    @csrf
-                    <p class="text-sm text-gray-600 mb-3">Sélectionnez les services à consulter simultanément :</p>
-                    <div class="grid grid-cols-2 gap-2 mb-4">
-                        @foreach(\App\Models\Service::all() as $svc)
-                            <label class="flex items-center gap-2 text-sm">
-                                <input type="checkbox" name="service_ids[]" value="{{ $svc->id }}"
-                                       class="rounded border-gray-300 text-indigo-600">
-                                {{ $svc->nom }}
-                            </label>
-                        @endforeach
-                    </div>
-                    <div class="flex justify-end">
-                        <button type="submit" class="px-4 py-2 bg-indigo-600 text-white rounded text-sm hover:bg-indigo-700">
-                            Affecter
-                        </button>
-                    </div>
-                </form>
-            </div>
-
-            {{-- Liste des affectations existantes --}}
-            @if(isset($affectations) && $affectations->isNotEmpty())
-                <div class="divide-y divide-gray-100">
-                    @foreach($affectations as $aff)
-                        <div class="px-4 py-3 flex items-start justify-between gap-4">
-                            <div class="flex-1">
-                                <p class="font-medium text-sm text-gray-800">{{ $aff->service->nom }}</p>
-                                @if($aff->avis)
-                                    <p class="text-sm text-gray-600 mt-1">{{ $aff->avis }}</p>
-                                @endif
-                                <p class="text-xs text-gray-400 mt-1">{{ $aff->date_affectation->format('d/m/Y H:i') }}</p>
-                            </div>
-                            <div class="flex-shrink-0 flex flex-col items-end gap-2">
-                                @php
-                                    $badge = match($aff->statut) {
-                                        'EN_ATTENTE' => 'bg-yellow-100 text-yellow-800',
-                                        'EN_COURS'   => 'bg-blue-100 text-blue-800',
-                                        'TERMINE'    => 'bg-green-100 text-green-800',
-                                        'REJETE'     => 'bg-red-100 text-red-800',
-                                        default      => 'bg-gray-100 text-gray-700',
-                                    };
-                                @endphp
-                                <span class="text-xs px-2 py-0.5 rounded-full {{ $badge }}">{{ $aff->statut }}</span>
-
-                                @if(auth()->user()->service_id === $aff->service_id || auth()->user()->hasRole('admin'))
-                                    @if($aff->statut !== 'TERMINE' && $aff->statut !== 'REJETE')
-                                        <button type="button"
-                                                onclick="document.getElementById('avisModal{{ $aff->id }}').classList.remove('hidden')"
-                                                class="text-xs text-indigo-600 hover:underline">
-                                            Soumettre avis
-                                        </button>
-
-                                        {{-- Avis modal --}}
-                                        <div id="avisModal{{ $aff->id }}"
-                                             class="hidden fixed inset-0 z-[99999] flex items-center justify-center bg-black/50">
-                                            <div class="bg-white w-full max-w-md rounded shadow p-6">
-                                                <h3 class="font-semibold mb-3">Avis — {{ $aff->service->nom }}</h3>
-                                                <form method="POST" action="{{ route('admin.affectations.repondre', $aff->id) }}">
-                                                    @csrf
-                                                    <div class="mb-3">
-                                                        <label class="block text-sm font-medium mb-1">Décision</label>
-                                                        <select name="statut" class="w-full border rounded px-3 py-2 text-sm">
-                                                            <option value="EN_COURS">En cours</option>
-                                                            <option value="TERMINE">Terminé</option>
-                                                            <option value="REJETE">Rejeté</option>
-                                                        </select>
-                                                    </div>
-                                                    <div class="mb-4">
-                                                        <label class="block text-sm font-medium mb-1">Avis / commentaire</label>
-                                                        <textarea name="avis" rows="3"
-                                                                  class="w-full border rounded px-3 py-2 text-sm"
-                                                                  placeholder="Observations, recommandations..."></textarea>
-                                                    </div>
-                                                    <div class="flex justify-end gap-2">
-                                                        <button type="button"
-                                                                onclick="document.getElementById('avisModal{{ $aff->id }}').classList.add('hidden')"
-                                                                class="px-3 py-2 border rounded text-sm">
-                                                            Annuler
-                                                        </button>
-                                                        <button type="submit" class="px-3 py-2 bg-indigo-600 text-white rounded text-sm">
-                                                            Enregistrer
-                                                        </button>
-                                                    </div>
-                                                </form>
-                                            </div>
-                                        </div>
-                                    @endif
-                                @endif
-                            </div>
-                        </div>
-                    @endforeach
-                </div>
-            @else
-                <p class="px-4 py-3 text-sm text-gray-400 italic">Aucune affectation pour ce dossier.</p>
-            @endif
-        </div>
     @endif
 
     @if($from === 'dashboard' && $request->isDraft())
@@ -2997,4 +3169,8 @@
             </div>
         </div>
     @endif
+
+            </div>{{-- end right column --}}
+        </div>{{-- end grid --}}
+    </div>{{-- end layout --}}
 </x-app-layout>

@@ -303,8 +303,7 @@ foreach ($laneOrder as $nodeId) {
 @endphp
 
 <div class="space-y-6"
-     x-data="{ view: localStorage.getItem('flux-view') || 'graph' }"
-     x-init="$watch('view', v => localStorage.setItem('flux-view', v))">
+     x-data="{ view: 'graph', advanced: false }">
 
     {{-- Page header + view toggle --}}
     <div class="flex items-start justify-between gap-4">
@@ -343,26 +342,35 @@ foreach ($laneOrder as $nodeId) {
          VIEW 1 — Cytoscape graph
     ════════════════════════════════════════════ --}}
     <div x-show="view === 'graph'" x-cloak>
-        <div class="bg-white rounded-xl border border-gray-200 shadow-sm p-5">
-            <div class="flex items-center justify-between mb-3">
+        <div class="bg-white rounded-xl border border-gray-200 shadow-sm"
+             x-data="{ open: true }">
+            <div class="flex items-center justify-between p-5 cursor-pointer select-none" @click="open = !open">
                 <h2 class="text-sm font-semibold text-gray-700">
                     <i class="fas fa-project-diagram mr-2 text-blue-400"></i> Représentation en graphe
                 </h2>
-                <div class="flex gap-2">
-                    <button id="cy-fit"
-                        class="text-xs px-3 py-1.5 border border-gray-300 rounded-lg hover:bg-gray-50 text-gray-600 transition-colors">
-                        <i class="fas fa-compress-alt mr-1"></i> Ajuster
-                    </button>
-                    <button id="cy-reset"
-                        class="text-xs px-3 py-1.5 border border-gray-300 rounded-lg hover:bg-gray-50 text-gray-600 transition-colors">
-                        <i class="fas fa-redo mr-1"></i> Réinitialiser
-                    </button>
-                    <button id="cy-download"
-                        class="text-xs px-3 py-1.5 border border-blue-300 rounded-lg hover:bg-blue-50 text-blue-600 transition-colors">
-                        <i class="fas fa-download mr-1"></i> Télécharger
-                    </button>
+                <div class="flex gap-2 items-center">
+                    <template x-if="open">
+                        <div class="flex gap-2" @click.stop>
+                            <button id="cy-fit"
+                                class="text-xs px-3 py-1.5 border border-gray-300 rounded-lg hover:bg-gray-50 text-gray-600 transition-colors">
+                                <i class="fas fa-compress-alt mr-1"></i> Ajuster
+                            </button>
+                            <button id="cy-reset"
+                                class="text-xs px-3 py-1.5 border border-gray-300 rounded-lg hover:bg-gray-50 text-gray-600 transition-colors">
+                                <i class="fas fa-redo mr-1"></i> Réinitialiser
+                            </button>
+                            <button id="cy-download"
+                                class="text-xs px-3 py-1.5 border border-blue-300 rounded-lg hover:bg-blue-50 text-blue-600 transition-colors">
+                                <i class="fas fa-download mr-1"></i> Télécharger
+                            </button>
+                        </div>
+                    </template>
+                    <i class="fas fa-chevron-down text-gray-400 text-xs transition-transform duration-200 ml-2"
+                       :class="open ? '' : '-rotate-90'"></i>
                 </div>
             </div>
+            <div x-show="open" x-transition:enter="transition ease-out duration-150" x-transition:enter-start="opacity-0 -translate-y-1" x-transition:enter-end="opacity-100 translate-y-0" x-transition:leave="transition ease-in duration-100" x-transition:leave-start="opacity-100 translate-y-0" x-transition:leave-end="opacity-0 -translate-y-1">
+            <div class="px-5 pb-5">
             <p class="text-xs text-gray-400 mb-3">
                 Cliquez sur un nœud pour voir ses connexions · Glissez les nœuds pour les repositionner · Molette pour zoomer
             </p>
@@ -387,6 +395,8 @@ foreach ($laneOrder as $nodeId) {
                  class="hidden fixed z-50 pointer-events-none bg-orange-50 border border-orange-300 text-orange-800 text-xs rounded-lg px-3 py-1.5 shadow-lg max-w-[220px]">
                 <i class="fas fa-shield-alt text-orange-500 mr-1"></i><span data-tip></span>
             </div>
+            </div>{{-- /px-5 pb-5 --}}
+            </div>{{-- /x-collapse --}}
         </div>
     </div>
 
@@ -544,15 +554,43 @@ foreach ($laneOrder as $nodeId) {
     </div>
 
     {{-- ═══════════════════════════════════════════
-         Formulaire d'ajout (always visible)
+         Transitions — formulaire d'ajout + tableau
     ════════════════════════════════════════════ --}}
     <div class="bg-white rounded-xl border border-gray-200 shadow-sm divide-y divide-gray-100"
-         x-data="{ sourceId: '' }">
-        <div class="px-6 py-4">
-            <h2 class="text-sm font-semibold text-gray-700">
-                <i class="fas fa-plus-circle mr-1.5 text-blue-500"></i> Ajouter une transition
-            </h2>
+         x-data="{ sourceId: '', open: false }">
+        <div class="px-6 py-4 flex items-start justify-between cursor-pointer select-none" @click="open = !open">
+            <div>
+                <h2 class="text-sm font-semibold text-gray-700">
+                    <i class="fas fa-plus-circle mr-1.5 text-blue-500"></i> Ajouter une transition
+                </h2>
+                <p class="text-xs text-gray-400 mt-1">
+                    Une transition définit qu'un service peut envoyer un dossier à un autre service.
+                    Elle détermine les chemins <strong class="text-gray-500">autorisés</strong> dans le circuit — sans imposer qu'ils soient obligatoirement empruntés.
+                </p>
+            </div>
+            <i class="fas fa-chevron-down text-gray-400 text-xs transition-transform duration-200 mt-1 shrink-0 ml-4"
+               :class="open ? '' : '-rotate-90'"></i>
         </div>
+
+        <div x-show="open" x-transition:enter="transition ease-out duration-150" x-transition:enter-start="opacity-0 -translate-y-1" x-transition:enter-end="opacity-100 translate-y-0" x-transition:leave="transition ease-in duration-100" x-transition:leave-start="opacity-100 translate-y-0" x-transition:leave-end="opacity-0 -translate-y-1">
+        {{-- Field legend --}}
+        <div class="px-6 py-3 bg-gray-50 border-b border-gray-100">
+            <div class="flex flex-wrap gap-x-6 gap-y-1.5 text-xs text-gray-500">
+                <span><span class="font-semibold text-gray-600">Service source</span> — le service qui initie le transfert (vide = soumission initiale par l'usager)</span>
+                <span><span class="font-semibold text-gray-600">Service destination</span> — le service qui reçoit le dossier</span>
+                <span><span class="font-semibold text-gray-600">Action</span> — le libellé affiché sur le bouton de transfert (ex : Dispatcher, Transmettre)</span>
+                <span>
+                    <span class="font-semibold text-gray-600">Type de demande</span>
+                    <span class="inline-flex items-center gap-0.5 text-[10px] font-medium px-1.5 py-0.5 rounded bg-gray-200 text-gray-500 ml-0.5">avancé</span>
+                    — restreint cette transition à un seul type de dossier.
+                    Par défaut (vide), <em>tous</em> les types peuvent emprunter ce chemin.
+                    À utiliser uniquement si vous voulez qu'une étape soit <em>inaccessible</em> pour certains types
+                    (ex : seul <em>Demande de pension</em> peut aller vers <em>Service Liquidation</em>).
+                    Ne pas confondre avec les <strong class="text-gray-600">Étapes obligatoires</strong> qui forcent le passage — ici on <em>interdit</em> un chemin pour certains types.
+                </span>
+            </div>
+        </div>
+
         <div class="px-6 py-5">
             <form method="POST" action="{{ route('admin.flux-transitions.store') }}"
                   class="flex flex-wrap gap-4 items-end">
@@ -604,7 +642,16 @@ foreach ($laneOrder as $nodeId) {
                     @enderror
                 </div>
 
-                <div>
+                <div class="flex items-end">
+                    <button type="button" @click="advanced = !advanced"
+                        :class="advanced ? 'bg-gray-200 text-gray-700' : 'bg-gray-100 text-gray-500 hover:bg-gray-200'"
+                        class="px-3 py-2 rounded-lg text-xs font-medium transition-colors flex items-center gap-1">
+                        <i class="fas fa-sliders-h text-[11px]"></i>
+                        <span x-text="advanced ? 'Masquer' : 'Avancé'"></span>
+                    </button>
+                </div>
+
+                <div x-show="advanced" x-cloak>
                     <label class="block text-sm font-medium text-gray-700 mb-1">Type de demande</label>
                     <select name="type_demande"
                         class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 min-w-[180px]">
@@ -623,13 +670,7 @@ foreach ($laneOrder as $nodeId) {
                 </div>
             </form>
         </div>
-    </div>
-
-    {{-- ═══════════════════════════════════════════
-         Tableau des transitions (always visible)
-    ════════════════════════════════════════════ --}}
-    <div class="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
-        <table class="w-full text-sm">
+        <table class="w-full text-sm border-t border-gray-100">
             <thead class="bg-gray-50 border-b border-gray-200">
                 <tr>
                     <th class="px-3 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide text-center w-8">#</th>
@@ -637,7 +678,7 @@ foreach ($laneOrder as $nodeId) {
                     <th class="px-2 py-3 w-6"></th>
                     <th class="px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide text-left">Destination</th>
                     <th class="px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide text-left">Action</th>
-                    <th class="px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide text-left">Type demande</th>
+                    <th x-show="advanced" class="px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide text-left">Type demande</th>
                     <th class="px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide text-center">Ordre</th>
                     <th class="px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide text-center">Actions</th>
                 </tr>
@@ -672,7 +713,7 @@ foreach ($laneOrder as $nodeId) {
 
                         <td class="px-4 py-3 text-gray-600 text-xs">{{ $transition->action }}</td>
 
-                        <td class="px-4 py-3">
+                        <td x-show="advanced" class="px-4 py-3">
                             @if($transition->type_demande)
                                 @php $enum = \App\Enums\TypeDemandeEnum::tryFrom($transition->type_demande); @endphp
                                 <span class="text-xs font-medium px-2 py-0.5 rounded-full bg-purple-100 text-purple-700">
@@ -762,7 +803,7 @@ foreach ($laneOrder as $nodeId) {
                             </div>
                             @endif
 
-                            <div x-data="{ open: false }"
+                            <div x-data="{ open: false, advanced: {{ $transition->type_demande ? 'true' : 'false' }} }"
                                  x-on:open-edit-{{ $transition->id }}.window="open = true"
                                  x-show="open" x-cloak
                                  class="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
@@ -801,7 +842,15 @@ foreach ($laneOrder as $nodeId) {
                                             <input type="text" name="action" required value="{{ $transition->action }}"
                                                 class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
                                         </div>
-                                        <div class="mb-5">
+                                        <div class="mb-4">
+                                            <button type="button" @click="advanced = !advanced"
+                                                :class="advanced ? 'bg-gray-200 text-gray-700' : 'bg-gray-100 text-gray-500 hover:bg-gray-200'"
+                                                class="px-3 py-1.5 rounded-lg text-xs font-medium transition-colors flex items-center gap-1.5">
+                                                <i class="fas fa-sliders-h text-[11px]"></i>
+                                                <span x-text="advanced ? 'Masquer options avancées' : 'Options avancées'"></span>
+                                            </button>
+                                        </div>
+                                        <div class="mb-5" x-show="advanced" x-cloak>
                                             <label class="block text-sm font-medium text-gray-700 mb-1">Type de demande</label>
                                             <select name="type_demande"
                                                 class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
@@ -839,13 +888,15 @@ foreach ($laneOrder as $nodeId) {
                 @endforelse
             </tbody>
         </table>
+        </div>{{-- /x-collapse --}}
     </div>
 
     {{-- ═══════════════════════════════════════════
          Étapes obligatoires (circuit enforcement)
     ════════════════════════════════════════════ --}}
-    <div class="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
-        <div class="px-5 py-4 border-b border-gray-100 flex items-center justify-between">
+    <div class="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden"
+         x-data="{ open: false }">
+        <div class="px-5 py-4 flex items-start justify-between cursor-pointer select-none" @click="open = !open">
             <div>
                 <h2 class="text-sm font-semibold text-gray-700">
                     <i class="fas fa-shield-alt mr-2 text-orange-400"></i> Étapes obligatoires du circuit
@@ -854,8 +905,11 @@ foreach ($laneOrder as $nodeId) {
                     Un dossier ne peut être approuvé ou clôturé que si tous ces services l'ont traité (réception acceptée).
                 </p>
             </div>
+            <i class="fas fa-chevron-down text-gray-400 text-xs transition-transform duration-200 mt-1 shrink-0 ml-4"
+               :class="open ? '' : '-rotate-90'"></i>
         </div>
 
+        <div x-show="open" x-transition:enter="transition ease-out duration-150" x-transition:enter-start="opacity-0 -translate-y-1" x-transition:enter-end="opacity-100 translate-y-0" x-transition:leave="transition ease-in duration-100" x-transition:leave-start="opacity-100 translate-y-0" x-transition:leave-end="opacity-0 -translate-y-1">
         {{-- Add form --}}
         <div class="px-5 py-4 border-b border-gray-100 bg-gray-50">
             <form method="POST" action="{{ route('admin.flux-transitions.required.store') }}"
@@ -970,6 +1024,7 @@ foreach ($laneOrder as $nodeId) {
                 @endforelse
             </tbody>
         </table>
+        </div>{{-- /x-collapse --}}
     </div>
 
 </div>

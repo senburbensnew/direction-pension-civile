@@ -26,6 +26,11 @@ class Status extends Model
         'description',
     ];
 
+    public function demandes()
+    {
+        return $this->hasMany(Demande::class);
+    }
+
     public static function getStatusStyle($status)
     {
         return match($status) {

@@ -103,6 +103,103 @@
 
     </div>
 
+    {{-- ── Métriques dossiers ──────────────────────────────────────────── --}}
+    <div>
+        <h2 class="text-sm font-semibold text-gray-600 uppercase tracking-wide mb-3">Suivi des dossiers</h2>
+        <div class="grid grid-cols-2 lg:grid-cols-5 gap-4">
+
+            <div class="bg-white rounded-xl border border-gray-200 p-4 shadow-sm">
+                <div class="w-10 h-10 rounded-lg bg-blue-50 flex items-center justify-center">
+                    <i class="fas fa-folder-open text-blue-600"></i>
+                </div>
+                <p class="text-2xl font-bold text-gray-800 mt-3">{{ $dossierStats['total'] }}</p>
+                <p class="text-sm text-gray-500">Total dossiers</p>
+            </div>
+
+            <div class="bg-white rounded-xl border border-gray-200 p-4 shadow-sm">
+                <div class="w-10 h-10 rounded-lg bg-purple-50 flex items-center justify-center">
+                    <i class="fas fa-spinner text-purple-600"></i>
+                </div>
+                <p class="text-2xl font-bold text-gray-800 mt-3">{{ $dossierStats['en_cours'] }}</p>
+                <p class="text-sm text-gray-500">En traitement</p>
+            </div>
+
+            <div class="bg-white rounded-xl border border-gray-200 p-4 shadow-sm">
+                <div class="w-10 h-10 rounded-lg bg-sky-50 flex items-center justify-center">
+                    <i class="fas fa-clock text-sky-600"></i>
+                </div>
+                <p class="text-2xl font-bold text-gray-800 mt-3">{{ $dossierStats['en_attente_recep'] }}</p>
+                <p class="text-sm text-gray-500">Att. réception</p>
+            </div>
+
+            <div class="bg-white rounded-xl border border-gray-200 p-4 shadow-sm {{ $dossierStats['urgents'] > 0 ? 'border-orange-300' : '' }}">
+                <div class="w-10 h-10 rounded-lg bg-orange-50 flex items-center justify-center">
+                    <i class="fas fa-bolt text-orange-500"></i>
+                </div>
+                <p class="text-2xl font-bold {{ $dossierStats['urgents'] > 0 ? 'text-orange-600' : 'text-gray-800' }} mt-3">{{ $dossierStats['urgents'] }}</p>
+                <p class="text-sm text-gray-500">Urgents</p>
+            </div>
+
+            <div class="bg-white rounded-xl border border-gray-200 p-4 shadow-sm {{ $dossierStats['delai_legal'] > 0 ? 'border-red-300' : '' }}">
+                <div class="w-10 h-10 rounded-lg bg-red-50 flex items-center justify-center">
+                    <i class="fas fa-exclamation-triangle text-red-500"></i>
+                </div>
+                <p class="text-2xl font-bold {{ $dossierStats['delai_legal'] > 0 ? 'text-red-600' : 'text-gray-800' }} mt-3">{{ $dossierStats['delai_legal'] }}</p>
+                <p class="text-sm text-gray-500">Délai légal dépassé</p>
+            </div>
+
+        </div>
+    </div>
+
+    {{-- ── Charge par service + réceptions ─────────────────────────────── --}}
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+
+        <div class="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
+            <div class="px-5 py-3 border-b border-gray-100">
+                <h2 class="font-semibold text-gray-700 text-sm">Charge par service</h2>
+            </div>
+            <div class="divide-y divide-gray-50">
+                @foreach($chargeParService as $svc)
+                    @if($svc->dossiers_actifs > 0)
+                    <div class="flex items-center gap-3 px-5 py-2.5">
+                        <p class="flex-1 text-sm text-gray-700">{{ $svc->nom }}</p>
+                        <div class="flex items-center gap-2">
+                            <div class="w-24 bg-gray-100 rounded-full h-1.5">
+                                <div class="bg-blue-500 h-1.5 rounded-full"
+                                     style="width: {{ min(100, ($svc->dossiers_actifs / max($chargeParService->max('dossiers_actifs'), 1)) * 100) }}%"></div>
+                            </div>
+                            <span class="text-sm font-semibold text-gray-800 w-6 text-right">{{ $svc->dossiers_actifs }}</span>
+                        </div>
+                    </div>
+                    @endif
+                @endforeach
+                @if($chargeParService->sum('dossiers_actifs') === 0)
+                    <div class="px-5 py-8 text-center text-gray-400 text-sm">Aucun dossier en cours.</div>
+                @endif
+            </div>
+        </div>
+
+        <div class="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
+            <div class="px-5 py-3 border-b border-gray-100">
+                <h2 class="font-semibold text-gray-700 text-sm">Dossiers par statut</h2>
+            </div>
+            <div class="divide-y divide-gray-50">
+                @foreach($dossierParStatut as $st)
+                    <div class="flex items-center gap-3 px-5 py-2.5">
+                        <span class="text-xs px-2 py-0.5 rounded-full font-medium {{ \App\Models\Status::getStatusStyle($st->code) }}">
+                            {{ $st->code }}
+                        </span>
+                        <span class="ml-auto text-sm font-semibold text-gray-800">{{ $st->demandes_count }}</span>
+                    </div>
+                @endforeach
+                @if($dossierParStatut->isEmpty())
+                    <div class="px-5 py-8 text-center text-gray-400 text-sm">Aucun dossier.</div>
+                @endif
+            </div>
+        </div>
+
+    </div>
+
     {{-- ── Two columns ──────────────────────────────────────────────────── --}}
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
 

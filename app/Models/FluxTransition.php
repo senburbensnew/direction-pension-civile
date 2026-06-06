@@ -17,6 +17,11 @@ class FluxTransition extends Model
         'action',
         'type_demande',
         'ordre',
+        'is_urgent_only',
+    ];
+
+    protected $casts = [
+        'is_urgent_only' => 'boolean',
     ];
 
     public function sourceService()
@@ -31,15 +36,21 @@ class FluxTransition extends Model
 
     /**
      * Returns the Service models reachable from a given service,
-     * optionally filtered by demande type.
+     * filtered by demande type and urgency.
      */
-    public static function destinationsFor(int $serviceId, ?string $typeDemandeCode = null): Collection
+    public static function destinationsFor(int $serviceId, ?string $typeDemandeCode = null, bool $isUrgent = false): Collection
     {
         $query = static::where('service_source_id', $serviceId)
             ->where(function ($q) use ($typeDemandeCode) {
                 $q->whereNull('type_demande');
                 if ($typeDemandeCode) {
                     $q->orWhere('type_demande', $typeDemandeCode);
+                }
+            })
+            ->where(function ($q) use ($isUrgent) {
+                $q->where('is_urgent_only', false);
+                if ($isUrgent) {
+                    $q->orWhere('is_urgent_only', true);
                 }
             })
             ->orderBy('ordre');
@@ -50,9 +61,9 @@ class FluxTransition extends Model
     }
 
     /**
-     * Check whether a transition is allowed, optionally for a specific demande type.
+     * Check whether a transition is allowed, optionally for a specific demande type and urgency.
      */
-    public static function allowed(int $fromServiceId, int $toServiceId, ?string $typeDemandeCode = null): bool
+    public static function allowed(int $fromServiceId, int $toServiceId, ?string $typeDemandeCode = null, bool $isUrgent = false): bool
     {
         return static::where('service_source_id', $fromServiceId)
             ->where('service_destination_id', $toServiceId)
@@ -60,6 +71,12 @@ class FluxTransition extends Model
                 $q->whereNull('type_demande');
                 if ($typeDemandeCode) {
                     $q->orWhere('type_demande', $typeDemandeCode);
+                }
+            })
+            ->where(function ($q) use ($isUrgent) {
+                $q->where('is_urgent_only', false);
+                if ($isUrgent) {
+                    $q->orWhere('is_urgent_only', true);
                 }
             })
             ->exists();

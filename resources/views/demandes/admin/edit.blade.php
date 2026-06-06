@@ -58,7 +58,7 @@
     @endif
     @endrole
 
-    {{-- ── Transfert en attente de réception ──────────────────────────────── --}}
+    {{-- ── Transfert en cours de traitement (lecture seule — géré par l'agent du service) ── --}}
     @php
         $pendingWorkflow = $demande->workflows()
             ->with(['fromService', 'toService', 'user'])
@@ -68,68 +68,24 @@
     @endphp
 
     @if($pendingWorkflow)
-        <div class="bg-sky-50 border-2 border-sky-300 rounded-xl p-5" x-data="{ showRefus: false }">
-            <div class="flex items-start gap-3">
-                <div class="w-10 h-10 rounded-full bg-sky-100 flex items-center justify-center flex-shrink-0">
-                    <i class="fas fa-paper-plane text-sky-600"></i>
-                </div>
-                <div class="flex-1">
-                    <h3 class="font-semibold text-sky-900">Transfert en attente de réception</h3>
-                    <p class="text-sm text-sky-700 mt-0.5">
-                        Ce dossier a été transféré
-                        @if($pendingWorkflow->fromService)
-                            depuis <strong>{{ $pendingWorkflow->fromService->nom }}</strong>
-                        @endif
-                        vers <strong>{{ $pendingWorkflow->toService->nom ?? '—' }}</strong>
-                        par <strong>{{ $pendingWorkflow->user?->name ?? '—' }}</strong>
-                        <span class="text-sky-500 text-xs ml-1">({{ $pendingWorkflow->created_at->diffForHumans() }})</span>
-                    </p>
-                    @if($pendingWorkflow->commentaire)
-                        <p class="text-sm text-sky-600 mt-1 italic">"{{ $pendingWorkflow->commentaire }}"</p>
-                    @endif
-
-                    <div class="flex flex-wrap gap-3 mt-4">
-                        {{-- Accept --}}
-                        <form method="POST" action="{{ route('admin.workflows.accepter', $pendingWorkflow) }}">
-                            @csrf
-                            <button type="submit"
-                                    class="bg-green-600 hover:bg-green-700 text-white text-sm font-semibold px-5 py-2 rounded-lg transition-colors flex items-center gap-2">
-                                <i class="fas fa-check-circle"></i>
-                                Confirmer la réception
-                            </button>
-                        </form>
-
-                        {{-- Refuse --}}
-                        <button type="button"
-                                @click="showRefus = true"
-                                class="bg-red-600 hover:bg-red-700 text-white text-sm font-semibold px-5 py-2 rounded-lg transition-colors flex items-center gap-2">
-                            <i class="fas fa-times-circle"></i>
-                            Refuser le transfert
-                        </button>
-                    </div>
-
-                    {{-- Refus form (inline) --}}
-                    <div x-show="showRefus" x-cloak class="mt-4 bg-white border border-red-200 rounded-lg p-4">
-                        <p class="text-sm font-semibold text-red-700 mb-2">
-                            Le dossier sera retourné à {{ $pendingWorkflow->fromService->nom ?? 'l\'expéditeur' }}.
-                        </p>
-                        <form method="POST" action="{{ route('admin.workflows.refuser', $pendingWorkflow) }}">
-                            @csrf
-                            <textarea name="motif" rows="2" placeholder="Motif du refus (optionnel)"
-                                      class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-red-300 mb-3"></textarea>
-                            <div class="flex gap-2">
-                                <button type="submit"
-                                        class="bg-red-600 hover:bg-red-700 text-white text-sm font-medium px-4 py-2 rounded-lg transition-colors">
-                                    Confirmer le refus
-                                </button>
-                                <button type="button" @click="showRefus = false"
-                                        class="text-gray-500 hover:text-gray-700 text-sm px-4 py-2">
-                                    Annuler
-                                </button>
-                            </div>
-                        </form>
-                    </div>
-                </div>
+        <div class="bg-sky-50 border border-sky-200 rounded-xl p-4 flex items-start gap-3">
+            <div class="w-9 h-9 rounded-full bg-sky-100 flex items-center justify-center flex-shrink-0 mt-0.5">
+                <i class="fas fa-clock text-sky-500 text-sm"></i>
+            </div>
+            <div class="text-sm leading-relaxed">
+                <p class="font-semibold text-sky-900">
+                    En attente de réception par
+                    <span class="text-sky-700">{{ $pendingWorkflow->toService->nom ?? '—' }}</span>
+                </p>
+                <p class="text-sky-700 mt-0.5">
+                    Transféré depuis <span class="font-medium">{{ $pendingWorkflow->fromService->nom ?? '—' }}</span>
+                    par <span class="font-medium">{{ $pendingWorkflow->user?->name ?? '—' }}</span>
+                    le {{ $pendingWorkflow->created_at->format('d/m/Y à H:i') }}
+                    <span class="text-sky-400 ml-1">({{ $pendingWorkflow->created_at->diffForHumans() }})</span>
+                </p>
+                @if($pendingWorkflow->commentaire)
+                    <p class="text-sky-600 italic mt-1">"{{ $pendingWorkflow->commentaire }}"</p>
+                @endif
             </div>
         </div>
     @endif

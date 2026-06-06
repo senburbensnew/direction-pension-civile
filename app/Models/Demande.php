@@ -28,6 +28,7 @@ class Demande extends Model
         'current_service_id',
         'submitted_at',
         'expires_at',
+        'circuit_snapshot',
         'annotation',
         'annotated_by',
         'annotated_at',
@@ -41,11 +42,12 @@ class Demande extends Model
     ];
 
     protected $casts = [
-        'data'         => 'array',
-        'submitted_at' => 'datetime',
-        'expires_at'   => 'datetime',
-        'annotated_at' => 'datetime',
-        'is_urgent'    => 'boolean',
+        'data'              => 'array',
+        'circuit_snapshot'  => 'array',
+        'submitted_at'      => 'datetime',
+        'expires_at'        => 'datetime',
+        'annotated_at'      => 'datetime',
+        'is_urgent'         => 'boolean',
     ];
 
     protected static function booted()
@@ -149,6 +151,11 @@ class Demande extends Model
         return $this->status->code === 'BROUILLON';
     }
 
+    public function isClosed(): bool
+    {
+        return in_array($this->status->code, ['APPROUVEE', 'FINALISEE', 'REJETEE', 'ANNULEE']);
+    }
+
     public function isSubmitted()
     {
         return $this->status->code === 'SOUMISE';
@@ -167,6 +174,16 @@ class Demande extends Model
     public function isExpired()
     {
         return $this->status->code === 'BROUILLON' && $this->expires_at && $this->expires_at->isPast();
+    }
+
+    public function isDelaiLegalDepasse(int $delaiJours = 30): bool
+    {
+        return $this->submitted_at && $this->submitted_at->diffInDays(now()) > $delaiJours;
+    }
+
+    public function joursDepuisSoumission(): ?int
+    {
+        return $this->submitted_at ? (int) $this->submitted_at->diffInDays(now()) : null;
     }
 
     /**

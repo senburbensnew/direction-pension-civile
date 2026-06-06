@@ -231,6 +231,24 @@ Route::middleware('auth')->group(function () {
     });
 
     // ----------------------------------------------------------
+    // Workflow reception — accessible to all service agents (not just admin role)
+    // ----------------------------------------------------------
+    Route::prefix('admin')->name('admin.')->middleware('corbeille.access')->group(function () {
+        Route::post('/workflows/{workflow}/accepter',         [DemandeManagementController::class, 'accepterReception'])->name('workflows.accepter');
+        Route::post('/workflows/{workflow}/refuser',          [DemandeManagementController::class, 'refuserReception'])->name('workflows.refuser');
+        Route::post('/demandes/{demande}/affecter',           [DemandeManagementController::class, 'affecterServices'])->name('demandes.affecter');
+        Route::post('/affectations/{affectation}/repondre',   [DemandeManagementController::class, 'repondreAffectation'])->name('affectations.repondre');
+    });
+
+    // Décision finale — Direction ou admin
+    Route::prefix('admin')->name('admin.')->middleware(['auth', 'role:admin|direction'])->group(function () {
+        Route::post('/demandes/{demande}/approuver', [DemandeManagementController::class, 'approuver'])->name('demandes.approuver');
+        Route::post('/demandes/{demande}/cloturer',  [DemandeManagementController::class, 'cloturer'])->name('demandes.cloturer');
+        Route::post('/demandes/{demande}/rejeter',   [DemandeManagementController::class, 'rejeter'])->name('demandes.rejeter');
+        Route::post('/demandes/{demande}/rouvrir',   [DemandeManagementController::class, 'rouvrir'])->name('demandes.rouvrir');
+    });
+
+    // ----------------------------------------------------------
     // Notifications
     // ----------------------------------------------------------
     Route::prefix('notifications')->name('notifications.')->middleware('not.admin')->group(function () {
@@ -279,6 +297,8 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'role:admin'])->grou
     Route::delete('/flux-transitions/{fluxTransition}',                              [FluxTransitionController::class, 'destroy'])->name('flux-transitions.destroy');
     Route::post('/flux-transitions/required',                                         [FluxTransitionController::class, 'storeRequired'])->name('flux-transitions.required.store');
     Route::delete('/flux-transitions/required/{requiredCircuitService}',              [FluxTransitionController::class, 'destroyRequired'])->name('flux-transitions.required.destroy');
+    Route::post('/flux-transitions/sla',                                              [FluxTransitionController::class, 'storeSla'])->name('flux-transitions.sla.store');
+    Route::delete('/flux-transitions/sla/{serviceSla}',                              [FluxTransitionController::class, 'destroySla'])->name('flux-transitions.sla.destroy');
 
     // Document uploads
     Route::get('/documents/upload',  [DocumentController::class, 'index'])->name('documents.index');
@@ -289,19 +309,12 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'role:admin'])->grou
     Route::get('/demandes/{demande}',                [DemandeManagementController::class, 'edit'])->name('demandes.show');
     Route::post('/demandes/{demande}/update-status', [DemandeManagementController::class, 'updateStatus'])->name('demandes.updateStatus');
 
-    // Transfer reception
-    Route::post('/workflows/{workflow}/accepter', [DemandeManagementController::class, 'accepterReception'])->name('workflows.accepter');
-    Route::post('/workflows/{workflow}/refuser',  [DemandeManagementController::class, 'refuserReception'])->name('workflows.refuser');
+    // Transfer reception — moved to corbeille.access group below (accessible to all service agents)
 
-    // Décision finale Direction
-    Route::post('/demandes/{demande}/approuver', [DemandeManagementController::class, 'approuver'])->name('demandes.approuver');
-    Route::post('/demandes/{demande}/cloturer',  [DemandeManagementController::class, 'cloturer'])->name('demandes.cloturer');
-    Route::post('/demandes/{demande}/rejeter',   [DemandeManagementController::class, 'rejeter'])->name('demandes.rejeter');
-    Route::post('/demandes/{demande}/annuler',   [DemandeManagementController::class, 'annuler'])->name('demandes.annuler');
+    // Annulation (admin only)
+    Route::post('/demandes/{demande}/annuler', [DemandeManagementController::class, 'annuler'])->name('demandes.annuler');
 
-    // Affectations
-    Route::post('/demandes/{demande}/affecter',         [DemandeManagementController::class, 'affecterServices'])->name('demandes.affecter');
-    Route::post('/affectations/{affectation}/repondre', [DemandeManagementController::class, 'repondreAffectation'])->name('affectations.repondre');
+    // Affectations — moved to corbeille.access group (accessible to all service agents)
 
     // Reports management (keeps original route names)
     Route::get('rapports',                   [ReportController::class, 'adminIndex'])->name('reports.admin.index');

@@ -17,6 +17,7 @@ use App\Models\Service;
 use App\Models\Status;
 use App\Models\TypeDemande;
 use App\Models\User;
+use App\Models\Affectation;
 use App\Models\FluxTransition;
 use App\Notifications\DemandeComplementSoumisNotification;
 use Illuminate\Http\Request;
@@ -385,6 +386,8 @@ class PersonalController extends Controller
     {
         $serviceId = $this->resolveServiceId();
 
+        $terminalCodes = ['APPROUVEE', 'FINALISEE', 'REJETEE', 'ANNULEE'];
+
         $folderStats = [
             ['key' => 'urgent',          'label' => 'Dossiers urgents',           'icon' => 'fa-exclamation-triangle', 'color' => 'red'],
             ['key' => 'pension',         'label' => 'Demandes de pension',        'icon' => 'fa-file-alt',             'color' => 'blue'],
@@ -392,24 +395,35 @@ class PersonalController extends Controller
             ['key' => 'administratif',   'label' => 'Dossiers administratifs',    'icon' => 'fa-folder',               'color' => 'indigo'],
             ['key' => 'correspondances', 'label' => 'Correspondances',            'icon' => 'fa-envelope',             'color' => 'purple'],
             ['key' => 'rencontre',       'label' => 'Demandes de rencontre',      'icon' => 'fa-video',                'color' => 'green'],
-            ['key' => 'autres',          'label' => 'Autres',                     'icon' => 'fa-ellipsis-h',            'color' => 'gray'],
+            ['key' => 'autres',          'label' => 'Autres',                     'icon' => 'fa-ellipsis-h',           'color' => 'gray'],
+            ['key' => 'clotures',        'label' => 'Dossiers clôturés',          'icon' => 'fa-archive',              'color' => 'teal'],
         ];
 
         foreach ($folderStats as &$folder) {
             $query = Demande::where('current_service_id', $serviceId);
-            if ($folder['key'] === 'urgent') {
-                $query->where(fn($q) => $q
-                    ->where('is_urgent', true)
-                    ->orWhere('submitted_at', '<=', now()->subDays(30))
-                );
+            if ($folder['key'] === 'clotures') {
+                $query->whereHas('status', fn($q) => $q->whereIn('code', $terminalCodes));
+            } elseif ($folder['key'] === 'urgent') {
+                $query->whereHas('status', fn($q) => $q->whereNotIn('code', $terminalCodes))
+                      ->where(fn($q) => $q
+                          ->where('is_urgent', true)
+                          ->orWhere('submitted_at', '<=', now()->subDays(30))
+                      );
             } else {
-                $query->where('categorie', $folder['key']);
+                $query->whereHas('status', fn($q) => $q->whereNotIn('code', $terminalCodes))
+                      ->where('categorie', $folder['key']);
             }
             $folder['count'] = $query->count();
         }
         unset($folder);
 
-        return view('personal.corbeille', compact('folderStats'));
+        $pendingAffectations = Affectation::with(['demande.status', 'demande.user'])
+            ->where('service_id', $serviceId)
+            ->where('statut', 'EN_ATTENTE')
+            ->latest()
+            ->get();
+
+        return view('personal.corbeille', compact('folderStats', 'pendingAffectations'));
     }
 
     public function requestsDashboardCorbeille(Request $request)
@@ -500,9 +514,43 @@ class PersonalController extends Controller
     {
         $requestModel = Demande::with(['status', 'activityLogs.user', 'affectations.service'])->findOrFail($id);
         $allowedServices = $requestModel->current_service_id
-            ? FluxTransition::destinationsFor($requestModel->current_service_id, $requestModel->type)
+            ? FluxTransition::destinationsFor($requestModel->current_service_id, $requestModel->type, $requestModel->is_urgent)
             : collect();
         $affectations = $requestModel->affectations()->with('service', 'affectePar')->get();
+
+        // Pending reception workflow visible to the current agent (own service or delegated)
+        $user = auth()->user();
+        $actingServiceIds = ($user && $user->service_id)
+            ? \App\Models\AgentDelegation::actingServiceIds($user->id, $user->service_id)
+            : [];
+
+        $pendingWorkflow = $requestModel->workflows()
+            ->with(['fromService', 'toService'])
+            ->where('reception_status', 'pending')
+            ->when(
+                count($actingServiceIds) > 0 && !($user && $user->hasRole('admin')),
+                fn($q) => $q->whereIn('to_service_id', $actingServiceIds)
+            )
+            ->latest()
+            ->first();
+
+        // Detect if the current service is consulted for avis (not the dossier owner)
+        $pendingAffectation = ($user && $user->service_id)
+            ? Affectation::where('demande_id', $requestModel->id)
+                ->where('service_id', $user->service_id)
+                ->where('statut', 'EN_ATTENTE')
+                ->first()
+            : null;
+
+        // Block access once avis is submitted, unless the service now owns the dossier via workflow
+        $isCurrentServiceOwner = $user?->service_id && $requestModel->current_service_id === $user->service_id;
+        if (!$isCurrentServiceOwner && !$user?->hasRole(['admin', 'direction']) && $user?->service_id) {
+            $submittedAvis = Affectation::where('demande_id', $requestModel->id)
+                ->where('service_id', $user->service_id)
+                ->whereIn('statut', ['TERMINE', 'REJETE'])
+                ->exists();
+            abort_if($submittedAvis, 403, 'Votre avis a été soumis. Vous n\'avez plus accès à ce dossier.');
+        }
 
         // Tracer la consultation
         DemandeActivityLog::create([
@@ -530,6 +578,8 @@ class PersonalController extends Controller
             }
         });
 
+        $isClosed = in_array($requestModel->status->code, ['APPROUVEE', 'FINALISEE', 'REJETEE', 'ANNULEE']);
+
         return view('personal.request-details', [
             'from'             => 'cart',
             'request'          => $requestModel,
@@ -538,6 +588,9 @@ class PersonalController extends Controller
             'affectations'     => $affectations,
             'activityLogs'     => $activityLogs,
             'messages'         => $messages,
+            'pendingWorkflow'       => $pendingWorkflow,
+            'pendingAffectation'    => $pendingAffectation,
+            'isClosed'              => $isClosed,
         ]);
     }
 
@@ -546,6 +599,8 @@ class PersonalController extends Controller
         $serviceId = $this->resolveServiceId();
         $folder    = $request->input('folder');
 
+        $terminalCodes = ['APPROUVEE', 'FINALISEE', 'REJETEE', 'ANNULEE'];
+
         $folders = [
             'urgent'          => 'Dossiers urgents',
             'pension'         => 'Demandes de pension',
@@ -553,19 +608,24 @@ class PersonalController extends Controller
             'administratif'   => 'Dossiers administratifs',
             'correspondances' => 'Correspondances',
             'rencontre'       => 'Demandes de rencontre',
+            'clotures'        => 'Dossiers clôturés',
         ];
 
         abort_unless(isset($folders[$folder]), 404);
 
-        $folderScope = function ($q) use ($folder, $serviceId) {
+        $folderScope = function ($q) use ($folder, $serviceId, $terminalCodes) {
             $q->where('current_service_id', $serviceId);
-            if ($folder === 'urgent') {
-                $q->where(fn($q2) => $q2
-                    ->where('is_urgent', true)
-                    ->orWhere('submitted_at', '<=', now()->subDays(30))
-                );
+            if ($folder === 'clotures') {
+                $q->whereHas('status', fn($q2) => $q2->whereIn('code', $terminalCodes));
+            } elseif ($folder === 'urgent') {
+                $q->whereHas('status', fn($q2) => $q2->whereNotIn('code', $terminalCodes))
+                  ->where(fn($q2) => $q2
+                      ->where('is_urgent', true)
+                      ->orWhere('submitted_at', '<=', now()->subDays(30))
+                  );
             } else {
-                $q->where('categorie', $folder);
+                $q->whereHas('status', fn($q2) => $q2->whereNotIn('code', $terminalCodes))
+                  ->where('categorie', $folder);
             }
         };
 

@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\FluxTransition;
 use App\Models\RequiredCircuitService;
 use App\Models\Service;
+use App\Models\ServiceSla;
 use Illuminate\Http\Request;
 
 class FluxTransitionController extends Controller
@@ -23,7 +24,12 @@ class FluxTransitionController extends Controller
             ->orderBy('service_id')
             ->get();
 
-        return view('admin.flux-transitions.index', compact('transitions', 'services', 'requiredServices'));
+        $slaRules = ServiceSla::with('service')
+            ->orderBy('service_id')
+            ->orderBy('type_demande')
+            ->get();
+
+        return view('admin.flux-transitions.index', compact('transitions', 'services', 'requiredServices', 'slaRules'));
     }
 
     public function store(Request $request)
@@ -151,5 +157,31 @@ class FluxTransitionController extends Controller
         $fluxTransition->delete();
 
         return redirect()->back()->with('success', 'Transition supprimée.');
+    }
+
+    public function storeSla(Request $request)
+    {
+        $request->validate([
+            'service_id'   => 'required|exists:services,id',
+            'type_demande' => 'nullable|string|max:100',
+            'delai_jours'  => 'required|integer|min:1|max:365',
+        ]);
+
+        ServiceSla::updateOrCreate(
+            [
+                'service_id'   => $request->service_id,
+                'type_demande' => $request->type_demande ?: null,
+            ],
+            ['delai_jours' => $request->delai_jours]
+        );
+
+        return redirect()->back()->with('success', 'SLA enregistré.');
+    }
+
+    public function destroySla(ServiceSla $serviceSla)
+    {
+        $serviceSla->delete();
+
+        return redirect()->back()->with('success', 'SLA supprimé.');
     }
 }

@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 
 
 use App\Models\Affectation;
+use App\Models\AgentDelegation;
 use App\Models\Demande;
 use App\Models\DemandeActivityLog;
 use App\Models\DemandeHistory;
@@ -84,6 +85,23 @@ class DemandeManagementController extends Controller
     public function annotate(Request $request, Demande $demande)
     {
         abort_unless(auth()->user()->hasRole('direction'), 403, 'Seule la Direction peut annoter un dossier.');
+        abort_if($demande->isClosed(), 403, 'Ce dossier est clôturé et ne peut plus être modifié.');
+
+        abort_if(
+            \App\Models\Affectation::where('demande_id', $demande->id)
+                ->where('service_id', auth()->user()->service_id)
+                ->where('statut', 'EN_ATTENTE')
+                ->exists(),
+            403,
+            'Votre service est en mode consultation pour ce dossier. Soumettez votre avis avant toute autre action.'
+        );
+
+        $actingServiceIds = AgentDelegation::actingServiceIds(auth()->id(), auth()->user()->service_id ?? 0);
+        abort_if(
+            $demande->workflows()->where('reception_status', 'pending')->whereIn('to_service_id', $actingServiceIds)->exists(),
+            403,
+            'Confirmez d\'abord la réception de ce dossier avant de l\'annoter.'
+        );
 
         $request->validate([
             'annotation' => 'required|string|max:2000',
@@ -113,6 +131,24 @@ class DemandeManagementController extends Controller
      */
     public function requestComplement(Request $request, Demande $demande)
     {
+        abort_if($demande->isClosed(), 403, 'Ce dossier est clôturé et ne peut plus être modifié.');
+
+        abort_if(
+            \App\Models\Affectation::where('demande_id', $demande->id)
+                ->where('service_id', auth()->user()->service_id)
+                ->where('statut', 'EN_ATTENTE')
+                ->exists(),
+            403,
+            'Votre service est en mode consultation pour ce dossier. Soumettez votre avis avant toute autre action.'
+        );
+
+        $actingServiceIds = AgentDelegation::actingServiceIds(auth()->id(), auth()->user()->service_id ?? 0);
+        abort_if(
+            $demande->workflows()->where('reception_status', 'pending')->whereIn('to_service_id', $actingServiceIds)->exists(),
+            403,
+            'Confirmez d\'abord la réception de ce dossier avant de demander un complément.'
+        );
+
         $request->validate([
             'message' => 'required|string|max:3000',
         ]);
@@ -164,10 +200,36 @@ class DemandeManagementController extends Controller
     {
         $demande = Demande::with('status')->findOrFail($request->demande_id);
 
+        abort_if($demande->isClosed(), 403, 'Ce dossier est clôturé et ne peut plus être transféré.');
+
         abort_if(
             !$demande->isAnnotated(),
             403,
             'Le dossier doit être annoté par la Direction avant d\'être transféré.'
+        );
+
+        abort_if(
+            \App\Models\Affectation::where('demande_id', $demande->id)
+                ->where('service_id', auth()->user()->service_id)
+                ->where('statut', 'EN_ATTENTE')
+                ->exists(),
+            403,
+            'Votre service est en mode consultation pour ce dossier. Soumettez votre avis avant toute autre action.'
+        );
+
+        abort_if(
+            \App\Models\Affectation::where('demande_id', $demande->id)
+                ->where('statut', 'EN_ATTENTE')
+                ->exists(),
+            403,
+            'Des avis sont encore en attente. Tous les services consultés doivent soumettre leur avis avant tout transfert.'
+        );
+
+        $actingServiceIds = AgentDelegation::actingServiceIds(auth()->id(), auth()->user()->service_id ?? 0);
+        abort_if(
+            $demande->workflows()->where('reception_status', 'pending')->whereIn('to_service_id', $actingServiceIds)->exists(),
+            403,
+            'Confirmez d\'abord la réception de ce dossier avant de le transférer.'
         );
 
         $toService = Service::findOrFail($request->service_id);
@@ -201,13 +263,18 @@ class DemandeManagementController extends Controller
      */
     public function accepterReception(Request $request, DemandeWorkflow $workflow, DemandeWorkflowService $workflowService)
     {
+        $user = auth()->user();
+        $actingServiceIds = $user->service_id
+            ? AgentDelegation::actingServiceIds($user->id, $user->service_id)
+            : [];
+
         abort_unless(
-            auth()->user()->service_id === $workflow->to_service_id || auth()->user()->hasRole('admin'),
+            in_array($workflow->to_service_id, $actingServiceIds) || $user->hasRole('admin'),
             403,
-            'Seul le service destinataire peut confirmer la réception.'
+            'Seul le service destinataire (ou son délégué) peut confirmer la réception.'
         );
 
-        $workflowService->accepterReception($workflow, auth()->user());
+        $workflowService->accepterReception($workflow, $user);
 
         DemandeActivityLog::create([
             'demande_id' => $workflow->demande_id,
@@ -225,13 +292,18 @@ class DemandeManagementController extends Controller
     {
         $request->validate(['motif' => 'nullable|string|max:1000']);
 
+        $user = auth()->user();
+        $actingServiceIds = $user->service_id
+            ? AgentDelegation::actingServiceIds($user->id, $user->service_id)
+            : [];
+
         abort_unless(
-            auth()->user()->service_id === $workflow->to_service_id || auth()->user()->hasRole('admin'),
+            in_array($workflow->to_service_id, $actingServiceIds) || $user->hasRole('admin'),
             403,
-            'Seul le service destinataire peut refuser la réception.'
+            'Seul le service destinataire (ou son délégué) peut refuser la réception.'
         );
 
-        $workflowService->refuserReception($workflow, auth()->user(), $request->motif);
+        $workflowService->refuserReception($workflow, $user, $request->motif);
 
         DemandeActivityLog::create([
             'demande_id' => $workflow->demande_id,
@@ -283,6 +355,12 @@ class DemandeManagementController extends Controller
     {
         abort_unless(auth()->user()->hasRole('direction'), 403);
 
+        abort_if(
+            $demande->created_by === auth()->id(),
+            403,
+            'Conflit d\'intérêt : vous êtes le créateur de ce dossier et ne pouvez pas l\'approuver.'
+        );
+
         abort_unless(
             $this->hasBeenProcessedByAService($demande),
             403,
@@ -333,6 +411,12 @@ class DemandeManagementController extends Controller
     public function cloturer(Demande $demande)
     {
         abort_unless(auth()->user()->hasRole('direction'), 403);
+
+        abort_if(
+            $demande->created_by === auth()->id(),
+            403,
+            'Conflit d\'intérêt : vous êtes le créateur de ce dossier et ne pouvez pas le clôturer.'
+        );
 
         abort_unless(
             $this->hasBeenProcessedByAService($demande),
@@ -455,10 +539,38 @@ class DemandeManagementController extends Controller
     }
 
     /**
+     * Réouverture d'un dossier clôturé par la Direction.
+     */
+    public function rouvrir(Request $request, Demande $demande)
+    {
+        abort_unless(auth()->user()->hasRole('direction'), 403);
+        abort_unless($demande->isClosed(), 422, 'Ce dossier n\'est pas clôturé.');
+
+        $request->validate(['motif' => 'nullable|string|max:2000']);
+
+        $statusId = Status::where('code', Status::STATUS_IN_PROGRESS)->value('id');
+
+        DB::transaction(function () use ($demande, $statusId, $request) {
+            $demande->update(['status_id' => $statusId]);
+            DemandeHistory::create([
+                'demande_id'  => $demande->id,
+                'statut'      => Status::STATUS_IN_PROGRESS,
+                'commentaire' => 'Dossier réouvert par la Direction.' . ($request->motif ? ' Motif : ' . $request->motif : ''),
+                'changed_by'  => auth()->id(),
+            ]);
+        });
+
+        return redirect()->back()->with('success', 'Dossier réouvert avec succès.');
+    }
+
+
+    /**
      * Affecter un dossier à un ou plusieurs services pour avis simultané.
      */
     public function affecterServices(Request $request, Demande $demande, DemandeWorkflowService $workflowService)
     {
+        abort_if($demande->isClosed(), 403, 'Ce dossier est clôturé et ne peut plus être modifié.');
+
         $request->validate([
             'service_ids'   => 'required|array|min:1',
             'service_ids.*' => 'integer|exists:services,id',
@@ -487,7 +599,7 @@ class DemandeManagementController extends Controller
         ]);
 
         abort_unless(
-            auth()->user()->service_id === $affectation->service_id || auth()->user()->hasRole('admin'),
+            auth()->user()->service_id === $affectation->service_id,
             403,
             'Seul le service affecté peut soumettre un avis.'
         );
@@ -501,6 +613,12 @@ class DemandeManagementController extends Controller
             'metadata'   => ['statut' => $request->statut],
         ]);
 
-        return redirect()->back()->with('success', 'Avis enregistré.');
+        // Final avis — redirect to corbeille so the agent doesn't hit the 403 on the dossier
+        if (in_array($request->statut, ['TERMINE', 'REJETE'])) {
+            return redirect()->route('personal.cart')
+                ->with('success', 'Avis soumis. Vous n\'avez plus accès à ce dossier.');
+        }
+
+        return redirect()->back()->with('success', 'Avis mis à jour.');
     }
 }

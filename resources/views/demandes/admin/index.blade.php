@@ -18,7 +18,7 @@
         </div>
     @endif
 
-    {{-- ── Transferts en attente de réception ─────────────────────────────── --}}
+    {{-- ── Transferts en cours (monitoring, lecture seule) ──────────────────── --}}
     @php
         $pendingWorkflows = \App\Models\DemandeWorkflow::with(['demande', 'fromService', 'toService', 'user'])
             ->where('reception_status', 'pending')
@@ -31,6 +31,7 @@
             <h2 class="text-sm font-semibold text-sky-800 mb-3 flex items-center gap-2">
                 <i class="fas fa-clock text-sky-500"></i>
                 Transferts en attente de réception ({{ $pendingWorkflows->count() }})
+                <span class="text-xs font-normal text-sky-600">— traités par les agents des services concernés</span>
             </h2>
             <div class="space-y-2">
                 @foreach($pendingWorkflows as $workflow)
@@ -50,48 +51,10 @@
                                 <p class="text-gray-500 text-xs mt-0.5 italic">{{ $workflow->commentaire }}</p>
                             @endif
                         </div>
-                        <div class="flex gap-2">
-                            <form method="POST" action="{{ route('admin.workflows.accepter', $workflow) }}">
-                                @csrf
-                                <button type="submit"
-                                        class="bg-green-600 hover:bg-green-700 text-white text-xs font-medium px-3 py-1.5 rounded-lg transition-colors">
-                                    <i class="fas fa-check mr-1"></i> Accepter
-                                </button>
-                            </form>
-                            <button type="button"
-                                    onclick="document.getElementById('refus-modal-{{ $workflow->id }}').classList.remove('hidden')"
-                                    class="bg-red-600 hover:bg-red-700 text-white text-xs font-medium px-3 py-1.5 rounded-lg transition-colors">
-                                <i class="fas fa-times mr-1"></i> Refuser
-                            </button>
-                        </div>
-                    </div>
-
-                    {{-- Refus modal --}}
-                    <div id="refus-modal-{{ $workflow->id }}"
-                         class="hidden fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4">
-                        <div class="bg-white rounded-xl shadow-xl w-full max-w-md p-6">
-                            <h3 class="font-semibold text-gray-800 mb-3">Refuser la réception</h3>
-                            <p class="text-sm text-gray-600 mb-4">
-                                Dossier <strong>#{{ $workflow->demande->code ?? $workflow->demande->id }}</strong>
-                                sera retourné à <strong>{{ $workflow->fromService->nom ?? '—' }}</strong>.
-                            </p>
-                            <form method="POST" action="{{ route('admin.workflows.refuser', $workflow) }}">
-                                @csrf
-                                <textarea name="motif" rows="3" placeholder="Motif du refus (optionnel)"
-                                          class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-red-300 mb-4"></textarea>
-                                <div class="flex justify-end gap-2">
-                                    <button type="button"
-                                            onclick="document.getElementById('refus-modal-{{ $workflow->id }}').classList.add('hidden')"
-                                            class="text-gray-500 hover:text-gray-700 text-sm px-4 py-2">
-                                        Annuler
-                                    </button>
-                                    <button type="submit"
-                                            class="bg-red-600 hover:bg-red-700 text-white text-sm font-medium px-4 py-2 rounded-lg transition-colors">
-                                        Confirmer le refus
-                                    </button>
-                                </div>
-                            </form>
-                        </div>
+                        <span class="text-xs bg-sky-100 text-sky-700 font-medium px-2.5 py-1 rounded-full flex items-center gap-1">
+                            <i class="fas fa-hourglass-half text-xs"></i>
+                            En attente
+                        </span>
                     </div>
                 @endforeach
             </div>
