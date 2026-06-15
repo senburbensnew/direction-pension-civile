@@ -1,4 +1,4 @@
-@inject('storage', 'Illuminate\Support\Facades\Storage')
+﻿@inject('storage', 'Illuminate\Support\Facades\Storage')
 
 @php
     $editableTypes = [
@@ -68,11 +68,11 @@
                                             'REJETEE'           => 'bg-red-50 text-red-700 ring-red-200',
                                             'CLOTUREE'          => 'bg-slate-100 text-slate-600 ring-slate-200',
                                         ];
-                                        $sc = $statusColors[$request->status->code] ?? 'bg-gray-100 text-gray-600 ring-gray-200';
+                                        $sc = $statusColors[$request->currentStep?->code] ?? 'bg-gray-100 text-gray-600 ring-gray-200';
                                     @endphp
                                     <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold ring-1 {{ $sc }}">
                                         <span class="w-1.5 h-1.5 rounded-full bg-current opacity-70"></span>
-                                        {{ $request->status->label ?? $request->status->code }}
+                                        {{ $request->currentStep?->nom ?? $request->currentStep?->code }}
                                     </span>
                                 @endif
                                 @if($request->is_urgent ?? false)
@@ -161,7 +161,7 @@
                                     @endif
 
                                     {{-- Complément --}}
-                                    @if($request->status->code !== 'COMPLEMENT_REQUIS')
+                                    @if($request->currentStep?->code !== 'COMPLEMENT_REQUIS')
                                         <button onclick="document.getElementById('complementModal').classList.remove('hidden'); document.getElementById('complementModal').closest('.bg-white').classList.remove('hidden')"
                                                 class="inline-flex items-center gap-2 px-4 py-2 bg-orange-500 hover:bg-orange-600 text-white text-sm font-medium rounded-xl transition-all shadow-sm hover:shadow">
                                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -293,7 +293,7 @@
                 </p>
 
                 <div class="space-y-2">
-                    <form method="POST" action="{{ route('admin.workflows.accepter', $pendingWorkflow) }}">
+                    <form method="POST" action="{{ route('admin.interactions.accepter', $pendingWorkflow) }}">
                         @csrf
                         <button type="submit"
                                 class="w-full flex items-center justify-center gap-2 bg-green-600 hover:bg-green-700 text-white text-sm font-semibold py-2.5 rounded-xl transition-all shadow-sm hover:shadow">
@@ -316,7 +316,7 @@
                     <p class="text-xs font-semibold text-red-700 mb-2">
                         Le dossier sera retourné à {{ $pendingWorkflow->fromService->nom ?? "l'expéditeur" }}.
                     </p>
-                    <form method="POST" action="{{ route('admin.workflows.refuser', $pendingWorkflow) }}">
+                    <form method="POST" action="{{ route('admin.interactions.refuser', $pendingWorkflow) }}">
                         @csrf
                         <textarea name="motif" rows="2" placeholder="Motif du refus (optionnel)"
                                   class="w-full border border-red-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-red-300 bg-white mb-2 resize-none"></textarea>
@@ -388,9 +388,10 @@
     @if($from === 'cart')
         @role('direction')
         @php
-            $lastIncoming = $request->workflows()
-                ->with(['fromService', 'user'])
-                ->where('reception_status', 'accepted')
+            $lastIncoming = $request->interactions()
+                ->with(['fromService', 'initiatedBy'])
+                ->where('type', \App\Models\DemandeInteraction::TYPE_TRANSFERT)
+                ->where('statut', \App\Models\DemandeInteraction::STATUT_ACCEPTE)
                 ->whereNotNull('from_service_id')
                 ->latest()
                 ->first();
@@ -406,7 +407,7 @@
                     <p class="font-semibold text-amber-900 text-xs uppercase tracking-wide mb-1">Transmis par</p>
                     <p class="font-bold text-amber-800">{{ $lastIncoming->fromService->nom }}</p>
                     <p class="text-amber-600 text-xs mt-1">
-                        Via <span class="font-medium">{{ $lastIncoming->user?->name ?? '—' }}</span>
+                        Via <span class="font-medium">{{ $lastIncoming->initiatedBy?->name ?? '—' }}</span>
                         · {{ $lastIncoming->created_at->format('d/m/Y à H:i') }}
                     </p>
                     @if($lastIncoming->commentaire)
@@ -433,7 +434,7 @@
                     <strong>{{ $pendingAffectation->date_affectation->format('d/m/Y à H:i') }}</strong>.
                     Soumettez votre avis — c'est la seule action disponible pour votre service sur ce dossier.
                 </p>
-                <form method="POST" action="{{ route('admin.affectations.repondre', $pendingAffectation->id) }}">
+                <form method="POST" action="{{ route('admin.interactions.repondre', $pendingAffectation->id) }}">
                     @csrf
                     <div class="mb-3">
                         <label class="block text-xs font-semibold text-gray-700 mb-1">Décision <span class="text-red-500">*</span></label>
@@ -576,7 +577,7 @@
 
 
     {{-- Service panel: Demander un complément (cart view, non COMPLEMENT_REQUIS, hors mode consultation) --}}
-    @if($from === 'cart' && (!isset($isClosed) || !$isClosed) && (!isset($pendingWorkflow) || !$pendingWorkflow) && (!isset($pendingAffectation) || !$pendingAffectation) && $request->status->code !== 'COMPLEMENT_REQUIS')
+    @if($from === 'cart' && (!isset($isClosed) || !$isClosed) && (!isset($pendingWorkflow) || !$pendingWorkflow) && (!isset($pendingAffectation) || !$pendingAffectation) && $request->currentStep?->code !== 'COMPLEMENT_REQUIS')
         @hasanyrole('secretariat|direction|service_liquidation|service_formalite|service_controle_placement|service_comptabilite|service_assurance|administration|admin')
             <div class="bg-white border border-gray-200 rounded-2xl shadow-sm overflow-hidden">
                 <div class="px-4 py-3 border-b border-gray-100 flex items-center justify-between">
@@ -857,7 +858,7 @@
                                          class="hidden fixed inset-0 z-[99999] flex items-center justify-center bg-black/50">
                                         <div class="bg-white w-full max-w-md rounded-2xl shadow-xl p-6">
                                             <h3 class="font-semibold text-gray-800 mb-4">Avis — {{ $aff->service->nom }}</h3>
-                                            <form method="POST" action="{{ route('admin.affectations.repondre', $aff->id) }}">
+                                            <form method="POST" action="{{ route('admin.interactions.repondre', $aff->id) }}">
                                                 @csrf
                                                 <div class="mb-3">
                                                     <label class="block text-sm font-medium text-gray-700 mb-1">Décision <span class="text-red-500">*</span></label>
@@ -940,9 +941,10 @@
             @php
                 $directionServiceId = \App\Models\Service::where('code', \App\Models\Service::DIRECTION)->value('id');
                 $isAtDirection = $request->current_service_id === $directionServiceId;
-                $isClosed = in_array($request->status->code, ['APPROUVEE', 'FINALISEE', 'REJETEE', 'ANNULEE']);
-                $canFinalize = $request->workflows()
-                    ->where('reception_status', 'accepted')
+                $isClosed = in_array($request->currentStep?->code, ['APPROUVEE', 'FINALISEE', 'REJETEE', 'ANNULEE']);
+                $canFinalize = $request->interactions()
+                    ->where('type', \App\Models\DemandeInteraction::TYPE_TRANSFERT)
+                    ->where('statut', \App\Models\DemandeInteraction::STATUT_ACCEPTE)
                     ->whereNotNull('from_service_id')
                     ->exists();
             @endphp
@@ -1998,10 +2000,10 @@
                     <div class="bg-white shadow rounded-lg p-6 space-y-8">
 
                         {{-- ================= STATUT ================= --}}
-                        <div class="p-4 rounded-lg {{ App\Models\Status::getStatusStyle($request->status->code) }}">
+                        <div class="p-4 rounded-lg {{ App\Models\WorkflowStep::getStatusStyle($request->currentStep?->code) }}">
                             <div class="flex justify-between items-center">
                                 <div>
-                                    <strong>Statut :</strong> {{ $request->status->code }}
+                                    <strong>Statut :</strong> {{ $request->currentStep?->code }}
                                 </div>
                                 <div class="text-sm">
                                     Mis à jour le {{ $request->updated_at->format('d/m/Y H:i') }}

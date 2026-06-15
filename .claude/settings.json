@@ -20,7 +20,30 @@
       "Bash(php -r \"echo file_get_contents\\('resources/views/personal/request-details.blade.php'\\);\")",
       "Bash(awk 'NR>=113 && NR<=647 && /max-w-7xl/' resources/views/personal/request-details.blade.php)",
       "Bash(awk 'NR>=113 && NR<=647 && /max-w-7xl/{print NR\": \"$0}' resources/views/personal/request-details.blade.php)",
-      "Bash(git stash *)"
+      "Bash(git stash *)",
+      "Bash(php fix_views2.php)",
+      "Bash(del fix_views2.php)",
+      "Bash(php -r \"echo 'done';\")",
+      "Bash(git rm *)",
+      "Bash(git checkout *)",
+      "Bash(APP_DEBUG=true php artisan tinker --execute=\"app\\('Illuminate\\\\Contracts\\\\Debug\\\\ExceptionHandler'\\)\")",
+      "Bash(grep -rn \"Models\\\\\\\\\\\\\\\\Status\" tests/)",
+      "Bash(del \"c:\\\\Users\\\\rubens\\\\Documents\\\\projects\\\\direction-pension-civile\\\\database\\\\migrations\\\\2026_06_06_183918_add_status_id_and_type_demande_to_workflow_steps_table.php\")",
+      "Bash(echo \"EXIT:$?\")",
+      "Bash(grep -n 'Etat\\\\|status\\\\b\\\\|->status\\\\b\\\\|$availableEtats\\\\|$etatServiceMap' c:/Users/rubens/Documents/projects/direction-pension-civile/resources/views/admin/dashboard.blade.php c:/Users/rubens/Documents/projects/direction-pension-civile/resources/views/admin/flux-transitions/index.blade.php)",
+      "Bash(grep -n \"App\\\\\\\\\\\\Models\\\\\\\\\\\\Status\\\\|use.*Status\\\\|Status::\" c:/Users/rubens/Documents/projects/direction-pension-civile/resources/views/admin/dashboard.blade.php)",
+      "Bash(grep -rn \"App\\\\\\\\\\\\Models\\\\\\\\\\\\Status\\\\|use.*Status\\\\b\\\\|\\\\bStatus::\" c:/Users/rubens/Documents/projects/direction-pension-civile/resources/views/)",
+      "Bash(grep -rn \"App\\\\\\\\\\\\Models\\\\\\\\\\\\Status\\\\|'App\\\\\\\\\\\\\\\\Models\\\\\\\\\\\\\\\\Status'\" c:/Users/rubens/Documents/projects/direction-pension-civile/app/)",
+      "Bash(Get-ChildItem storage/logs/)",
+      "Bash(tail -c 3000 c:/Users/rubens/.claude/projects/c--Users-rubens-Documents-projects-direction-pension-civile/cb9012ab-aa2d-431f-8fca-741750bec71b/tool-results/b2yjj2oaj.txt)",
+      "Read(//c/Users/rubens/.claude/projects/c--Users-rubens-Documents-projects-direction-pension-civile/cb9012ab-aa2d-431f-8fca-741750bec71b/tool-results/**)",
+      "Bash(php -r \"echo date\\('Y_m_d_His'\\);\")",
+      "Bash(exist .env.testing type .env.testing)",
+      "Bash(findstr \"DB_\")",
+      "Bash(git mv *)",
+      "PowerShell(cd \"c:\\\\Users\\\\rubens\\\\Documents\\\\projects\\\\direction-pension-civile\"; php artisan test; echo \"Exit: $LASTEXITCODE\")",
+      "Bash(xargs grep -l \"toggle-construction\")",
+      "Bash(xargs grep -l \"maintenance\\\\|under construction\")"
     ]
   }
 }

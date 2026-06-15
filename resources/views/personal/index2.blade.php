@@ -22,9 +22,9 @@
                     <form method="GET" action="{{ route('personal.dashboard') }}" class="flex flex-wrap gap-4 mb-6 items-end">
                         {{-- Status filter --}}
                         <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-1">Statut</label>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">État</label>
                             <select name="status_id" class="mt-1 inline-block w-auto min-w-[12rem] rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
-                                <option value="">Tous les statuts</option>
+                                <option value="">Tous les états</option>
                                 @foreach ($statuses as $status)
                                     <option value="{{ $status->id }}"
                                         {{ request('status_id') == $status->id ? 'selected' : '' }}>

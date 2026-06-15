@@ -85,7 +85,7 @@
             </div>
 
             {{-- Utilisateurs & Accès --}}
-            <div x-data="{ open: {{ request()->routeIs('admin.users.*', 'admin.roles.*', 'admin.permissions.*', 'admin.services.*', 'admin.flux-transitions.*', 'admin.directions.*') ? 'true' : 'false' }} }">
+            <div x-data="{ open: {{ request()->routeIs('admin.users.*', 'admin.roles.*', 'admin.permissions.*', 'admin.services.*', 'admin.flux-transitions.*', 'admin.directions.*', 'admin.statuses.*') ? 'true' : 'false' }} }">
                 <button @click="open = !open"
                     class="nav-section mt-2 w-full flex items-center justify-between cursor-pointer hover:text-slate-300 transition-colors">
                     <span>Utilisateurs &amp; Accès</span>
@@ -218,8 +218,28 @@
 
         </nav>
 
-        {{-- Footer: user info + profile + logout --}}
+        {{-- Footer: maintenance toggle + user info + profile + logout --}}
         <div class="border-t border-white/10 px-3 py-3 space-y-2">
+            @php
+                $maintenanceOn = \Illuminate\Support\Facades\Cache::remember('is_maintenance_mode', 60, fn() =>
+                    \Illuminate\Support\Facades\DB::table('parameters')
+                        ->where('name', 'is_maintenance_mode')->value('value') === 'true'
+                );
+            @endphp
+            <form method="POST" action="{{ route('admin.toggle.maintenance') }}">
+                @csrf
+                <button type="submit"
+                    class="w-full flex items-center justify-between gap-2 px-3 py-2 rounded-lg text-xs font-medium transition-colors
+                        {{ $maintenanceOn ? 'bg-yellow-500/20 text-yellow-300 hover:bg-yellow-500/30' : 'text-slate-400 hover:bg-white/07 hover:text-slate-200' }}">
+                    <span class="flex items-center gap-2">
+                        <i class="fas fa-tools w-4 text-center {{ $maintenanceOn ? 'text-yellow-400' : '' }}"></i>
+                        Mode maintenance
+                    </span>
+                    <span class="flex-shrink-0 w-8 h-4 rounded-full relative transition-colors {{ $maintenanceOn ? 'bg-yellow-400' : 'bg-slate-600' }}">
+                        <span class="absolute top-0.5 w-3 h-3 rounded-full bg-white shadow transition-transform {{ $maintenanceOn ? 'translate-x-4' : 'translate-x-0.5' }}"></span>
+                    </span>
+                </button>
+            </form>
             <a href="{{ route('profile.edit') }}"
                 class="nav-link {{ request()->routeIs('profile.*') ? 'active' : '' }} text-xs">
                 <i class="fas fa-user-circle"></i> Mon profil

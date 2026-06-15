@@ -1,4 +1,4 @@
-@extends('layouts.admin')
+﻿@extends('layouts.admin')
 
 @section('title', 'Statuts des demandes')
 
@@ -12,11 +12,11 @@
     <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <div>
             <h1 class="text-xl font-bold text-gray-800">Statuts des demandes</h1>
-            <p class="text-sm text-gray-500 mt-0.5">Libellés et descriptions affichés aux usagers et agents.</p>
+            <p class="text-sm text-gray-500 mt-0.5">Libellés et descriptions des états métier. La localisation est gérée par les étapes de workflow.</p>
         </div>
         <button type="button" @click="showCreate = true"
             class="inline-flex items-center gap-1.5 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg transition-colors">
-            <i class="fas fa-plus"></i> Nouveau statut
+            <i class="fas fa-plus"></i> Nouvel état
         </button>
     </div>
 
@@ -41,6 +41,7 @@
                     <th class="px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide text-left">Libellé</th>
                     <th class="px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide text-left">Description</th>
                     <th class="px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide text-center">Demandes</th>
+                    <th class="px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide text-center">Nœuds du circuit</th>
                     <th class="px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide text-right">Actions</th>
                 </tr>
             </thead>
@@ -55,9 +56,7 @@
                         </td>
                         <td class="px-4 py-3">
                             <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium
-                                @php
-                                    $style = \App\Models\Status::getStatusStyle($status->code);
-                                @endphp
+                                @php $style = \App\Models\Etat::getStatusStyle($status->code); @endphp
                                 {{ $style }}">
                                 {{ $status->label }}
                             </span>
@@ -72,6 +71,16 @@
                                 {{ $status->demandes_count }}
                             </span>
                         </td>
+                        <td class="px-4 py-3 text-center">
+                            @if($status->workflow_steps_count > 0)
+                                <a href="{{ route('admin.flux-transitions.index') }}"
+                                   class="inline-flex items-center justify-center gap-1 px-2.5 py-0.5 rounded-full bg-indigo-100 text-indigo-700 text-xs font-semibold hover:bg-indigo-200 transition-colors">
+                                    <i class="fas fa-circle text-[7px]"></i> {{ $status->workflow_steps_count }}
+                                </a>
+                            @else
+                                <span class="text-xs text-gray-300">—</span>
+                            @endif
+                        </td>
                         <td class="px-4 py-3 text-right">
                             <div class="flex items-center justify-end gap-2">
                                 <button type="button"
@@ -80,8 +89,8 @@
                                     <i class="fas fa-pencil-alt"></i> Modifier
                                 </button>
                                 @if($status->demandes_count === 0)
-                                    <form method="POST" action="{{ route('admin.statuses.destroy', $status) }}"
-                                          onsubmit="return confirm('Supprimer ce statut ?')">
+                                    <form method="POST" action="{{ route('admin.etats.destroy', $status) }}"
+                                          onsubmit="return confirm('Supprimer cet état ?')">
                                         @csrf @method('DELETE')
                                         <button type="submit"
                                             class="inline-flex items-center gap-1 px-2.5 py-1.5 text-xs font-medium text-red-600 hover:bg-red-50 rounded-lg transition-colors">
@@ -94,9 +103,9 @@
                     </tr>
                 @empty
                     <tr>
-                        <td colspan="6" class="px-4 py-10 text-center text-gray-400">
+                        <td colspan="7" class="px-4 py-10 text-center text-gray-400">
                             <i class="fas fa-tag text-3xl mb-2 block"></i>
-                            Aucun statut défini.
+                            Aucun état défini.
                         </td>
                     </tr>
                 @endforelse
@@ -110,9 +119,9 @@
          @keydown.escape.window="showCreate = false">
         <div class="bg-white w-full max-w-lg rounded-xl shadow-xl p-6" @click.stop>
             <h3 class="font-semibold text-gray-800 text-base mb-4">
-                <i class="fas fa-plus-circle mr-2 text-blue-500"></i> Nouveau statut
+                <i class="fas fa-plus-circle mr-2 text-blue-500"></i> Nouvel état
             </h3>
-            <form method="POST" action="{{ route('admin.statuses.store') }}" class="space-y-4">
+            <form method="POST" action="{{ route('admin.etats.store') }}" class="space-y-4">
                 @csrf
                 <div>
                     <label class="block text-xs font-medium text-gray-700 mb-1">Code <span class="text-red-500">*</span></label>
@@ -154,16 +163,15 @@
          @keydown.escape.window="editStatus = null">
         <div class="bg-white w-full max-w-lg rounded-xl shadow-xl p-6" @click.stop>
             <h3 class="font-semibold text-gray-800 text-base mb-1">
-                <i class="fas fa-pencil-alt mr-2 text-blue-500"></i> Modifier le statut
+                <i class="fas fa-pencil-alt mr-2 text-blue-500"></i> Modifier l'état
             </h3>
             <p class="text-xs text-gray-400 mb-4" x-text="'Code : ' + (editStatus?.code ?? '')"></p>
 
             <template x-if="editStatus">
                 <form method="POST"
-                      :action="'{{ url('admin/statuses') }}/' + editStatus.id"
+                      :action="'{{ url('admin/etats') }}/' + editStatus.id"
                       class="space-y-4">
                     @csrf
-                    @method('PATCH')
                     <input type="hidden" name="_method" value="PATCH">
 
                     <div>

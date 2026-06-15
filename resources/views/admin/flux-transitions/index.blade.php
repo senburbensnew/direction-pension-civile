@@ -1,4 +1,4 @@
-@extends('layouts.admin')
+﻿@extends('layouts.admin')
 
 @section('title', 'Circuit de traitement')
 
@@ -16,197 +16,278 @@ document.addEventListener('DOMContentLoaded', function () {
     cytoscape.use(cytoscapeDagre);
 
     @php
-        // Build required circuit map: serviceNodeId → [type_demande|null, ...]
-        $requiredMap = [];
-        foreach ($requiredServices as $req) {
-            $rid = 's' . $req->service_id;
-            $requiredMap[$rid][] = $req->type_demande;
-        }
-        $requiredLabel = function(string $rid) use ($requiredMap): string {
-            if (!isset($requiredMap[$rid])) return '';
-            $labels = array_map(function($t) {
-                if ($t === null) return 'Tous les types';
-                return \App\Enums\TypeDemandeEnum::tryFrom($t)?->label() ?? $t;
-            }, $requiredMap[$rid]);
-            return implode(', ', $labels);
-        };
+        // ── Build Cytoscape elements from workflow_steps (nodes) + workflow_step_transitions (edges) ──
 
-        $nodes = collect();
-        foreach ($transitions as $t) {
-            if ($t->sourceService && !$nodes->contains('data.id', 's'.$t->sourceService->id)) {
-                $rid = 's'.$t->sourceService->id;
-                $nodes->push(['data' => ['id' => $rid, 'label' => $t->sourceService->nom, 'type' => 'service',
-                    'required' => isset($requiredMap[$rid]) ? 1 : 0, 'requiredLabel' => $requiredLabel($rid)]]);
-            }
-            if (!$t->sourceService && !$nodes->contains('data.id', 'INIT')) {
-                $nodes->push(['data' => ['id' => 'INIT', 'label' => "Soumission\ninitiale", 'type' => 'init', 'required' => 0, 'requiredLabel' => '']]);
-            }
-            if (!$nodes->contains('data.id', 's'.$t->destinationService->id)) {
-                $rid = 's'.$t->destinationService->id;
-                $nodes->push(['data' => ['id' => $rid, 'label' => $t->destinationService->nom, 'type' => 'service',
-                    'required' => isset($requiredMap[$rid]) ? 1 : 0, 'requiredLabel' => $requiredLabel($rid)]]);
-            }
-        }
-        $edges = $transitions->map(function ($t, $i) {
-            $src = $t->sourceService ? 's'.$t->sourceService->id : 'INIT';
-            $dst = 's'.$t->destinationService->id;
-            $label = $t->action;
-            if ($t->type_demande) {
-                $enum = \App\Enums\TypeDemandeEnum::tryFrom($t->type_demande);
-                $label .= "\n(".($enum?->label() ?? $t->type_demande).")";
-            }
-            return ['data' => ['id' => 'e'.$i, 'source' => $src, 'target' => $dst, 'label' => $label]];
+        $stepMap = $steps->keyBy('id'); // id → WorkflowStep
+
+        // Required service map for badge colouring
+        $requiredServiceIds = $requiredServices->pluck('service_id')->unique()->values();
+
+        // Nodes
+        $cyNodes = $steps->map(function ($step) use ($requiredServiceIds) {
+            $isRequired = $step->service_id && $requiredServiceIds->contains($step->service_id);
+
+            // Type visuel selon le rôle dans le workflow
+            $nodeType = match(true) {
+                $step->isInitial() && $step->code === 'BROUILLON' => 'start_draft',
+                $step->isInitial()                                => 'start_submit',
+                $step->isTerminal()                               => str_contains(\App\Models\WorkflowStep::getStatusStyle($step->code), 'red') ? 'fin_ko' : 'fin_ok',
+                in_array($step->code, ['DECISION_FINALE', 'EN_DECISION']) => 'end_decision',
+                default                                               => 'step',
+            };
+
+            // Label = nom de l'étape + [Service] entre parenthèses
+            $etatLabel = $step->nom;
+            $label = $step->service
+                ? $etatLabel . "\n(" . $step->service->nom . ")"
+                : $etatLabel;
+
+            return [
+                'data' => [
+                    'id'          => 's' . $step->id,
+                    'label'       => $label,
+                    'stepName'    => $step->nom,
+                    'serviceName' => $step->service?->nom ?? '',
+                    'type'        => $nodeType,
+                    'required'    => $isRequired ? 1 : 0,
+                    'isGlobal'    => $step->type_demande === null ? 1 : 0,
+                ],
+            ];
         });
 
-        $connectedServiceIds = collect();
-        foreach ($transitions as $t) {
-            if ($t->sourceService) $connectedServiceIds->push($t->sourceService->id);
-            $connectedServiceIds->push($t->destinationService->id);
+        // Codes des étapes terminales pour colorier les arêtes
+        $terminalOkCodes = ['APPROUVEE', 'FINALISEE'];
+        $terminalKoCodes = ['REJETEE',   'ANNULEE'];
+
+        // Edges from step transitions
+        $cyEdges = collect();
+        foreach ($stepTransitions as $i => $t) {
+            $src         = $t->from_step_id ? 's' . $t->from_step_id : 'INIT';
+            $dst         = 's' . $t->to_step_id;
+            $toCode      = $t->toStep?->code ?? '';
+            $cyEdges->push(['data' => [
+                'id'           => 'e' . $i,
+                'source'       => $src,
+                'target'       => $dst,
+                'label'        => $t->action . ($t->is_urgent_only ? "\n⚡ urgent" : ''),
+                'isTerminalOk' => in_array($toCode, $terminalOkCodes),
+                'isTerminalKo' => in_array($toCode, $terminalKoCodes),
+            ]]);
         }
-        $connectedServiceIds = $connectedServiceIds->unique();
-        foreach ($services as $service) {
-            if (!$connectedServiceIds->contains($service->id)) {
-                $rid = 's'.$service->id;
-                $nodes->push(['data' => ['id' => $rid, 'label' => $service->nom, 'type' => 'orphan',
-                    'required' => isset($requiredMap[$rid]) ? 1 : 0, 'requiredLabel' => $requiredLabel($rid)]]);
-            }
-        }
+
+        // Initial submission node (if any transition starts from null)
+        $hasInitTransition = $stepTransitions->whereNull('from_step_id')->isNotEmpty();
+
     @endphp
 
-    const elements = {!! json_encode(['nodes' => $nodes->values(), 'edges' => $edges->values()]) !!};
+    @if($hasInitTransition)
+    const initNode = { data: { id: 'INIT', label: "Soumission\ninitiale", stepName: 'Soumission initiale', serviceName: '', type: 'init', required: 0, isGlobal: 0 } };
+    @endif
 
-    elements.nodes.push({ data: { id: 'FIN_APPROUVE',  label: 'Approuvé',  type: 'fin_ok'  } });
-    elements.nodes.push({ data: { id: 'FIN_FINALISE',  label: 'Clôturé',   type: 'fin_ok'  } });
-    elements.nodes.push({ data: { id: 'FIN_REJETE',    label: 'Rejeté',    type: 'fin_ko'  } });
-    elements.nodes.push({ data: { id: 'FIN_ANNULE',    label: 'Annulé',    type: 'fin_ko'  } });
+    const cyNodes = {!! json_encode($cyNodes->values()) !!};
+    const cyEdges = {!! json_encode($cyEdges->values()) !!};
 
-    @php $directionId = \App\Models\Service::where('code', \App\Models\Service::DIRECTION)->value('id'); @endphp
-    const directionNodeId = 's{{ $directionId }}';
-    if (elements.nodes.find(n => n.data.id === directionNodeId)) {
-        elements.edges.push({ data: { id: 'e_approuve', source: directionNodeId, target: 'FIN_APPROUVE', label: 'Approuver' } });
-        elements.edges.push({ data: { id: 'e_finalise', source: directionNodeId, target: 'FIN_FINALISE', label: 'Clôturer'  } });
-        elements.edges.push({ data: { id: 'e_rejete',   source: directionNodeId, target: 'FIN_REJETE',   label: 'Rejeter'   } });
-        elements.edges.push({ data: { id: 'e_annule',   source: directionNodeId, target: 'FIN_ANNULE',   label: 'Annuler'   } });
-    }
+    @if($hasInitTransition)
+    cyNodes.unshift(initNode);
+    @endif
+
+
+    // Dédupliquer les nœuds et supprimer les orphelins (nœuds sans arête)
+    const seen = new Set();
+    const uniqueNodes = cyNodes.filter(n => {
+        if (seen.has(n.data.id)) return false;
+        seen.add(n.data.id);
+        return true;
+    });
+
+    // IDs des nœuds connectés par au moins une arête
+    const connectedIds = new Set();
+    cyEdges.forEach(e => { connectedIds.add(e.data.source); connectedIds.add(e.data.target); });
+
+    const elements = {
+        nodes: uniqueNodes,
+        edges: cyEdges,
+    };
+
+    // ── Styles partagés (interaction — identiques dans les deux modes) ──
+    const sharedStyles = [
+        { selector: 'edge', style: {
+            'label': 'data(label)', 'text-wrap': 'wrap', 'text-max-width': '90px',
+            'font-size': '9px', 'color': '#374151',
+            'text-background-color': '#f8fafc', 'text-background-opacity': 1, 'text-background-padding': '2px',
+            'curve-style': 'bezier', 'target-arrow-shape': 'triangle',
+            'target-arrow-color': '#64748b', 'line-color': '#94a3b8', 'width': 2, 'arrow-scale': 1.2,
+        }},
+        { selector: 'edge[?isTerminalOk]', style: { 'line-color': '#4ade80', 'target-arrow-color': '#4ade80', 'line-style': 'dashed' } },
+        { selector: 'edge[?isTerminalKo]', style: { 'line-color': '#f87171', 'target-arrow-color': '#f87171', 'line-style': 'dashed' } },
+        { selector: 'node:selected, node.hl', style: { 'border-color': '#3b82f6', 'border-width': 3, 'background-color': '#dbeafe' } },
+        { selector: 'edge:selected, edge.hl',  style: { 'line-color': '#3b82f6', 'target-arrow-color': '#3b82f6', 'width': 3 } },
+        { selector: '.faded', style: { 'opacity': 0.2 } },
+    ];
+
+    // ── Mode personnalisé (couleurs métier) ──────────────────────────
+    const customStyles = [
+        { selector: 'node[type="step"]', style: {
+            'label': 'data(label)', 'text-wrap': 'wrap', 'text-max-width': '130px',
+            'background-color': '#eff6ff', 'border-color': '#93c5fd', 'border-width': 2,
+            'color': '#1e3a8a', 'font-size': '10px', 'font-weight': '600',
+            'text-valign': 'center', 'text-halign': 'center',
+            'width': '145px', 'height': '54px', 'shape': 'round-rectangle', 'padding': '8px',
+        }},
+        { selector: 'node[type="step"][isGlobal=1]', style: { 'border-style': 'dashed' } },
+        { selector: 'node[type="start_draft"]', style: {
+            'label': 'data(label)', 'text-wrap': 'wrap', 'text-max-width': '100px',
+            'background-color': '#fffbeb', 'border-color': '#f59e0b', 'border-width': 3, 'border-style': 'dashed',
+            'color': '#78350f', 'font-size': '10px', 'font-weight': '700', 'font-style': 'italic',
+            'text-valign': 'bottom', 'text-margin-y': '10px', 'text-halign': 'center',
+            'width': '56px', 'height': '56px', 'shape': 'ellipse',
+        }},
+        { selector: 'node[type="start_submit"]', style: {
+            'label': 'data(label)', 'text-wrap': 'wrap', 'text-max-width': '110px',
+            'background-color': '#eef2ff', 'border-color': '#4f46e5', 'border-width': 4,
+            'color': '#312e81', 'font-size': '10px', 'font-weight': '800',
+            'text-valign': 'bottom', 'text-margin-y': '10px', 'text-halign': 'center',
+            'width': '64px', 'height': '64px', 'shape': 'ellipse',
+            'outline-color': '#a5b4fc', 'outline-width': 3, 'outline-offset': 3, 'outline-opacity': 1,
+        }},
+        { selector: 'node[type="init"]', style: {
+            'label': 'data(label)', 'text-wrap': 'wrap',
+            'background-color': '#1e1b4b', 'border-color': '#4f46e5', 'border-width': 2,
+            'color': '#e0e7ff', 'font-size': '10px', 'font-style': 'italic',
+            'text-valign': 'center', 'text-halign': 'center',
+            'width': '100px', 'height': '40px', 'shape': 'round-rectangle',
+        }},
+        { selector: 'node[required=1]', style: { 'background-color': '#fff7ed', 'border-color': '#f97316', 'border-width': 3 } },
+        { selector: 'node[type="end_decision"]', style: {
+            'label': 'data(label)', 'text-wrap': 'wrap', 'text-max-width': '130px',
+            'background-color': '#312e81', 'border-color': '#818cf8', 'border-width': 3,
+            'color': '#e0e7ff', 'font-size': '11px', 'font-weight': '800',
+            'text-valign': 'center', 'text-halign': 'center',
+            'width': '150px', 'height': '58px', 'shape': 'round-rectangle',
+            'outline-color': '#6366f1', 'outline-width': 3, 'outline-offset': 3, 'outline-opacity': 1,
+        }},
+        { selector: 'node[type="fin_ok"]', style: {
+            'label': 'data(label)', 'text-wrap': 'wrap', 'text-max-width': '110px',
+            'background-color': '#16a34a', 'border-color': '#4ade80', 'border-width': 5,
+            'color': '#ffffff', 'font-size': '10px', 'font-weight': '800',
+            'text-valign': 'bottom', 'text-margin-y': '10px', 'text-halign': 'center',
+            'width': '56px', 'height': '56px', 'shape': 'ellipse',
+            'outline-color': '#bbf7d0', 'outline-width': 3, 'outline-offset': 2, 'outline-opacity': 1,
+        }},
+        { selector: 'node[type="fin_ko"]', style: {
+            'label': 'data(label)', 'text-wrap': 'wrap', 'text-max-width': '110px',
+            'background-color': '#dc2626', 'border-color': '#f87171', 'border-width': 5,
+            'color': '#ffffff', 'font-size': '10px', 'font-weight': '800',
+            'text-valign': 'bottom', 'text-margin-y': '10px', 'text-halign': 'center',
+            'width': '56px', 'height': '56px', 'shape': 'ellipse',
+            'outline-color': '#fecaca', 'outline-width': 3, 'outline-offset': 2, 'outline-opacity': 1,
+        }},
+    ];
+
+    // ── Mode BPMN 2.0 (formes standard) ─────────────────────────────
+    // Événement début = ellipse fin / Tâche = rectangle arrondi
+    // Passerelle = diamond / Événement fin = ellipse épaisse
+    const bpmnStyles = [
+        // Tâche de service (étape standard)
+        { selector: 'node[type="step"]', style: {
+            'label': 'data(label)', 'text-wrap': 'wrap', 'text-max-width': '110px',
+            'background-color': '#ffffff', 'border-color': '#374151', 'border-width': 2,
+            'color': '#111827', 'font-size': '10px', 'font-weight': '600',
+            'text-valign': 'center', 'text-halign': 'center',
+            'width': '130px', 'height': '52px', 'shape': 'round-rectangle', 'padding': '8px',
+        }},
+        { selector: 'node[type="step"][isGlobal=1]', style: { 'border-style': 'dashed', 'border-color': '#6b7280' } },
+        // Événement début non-interrompant (brouillon) — cercle fin + contour pointillé ambre
+        { selector: 'node[type="start_draft"]', style: {
+            'label': 'data(label)', 'text-wrap': 'wrap', 'text-max-width': '80px',
+            'background-color': '#fffbeb', 'border-color': '#f59e0b', 'border-width': 2, 'border-style': 'dashed',
+            'color': '#78350f', 'font-size': '9px', 'font-weight': '600',
+            'text-valign': 'bottom', 'text-margin-y': '6px', 'text-halign': 'center',
+            'width': '40px', 'height': '40px', 'shape': 'ellipse',
+        }},
+        // Événement début (soumission) — cercle fin indigo
+        { selector: 'node[type="start_submit"]', style: {
+            'label': 'data(label)', 'text-wrap': 'wrap', 'text-max-width': '80px',
+            'background-color': '#eef2ff', 'border-color': '#4f46e5', 'border-width': 3,
+            'color': '#312e81', 'font-size': '9px', 'font-weight': '700',
+            'text-valign': 'bottom', 'text-margin-y': '6px', 'text-halign': 'center',
+            'width': '44px', 'height': '44px', 'shape': 'ellipse',
+        }},
+        // Événement début générique (init)
+        { selector: 'node[type="init"]', style: {
+            'label': 'data(label)', 'text-wrap': 'wrap', 'text-max-width': '80px',
+            'background-color': '#1e1b4b', 'border-color': '#4f46e5', 'border-width': 2,
+            'color': '#e0e7ff', 'font-size': '9px',
+            'text-valign': 'bottom', 'text-margin-y': '6px', 'text-halign': 'center',
+            'width': '36px', 'height': '36px', 'shape': 'ellipse',
+        }},
+        // Étape obligatoire — marquée par une bordure orange
+        { selector: 'node[required=1]', style: { 'border-color': '#f97316', 'border-width': 3 } },
+        // Passerelle exclusive (décision) — losange indigo
+        { selector: 'node[type="end_decision"]', style: {
+            'label': 'data(label)', 'text-wrap': 'wrap', 'text-max-width': '90px',
+            'background-color': '#312e81', 'border-color': '#818cf8', 'border-width': 3,
+            'color': '#e0e7ff', 'font-size': '9px', 'font-weight': '800',
+            'text-valign': 'bottom', 'text-margin-y': '8px', 'text-halign': 'center',
+            'width': '54px', 'height': '54px', 'shape': 'diamond',
+        }},
+        // Événement fin positif — cercle épais vert (BPMN : trait double)
+        { selector: 'node[type="fin_ok"]', style: {
+            'label': 'data(label)', 'text-wrap': 'wrap', 'text-max-width': '80px',
+            'background-color': '#dcfce7', 'border-color': '#16a34a', 'border-width': 5,
+            'color': '#14532d', 'font-size': '9px', 'font-weight': '700',
+            'text-valign': 'bottom', 'text-margin-y': '6px', 'text-halign': 'center',
+            'width': '44px', 'height': '44px', 'shape': 'ellipse',
+        }},
+        // Événement fin négatif — cercle épais rouge
+        { selector: 'node[type="fin_ko"]', style: {
+            'label': 'data(label)', 'text-wrap': 'wrap', 'text-max-width': '80px',
+            'background-color': '#fee2e2', 'border-color': '#dc2626', 'border-width': 5,
+            'color': '#7f1d1d', 'font-size': '9px', 'font-weight': '700',
+            'text-valign': 'bottom', 'text-margin-y': '6px', 'text-halign': 'center',
+            'width': '44px', 'height': '44px', 'shape': 'ellipse',
+        }},
+    ];
+
+    let isBpmn = false;
 
     const cy = cytoscape({
         container: document.getElementById('cy'),
         elements,
-        layout: { name: 'dagre', rankDir: 'LR', nodeSep: 60, rankSep: 120, edgeSep: 20, padding: 30 },
-        style: [
-            {
-                selector: 'node[type="service"]',
-                style: {
-                    'label': 'data(label)', 'text-wrap': 'wrap', 'text-max-width': '110px',
-                    'background-color': '#eff6ff', 'border-color': '#93c5fd', 'border-width': 2,
-                    'color': '#1e3a8a', 'font-size': '11px', 'font-weight': '600',
-                    'text-valign': 'center', 'text-halign': 'center',
-                    'width': '120px', 'height': '44px', 'shape': 'round-rectangle', 'padding': '8px',
-                },
-            },
-            {
-                selector: 'node[type="init"]',
-                style: {
-                    'label': 'data(label)', 'text-wrap': 'wrap',
-                    'background-color': '#000000', 'border-color': '#000000', 'border-width': 2,
-                    'border-style': 'solid', 'color': '#ffffff', 'font-size': '10px', 'font-style': 'italic',
-                    'text-valign': 'center', 'text-halign': 'center',
-                    'width': '100px', 'height': '40px', 'shape': 'round-rectangle',
-                },
-            },
-            {
-                selector: 'edge',
-                style: {
-                    'label': 'data(label)', 'text-wrap': 'wrap', 'text-max-width': '100px',
-                    'font-size': '9px', 'color': '#374151',
-                    'text-background-color': '#f8fafc', 'text-background-opacity': 1, 'text-background-padding': '2px',
-                    'curve-style': 'bezier', 'target-arrow-shape': 'triangle',
-                    'target-arrow-color': '#64748b', 'line-color': '#94a3b8', 'width': 2, 'arrow-scale': 1.2,
-                },
-            },
-            {
-                selector: 'node[type="fin_ok"]',
-                style: {
-                    'label': 'data(label)', 'background-color': '#f0fdf4', 'border-color': '#4ade80', 'border-width': 3,
-                    'color': '#166534', 'font-size': '11px', 'font-weight': '700',
-                    'text-valign': 'center', 'text-halign': 'center', 'width': '90px', 'height': '36px', 'shape': 'round-rectangle',
-                },
-            },
-            {
-                selector: 'node[type="fin_ko"]',
-                style: {
-                    'label': 'data(label)', 'background-color': '#fff1f2', 'border-color': '#f87171', 'border-width': 3,
-                    'color': '#991b1b', 'font-size': '11px', 'font-weight': '700',
-                    'text-valign': 'center', 'text-halign': 'center', 'width': '90px', 'height': '36px', 'shape': 'round-rectangle',
-                },
-            },
-            { selector: 'edge[target="FIN_APPROUVE"], edge[target="FIN_FINALISE"]', style: { 'line-color': '#4ade80', 'target-arrow-color': '#4ade80', 'line-style': 'dashed' } },
-            { selector: 'edge[target="FIN_REJETE"], edge[target="FIN_ANNULE"]', style: { 'line-color': '#f87171', 'target-arrow-color': '#f87171', 'line-style': 'dashed' } },
-            {
-                selector: 'node[required=1]',
-                style: {
-                    'background-color': '#fff7ed', 'border-color': '#f97316', 'border-width': 3,
-                },
-            },
-            { selector: 'node[required=1]:selected, node[required=1].highlighted', style: { 'background-color': '#ffedd5', 'border-color': '#ea580c', 'border-width': 4 } },
-            { selector: 'node:selected, node.highlighted', style: { 'background-color': '#dbeafe', 'border-color': '#3b82f6', 'border-width': 3 } },
-            { selector: 'edge:selected, edge.highlighted', style: { 'line-color': '#3b82f6', 'target-arrow-color': '#3b82f6', 'width': 3 } },
-            { selector: '.faded', style: { 'opacity': 0.2 } },
-            {
-                selector: 'node[type="orphan"]',
-                style: {
-                    'label': 'data(label)', 'text-wrap': 'wrap', 'text-max-width': '110px',
-                    'background-color': '#f9fafb', 'border-color': '#d1d5db', 'border-width': 2,
-                    'border-style': 'dashed', 'color': '#6b7280', 'font-size': '11px',
-                    'text-valign': 'center', 'text-halign': 'center',
-                    'width': '120px', 'height': '44px', 'shape': 'round-rectangle', 'padding': '8px',
-                },
-            },
-        ],
+        layout: { name: 'dagre', rankDir: 'LR', nodeSep: 50, rankSep: 130, edgeSep: 20, padding: 30 },
+        style: [...customStyles, ...sharedStyles],
     });
 
-    cy.on('mouseover', 'node[required=1]', function (e) {
-        const node = e.target;
-        const oe   = e.originalEvent;
-        const tip  = document.getElementById('cy-tooltip');
-        tip.querySelector('[data-tip]').textContent = 'Requis pour : ' + node.data('requiredLabel');
-        tip.style.left = (oe.clientX + 14) + 'px';
-        tip.style.top  = (oe.clientY - 36) + 'px';
-        tip.classList.remove('hidden');
-    });
-    cy.on('mouseout', 'node', function () {
-        document.getElementById('cy-tooltip').classList.add('hidden');
+    document.getElementById('cy-toggle-mode').addEventListener('click', () => {
+        isBpmn = !isBpmn;
+        const btn = document.getElementById('cy-toggle-mode');
+        cy.style([...(isBpmn ? bpmnStyles : customStyles), ...sharedStyles]);
+        btn.innerHTML = isBpmn
+            ? '<i class="fas fa-palette mr-1"></i> Vue métier'
+            : '<i class="fas fa-shapes mr-1"></i> Vue BPMN';
+        btn.classList.toggle('bg-purple-50',  isBpmn);
+        btn.classList.toggle('text-purple-700', isBpmn);
+        btn.classList.toggle('border-purple-300', isBpmn);
+        btn.classList.toggle('text-gray-600', !isBpmn);
+        btn.classList.toggle('border-gray-300', !isBpmn);
     });
 
-    cy.on('tap', 'node', function (e) {
-        const node = e.target;
+    cy.on('tap', 'node', e => {
+        const n = e.target;
         cy.elements().addClass('faded');
-        node.removeClass('faded').addClass('highlighted');
-        node.connectedEdges().removeClass('faded').addClass('highlighted');
-        node.connectedEdges().connectedNodes().removeClass('faded');
+        n.removeClass('faded').addClass('hl');
+        n.connectedEdges().removeClass('faded').addClass('hl');
+        n.connectedEdges().connectedNodes().removeClass('faded');
     });
-    cy.on('tap', function (e) {
-        if (e.target === cy) cy.elements().removeClass('faded highlighted');
-    });
-    document.getElementById('cy-fit').addEventListener('click', () => cy.fit(undefined, 30));
-    document.getElementById('cy-reset').addEventListener('click', () => {
-        cy.elements().removeClass('faded highlighted');
-        cy.fit(undefined, 30);
-    });
+    cy.on('tap', e => { if (e.target === cy) cy.elements().removeClass('faded hl'); });
+
+    document.getElementById('cy-fit').addEventListener('click',   () => cy.fit(undefined, 30));
+    document.getElementById('cy-reset').addEventListener('click', () => { cy.elements().removeClass('faded hl'); cy.fit(undefined, 30); });
     document.getElementById('cy-download').addEventListener('click', () => {
-        const link = document.createElement('a');
-        link.href = cy.png({ bg: 'white', scale: 2, full: true });
-        link.download = 'circuit-traitement.png';
-        link.click();
-    });
-    document.getElementById('swimlane-download').addEventListener('click', () => {
-        const el = document.getElementById('swimlane-container');
-        html2canvas(el, { scale: 2, backgroundColor: '#ffffff', useCORS: true }).then(canvas => {
-            const link = document.createElement('a');
-            link.href = canvas.toDataURL('image/png');
-            link.download = 'couloirs-traitement.png';
-            link.click();
-        });
+        const a = document.createElement('a');
+        a.href     = cy.png({ bg: 'white', scale: 2, full: true });
+        a.download = 'circuit-{{ $selectedType ?? "commun" }}.png';
+        a.click();
     });
 });
 </script>
@@ -214,116 +295,28 @@ document.addEventListener('DOMContentLoaded', function () {
 
 @section('content')
 
-@php
-/* ──────────────────────────────────────────────
-   Build swimlane data (ordered by first appearance)
-   ────────────────────────────────────────────── */
-// Required circuit services for swimlane badges
-$swimRequiredMap = [];
-foreach ($requiredServices as $req) {
-    $rid = 's' . $req->service_id;
-    $swimRequiredMap[$rid][] = $req->type_demande;
-}
-$swimRequiredLabel = function(string $rid) use ($swimRequiredMap): string {
-    if (!isset($swimRequiredMap[$rid])) return '';
-    $labels = array_map(function($t) {
-        if ($t === null) return 'Tous';
-        return \App\Enums\TypeDemandeEnum::tryFrom($t)?->label() ?? $t;
-    }, $swimRequiredMap[$rid]);
-    return implode(', ', $labels);
-};
+<div class="space-y-5" x-data="{ advanced: false }">
 
-$laneOrder = [];   // ordered list of node IDs
-$laneData  = [];   // ['nodeId' => ['label', 'incoming' => [], 'outgoing' => []]]
+    {{-- ── Header ── --}}
+    <div class="bg-white rounded-xl border border-gray-200 shadow-sm p-4">
+        <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+                <h1 class="text-lg font-bold text-gray-800">Circuit de traitement</h1>
+                <p class="text-xs text-gray-400 mt-0.5">États (nœuds) et transitions (arêtes) par type de demande.</p>
+            </div>
 
-foreach ($transitions as $t) {
-    if (!$t->sourceService) {
-        if (!isset($laneData['INIT'])) {
-            $laneOrder[]        = 'INIT';
-            $laneData['INIT']   = ['label' => 'Portail Citoyen', 'incoming' => [], 'outgoing' => []];
-        }
-    }
-}
-
-foreach ($transitions as $t) {
-    $srcId    = $t->sourceService ? 's'.$t->sourceService->id : 'INIT';
-    $srcLabel = $t->sourceService ? $t->sourceService->nom    : 'Portail Citoyen';
-    $dstId    = 's'.$t->destinationService->id;
-    $dstLabel = $t->destinationService->nom;
-
-    if (!isset($laneData[$srcId])) {
-        $laneOrder[]        = $srcId;
-        $laneData[$srcId]   = ['label' => $srcLabel, 'incoming' => [], 'outgoing' => []];
-    }
-    if (!isset($laneData[$dstId])) {
-        $laneOrder[]        = $dstId;
-        $laneData[$dstId]   = ['label' => $dstLabel, 'incoming' => [], 'outgoing' => []];
-    }
-
-    $actionLabel = $t->action;
-    if ($t->type_demande) {
-        $enum        = \App\Enums\TypeDemandeEnum::tryFrom($t->type_demande);
-        $actionLabel .= ' · ' . ($enum?->label() ?? $t->type_demande);
-    }
-
-    $laneData[$srcId]['outgoing'][] = ['action' => $actionLabel, 'to' => $dstLabel,  'final' => false];
-    $laneData[$dstId]['incoming'][] = ['action' => $actionLabel, 'from' => $srcLabel, 'final' => false];
-}
-
-// Append direction final-state outgoing transitions
-$swimDirId = \App\Models\Service::where('code', \App\Models\Service::DIRECTION)->value('id');
-if ($swimDirId && isset($laneData['s'.$swimDirId])) {
-    foreach ([
-        ['action' => 'Approuver', 'to' => 'Approuvé',  'final' => 'ok'],
-        ['action' => 'Clôturer',  'to' => 'Clôturé',   'final' => 'ok'],
-        ['action' => 'Rejeter',   'to' => 'Rejeté',    'final' => 'ko'],
-        ['action' => 'Annuler',   'to' => 'Annulé',    'final' => 'ko'],
-    ] as $f) {
-        $laneData['s'.$swimDirId]['outgoing'][] = $f;
-    }
-}
-
-// Colour palette — one set per lane (bg/border/header-bg/header-text/dot)
-$palette = [
-    'INIT' => ['bg'=>'bg-slate-50',   'border'=>'border-slate-200', 'hbg'=>'bg-slate-100',   'ht'=>'text-slate-700',  'dot'=>'bg-slate-400'],
-    '_0'   => ['bg'=>'bg-blue-50',    'border'=>'border-blue-200',  'hbg'=>'bg-blue-100',    'ht'=>'text-blue-800',   'dot'=>'bg-blue-500'],
-    '_1'   => ['bg'=>'bg-emerald-50', 'border'=>'border-emerald-200','hbg'=>'bg-emerald-100','ht'=>'text-emerald-800','dot'=>'bg-emerald-500'],
-    '_2'   => ['bg'=>'bg-violet-50',  'border'=>'border-violet-200', 'hbg'=>'bg-violet-100', 'ht'=>'text-violet-800', 'dot'=>'bg-violet-500'],
-    '_3'   => ['bg'=>'bg-amber-50',   'border'=>'border-amber-200',  'hbg'=>'bg-amber-100',  'ht'=>'text-amber-800',  'dot'=>'bg-amber-500'],
-    '_4'   => ['bg'=>'bg-rose-50',    'border'=>'border-rose-200',   'hbg'=>'bg-rose-100',   'ht'=>'text-rose-800',   'dot'=>'bg-rose-500'],
-    '_5'   => ['bg'=>'bg-cyan-50',    'border'=>'border-cyan-200',   'hbg'=>'bg-cyan-100',   'ht'=>'text-cyan-800',   'dot'=>'bg-cyan-500'],
-    '_6'   => ['bg'=>'bg-teal-50',    'border'=>'border-teal-200',   'hbg'=>'bg-teal-100',   'ht'=>'text-teal-800',   'dot'=>'bg-teal-500'],
-    '_7'   => ['bg'=>'bg-orange-50',  'border'=>'border-orange-200', 'hbg'=>'bg-orange-100', 'ht'=>'text-orange-800', 'dot'=>'bg-orange-500'],
-];
-$laneColors = [];
-$pi = 0;
-foreach ($laneOrder as $nodeId) {
-    $laneColors[$nodeId] = $nodeId === 'INIT' ? $palette['INIT'] : $palette['_'.($pi++ % 8)];
-}
-@endphp
-
-<div class="space-y-6"
-     x-data="{ view: 'graph', advanced: false }">
-
-    {{-- Page header + view toggle --}}
-    <div class="flex items-start justify-between gap-4">
-        <div>
-            <h1 class="text-xl font-bold text-gray-800">Circuit de traitement</h1>
-            <p class="text-sm text-gray-500 mt-0.5">Transitions autorisées entre services pour le traitement des dossiers.</p>
-        </div>
-
-        {{-- Toggle button --}}
-        <div class="flex items-center bg-gray-100 rounded-lg p-1 gap-0.5 shrink-0">
-            <button @click="view='graph'"
-                :class="view==='graph' ? 'bg-white shadow-sm text-blue-600 font-semibold' : 'text-gray-500 hover:text-gray-700'"
-                class="flex items-center gap-1.5 px-3 py-1.5 text-xs rounded-md transition-all whitespace-nowrap">
-                <i class="fas fa-project-diagram"></i> Graphe
-            </button>
-            <button @click="view='swimlane'"
-                :class="view==='swimlane' ? 'bg-white shadow-sm text-blue-600 font-semibold' : 'text-gray-500 hover:text-gray-700'"
-                class="flex items-center gap-1.5 px-3 py-1.5 text-xs rounded-md transition-all whitespace-nowrap">
-                <i class="fas fa-layer-group"></i> Couloirs
-            </button>
+            {{-- Sélecteur de type --}}
+            <form method="GET" action="{{ route('admin.flux-transitions.index') }}">
+                <select name="type" onchange="this.form.submit()"
+                    class="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 min-w-[220px]">
+                    <option value="" {{ $selectedType === null ? 'selected' : '' }}>— Commun (global) —</option>
+                    @foreach($typeDemandeOptions as $typeEnum)
+                        <option value="{{ $typeEnum->value }}" {{ $selectedType === $typeEnum->value ? 'selected' : '' }}>
+                            {{ $typeEnum->label() }}
+                        </option>
+                    @endforeach
+                </select>
+            </form>
         </div>
     </div>
 
@@ -338,623 +331,648 @@ foreach ($laneOrder as $nodeId) {
         </div>
     @endif
 
-    {{-- ═══════════════════════════════════════════
-         VIEW 1 — Cytoscape graph
-    ════════════════════════════════════════════ --}}
-    <div x-show="view === 'graph'" x-cloak>
-        <div class="bg-white rounded-xl border border-gray-200 shadow-sm"
-             x-data="{ open: true }">
-            <div class="flex items-center justify-between p-5 cursor-pointer select-none" @click="open = !open">
-                <h2 class="text-sm font-semibold text-gray-700">
-                    <i class="fas fa-project-diagram mr-2 text-blue-400"></i> Représentation en graphe
-                </h2>
-                <div class="flex gap-2 items-center">
-                    <template x-if="open">
-                        <div class="flex gap-2" @click.stop>
-                            <button id="cy-fit"
-                                class="text-xs px-3 py-1.5 border border-gray-300 rounded-lg hover:bg-gray-50 text-gray-600 transition-colors">
-                                <i class="fas fa-compress-alt mr-1"></i> Ajuster
-                            </button>
-                            <button id="cy-reset"
-                                class="text-xs px-3 py-1.5 border border-gray-300 rounded-lg hover:bg-gray-50 text-gray-600 transition-colors">
-                                <i class="fas fa-redo mr-1"></i> Réinitialiser
-                            </button>
-                            <button id="cy-download"
-                                class="text-xs px-3 py-1.5 border border-blue-300 rounded-lg hover:bg-blue-50 text-blue-600 transition-colors">
-                                <i class="fas fa-download mr-1"></i> Télécharger
-                            </button>
-                        </div>
-                    </template>
-                    <i class="fas fa-chevron-down text-gray-400 text-xs transition-transform duration-200 ml-2"
-                       :class="open ? '' : '-rotate-90'"></i>
-                </div>
-            </div>
-            <div x-show="open" x-transition:enter="transition ease-out duration-150" x-transition:enter-start="opacity-0 -translate-y-1" x-transition:enter-end="opacity-100 translate-y-0" x-transition:leave="transition ease-in duration-100" x-transition:leave-start="opacity-100 translate-y-0" x-transition:leave-end="opacity-0 -translate-y-1">
-            <div class="px-5 pb-5">
-            <p class="text-xs text-gray-400 mb-3">
-                Cliquez sur un nœud pour voir ses connexions · Glissez les nœuds pour les repositionner · Molette pour zoomer
-            </p>
-            {{-- Legend --}}
-            <div class="flex items-center gap-4 mb-3 flex-wrap">
-                <div class="flex items-center gap-1.5 text-xs text-gray-500">
-                    <span class="inline-block w-4 h-4 rounded border-2 border-blue-300 bg-blue-50"></span>
-                    Service
-                </div>
-                <div class="flex items-center gap-1.5 text-xs text-orange-700 font-medium">
-                    <span class="inline-block w-4 h-4 rounded border-[3px] border-orange-400 bg-orange-50"></span>
-                    Étape obligatoire du circuit
-                </div>
-                <div class="flex items-center gap-1.5 text-xs text-gray-400">
-                    <span class="inline-block w-4 h-4 rounded border-2 border-dashed border-gray-300 bg-gray-50"></span>
-                    Service non connecté
-                </div>
-            </div>
-            <div id="cy" class="w-full rounded-lg border border-gray-100" style="height: 420px;"></div>
-            {{-- Tooltip (fixed, hidden by default) --}}
-            <div id="cy-tooltip"
-                 class="hidden fixed z-50 pointer-events-none bg-orange-50 border border-orange-300 text-orange-800 text-xs rounded-lg px-3 py-1.5 shadow-lg max-w-[220px]">
-                <i class="fas fa-shield-alt text-orange-500 mr-1"></i><span data-tip></span>
-            </div>
-            </div>{{-- /px-5 pb-5 --}}
-            </div>{{-- /x-collapse --}}
-        </div>
-    </div>
-
-    {{-- ═══════════════════════════════════════════
-         VIEW 2 — Swimlane (couloirs)
-    ════════════════════════════════════════════ --}}
-    <div x-show="view === 'swimlane'" x-cloak>
-        <div class="bg-white rounded-xl border border-gray-200 shadow-sm p-5">
-            <div class="flex items-center justify-between mb-5">
-                <h2 class="text-sm font-semibold text-gray-700">
-                    <i class="fas fa-layer-group mr-2 text-blue-400"></i> Procédure en couloirs (Swimlane)
-                </h2>
-                <div class="flex items-center gap-3">
-                    <span class="text-xs text-gray-400 italic">Un couloir par service responsable · flux de haut en bas</span>
-                    <button id="swimlane-download"
-                        class="text-xs px-3 py-1.5 border border-blue-300 rounded-lg hover:bg-blue-50 text-blue-600 transition-colors shrink-0">
-                        <i class="fas fa-download mr-1"></i> Télécharger
-                    </button>
-                </div>
-            </div>
-
-            @if(empty($laneOrder))
-                <p class="text-center text-gray-400 py-10 text-sm">Aucune transition définie.</p>
-            @else
-                <div id="swimlane-container" class="relative">
-                    {{-- Vertical spine line --}}
-                    <div class="absolute left-6 top-8 bottom-8 w-px bg-gray-200 z-0"></div>
-
-                    <div class="space-y-0 relative z-10">
-                        @foreach($laneOrder as $nodeId)
-                            @php
-                                $lane   = $laneData[$nodeId];
-                                $c      = $laneColors[$nodeId];
-                                $isInit = $nodeId === 'INIT';
-                            @endphp
-
-                            {{-- Lane row --}}
-                            <div class="flex gap-4 items-stretch">
-
-                                {{-- Left: step bullet + connector --}}
-                                <div class="flex flex-col items-center shrink-0 w-12">
-                                    <div class="w-5 h-5 rounded-full {{ $c['dot'] }} border-2 border-white shadow-sm shrink-0 mt-4 z-10"></div>
-                                    @unless($loop->last)
-                                        <div class="flex-1 w-px bg-gray-200 my-1"></div>
-                                    @endunless
-                                </div>
-
-                                {{-- Right: lane card --}}
-                                <div class="flex-1 mb-3">
-                                    <div class="rounded-xl border {{ $c['border'] }} {{ $c['bg'] }} overflow-hidden">
-
-                                        {{-- Lane header --}}
-                                        <div class="{{ $c['hbg'] }} border-b {{ $c['border'] }} px-4 py-2.5 flex items-center gap-2.5">
-                                            <span class="text-sm font-semibold {{ $c['ht'] }}">{{ $lane['label'] }}</span>
-                                            @if($isInit)
-                                                <span class="text-[11px] text-gray-400 italic">— point d'entrée</span>
-                                            @endif
-                                            @if(!$isInit && isset($swimRequiredMap[$nodeId]))
-                                                <span class="inline-flex items-center gap-1 text-[10px] font-semibold px-2 py-0.5 rounded-full bg-orange-100 border border-orange-300 text-orange-700"
-                                                      title="Requis pour : {{ $swimRequiredLabel($nodeId) }}">
-                                                    <i class="fas fa-shield-alt text-[9px]"></i>
-                                                    Obligatoire
-                                                    @if(count($swimRequiredMap[$nodeId]) === 1 && $swimRequiredMap[$nodeId][0] !== null)
-                                                        · {{ $swimRequiredLabel($nodeId) }}
-                                                    @endif
-                                                </span>
-                                            @endif
-                                        </div>
-
-                                        {{-- Lane body --}}
-                                        <div class="px-4 py-3 space-y-3">
-
-                                            {{-- Incoming --}}
-                                            @if(!empty($lane['incoming']))
-                                                <div class="flex flex-wrap gap-2">
-                                                    @foreach($lane['incoming'] as $inc)
-                                                        <span class="inline-flex items-center gap-1.5 text-xs px-2.5 py-1 rounded-full bg-white border border-gray-200 text-gray-500 shadow-xs">
-                                                            <i class="fas fa-arrow-circle-down text-gray-300 text-[10px]"></i>
-                                                            Reçoit de <strong class="text-gray-600">{{ $inc['from'] }}</strong>
-                                                            <span class="text-gray-300">·</span>
-                                                            <em>{{ $inc['action'] }}</em>
-                                                        </span>
-                                                    @endforeach
-                                                </div>
-                                            @endif
-
-                                            {{-- Outgoing --}}
-                                            @if(!empty($lane['outgoing']))
-                                                <div class="flex flex-wrap gap-2">
-                                                    @foreach($lane['outgoing'] as $out)
-                                                        @if($out['final'] === 'ok')
-                                                            <div class="inline-flex items-center gap-2 text-xs px-3 py-1.5 rounded-lg bg-green-50 border border-green-200 text-green-700 font-medium">
-                                                                <i class="fas fa-check-circle text-green-500 text-[11px]"></i>
-                                                                {{ $out['action'] }} → {{ $out['to'] }}
-                                                            </div>
-                                                        @elseif($out['final'] === 'ko')
-                                                            <div class="inline-flex items-center gap-2 text-xs px-3 py-1.5 rounded-lg bg-red-50 border border-red-200 text-red-700 font-medium">
-                                                                <i class="fas fa-times-circle text-red-400 text-[11px]"></i>
-                                                                {{ $out['action'] }} → {{ $out['to'] }}
-                                                            </div>
-                                                        @else
-                                                            <div class="inline-flex items-center gap-2 text-xs px-3 py-1.5 rounded-lg bg-white border border-gray-200 text-gray-700 shadow-xs">
-                                                                <i class="fas fa-arrow-right text-gray-400 text-[10px]"></i>
-                                                                <strong>{{ $out['action'] }}</strong>
-                                                                <span class="text-gray-300">→</span>
-                                                                {{ $out['to'] }}
-                                                            </div>
-                                                        @endif
-                                                    @endforeach
-                                                </div>
-                                            @endif
-
-                                            @if(empty($lane['incoming']) && empty($lane['outgoing']))
-                                                <span class="text-xs text-gray-400 italic">Aucune transition configurée.</span>
-                                            @endif
-
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        @endforeach
-
-                        {{-- Final states row --}}
-                        @if(!empty($laneOrder))
-                            <div class="flex gap-4 items-start">
-                                <div class="flex flex-col items-center shrink-0 w-12">
-                                    <div class="w-5 h-5 rounded-full bg-gray-300 border-2 border-white shadow-sm mt-2 z-10"></div>
-                                </div>
-                                <div class="flex-1 grid grid-cols-2 gap-3 pb-2">
-                                    <div class="rounded-xl border border-green-200 bg-green-50 px-4 py-3 flex items-center gap-3">
-                                        <div class="w-8 h-8 rounded-full bg-green-100 flex items-center justify-center shrink-0">
-                                            <i class="fas fa-check text-green-600 text-sm"></i>
-                                        </div>
-                                        <div>
-                                            <p class="text-sm font-semibold text-green-800">Approuvé / Clôturé</p>
-                                            <p class="text-xs text-green-600 mt-0.5">Dossier traité avec succès</p>
-                                        </div>
-                                    </div>
-                                    <div class="rounded-xl border border-red-200 bg-red-50 px-4 py-3 flex items-center gap-3">
-                                        <div class="w-8 h-8 rounded-full bg-red-100 flex items-center justify-center shrink-0">
-                                            <i class="fas fa-times text-red-600 text-sm"></i>
-                                        </div>
-                                        <div>
-                                            <p class="text-sm font-semibold text-red-800">Rejeté / Annulé</p>
-                                            <p class="text-xs text-red-600 mt-0.5">Dossier clôturé sans approbation</p>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        @endif
+    {{-- ── Graph ── --}}
+    <div class="bg-white rounded-xl border border-gray-200 shadow-sm"
+         x-data="{ open: true }">
+        <div class="flex items-center justify-between p-5 cursor-pointer select-none" @click="open = !open">
+            <h2 class="text-sm font-semibold text-gray-700">
+                <i class="fas fa-project-diagram mr-2 text-blue-400"></i> Graphe des états
+                @if($selectedType)
+                    <span class="ml-1 text-xs font-normal text-blue-500">— {{ \App\Enums\TypeDemandeEnum::from($selectedType)->label() }}</span>
+                @else
+                    <span class="ml-1 text-xs font-normal text-gray-400">— circuit commun</span>
+                @endif
+            </h2>
+            <div class="flex gap-2 items-center">
+                <template x-if="open">
+                    <div class="flex gap-2" @click.stop>
+                        <button id="cy-toggle-mode"
+                            class="text-xs px-3 py-1.5 border border-gray-300 rounded-lg hover:bg-gray-50 text-gray-600 transition-colors">
+                            <i class="fas fa-shapes mr-1"></i> Vue BPMN
+                        </button>
+                        <button id="cy-fit"
+                            class="text-xs px-3 py-1.5 border border-gray-300 rounded-lg hover:bg-gray-50 text-gray-600 transition-colors">
+                            <i class="fas fa-compress-alt mr-1"></i> Ajuster
+                        </button>
+                        <button id="cy-reset"
+                            class="text-xs px-3 py-1.5 border border-gray-300 rounded-lg hover:bg-gray-50 text-gray-600 transition-colors">
+                            <i class="fas fa-redo mr-1"></i> Réinitialiser
+                        </button>
+                        <button id="cy-download"
+                            class="text-xs px-3 py-1.5 border border-blue-300 rounded-lg hover:bg-blue-50 text-blue-600 transition-colors">
+                            <i class="fas fa-download mr-1"></i> Télécharger
+                        </button>
                     </div>
+                </template>
+                <i class="fas fa-chevron-down text-gray-400 text-xs transition-transform duration-200 ml-2"
+                   :class="open ? '' : '-rotate-90'"></i>
+            </div>
+        </div>
+
+        <div x-show="open" x-transition:enter="transition ease-out duration-150" x-transition:enter-start="opacity-0 -translate-y-1" x-transition:enter-end="opacity-100 translate-y-0">
+        <div class="px-5 pb-5">
+            <div class="flex items-center gap-4 mb-3 flex-wrap text-xs">
+                <span class="flex items-center gap-1.5 text-amber-700 font-semibold">
+                    <span class="inline-block w-5 h-3.5 rounded border-[3px] border-dashed border-amber-400 bg-amber-50"></span> Brouillon (début)
+                </span>
+                <span class="flex items-center gap-1.5 text-indigo-700 font-semibold">
+                    <span class="inline-block w-4 h-4 rounded border-4 border-indigo-500 bg-indigo-50 ring-2 ring-indigo-200 ring-offset-1"></span> Soumission initiale (entrée circuit)
+                </span>
+                <span class="flex items-center gap-1.5 text-gray-500">
+                    <span class="inline-block w-4 h-4 rounded border-2 border-blue-300 bg-blue-50"></span> État de traitement
+                </span>
+                <span class="flex items-center gap-1.5 text-gray-500">
+                    <span class="inline-block w-4 h-4 rounded border-2 border-dashed border-blue-300 bg-blue-50"></span> État global (partagé)
+                </span>
+                <span class="flex items-center gap-1.5 text-orange-700 font-medium">
+                    <span class="inline-block w-4 h-4 rounded border-[3px] border-orange-400 bg-orange-50"></span> Étape obligatoire
+                </span>
+                <span class="flex items-center gap-1.5 text-indigo-900 font-semibold">
+                    <span class="inline-block w-4 h-4 rounded bg-indigo-900 ring-2 ring-indigo-400 ring-offset-1"></span> Décision finale (Direction)
+                </span>
+                <span class="flex items-center gap-1.5 text-green-700 font-semibold">
+                    <span class="inline-block w-5 h-3.5 rounded bg-green-600 ring-2 ring-green-200 ring-offset-1"></span> Terminal positif (Approuvé / Clôturé)
+                </span>
+                <span class="flex items-center gap-1.5 text-red-700 font-semibold">
+                    <span class="inline-block w-5 h-3.5 rounded bg-red-600 ring-2 ring-red-200 ring-offset-1"></span> Terminal négatif (Rejeté / Annulé)
+                </span>
+            </div>
+            @if($steps->isEmpty())
+                <div class="flex flex-col items-center justify-center h-40 text-gray-400 text-sm">
+                    <i class="fas fa-project-diagram text-3xl mb-2"></i>
+                    Aucun état défini pour ce type. Ajoutez des états ci-dessous.
                 </div>
+            @else
+                <div id="cy" class="w-full rounded-lg border border-gray-100" style="height: 440px;"></div>
             @endif
         </div>
+        </div>
     </div>
 
-    {{-- ═══════════════════════════════════════════
-         Transitions — formulaire d'ajout + tableau
-    ════════════════════════════════════════════ --}}
-    <div class="bg-white rounded-xl border border-gray-200 shadow-sm divide-y divide-gray-100"
-         x-data="{ sourceId: '', open: false }">
-        <div class="px-6 py-4 flex items-start justify-between cursor-pointer select-none" @click="open = !open">
+    {{-- ── États (nœuds) ── --}}
+    <div class="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden"
+         x-data="{ open: true, showAddStep: false }">
+        <div class="px-5 py-4 flex items-start justify-between cursor-pointer select-none" @click="open = !open">
             <div>
                 <h2 class="text-sm font-semibold text-gray-700">
-                    <i class="fas fa-plus-circle mr-1.5 text-blue-500"></i> Ajouter une transition
+                    <i class="fas fa-circle mr-2 text-blue-400 text-xs"></i> États du dossier (nœuds)
                 </h2>
-                <p class="text-xs text-gray-400 mt-1">
-                    Une transition définit qu'un service peut envoyer un dossier à un autre service.
-                    Elle détermine les chemins <strong class="text-gray-500">autorisés</strong> dans le circuit — sans imposer qu'ils soient obligatoirement empruntés.
+                <p class="text-xs text-gray-400 mt-0.5">
+                    Chaque état encode une étape métier <strong>et</strong> le service responsable.
+                    La localisation du dossier est déduite de son état courant.
+                </p>
+            </div>
+            <div class="flex items-center gap-3" @click.stop>
+                <button type="button" @click="showAddStep = true"
+                    class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white text-xs font-medium rounded-lg transition-colors">
+                    <i class="fas fa-plus"></i> Ajouter un nœud
+                </button>
+                <i class="fas fa-chevron-down text-gray-400 text-xs transition-transform duration-200 shrink-0"
+                   :class="open ? '' : '-rotate-90'" @click="open = !open"></i>
+            </div>
+        </div>
+
+        {{-- Modal ajout nœud --}}
+        <div x-show="showAddStep" x-cloak @keydown.escape.window="showAddStep = false"
+             class="fixed inset-0 z-50 flex items-center justify-center bg-black/50"
+             x-data="addStepModal([])">
+            <div class="bg-white w-full max-w-md rounded-xl shadow-xl p-6" @click.stop>
+                <h3 class="font-semibold text-gray-800 text-base mb-4">
+                    <i class="fas fa-plus-circle mr-2 text-blue-500"></i> Ajouter un nœud
+                </h3>
+
+                {{-- Onglets Nouveau / Existant --}}
+                <div class="flex rounded-lg border border-gray-200 overflow-hidden mb-5 text-sm">
+                    <button type="button" @click="tab = 'new'"
+                        :class="tab === 'new' ? 'bg-blue-600 text-white' : 'bg-white text-gray-600 hover:bg-gray-50'"
+                        class="flex-1 py-2 font-medium transition-colors">
+                        Nouveau nœud
+                    </button>
+                    @if($reusableSteps->isNotEmpty())
+                    <button type="button" @click="tab = 'existing'"
+                        :class="tab === 'existing' ? 'bg-blue-600 text-white' : 'bg-white text-gray-600 hover:bg-gray-50'"
+                        class="flex-1 py-2 font-medium border-l border-gray-200 transition-colors">
+                        Nœud existant
+                    </button>
+                    @endif
+                </div>
+
+                {{-- Onglet : nœud existant --}}
+                @if($reusableSteps->isNotEmpty())
+                <div x-show="tab === 'existing'">
+                    <div class="space-y-4">
+                        <div>
+                            <label class="block text-xs font-medium text-gray-700 mb-1">Choisir un nœud <span class="text-red-500">*</span></label>
+                            <select x-model="selectedStepId"
+                                class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                <option value="">— Sélectionner —</option>
+                                @foreach($reusableSteps->groupBy(fn($s) => $s->type_demande ?? 'Commun') as $group => $groupSteps)
+                                    <optgroup label="{{ $group === 'Commun' ? 'Commun (global)' : (\App\Enums\TypeDemandeEnum::tryFrom($group)?->label() ?? $group) }}">
+                                        @foreach($groupSteps as $rs)
+                                            <option value="{{ $rs->id }}">
+                                                {{ $rs->nom }}{{ $rs->service ? ' (' . $rs->service->nom . ')' : '' }}
+                                            </option>
+                                        @endforeach
+                                    </optgroup>
+                                @endforeach
+                            </select>
+                        </div>
+                        <div class="flex justify-end gap-2 pt-1">
+                            <button type="button" @click="showAddStep = false; reset()"
+                                class="px-4 py-2 text-sm font-medium text-gray-600 hover:text-gray-800">Annuler</button>
+                            <button type="button"
+                                :disabled="!selectedStepId"
+                                :class="!selectedStepId ? 'opacity-40 cursor-not-allowed' : 'hover:bg-blue-700'"
+                                class="px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg transition-colors"
+                                @click="submitClone()">
+                                <i class="fas fa-plus mr-1"></i> Ajouter
+                            </button>
+                        </div>
+
+                        {{-- Formulaire caché pour la soumission --}}
+                        <form id="clone-step-form" method="POST" style="display:none">
+                            @csrf
+                            <input type="hidden" name="type_demande" value="{{ $selectedType }}">
+                        </form>
+                    </div>
+                </div>
+                @endif
+
+                {{-- Onglet : nouveau nœud --}}
+                <div x-show="tab === 'new'">
+                <form method="POST" action="{{ route('admin.workflow-steps.store') }}" class="space-y-4">
+                    @csrf
+                    <input type="hidden" name="type_demande" value="{{ $selectedType }}">
+
+                    <div>
+                        <label class="block text-xs font-medium text-gray-700 mb-1">Code <span class="text-red-500">*</span></label>
+                        <input type="text" name="code" required placeholder="ex : EN_REVISION"
+                            class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm font-mono focus:outline-none focus:ring-2 focus:ring-blue-500 uppercase"
+                            oninput="this.value = this.value.toUpperCase().replace(/[^A-Z0-9_]/g, '')">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-medium text-gray-700 mb-1">Service</label>
+                        <select name="service_id"
+                            class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+                            <option value="">— Aucun service —</option>
+                            @foreach($services as $svc)
+                                <option value="{{ $svc->id }}">{{ $svc->nom }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-medium text-gray-700 mb-1">Nom <span class="text-red-500">*</span></label>
+                        <input type="text" name="nom" required placeholder="Libellé court"
+                            class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    </div>
+                    <div class="flex gap-4">
+                        <div>
+                            <label class="block text-xs font-medium text-gray-700 mb-1">Ordre</label>
+                            <input type="number" name="ordre" value="50" min="0" max="999"
+                                class="w-24 px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        </div>
+                        <div class="flex-1">
+                            <label class="block text-xs font-medium text-gray-700 mb-1">Type de nœud <span class="text-red-500">*</span></label>
+                            <select name="type_noeud" required
+                                class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                @foreach(\App\Enums\WorkflowStepTypeEnum::cases() as $type)
+                                    <option value="{{ $type->value }}" {{ $type === \App\Enums\WorkflowStepTypeEnum::INTERMEDIAIRE ? 'selected' : '' }}>
+                                        {{ $type->label() }}
+                                    </option>
+                                @endforeach
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="flex justify-end gap-2 pt-1">
+                        <button type="button" @click="showAddStep = false; reset()"
+                            class="px-4 py-2 text-sm font-medium text-gray-600 hover:text-gray-800">Annuler</button>
+                        <button type="submit"
+                            class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg transition-colors">
+                            <i class="fas fa-plus mr-1"></i> Ajouter
+                        </button>
+                    </div>
+                </form>
+                </div>{{-- end tab new --}}
+            </div>
+        </div>
+
+        <div x-show="open" x-transition:enter="transition ease-out duration-150" x-transition:enter-start="opacity-0 -translate-y-1" x-transition:enter-end="opacity-100 translate-y-0">
+        <table class="w-full text-sm">
+            <thead class="bg-gray-50 border-b border-gray-200">
+                <tr>
+                    <th class="px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide text-left">Nom de l'état</th>
+                    <th class="px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide text-left">Service</th>
+                    <th class="px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide text-left">Description</th>
+                    <th class="px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide text-center w-16">Ordre</th>
+                    <th class="px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide text-center">Type</th>
+                    <th class="px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide text-center">Portée</th>
+                    <th class="px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide text-center w-24">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                @forelse($steps as $step)
+                    <tr class="border-b border-gray-100 last:border-0 hover:bg-gray-50">
+                        <td class="px-4 py-3 font-medium text-gray-800 text-sm">
+                            {{ $step->nom }}
+                            <span class="ml-1 text-[10px] text-gray-400 font-normal font-mono">{{ $step->code }}</span>
+                        </td>
+                        <td class="px-4 py-3">
+                            <span class="text-xs font-medium px-2 py-0.5 rounded-full bg-blue-100 text-blue-700">
+                                {{ $step->service?->nom ?? '—' }}
+                            </span>
+                        </td>
+                        <td class="px-4 py-3 text-gray-500 text-xs">{{ $step->description ?? '—' }}</td>
+                        <td class="px-4 py-3 text-center text-xs text-gray-500">{{ $step->ordre }}</td>
+                        <td class="px-4 py-3 text-center">
+                            @php
+                                $typeNoeud = $step->type_noeud;
+                                $typeClass = match($typeNoeud) {
+                                    \App\Enums\WorkflowStepTypeEnum::INITIAL   => 'bg-indigo-100 text-indigo-700',
+                                    \App\Enums\WorkflowStepTypeEnum::TERMINAL  => 'bg-red-100 text-red-700',
+                                    default                                     => 'bg-yellow-100 text-yellow-700',
+                                };
+                            @endphp
+                            <span class="text-[10px] font-semibold px-2 py-0.5 rounded-full {{ $typeClass }}">
+                                {{ $typeNoeud?->label() ?? '—' }}
+                            </span>
+                        </td>
+                        <td class="px-4 py-3 text-center">
+                            @if($step->type_demande)
+                                <span class="text-[10px] font-medium px-2 py-0.5 rounded-full bg-purple-100 text-purple-700">
+                                    {{ \App\Enums\TypeDemandeEnum::tryFrom($step->type_demande)?->label() ?? $step->type_demande }}
+                                </span>
+                            @else
+                                <span class="text-[10px] text-gray-400 italic">Global</span>
+                            @endif
+                        </td>
+                        <td class="px-4 py-3">
+                            <div class="flex items-center justify-center gap-2">
+                                @if($step->isInitial())
+                                    <span class="text-xs text-gray-400 italic px-2">Système</span>
+                                @else
+                                <div x-data="{ open: false }">
+                                    <button type="button" @click="open = true"
+                                        class="px-2 py-1 bg-blue-100 text-blue-700 hover:bg-blue-200 rounded text-xs font-medium">
+                                        <i class="fas fa-pencil-alt"></i>
+                                    </button>
+                                    <div x-show="open" x-cloak class="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+                                        <div class="bg-white w-full max-w-md rounded-xl shadow-xl p-6" @click.stop>
+                                            <h3 class="font-semibold text-gray-800 mb-1">Modifier le nœud</h3>
+                                            <p class="text-xs text-gray-400 mb-4 font-mono">{{ $step->code }}</p>
+                                            <form method="POST" action="{{ route('admin.workflow-steps.update', $step->id) }}">
+                                                @csrf @method('PATCH')
+                                
+                                                <div class="mb-3">
+                                                    <label class="block text-xs font-medium text-gray-700 mb-1">Nom <span class="text-red-500">*</span></label>
+                                                    <input type="text" name="nom" required value="{{ $step->nom }}"
+                                                        class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                                </div>
+                                                <div class="mb-3">
+                                                    <label class="block text-xs font-medium text-gray-700 mb-1">Service</label>
+                                                    <select name="service_id"
+                                                        class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                                        <option value="">— Aucun service —</option>
+                                                        @foreach($services as $svc)
+                                                            <option value="{{ $svc->id }}" {{ $step->service_id == $svc->id ? 'selected' : '' }}>
+                                                                {{ $svc->nom }}
+                                                            </option>
+                                                        @endforeach
+                                                    </select>
+                                                </div>
+                                                <div class="mb-3">
+                                                    <label class="block text-xs font-medium text-gray-700 mb-1">Description</label>
+                                                    <input type="text" name="description" value="{{ $step->description }}"
+                                                        class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                                </div>
+                                                <div class="mb-3 flex gap-4">
+                                                    <div>
+                                                        <label class="block text-xs font-medium text-gray-700 mb-1">Ordre</label>
+                                                        <input type="number" name="ordre" value="{{ $step->ordre }}" min="0"
+                                                            class="w-24 px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                                    </div>
+                                                    <div class="flex-1">
+                                                        <label class="block text-xs font-medium text-gray-700 mb-1">Type de nœud <span class="text-red-500">*</span></label>
+                                                        <select name="type_noeud" required
+                                                            class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                                            @foreach(\App\Enums\WorkflowStepTypeEnum::cases() as $typeCase)
+                                                                <option value="{{ $typeCase->value }}" {{ $step->type_noeud === $typeCase ? 'selected' : '' }}>
+                                                                    {{ $typeCase->label() }}
+                                                                </option>
+                                                            @endforeach
+                                                        </select>
+                                                    </div>
+                                                </div>
+                                                <div class="flex justify-end gap-2">
+                                                    <button type="button" @click="open = false"
+                                                        class="px-4 py-2 text-sm font-medium text-gray-600 hover:text-gray-800">Annuler</button>
+                                                    <button type="submit"
+                                                        class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg">Enregistrer</button>
+                                                </div>
+                                            </form>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div x-data="{ open: false }">
+                                    <button type="button" @click="open = true"
+                                        class="px-2 py-1 bg-red-100 text-red-700 hover:bg-red-200 rounded text-xs font-medium">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                    <div x-show="open" x-cloak class="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+                                        <div class="bg-white w-full max-w-sm rounded-xl shadow-xl p-6" @click.stop>
+                                            <h3 class="font-semibold text-gray-800 mb-3">Supprimer l'état</h3>
+                                            <p class="text-sm text-gray-600 mb-5">
+                                                Supprimer <strong>« {{ $step->nom }} »</strong> ? Les transitions liées seront également supprimées.
+                                            </p>
+                                            <div class="flex justify-end gap-2">
+                                                <button type="button" @click="open = false"
+                                                    class="px-4 py-2 text-sm font-medium text-gray-600">Annuler</button>
+                                                <form method="POST" action="{{ route('admin.workflow-steps.destroy', $step->id) }}">
+                                                    @csrf @method('DELETE')
+                                                    <button type="submit"
+                                                        class="px-4 py-2 bg-red-600 hover:bg-red-700 text-white text-sm font-medium rounded-lg">Supprimer</button>
+                                                </form>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                @endif
+                            </div>
+                        </td>
+                    </tr>
+                @empty
+                    <tr>
+                        <td colspan="7" class="px-4 py-10 text-center text-gray-400">
+                            <i class="fas fa-circle text-3xl mb-2 block"></i>
+                            Aucun état défini.
+                        </td>
+                    </tr>
+                @endforelse
+            </tbody>
+        </table>
+        </div>
+    </div>
+
+    {{-- ── Transitions (arêtes) ── --}}
+    <div class="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden"
+         x-data="{ open: true }">
+        <div class="px-5 py-4 flex items-start justify-between cursor-pointer select-none" @click="open = !open">
+            <div>
+                <h2 class="text-sm font-semibold text-gray-700">
+                    <i class="fas fa-arrow-right mr-2 text-blue-400"></i> Transitions entre états (arêtes)
+                </h2>
+                <p class="text-xs text-gray-400 mt-0.5">
+                    Définissent quels enchaînements d'états sont autorisés et le libellé de l'action de transfert.
                 </p>
             </div>
             <i class="fas fa-chevron-down text-gray-400 text-xs transition-transform duration-200 mt-1 shrink-0 ml-4"
                :class="open ? '' : '-rotate-90'"></i>
         </div>
 
-        <div x-show="open" x-transition:enter="transition ease-out duration-150" x-transition:enter-start="opacity-0 -translate-y-1" x-transition:enter-end="opacity-100 translate-y-0" x-transition:leave="transition ease-in duration-100" x-transition:leave-start="opacity-100 translate-y-0" x-transition:leave-end="opacity-0 -translate-y-1">
-        {{-- Field legend --}}
-        <div class="px-6 py-3 bg-gray-50 border-b border-gray-100">
-            <div class="flex flex-wrap gap-x-6 gap-y-1.5 text-xs text-gray-500">
-                <span><span class="font-semibold text-gray-600">Service source</span> — le service qui initie le transfert (vide = soumission initiale par l'usager)</span>
-                <span><span class="font-semibold text-gray-600">Service destination</span> — le service qui reçoit le dossier</span>
-                <span><span class="font-semibold text-gray-600">Action</span> — le libellé affiché sur le bouton de transfert (ex : Dispatcher, Transmettre)</span>
-                <span>
-                    <span class="font-semibold text-gray-600">Type de demande</span>
-                    <span class="inline-flex items-center gap-0.5 text-[10px] font-medium px-1.5 py-0.5 rounded bg-gray-200 text-gray-500 ml-0.5">avancé</span>
-                    — restreint cette transition à un seul type de dossier.
-                    Par défaut (vide), <em>tous</em> les types peuvent emprunter ce chemin.
-                    À utiliser uniquement si vous voulez qu'une étape soit <em>inaccessible</em> pour certains types
-                    (ex : seul <em>Demande de pension</em> peut aller vers <em>Service Liquidation</em>).
-                    Ne pas confondre avec les <strong class="text-gray-600">Étapes obligatoires</strong> qui forcent le passage — ici on <em>interdit</em> un chemin pour certains types.
-                </span>
-            </div>
-        </div>
-
-        <div class="px-6 py-5">
-            <form method="POST" action="{{ route('admin.flux-transitions.store') }}"
-                  class="flex flex-wrap gap-4 items-end">
+        <div x-show="open" x-transition:enter="transition ease-out duration-150" x-transition:enter-start="opacity-0 -translate-y-1" x-transition:enter-end="opacity-100 translate-y-0">
+        <div class="px-5 py-4 border-t border-b border-gray-100 bg-gray-50">
+            <form method="POST" action="{{ route('admin.flux-transitions.step-transitions.store') }}"
+                  class="flex flex-wrap gap-3 items-end">
                 @csrf
 
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">Service source</label>
-                    <select name="service_source_id" x-model="sourceId"
-                        class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 min-w-[200px]">
-                        <option value="" disabled selected>— Choisir un service —</option>
-                        @foreach($services as $svc)
-                            <option value="{{ $svc->id }}">{{ $svc->nom }}</option>
+                    <label class="block text-xs font-medium text-gray-600 mb-1">État source</label>
+                    <select name="from_step_id"
+                        class="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 min-w-[200px]">
+                        <option value="">— Soumission initiale —</option>
+                        @foreach($steps as $step)
+                            @unless($step->isTerminal())
+                                <option value="{{ $step->id }}">{{ $step->nom }}</option>
+                            @endunless
                         @endforeach
                     </select>
                 </div>
 
-                <div class="flex items-end pb-2.5 text-gray-400">
-                    <i class="fas fa-arrow-right"></i>
+                <div class="flex items-end pb-2 text-gray-400"><i class="fas fa-long-arrow-alt-right"></i></div>
+
+                <div>
+                    <label class="block text-xs font-medium text-gray-600 mb-1">État destination <span class="text-red-500">*</span></label>
+                    <select name="to_step_id" required
+                        class="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 min-w-[200px]">
+                        <option value="">— Choisir —</option>
+                        @foreach($steps as $step)
+                            @unless($step->isInitial())
+                                <option value="{{ $step->id }}">{{ $step->nom }}</option>
+                            @endunless
+                        @endforeach
+                    </select>
                 </div>
 
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">
-                        Service destination <span class="text-red-500">*</span>
+                    <label class="block text-xs font-medium text-gray-600 mb-1">Action <span class="text-red-500">*</span></label>
+                    <input type="text" name="action" required placeholder="ex : Transmettre, Valider…"
+                        class="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 w-44">
+                </div>
+
+                <div class="flex items-end gap-2">
+                    <label class="flex items-center gap-1.5 text-xs text-gray-600 pb-2.5 cursor-pointer">
+                        <input type="checkbox" name="is_urgent_only" value="1" class="rounded text-orange-500">
+                        Urgent uniquement
                     </label>
-                    <select name="service_destination_id" required
-                        class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 min-w-[200px]">
-                        <option value="">-- Choisir --</option>
-                        @foreach($services as $svc)
-                            <option value="{{ $svc->id }}"
-                                x-bind:disabled="sourceId == '{{ $svc->id }}'">
-                                {{ $svc->nom }}
-                            </option>
-                        @endforeach
-                    </select>
-                    @error('service_destination_id')
-                        <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
-                    @enderror
                 </div>
 
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">
-                        Action <span class="text-red-500">*</span>
-                    </label>
-                    <input type="text" name="action" value="{{ old('action') }}" required
-                        placeholder="ex: Annoter, Dispatcher…"
-                        class="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 w-44">
-                    @error('action')
-                        <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
-                    @enderror
-                </div>
-
-                <div class="flex items-end">
-                    <button type="button" @click="advanced = !advanced"
-                        :class="advanced ? 'bg-gray-200 text-gray-700' : 'bg-gray-100 text-gray-500 hover:bg-gray-200'"
-                        class="px-3 py-2 rounded-lg text-xs font-medium transition-colors flex items-center gap-1">
-                        <i class="fas fa-sliders-h text-[11px]"></i>
-                        <span x-text="advanced ? 'Masquer' : 'Avancé'"></span>
-                    </button>
-                </div>
-
-                <div x-show="advanced" x-cloak>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">Type de demande</label>
-                    <select name="type_demande"
-                        class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 min-w-[180px]">
-                        <option value="">— Tous les types —</option>
-                        @foreach(\App\Enums\TypeDemandeEnum::cases() as $type)
-                            <option value="{{ $type->value }}">{{ $type->label() }}</option>
-                        @endforeach
-                    </select>
-                </div>
-
-                <div class="flex items-end">
-                    <button type="submit"
-                        class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg transition-colors">
-                        <i class="fas fa-plus mr-1"></i> Ajouter
-                    </button>
-                </div>
+                <button type="submit"
+                    class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg transition-colors self-end">
+                    <i class="fas fa-plus mr-1"></i> Ajouter
+                </button>
             </form>
         </div>
-        <table class="w-full text-sm border-t border-gray-100">
+
+        <table class="w-full text-sm">
             <thead class="bg-gray-50 border-b border-gray-200">
                 <tr>
                     <th class="px-3 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide text-center w-8">#</th>
-                    <th class="px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide text-left">Source</th>
+                    <th class="px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide text-left">État source</th>
                     <th class="px-2 py-3 w-6"></th>
-                    <th class="px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide text-left">Destination</th>
+                    <th class="px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide text-left">État destination</th>
                     <th class="px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide text-left">Action</th>
-                    <th x-show="advanced" class="px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide text-left">Type demande</th>
-                    <th class="px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide text-center">Ordre</th>
-                    <th class="px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide text-center">Actions</th>
+                    <th class="px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide text-center w-24">Ordre</th>
+                    <th class="px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide text-center w-24">Actions</th>
                 </tr>
             </thead>
             <tbody>
-                @forelse($transitions as $i => $transition)
+                @forelse($stepTransitions as $i => $t)
                     <tr class="border-b border-gray-100 last:border-0 hover:bg-gray-50">
-
                         <td class="px-3 py-3 text-center text-gray-400 text-xs">{{ $i + 1 }}</td>
-
                         <td class="px-4 py-3">
-                            @if($transition->sourceService)
+                            @if($t->from_step_id)
                                 <span class="text-xs font-medium px-2 py-0.5 rounded-full bg-blue-100 text-blue-700">
-                                    {{ $transition->sourceService->nom }}
+                                    {{ $t->fromStep?->nom ?? '?' }}
                                 </span>
+                                @if($t->fromStep?->service)
+                                    <span class="text-[10px] text-gray-400 ml-1">{{ $t->fromStep->service->nom }}</span>
+                                @endif
                             @else
-                                <span class="text-xs font-medium px-2 py-0.5 rounded-full bg-black text-white italic">
-                                    Soumission initiale
-                                </span>
+                                <span class="text-xs font-medium px-2 py-0.5 rounded-full bg-gray-900 text-white italic">Soumission initiale</span>
                             @endif
                         </td>
-
-                        <td class="px-2 py-3 text-gray-400 text-center">
-                            <i class="fas fa-arrow-right text-xs"></i>
-                        </td>
-
+                        <td class="px-2 py-3 text-gray-400 text-center"><i class="fas fa-arrow-right text-xs"></i></td>
                         <td class="px-4 py-3">
                             <span class="text-xs font-medium px-2 py-0.5 rounded-full bg-green-100 text-green-700">
-                                {{ $transition->destinationService->nom }}
+                                {{ $t->toStep?->nom ?? '?' }}
                             </span>
+                            @if($t->toStep?->service)
+                                <span class="text-[10px] text-gray-400 ml-1">{{ $t->toStep->service->nom }}</span>
+                            @endif
                         </td>
-
-                        <td class="px-4 py-3 text-gray-600 text-xs">{{ $transition->action }}</td>
-
-                        <td x-show="advanced" class="px-4 py-3">
-                            @if($transition->type_demande)
-                                @php $enum = \App\Enums\TypeDemandeEnum::tryFrom($transition->type_demande); @endphp
-                                <span class="text-xs font-medium px-2 py-0.5 rounded-full bg-purple-100 text-purple-700">
-                                    {{ $enum?->label() ?? $transition->type_demande }}
+                        <td class="px-4 py-3 text-gray-700 text-xs font-medium">
+                            {{ $t->action }}
+                            @if($t->is_urgent_only)
+                                <span class="ml-1 inline-flex items-center gap-0.5 text-[10px] px-1.5 py-0.5 rounded-full bg-orange-100 text-orange-700 font-semibold">
+                                    <i class="fas fa-bolt text-[9px]"></i> Urgent
                                 </span>
-                            @else
-                                <span class="text-xs text-gray-400 italic">Tous</span>
                             @endif
                         </td>
-
                         <td class="px-4 py-3 text-center">
-                            @if($transition->service_source_id !== null)
                             <div class="flex items-center justify-center gap-1">
-                                @unless($loop->first)
-                                    <form method="POST" action="{{ route('admin.flux-transitions.move-up', $transition->id) }}">
-                                        @csrf
-                                        <button type="submit" class="text-gray-400 hover:text-blue-600 transition-colors" title="Monter">
-                                            <i class="fas fa-chevron-up text-xs"></i>
-                                        </button>
-                                    </form>
-                                @endunless
-                                @unless($loop->last)
-                                    <form method="POST" action="{{ route('admin.flux-transitions.move-down', $transition->id) }}">
-                                        @csrf
-                                        <button type="submit" class="text-gray-400 hover:text-blue-600 transition-colors" title="Descendre">
-                                            <i class="fas fa-chevron-down text-xs"></i>
-                                        </button>
-                                    </form>
-                                @endunless
+                                <form method="POST" action="{{ route('admin.flux-transitions.step-transitions.move-up', $t->id) }}">
+                                    @csrf
+                                    <button type="submit" class="text-gray-400 hover:text-blue-600" title="Monter">
+                                        <i class="fas fa-chevron-up text-xs"></i>
+                                    </button>
+                                </form>
+                                <form method="POST" action="{{ route('admin.flux-transitions.step-transitions.move-down', $t->id) }}">
+                                    @csrf
+                                    <button type="submit" class="text-gray-400 hover:text-blue-600" title="Descendre">
+                                        <i class="fas fa-chevron-down text-xs"></i>
+                                    </button>
+                                </form>
                             </div>
-                            @endif
                         </td>
-
                         <td class="px-4 py-3">
                             <div class="flex items-center justify-center gap-2">
-                                <button type="button"
-                                    x-data
-                                    @click="$dispatch('open-edit-{{ $transition->id }}')"
-                                    class="px-2 py-1 bg-blue-100 text-blue-700 hover:bg-blue-200 rounded text-xs font-medium transition-colors">
-                                    <i class="fas fa-pencil-alt"></i>
-                                </button>
-
-                                @if($transition->service_source_id !== null)
-                                <button type="button"
-                                    x-data
-                                    @click="$dispatch('open-delete-{{ $transition->id }}')"
-                                    class="px-2 py-1 bg-red-100 text-red-700 hover:bg-red-200 rounded text-xs font-medium transition-colors">
-                                    <i class="fas fa-trash"></i>
-                                </button>
-                                @endif
-                            </div>
-
-                            @if($transition->service_source_id !== null)
-                            <div x-data="{ open: false }"
-                                 x-on:open-delete-{{ $transition->id }}.window="open = true"
-                                 x-show="open" x-cloak
-                                 class="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-                                <div class="bg-white w-full max-w-sm rounded-xl shadow-xl p-6" @click.stop>
-                                    <div class="flex items-center gap-3 mb-4">
-                                        <div class="w-10 h-10 rounded-full bg-red-100 flex items-center justify-center shrink-0">
-                                            <i class="fas fa-trash text-red-600"></i>
+                                {{-- Edit --}}
+                                <div x-data="{ open: false }">
+                                    <button type="button" @click="open = true"
+                                        class="px-2 py-1 bg-blue-100 text-blue-700 hover:bg-blue-200 rounded text-xs font-medium">
+                                        <i class="fas fa-pencil-alt"></i>
+                                    </button>
+                                    <div x-show="open" x-cloak class="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+                                        <div class="bg-white w-full max-w-sm rounded-xl shadow-xl p-6" @click.stop>
+                                            <h3 class="font-semibold text-gray-800 mb-4">Modifier la transition</h3>
+                                            <form method="POST" action="{{ route('admin.flux-transitions.step-transitions.update', $t->id) }}">
+                                                @csrf @method('PATCH')
+                                                <div class="mb-3">
+                                                    <label class="block text-sm font-medium text-gray-700 mb-1">Action</label>
+                                                    <input type="text" name="action" required value="{{ $t->action }}"
+                                                        class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                                </div>
+                                                <div class="mb-5">
+                                                    <label class="flex items-center gap-2 text-sm text-gray-700 cursor-pointer">
+                                                        <input type="checkbox" name="is_urgent_only" value="1"
+                                                            {{ $t->is_urgent_only ? 'checked' : '' }}
+                                                            class="rounded text-orange-500">
+                                                        Urgent uniquement
+                                                    </label>
+                                                </div>
+                                                <div class="flex justify-end gap-2">
+                                                    <button type="button" @click="open = false"
+                                                        class="px-4 py-2 text-sm font-medium text-gray-600">Annuler</button>
+                                                    <button type="submit"
+                                                        class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg">Enregistrer</button>
+                                                </div>
+                                            </form>
                                         </div>
-                                        <div>
-                                            <h3 class="font-semibold text-gray-800">Supprimer la transition</h3>
-                                            <p class="text-xs text-gray-500 mt-0.5">Cette action est irréversible.</p>
-                                        </div>
-                                    </div>
-                                    <p class="text-sm text-gray-600 mb-5">
-                                        Voulez-vous vraiment supprimer la transition
-                                        <span class="font-medium text-gray-800">« {{ $transition->action }} »</span> ?
-                                    </p>
-                                    <div class="flex justify-end gap-2">
-                                        <button type="button" @click="open = false"
-                                            class="px-4 py-2 text-sm font-medium text-gray-600 hover:text-gray-800">
-                                            Annuler
-                                        </button>
-                                        <form method="POST" action="{{ route('admin.flux-transitions.destroy', $transition->id) }}">
-                                            @csrf
-                                            @method('DELETE')
-                                            <button type="submit"
-                                                class="px-4 py-2 bg-red-600 hover:bg-red-700 text-white text-sm font-medium rounded-lg transition-colors">
-                                                Supprimer
-                                            </button>
-                                        </form>
                                     </div>
                                 </div>
-                            </div>
-                            @endif
-
-                            <div x-data="{ open: false, advanced: {{ $transition->type_demande ? 'true' : 'false' }} }"
-                                 x-on:open-edit-{{ $transition->id }}.window="open = true"
-                                 x-show="open" x-cloak
-                                 class="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-                                <div class="bg-white w-full max-w-md rounded-xl shadow-xl p-6" @click.stop>
-                                    <h3 class="font-semibold text-gray-800 mb-4">
-                                        <i class="fas fa-pencil-alt mr-2 text-blue-500"></i> Modifier la transition
-                                    </h3>
-                                    <form method="POST" action="{{ route('admin.flux-transitions.update', $transition->id) }}">
-                                        @csrf
-                                        @method('PATCH')
-
-                                        @if($transition->service_source_id !== null)
-                                        <div class="mb-3">
-                                            <label class="block text-sm font-medium text-gray-700 mb-1">Service source</label>
-                                            <select name="service_source_id"
-                                                class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
-                                                @foreach($services as $svc)
-                                                    <option value="{{ $svc->id }}" @selected($transition->service_source_id === $svc->id)>{{ $svc->nom }}</option>
-                                                @endforeach
-                                            </select>
+                                {{-- Delete --}}
+                                <div x-data="{ open: false }">
+                                    <button type="button" @click="open = true"
+                                        class="px-2 py-1 bg-red-100 text-red-700 hover:bg-red-200 rounded text-xs font-medium">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                    <div x-show="open" x-cloak class="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+                                        <div class="bg-white w-full max-w-sm rounded-xl shadow-xl p-6" @click.stop>
+                                            <h3 class="font-semibold text-gray-800 mb-3">Supprimer la transition</h3>
+                                            <p class="text-sm text-gray-600 mb-5">
+                                                Supprimer <strong>« {{ $t->action }} »</strong>
+                                                ({{ $t->fromStep?->nom ?? 'Soumission initiale' }} → {{ $t->toStep?->nom ?? '?' }}) ?
+                                            </p>
+                                            <div class="flex justify-end gap-2">
+                                                <button type="button" @click="open = false"
+                                                    class="px-4 py-2 text-sm font-medium text-gray-600">Annuler</button>
+                                                <form method="POST" action="{{ route('admin.flux-transitions.step-transitions.destroy', $t->id) }}">
+                                                    @csrf @method('DELETE')
+                                                    <button type="submit"
+                                                        class="px-4 py-2 bg-red-600 hover:bg-red-700 text-white text-sm font-medium rounded-lg">Supprimer</button>
+                                                </form>
+                                            </div>
                                         </div>
-                                        @endif
-
-                                        <div class="mb-3">
-                                            <label class="block text-sm font-medium text-gray-700 mb-1">Service destination <span class="text-red-500">*</span></label>
-                                            <select name="service_destination_id" required
-                                                class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
-                                                @foreach($services as $svc)
-                                                    <option value="{{ $svc->id }}" @selected($transition->service_destination_id === $svc->id)>{{ $svc->nom }}</option>
-                                                @endforeach
-                                            </select>
-                                        </div>
-
-                                        <div class="mb-3">
-                                            <label class="block text-sm font-medium text-gray-700 mb-1">Action</label>
-                                            <input type="text" name="action" required value="{{ $transition->action }}"
-                                                class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
-                                        </div>
-                                        <div class="mb-4">
-                                            <button type="button" @click="advanced = !advanced"
-                                                :class="advanced ? 'bg-gray-200 text-gray-700' : 'bg-gray-100 text-gray-500 hover:bg-gray-200'"
-                                                class="px-3 py-1.5 rounded-lg text-xs font-medium transition-colors flex items-center gap-1.5">
-                                                <i class="fas fa-sliders-h text-[11px]"></i>
-                                                <span x-text="advanced ? 'Masquer options avancées' : 'Options avancées'"></span>
-                                            </button>
-                                        </div>
-                                        <div class="mb-5" x-show="advanced" x-cloak>
-                                            <label class="block text-sm font-medium text-gray-700 mb-1">Type de demande</label>
-                                            <select name="type_demande"
-                                                class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
-                                                <option value="">— Tous les types —</option>
-                                                @foreach(\App\Enums\TypeDemandeEnum::cases() as $type)
-                                                    <option value="{{ $type->value }}"
-                                                        @selected($transition->type_demande === $type->value)>
-                                                        {{ $type->label() }}
-                                                    </option>
-                                                @endforeach
-                                            </select>
-                                        </div>
-                                        <div class="flex justify-end gap-2">
-                                            <button type="button" @click="open = false"
-                                                class="px-4 py-2 text-sm font-medium text-gray-600 hover:text-gray-800">
-                                                Annuler
-                                            </button>
-                                            <button type="submit"
-                                                class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg transition-colors">
-                                                Enregistrer
-                                            </button>
-                                        </div>
-                                    </form>
+                                    </div>
                                 </div>
                             </div>
                         </td>
                     </tr>
                 @empty
                     <tr>
-                        <td colspan="8" class="px-4 py-10 text-center text-gray-400">
-                            <i class="fas fa-route text-3xl mb-2 block"></i>
+                        <td colspan="7" class="px-4 py-10 text-center text-gray-400">
+                            <i class="fas fa-arrow-right text-3xl mb-2 block"></i>
                             Aucune transition définie.
                         </td>
                     </tr>
                 @endforelse
             </tbody>
         </table>
-        </div>{{-- /x-collapse --}}
+        </div>
     </div>
 
-    {{-- ═══════════════════════════════════════════
-         Étapes obligatoires (circuit enforcement)
-    ════════════════════════════════════════════ --}}
+    {{-- ── Étapes obligatoires ── --}}
     <div class="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden"
          x-data="{ open: false }">
         <div class="px-5 py-4 flex items-start justify-between cursor-pointer select-none" @click="open = !open">
             <div>
                 <h2 class="text-sm font-semibold text-gray-700">
-                    <i class="fas fa-shield-alt mr-2 text-orange-400"></i> Étapes obligatoires du circuit
+                    <i class="fas fa-shield-alt mr-2 text-orange-400"></i> Étapes obligatoires
                 </h2>
                 <p class="text-xs text-gray-400 mt-0.5">
-                    Un dossier ne peut être approuvé ou clôturé que si tous ces services l'ont traité (réception acceptée).
+                    Un dossier ne peut être approuvé que si tous ces services l'ont traité.
                 </p>
             </div>
             <i class="fas fa-chevron-down text-gray-400 text-xs transition-transform duration-200 mt-1 shrink-0 ml-4"
                :class="open ? '' : '-rotate-90'"></i>
         </div>
 
-        <div x-show="open" x-transition:enter="transition ease-out duration-150" x-transition:enter-start="opacity-0 -translate-y-1" x-transition:enter-end="opacity-100 translate-y-0" x-transition:leave="transition ease-in duration-100" x-transition:leave-start="opacity-100 translate-y-0" x-transition:leave-end="opacity-0 -translate-y-1">
-        {{-- Add form --}}
+        <div x-show="open" x-transition:enter="transition ease-out duration-150" x-transition:enter-start="opacity-0 -translate-y-1" x-transition:enter-end="opacity-100 translate-y-0">
         <div class="px-5 py-4 border-b border-gray-100 bg-gray-50">
             <form method="POST" action="{{ route('admin.flux-transitions.required.store') }}"
                   class="flex flex-wrap items-end gap-3">
                 @csrf
-
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">
-                        Service <span class="text-red-500">*</span>
-                    </label>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Service <span class="text-red-500">*</span></label>
                     <select name="service_id" required
-                        class="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 min-w-[180px]">
+                        class="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 min-w-[180px]">
                         <option value="">— Choisir —</option>
                         @foreach($services as $svc)
                             <option value="{{ $svc->id }}">{{ $svc->nom }}</option>
                         @endforeach
                     </select>
                 </div>
-
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-1">Type de demande</label>
                     <select name="type_demande"
-                        class="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 min-w-[200px]">
+                        class="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 min-w-[200px]">
                         <option value="">— Tous les types —</option>
-                        @foreach(\App\Enums\TypeDemandeEnum::cases() as $type)
-                            <option value="{{ $type->value }}">{{ $type->label() }}</option>
+                        @foreach($typeDemandeOptions as $type)
+                            <option value="{{ $type->value }}" @selected($selectedType === $type->value)>{{ $type->label() }}</option>
                         @endforeach
                     </select>
                 </div>
-
-                <div class="flex items-end">
-                    <button type="submit"
-                        class="px-4 py-2 bg-orange-600 hover:bg-orange-700 text-white text-sm font-medium rounded-lg transition-colors">
-                        <i class="fas fa-plus mr-1"></i> Ajouter
-                    </button>
-                </div>
+                <button type="submit"
+                    class="px-4 py-2 bg-orange-600 hover:bg-orange-700 text-white text-sm font-medium rounded-lg transition-colors">
+                    <i class="fas fa-plus mr-1"></i> Ajouter
+                </button>
             </form>
         </div>
-
-        {{-- Table --}}
         <table class="w-full text-sm">
             <thead class="bg-gray-50 border-b border-gray-200">
                 <tr>
-                    <th class="px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide text-left">Service requis</th>
-                    <th class="px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide text-left">Type de demande</th>
+                    <th class="px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide text-left">Service</th>
+                    <th class="px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide text-left">Type</th>
                     <th class="px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide text-center w-20">Action</th>
                 </tr>
             </thead>
@@ -962,51 +980,37 @@ foreach ($laneOrder as $nodeId) {
                 @forelse($requiredServices as $req)
                     <tr class="border-b border-gray-100 last:border-0 hover:bg-gray-50">
                         <td class="px-4 py-3">
-                            <span class="text-xs font-medium px-2 py-0.5 rounded-full bg-orange-100 text-orange-700">
-                                {{ $req->service->nom }}
-                            </span>
+                            <span class="text-xs font-medium px-2 py-0.5 rounded-full bg-orange-100 text-orange-700">{{ $req->service->nom }}</span>
                         </td>
                         <td class="px-4 py-3">
                             @if($req->type_demande)
-                                @php $enum = \App\Enums\TypeDemandeEnum::tryFrom($req->type_demande); @endphp
                                 <span class="text-xs font-medium px-2 py-0.5 rounded-full bg-purple-100 text-purple-700">
-                                    {{ $enum?->label() ?? $req->type_demande }}
+                                    {{ \App\Enums\TypeDemandeEnum::tryFrom($req->type_demande)?->label() ?? $req->type_demande }}
                                 </span>
                             @else
-                                <span class="text-xs text-gray-400 italic">Tous les types</span>
+                                <span class="text-xs text-gray-400 italic">Tous</span>
                             @endif
                         </td>
                         <td class="px-4 py-3 text-center">
                             <div x-data="{ open: false }">
                                 <button type="button" @click="open = true"
-                                    class="px-2 py-1 bg-red-100 text-red-700 hover:bg-red-200 rounded text-xs font-medium transition-colors">
+                                    class="px-2 py-1 bg-red-100 text-red-700 hover:bg-red-200 rounded text-xs font-medium">
                                     <i class="fas fa-trash"></i>
                                 </button>
-                                <div x-show="open" x-cloak
-                                     class="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+                                <div x-show="open" x-cloak class="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
                                     <div class="bg-white w-full max-w-sm rounded-xl shadow-xl p-6" @click.stop>
-                                        <h3 class="font-semibold text-gray-800 mb-3">Supprimer l'étape obligatoire</h3>
+                                        <h3 class="font-semibold text-gray-800 mb-3">Supprimer</h3>
                                         <p class="text-sm text-gray-600 mb-5">
-                                            Supprimer <span class="font-medium text-gray-800">{{ $req->service->nom }}</span>
-                                            @if($req->type_demande)
-                                                pour <span class="font-medium text-gray-800">{{ \App\Enums\TypeDemandeEnum::tryFrom($req->type_demande)?->label() ?? $req->type_demande }}</span>
-                                            @else
-                                                (tous les types)
-                                            @endif
-                                            ? Les dossiers pourront être approuvés sans passer par ce service.
+                                            Supprimer <strong>{{ $req->service->nom }}</strong>
+                                            @if($req->type_demande) pour <strong>{{ \App\Enums\TypeDemandeEnum::tryFrom($req->type_demande)?->label() }}</strong>@else (tous les types)@endif ?
                                         </p>
                                         <div class="flex justify-end gap-2">
                                             <button type="button" @click="open = false"
-                                                class="px-4 py-2 text-sm font-medium text-gray-600 hover:text-gray-800">
-                                                Annuler
-                                            </button>
+                                                class="px-4 py-2 text-sm text-gray-600">Annuler</button>
                                             <form method="POST" action="{{ route('admin.flux-transitions.required.destroy', $req->id) }}">
-                                                @csrf
-                                                @method('DELETE')
+                                                @csrf @method('DELETE')
                                                 <button type="submit"
-                                                    class="px-4 py-2 bg-red-600 hover:bg-red-700 text-white text-sm font-medium rounded-lg transition-colors">
-                                                    Supprimer
-                                                </button>
+                                                    class="px-4 py-2 bg-red-600 hover:bg-red-700 text-white text-sm font-medium rounded-lg">Supprimer</button>
                                             </form>
                                         </div>
                                     </div>
@@ -1016,16 +1020,35 @@ foreach ($laneOrder as $nodeId) {
                     </tr>
                 @empty
                     <tr>
-                        <td colspan="3" class="px-4 py-10 text-center text-gray-400">
-                            <i class="fas fa-shield-alt text-3xl mb-2 block"></i>
-                            Aucune étape obligatoire définie. Tous les dossiers peuvent être approuvés librement.
-                        </td>
+                        <td colspan="3" class="px-4 py-10 text-center text-gray-400">Aucune étape obligatoire.</td>
                     </tr>
                 @endforelse
             </tbody>
         </table>
-        </div>{{-- /x-collapse --}}
+        </div>
     </div>
 
 </div>
+
+<script>
+function addStepModal(etats) {
+    return {
+        tab: 'new',
+        selectedStepId: '',
+
+        reset() {
+            this.tab = 'new';
+            this.selectedStepId = '';
+        },
+
+        submitClone() {
+            if (!this.selectedStepId) return;
+            const form = document.getElementById('clone-step-form');
+            form.action = '{{ url('admin/workflow-steps') }}/' + this.selectedStepId + '/clone';
+            form.submit();
+        },
+    };
+}
+
+</script>
 @endsection

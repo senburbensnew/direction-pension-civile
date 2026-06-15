@@ -14,7 +14,7 @@ return new class extends Migration
             $table->string('title')->nullable();
             $table->string('type', 50)->index(); // maybe should be a foreign key to a dedicated table
             $table->foreignId('created_by')->nullable()->constrained('users')->nullOnDelete();
-            $table->foreignId('status_id')->constrained('statuses');
+            $table->foreignId('status_id')->nullable()->constrained('statuses')->nullOnDelete();
             $table->json('data')->nullable();
             $table->timestamp('submitted_at')->nullable();
             $table->timestamp('expires_at')->nullable();

@@ -4,9 +4,9 @@ namespace Tests\Feature;
 
 use App\Enums\TypeDemandeEnum;
 use App\Models\Demande;
-use App\Models\DemandeWorkflow;
+use App\Models\DemandeInteraction;
 use App\Models\Service;
-use App\Models\Status;
+use App\Models\WorkflowStep;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
@@ -59,46 +59,45 @@ class DemandeManagementFeatureTest extends TestCase
 
     private function makeDemande(User $owner, string $statusCode = 'SOUMISE'): Demande
     {
-        $statusId = Status::where('code', $statusCode)->value('id');
+        $stepId = WorkflowStep::idForCode($statusCode);
         return Demande::create([
-            'type'       => TypeDemandeEnum::DEMANDE_ATTESTATION->value,
-            'created_by' => $owner->id,
-            'status_id'  => $statusId,
+            'type'           => TypeDemandeEnum::DEMANDE_ATTESTATION->value,
+            'created_by'     => $owner->id,
+            'current_step_id' => $stepId,
         ]);
     }
 
     private function makeDemandeThatHasBeenProcessed(User $owner): Demande
     {
         // DEMANDE_ATTESTATION requires: secretariat → service_formalite
-        $demande    = $this->makeDemande($owner, 'EN_COURS');
-        $direction  = Service::where('code', Service::DIRECTION)->first();
+        $demande     = $this->makeDemande($owner, 'EN_COURS');
+        $direction   = Service::where('code', Service::DIRECTION)->first();
         $secretariat = Service::where('code', Service::SECRETARIAT)->first();
-        $formalite  = Service::where('code', Service::FORMALITE)->first();
-        $statusId   = Status::where('code', 'EN_COURS')->value('id');
+        $formalite   = Service::where('code', Service::FORMALITE)->first();
 
         foreach ([$secretariat, $formalite] as $service) {
-            DemandeWorkflow::create([
-                'demande_id'           => $demande->id,
-                'from_service_id'      => $direction->id,
-                'to_service_id'        => $service->id,
-                'status_id'            => $statusId,
-                'action_by_user_id'    => $owner->id,
-                'reception_status'     => 'accepted',
-                'reception_by_user_id' => $owner->id,
-                'reception_at'         => now(),
+            DemandeInteraction::create([
+                'demande_id'      => $demande->id,
+                'type'            => DemandeInteraction::TYPE_TRANSFERT,
+                'from_service_id' => $direction->id,
+                'to_service_id'   => $service->id,
+                'initiated_by'    => $owner->id,
+                'statut'          => DemandeInteraction::STATUT_ACCEPTE,
+                'repondu_by'      => $owner->id,
+                'repondu_at'      => now(),
             ]);
         }
 
         // Final return to Direction
-        DemandeWorkflow::create([
-            'demande_id'           => $demande->id,
-            'from_service_id'      => $formalite->id,
-            'to_service_id'        => $direction->id,
-            'status_id'            => $statusId,
-            'action_by_user_id'    => $owner->id,
-            'reception_status'     => 'accepted',
-            'reception_by_user_id' => $owner->id,
-            'reception_at'         => now(),
+        DemandeInteraction::create([
+            'demande_id'      => $demande->id,
+            'type'            => DemandeInteraction::TYPE_TRANSFERT,
+            'from_service_id' => $formalite->id,
+            'to_service_id'   => $direction->id,
+            'initiated_by'    => $owner->id,
+            'statut'          => DemandeInteraction::STATUT_ACCEPTE,
+            'repondu_by'      => $owner->id,
+            'repondu_at'      => now(),
         ]);
 
         return $demande;
@@ -213,7 +212,7 @@ class DemandeManagementFeatureTest extends TestCase
         $response->assertSessionHas('success');
 
         $demande->refresh();
-        $this->assertEquals('COMPLEMENT_REQUIS', $demande->status->code);
+        $this->assertEquals('COMPLEMENT_REQUIS', $demande->currentStep?->code);
 
         $this->assertDatabaseHas('demande_messages', [
             'demande_id' => $demande->id,
@@ -255,7 +254,7 @@ class DemandeManagementFeatureTest extends TestCase
         $response->assertSessionHas('success');
 
         $demande->refresh();
-        $this->assertEquals('APPROUVEE', $demande->status->code);
+        $this->assertEquals('APPROUVEE', $demande->currentStep?->code);
     }
 
     /** @test */
@@ -301,7 +300,7 @@ class DemandeManagementFeatureTest extends TestCase
         $response->assertSessionHas('success');
 
         $demande->refresh();
-        $this->assertEquals('FINALISEE', $demande->status->code);
+        $this->assertEquals('FINALISEE', $demande->currentStep?->code);
     }
 
     // ─── rejeter() ───────────────────────────────────────────────────────────
@@ -320,7 +319,7 @@ class DemandeManagementFeatureTest extends TestCase
 
         $response->assertRedirect();
         $demande->refresh();
-        $this->assertEquals('REJETEE', $demande->status->code);
+        $this->assertEquals('REJETEE', $demande->currentStep?->code);
     }
 
     /** @test */
@@ -353,7 +352,7 @@ class DemandeManagementFeatureTest extends TestCase
 
         $response->assertRedirect();
         $demande->refresh();
-        $this->assertEquals('ANNULEE', $demande->status->code);
+        $this->assertEquals('ANNULEE', $demande->currentStep?->code);
     }
 
     // ─── updateStatus() ──────────────────────────────────────────────────────
@@ -376,7 +375,7 @@ class DemandeManagementFeatureTest extends TestCase
         $response->assertSessionHas('success');
 
         $demande->refresh();
-        $this->assertEquals('EN_ATTENTE', $demande->status->code);
+        $this->assertEquals('EN_ATTENTE', $demande->currentStep?->code);
     }
 
     /** @test */
@@ -413,8 +412,16 @@ class DemandeManagementFeatureTest extends TestCase
         $response->assertRedirect();
         $response->assertSessionHas('success');
 
-        $this->assertDatabaseHas('affectations', ['demande_id' => $demande->id, 'service_id' => $liq->id]);
-        $this->assertDatabaseHas('affectations', ['demande_id' => $demande->id, 'service_id' => $sec->id]);
+        $this->assertDatabaseHas('demande_interactions', [
+            'demande_id'    => $demande->id,
+            'type'          => DemandeInteraction::TYPE_AVIS,
+            'to_service_id' => $liq->id,
+        ]);
+        $this->assertDatabaseHas('demande_interactions', [
+            'demande_id'    => $demande->id,
+            'type'          => DemandeInteraction::TYPE_AVIS,
+            'to_service_id' => $sec->id,
+        ]);
     }
 
     /** @test */
@@ -431,5 +438,119 @@ class DemandeManagementFeatureTest extends TestCase
             ]);
 
         $response->assertSessionHasErrors('service_ids');
+    }
+
+    /** @test */
+    public function assigner_agent_creates_assignment_record(): void
+    {
+        $serviceId = Service::where('code', Service::DIRECTION)->value('id');
+        $admin     = $this->makeDirectionUser();
+        $agent     = User::factory()->create(['service_id' => $serviceId, 'is_active' => true]);
+        $owner     = $this->makeRegularUser();
+        $demande   = $this->makeDemande($owner);
+        $demande->update(['current_service_id' => $serviceId]);
+
+        $response = $this->actingAs($admin)
+            ->post(route('admin.demandes.assigner-agent', $demande), [
+                'user_id' => $agent->id,
+                'note'    => 'Test affectation',
+            ]);
+
+        $response->assertRedirect();
+        $this->assertDatabaseHas('assignments', [
+            'demande_id'  => $demande->id,
+            'user_id'     => $agent->id,
+            'assigned_by' => $admin->id,
+            'ended_at'    => null,
+        ]);
+    }
+
+    /** @test */
+    public function assigner_agent_closes_previous_assignment(): void
+    {
+        $serviceId = Service::where('code', Service::DIRECTION)->value('id');
+        $admin     = $this->makeDirectionUser();
+        $agent1    = User::factory()->create(['service_id' => $serviceId, 'is_active' => true]);
+        $agent2    = User::factory()->create(['service_id' => $serviceId, 'is_active' => true]);
+        $owner     = $this->makeRegularUser();
+        $demande   = $this->makeDemande($owner);
+        $demande->update(['current_service_id' => $serviceId]);
+
+        $this->actingAs($admin)->post(route('admin.demandes.assigner-agent', $demande), ['user_id' => $agent1->id]);
+        $this->actingAs($admin)->post(route('admin.demandes.assigner-agent', $demande), ['user_id' => $agent2->id]);
+
+        // First assignment should now have ended_at set
+        $this->assertDatabaseMissing('assignments', ['user_id' => $agent1->id, 'ended_at' => null]);
+        // Second assignment should be active
+        $this->assertDatabaseHas('assignments', ['user_id' => $agent2->id, 'ended_at' => null]);
+    }
+
+    /** @test */
+    public function assigner_agent_rejects_agent_from_wrong_service(): void
+    {
+        $dirServiceId = Service::where('code', Service::DIRECTION)->value('id');
+        $liqServiceId = Service::where('code', Service::LIQUIDATION)->value('id');
+        $admin  = $this->makeDirectionUser();
+        $agent  = User::factory()->create(['service_id' => $liqServiceId, 'is_active' => true]);
+        $owner  = $this->makeRegularUser();
+        $demande = $this->makeDemande($owner);
+        $demande->update(['current_service_id' => $dirServiceId]);
+
+        $response = $this->actingAs($admin)
+            ->post(route('admin.demandes.assigner-agent', $demande), ['user_id' => $agent->id]);
+
+        $response->assertStatus(422);
+        $this->assertDatabaseCount('assignments', 0);
+    }
+
+    /** @test */
+    public function admin_can_accept_rencontre(): void
+    {
+        $admin   = User::factory()->create();
+        $admin->assignRole('admin');
+        $statusId = WorkflowStep::idForCode('SOUMISE');
+        $demande  = Demande::create([
+            'type'           => \App\Enums\TypeDemandeEnum::DEMANDE_RENCONTRE->value,
+            'created_by'     => null,
+            'current_step_id' => $statusId,
+            'data'           => ['prenom' => 'Jean', 'nom' => 'Dupont', 'email' => 'j@d.com',
+                                'objet' => 'Test', 'date_souhaitee' => now()->addDays(5)->toDateString(),
+                                'heure_souhaitee' => '10:00', 'plateforme' => 'zoom'],
+        ]);
+
+        $this->actingAs($admin)
+            ->post(route('admin.rencontres.accepter', $demande))
+            ->assertRedirect(route('admin.rencontres.index'));
+
+        $this->assertDatabaseHas('demandes', [
+            'id'              => $demande->id,
+            'current_step_id' => WorkflowStep::idForCode('APPROUVEE'),
+        ]);
+    }
+
+    /** @test */
+    public function admin_can_refuse_rencontre_with_motif(): void
+    {
+        $admin    = User::factory()->create();
+        $admin->assignRole('admin');
+        $statusId = WorkflowStep::idForCode('SOUMISE');
+        $demande  = Demande::create([
+            'type'           => \App\Enums\TypeDemandeEnum::DEMANDE_RENCONTRE->value,
+            'created_by'     => null,
+            'current_step_id' => $statusId,
+            'data'           => ['prenom' => 'Jean', 'nom' => 'Dupont', 'email' => 'j@d.com',
+                                'objet' => 'Test', 'date_souhaitee' => now()->addDays(5)->toDateString(),
+                                'heure_souhaitee' => '10:00', 'plateforme' => 'zoom'],
+        ]);
+
+        $this->actingAs($admin)
+            ->post(route('admin.rencontres.refuser', $demande), ['motif' => 'Agenda complet.'])
+            ->assertRedirect(route('admin.rencontres.index'));
+
+        $this->assertDatabaseHas('demandes', [
+            'id'         => $demande->id,
+            'current_step_id' => WorkflowStep::idForCode('REJETEE'),
+            'annotation' => 'Agenda complet.',
+        ]);
     }
 }

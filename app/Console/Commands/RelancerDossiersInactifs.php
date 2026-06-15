@@ -3,7 +3,6 @@
 namespace App\Console\Commands;
 
 use App\Models\Demande;
-use App\Models\Status;
 use App\Notifications\DossierInactifNotification;
 use Illuminate\Console\Command;
 
@@ -16,11 +15,7 @@ class RelancerDossiersInactifs extends Command
     {
         $jours = (int) $this->option('jours');
 
-        $terminaux = Status::whereIn('code', [
-            'BROUILLON', 'APPROUVEE', 'REJETEE', 'CLOTUREE', 'ANNULEE',
-        ])->pluck('id');
-
-        $demandes = Demande::whereNotIn('status_id', $terminaux)
+        $demandes = Demande::active()
             ->whereNotNull('current_service_id')
             ->where('updated_at', '<=', now()->subDays($jours))
             ->with('service.users')

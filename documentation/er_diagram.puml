@@ -1,352 +1,260 @@
-@startuml er_diagram
-' ============================================================
-'  Diagramme Entite-Association (ERD)
-'  Systeme de Gestion des Pensions Civiles
-'  Date : 2026-03-28
-' ============================================================
+@startuml er_workflow_dossiers
+!theme plain
+skinparam linetype ortho
+skinparam roundcorner 8
+skinparam shadowing false
+skinparam backgroundColor #FAFAFA
 
 skinparam entity {
-    BackgroundColor #FEFEFE
-    BorderColor #2C5F8A
-    ArrowColor #444444
-    FontName Arial
-    FontSize 11
-}
-skinparam linetype ortho
-skinparam shadowing false
-skinparam DefaultFontName Arial
-skinparam DefaultFontSize 11
-skinparam noteBackgroundColor #FFFDE7
-skinparam noteBorderColor #B8860B
-skinparam packageBorderColor #2C5F8A
-skinparam packageBackgroundColor #F0F7FF
-
-title Diagramme Entite-Association\nSysteme de Gestion des Pensions Civiles
-
-' ============================================================
-'  ENTITES PRINCIPALES
-' ============================================================
-
-package "Gestion des Utilisateurs" {
-
-    entity "users" as USER {
-        * id : bigint <<PK>>
-        --
-        * name : varchar(255)
-        * email : varchar(255) <<unique>>
-        * password : varchar(255)
-          type : enum(pensionnaire,fonctionnaire,institution)
-          nif : varchar(20) <<nullable>>
-          ninu : varchar(20) <<nullable>>
-          telephone : varchar(20) <<nullable>>
-          service_id : bigint <<FK, nullable>>
-          email_verified_at : timestamp
-        * created_at : timestamp
-        * updated_at : timestamp
-    }
-
-    entity "roles" as ROLE {
-        * id : bigint <<PK>>
-        --
-        * name : varchar(255)
-          guard_name : varchar(255)
-        * created_at : timestamp
-        * updated_at : timestamp
-    }
-
-    entity "permissions" as PERM {
-        * id : bigint <<PK>>
-        --
-        * name : varchar(255)
-          guard_name : varchar(255)
-        * created_at : timestamp
-        * updated_at : timestamp
-    }
-
-    entity "model_has_roles" as MHR {
-        * role_id : bigint <<FK>>
-        * model_type : varchar(255)
-        * model_id : bigint
-    }
-
-    entity "model_has_permissions" as MHP {
-        * permission_id : bigint <<FK>>
-        * model_type : varchar(255)
-        * model_id : bigint
-    }
-
-    entity "role_has_permissions" as RHP {
-        * role_id : bigint <<FK>>
-        * permission_id : bigint <<FK>>
-    }
-
+    BackgroundColor #FFFFFF
+    BorderColor #4A90D9
+    HeaderBackgroundColor #4A90D9
+    HeaderFontColor #FFFFFF
+    FontColor #333333
+    FontSize 12
 }
 
-package "Organisation Interne" {
-
-    entity "services" as SERVICE {
-        * id : bigint <<PK>>
-        --
-        * code : varchar(50) <<unique>>
-        * nom : varchar(255)
-          description : text <<nullable>>
-        * created_at : timestamp
-        * updated_at : timestamp
-    }
-
-    note right of SERVICE
-        Codes : direction, secretariat,
-        service_liquidation, service_formalite,
-        service_controle_placement,
-        service_comptabilite,
-        service_assurance, administration
-    end note
-
+skinparam arrow {
+    Color #666666
+    FontColor #555555
+    FontSize 10
 }
 
-package "Referentiel des Demandes" {
+title <b>Diagramme Entité-Association\nFlux de Traitement des Dossiers</b>
 
-    entity "types_demandes" as TYPEDEM {
-        * id : bigint <<PK>>
-        --
-        * code : varchar(100) <<unique>>
-        * label : varchar(255)
-          description : text <<nullable>>
-          active : boolean <<default true>>
-        * created_at : timestamp
-        * updated_at : timestamp
-    }
-
-    entity "statuses" as STATUS {
-        * id : bigint <<PK>>
-        --
-        * code : varchar(50) <<unique>>
-          name : varchar(255)
-          color : varchar(50) <<nullable>>
-        * created_at : timestamp
-        * updated_at : timestamp
-    }
-
-    note right of STATUS
-        Codes : BROUILLON, SOUMISE,
-        EN_TRAITEMENT, COMPLEMENT_REQUIS,
-        TRANSFEREE, APPROUVEE,
-        REJETEE, ANNULEE, CLOTUREE
-    end note
-
+' ─────────────────────────────────────────────────────────────
+'  ENTITÉ CENTRALE
+' ─────────────────────────────────────────────────────────────
+entity "**demandes**" as demandes {
+    <b>PK</b>  id                  : BIGINT UNSIGNED        -- identifiant auto-incrémenté
+    ---
+        code                : VARCHAR(50) UNIQUE     -- référence unique générée (ex: DEM-2026-001)
+        title               : VARCHAR(255)           -- titre / intitulé de la demande
+        type                : VARCHAR(100)           -- TypeDemandeEnum (ex: PENSION_REQUEST)
+        categorie           : VARCHAR(100) NULL      -- CategorieDossierEnum (ex: ADMINISTRATIF)
+        is_urgent           : TINYINT(1) DEFAULT 0  -- 1 = dossier urgent (priorité haute)
+        data                : JSON NULL              -- données spécifiques au type (champs variables)
+        annotation          : TEXT NULL              -- note interne apposée par un agent
+        circuit_snapshot    : JSON NULL              -- instantané du circuit au moment de la soumission
+        folder              : VARCHAR(100) NULL      -- corbeille / répertoire d'archivage
+        submitted_at        : TIMESTAMP NULL         -- date/heure de soumission officielle
+        expires_at          : TIMESTAMP NULL         -- expiration du brouillon (72 h par défaut)
+    <b>FK</b>  created_by          : BIGINT UNSIGNED        -- users.id — créateur (demandeur)
+    <b>FK</b>  current_service_id  : BIGINT UNSIGNED NULL   -- services.id — service en charge
+    <b>FK</b>  current_step_id     : BIGINT UNSIGNED NULL   -- workflow_steps.id — étape courante
+    <b>FK</b>  annotated_by        : BIGINT UNSIGNED NULL   -- users.id — auteur de l'annotation
+        annotated_at        : TIMESTAMP NULL         -- date/heure de l'annotation
+        created_at          : TIMESTAMP
+        updated_at          : TIMESTAMP
 }
 
-package "Gestion des Demandes" {
-
-    entity "demandes" as DEMANDE {
-        * id : bigint <<PK>>
-        --
-        * code : varchar(50) <<unique>>
-          title : varchar(255) <<nullable>>
-        * type : varchar(50) <<index>>
-        * created_by : bigint <<FK>>
-        * status_id : bigint <<FK>>
-          current_service_id : bigint <<FK, nullable>>
-          data : json <<nullable>>
-          submitted_at : timestamp <<nullable>>
-          expires_at : timestamp <<nullable>>
-          annotation : text <<nullable>>
-          annotated_by : bigint <<FK, nullable>>
-          annotated_at : timestamp <<nullable>>
-          folder : enum(pension,urgent,suivi,...) <<nullable>>
-        * created_at : timestamp
-        * updated_at : timestamp
-    }
-
-    note right of DEMANDE
-        Types : DEMANDE_VIREMENT_BANCAIRE,
-        DEMANDE_ATTESTATION,
-        DEMANDE_TRANSFERT_CHEQUE,
-        DEMANDE_ARRET_PAIEMENT,
-        DEMANDE_REINSERTION,
-        DEMANDE_ARRET_VIREMENT,
-        DEMANDE_PREUVE_EXISTENCE,
-        DEMANDE_PENSION_REVERSION,
-        DEMANDE_ETAT_CARRIERE,
-        DEMANDE_PENSION,
-        DEMANDE_ADHESION
-    end note
-
-    entity "demande_documents" as DEMDOC {
-        * id : bigint <<PK>>
-        --
-        * demande_id : bigint <<FK>>
-        * type : varchar(100)
-          label : varchar(255) <<nullable>>
-          disk : varchar(50) <<default public>>
-        * path : varchar(500)
-        * original_name : varchar(255)
-          mime_type : varchar(100) <<nullable>>
-          size : bigint <<nullable>>
-        * created_at : timestamp
-        * updated_at : timestamp
-    }
-
-    entity "demande_messages" as DEMMSG {
-        * id : bigint <<PK>>
-        --
-        * demande_id : bigint <<FK>>
-        * sender_id : bigint <<FK>>
-        * body : text
-          read_at : timestamp <<nullable>>
-        * created_at : timestamp
-        * updated_at : timestamp
-    }
-
-    entity "demande_history" as DEMHIST {
-        * id : bigint <<PK>>
-        --
-        * demande_id : bigint <<FK>>
-        * statut : varchar(50)
-          commentaire : text <<nullable>>
-          changed_by : bigint <<FK, nullable>>
-          data : json <<nullable>>
-        * created_at : timestamp
-        * updated_at : timestamp
-    }
-
-    entity "demande_workflows" as DEMWF {
-        * id : bigint <<PK>>
-        --
-        * demande_id : bigint <<FK>>
-          from_service_id : bigint <<FK, nullable>>
-        * to_service_id : bigint <<FK>>
-        * status_id : bigint <<FK>>
-        * action_by_user_id : bigint <<FK>>
-          commentaire : text <<nullable>>
-          action_at : timestamp <<nullable>>
-        * created_at : timestamp
-        * updated_at : timestamp
-    }
-
-    entity "demande_activity_logs" as DEMAL {
-        * id : bigint <<PK>>
-        --
-        * demande_id : bigint <<FK>>
-        * user_id : bigint <<FK>>
-        * action : varchar(100)
-          metadata : json <<nullable>>
-        * created_at : timestamp
-        * updated_at : timestamp
-    }
-
-    note right of DEMWF
-        Trace chaque transfert
-        entre services.
-        from_service_id=NULL
-        a la soumission initiale.
-    end note
-
+' ─────────────────────────────────────────────────────────────
+'  ÉTAPES DU WORKFLOW
+' ─────────────────────────────────────────────────────────────
+entity "**workflow_steps**" as wf_steps {
+    <b>PK</b>  id           : BIGINT UNSIGNED    -- identifiant auto-incrémenté
+    ---
+        code         : VARCHAR(100) UNIQUE  -- code métier (SOUMISE, EN_COURS, APPROUVEE …)
+        nom          : VARCHAR(255)         -- libellé affiché à l'interface
+        description  : TEXT NULL           -- rôle et attributions de l'étape
+        type_noeud   : ENUM                -- INITIATEUR | INTERMEDIAIRE | TERMINAISON
+        type_demande : VARCHAR(100) NULL   -- TypeDemandeEnum concerné (NULL = global)
+        ordre        : INT DEFAULT 0       -- ordre d'affichage dans le circuit
+    <b>FK</b>  service_id   : BIGINT UNSIGNED NULL -- services.id — service propriétaire de l'étape
+        created_at   : TIMESTAMP
+        updated_at   : TIMESTAMP
 }
 
-package "Contenu et Communication" {
-
-    entity "actualites" as ACTU {
-        * id : bigint <<PK>>
-        --
-        * titre : varchar(255)
-        * contenu : text
-          image : varchar(500) <<nullable>>
-          published_at : timestamp <<nullable>>
-          active : boolean <<default true>>
-        * created_at : timestamp
-        * updated_at : timestamp
-    }
-
-    entity "carousels" as CAROUSEL {
-        * id : bigint <<PK>>
-        --
-        * titre : varchar(255)
-          sous_titre : varchar(255) <<nullable>>
-          image : varchar(500)
-          lien : varchar(500) <<nullable>>
-          ordre : integer <<default 0>>
-          active : boolean <<default true>>
-        * created_at : timestamp
-        * updated_at : timestamp
-    }
-
-    entity "newsletters" as NEWSLETTER {
-        * id : bigint <<PK>>
-        --
-        * email : varchar(255) <<unique>>
-          confirmed_at : timestamp <<nullable>>
-        * created_at : timestamp
-        * updated_at : timestamp
-    }
-
+' ─────────────────────────────────────────────────────────────
+'  RÈGLES DE TRANSITION ENTRE ÉTAPES
+' ─────────────────────────────────────────────────────────────
+entity "**workflow_step_transitions**" as wf_transitions {
+    <b>PK</b>  id                  : BIGINT UNSIGNED       -- identifiant auto-incrémenté
+    ---
+    <b>FK</b>  from_step_id        : BIGINT UNSIGNED NULL   -- workflow_steps.id — étape source
+    <b>FK</b>  to_step_id          : BIGINT UNSIGNED        -- workflow_steps.id — étape destination
+        action              : VARCHAR(255)           -- libellé de l'action (ex: "Transférer au contrôle")
+        is_urgent_only      : TINYINT(1) DEFAULT 0  -- 1 = réservé aux dossiers urgents
+        ordre               : INT DEFAULT 0          -- ordre d'affichage dans le menu d'actions
+        required_permission : VARCHAR(255) NULL      -- slug Spatie permission requis
+        guard_conditions    : JSON NULL              -- {docs_complets, avis_complets, avis_favorables}
+        created_at          : TIMESTAMP
+        updated_at          : TIMESTAMP
 }
 
-package "Notifications (Laravel)" {
-
-    entity "notifications" as NOTIFENT {
-        * id : char(36) <<PK, UUID>>
-        --
-        * type : varchar(255)
-        * notifiable_type : varchar(255)
-        * notifiable_id : bigint
-        * data : text (json)
-          read_at : timestamp <<nullable>>
-        * created_at : timestamp
-        * updated_at : timestamp
-    }
-
-    note right of NOTIFENT
-        Types :
-        DemandeSubmittedNotification
-        DemandeStatusChangedNotification
-        DemandeTransferredNotification
-    end note
-
+' ─────────────────────────────────────────────────────────────
+'  HISTORIQUE DES TRANSFERTS INTER-SERVICES
+' ─────────────────────────────────────────────────────────────
+entity "**demande_workflows**" as dw {
+    <b>PK</b>  id                   : BIGINT UNSIGNED       -- identifiant auto-incrémenté
+    ---
+    <b>FK</b>  demande_id           : BIGINT UNSIGNED        -- demandes.id
+    <b>FK</b>  from_service_id      : BIGINT UNSIGNED NULL   -- services.id — service émetteur
+    <b>FK</b>  to_service_id        : BIGINT UNSIGNED        -- services.id — service récepteur
+    <b>FK</b>  action_by_user_id    : BIGINT UNSIGNED        -- users.id — agent qui déclenche le transfert
+        commentaire          : TEXT NULL             -- motif / observation du transfert
+        reception_status     : ENUM DEFAULT 'pending' -- pending | accepted | refused
+        reception_motif      : TEXT NULL             -- raison du refus ou note de réception
+        reception_at         : TIMESTAMP NULL        -- date/heure de la décision de réception
+    <b>FK</b>  reception_by_user_id : BIGINT UNSIGNED NULL   -- users.id — agent qui confirme la réception
+        created_at           : TIMESTAMP
+        updated_at           : TIMESTAMP
 }
 
-' ============================================================
+' ─────────────────────────────────────────────────────────────
+'  JOURNAL DES CHANGEMENTS DE STATUT
+' ─────────────────────────────────────────────────────────────
+entity "**demande_histories**" as dh {
+    <b>PK</b>  id          : BIGINT UNSIGNED    -- identifiant auto-incrémenté
+    ---
+    <b>FK</b>  demande_id  : BIGINT UNSIGNED     -- demandes.id
+        statut      : VARCHAR(100)       -- code statut au moment du changement (ex: SOUMISE)
+        commentaire : TEXT NULL         -- justification du changement de statut
+        data        : JSON NULL         -- instantané des données de la demande à cet instant
+    <b>FK</b>  changed_by  : BIGINT UNSIGNED NULL -- users.id — auteur du changement
+        created_at  : TIMESTAMP
+        updated_at  : TIMESTAMP
+}
+
+' ─────────────────────────────────────────────────────────────
+'  DEMANDES D'AVIS AUX SERVICES
+' ─────────────────────────────────────────────────────────────
+entity "**affectations**" as affectations {
+    <b>PK</b>  id                   : BIGINT UNSIGNED        -- identifiant auto-incrémenté
+    ---
+    <b>FK</b>  demande_id           : BIGINT UNSIGNED         -- demandes.id
+    <b>FK</b>  service_id           : BIGINT UNSIGNED         -- services.id — service consulté pour avis
+    <b>FK</b>  affecte_par_user_id  : BIGINT UNSIGNED         -- users.id — agent demandeur de l'avis
+        statut               : ENUM DEFAULT 'EN_ATTENTE'  -- EN_ATTENTE | EN_COURS | TERMINE | REJETE
+        avis                 : TEXT NULL               -- texte de l'avis rendu par le service
+        date_affectation     : TIMESTAMP               -- date de création de la demande d'avis
+        date_reponse         : TIMESTAMP NULL          -- date de rendu de l'avis
+        created_at           : TIMESTAMP
+        updated_at           : TIMESTAMP
+}
+
+' ─────────────────────────────────────────────────────────────
+'  ASSIGNATION D'UN DOSSIER À UN AGENT
+' ─────────────────────────────────────────────────────────────
+entity "**assignments**" as assignments {
+    <b>PK</b>  id          : BIGINT UNSIGNED     -- identifiant auto-incrémenté
+    ---
+    <b>FK</b>  demande_id  : BIGINT UNSIGNED      -- demandes.id
+    <b>FK</b>  user_id     : BIGINT UNSIGNED      -- users.id — agent assigné au dossier
+    <b>FK</b>  service_id  : BIGINT UNSIGNED      -- services.id — service de l'agent
+    <b>FK</b>  assigned_by : BIGINT UNSIGNED      -- users.id — responsable qui fait l'assignation
+        note        : TEXT NULL          -- instruction ou note à l'attention de l'agent
+        ended_at    : TIMESTAMP NULL     -- fin d'assignation (NULL = assignation en cours)
+        created_at  : TIMESTAMP
+        updated_at  : TIMESTAMP
+}
+
+' ─────────────────────────────────────────────────────────────
+'  DOCUMENTS REQUIS PAR SERVICE/TYPE
+' ─────────────────────────────────────────────────────────────
+entity "**step_required_documents**" as step_docs {
+    <b>PK</b>  id            : BIGINT UNSIGNED     -- identifiant auto-incrémenté
+    ---
+    <b>FK</b>  service_id    : BIGINT UNSIGNED      -- services.id — service exigeant le document
+        type_demande  : VARCHAR(100) NULL    -- TypeDemandeEnum concerné (NULL = tous les types)
+        label         : VARCHAR(255)         -- libellé du document (ex: "Acte de naissance")
+        document_type : VARCHAR(100)         -- collection Spatie Media (ex: acte_naissance)
+        created_at    : TIMESTAMP
+        updated_at    : TIMESTAMP
+}
+
+' ─────────────────────────────────────────────────────────────
+'  SERVICES INTERNES
+' ─────────────────────────────────────────────────────────────
+entity "**services**" as services {
+    <b>PK</b>  id          : BIGINT UNSIGNED    -- identifiant auto-incrémenté
+    ---
+        code        : VARCHAR(50) UNIQUE   -- code court (DIRECTION, LIQUIDATION, CONTROLE …)
+        nom         : VARCHAR(255)         -- nom complet du service
+        description : TEXT NULL           -- rôle et attributions du service
+        icon        : VARCHAR(100) NULL    -- identifiant icône (Heroicons / FontAwesome)
+        color       : VARCHAR(50) NULL     -- couleur Tailwind CSS pour l'affichage
+        created_at  : TIMESTAMP
+        updated_at  : TIMESTAMP
+}
+
+' ─────────────────────────────────────────────────────────────
+'  TRANSITIONS DE FLUX LEGACY (service → service)
+' ─────────────────────────────────────────────────────────────
+entity "**flux_transitions**" as flux {
+    <b>PK</b>  id                     : BIGINT UNSIGNED       -- identifiant auto-incrémenté
+    ---
+    <b>FK</b>  service_source_id      : BIGINT UNSIGNED        -- services.id — service émetteur
+    <b>FK</b>  service_destination_id : BIGINT UNSIGNED        -- services.id — service récepteur
+        action                 : VARCHAR(255)           -- libellé de l'action de transfert
+        type_demande           : VARCHAR(100) NULL       -- TypeDemandeEnum concerné (NULL = tous)
+        is_urgent_only         : TINYINT(1) DEFAULT 0   -- 1 = réservé aux dossiers urgents
+        ordre                  : INT DEFAULT 0           -- ordre d'affichage dans la liste
+        created_at             : TIMESTAMP
+        updated_at             : TIMESTAMP
+}
+
+' ─────────────────────────────────────────────────────────────
+'  UTILISATEURS (référence)
+' ─────────────────────────────────────────────────────────────
+entity "**users**" as users {
+    <b>PK</b>  id         : BIGINT UNSIGNED     -- identifiant auto-incrémenté
+    ---
+        name       : VARCHAR(255)        -- nom complet de l'utilisateur
+        email      : VARCHAR(255) UNIQUE -- adresse email (identifiant de connexion)
+        type       : VARCHAR(50)         -- UserTypeEnum : Pensionnaire | Fonctionnaire | Institution
+    <b>FK</b>  service_id : BIGINT UNSIGNED NULL  -- services.id — service de rattachement (agents seulement)
+        created_at : TIMESTAMP
+        updated_at : TIMESTAMP
+}
+
+' ─────────────────────────────────────────────────────────────
 '  RELATIONS
-' ============================================================
+' ─────────────────────────────────────────────────────────────
 
-' --- Utilisateurs et Roles/Permissions (Spatie) ---
-USER ||--o{ MHR : "a les roles"
-ROLE ||--o{ MHR : "attribue via"
-USER ||--o{ MHP : "a les permissions"
-PERM ||--o{ MHP : "attribuee via"
-ROLE ||--o{ RHP : "inclut"
-PERM ||--o{ RHP : "incluse dans"
+' Demande — clés étrangères directes
+users    ||--o{ demandes       : "crée (created_by)"
+services ||--o{ demandes       : "en charge (current_service_id)"
+wf_steps ||--o{ demandes       : "étape courante (current_step_id)"
+users    ||--o{ demandes       : "annote (annotated_by)"
 
-' --- Utilisateurs et Service ---
-SERVICE ||--o{ USER : "emploie (service_id)"
+' Demande — entités enfants
+demandes ||--o{ dw             : "transferts inter-services"
+demandes ||--o{ dh             : "historique des statuts"
+demandes ||--o{ affectations   : "demandes d'avis"
+demandes ||--o{ assignments    : "assignations d'agents"
 
-' --- Demandes : relations principales ---
-USER ||--o{ DEMANDE : "cree (created_by)"
-STATUS ||--o{ DEMANDE : "qualifie (status_id)"
-SERVICE |o--o{ DEMANDE : "traite (current_service_id)"
-USER |o--o{ DEMANDE : "annote (annotated_by)"
+' Étapes du workflow
+services ||--o{ wf_steps       : "possède les étapes (service_id)"
+wf_steps ||--o{ wf_transitions : "from_step (source)"
+wf_steps ||--o{ wf_transitions : "to_step (destination)"
 
-' --- Sous-entites de la Demande ---
-DEMANDE ||--o{ DEMDOC : "possede"
-DEMANDE ||--o{ DEMMSG : "contient"
-DEMANDE ||--o{ DEMHIST : "trace les changements"
-DEMANDE ||--o{ DEMWF : "trace les transferts"
-DEMANDE ||--o{ DEMAL : "journalise les actions"
+' Transferts inter-services
+services ||--o{ dw             : "émet (from_service_id)"
+services ||--o{ dw             : "reçoit (to_service_id)"
+users    ||--o{ dw             : "déclenche (action_by_user_id)"
+users    ||--o{ dw             : "confirme réception (reception_by_user_id)"
 
-' --- Workflow et Services et Status ---
-SERVICE |o--o{ DEMWF : "service source"
-SERVICE ||--o{ DEMWF : "service cible"
-STATUS ||--o{ DEMWF : "statut au transfert"
-USER ||--o{ DEMWF : "effectue par"
+' Historique
+users    ||--o{ dh             : "modifie (changed_by)"
 
-' --- History et ActivityLog et Users ---
-USER |o--o{ DEMHIST : "modifie par"
-USER ||--o{ DEMAL : "realise par"
+' Affectations pour avis
+services ||--o{ affectations   : "consulté pour avis (service_id)"
+users    ||--o{ affectations   : "demande l'avis (affecte_par_user_id)"
 
-' --- Messages et Users ---
-USER ||--o{ DEMMSG : "envoie"
+' Assignation agents
+users    ||--o{ assignments    : "assigné au dossier (user_id)"
+services ||--o{ assignments    : "service de l'agent (service_id)"
+users    ||--o{ assignments    : "assigne (assigned_by)"
 
-' --- Notifications et Users (polymorphique) ---
-USER ||--o{ NOTIFENT : "recoit (notifiable_id)"
+' Documents requis
+services ||--o{ step_docs      : "exige des documents (service_id)"
+
+' Flux legacy
+services ||--o{ flux           : "source (service_source_id)"
+services ||--o{ flux           : "destination (service_destination_id)"
+
+' Agents rattachés à un service
+services ||--o{ users          : "emploie (service_id)"
 
 @enduml

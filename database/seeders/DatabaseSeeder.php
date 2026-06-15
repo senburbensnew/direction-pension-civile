@@ -17,7 +17,9 @@ class DatabaseSeeder extends Seeder
         $this->call(DefaultUserSeeder::class);
         $this->call(RolesAndPermissionsSeeder::class);
         $this->call(ServiceSeeder::class);
-        $this->call(FluxTransitionSeeder::class);
+        $this->call(WorkflowStepSeeder::class);
+        $this->call(WorkflowStepTransitionSeeder::class);
+        $this->call(WorkflowTypeCircuitsSeeder::class);
         $this->call(RequiredCircuitSeeder::class);
         $this->call(UsersSeeder::class);
         $this->call(StatusesSeeder::class);

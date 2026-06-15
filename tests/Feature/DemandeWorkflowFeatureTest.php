@@ -4,10 +4,9 @@ namespace Tests\Feature;
 
 use App\Enums\TypeDemandeEnum;
 use App\Models\Demande;
-use App\Models\DemandeWorkflow;
-use App\Models\FluxTransition;
+use App\Models\DemandeInteraction;
 use App\Models\Service;
-use App\Models\Status;
+use App\Models\WorkflowStep;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
@@ -102,9 +101,9 @@ class DemandeWorkflowFeatureTest extends TestCase
     public function owner_can_submit_complement_response(): void
     {
         $user      = $this->makeUser();
-        $statusId  = Status::where('code', 'COMPLEMENT_REQUIS')->value('id');
+        $statusId  = WorkflowStep::idForCode('COMPLEMENT_REQUIS');
         $demande   = $this->makeDemande($user);
-        $demande->update(['status_id' => $statusId]);
+        $demande->update(['current_step_id' => $statusId]);
 
         $response = $this->actingAs($user)
             ->post(route('demande.repondre-complement', $demande), [
@@ -115,7 +114,7 @@ class DemandeWorkflowFeatureTest extends TestCase
         $response->assertSessionHas('success');
 
         $demande->refresh();
-        $this->assertEquals('SOUMISE', $demande->status->code);
+        $this->assertEquals('SOUMISE', $demande->currentStep?->code);
     }
 
     /** @test */
@@ -123,9 +122,9 @@ class DemandeWorkflowFeatureTest extends TestCase
     {
         $owner     = $this->makeUser();
         $intruder  = $this->makeUser();
-        $statusId  = Status::where('code', 'COMPLEMENT_REQUIS')->value('id');
+        $statusId  = WorkflowStep::idForCode('COMPLEMENT_REQUIS');
         $demande   = $this->makeDemande($owner);
-        $demande->update(['status_id' => $statusId]);
+        $demande->update(['current_step_id' => $statusId]);
 
         $response = $this->actingAs($intruder)
             ->post(route('demande.repondre-complement', $demande), [
@@ -139,9 +138,9 @@ class DemandeWorkflowFeatureTest extends TestCase
     public function complement_response_requires_message_field(): void
     {
         $user     = $this->makeUser();
-        $statusId = Status::where('code', 'COMPLEMENT_REQUIS')->value('id');
+        $statusId = WorkflowStep::idForCode('COMPLEMENT_REQUIS');
         $demande  = $this->makeDemande($user);
-        $demande->update(['status_id' => $statusId]);
+        $demande->update(['current_step_id' => $statusId]);
 
         $response = $this->actingAs($user)
             ->post(route('demande.repondre-complement', $demande), []);
@@ -168,36 +167,34 @@ class DemandeWorkflowFeatureTest extends TestCase
     /** @test */
     public function service_user_can_accept_transfer_reception(): void
     {
-        // admin.workflows.accepter is behind role:admin middleware;
-        // liqUser must have admin role to access the route.
         $dirUser  = $this->makeUser('direction', $this->direction()->id);
         $liqUser  = User::factory()->create(['service_id' => $this->liquidation()->id]);
         $liqUser->assignRole('admin');
         $demande  = $this->makeDemande($dirUser);
-        $statusId = Status::where('code', 'TRANSFERT_EN_ATTENTE')->value('id');
+        $statusId = WorkflowStep::idForCode('TRANSFERT_EN_ATTENTE');
 
         $demande->update([
             'current_service_id' => $this->liquidation()->id,
-            'status_id'          => $statusId,
+            'current_step_id'    => $statusId,
         ]);
 
-        $workflow = DemandeWorkflow::create([
-            'demande_id'        => $demande->id,
-            'from_service_id'   => $this->direction()->id,
-            'to_service_id'     => $this->liquidation()->id,
-            'status_id'         => $statusId,
-            'action_by_user_id' => $dirUser->id,
-            'reception_status'  => 'pending',
+        $interaction = DemandeInteraction::create([
+            'demande_id'      => $demande->id,
+            'type'            => DemandeInteraction::TYPE_TRANSFERT,
+            'from_service_id' => $this->direction()->id,
+            'to_service_id'   => $this->liquidation()->id,
+            'initiated_by'    => $dirUser->id,
+            'statut'          => DemandeInteraction::STATUT_EN_ATTENTE,
         ]);
 
         $response = $this->actingAs($liqUser)
-            ->post(route('admin.workflows.accepter', $workflow));
+            ->post(route('admin.interactions.accepter', $interaction));
 
         $response->assertRedirect();
         $response->assertSessionHas('success');
 
-        $workflow->refresh();
-        $this->assertEquals('accepted', $workflow->reception_status);
+        $interaction->refresh();
+        $this->assertEquals(DemandeInteraction::STATUT_ACCEPTE, $interaction->statut);
     }
 
     /** @test */
@@ -207,33 +204,33 @@ class DemandeWorkflowFeatureTest extends TestCase
         $liqUser  = User::factory()->create(['service_id' => $this->liquidation()->id]);
         $liqUser->assignRole('admin');
         $demande  = $this->makeDemande($dirUser);
-        $statusId = Status::where('code', 'TRANSFERT_EN_ATTENTE')->value('id');
+        $statusId = WorkflowStep::idForCode('TRANSFERT_EN_ATTENTE');
 
         $demande->update([
             'current_service_id' => $this->liquidation()->id,
-            'status_id'          => $statusId,
+            'current_step_id'    => $statusId,
         ]);
 
-        $workflow = DemandeWorkflow::create([
-            'demande_id'        => $demande->id,
-            'from_service_id'   => $this->direction()->id,
-            'to_service_id'     => $this->liquidation()->id,
-            'status_id'         => $statusId,
-            'action_by_user_id' => $dirUser->id,
-            'reception_status'  => 'pending',
+        $interaction = DemandeInteraction::create([
+            'demande_id'      => $demande->id,
+            'type'            => DemandeInteraction::TYPE_TRANSFERT,
+            'from_service_id' => $this->direction()->id,
+            'to_service_id'   => $this->liquidation()->id,
+            'initiated_by'    => $dirUser->id,
+            'statut'          => DemandeInteraction::STATUT_EN_ATTENTE,
         ]);
 
         $response = $this->actingAs($liqUser)
-            ->post(route('admin.workflows.refuser', $workflow), [
+            ->post(route('admin.interactions.refuser', $interaction), [
                 'motif' => 'Dossier incomplet',
             ]);
 
         $response->assertRedirect();
 
-        $workflow->refresh();
+        $interaction->refresh();
         $demande->refresh();
 
-        $this->assertEquals('refused', $workflow->reception_status);
+        $this->assertEquals(DemandeInteraction::STATUT_REJETE, $interaction->statut);
         $this->assertEquals($this->direction()->id, $demande->current_service_id);
     }
 
@@ -241,22 +238,22 @@ class DemandeWorkflowFeatureTest extends TestCase
     public function wrong_service_user_cannot_accept_reception(): void
     {
         // A non-admin user from a different service cannot access admin routes at all.
-        $dirUser  = $this->makeUser('direction', $this->direction()->id);
+        $dirUser   = $this->makeUser('direction', $this->direction()->id);
         $wrongUser = $this->makeUser(null, $this->direction()->id); // no admin role → blocked by middleware
-        $demande  = $this->makeDemande($dirUser);
-        $statusId = Status::where('code', 'TRANSFERT_EN_ATTENTE')->value('id');
+        $demande   = $this->makeDemande($dirUser);
+        $statusId  = WorkflowStep::idForCode('TRANSFERT_EN_ATTENTE');
 
-        $workflow = DemandeWorkflow::create([
-            'demande_id'        => $demande->id,
-            'from_service_id'   => $this->direction()->id,
-            'to_service_id'     => $this->liquidation()->id,
-            'status_id'         => $statusId,
-            'action_by_user_id' => $dirUser->id,
-            'reception_status'  => 'pending',
+        $interaction = DemandeInteraction::create([
+            'demande_id'      => $demande->id,
+            'type'            => DemandeInteraction::TYPE_TRANSFERT,
+            'from_service_id' => $this->direction()->id,
+            'to_service_id'   => $this->liquidation()->id,
+            'initiated_by'    => $dirUser->id,
+            'statut'          => DemandeInteraction::STATUT_EN_ATTENTE,
         ]);
 
         $response = $this->actingAs($wrongUser)
-            ->post(route('admin.workflows.accepter', $workflow));
+            ->post(route('admin.interactions.accepter', $interaction));
 
         $response->assertForbidden();
     }
@@ -266,13 +263,7 @@ class DemandeWorkflowFeatureTest extends TestCase
     /** @test */
     public function direction_user_can_transfer_annotated_demande(): void
     {
-        FluxTransition::create([
-            'service_source_id'      => $this->direction()->id,
-            'service_destination_id' => $this->liquidation()->id,
-            'action'                 => 'transfer',
-            'ordre'                  => 1,
-        ]);
-
+        // No service-specific WorkflowSteps configured → validateTransition returns true (allow-all)
         $dirUser = $this->makeUser('direction', $this->direction()->id);
         $demande = $this->makeDemande($dirUser);
         $demande->update([
@@ -280,7 +271,7 @@ class DemandeWorkflowFeatureTest extends TestCase
             'annotation'         => 'Dossier examiné',
             'annotated_by'       => $dirUser->id,
             'annotated_at'       => now(),
-            'status_id'          => Status::where('code', 'SOUMISE')->value('id'),
+            'current_step_id'    => WorkflowStep::idForCode('SOUMISE'),
         ]);
 
         $response = $this->actingAs($dirUser)
@@ -293,19 +284,12 @@ class DemandeWorkflowFeatureTest extends TestCase
         $response->assertRedirect(route('personal.cart'));
 
         $demande->refresh();
-        $this->assertEquals('TRANSFERT_EN_ATTENTE', $demande->status->code);
+        $this->assertEquals('TRANSFERT_EN_ATTENTE', $demande->currentStep?->code);
     }
 
     /** @test */
     public function transfer_is_blocked_when_demande_not_annotated(): void
     {
-        FluxTransition::create([
-            'service_source_id'      => $this->direction()->id,
-            'service_destination_id' => $this->liquidation()->id,
-            'action'                 => 'transfer',
-            'ordre'                  => 1,
-        ]);
-
         $dirUser = $this->makeUser('direction', $this->direction()->id);
         $demande = $this->makeDemande($dirUser);
         $demande->update(['current_service_id' => $this->direction()->id]);

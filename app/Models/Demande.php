@@ -2,13 +2,12 @@
 
 namespace App\Models;
 
+use App\Enums\WorkflowStepTypeEnum;
 use App\Models\CivilStatus;
-use App\Models\DemandeWorkflow;
 use App\Models\Gender;
 use App\Models\PensionCategory;
 use App\Models\PensionType;
 use App\Models\Service;
-use App\Models\Status;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -24,7 +23,7 @@ class Demande extends Model implements HasMedia
     public function getActivitylogOptions(): LogOptions
     {
         return LogOptions::defaults()
-            ->logOnly(['status_id', 'current_service_id', 'annotation', 'is_urgent'])
+            ->logOnly(['current_service_id', 'current_step_id', 'annotation', 'is_urgent'])
             ->logOnlyDirty()
             ->dontSubmitEmptyLogs()
             ->useLogName('demande');
@@ -54,12 +53,11 @@ class Demande extends Model implements HasMedia
         'title',
         'type',
         'created_by',
-        'status_id',
         'data',
         'current_service_id',
+        'current_step_id',
         'submitted_at',
         'expires_at',
-        'circuit_snapshot',
         'annotation',
         'annotated_by',
         'annotated_at',
@@ -73,20 +71,22 @@ class Demande extends Model implements HasMedia
     ];
 
     protected $casts = [
-        'data'              => 'array',
-        'circuit_snapshot'  => 'array',
-        'submitted_at'      => 'datetime',
-        'expires_at'        => 'datetime',
-        'annotated_at'      => 'datetime',
-        'is_urgent'         => 'boolean',
+        'data'         => 'array',
+        'submitted_at' => 'datetime',
+        'expires_at'   => 'datetime',
+        'annotated_at' => 'datetime',
+        'is_urgent'    => 'boolean',
     ];
 
     protected static function booted()
     {
-        static::saving(function ($demande) {
-            if (is_null($demande->status_id)) {
-                $demande->status_id = Status::where('code', 'BROUILLON')->value('id');
+        static::creating(function ($demande) {
+            if (is_null($demande->current_step_id)) {
+                $demande->current_step_id = \App\Models\WorkflowStep::forCode('BROUILLON')?->id;
             }
+        });
+
+        static::saving(function ($demande) {
             if (empty($demande->title) && $demande->type) {
                 $demande->title = \App\Enums\TypeDemandeEnum::from($demande->type)->label();
             }
@@ -119,9 +119,31 @@ class Demande extends Model implements HasMedia
         return $this->belongsTo(Service::class, 'current_service_id');
     }
 
+    public function currentStep()
+    {
+        return $this->belongsTo(\App\Models\WorkflowStep::class, 'current_step_id');
+    }
+
+    public function interactions()
+    {
+        return $this->hasMany(DemandeInteraction::class);
+    }
+
+    /** Transferts inter-services uniquement. */
     public function workflows()
     {
-        return $this->hasMany(DemandeWorkflow::class);
+        return $this->hasMany(DemandeInteraction::class)->where('type', DemandeInteraction::TYPE_TRANSFERT);
+    }
+
+    /** Demandes d'avis uniquement. */
+    public function affectations()
+    {
+        return $this->hasMany(DemandeInteraction::class)->where('type', DemandeInteraction::TYPE_AVIS);
+    }
+
+    public function circuitSnapshot()
+    {
+        return $this->hasOne(DemandeCircuitSnapshot::class);
     }
 
     public function histories()
@@ -129,14 +151,14 @@ class Demande extends Model implements HasMedia
         return $this->hasMany(DemandeHistory::class);
     }
 
-    public function affectations()
+    public function assignments()
     {
-        return $this->hasMany(Affectation::class);
+        return $this->hasMany(Assignment::class)->orderByDesc('created_at');
     }
 
-    public function status()
+    public function currentAssignment()
     {
-        return $this->belongsTo(Status::class);
+        return $this->hasOne(Assignment::class)->whereNull('ended_at')->latest();
     }
 
     public function annotatedBy()
@@ -151,15 +173,24 @@ class Demande extends Model implements HasMedia
 
     /* ================= Helpers ================= */
 
-    public function addWorkflow($toServiceId, $statusId, $commentaire = null)
+    public function addTransfert($toServiceId, $commentaire = null): DemandeInteraction
     {
-        return $this->workflows()->create([
-            'from_service_id'   => $this->getOriginal('current_service_id'),
-            'to_service_id'     => $toServiceId,
-            'status_id'         => $statusId,
-            'action_by_user_id' => auth()->id(),
-            'commentaire'       => $commentaire,
+        return $this->interactions()->create([
+            'type'            => DemandeInteraction::TYPE_TRANSFERT,
+            'from_service_id' => $this->getOriginal('current_service_id') ?? $this->current_service_id,
+            'to_service_id'   => $toServiceId,
+            'initiated_by'    => auth()->id(),
+            'commentaire'     => $commentaire,
+            'statut'          => DemandeInteraction::STATUT_EN_ATTENTE,
         ]);
+    }
+
+    public function localisation(): string
+    {
+        if ($this->currentStep) {
+            return $this->currentStep->nom;
+        }
+        return $this->service?->nom ?? '—';
     }
 
     public function isAnnotated(): bool
@@ -167,34 +198,48 @@ class Demande extends Model implements HasMedia
         return !is_null($this->annotated_at);
     }
 
-    public function isDraft()
+    public function isDraft(): bool
     {
-        return $this->status->code === 'BROUILLON';
+        return $this->currentStep?->code === 'BROUILLON';
     }
 
     public function isClosed(): bool
     {
-        return in_array($this->status->code, ['APPROUVEE', 'FINALISEE', 'REJETEE', 'ANNULEE']);
+        return $this->currentStep?->isTerminal() ?? false;
     }
 
-    public function isSubmitted()
+    public function scopeActive($query)
     {
-        return $this->status->code === 'SOUMISE';
+        return $query->whereHas('currentStep', fn($q) =>
+            $q->where('type_noeud', WorkflowStepTypeEnum::INTERMEDIAIRE->value)
+        );
+    }
+
+    public function scopeClosed($query)
+    {
+        return $query->whereHas('currentStep', fn($q) =>
+            $q->where('type_noeud', WorkflowStepTypeEnum::TERMINAL->value)
+        );
+    }
+
+    public function isSubmitted(): bool
+    {
+        return $this->currentStep?->code === 'SOUMISE';
     }
 
     public function needsComplement(): bool
     {
-        return $this->status->code === 'COMPLEMENT_REQUIS';
+        return $this->currentStep?->code === 'COMPLEMENT_REQUIS';
     }
 
     public function canBeEditedByUser(): bool
     {
-        return in_array($this->status->code, ['BROUILLON', 'COMPLEMENT_REQUIS']);
+        return in_array($this->currentStep?->code, ['BROUILLON', 'COMPLEMENT_REQUIS']);
     }
 
-    public function isExpired()
+    public function isExpired(): bool
     {
-        return $this->status->code === 'BROUILLON' && $this->expires_at && $this->expires_at->isPast();
+        return $this->isDraft() && $this->expires_at && $this->expires_at->isPast();
     }
 
     public function isDelaiLegalDepasse(int $delaiJours = 30): bool
@@ -268,31 +313,31 @@ class Demande extends Model implements HasMedia
 
     public function scopePending($query)
     {
-        return $query->where('status_id', Status::getStatusPending()->id);
+        return $query->whereHas('currentStep', fn($q) => $q->where('code', 'EN_ATTENTE'));
     }
 
     public function scopeApproved($query)
     {
-        return $query->where('status_id', Status::getStatusApproved()->id);
+        return $query->whereHas('currentStep', fn($q) => $q->where('code', 'APPROUVEE'));
     }
 
     public function scopeInProgress($query)
     {
-        return $query->where('status_id', Status::getStatusInProgress()->id);
+        return $query->whereHas('currentStep', fn($q) => $q->where('code', 'EN_COURS'));
     }
 
     public function scopeRejected($query)
     {
-        return $query->where('status_id', Status::getStatusRejected()->id);
+        return $query->whereHas('currentStep', fn($q) => $q->where('code', 'REJETEE'));
     }
 
     public function scopeCanceled($query)
     {
-        return $query->where('status_id', Status::getStatusCanceled()->id);
+        return $query->whereHas('currentStep', fn($q) => $q->where('code', 'ANNULEE'));
     }
 
     public function scopeCompleted($query)
     {
-        return $query->where('status_id', Status::getStatusCompleted()->id);
+        return $query->whereHas('currentStep', fn($q) => $q->where('code', 'FINALISEE'));
     }
 }

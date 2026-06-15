@@ -28,12 +28,12 @@ use App\Http\Controllers\QuiSommesNousController;
 use App\Http\Controllers\ReportController;
 use App\Http\Controllers\RoleController;
 use App\Http\Controllers\FluxTransitionController;
+use App\Http\Controllers\WorkflowStepController;
 use App\Http\Controllers\ServiceController;
 use App\Http\Controllers\ContactController;
 use App\Http\Controllers\ContactParameterController;
 use App\Http\Controllers\DirectionDepartementaleController;
 use App\Http\Controllers\DemandeRencontreController;
-use App\Http\Controllers\StatusController;
 use App\Http\Controllers\UserController;
 use App\Models\Actualite;
 use App\Models\Report;
@@ -235,10 +235,11 @@ Route::middleware('auth')->group(function () {
     // Workflow reception — accessible to all service agents (not just admin role)
     // ----------------------------------------------------------
     Route::prefix('admin')->name('admin.')->middleware('corbeille.access')->group(function () {
-        Route::post('/workflows/{workflow}/accepter',         [DemandeManagementController::class, 'accepterReception'])->name('workflows.accepter');
-        Route::post('/workflows/{workflow}/refuser',          [DemandeManagementController::class, 'refuserReception'])->name('workflows.refuser');
+        Route::post('/interactions/{interaction}/accepter',   [DemandeManagementController::class, 'accepterReception'])->name('interactions.accepter');
+        Route::post('/interactions/{interaction}/refuser',    [DemandeManagementController::class, 'refuserReception'])->name('interactions.refuser');
         Route::post('/demandes/{demande}/affecter',           [DemandeManagementController::class, 'affecterServices'])->name('demandes.affecter');
-        Route::post('/affectations/{affectation}/repondre',   [DemandeManagementController::class, 'repondreAffectation'])->name('affectations.repondre');
+        Route::post('/interactions/{interaction}/repondre',   [DemandeManagementController::class, 'repondreAffectation'])->name('interactions.repondre');
+        Route::post('/demandes/{demande}/assigner-agent',     [DemandeManagementController::class, 'assignerAgent'])->name('demandes.assigner-agent');
     });
 
     // Décision finale — Direction ou admin
@@ -272,10 +273,22 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'role:admin'])->grou
 
     // Settings & dev tools
     Route::get('/settings',            [AdminController::class, 'settings'])->name('settings');
-    Route::get('/toggle-construction', function () {
-        session()->put('site_under_construction', ! session()->get('site_under_construction', true));
-        return redirect()->back();
-    })->name('toggle.construction');
+    Route::post('/toggle-maintenance', function () {
+        $current = \Illuminate\Support\Facades\DB::table('parameters')
+            ->where('name', 'is_maintenance_mode')
+            ->value('value');
+
+        $next = ($current === 'true') ? 'false' : 'true';
+
+        \Illuminate\Support\Facades\DB::table('parameters')
+            ->where('name', 'is_maintenance_mode')
+            ->update(['value' => $next]);
+
+        \Illuminate\Support\Facades\Cache::forget('is_maintenance_mode');
+
+        $label = $next === 'true' ? 'activé' : 'désactivé';
+        return redirect()->back()->with('success', "Mode maintenance {$label}.");
+    })->name('toggle.maintenance');
 
     // Users, carousels, posts
     Route::resource('users',     UserController::class);
@@ -289,23 +302,34 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'role:admin'])->grou
     Route::get('/roles',       [RoleController::class, 'index'])->name('roles.index');
     Route::get('/permissions', [PermissionController::class, 'index'])->name('permissions.index');
 
-    // Statuses
-    Route::get('statuses',              [StatusController::class, 'index'])->name('statuses.index');
-    Route::post('statuses',             [StatusController::class, 'store'])->name('statuses.store');
-    Route::patch('statuses/{status}',   [StatusController::class, 'update'])->name('statuses.update');
-    Route::delete('statuses/{status}',  [StatusController::class, 'destroy'])->name('statuses.destroy');
+    // Rencontres (visioconférences)
+    Route::get('rencontres',                         [DemandeRencontreController::class, 'index'])->name('rencontres.index');
+    Route::post('rencontres/{demande}/accepter',     [DemandeRencontreController::class, 'accepter'])->name('rencontres.accepter');
+    Route::post('rencontres/{demande}/refuser',      [DemandeRencontreController::class, 'refuser'])->name('rencontres.refuser');
 
-    // Flux transitions (workflow circuit)
-    Route::get('/flux-transitions',                               [FluxTransitionController::class, 'index'])->name('flux-transitions.index');
-    Route::post('/flux-transitions',                              [FluxTransitionController::class, 'store'])->name('flux-transitions.store');
-    Route::patch('/flux-transitions/{fluxTransition}',            [FluxTransitionController::class, 'update'])->name('flux-transitions.update');
-    Route::post('/flux-transitions/{fluxTransition}/move-up',     [FluxTransitionController::class, 'moveUp'])->name('flux-transitions.move-up');
-    Route::post('/flux-transitions/{fluxTransition}/move-down',   [FluxTransitionController::class, 'moveDown'])->name('flux-transitions.move-down');
-    Route::delete('/flux-transitions/{fluxTransition}',                              [FluxTransitionController::class, 'destroy'])->name('flux-transitions.destroy');
-    Route::post('/flux-transitions/required',                                         [FluxTransitionController::class, 'storeRequired'])->name('flux-transitions.required.store');
-    Route::delete('/flux-transitions/required/{requiredCircuitService}',              [FluxTransitionController::class, 'destroyRequired'])->name('flux-transitions.required.destroy');
-    Route::post('/flux-transitions/sla',                                              [FluxTransitionController::class, 'storeSla'])->name('flux-transitions.sla.store');
-    Route::delete('/flux-transitions/sla/{serviceSla}',                              [FluxTransitionController::class, 'destroySla'])->name('flux-transitions.sla.destroy');
+    // Circuit de traitement (step-based)
+    Route::get('/flux-transitions',                                             [FluxTransitionController::class, 'index'])->name('flux-transitions.index');
+
+    // Step transitions (arêtes du graphe)
+    Route::post('/flux-transitions/step-transitions',                           [FluxTransitionController::class, 'storeStepTransition'])->name('flux-transitions.step-transitions.store');
+    Route::patch('/flux-transitions/step-transitions/{stepTransition}',         [FluxTransitionController::class, 'updateStepTransition'])->name('flux-transitions.step-transitions.update');
+    Route::delete('/flux-transitions/step-transitions/{stepTransition}',        [FluxTransitionController::class, 'destroyStepTransition'])->name('flux-transitions.step-transitions.destroy');
+    Route::post('/flux-transitions/step-transitions/{stepTransition}/move-up',  [FluxTransitionController::class, 'moveUpStepTransition'])->name('flux-transitions.step-transitions.move-up');
+    Route::post('/flux-transitions/step-transitions/{stepTransition}/move-down',[FluxTransitionController::class, 'moveDownStepTransition'])->name('flux-transitions.step-transitions.move-down');
+
+    // Workflow steps (nœuds du graphe)
+    Route::post('/workflow-steps',                         [WorkflowStepController::class, 'store'])->name('workflow-steps.store');
+    Route::post('/workflow-steps/{workflowStep}/clone',    [WorkflowStepController::class, 'clone'])->name('workflow-steps.clone');
+    Route::patch('/workflow-steps/{workflowStep}',         [WorkflowStepController::class, 'update'])->name('workflow-steps.update');
+    Route::delete('/workflow-steps/{workflowStep}',        [WorkflowStepController::class, 'destroy'])->name('workflow-steps.destroy');
+
+    // Required circuit services
+    Route::post('/flux-transitions/required',                        [FluxTransitionController::class, 'storeRequired'])->name('flux-transitions.required.store');
+    Route::delete('/flux-transitions/required/{requiredCircuitService}', [FluxTransitionController::class, 'destroyRequired'])->name('flux-transitions.required.destroy');
+
+    // SLA
+    Route::post('/flux-transitions/sla',                [FluxTransitionController::class, 'storeSla'])->name('flux-transitions.sla.store');
+    Route::delete('/flux-transitions/sla/{serviceSla}', [FluxTransitionController::class, 'destroySla'])->name('flux-transitions.sla.destroy');
 
     // Document uploads
     Route::get('/documents/upload',  [DocumentController::class, 'index'])->name('documents.index');

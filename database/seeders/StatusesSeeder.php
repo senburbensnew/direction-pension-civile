@@ -9,20 +9,25 @@ class StatusesSeeder extends Seeder
 {
     public function run(): void
     {
-        $statuses = [
-            ['code' => 'BROUILLON',           'label' => 'Brouillon',                'description' => "La demande est en cours de preparation et n'a pas encore ete soumise"],
-            ['code' => 'SOUMISE',             'label' => 'Soumise',                  'description' => "La demande a ete soumise par l'institution et transmise au systeme"],
-            ['code' => 'EN_ATTENTE',          'label' => 'En attente de traitement', 'description' => "La demande a ete recue mais n'a pas encore ete traitee"],
-            ['code' => 'APPROUVEE',           'label' => 'Demande approuvee',        'description' => 'La demande a ete validee'],
-            ['code' => 'EN_COURS',            'label' => 'En cours de traitement',   'description' => 'La demande est actuellement en traitement'],
-            ['code' => 'REJETEE',             'label' => 'Demande rejetee',          'description' => 'La demande a ete refusee'],
-            ['code' => 'FINALISEE',           'label' => 'Traitement finalise',      'description' => 'Le traitement est termine'],
-            ['code' => 'ANNULEE',             'label' => 'Demande annulee',          'description' => 'La demande a ete annulee'],
-            ['code' => 'COMPLEMENT_REQUIS',   'label' => 'Complement requis',        'description' => "Un complement d'information ou de documents est requis de la part de l'usager"],
-            ['code' => 'TRANSFERT_EN_ATTENTE','label' => 'Transfert en attente',     'description' => 'Le dossier a ete transfere vers un service et est en attente de confirmation de reception'],
-            ['code' => 'TRANSFERT_REFUSE',    'label' => 'Transfert refuse',         'description' => 'Le service destinataire a refuse la reception du dossier'],
+        $steps = [
+            ['code' => 'BROUILLON',            'nom' => 'Brouillon',             'type_noeud' => 'initial',    'ordre' => 1],
+            ['code' => 'SOUMISE',              'nom' => 'Soumise',               'type_noeud' => 'initial',    'ordre' => 2],
+            ['code' => 'EN_ATTENTE',           'nom' => 'En attente',            'type_noeud' => 'intermediaire', 'ordre' => 5],
+            ['code' => 'EN_COURS',             'nom' => 'En cours',              'type_noeud' => 'intermediaire', 'ordre' => 6],
+            ['code' => 'APPROUVEE',            'nom' => 'Approuvée',             'type_noeud' => 'terminal',   'ordre' => 90],
+            ['code' => 'REJETEE',              'nom' => 'Rejetée',               'type_noeud' => 'terminal',   'ordre' => 91],
+            ['code' => 'FINALISEE',            'nom' => 'Finalisée',             'type_noeud' => 'terminal',   'ordre' => 92],
+            ['code' => 'ANNULEE',              'nom' => 'Annulée',               'type_noeud' => 'terminal',   'ordre' => 93],
+            ['code' => 'COMPLEMENT_REQUIS',    'nom' => 'Complément requis',     'type_noeud' => 'intermediaire', 'ordre' => 0],
+            ['code' => 'TRANSFERT_EN_ATTENTE', 'nom' => 'Transfert en attente',  'type_noeud' => 'intermediaire', 'ordre' => 0],
+            ['code' => 'TRANSFERT_REFUSE',     'nom' => 'Transfert refusé',      'type_noeud' => 'intermediaire', 'ordre' => 0],
         ];
 
-        DB::table('statuses')->upsert($statuses, ['code'], ['label', 'description']);
+        foreach ($steps as $step) {
+            DB::table('workflow_steps')->updateOrInsert(
+                ['code' => $step['code'], 'service_id' => null, 'type_demande' => null],
+                array_merge($step, ['service_id' => null, 'type_demande' => null, 'updated_at' => now()])
+            );
+        }
     }
 }

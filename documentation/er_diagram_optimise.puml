@@ -1,0 +1,310 @@
+@startuml er_workflow_optimise
+!theme plain
+skinparam linetype ortho
+skinparam roundcorner 8
+skinparam shadowing false
+skinparam backgroundColor #FAFAFA
+
+skinparam entity {
+    BackgroundColor #FFFFFF
+    BorderColor #2D7D46
+    HeaderBackgroundColor #2D7D46
+    HeaderFontColor #FFFFFF
+    FontColor #222222
+    FontSize 12
+}
+
+skinparam note {
+    BackgroundColor #FFFDE7
+    BorderColor #F9A825
+    FontSize 10
+}
+
+skinparam arrow {
+    Color #555555
+    FontColor #444444
+    FontSize 10
+}
+
+title <b>Diagramme Entité-Association — Modèle Optimisé\nFlux de Traitement des Dossiers</b>
+
+' ═══════════════════════════════════════════════════════════════
+'  SERVICES
+' ═══════════════════════════════════════════════════════════════
+entity "**services**" as services {
+    <b>PK</b>  id          : BIGINT UNSIGNED UNSIGNED   -- identifiant auto-incrémenté
+    ---
+        code        : VARCHAR(50) UNIQUE    -- code court (DIRECTION, LIQUIDATION…)
+        nom         : VARCHAR(255)          -- nom complet du service
+        description : TEXT NULL            -- rôle et attributions du service
+        icon        : VARCHAR(100) NULL     -- identifiant icône (Heroicons / FontAwesome)
+        color       : VARCHAR(50) NULL      -- couleur Tailwind CSS pour l'interface
+        created_at  : TIMESTAMP
+        updated_at  : TIMESTAMP
+}
+
+' ═══════════════════════════════════════════════════════════════
+'  UTILISATEURS
+' ═══════════════════════════════════════════════════════════════
+entity "**users**" as users {
+    <b>PK</b>  id         : BIGINT UNSIGNED     -- identifiant auto-incrémenté
+    ---
+        name       : VARCHAR(255)        -- nom complet de l'utilisateur
+        email      : VARCHAR(255) UNIQUE -- adresse email (identifiant de connexion)
+        type       : VARCHAR(50)         -- UserTypeEnum : Pensionnaire | Fonctionnaire | Institution
+    <b>FK</b>  service_id : BIGINT UNSIGNED NULL  -- services.id — service de rattachement (agents)
+        created_at : TIMESTAMP
+        updated_at : TIMESTAMP
+}
+
+note right of users
+  service_id est la source de vérité
+  pour le service d'un agent.
+  assignments.service_id est supprimé
+  (redondant).
+end note
+
+' ═══════════════════════════════════════════════════════════════
+'  ÉTAPES DU WORKFLOW
+' ═══════════════════════════════════════════════════════════════
+entity "**workflow_steps**" as wf_steps {
+    <b>PK</b>  id           : BIGINT UNSIGNED     -- identifiant auto-incrémenté
+    ---
+        code         : VARCHAR(100) UNIQUE   -- code métier (SOUMISE, EN_COURS, APPROUVEE…)
+        nom          : VARCHAR(255)          -- libellé affiché à l'interface
+        description  : TEXT NULL            -- rôle de l'étape dans le circuit
+        type_noeud   : ENUM                 -- INITIATEUR | INTERMEDIAIRE | TERMINAISON
+        type_demande : VARCHAR(100) NULL    -- TypeDemandeEnum concerné (NULL = global)
+        ordre        : INT DEFAULT 0        -- ordre d'affichage dans le circuit
+    <b>FK</b>  service_id   : BIGINT UNSIGNED NULL  -- services.id — service responsable (NULL autorisé)
+        created_at   : TIMESTAMP
+        updated_at   : TIMESTAMP
+}
+
+note right of wf_steps
+  service_id peut être NULL :
+  ex. "COMPLEMENT_REQUIS" est une étape
+  transverse sans service attitré.
+  Dans ce cas, demandes.current_service_id
+  conserve le dernier service connu.
+end note
+
+' ═══════════════════════════════════════════════════════════════
+'  RÈGLES DE TRANSITION ENTRE ÉTAPES
+' ═══════════════════════════════════════════════════════════════
+entity "**workflow_step_transitions**" as wf_transitions {
+    <b>PK</b>  id                  : BIGINT UNSIGNED       -- identifiant auto-incrémenté
+    ---
+    <b>FK</b>  from_step_id        : BIGINT UNSIGNED NULL   -- workflow_steps.id — étape source (NULL = soumission initiale)
+    <b>FK</b>  to_step_id          : BIGINT UNSIGNED        -- workflow_steps.id — étape destination
+        action              : VARCHAR(255)           -- libellé de l'action (ex: "Envoyer au contrôle")
+        is_urgent_only      : TINYINT(1) DEFAULT 0  -- 1 = transition réservée aux dossiers urgents
+        ordre               : INT DEFAULT 0          -- ordre d'affichage dans le menu d'actions
+        required_permission : VARCHAR(255) NULL      -- slug Spatie permission requis pour déclencher
+        guard_conditions    : JSON NULL              -- ex: {"docs_complets":true,"avis_complets":true}
+        created_at          : TIMESTAMP
+        updated_at          : TIMESTAMP
+}
+
+note bottom of wf_transitions
+  Remplace DÉFINITIVEMENT flux_transitions (table supprimée).
+  guard_conditions : clés supportées —
+    docs_complets    (bool) : tous les documents requis sont joints
+    avis_complets    (bool) : aucune affectation en attente de réponse
+    avis_favorables  (bool) : toutes les réponses sont favorables
+end note
+
+' ═══════════════════════════════════════════════════════════════
+'  ENTITÉ CENTRALE — DEMANDE
+' ═══════════════════════════════════════════════════════════════
+entity "**demandes**" as demandes {
+    <b>PK</b>  id                 : BIGINT UNSIGNED        -- identifiant auto-incrémenté
+    ---
+        code               : VARCHAR(50) UNIQUE      -- référence unique (ex: DEM-2026-001)
+        title              : VARCHAR(255)            -- titre / intitulé de la demande
+        type               : VARCHAR(100)            -- TypeDemandeEnum (ex: PENSION_REQUEST)
+        categorie          : VARCHAR(100) NULL       -- CategorieDossierEnum (ex: ADMINISTRATIF)
+        is_urgent          : TINYINT(1) DEFAULT 0   -- 1 = dossier prioritaire
+        data               : JSON NULL               -- données propres au type de demande
+        annotation         : TEXT NULL               -- note interne apposée par un agent
+        folder             : VARCHAR(100) NULL       -- corbeille / répertoire d'archivage
+        submitted_at       : TIMESTAMP NULL          -- date/heure de soumission officielle
+        expires_at         : TIMESTAMP NULL          -- expiration du brouillon (72 h par défaut)
+    <b>FK</b>  created_by         : BIGINT UNSIGNED         -- users.id — créateur (demandeur)
+    <b>FK</b>  current_service_id : BIGINT UNSIGNED NOT NULL -- services.id — dernier service connu (jamais NULL)
+    <b>FK</b>  current_step_id    : BIGINT UNSIGNED NULL    -- workflow_steps.id — étape courante
+    <b>FK</b>  annotated_by       : BIGINT UNSIGNED NULL    -- users.id — auteur de l'annotation
+        annotated_at       : TIMESTAMP NULL          -- date/heure de l'annotation
+        created_at         : TIMESTAMP
+        updated_at         : TIMESTAMP
+}
+
+note right of demandes
+  circuit_snapshot retiré de cette table.
+  current_service_id est mis à jour à chaque
+  changement d'étape :
+  → si wf_steps.service_id IS NOT NULL → adopter ce service
+  → sinon → conserver l'ancien current_service_id
+  Seul cas NULL autorisé : archivage définitif (contrôlé).
+end note
+
+' ═══════════════════════════════════════════════════════════════
+'  INSTANTANÉ DU CIRCUIT (table séparée)
+' ═══════════════════════════════════════════════════════════════
+entity "**demande_circuit_snapshots**" as snapshots {
+    <b>PK</b>  id         : BIGINT UNSIGNED    -- identifiant auto-incrémenté
+    ---
+    <b>FK</b>  demande_id : BIGINT UNSIGNED     -- demandes.id
+        snapshot   : JSON               -- liste ordonnée des étapes du circuit à la soumission
+        created_at : TIMESTAMP          -- date de prise de l'instantané (= submitted_at)
+}
+
+note right of snapshots
+  Anciennement circuit_snapshot dans demandes.
+  Séparé pour alléger la table principale.
+  Recalculable depuis workflow_step_transitions
+  si la ligne est absente.
+end note
+
+' ═══════════════════════════════════════════════════════════════
+'  TABLE UNIFIÉE : INTERACTIONS INTER-SERVICES
+'  (fusion de demande_workflows + affectations)
+' ═══════════════════════════════════════════════════════════════
+entity "**demande_interactions**" as interactions {
+    <b>PK</b>  id               : BIGINT UNSIGNED        -- identifiant auto-incrémenté
+    ---
+    <b>FK</b>  demande_id       : BIGINT UNSIGNED         -- demandes.id
+        type             : ENUM                    -- TRANSFERT | AVIS
+    <b>FK</b>  from_service_id  : BIGINT UNSIGNED NULL    -- services.id — service émetteur (NULL si soumission initiale)
+    <b>FK</b>  to_service_id    : BIGINT UNSIGNED         -- services.id — service destinataire
+    <b>FK</b>  initiated_by     : BIGINT UNSIGNED         -- users.id — agent déclencheur
+        commentaire      : TEXT NULL              -- motif du transfert ou texte de la sollicitation d'avis
+        statut           : ENUM DEFAULT 'EN_ATTENTE' -- EN_ATTENTE | ACCEPTE | REJETE | EN_COURS | TERMINE
+        reponse          : TEXT NULL              -- avis rendu (pour type=AVIS) ou motif d'acceptation/refus
+        repondu_at       : TIMESTAMP NULL         -- date/heure de la réponse du service destinataire
+    <b>FK</b>  repondu_by       : BIGINT UNSIGNED NULL    -- users.id — agent ayant rendu la réponse
+        created_at       : TIMESTAMP
+        updated_at       : TIMESTAMP
+}
+
+note bottom of interactions
+  Remplace demande_workflows (TRANSFERT) et affectations (AVIS).
+  type=TRANSFERT : transfert de responsabilité d'un service à un autre.
+  type=AVIS      : sollicitation sans transfert de propriété.
+  statuts communs :
+    EN_ATTENTE → le destinataire n'a pas encore répondu
+    ACCEPTE    → transfert accepté (TRANSFERT) ou favorable (AVIS)
+    REJETE     → transfert refusé ou avis défavorable
+    EN_COURS   → le service destinataire travaille dessus (AVIS)
+    TERMINE    → avis rendu et clos (AVIS)
+end note
+
+' ═══════════════════════════════════════════════════════════════
+'  HISTORIQUE ALLÉGÉ (diff uniquement)
+' ═══════════════════════════════════════════════════════════════
+entity "**demande_histories**" as dh {
+    <b>PK</b>  id          : BIGINT UNSIGNED    -- identifiant auto-incrémenté
+    ---
+    <b>FK</b>  demande_id  : BIGINT UNSIGNED     -- demandes.id
+        event       : VARCHAR(100)       -- code de l'événement (ex: STEP_CHANGED, URGENT_SET)
+        champs      : JSON               -- {"field": "current_step_id", "old": 2, "new": 5}
+        commentaire : TEXT NULL         -- justification optionnelle du changement
+    <b>FK</b>  changed_by  : BIGINT UNSIGNED NULL -- users.id — auteur du changement
+        created_at  : TIMESTAMP
+        updated_at  : TIMESTAMP
+}
+
+note right of dh
+  Allégé : plus d'instantané complet.
+  champs stocke uniquement les diff :
+  [{field, old, new}, …]
+  event identifie la nature du changement.
+end note
+
+' ═══════════════════════════════════════════════════════════════
+'  ASSIGNATION D'UN DOSSIER À UN AGENT
+' ═══════════════════════════════════════════════════════════════
+entity "**assignments**" as assignments {
+    <b>PK</b>  id          : BIGINT UNSIGNED     -- identifiant auto-incrémenté
+    ---
+    <b>FK</b>  demande_id  : BIGINT UNSIGNED      -- demandes.id
+    <b>FK</b>  user_id     : BIGINT UNSIGNED      -- users.id — agent assigné (son service_id via users)
+    <b>FK</b>  assigned_by : BIGINT UNSIGNED      -- users.id — responsable qui fait l'assignation
+        note        : TEXT NULL          -- instruction ou note à l'attention de l'agent
+        ended_at    : TIMESTAMP NULL     -- fin d'assignation (NULL = assignation active)
+        created_at  : TIMESTAMP
+        updated_at  : TIMESTAMP
+}
+
+note right of assignments
+  service_id supprimé : redondant avec
+  users.service_id.
+  Pour connaître le service de l'agent :
+  JOIN users ON assignments.user_id = users.id
+end note
+
+' ═══════════════════════════════════════════════════════════════
+'  DOCUMENTS REQUIS PAR ÉTAPE
+' ═══════════════════════════════════════════════════════════════
+entity "**step_required_documents**" as step_docs {
+    <b>PK</b>  id               : BIGINT UNSIGNED     -- identifiant auto-incrémenté
+    ---
+    <b>FK</b>  workflow_step_id : BIGINT UNSIGNED      -- workflow_steps.id — étape exigeant le document
+        type_demande     : VARCHAR(100) NULL    -- TypeDemandeEnum concerné (NULL = tous les types)
+        label            : VARCHAR(255)         -- libellé du document (ex: "Acte de naissance")
+        document_type    : VARCHAR(100)         -- collection Spatie Media (ex: acte_naissance)
+        created_at       : TIMESTAMP
+        updated_at       : TIMESTAMP
+}
+
+note right of step_docs
+  Anciennement lié à services.id.
+  Maintenant lié à workflow_steps.id :
+  plus précis car un même service peut
+  avoir plusieurs étapes avec des exigences
+  documentaires différentes.
+end note
+
+' ═══════════════════════════════════════════════════════════════
+'  RELATIONS
+' ═══════════════════════════════════════════════════════════════
+
+' Services → agents
+services ||--o{ users             : "emploie (service_id)"
+
+' Services → étapes
+services ||--o{ wf_steps          : "possède des étapes (service_id)"
+
+' Étapes → transitions
+wf_steps ||--o{ wf_transitions    : "from_step (source)"
+wf_steps ||--o{ wf_transitions    : "to_step (destination)"
+
+' Étapes → documents requis
+wf_steps ||--o{ step_docs         : "exige des documents"
+
+' Demande — clés directes
+users    ||--o{ demandes          : "crée (created_by)"
+services ||--o{ demandes          : "dernier service connu (current_service_id)"
+wf_steps ||--o{ demandes          : "étape courante (current_step_id)"
+users    ||--o{ demandes          : "annote (annotated_by)"
+
+' Demande — entités enfants
+demandes ||--|| snapshots         : "instantané du circuit"
+demandes ||--o{ interactions      : "interactions inter-services"
+demandes ||--o{ dh               : "historique des changements"
+demandes ||--o{ assignments      : "assignations d'agents"
+
+' Interactions — acteurs
+services ||--o{ interactions      : "émet (from_service_id)"
+services ||--o{ interactions      : "reçoit (to_service_id)"
+users    ||--o{ interactions      : "déclenche (initiated_by)"
+users    ||--o{ interactions      : "répond (repondu_by)"
+
+' Historique — acteur
+users    ||--o{ dh               : "modifie (changed_by)"
+
+' Assignments — acteurs
+users    ||--o{ assignments      : "assigné (user_id)"
+users    ||--o{ assignments      : "assigne (assigned_by)"
+
+@enduml

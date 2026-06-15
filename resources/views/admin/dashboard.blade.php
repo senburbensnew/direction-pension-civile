@@ -1,4 +1,4 @@
-@extends('layouts.admin')
+﻿@extends('layouts.admin')
 
 @section('title', 'Tableau de bord')
 
@@ -181,12 +181,12 @@
 
         <div class="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
             <div class="px-5 py-3 border-b border-gray-100">
-                <h2 class="font-semibold text-gray-700 text-sm">Dossiers par statut</h2>
+                <h2 class="font-semibold text-gray-700 text-sm">Dossiers par état</h2>
             </div>
             <div class="divide-y divide-gray-50">
                 @foreach($dossierParStatut as $st)
                     <div class="flex items-center gap-3 px-5 py-2.5">
-                        <span class="text-xs px-2 py-0.5 rounded-full font-medium {{ \App\Models\Status::getStatusStyle($st->code) }}">
+                        <span class="text-xs px-2 py-0.5 rounded-full font-medium {{ \App\Models\WorkflowStep::getStatusStyle($st->code) }}">
                             {{ $st->code }}
                         </span>
                         <span class="ml-auto text-sm font-semibold text-gray-800">{{ $st->demandes_count }}</span>
@@ -198,6 +198,27 @@
             </div>
         </div>
 
+    </div>
+
+    {{-- ── Dossiers par type ───────────────────────────────────────────── --}}
+    <div class="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
+        <div class="px-5 py-3 border-b border-gray-100">
+            <h2 class="font-semibold text-gray-700 text-sm">Dossiers par type de demande</h2>
+        </div>
+        <div class="divide-y divide-gray-50">
+            @forelse($dossierParType as $row)
+                <div class="flex items-center gap-3 px-5 py-2.5">
+                    <span class="flex-1 text-sm text-gray-700 truncate">{{ $row['label'] }}</span>
+                    <div class="w-32 bg-gray-100 rounded-full h-1.5">
+                        <div class="bg-indigo-500 h-1.5 rounded-full"
+                             style="width: {{ min(100, ($row['total'] / max($dossierParType->max('total'), 1)) * 100) }}%"></div>
+                    </div>
+                    <span class="text-sm font-semibold text-gray-800 w-8 text-right">{{ $row['total'] }}</span>
+                </div>
+            @empty
+                <div class="px-5 py-8 text-center text-gray-400 text-sm">Aucun dossier.</div>
+            @endforelse
+        </div>
     </div>
 
     {{-- ── Two columns ──────────────────────────────────────────────────── --}}

@@ -5,7 +5,7 @@ namespace Tests\Unit\Models;
 use App\Enums\CategorieDossierEnum;
 use App\Enums\TypeDemandeEnum;
 use App\Models\Demande;
-use App\Models\Status;
+use App\Models\WorkflowStep;
 use App\Models\User;
 use Carbon\Carbon;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -38,7 +38,7 @@ class DemandeModelTest extends TestCase
             'created_by' => $user->id,
         ]);
 
-        $this->assertEquals('BROUILLON', $demande->status->code);
+        $this->assertEquals('BROUILLON', $demande->currentStep?->code);
     }
 
     /** @test */
@@ -95,11 +95,11 @@ class DemandeModelTest extends TestCase
     public function isSubmitted_returns_true_for_soumise_status(): void
     {
         $user      = $this->makeUser();
-        $statusId  = Status::where('code', 'SOUMISE')->value('id');
+        $statusId  = WorkflowStep::idForCode('SOUMISE');
         $demande   = Demande::create([
             'type'       => TypeDemandeEnum::DEMANDE_ATTESTATION->value,
             'created_by' => $user->id,
-            'status_id'  => $statusId,
+            'current_step_id'  => $statusId,
         ]);
 
         $this->assertTrue($demande->isSubmitted());
@@ -110,11 +110,11 @@ class DemandeModelTest extends TestCase
     public function needsComplement_returns_true_for_complement_requis_status(): void
     {
         $user      = $this->makeUser();
-        $statusId  = Status::where('code', 'COMPLEMENT_REQUIS')->value('id');
+        $statusId  = WorkflowStep::idForCode('COMPLEMENT_REQUIS');
         $demande   = Demande::create([
             'type'       => TypeDemandeEnum::DEMANDE_ATTESTATION->value,
             'created_by' => $user->id,
-            'status_id'  => $statusId,
+            'current_step_id'  => $statusId,
         ]);
 
         $this->assertTrue($demande->needsComplement());
@@ -125,13 +125,13 @@ class DemandeModelTest extends TestCase
     {
         $user = $this->makeUser();
 
-        $brouillonId    = Status::where('code', 'BROUILLON')->value('id');
-        $complementId   = Status::where('code', 'COMPLEMENT_REQUIS')->value('id');
-        $soumiseId      = Status::where('code', 'SOUMISE')->value('id');
+        $brouillonId    = WorkflowStep::idForCode('BROUILLON');
+        $complementId   = WorkflowStep::idForCode('COMPLEMENT_REQUIS');
+        $soumiseId      = WorkflowStep::idForCode('SOUMISE');
 
-        $draft      = Demande::create(['type' => TypeDemandeEnum::DEMANDE_ATTESTATION->value, 'created_by' => $user->id, 'status_id' => $brouillonId]);
-        $complement = Demande::create(['type' => TypeDemandeEnum::DEMANDE_ATTESTATION->value, 'created_by' => $user->id, 'status_id' => $complementId]);
-        $submitted  = Demande::create(['type' => TypeDemandeEnum::DEMANDE_ATTESTATION->value, 'created_by' => $user->id, 'status_id' => $soumiseId]);
+        $draft      = Demande::create(['type' => TypeDemandeEnum::DEMANDE_ATTESTATION->value, 'created_by' => $user->id, 'current_step_id' => $brouillonId]);
+        $complement = Demande::create(['type' => TypeDemandeEnum::DEMANDE_ATTESTATION->value, 'created_by' => $user->id, 'current_step_id' => $complementId]);
+        $submitted  = Demande::create(['type' => TypeDemandeEnum::DEMANDE_ATTESTATION->value, 'created_by' => $user->id, 'current_step_id' => $soumiseId]);
 
         $this->assertTrue($draft->canBeEditedByUser());
         $this->assertTrue($complement->canBeEditedByUser());

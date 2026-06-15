@@ -2,24 +2,46 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\FluxTransition;
+use App\Enums\TypeDemandeEnum;
 use App\Models\RequiredCircuitService;
 use App\Models\Service;
 use App\Models\ServiceSla;
+use App\Models\WorkflowStep;
+use App\Models\WorkflowStepTransition;
 use Illuminate\Http\Request;
 
 class FluxTransitionController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
-        $transitions = FluxTransition::with('sourceService', 'destinationService')
+        $selectedType = $request->query('type'); // null = common/global view
+
+        // When a specific type is selected: show only type-specific steps (complete circuit).
+        // When no type: show the global (type_demande = null) common circuit.
+        $steps = WorkflowStep::with('service')
+            ->when(
+                $selectedType,
+                fn($q) => $q->where('type_demande', $selectedType),
+                fn($q) => $q->whereNull('type_demande')
+            )
             ->orderBy('ordre')
-            ->orderBy('id')
             ->get();
+
+        $stepTransitions = WorkflowStepTransition::with('fromStep.service', 'toStep.service')
+            ->when($steps->isNotEmpty(), fn($q) => $q->where(
+                fn($q2) => $q2->whereIn('from_step_id', $steps->pluck('id'))->orWhereNull('from_step_id')
+            ))
+            ->orderBy('ordre')
+            ->get()
+            ->filter(fn($t) => $steps->contains('id', $t->to_step_id))
+            ->values();
 
         $services = Service::orderBy('nom')->get();
 
         $requiredServices = RequiredCircuitService::with('service')
+            ->when($selectedType, fn($q) => $q->where(fn($q2) =>
+                $q2->whereNull('type_demande')->orWhere('type_demande', $selectedType)
+            ))
             ->orderBy('type_demande')
             ->orderBy('service_id')
             ->get();
@@ -29,97 +51,121 @@ class FluxTransitionController extends Controller
             ->orderBy('type_demande')
             ->get();
 
-        return view('admin.flux-transitions.index', compact('transitions', 'services', 'requiredServices', 'slaRules'));
+        $typeDemandeOptions = TypeDemandeEnum::cases();
+
+        // Steps from other circuits not already present in the current one (by code+type)
+        $currentCodes = $steps->pluck('code')->unique();
+        $reusableSteps = WorkflowStep::with('service')
+            ->whereNotIn('code', $currentCodes)
+            ->when($selectedType, fn($q) => $q->where('type_demande', '!=', $selectedType))
+            ->orderBy('type_demande')
+            ->orderBy('ordre')
+            ->get();
+
+        return view('admin.flux-transitions.index', compact(
+            'steps', 'stepTransitions', 'services',
+            'requiredServices', 'slaRules',
+            'selectedType', 'typeDemandeOptions',
+            'reusableSteps'
+        ));
     }
 
-    public function store(Request $request)
+    /* ── Step-transition CRUD ─────────────────────────────────────── */
+
+    public function storeStepTransition(Request $request)
     {
         $request->validate([
-            'service_source_id'      => 'nullable|exists:services,id',
-            'service_destination_id' => 'required|exists:services,id',
-            'action'                 => 'required|string|max:100',
-            'type_demande'           => 'nullable|string',
+            'from_step_id'  => 'nullable|exists:workflow_steps,id',
+            'to_step_id'    => 'required|exists:workflow_steps,id|different:from_step_id',
+            'action'        => 'required|string|max:100',
+            'is_urgent_only'=> 'boolean',
         ]);
 
-        $exists = FluxTransition::where('service_source_id', $request->service_source_id ?: null)
-            ->where('service_destination_id', $request->service_destination_id)
-            ->where('type_demande', $request->type_demande ?: null)
-            ->exists();
+        $from = $request->from_step_id ?: null;
 
-        if ($exists) {
+        $toStep = WorkflowStep::findOrFail($request->to_step_id);
+        if ($toStep->isInitial()) {
+            return redirect()->back()->with('error', 'Un nœud initial ne peut pas être une destination de transition.');
+        }
+
+        if ($from) {
+            $fromStep = WorkflowStep::findOrFail($from);
+            if ($fromStep->isTerminal()) {
+                return redirect()->back()->with('error', 'Un nœud terminal ne peut pas être une source de transition.');
+            }
+        }
+
+        if (WorkflowStepTransition::where('from_step_id', $from)->where('to_step_id', $request->to_step_id)->exists()) {
             return redirect()->back()->with('error', 'Cette transition existe déjà.');
         }
 
-        FluxTransition::create([
-            'service_source_id'      => $request->service_source_id ?: null,
-            'service_destination_id' => $request->service_destination_id,
-            'action'                 => $request->action,
-            'type_demande'           => $request->type_demande ?: null,
+        $maxOrdre = WorkflowStepTransition::where('from_step_id', $from)->max('ordre') ?? 0;
+
+        WorkflowStepTransition::create([
+            'from_step_id'   => $from,
+            'to_step_id'     => $request->to_step_id,
+            'action'         => $request->action,
+            'is_urgent_only' => $request->boolean('is_urgent_only'),
+            'ordre'          => $maxOrdre + 10,
         ]);
 
         return redirect()->back()->with('success', 'Transition ajoutée.');
     }
 
-    public function update(Request $request, FluxTransition $fluxTransition)
+    public function updateStepTransition(Request $request, WorkflowStepTransition $stepTransition)
     {
-        $isInit = $fluxTransition->service_source_id === null;
+        $request->validate([
+            'action'         => 'required|string|max:100',
+            'is_urgent_only' => 'boolean',
+        ]);
 
-        $rules = [
-            'action'                 => 'required|string|max:100',
-            'type_demande'           => 'nullable|string',
-            'service_destination_id' => 'required|exists:services,id',
-        ];
-
-        if (! $isInit) {
-            $rules['service_source_id'] = 'nullable|exists:services,id';
-        }
-
-        $request->validate($rules);
-
-        $data = [
+        $stepTransition->update([
             'action'         => $request->action,
-            'type_demande'   => $request->type_demande ?: null,
-            'service_destination_id' => $request->service_destination_id,
-        ];
-
-        if (! $isInit) {
-            $data['service_source_id'] = $request->service_source_id ?: null;
-        }
-
-        $fluxTransition->update($data);
+            'is_urgent_only' => $request->boolean('is_urgent_only'),
+        ]);
 
         return redirect()->back()->with('success', 'Transition mise à jour.');
     }
 
-    public function moveUp(FluxTransition $fluxTransition)
+    public function destroyStepTransition(WorkflowStepTransition $stepTransition)
     {
-        $previous = FluxTransition::where('ordre', '<', $fluxTransition->ordre)
+        $stepTransition->delete();
+        return redirect()->back()->with('success', 'Transition supprimée.');
+    }
+
+    public function moveUpStepTransition(WorkflowStepTransition $stepTransition)
+    {
+        $previous = WorkflowStepTransition::where('from_step_id', $stepTransition->from_step_id)
+            ->where('ordre', '<', $stepTransition->ordre)
             ->orderBy('ordre', 'desc')
             ->first();
 
         if ($previous) {
-            [$fluxTransition->ordre, $previous->ordre] = [$previous->ordre, $fluxTransition->ordre];
-            $fluxTransition->save();
+            [$stepTransition->ordre, $previous->ordre] = [$previous->ordre, $stepTransition->ordre];
+            $stepTransition->save();
             $previous->save();
         }
 
         return redirect()->back();
     }
 
-    public function moveDown(FluxTransition $fluxTransition)
+    public function moveDownStepTransition(WorkflowStepTransition $stepTransition)
     {
-        $next = FluxTransition::where('ordre', '>', $fluxTransition->ordre)
+        $next = WorkflowStepTransition::where('from_step_id', $stepTransition->from_step_id)
+            ->where('ordre', '>', $stepTransition->ordre)
             ->orderBy('ordre')
             ->first();
 
         if ($next) {
-            [$fluxTransition->ordre, $next->ordre] = [$next->ordre, $fluxTransition->ordre];
-            $fluxTransition->save();
+            [$stepTransition->ordre, $next->ordre] = [$next->ordre, $stepTransition->ordre];
+            $stepTransition->save();
             $next->save();
         }
 
         return redirect()->back();
     }
+
+    /* ── Required circuit services ────────────────────────────────── */
 
     public function storeRequired(Request $request)
     {
@@ -147,20 +193,10 @@ class FluxTransitionController extends Controller
     public function destroyRequired(RequiredCircuitService $requiredCircuitService)
     {
         $requiredCircuitService->delete();
-
         return redirect()->back()->with('success', 'Étape obligatoire supprimée.');
     }
 
-    public function destroy(FluxTransition $fluxTransition)
-    {
-        if ($fluxTransition->service_source_id === null) {
-            return redirect()->back()->with('error', 'La transition de soumission initiale ne peut pas être supprimée.');
-        }
-
-        $fluxTransition->delete();
-
-        return redirect()->back()->with('success', 'Transition supprimée.');
-    }
+    /* ── SLA ──────────────────────────────────────────────────────── */
 
     public function storeSla(Request $request)
     {
@@ -171,10 +207,7 @@ class FluxTransitionController extends Controller
         ]);
 
         ServiceSla::updateOrCreate(
-            [
-                'service_id'   => $request->service_id,
-                'type_demande' => $request->type_demande ?: null,
-            ],
+            ['service_id' => $request->service_id, 'type_demande' => $request->type_demande ?: null],
             ['delai_jours' => $request->delai_jours]
         );
 
@@ -184,7 +217,6 @@ class FluxTransitionController extends Controller
     public function destroySla(ServiceSla $serviceSla)
     {
         $serviceSla->delete();
-
         return redirect()->back()->with('success', 'SLA supprimé.');
     }
 }

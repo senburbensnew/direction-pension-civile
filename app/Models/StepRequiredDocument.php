@@ -7,11 +7,11 @@ use Illuminate\Database\Eloquent\Model;
 
 class StepRequiredDocument extends Model
 {
-    protected $fillable = ['service_id', 'type_demande', 'label', 'document_type'];
+    protected $fillable = ['workflow_step_id', 'type_demande', 'label', 'document_type'];
 
-    public function service()
+    public function step()
     {
-        return $this->belongsTo(Service::class);
+        return $this->belongsTo(WorkflowStep::class, 'workflow_step_id');
     }
 
     public function typeDemandeLabelAttribute(): ?string
@@ -21,12 +21,12 @@ class StepRequiredDocument extends Model
     }
 
     /**
-     * Returns document requirements for a given service and demande type.
+     * Returns document requirements for a given workflow step and demande type.
      * NULL type_demande means the requirement applies to all types.
      */
-    public static function forService(int $serviceId, ?string $typeDemandeCode = null): \Illuminate\Database\Eloquent\Collection
+    public static function forStep(int $stepId, ?string $typeDemandeCode = null): \Illuminate\Database\Eloquent\Collection
     {
-        return static::where('service_id', $serviceId)
+        return static::where('workflow_step_id', $stepId)
             ->where(function ($q) use ($typeDemandeCode) {
                 $q->whereNull('type_demande');
                 if ($typeDemandeCode) {

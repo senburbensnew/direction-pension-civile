@@ -2,8 +2,8 @@
 
 namespace Tests\Traits;
 
+use App\Models\WorkflowStep;
 use App\Models\Service;
-use App\Models\Status;
 use Illuminate\Support\Facades\DB;
 use Spatie\Permission\Models\Role;
 
@@ -11,22 +11,28 @@ trait SeedsRequiredData
 {
     protected function seedStatuses(): void
     {
-        $statuses = [
-            ['code' => 'BROUILLON',            'label' => 'Brouillon'],
-            ['code' => 'SOUMISE',              'label' => 'Soumise'],
-            ['code' => 'EN_ATTENTE',           'label' => 'En attente'],
-            ['code' => 'APPROUVEE',            'label' => 'Approuvée'],
-            ['code' => 'EN_COURS',             'label' => 'En cours'],
-            ['code' => 'REJETEE',              'label' => 'Rejetée'],
-            ['code' => 'FINALISEE',            'label' => 'Finalisée'],
-            ['code' => 'ANNULEE',              'label' => 'Annulée'],
-            ['code' => 'COMPLEMENT_REQUIS',    'label' => 'Complément requis'],
-            ['code' => 'TRANSFERT_EN_ATTENTE', 'label' => 'Transfert en attente'],
-            ['code' => 'TRANSFERT_REFUSE',     'label' => 'Transfert refusé'],
+        $steps = [
+            ['code' => 'BROUILLON',            'nom' => 'Brouillon',            'type_noeud' => 'initial',    'ordre' => 1],
+            ['code' => 'SOUMISE',              'nom' => 'Soumise',              'type_noeud' => 'initial',    'ordre' => 2],
+            ['code' => 'EN_ATTENTE',           'nom' => 'En attente',           'type_noeud' => 'intermediaire', 'ordre' => 5],
+            ['code' => 'EN_COURS',             'nom' => 'En cours',             'type_noeud' => 'intermediaire', 'ordre' => 6],
+            ['code' => 'APPROUVEE',            'nom' => 'Approuvée',            'type_noeud' => 'terminal',   'ordre' => 90],
+            ['code' => 'REJETEE',              'nom' => 'Rejetée',              'type_noeud' => 'terminal',   'ordre' => 91],
+            ['code' => 'FINALISEE',            'nom' => 'Finalisée',            'type_noeud' => 'terminal',   'ordre' => 92],
+            ['code' => 'ANNULEE',              'nom' => 'Annulée',              'type_noeud' => 'terminal',   'ordre' => 93],
+            ['code' => 'COMPLEMENT_REQUIS',    'nom' => 'Complément requis',    'type_noeud' => 'intermediaire', 'ordre' => 0],
+            ['code' => 'TRANSFERT_EN_ATTENTE', 'nom' => 'Transfert en attente', 'type_noeud' => 'intermediaire', 'ordre' => 0],
+            ['code' => 'TRANSFERT_REFUSE',     'nom' => 'Transfert refusé',     'type_noeud' => 'intermediaire', 'ordre' => 0],
         ];
 
-        // insertOrIgnore handles the case where the migration already seeded some statuses
-        DB::table('statuses')->insertOrIgnore($statuses);
+        foreach ($steps as $step) {
+            DB::table('workflow_steps')->insertOrIgnore(array_merge($step, [
+                'service_id'   => null,
+                'type_demande' => null,
+                'created_at'   => now(),
+                'updated_at'   => now(),
+            ]));
+        }
     }
 
     protected function seedServices(): void
@@ -66,12 +72,12 @@ trait SeedsRequiredData
             ? \App\Models\User::find($attributes['created_by'])
             : \App\Models\User::factory()->create();
 
-        $brouillonId = Status::where('code', 'BROUILLON')->value('id');
+        $brouillonId = WorkflowStep::idForCode('BROUILLON');
 
         return \App\Models\Demande::create(array_merge([
             'type'       => \App\Enums\TypeDemandeEnum::DEMANDE_ATTESTATION->value,
             'created_by' => $user->id,
-            'status_id'  => $brouillonId,
+            'current_step_id'  => $brouillonId,
         ], $attributes));
     }
 }

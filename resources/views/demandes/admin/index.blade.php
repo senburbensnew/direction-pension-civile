@@ -1,4 +1,4 @@
-@extends('layouts.admin')
+﻿@extends('layouts.admin')
 
 @section('title', 'Gestion des dossiers')
 
@@ -20,8 +20,9 @@
 
     {{-- ── Transferts en cours (monitoring, lecture seule) ──────────────────── --}}
     @php
-        $pendingWorkflows = \App\Models\DemandeWorkflow::with(['demande', 'fromService', 'toService', 'user'])
-            ->where('reception_status', 'pending')
+        $pendingWorkflows = \App\Models\DemandeInteraction::with(['demande', 'fromService', 'toService', 'initiatedBy'])
+            ->where('type', \App\Models\DemandeInteraction::TYPE_TRANSFERT)
+            ->where('statut', \App\Models\DemandeInteraction::STATUT_EN_ATTENTE)
             ->latest()
             ->get();
     @endphp
@@ -82,7 +83,22 @@
                             {{ $demande->code ?? '#' . $demande->id }}
                         </td>
                         <td class="px-4 py-3 text-gray-700">
-                            {{ str_replace('_', ' ', $demande->type) }}
+                            <div class="flex flex-wrap items-center gap-1">
+                                <span>{{ str_replace('_', ' ', $demande->type) }}</span>
+                                @if($demande->is_urgent)
+                                    <span class="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-bold bg-red-100 text-red-700">
+                                        <i class="fas fa-bolt mr-0.5"></i> Urgent
+                                    </span>
+                                @endif
+                                @if($demande->categorie)
+                                    @php $cat = \App\Enums\CategorieDossierEnum::tryFrom($demande->categorie); @endphp
+                                    @if($cat)
+                                        <span class="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium {{ $cat->badgeClass() }}">
+                                            {{ $cat->label() }}
+                                        </span>
+                                    @endif
+                                @endif
+                            </div>
                         </td>
                         <td class="px-4 py-3 text-gray-700">
                             {{ $demande->user?->name ?? '—' }}
@@ -90,8 +106,8 @@
                         <td class="px-4 py-3">
                             @if($demande->status)
                                 <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium
-                                    {{ \App\Models\Status::getStatusStyle($demande->status->code) }}">
-                                    {{ $demande->status->label }}
+                                    {{ \App\Models\WorkflowStep::getStatusStyle($demande->currentStep?->code) }}">
+                                    {{ $demande->currentStep?->nom }}
                                 </span>
                             @else
                                 <span class="text-gray-400 text-xs">—</span>

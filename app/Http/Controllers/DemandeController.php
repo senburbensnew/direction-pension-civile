@@ -24,7 +24,7 @@ use App\Models\Gender;
 use App\Models\PensionCategory;
 use App\Models\PensionType;
 use App\Models\Service;
-use App\Models\Status;
+use App\Models\WorkflowStep;
 use App\Services\DemandeService;
 use Exception;
 use Illuminate\Support\Arr;
@@ -82,7 +82,7 @@ class DemandeController extends Controller
                 // First submission — create draft then submit in one shot
                 try {
                     $demande = DB::transaction(function () use ($request, $validated) {
-                        $draftStatusId = Status::where('code', DemandeStatusEnum::BROUILLON->value)->value('id');
+                        $draftStatusId = WorkflowStep::idForCode('BROUILLON');
                         $data = collect($validated)->except([
                             'title', 'action', 'demande_id', 'status_id', 'created_by', 'type', 'current_service_id', 'code', 'profile_photo',
                         ])->toArray();
@@ -90,7 +90,7 @@ class DemandeController extends Controller
                             'code'       => CodeGeneratorService::generateUniqueRequestCode(TypeDemandeEnum::DEMANDE_VIREMENT_BANCAIRE->value, (new Demande())->getTable()),
                             'created_by' => auth()->id(),
                             'type'       => TypeDemandeEnum::DEMANDE_VIREMENT_BANCAIRE->value,
-                            'status_id'  => $draftStatusId,
+                            'current_step_id'  => $draftStatusId,
                             'data'       => $data,
                             'title'      => $request->title,
                             'expires_at' => now()->addYear(),
@@ -98,7 +98,7 @@ class DemandeController extends Controller
                         $this->demandeService->storeFiles($demande, $request->allFiles());
                         return $demande;
                     });
-                    $demande->load('status');
+                    $demande->load('currentStep');
                 } catch (\Exception $e) {
                     Log::error('Erreur lors de la soumission', ['error' => $e->getMessage()]);
                     return back()->with('error', 'Une erreur inattendue est survenue.')->withInput();
@@ -107,14 +107,14 @@ class DemandeController extends Controller
 
             try {
                 DB::transaction(function () use ($demande, $request) {
-                    $statusId  = Status::where('code', DemandeStatusEnum::SOUMISE->value)->value('id');
+                    $statusId  = WorkflowStep::idForCode('SOUMISE');
                     $serviceId = Service::where('code', Service::DIRECTION)->value('id');
 
                     if (! $serviceId) throw new \Exception('Service direction introuvable');
 
                     $demande->update([
                         'title'              => $request->title,
-                        'status_id'          => $statusId,
+                        'current_step_id'          => $statusId,
                         'current_service_id' => $serviceId,
                         'submitted_at'       => now(),
                         'expires_at'         => null,
@@ -124,7 +124,7 @@ class DemandeController extends Controller
 
                     DemandeHistory::create([
                         'demande_id'  => $demande->id,
-                        'statut'      => $demande->status->code,
+                        'statut'      => $demande->currentStep?->code,
                         'commentaire' => 'Demande soumise',
                         'changed_by'  => auth()->id(),
                         'data'        => $demande->data,
@@ -152,7 +152,7 @@ class DemandeController extends Controller
 
         try {
             $demande = DB::transaction(function () use ($request, $validated, &$storedFilePaths) {
-                $draftStatusId = Status::where('code', DemandeStatusEnum::BROUILLON->value)->value('id');
+                $draftStatusId = WorkflowStep::idForCode('BROUILLON');
 
                 $existing = $request->demande_id ? Demande::with('status')->findOrFail($request->demande_id) : null;
 
@@ -179,7 +179,7 @@ class DemandeController extends Controller
                         'code'       => CodeGeneratorService::generateUniqueRequestCode(TypeDemandeEnum::DEMANDE_VIREMENT_BANCAIRE->value, (new Demande())->getTable()),
                         'created_by' => auth()->id(),
                         'type'       => TypeDemandeEnum::DEMANDE_VIREMENT_BANCAIRE->value,
-                        'status_id'  => $draftStatusId,
+                        'current_step_id'  => $draftStatusId,
                         'data'       => $data,
                         'title'      => $request->title,
                     ]);
@@ -235,7 +235,7 @@ class DemandeController extends Controller
                 // First submission — create draft then submit in one shot
                 try {
                     $demande = DB::transaction(function () use ($request, $validated) {
-                        $draftStatusId = Status::where('code', DemandeStatusEnum::BROUILLON->value)->value('id');
+                        $draftStatusId = WorkflowStep::idForCode('BROUILLON');
                         $data = collect($validated)->except([
                             'title', 'action', 'demande_id', 'status_id', 'created_by', 'type', 'current_service_id', 'code',
                         ])->toArray();
@@ -243,7 +243,7 @@ class DemandeController extends Controller
                             'code'       => CodeGeneratorService::generateUniqueRequestCode(TypeDemandeEnum::DEMANDE_ATTESTATION->value, (new Demande())->getTable()),
                             'created_by' => auth()->id(),
                             'type'       => TypeDemandeEnum::DEMANDE_ATTESTATION->value,
-                            'status_id'  => $draftStatusId,
+                            'current_step_id'  => $draftStatusId,
                             'data'       => $data,
                             'title'      => $request->title,
                             'expires_at' => now()->addYear(),
@@ -251,7 +251,7 @@ class DemandeController extends Controller
                         $this->demandeService->storeFiles($demande, $request->allFiles());
                         return $demande;
                     });
-                    $demande->load('status');
+                    $demande->load('currentStep');
                 } catch (\Exception $e) {
                     Log::error('Erreur lors de la soumission', ['error' => $e->getMessage()]);
                     return back()->with('error', 'Une erreur inattendue est survenue.')->withInput();
@@ -260,14 +260,14 @@ class DemandeController extends Controller
 
             try {
                 DB::transaction(function () use ($demande, $request) {
-                    $statusId  = Status::where('code', DemandeStatusEnum::SOUMISE->value)->value('id');
+                    $statusId  = WorkflowStep::idForCode('SOUMISE');
                     $serviceId = Service::where('code', Service::DIRECTION)->value('id');
 
                     if (! $serviceId) throw new \Exception('Service direction introuvable');
 
                     $demande->update([
                         'title'              => $request->title,
-                        'status_id'          => $statusId,
+                        'current_step_id'          => $statusId,
                         'current_service_id' => $serviceId,
                         'submitted_at'       => now(),
                         'expires_at'         => null,
@@ -277,7 +277,7 @@ class DemandeController extends Controller
 
                     DemandeHistory::create([
                         'demande_id'  => $demande->id,
-                        'statut'      => $demande->status->code,
+                        'statut'      => $demande->currentStep?->code,
                         'commentaire' => 'Demande soumise',
                         'changed_by'  => auth()->id(),
                         'data'        => $demande->data,
@@ -303,14 +303,14 @@ class DemandeController extends Controller
         // SAVE DRAFT
         try {
             $demande = DB::transaction(function () use ($request, $validated) {
-                $draftStatusId = Status::where('code', DemandeStatusEnum::BROUILLON->value)->value('id');
+                $draftStatusId = WorkflowStep::idForCode('BROUILLON');
 
                 $data = collect($validated)->except(['title', 'action', 'demande_id', 'consentement'])->toArray();
 
                 if ($request->demande_id) {
                     $demande = Demande::with('status')->findOrFail($request->demande_id);
                     $updateFields = ['data' => $data, 'title' => $request->title];
-                    if ($demande->status->code === DemandeStatusEnum::BROUILLON->value) {
+                    if ($demande->currentStep?->code === DemandeStatusEnum::BROUILLON->value) {
                         $updateFields['status_id'] = $draftStatusId;
                     }
                     $demande->update($updateFields);
@@ -319,7 +319,7 @@ class DemandeController extends Controller
                         'code'       => CodeGeneratorService::generateUniqueRequestCode(TypeDemandeEnum::DEMANDE_ATTESTATION->value, (new Demande())->getTable()),
                         'created_by' => auth()->id(),
                         'type'       => TypeDemandeEnum::DEMANDE_ATTESTATION->value,
-                        'status_id'  => $draftStatusId,
+                        'current_step_id'  => $draftStatusId,
                         'data'       => $data,
                         'title'      => $request->title,
                     ]);
@@ -375,7 +375,7 @@ class DemandeController extends Controller
                 // First submission — create draft then submit in one shot
                 try {
                     $demande = DB::transaction(function () use ($request, $validated) {
-                        $draftStatusId = Status::where('code', DemandeStatusEnum::BROUILLON->value)->value('id');
+                        $draftStatusId = WorkflowStep::idForCode('BROUILLON');
                         $data = collect($validated)->except([
                             'title', 'action', 'demande_id', 'status_id', 'created_by', 'type', 'current_service_id', 'code',
                         ])->toArray();
@@ -383,7 +383,7 @@ class DemandeController extends Controller
                             'code'       => CodeGeneratorService::generateUniqueRequestCode(TypeDemandeEnum::DEMANDE_TRANSFERT_CHEQUE->value, (new Demande())->getTable()),
                             'created_by' => auth()->id(),
                             'type'       => TypeDemandeEnum::DEMANDE_TRANSFERT_CHEQUE->value,
-                            'status_id'  => $draftStatusId,
+                            'current_step_id'  => $draftStatusId,
                             'data'       => $data,
                             'title'      => $request->title,
                             'expires_at' => now()->addYear(),
@@ -391,7 +391,7 @@ class DemandeController extends Controller
                         $this->demandeService->storeFiles($demande, $request->allFiles());
                         return $demande;
                     });
-                    $demande->load('status');
+                    $demande->load('currentStep');
                 } catch (\Exception $e) {
                     Log::error('Erreur lors de la soumission', ['error' => $e->getMessage()]);
                     return back()->with('error', 'Une erreur inattendue est survenue.')->withInput();
@@ -400,14 +400,14 @@ class DemandeController extends Controller
 
             try {
                 DB::transaction(function () use ($demande, $request) {
-                    $statusId  = Status::where('code', DemandeStatusEnum::SOUMISE->value)->value('id');
+                    $statusId  = WorkflowStep::idForCode('SOUMISE');
                     $serviceId = Service::where('code', Service::DIRECTION)->value('id');
 
                     if (! $serviceId) throw new \Exception('Service direction introuvable');
 
                     $demande->update([
                         'title'              => $request->title,
-                        'status_id'          => $statusId,
+                        'current_step_id'          => $statusId,
                         'current_service_id' => $serviceId,
                         'submitted_at'       => now(),
                         'expires_at'         => null,
@@ -417,7 +417,7 @@ class DemandeController extends Controller
 
                     DemandeHistory::create([
                         'demande_id'  => $demande->id,
-                        'statut'      => $demande->status->code,
+                        'statut'      => $demande->currentStep?->code,
                         'commentaire' => 'Demande soumise',
                         'changed_by'  => auth()->id(),
                         'data'        => $demande->data,
@@ -443,14 +443,14 @@ class DemandeController extends Controller
         // SAVE DRAFT
         try {
             $demande = DB::transaction(function () use ($request, $validated) {
-                $draftStatusId = Status::where('code', DemandeStatusEnum::BROUILLON->value)->value('id');
+                $draftStatusId = WorkflowStep::idForCode('BROUILLON');
 
                 $data = collect($validated)->except(['title', 'action', 'demande_id', 'consentement'])->toArray();
 
                 if ($request->demande_id) {
                     $demande = Demande::with('status')->findOrFail($request->demande_id);
                     $updateFields = ['data' => $data, 'title' => $request->title];
-                    if ($demande->status->code === DemandeStatusEnum::BROUILLON->value) {
+                    if ($demande->currentStep?->code === DemandeStatusEnum::BROUILLON->value) {
                         $updateFields['status_id'] = $draftStatusId;
                     }
                     $demande->update($updateFields);
@@ -459,7 +459,7 @@ class DemandeController extends Controller
                         'code'       => CodeGeneratorService::generateUniqueRequestCode(TypeDemandeEnum::DEMANDE_TRANSFERT_CHEQUE->value, (new Demande())->getTable()),
                         'created_by' => auth()->id(),
                         'type'       => TypeDemandeEnum::DEMANDE_TRANSFERT_CHEQUE->value,
-                        'status_id'  => $draftStatusId,
+                        'current_step_id'  => $draftStatusId,
                         'data'       => $data,
                         'title'      => $request->title,
                     ]);
@@ -515,7 +515,7 @@ class DemandeController extends Controller
                 // First submission — create draft then submit in one shot
                 try {
                     $demande = DB::transaction(function () use ($request, $validated) {
-                        $draftStatusId = Status::where('code', DemandeStatusEnum::BROUILLON->value)->value('id');
+                        $draftStatusId = WorkflowStep::idForCode('BROUILLON');
                         $data = collect($validated)->except([
                             'title', 'action', 'demande_id', 'status_id', 'created_by', 'type', 'current_service_id', 'code',
                         ])->toArray();
@@ -523,7 +523,7 @@ class DemandeController extends Controller
                             'code'       => CodeGeneratorService::generateUniqueRequestCode(TypeDemandeEnum::DEMANDE_ARRET_PAIEMENT->value, (new Demande())->getTable()),
                             'created_by' => auth()->id(),
                             'type'       => TypeDemandeEnum::DEMANDE_ARRET_PAIEMENT->value,
-                            'status_id'  => $draftStatusId,
+                            'current_step_id'  => $draftStatusId,
                             'data'       => $data,
                             'title'      => $request->title,
                             'expires_at' => now()->addYear(),
@@ -531,7 +531,7 @@ class DemandeController extends Controller
                         $this->demandeService->storeFiles($demande, $request->allFiles());
                         return $demande;
                     });
-                    $demande->load('status');
+                    $demande->load('currentStep');
                 } catch (\Exception $e) {
                     Log::error('Erreur lors de la soumission', ['error' => $e->getMessage()]);
                     return back()->with('error', 'Une erreur inattendue est survenue.')->withInput();
@@ -540,14 +540,14 @@ class DemandeController extends Controller
 
             try {
                 DB::transaction(function () use ($demande, $request) {
-                    $statusId  = Status::where('code', DemandeStatusEnum::SOUMISE->value)->value('id');
+                    $statusId  = WorkflowStep::idForCode('SOUMISE');
                     $serviceId = Service::where('code', Service::DIRECTION)->value('id');
 
                     if (! $serviceId) throw new \Exception('Service direction introuvable');
 
                     $demande->update([
                         'title'              => $request->title,
-                        'status_id'          => $statusId,
+                        'current_step_id'          => $statusId,
                         'current_service_id' => $serviceId,
                         'submitted_at'       => now(),
                         'expires_at'         => null,
@@ -557,7 +557,7 @@ class DemandeController extends Controller
 
                     DemandeHistory::create([
                         'demande_id'  => $demande->id,
-                        'statut'      => $demande->status->code,
+                        'statut'      => $demande->currentStep?->code,
                         'commentaire' => 'Demande soumise',
                         'changed_by'  => auth()->id(),
                         'data'        => $demande->data,
@@ -585,7 +585,7 @@ class DemandeController extends Controller
 
         try {
             $demande = DB::transaction(function () use ($request, $validated, &$storedFilePaths) {
-                $draftStatusId = Status::where('code', DemandeStatusEnum::BROUILLON->value)->value('id');
+                $draftStatusId = WorkflowStep::idForCode('BROUILLON');
 
                 $existing = $request->demande_id ? Demande::with('status')->findOrFail($request->demande_id) : null;
 
@@ -617,7 +617,7 @@ class DemandeController extends Controller
                         'code'       => CodeGeneratorService::generateUniqueRequestCode(TypeDemandeEnum::DEMANDE_ARRET_PAIEMENT->value, (new Demande())->getTable()),
                         'created_by' => auth()->id(),
                         'type'       => TypeDemandeEnum::DEMANDE_ARRET_PAIEMENT->value,
-                        'status_id'  => $draftStatusId,
+                        'current_step_id'  => $draftStatusId,
                         'data'       => $data,
                         'title'      => $request->title,
                     ]);
@@ -675,7 +675,7 @@ class DemandeController extends Controller
                 // First submission — create draft then submit in one shot
                 try {
                     $demande = DB::transaction(function () use ($request, $validated) {
-                        $draftStatusId = Status::where('code', DemandeStatusEnum::BROUILLON->value)->value('id');
+                        $draftStatusId = WorkflowStep::idForCode('BROUILLON');
                         $data = collect($validated)->except([
                             'title', 'action', 'demande_id', 'status_id', 'created_by', 'type', 'current_service_id', 'code',
                         ])->toArray();
@@ -683,7 +683,7 @@ class DemandeController extends Controller
                             'code'       => CodeGeneratorService::generateUniqueRequestCode(TypeDemandeEnum::DEMANDE_REINSERTION->value, (new Demande())->getTable()),
                             'created_by' => auth()->id(),
                             'type'       => TypeDemandeEnum::DEMANDE_REINSERTION->value,
-                            'status_id'  => $draftStatusId,
+                            'current_step_id'  => $draftStatusId,
                             'data'       => $data,
                             'title'      => $request->title,
                             'expires_at' => now()->addYear(),
@@ -691,7 +691,7 @@ class DemandeController extends Controller
                         $this->demandeService->storeFiles($demande, $request->allFiles());
                         return $demande;
                     });
-                    $demande->load('status');
+                    $demande->load('currentStep');
                 } catch (\Exception $e) {
                     Log::error('Erreur lors de la soumission', ['error' => $e->getMessage()]);
                     return back()->with('error', 'Une erreur inattendue est survenue.')->withInput();
@@ -700,14 +700,14 @@ class DemandeController extends Controller
 
             try {
                 DB::transaction(function () use ($demande, $request) {
-                    $statusId  = Status::where('code', DemandeStatusEnum::SOUMISE->value)->value('id');
+                    $statusId  = WorkflowStep::idForCode('SOUMISE');
                     $serviceId = Service::where('code', Service::DIRECTION)->value('id');
 
                     if (! $serviceId) throw new \Exception('Service direction introuvable');
 
                     $demande->update([
                         'title'              => $request->title,
-                        'status_id'          => $statusId,
+                        'current_step_id'          => $statusId,
                         'current_service_id' => $serviceId,
                         'submitted_at'       => now(),
                         'expires_at'         => null,
@@ -717,7 +717,7 @@ class DemandeController extends Controller
 
                     DemandeHistory::create([
                         'demande_id'  => $demande->id,
-                        'statut'      => $demande->status->code,
+                        'statut'      => $demande->currentStep?->code,
                         'commentaire' => 'Demande soumise',
                         'changed_by'  => auth()->id(),
                         'data'        => $demande->data,
@@ -743,14 +743,14 @@ class DemandeController extends Controller
         // SAVE DRAFT
         try {
             $demande = DB::transaction(function () use ($request, $validated) {
-                $draftStatusId = Status::where('code', DemandeStatusEnum::BROUILLON->value)->value('id');
+                $draftStatusId = WorkflowStep::idForCode('BROUILLON');
 
                 $data = collect($validated)->except(['title', 'action', 'demande_id'])->toArray();
 
                 if ($request->demande_id) {
                     $demande = Demande::with('status')->findOrFail($request->demande_id);
                     $updateFields = ['data' => $data, 'title' => $request->title];
-                    if ($demande->status->code === DemandeStatusEnum::BROUILLON->value) {
+                    if ($demande->currentStep?->code === DemandeStatusEnum::BROUILLON->value) {
                         $updateFields['status_id'] = $draftStatusId;
                     }
                     $demande->update($updateFields);
@@ -759,7 +759,7 @@ class DemandeController extends Controller
                         'code'       => CodeGeneratorService::generateUniqueRequestCode(TypeDemandeEnum::DEMANDE_REINSERTION->value, (new Demande())->getTable()),
                         'created_by' => auth()->id(),
                         'type'       => TypeDemandeEnum::DEMANDE_REINSERTION->value,
-                        'status_id'  => $draftStatusId,
+                        'current_step_id'  => $draftStatusId,
                         'data'       => $data,
                         'title'      => $request->title,
                     ]);
@@ -814,7 +814,7 @@ class DemandeController extends Controller
                 // First submission — create draft then submit in one shot
                 try {
                     $demande = DB::transaction(function () use ($request, $validated) {
-                        $draftStatusId = Status::where('code', DemandeStatusEnum::BROUILLON->value)->value('id');
+                        $draftStatusId = WorkflowStep::idForCode('BROUILLON');
                         $data = collect($validated)->except([
                             'title', 'action', 'demande_id', 'status_id', 'created_by', 'type', 'current_service_id', 'code',
                         ])->toArray();
@@ -822,7 +822,7 @@ class DemandeController extends Controller
                             'code'       => CodeGeneratorService::generateUniqueRequestCode(TypeDemandeEnum::DEMANDE_ARRET_VIREMENT->value, (new Demande())->getTable()),
                             'created_by' => auth()->id(),
                             'type'       => TypeDemandeEnum::DEMANDE_ARRET_VIREMENT->value,
-                            'status_id'  => $draftStatusId,
+                            'current_step_id'  => $draftStatusId,
                             'data'       => $data,
                             'title'      => $request->title,
                             'expires_at' => now()->addYear(),
@@ -830,7 +830,7 @@ class DemandeController extends Controller
                         $this->demandeService->storeFiles($demande, $request->allFiles());
                         return $demande;
                     });
-                    $demande->load('status');
+                    $demande->load('currentStep');
                 } catch (\Exception $e) {
                     Log::error('Erreur lors de la soumission', ['error' => $e->getMessage()]);
                     return back()->with('error', 'Une erreur inattendue est survenue.')->withInput();
@@ -839,14 +839,14 @@ class DemandeController extends Controller
 
             try {
                 DB::transaction(function () use ($demande, $request) {
-                    $statusId  = Status::where('code', DemandeStatusEnum::SOUMISE->value)->value('id');
+                    $statusId  = WorkflowStep::idForCode('SOUMISE');
                     $serviceId = Service::where('code', Service::DIRECTION)->value('id');
 
                     if (! $serviceId) throw new \Exception('Service direction introuvable');
 
                     $demande->update([
                         'title'              => $request->title,
-                        'status_id'          => $statusId,
+                        'current_step_id'          => $statusId,
                         'current_service_id' => $serviceId,
                         'submitted_at'       => now(),
                         'expires_at'         => null,
@@ -856,7 +856,7 @@ class DemandeController extends Controller
 
                     DemandeHistory::create([
                         'demande_id'  => $demande->id,
-                        'statut'      => $demande->status->code,
+                        'statut'      => $demande->currentStep?->code,
                         'commentaire' => 'Demande soumise',
                         'changed_by'  => auth()->id(),
                         'data'        => $demande->data,
@@ -882,14 +882,14 @@ class DemandeController extends Controller
         // SAVE DRAFT
         try {
             $demande = DB::transaction(function () use ($request, $validated) {
-                $draftStatusId = Status::where('code', DemandeStatusEnum::BROUILLON->value)->value('id');
+                $draftStatusId = WorkflowStep::idForCode('BROUILLON');
 
                 $data = collect($validated)->except(['title', 'action', 'demande_id', 'consentement'])->toArray();
 
                 if ($request->demande_id) {
                     $demande = Demande::with('status')->findOrFail($request->demande_id);
                     $updateFields = ['data' => $data, 'title' => $request->title];
-                    if ($demande->status->code === DemandeStatusEnum::BROUILLON->value) {
+                    if ($demande->currentStep?->code === DemandeStatusEnum::BROUILLON->value) {
                         $updateFields['status_id'] = $draftStatusId;
                     }
                     $demande->update($updateFields);
@@ -898,7 +898,7 @@ class DemandeController extends Controller
                         'code'       => CodeGeneratorService::generateUniqueRequestCode(TypeDemandeEnum::DEMANDE_ARRET_VIREMENT->value, (new Demande())->getTable()),
                         'created_by' => auth()->id(),
                         'type'       => TypeDemandeEnum::DEMANDE_ARRET_VIREMENT->value,
-                        'status_id'  => $draftStatusId,
+                        'current_step_id'  => $draftStatusId,
                         'data'       => $data,
                         'title'      => $request->title,
                     ]);
@@ -955,14 +955,14 @@ class DemandeController extends Controller
 
             try {
                 DB::transaction(function () use ($demande, $request) {
-                    $statusId  = Status::where('code', DemandeStatusEnum::SOUMISE->value)->value('id');
+                    $statusId  = WorkflowStep::idForCode('SOUMISE');
                     $serviceId = Service::where('code', Service::DIRECTION)->value('id');
 
                     if (! $serviceId) throw new \Exception('Service direction introuvable');
 
                     $demande->update([
                         'title'              => $request->title,
-                        'status_id'          => $statusId,
+                        'current_step_id'          => $statusId,
                         'current_service_id' => $serviceId,
                         'submitted_at'       => now(),
                         'expires_at'         => null,
@@ -972,7 +972,7 @@ class DemandeController extends Controller
 
                     DemandeHistory::create([
                         'demande_id'  => $demande->id,
-                        'statut'      => $demande->status->code,
+                        'statut'      => $demande->currentStep?->code,
                         'commentaire' => 'Demande soumise',
                         'changed_by'  => auth()->id(),
                         'data'        => $demande->data,
@@ -1000,7 +1000,7 @@ class DemandeController extends Controller
 
         try {
             $demande = DB::transaction(function () use ($request, $validated, &$storedFilePaths) {
-                $draftStatusId = Status::where('code', DemandeStatusEnum::BROUILLON->value)->value('id');
+                $draftStatusId = WorkflowStep::idForCode('BROUILLON');
 
                 $existing = $request->demande_id ? Demande::with('status')->findOrFail($request->demande_id) : null;
 
@@ -1027,7 +1027,7 @@ class DemandeController extends Controller
                         'code'       => CodeGeneratorService::generateUniqueRequestCode(TypeDemandeEnum::DEMANDE_PREUVE_EXISTENCE->value, (new Demande())->getTable()),
                         'created_by' => auth()->id(),
                         'type'       => TypeDemandeEnum::DEMANDE_PREUVE_EXISTENCE->value,
-                        'status_id'  => $draftStatusId,
+                        'current_step_id'  => $draftStatusId,
                         'data'       => $data,
                         'title'      => $request->title,
                     ]);
@@ -1097,7 +1097,7 @@ class DemandeController extends Controller
             try {
                 DB::transaction(function () use ($demande, $request) {
 
-                    $statusId  = Status::where('code', DemandeStatusEnum::SOUMISE->value)->value('id');
+                    $statusId  = WorkflowStep::idForCode('SOUMISE');
                     $serviceId = Service::where('code', 'direction')->value('id');
 
                     if (!$serviceId) {
@@ -1106,7 +1106,7 @@ class DemandeController extends Controller
 
                     $demande->update([
                         'title'              => $request->title,
-                        'status_id'          => $statusId,
+                        'current_step_id'          => $statusId,
                         'current_service_id' => $serviceId,
                         'submitted_at'       => now(),
                         'expires_at'         => null,
@@ -1117,7 +1117,7 @@ class DemandeController extends Controller
 
                     DemandeHistory::create([
                         'demande_id'  => $demande->id,
-                        'statut'      => $demande->status->code,
+                        'statut'      => $demande->currentStep?->code,
                         'commentaire' => 'Demande soumise',
                         'changed_by'  => auth()->id(),
                         'data'        => $demande->data,
@@ -1156,12 +1156,12 @@ class DemandeController extends Controller
         */
         try {
             $demande = DB::transaction(function () use ($request, $validated) {
-                $draftStatusId = Status::where('code', DemandeStatusEnum::BROUILLON->value)->value('id');
+                $draftStatusId = WorkflowStep::idForCode('BROUILLON');
 
                 if ($request->demande_id) {
                     $existing = Demande::find($request->demande_id);
                     if ($existing?->needsComplement()) {
-                        $draftStatusId = Status::where('code', 'COMPLEMENT_REQUIS')->value('id');
+                        $draftStatusId = WorkflowStep::idForCode('COMPLEMENT_REQUIS');
                     }
                 } else {
                     $validated['code'] = CodeGeneratorService::generateUniqueRequestCode(
@@ -1186,7 +1186,7 @@ class DemandeController extends Controller
                     array_merge($validated, [
                         'created_by' => auth()->id(),
                         'type'       => TypeDemandeEnum::DEMANDE_ETAT_CARRIERE->value,
-                        'status_id'  => $draftStatusId,
+                        'current_step_id'  => $draftStatusId,
                         'data'       => $data,
                     ])
                 );
@@ -1236,7 +1236,7 @@ class DemandeController extends Controller
                     TypeDemandeEnum::DEMANDE_ETAT_CARRIERE->value,
                     (new Demande())->getTable()
                 );
-                $validated['status_id'] = Status::getStatusPending()->id;
+                $validated['current_step_id'] = WorkflowStep::idForCode('EN_ATTENTE');
                 $validated['created_by'] = auth()->id();
                 $validated['type'] = TypeDemandeEnum::DEMANDE_ETAT_CARRIERE->value;
                 $serviceId = Service::where('code', Service::DIRECTION)
@@ -1327,7 +1327,7 @@ class DemandeController extends Controller
 
                 DemandeHistory::create([
                     'demande_id' => $demande->id,
-                    'statut' => $demande->status->code,
+                    'statut' => $demande->currentStep?->code,
                     'commentaire' => 'Demande créée',
                     'changed_by' => auth()->id(),
                     'data' => $demande->data
@@ -1415,7 +1415,7 @@ class DemandeController extends Controller
                 // First submission — create draft then submit in one shot
                 try {
                     $demande = DB::transaction(function () use ($request, $validated) {
-                        $draftStatusId = Status::where('code', DemandeStatusEnum::BROUILLON->value)->value('id');
+                        $draftStatusId = WorkflowStep::idForCode('BROUILLON');
                         $validated['code'] = CodeGeneratorService::generateUniqueRequestCode(
                             TypeDemandeEnum::DEMANDE_PENSION->value,
                             (new Demande())->getTable()
@@ -1423,7 +1423,7 @@ class DemandeController extends Controller
                         $demande = Demande::create(array_merge($validated, [
                             'created_by' => auth()->id(),
                             'type'       => TypeDemandeEnum::DEMANDE_PENSION->value,
-                            'status_id'  => $draftStatusId,
+                            'current_step_id'  => $draftStatusId,
                             'expires_at' => now()->addYear(),
                         ]));
                         $this->demandeService->storeFiles($demande, $request->allFiles());
@@ -1448,7 +1448,7 @@ class DemandeController extends Controller
             try {
                 DB::transaction(function () use ($demande, $request) {
 
-                    $statusId  = Status::where('code', DemandeStatusEnum::SOUMISE->value)->value('id');
+                    $statusId  = WorkflowStep::idForCode('SOUMISE');
                     $serviceId = Service::where('code', 'direction')->value('id');
 
                     if (!$serviceId) {
@@ -1457,7 +1457,7 @@ class DemandeController extends Controller
 
                     $demande->update([
                         'title'              => $request->title,
-                        'status_id'          => $statusId,
+                        'current_step_id'          => $statusId,
                         'current_service_id' => $serviceId,
                         'submitted_at'       => now(),
                         'expires_at'         => null,
@@ -1468,7 +1468,7 @@ class DemandeController extends Controller
 
                     DemandeHistory::create([
                         'demande_id'  => $demande->id,
-                        'statut'      => $demande->status->code,
+                        'statut'      => $demande->currentStep?->code,
                         'commentaire' => 'Demande soumise',
                         'changed_by'  => auth()->id(),
                         'data'        => $demande->data,
@@ -1508,12 +1508,12 @@ class DemandeController extends Controller
         try {
             $demande = DB::transaction(function () use ($request, $validated) {
 
-                $draftStatusId = Status::where('code', DemandeStatusEnum::BROUILLON->value)->value('id');
+                $draftStatusId = WorkflowStep::idForCode('BROUILLON');
 
                 if ($request->demande_id) {
                     $existing = Demande::find($request->demande_id);
                     if ($existing?->needsComplement()) {
-                        $draftStatusId = Status::where('code', 'COMPLEMENT_REQUIS')->value('id');
+                        $draftStatusId = WorkflowStep::idForCode('COMPLEMENT_REQUIS');
                     }
                 } else {
                     $validated['code'] = CodeGeneratorService::generateUniqueRequestCode(
@@ -1527,7 +1527,7 @@ class DemandeController extends Controller
                     array_merge($validated, [
                         'created_by' => auth()->id(),
                         'type'       => TypeDemandeEnum::DEMANDE_PENSION->value,
-                        'status_id'  => $draftStatusId,
+                        'current_step_id'  => $draftStatusId,
                     ])
                 );
 
@@ -1604,7 +1604,7 @@ class DemandeController extends Controller
                 // First submission — create draft then submit in one shot
                 try {
                     $demande = DB::transaction(function () use ($request, $validated) {
-                        $draftStatusId = Status::where('code', DemandeStatusEnum::BROUILLON->value)->value('id');
+                        $draftStatusId = WorkflowStep::idForCode('BROUILLON');
                         $validated['code'] = CodeGeneratorService::generateUniqueRequestCode(
                             TypeDemandeEnum::DEMANDE_PENSION_REVERSION->value,
                             (new Demande())->getTable()
@@ -1615,7 +1615,7 @@ class DemandeController extends Controller
                         $demande = Demande::create(array_merge($validated, [
                             'created_by' => auth()->id(),
                             'type'       => TypeDemandeEnum::DEMANDE_PENSION_REVERSION->value,
-                            'status_id'  => $draftStatusId,
+                            'current_step_id'  => $draftStatusId,
                             'data'       => $data,
                             'expires_at' => now()->addYear(),
                         ]));
@@ -1641,7 +1641,7 @@ class DemandeController extends Controller
             try {
                 DB::transaction(function () use ($demande, $request) {
 
-                    $statusId  = Status::where('code', DemandeStatusEnum::SOUMISE->value)->value('id');
+                    $statusId  = WorkflowStep::idForCode('SOUMISE');
                     $serviceId = Service::where('code', 'direction')->value('id');
 
                     if (!$serviceId) {
@@ -1650,7 +1650,7 @@ class DemandeController extends Controller
 
                     $demande->update([
                         'title'              => $request->title,
-                        'status_id'          => $statusId,
+                        'current_step_id'          => $statusId,
                         'current_service_id' => $serviceId,
                         'submitted_at'       => now(),
                         'expires_at'         => null,
@@ -1661,7 +1661,7 @@ class DemandeController extends Controller
 
                     DemandeHistory::create([
                         'demande_id'  => $demande->id,
-                        'statut'      => $demande->status->code,
+                        'statut'      => $demande->currentStep?->code,
                         'commentaire' => 'Demande soumise',
                         'changed_by'  => auth()->id(),
                         'data'        => $demande->data,
@@ -1701,12 +1701,12 @@ class DemandeController extends Controller
         try {
             $demande = DB::transaction(function () use ($request, $validated) {
 
-                $draftStatusId = Status::where('code', DemandeStatusEnum::BROUILLON->value)->value('id');
+                $draftStatusId = WorkflowStep::idForCode('BROUILLON');
 
                 if ($request->demande_id) {
                     $existing = Demande::find($request->demande_id);
                     if ($existing?->needsComplement()) {
-                        $draftStatusId = Status::where('code', 'COMPLEMENT_REQUIS')->value('id');
+                        $draftStatusId = WorkflowStep::idForCode('COMPLEMENT_REQUIS');
                     }
                 } else {
                     $validated['code'] = CodeGeneratorService::generateUniqueRequestCode(
@@ -1731,7 +1731,7 @@ class DemandeController extends Controller
                     array_merge($validated, [
                         'created_by' => auth()->id(),
                         'type'       => TypeDemandeEnum::DEMANDE_PENSION_REVERSION->value,
-                        'status_id'  => $draftStatusId,
+                        'current_step_id'  => $draftStatusId,
                         'data' => $data
                     ])
                 );
@@ -1809,7 +1809,7 @@ class DemandeController extends Controller
                 // First submission — create draft then submit in one shot
                 try {
                     $demande = DB::transaction(function () use ($request, $validated) {
-                        $draftStatusId = Status::where('code', DemandeStatusEnum::BROUILLON->value)->value('id');
+                        $draftStatusId = WorkflowStep::idForCode('BROUILLON');
                         $validated['code'] = CodeGeneratorService::generateUniqueRequestCode(
                             TypeDemandeEnum::DEMANDE_ADHESION->value,
                             (new Demande())->getTable()
@@ -1820,7 +1820,7 @@ class DemandeController extends Controller
                         $demande = Demande::create(array_merge($validated, [
                             'created_by' => auth()->id(),
                             'type'       => TypeDemandeEnum::DEMANDE_ADHESION->value,
-                            'status_id'  => $draftStatusId,
+                            'current_step_id'  => $draftStatusId,
                             'data'       => $data,
                             'expires_at' => now()->addYear(),
                         ]));
@@ -1845,7 +1845,7 @@ class DemandeController extends Controller
             try {
                 DB::transaction(function () use ($demande, $request) {
 
-                    $statusId  = Status::where('code', DemandeStatusEnum::SOUMISE->value)->value('id');
+                    $statusId  = WorkflowStep::idForCode('SOUMISE');
                     $serviceId = Service::where('code', 'direction')->value('id');
 
                     if (!$serviceId) {
@@ -1854,7 +1854,7 @@ class DemandeController extends Controller
 
                     $demande->update([
                         'title'              => $request->title,
-                        'status_id'          => $statusId,
+                        'current_step_id'          => $statusId,
                         'current_service_id' => $serviceId,
                         'submitted_at'       => now(),
                         'expires_at'         => null,
@@ -1865,7 +1865,7 @@ class DemandeController extends Controller
 
                     DemandeHistory::create([
                         'demande_id'  => $demande->id,
-                        'statut'      => $demande->status->code,
+                        'statut'      => $demande->currentStep?->code,
                         'commentaire' => 'Demande soumise',
                         'changed_by'  => auth()->id(),
                         'data'        => $demande->data,
@@ -1904,12 +1904,12 @@ class DemandeController extends Controller
         */
         try {
             $demande = DB::transaction(function () use ($request, $validated) {
-                $draftStatusId = Status::where('code', DemandeStatusEnum::BROUILLON->value)->value('id');
+                $draftStatusId = WorkflowStep::idForCode('BROUILLON');
 
                 if ($request->demande_id) {
                     $existing = Demande::find($request->demande_id);
                     if ($existing?->needsComplement()) {
-                        $draftStatusId = Status::where('code', 'COMPLEMENT_REQUIS')->value('id');
+                        $draftStatusId = WorkflowStep::idForCode('COMPLEMENT_REQUIS');
                     }
                 } else {
                     $validated['code'] = CodeGeneratorService::generateUniqueRequestCode(
@@ -1935,7 +1935,7 @@ class DemandeController extends Controller
                     array_merge($validated, [
                         'created_by' => auth()->id(),
                         'type'       => TypeDemandeEnum::DEMANDE_ADHESION->value,
-                        'status_id'  => $draftStatusId,
+                        'current_step_id'  => $draftStatusId,
                         'data'       => $data,
                     ])
                 );
@@ -1971,7 +1971,7 @@ class DemandeController extends Controller
     public function destroyDemande(Demande $demande)
     {
         if (
-            $demande->status->code !== 'BROUILLON' ||
+            $demande->currentStep?->code !== 'BROUILLON' ||
             $demande->user->id !== auth()->id()
         ) {
             abort(403, 'Vous n\'êtes pas autorisé à supprimer cette demande.');
@@ -2030,7 +2030,7 @@ class DemandeController extends Controller
                 // First submission — create draft then submit in one shot
                 try {
                     $demande = DB::transaction(function () use ($request, $validated) {
-                        $draftStatusId = Status::where('code', DemandeStatusEnum::BROUILLON->value)->value('id');
+                        $draftStatusId = WorkflowStep::idForCode('BROUILLON');
                         $validated['code'] = CodeGeneratorService::generateUniqueRequestCode(
                             TypeDemandeEnum::DEMANDE_PENSION_REVERSION->value,
                             (new Demande())->getTable()
@@ -2041,13 +2041,13 @@ class DemandeController extends Controller
                         $demande = Demande::create(array_merge($validated, [
                             'created_by' => auth()->id(),
                             'type'       => TypeDemandeEnum::DEMANDE_PENSION_REVERSION->value,
-                            'status_id'  => $draftStatusId,
+                            'current_step_id'  => $draftStatusId,
                             'data'       => $data,
                             'expires_at' => now()->addYear(),
                         ]));
                         return $demande;
                     });
-                    $demande->load('status');
+                    $demande->load('currentStep');
                 } catch (\Exception $e) {
                     Log::error('Erreur lors de la soumission', ['error' => $e->getMessage()]);
                     return back()->with('error', 'Une erreur inattendue est survenue.')->withInput();
@@ -2057,7 +2057,7 @@ class DemandeController extends Controller
             try {
                 DB::transaction(function () use ($demande, $request) {
 
-                    $statusId  = Status::where('code', DemandeStatusEnum::SOUMISE->value)->value('id');
+                    $statusId  = WorkflowStep::idForCode('SOUMISE');
                     $serviceId = Service::where('code', 'direction')->value('id');
 
                     if (!$serviceId) {
@@ -2066,7 +2066,7 @@ class DemandeController extends Controller
 
                     $demande->update([
                         'title'              => $request->title,
-                        'status_id'          => $statusId,
+                        'current_step_id'          => $statusId,
                         'current_service_id' => $serviceId,
                         'submitted_at'       => now(),
                         'expires_at'         => null,
@@ -2077,7 +2077,7 @@ class DemandeController extends Controller
 
                     DemandeHistory::create([
                         'demande_id'  => $demande->id,
-                        'statut'      => $demande->status->code,
+                        'statut'      => $demande->currentStep?->code,
                         'commentaire' => 'Demande soumise',
                         'changed_by'  => auth()->id(),
                         'data'        => $demande->data,
@@ -2117,12 +2117,12 @@ class DemandeController extends Controller
         try {
             $demande = DB::transaction(function () use ($request, $validated) {
 
-                $draftStatusId = Status::where('code', DemandeStatusEnum::BROUILLON->value)->value('id');
+                $draftStatusId = WorkflowStep::idForCode('BROUILLON');
 
                 if ($request->demande_id) {
                     $existing = Demande::find($request->demande_id);
                     if ($existing?->needsComplement()) {
-                        $draftStatusId = Status::where('code', 'COMPLEMENT_REQUIS')->value('id');
+                        $draftStatusId = WorkflowStep::idForCode('COMPLEMENT_REQUIS');
                     }
                 } else {
                     $validated['code'] = CodeGeneratorService::generateUniqueRequestCode(
@@ -2140,7 +2140,7 @@ class DemandeController extends Controller
                     array_merge($validated, [
                         'created_by' => auth()->id(),
                         'type'       => TypeDemandeEnum::DEMANDE_PENSION_REVERSION->value,
-                        'status_id'  => $draftStatusId,
+                        'current_step_id'  => $draftStatusId,
                         'data'       => $data,
                     ])
                 );

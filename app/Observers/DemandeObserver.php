@@ -16,21 +16,21 @@ class DemandeObserver
      */
     public function updated(Demande $demande): void
     {
-        if (! $demande->wasChanged('status_id')) {
+        if (! $demande->wasChanged('current_step_id')) {
             return;
         }
 
-        $demande->load('status', 'user');
+        $demande->load('currentStep', 'user');
 
-        $newCode = $demande->status->code;
+        $newCode = $demande->currentStep?->code;
         $owner   = $demande->user;
 
         // Notify direction users when a demande is first submitted.
         // Skip if transitioning from COMPLEMENT_REQUIS — that is a complement response, not a new submission.
         if ($newCode === 'SOUMISE') {
-            $previousStatusId = $demande->getOriginal('status_id');
-            $previousCode = $previousStatusId
-                ? \App\Models\Status::find($previousStatusId)?->code
+            $previousStepId = $demande->getOriginal('current_step_id');
+            $previousCode = $previousStepId
+                ? \App\Models\WorkflowStep::find($previousStepId)?->code
                 : null;
 
             if ($previousCode !== 'COMPLEMENT_REQUIS') {

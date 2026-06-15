@@ -12,11 +12,11 @@ use App\Models\ExistenceProofRequest;
 use App\Models\PaymentStopRequests;
 use App\Models\PensionRequest;
 use App\Models\Service;
-use App\Models\Status;
 use App\Models\TypeDemande;
+use App\Models\WorkflowStep;
 use App\Models\User;
-use App\Models\Affectation;
-use App\Models\FluxTransition;
+use App\Models\DemandeInteraction;
+use App\Services\DemandeWorkflowService;
 use App\Notifications\DemandeComplementSoumisNotification;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -67,7 +67,7 @@ class PersonalController extends Controller
 
         // Filter by status
         if ($request->filled('status_id')) {
-            $query->where('status_id', $request->status_id);
+            $query->where('current_step_id', $request->status_id);
         }
 
         // Filter by type de demande
@@ -77,7 +77,7 @@ class PersonalController extends Controller
 
         $demandes = $query->latest()->get();
 
-        $statuses = Status::orderBy('label')->get();
+        $statuses = WorkflowStep::orderBy('nom')->get();
         $typesDemandes = TypeDemande::orderBy('label')->get();
 
         return view('personal.index2', compact(
@@ -329,7 +329,7 @@ class PersonalController extends Controller
         ]);
 
         DB::transaction(function () use ($demande, $request) {
-            $soumiseStatusId = Status::where('code', 'SOUMISE')->value('id');
+            $soumiseStepId = WorkflowStep::idForCode('SOUMISE');
 
             DemandeMessage::create([
                 'demande_id' => $demande->id,
@@ -345,7 +345,7 @@ class PersonalController extends Controller
                 }
             }
 
-            $demande->update(['status_id' => $soumiseStatusId]);
+            if ($soumiseStepId) $demande->update(['current_step_id' => $soumiseStepId]);
 
             DemandeHistory::create([
                 'demande_id'  => $demande->id,
@@ -357,7 +357,7 @@ class PersonalController extends Controller
 
         // Notify direction users that the complement has been submitted
         try {
-            $demande->loadMissing('status');
+            $demande->loadMissing('currentStep');
             $directionUsers = User::whereHas('service', fn ($q) => $q->where('code', Service::DIRECTION))
                 ->orWhereHas('roles', fn ($q) => $q->where('name', 'direction'))
                 ->get();
@@ -376,8 +376,6 @@ class PersonalController extends Controller
     {
         $serviceId = $this->resolveServiceId();
 
-        $terminalCodes = ['APPROUVEE', 'FINALISEE', 'REJETEE', 'ANNULEE'];
-
         $folderStats = [
             ['key' => 'urgent',          'label' => 'Dossiers urgents',           'icon' => 'fa-exclamation-triangle', 'color' => 'red'],
             ['key' => 'pension',         'label' => 'Demandes de pension',        'icon' => 'fa-file-alt',             'color' => 'blue'],
@@ -392,24 +390,23 @@ class PersonalController extends Controller
         foreach ($folderStats as &$folder) {
             $query = Demande::where('current_service_id', $serviceId);
             if ($folder['key'] === 'clotures') {
-                $query->whereHas('status', fn($q) => $q->whereIn('code', $terminalCodes));
+                $query->closed();
             } elseif ($folder['key'] === 'urgent') {
-                $query->whereHas('status', fn($q) => $q->whereNotIn('code', $terminalCodes))
-                      ->where(fn($q) => $q
-                          ->where('is_urgent', true)
-                          ->orWhere('submitted_at', '<=', now()->subDays(30))
-                      );
+                $query->active()->where(fn($q) => $q
+                    ->where('is_urgent', true)
+                    ->orWhere('submitted_at', '<=', now()->subDays(30))
+                );
             } else {
-                $query->whereHas('status', fn($q) => $q->whereNotIn('code', $terminalCodes))
-                      ->where('categorie', $folder['key']);
+                $query->active()->where('categorie', $folder['key']);
             }
             $folder['count'] = $query->count();
         }
         unset($folder);
 
-        $pendingAffectations = Affectation::with(['demande.status', 'demande.user'])
-            ->where('service_id', $serviceId)
-            ->where('statut', 'EN_ATTENTE')
+        $pendingAffectations = DemandeInteraction::with(['demande.user'])
+            ->where('type', DemandeInteraction::TYPE_AVIS)
+            ->where('to_service_id', $serviceId)
+            ->where('statut', DemandeInteraction::STATUT_EN_ATTENTE)
             ->latest()
             ->get();
 
@@ -502,11 +499,11 @@ class PersonalController extends Controller
 
     public function showRequest($id)
     {
-        $requestModel = Demande::with(['status', 'activityLogs.user', 'affectations.service'])->findOrFail($id);
-        $allowedServices = $requestModel->current_service_id
-            ? FluxTransition::destinationsFor($requestModel->current_service_id, $requestModel->type, $requestModel->is_urgent)
-            : collect();
-        $affectations = $requestModel->affectations()->with('service', 'affectePar')->get();
+        $workflowService = app(DemandeWorkflowService::class);
+
+        $requestModel = Demande::with(['affectations.toService'])->findOrFail($id);
+        $allowedServices = $workflowService->availableDestinations($requestModel, auth()->user());
+        $affectations = $requestModel->affectations()->with('toService', 'initiatedBy')->get();
 
         // Pending reception workflow visible to the current agent (own service or delegated)
         $user = auth()->user();
@@ -514,30 +511,33 @@ class PersonalController extends Controller
             ? \App\Models\AgentDelegation::actingServiceIds($user->id, $user->service_id)
             : [];
 
-        $pendingWorkflow = $requestModel->workflows()
+        $pendingWorkflow = $requestModel->interactions()
             ->with(['fromService', 'toService'])
-            ->where('reception_status', 'pending')
+            ->where('type', DemandeInteraction::TYPE_TRANSFERT)
+            ->where('statut', DemandeInteraction::STATUT_EN_ATTENTE)
             ->when(
                 count($actingServiceIds) > 0 && !($user && $user->hasRole('admin')),
-                fn($q) => $q->whereIn('to_service_id', $actingServiceIds)
+                fn ($q) => $q->whereIn('to_service_id', $actingServiceIds)
             )
             ->latest()
             ->first();
 
         // Detect if the current service is consulted for avis (not the dossier owner)
         $pendingAffectation = ($user && $user->service_id)
-            ? Affectation::where('demande_id', $requestModel->id)
-                ->where('service_id', $user->service_id)
-                ->where('statut', 'EN_ATTENTE')
+            ? DemandeInteraction::where('demande_id', $requestModel->id)
+                ->where('type', DemandeInteraction::TYPE_AVIS)
+                ->where('to_service_id', $user->service_id)
+                ->where('statut', DemandeInteraction::STATUT_EN_ATTENTE)
                 ->first()
             : null;
 
         // Block access once avis is submitted, unless the service now owns the dossier via workflow
         $isCurrentServiceOwner = $user?->service_id && $requestModel->current_service_id === $user->service_id;
         if (!$isCurrentServiceOwner && !$user?->hasRole(['admin', 'direction']) && $user?->service_id) {
-            $submittedAvis = Affectation::where('demande_id', $requestModel->id)
-                ->where('service_id', $user->service_id)
-                ->whereIn('statut', ['TERMINE', 'REJETE'])
+            $submittedAvis = DemandeInteraction::where('demande_id', $requestModel->id)
+                ->where('type', DemandeInteraction::TYPE_AVIS)
+                ->where('to_service_id', $user->service_id)
+                ->whereIn('statut', [DemandeInteraction::STATUT_TERMINE, DemandeInteraction::STATUT_REJETE])
                 ->exists();
             abort_if($submittedAvis, 403, 'Votre avis a été soumis. Vous n\'avez plus accès à ce dossier.');
         }
@@ -563,7 +563,7 @@ class PersonalController extends Controller
             }
         });
 
-        $isClosed = in_array($requestModel->status->code, ['APPROUVEE', 'FINALISEE', 'REJETEE', 'ANNULEE']);
+        $isClosed = $requestModel->isClosed();
 
         return view('personal.request-details', [
             'from'             => 'cart',
@@ -584,8 +584,6 @@ class PersonalController extends Controller
         $serviceId = $this->resolveServiceId();
         $folder    = $request->input('folder');
 
-        $terminalCodes = ['APPROUVEE', 'FINALISEE', 'REJETEE', 'ANNULEE'];
-
         $folders = [
             'urgent'          => 'Dossiers urgents',
             'pension'         => 'Demandes de pension',
@@ -598,19 +596,17 @@ class PersonalController extends Controller
 
         abort_unless(isset($folders[$folder]), 404);
 
-        $folderScope = function ($q) use ($folder, $serviceId, $terminalCodes) {
+        $folderScope = function ($q) use ($folder, $serviceId) {
             $q->where('current_service_id', $serviceId);
             if ($folder === 'clotures') {
-                $q->whereHas('status', fn($q2) => $q2->whereIn('code', $terminalCodes));
+                $q->closed();
             } elseif ($folder === 'urgent') {
-                $q->whereHas('status', fn($q2) => $q2->whereNotIn('code', $terminalCodes))
-                  ->where(fn($q2) => $q2
-                      ->where('is_urgent', true)
-                      ->orWhere('submitted_at', '<=', now()->subDays(30))
-                  );
+                $q->active()->where(fn($q2) => $q2
+                    ->where('is_urgent', true)
+                    ->orWhere('submitted_at', '<=', now()->subDays(30))
+                );
             } else {
-                $q->whereHas('status', fn($q2) => $q2->whereNotIn('code', $terminalCodes))
-                  ->where('categorie', $folder);
+                $q->active()->where('categorie', $folder);
             }
         };
 
@@ -618,18 +614,18 @@ class PersonalController extends Controller
         $type     = $folders[$folder];
 
         $statusCodes = [
-            'pending'     => Status::STATUS_PENDING,
-            'in_progress' => Status::STATUS_IN_PROGRESS,
-            'rejected'    => Status::STATUS_REJECTED,
-            'canceled'    => Status::STATUS_CANCELED,
-            'approved'    => Status::STATUS_APPROVED,
-            'completed'   => Status::STATUS_COMPLETED,
+            'pending'     => 'EN_ATTENTE',
+            'in_progress' => 'EN_COURS',
+            'rejected'    => 'REJETEE',
+            'canceled'    => 'ANNULEE',
+            'approved'    => 'APPROUVEE',
+            'completed'   => 'FINALISEE',
         ];
 
         $stats = [];
         foreach ($statusCodes as $key => $code) {
             $stats[$key] = Demande::where(fn($q) => $folderScope($q))
-                ->whereHas('status', fn($q) => $q->where('code', $code))
+                ->whereHas('currentStep', fn($q) => $q->where('code', $code))
                 ->count();
         }
 

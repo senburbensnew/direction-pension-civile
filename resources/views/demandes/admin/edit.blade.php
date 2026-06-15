@@ -1,4 +1,4 @@
-@extends('layouts.admin')
+﻿@extends('layouts.admin')
 
 @section('title', 'Dossier #' . ($demande->code ?? $demande->id))
 
@@ -27,9 +27,10 @@
     {{-- ── Provenance du dossier (visible Direction) ──────────────────────── --}}
     @role('direction')
     @php
-        $lastIncoming = $demande->workflows()
-            ->with(['fromService', 'toService', 'user'])
-            ->where('reception_status', 'accepted')
+        $lastIncoming = $demande->interactions()
+            ->with(['fromService', 'toService', 'initiatedBy'])
+            ->where('type', \App\Models\DemandeInteraction::TYPE_TRANSFERT)
+            ->where('statut', \App\Models\DemandeInteraction::STATUT_ACCEPTE)
             ->whereNotNull('from_service_id')
             ->latest()
             ->first();
@@ -46,7 +47,7 @@
                 </p>
                 <p class="text-amber-700 mt-0.5">
                     Déclenché par
-                    <span class="font-medium">{{ $lastIncoming->user?->name ?? '—' }}</span>
+                    <span class="font-medium">{{ $lastIncoming->initiatedBy?->name ?? '—' }}</span>
                     le {{ $lastIncoming->created_at->format('d/m/Y à H:i') }}
                     <span class="text-amber-500 ml-1">({{ $lastIncoming->created_at->diffForHumans() }})</span>
                 </p>
@@ -60,9 +61,10 @@
 
     {{-- ── Transfert en cours de traitement (lecture seule — géré par l'agent du service) ── --}}
     @php
-        $pendingWorkflow = $demande->workflows()
-            ->with(['fromService', 'toService', 'user'])
-            ->where('reception_status', 'pending')
+        $pendingWorkflow = $demande->interactions()
+            ->with(['fromService', 'toService', 'initiatedBy'])
+            ->where('type', \App\Models\DemandeInteraction::TYPE_TRANSFERT)
+            ->where('statut', \App\Models\DemandeInteraction::STATUT_EN_ATTENTE)
             ->latest()
             ->first();
     @endphp
@@ -79,7 +81,7 @@
                 </p>
                 <p class="text-sky-700 mt-0.5">
                     Transféré depuis <span class="font-medium">{{ $pendingWorkflow->fromService->nom ?? '—' }}</span>
-                    par <span class="font-medium">{{ $pendingWorkflow->user?->name ?? '—' }}</span>
+                    par <span class="font-medium">{{ $pendingWorkflow->initiatedBy?->name ?? '—' }}</span>
                     le {{ $pendingWorkflow->created_at->format('d/m/Y à H:i') }}
                     <span class="text-sky-400 ml-1">({{ $pendingWorkflow->created_at->diffForHumans() }})</span>
                 </p>
@@ -107,10 +109,14 @@
                 @endif
                 @if($demande->status)
                     <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold
-                        {{ \App\Models\Status::getStatusStyle($demande->status->code) }}">
-                        {{ $demande->status->label }}
+                        {{ \App\Models\WorkflowStep::getStatusStyle($demande->currentStep?->code) }}">
+                        {{ $demande->currentStep?->nom }}
                     </span>
                 @endif
+                <a href="{{ route('demande.pdf', $demande) }}" target="_blank"
+                   class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-gray-200 text-xs font-medium text-gray-600 hover:bg-gray-50 hover:text-gray-900 transition">
+                    <i class="fas fa-file-pdf text-red-400"></i> Télécharger PDF
+                </a>
             </div>
         </div>
 
@@ -142,16 +148,122 @@
         </dl>
     </div>
 
+    {{-- ── Affectation agent ───────────────────────────────────────────────── --}}
+    @php
+        $currentAssignment = $demande->currentAssignment()->with(['agent', 'assignePar'])->first();
+        $agentsDisponibles = \App\Models\User::when($demande->current_service_id,
+                fn($q) => $q->where('service_id', $demande->current_service_id)
+            )->where('is_active', true)->orderBy('name')->get();
+        $isClosed = in_array($demande->status?->code, ['APPROUVEE', 'FINALISEE', 'REJETEE', 'ANNULEE']);
+    @endphp
+    @if(!$isClosed)
+    <div class="bg-white border border-gray-200 rounded-xl shadow-sm p-5"
+         x-data="{ showForm: false }">
+        <div class="flex items-center justify-between mb-3">
+            <h2 class="text-sm font-semibold text-gray-700 flex items-center gap-2">
+                <i class="fas fa-user-check text-indigo-400"></i> Agent responsable
+            </h2>
+            @if($agentsDisponibles->isNotEmpty())
+                <button type="button" @click="showForm = !showForm"
+                        class="text-xs text-indigo-600 hover:underline font-medium">
+                    <span x-text="showForm ? 'Annuler' : '{{ $currentAssignment ? 'Réaffecter' : 'Affecter' }}'"></span>
+                </button>
+            @endif
+        </div>
+
+        @if($currentAssignment)
+            <div class="flex items-center gap-3">
+                <div class="w-9 h-9 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-700 font-bold text-sm flex-shrink-0">
+                    {{ strtoupper(substr($currentAssignment->agent->name, 0, 1)) }}
+                </div>
+                <div>
+                    <p class="text-sm font-semibold text-gray-800">{{ $currentAssignment->agent->name }}</p>
+                    <p class="text-xs text-gray-400">
+                        Affecté par {{ $currentAssignment->assignePar->name }}
+                        · {{ $currentAssignment->created_at->format('d/m/Y à H:i') }}
+                    </p>
+                    @if($currentAssignment->note)
+                        <p class="text-xs text-gray-500 italic mt-0.5">"{{ $currentAssignment->note }}"</p>
+                    @endif
+                </div>
+            </div>
+        @else
+            <p class="text-sm text-gray-400 italic">Aucun agent affecté pour le moment.</p>
+        @endif
+
+        <div x-show="showForm" x-cloak x-transition class="mt-4 border-t border-gray-100 pt-4">
+            @if($agentsDisponibles->isEmpty())
+                <p class="text-xs text-gray-400">Aucun agent actif dans le service courant.</p>
+            @else
+                <form method="POST" action="{{ route('admin.demandes.assigner-agent', $demande) }}">
+                    @csrf
+                    <div class="flex flex-col sm:flex-row gap-3">
+                        <select name="user_id" required
+                                class="flex-1 text-sm border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-indigo-300 focus:outline-none">
+                            <option value="">— Choisir un agent —</option>
+                            @foreach($agentsDisponibles as $agent)
+                                <option value="{{ $agent->id }}"
+                                    {{ $currentAssignment?->user_id === $agent->id ? 'selected' : '' }}>
+                                    {{ $agent->name }}
+                                </option>
+                            @endforeach
+                        </select>
+                        <button type="submit"
+                                class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium rounded-lg transition">
+                            Confirmer
+                        </button>
+                    </div>
+                    <input type="text" name="note" placeholder="Note (optionnel)"
+                           class="mt-2 w-full text-sm border border-gray-200 rounded-lg px-3 py-2 focus:ring-2 focus:ring-indigo-200 focus:outline-none text-gray-700">
+                </form>
+            @endif
+        </div>
+
+        {{-- Historique des affectations --}}
+        @php $pastAssignments = $demande->assignments()->with(['agent', 'assignePar'])->whereNotNull('ended_at')->get(); @endphp
+        @if($pastAssignments->isNotEmpty())
+            <div x-data="{ open: false }" class="mt-4 border-t border-gray-100 pt-3">
+                <button type="button" @click="open = !open"
+                        class="text-xs text-gray-400 hover:text-gray-600 flex items-center gap-1">
+                    <i class="fas fa-history"></i>
+                    <span x-text="open ? 'Masquer l\'historique' : 'Voir l\'historique ({{ $pastAssignments->count() }})'"></span>
+                </button>
+                <div x-show="open" x-cloak x-transition class="mt-2 space-y-2">
+                    @foreach($pastAssignments as $past)
+                        <div class="flex items-center gap-2 text-xs text-gray-500">
+                            <div class="w-6 h-6 rounded-full bg-gray-100 flex items-center justify-center text-gray-500 font-bold flex-shrink-0 text-[10px]">
+                                {{ strtoupper(substr($past->agent->name, 0, 1)) }}
+                            </div>
+                            <span class="font-medium text-gray-700">{{ $past->agent->name }}</span>
+                            <span class="text-gray-300">·</span>
+                            <span>{{ $past->created_at->format('d/m/Y') }} → {{ $past->ended_at->format('d/m/Y') }}</span>
+                            <span class="text-gray-300">·</span>
+                            <span class="italic">par {{ $past->assignePar->name }}</span>
+                            @if($past->note)
+                                <span class="text-gray-300">·</span>
+                                <span class="italic text-gray-400">"{{ $past->note }}"</span>
+                            @endif
+                        </div>
+                    @endforeach
+                </div>
+            </div>
+        @endif
+    </div>
+    @endif
+
     {{-- ── Décision finale Direction ───────────────────────────────────────── --}}
     @role('direction')
         @php
             $directionServiceId = \App\Models\Service::where('code', \App\Models\Service::DIRECTION)->value('id');
             $isAtDirection = $demande->current_service_id === $directionServiceId;
             $isClosed = in_array($demande->status?->code, ['APPROUVEE', 'FINALISEE', 'REJETEE', 'ANNULEE']);
-            $canFinalize = $demande->workflows()
-                ->where('reception_status', 'accepted')
+            $hasBeenRouted = $demande->interactions()
+                ->where('type', \App\Models\DemandeInteraction::TYPE_TRANSFERT)
+                ->where('statut', \App\Models\DemandeInteraction::STATUT_ACCEPTE)
                 ->whereNotNull('from_service_id')
                 ->exists();
+            $allConditionsMet = empty(array_filter($requiredConditions ?? [], fn($c) => !$c['is_met']));
+            $canFinalize = $hasBeenRouted && $allConditionsMet;
         @endphp
         @if($isAtDirection && !$isClosed)
             <div class="bg-blue-50 border-2 border-blue-300 rounded-xl p-5"
@@ -164,12 +276,46 @@
                         <h3 class="font-semibold text-blue-900">Décision finale — Direction générale</h3>
                         <p class="text-sm text-blue-700 mt-0.5 mb-3">Choisissez l'action à effectuer sur ce dossier.</p>
 
+                        {{-- Conditions préalables --}}
+                        @if(!empty($requiredConditions))
+                            <div class="mb-4 bg-white border border-blue-200 rounded-lg overflow-hidden">
+                                <div class="px-3 py-2 bg-blue-100 border-b border-blue-200">
+                                    <p class="text-xs font-semibold text-blue-800 uppercase tracking-wide">
+                                        <i class="fas fa-tasks mr-1"></i> Conditions requises pour Approuver / Clôturer
+                                    </p>
+                                </div>
+                                <ul class="divide-y divide-gray-100">
+                                    @foreach($requiredConditions as $condition)
+                                        <li class="flex items-center gap-3 px-3 py-2.5">
+                                            @if($condition['is_met'])
+                                                <span class="w-5 h-5 rounded-full bg-green-100 flex items-center justify-center flex-shrink-0">
+                                                    <i class="fas fa-check text-green-600 text-[10px]"></i>
+                                                </span>
+                                                <span class="text-sm text-green-800 font-medium">{{ $condition['service_name'] }}</span>
+                                                <span class="ml-auto text-xs text-green-600 font-medium">Traité</span>
+                                            @else
+                                                <span class="w-5 h-5 rounded-full bg-red-100 flex items-center justify-center flex-shrink-0">
+                                                    <i class="fas fa-times text-red-500 text-[10px]"></i>
+                                                </span>
+                                                <span class="text-sm text-gray-700">{{ $condition['service_name'] }}</span>
+                                                <span class="ml-auto text-xs text-red-500 font-medium">En attente</span>
+                                            @endif
+                                        </li>
+                                    @endforeach
+                                </ul>
+                            </div>
+                        @endif
+
                         @if(!$canFinalize)
                             <div class="flex items-start gap-2 bg-yellow-50 border border-yellow-300 rounded-lg px-3 py-2 mb-3">
                                 <i class="fas fa-exclamation-triangle text-yellow-500 mt-0.5 text-sm flex-shrink-0"></i>
                                 <p class="text-xs text-yellow-800">
-                                    L'approbation et la clôture nécessitent que le dossier ait d'abord été
-                                    traité et acheminé par un autre service. Le rejet et l'annulation restent possibles.
+                                    @if(!$hasBeenRouted)
+                                        L'approbation et la clôture nécessitent que le dossier ait d'abord été traité et acheminé par un autre service.
+                                    @else
+                                        Le circuit de traitement n'est pas complet. Tous les services listés ci-dessus doivent avoir traité le dossier.
+                                    @endif
+                                    Le rejet et l'annulation restent possibles.
                                 </p>
                             </div>
                         @endif
@@ -256,12 +402,18 @@
     @endrole
 
     {{-- ── Historique des transferts ────────────────────────────────────────── --}}
-    @php $workflows = $demande->workflows()->with(['fromService','toService','user','receptionBy'])->latest()->get(); @endphp
-    @if($workflows->isNotEmpty())
+    @php
+        $transferts = $demande->interactions()
+            ->with(['fromService', 'toService', 'initiatedBy', 'reponduBy'])
+            ->where('type', \App\Models\DemandeInteraction::TYPE_TRANSFERT)
+            ->latest()
+            ->get();
+    @endphp
+    @if($transferts->isNotEmpty())
         <div class="bg-white border border-gray-200 rounded-xl shadow-sm p-6">
             <h2 class="text-sm font-semibold text-gray-700 mb-4">Historique des transferts</h2>
             <div class="space-y-3">
-                @foreach($workflows as $wf)
+                @foreach($transferts as $wf)
                     @php
                         $wfIconClass = $wf->isAccepted()
                             ? 'bg-green-100 text-green-600'
@@ -278,20 +430,20 @@
                                 → <span class="font-medium">{{ $wf->toService?->nom ?? '—' }}</span>
                             </p>
                             <p class="text-gray-400 text-xs mt-0.5">
-                                Par {{ $wf->user?->name ?? '—' }} · {{ $wf->created_at->format('d/m/Y H:i') }}
+                                Par {{ $wf->initiatedBy?->name ?? '—' }} · {{ $wf->created_at->format('d/m/Y H:i') }}
                                 @if($wf->commentaire)
                                     · <em>{{ $wf->commentaire }}</em>
                                 @endif
                             </p>
                             @if($wf->isRefused())
                                 <p class="text-red-600 text-xs mt-0.5">
-                                    Refusé par {{ $wf->receptionBy?->name ?? '—' }}
-                                    @if($wf->reception_motif) · "{{ $wf->reception_motif }}" @endif
+                                    Refusé par {{ $wf->reponduBy?->name ?? '—' }}
+                                    @if($wf->reponse) · "{{ $wf->reponse }}" @endif
                                 </p>
-                            @elseif($wf->isAccepted() && $wf->reception_at)
+                            @elseif($wf->isAccepted() && $wf->repondu_at)
                                 <p class="text-green-600 text-xs mt-0.5">
-                                    Réceptionné par {{ $wf->receptionBy?->name ?? '—' }}
-                                    le {{ $wf->reception_at->format('d/m/Y H:i') }}
+                                    Réceptionné par {{ $wf->reponduBy?->name ?? '—' }}
+                                    le {{ $wf->repondu_at->format('d/m/Y H:i') }}
                                 </p>
                             @endif
                         </div>
@@ -301,11 +453,52 @@
         </div>
     @endif
 
-    {{-- ── Historique des statuts ──────────────────────────────────────────── --}}
+    {{-- ── Pièces jointes ───────────────────────────────────────────────── --}}
+    @php $mediaItems = $demande->getMedia(); @endphp
+    @if($mediaItems->isNotEmpty())
+    <div class="bg-white border border-gray-200 rounded-xl shadow-sm p-6">
+        <h2 class="text-sm font-semibold text-gray-700 mb-4">
+            <i class="fas fa-paperclip text-gray-400 mr-1"></i> Pièces jointes ({{ $mediaItems->count() }})
+        </h2>
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            @foreach($mediaItems as $media)
+                @php
+                    $isImage = str_starts_with($media->mime_type, 'image/');
+                    $isPdf   = $media->mime_type === 'application/pdf';
+                    $sizeMo  = number_format($media->size / 1048576, 2);
+                @endphp
+                <div class="flex items-center gap-3 p-3 rounded-lg border border-gray-100 hover:bg-gray-50 group">
+                    <div class="w-9 h-9 rounded flex items-center justify-center flex-shrink-0
+                        {{ $isImage ? 'bg-blue-50' : ($isPdf ? 'bg-red-50' : 'bg-gray-100') }}">
+                        <i class="fas {{ $isImage ? 'fa-image text-blue-400' : ($isPdf ? 'fa-file-pdf text-red-400' : 'fa-file text-gray-400') }} text-sm"></i>
+                    </div>
+                    <div class="flex-1 min-w-0">
+                        <p class="text-xs font-medium text-gray-700 truncate">{{ $media->file_name }}</p>
+                        <p class="text-[10px] text-gray-400">{{ $media->collection_name }} · {{ $sizeMo }} Mo</p>
+                    </div>
+                    <div class="flex gap-1 opacity-0 group-hover:opacity-100 transition">
+                        @if($isImage)
+                            <a href="{{ $media->getUrl() }}" target="_blank"
+                               class="p-1.5 rounded text-gray-400 hover:text-blue-600 hover:bg-blue-50 transition" title="Aperçu">
+                                <i class="fas fa-eye text-xs"></i>
+                            </a>
+                        @endif
+                        <a href="{{ $media->getUrl() }}" download="{{ $media->file_name }}"
+                           class="p-1.5 rounded text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 transition" title="Télécharger">
+                            <i class="fas fa-download text-xs"></i>
+                        </a>
+                    </div>
+                </div>
+            @endforeach
+        </div>
+    </div>
+    @endif
+
+    {{-- ── Historique des états ──────────────────────────────────────────── --}}
     @php $histories = $demande->histories()->with('changer')->latest()->get(); @endphp
     @if($histories->isNotEmpty())
         <div class="bg-white border border-gray-200 rounded-xl shadow-sm p-6">
-            <h2 class="text-sm font-semibold text-gray-700 mb-4">Historique des statuts</h2>
+            <h2 class="text-sm font-semibold text-gray-700 mb-4">Historique des états</h2>
             <div class="space-y-2">
                 @foreach($histories as $h)
                     <div class="text-sm flex gap-3">

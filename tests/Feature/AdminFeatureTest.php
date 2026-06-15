@@ -201,44 +201,50 @@ class AdminFeatureTest extends TestCase
     }
 
     /** @test */
-    public function admin_can_create_flux_transition(): void
+    public function admin_can_create_step_transition(): void
     {
-        $admin    = $this->makeAdmin();
-        $source   = Service::where('code', Service::DIRECTION)->first();
-        $dest     = Service::where('code', Service::LIQUIDATION)->first();
+        $admin  = $this->makeAdmin();
+        $source = Service::where('code', Service::DIRECTION)->first();
+        $dest   = Service::where('code', Service::LIQUIDATION)->first();
 
-        $response = $this->actingAs($admin)->post(route('admin.flux-transitions.store'), [
-            'service_source_id'      => $source->id,
-            'service_destination_id' => $dest->id,
-            'action'                 => 'transfer',
-            'ordre'                  => 1,
+        $fromStep = \App\Models\WorkflowStep::create(['code' => 'DIR',  'nom' => 'Direction',   'service_id' => $source->id, 'ordre' => 10]);
+        $toStep   = \App\Models\WorkflowStep::create(['code' => 'LIQ',  'nom' => 'Liquidation', 'service_id' => $dest->id,   'ordre' => 20]);
+
+        $response = $this->actingAs($admin)->post(route('admin.flux-transitions.step-transitions.store'), [
+            'from_step_id'   => $fromStep->id,
+            'to_step_id'     => $toStep->id,
+            'action'         => 'transfer',
+            'is_urgent_only' => false,
         ]);
 
         $response->assertRedirect();
         $response->assertSessionHas('success');
 
-        $this->assertDatabaseHas('flux_transitions', [
-            'service_source_id'      => $source->id,
-            'service_destination_id' => $dest->id,
+        $this->assertDatabaseHas('workflow_step_transitions', [
+            'from_step_id' => $fromStep->id,
+            'to_step_id'   => $toStep->id,
         ]);
     }
 
     /** @test */
-    public function admin_can_delete_flux_transition(): void
+    public function admin_can_delete_step_transition(): void
     {
-        $admin    = $this->makeAdmin();
-        $source   = Service::where('code', Service::DIRECTION)->first();
-        $dest     = Service::where('code', Service::LIQUIDATION)->first();
+        $admin  = $this->makeAdmin();
+        $source = Service::where('code', Service::DIRECTION)->first();
+        $dest   = Service::where('code', Service::LIQUIDATION)->first();
 
-        $transition = \App\Models\FluxTransition::create([
-            'service_source_id'      => $source->id,
-            'service_destination_id' => $dest->id,
-            'action'                 => 'transfer',
-            'ordre'                  => 1,
+        $fromStep = \App\Models\WorkflowStep::create(['code' => 'DIR', 'nom' => 'Direction',   'service_id' => $source->id, 'ordre' => 10]);
+        $toStep   = \App\Models\WorkflowStep::create(['code' => 'LIQ', 'nom' => 'Liquidation', 'service_id' => $dest->id,   'ordre' => 20]);
+
+        $transition = \App\Models\WorkflowStepTransition::create([
+            'from_step_id' => $fromStep->id,
+            'to_step_id'   => $toStep->id,
+            'action'       => 'transfer',
+            'ordre'        => 10,
         ]);
 
         $response = $this->actingAs($admin)
-            ->delete(route('admin.flux-transitions.destroy', $transition));
+            ->delete(route('admin.flux-transitions.step-transitions.destroy', $transition));
 
         $response->assertRedirect();
         $this->assertModelMissing($transition);
