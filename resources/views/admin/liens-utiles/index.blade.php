@@ -12,20 +12,34 @@
     <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <div>
             <h1 class="text-xl font-bold text-gray-800">Liens utiles</h1>
-            <p class="text-sm text-gray-500 mt-0.5">Gérez les liens vers les institutions partenaires.</p>
+            <p class="text-sm text-gray-500 mt-0.5">
+                Gérez les liens affichés sur
+                <a href="{{ route('liens-utiles') }}" target="_blank" class="text-blue-600 hover:underline">/liens-utiles</a>.
+            </p>
         </div>
-        <div class="flex items-center gap-2">
-            <form method="GET" class="flex gap-2">
+        <div class="flex items-center gap-2 flex-wrap justify-end">
+            <form method="GET" class="flex gap-2 flex-wrap">
                 <input type="text" name="q" value="{{ request('q') }}"
                     placeholder="Rechercher…"
-                    class="border border-gray-300 rounded-lg px-3 py-2 text-sm w-52 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    class="border border-gray-300 rounded-lg px-3 py-2 text-sm w-44 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                <select name="category" onchange="this.form.submit()"
+                    class="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    <option value="">Toutes catégories</option>
+                    @foreach($categories as $cat)
+                        <option value="{{ $cat }}" {{ request('category') === $cat ? 'selected' : '' }}>{{ $cat }}</option>
+                    @endforeach
+                </select>
                 <button type="submit" class="px-3 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 text-sm rounded-lg">
                     <i class="fas fa-search"></i>
                 </button>
-                @if(request('q'))
+                @if(request('q') || request('category'))
                     <a href="{{ route('admin.liens-utiles.index') }}" class="px-3 py-2 text-sm text-gray-500 hover:text-gray-700"><i class="fas fa-times"></i></a>
                 @endif
             </form>
+            <a href="{{ route('liens-utiles') }}" target="_blank"
+                class="inline-flex items-center gap-1.5 px-4 py-2 border border-gray-300 bg-white hover:bg-gray-50 text-gray-700 text-sm font-medium rounded-lg">
+                <i class="fas fa-eye"></i> Voir le site
+            </a>
             <button @click="openCreate()" class="inline-flex items-center gap-1.5 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg">
                 <i class="fas fa-plus"></i> Ajouter
             </button>
@@ -40,6 +54,7 @@
                     <th class="px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide text-left">Abrév.</th>
                     <th class="px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide text-left">URL</th>
                     <th class="px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide text-left">Catégorie</th>
+                    <th class="px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide text-center">Ordre</th>
                     <th class="px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide text-center">Statut</th>
                     <th class="px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide text-center">Actions</th>
                 </tr>
@@ -55,6 +70,7 @@
                             </a>
                         </td>
                         <td class="px-4 py-3 text-gray-500 text-xs">{{ $link->category }}</td>
+                        <td class="px-4 py-3 text-center text-gray-400 text-xs">{{ $link->order_column }}</td>
                         <td class="px-4 py-3 text-center">
                             <span class="text-xs font-medium px-2 py-0.5 rounded-full {{ $link->published ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-600' }}">
                                 {{ $link->published ? 'Publié' : 'Masqué' }}
@@ -70,7 +86,7 @@
                                 </form>
                                 <button @click="openEdit({{ $link->toJson() }})"
                                     class="px-2 py-1 bg-blue-100 text-blue-700 hover:bg-blue-200 rounded text-xs font-medium">
-                                    <i class="fas fa-pencil-alt"></i> Éditer
+                                    <i class="fas fa-pencil-alt"></i>
                                 </button>
                                 <form action="{{ route('admin.liens-utiles.destroy', $link) }}" method="POST"
                                     onsubmit="return confirm('Supprimer ce lien ?')">
@@ -84,7 +100,7 @@
                     </tr>
                 @empty
                     <tr>
-                        <td colspan="6" class="px-4 py-10 text-center text-gray-400">
+                        <td colspan="7" class="px-4 py-10 text-center text-gray-400">
                             <i class="fas fa-link text-3xl mb-2 block"></i>
                             Aucun lien trouvé.
                         </td>
@@ -104,7 +120,7 @@
         <div class="relative bg-white rounded-xl shadow-xl w-full max-w-lg p-6 space-y-4 z-10">
             <h2 class="text-lg font-bold text-gray-800" x-text="editing ? 'Modifier le lien' : 'Ajouter un lien'"></h2>
 
-            <form :action="editing ? '/admin/liens-utiles/' + form.id : '{{ route('admin.liens-utiles.store') }}'" method="POST" class="space-y-3">
+            <form :action="editing ? '{{ url('/admin/liens-utiles') }}/' + form.id : '{{ route('admin.liens-utiles.store') }}'" method="POST" class="space-y-3">
                 @csrf
                 <template x-if="editing"><input type="hidden" name="_method" value="PUT"></template>
 
@@ -124,6 +140,9 @@
                         <input type="text" name="category" x-model="form.category" list="lien-categories"
                             class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
                         <datalist id="lien-categories">
+                            @foreach($categories as $cat)
+                                <option value="{{ $cat }}">{{ $cat }}</option>
+                            @endforeach
                             <option>Gouvernement</option>
                             <option>Services</option>
                             <option>Ressources</option>
@@ -135,6 +154,11 @@
                     <label class="block text-xs font-medium text-gray-700 mb-1">URL <span class="text-red-500">*</span></label>
                     <input type="url" name="url" x-model="form.url" required placeholder="https://..."
                         class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+                </div>
+                <div>
+                    <label class="block text-xs font-medium text-gray-700 mb-1">Ordre d'affichage</label>
+                    <input type="number" name="order_column" x-model="form.order_column" min="0"
+                        class="w-28 border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
                 </div>
                 <div class="flex items-center gap-2">
                     <input type="hidden" name="published" value="0">
@@ -159,15 +183,15 @@ function liensAdmin() {
     return {
         open: false,
         editing: false,
-        form: { id: null, name: '', abbr: '', url: '', category: 'Gouvernement', published: true },
+        form: { id: null, name: '', abbr: '', url: '', category: 'Gouvernement', order_column: 0, published: true },
         openCreate() {
             this.editing = false;
-            this.form = { id: null, name: '', abbr: '', url: '', category: 'Gouvernement', published: true };
+            this.form = { id: null, name: '', abbr: '', url: '', category: 'Gouvernement', order_column: 0, published: true };
             this.open = true;
         },
         openEdit(item) {
             this.editing = true;
-            this.form = { ...item, published: !!item.published };
+            this.form = { ...item, published: !!item.published, order_column: item.order_column ?? 0 };
             this.open = true;
         }
     };

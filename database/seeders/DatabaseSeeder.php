@@ -35,6 +35,7 @@ class DatabaseSeeder extends Seeder
         $this->call(InstitutionImageSeeder::class);
         $this->call(PartenaireSeeder::class);
         $this->call(OfficialSeeder::class);
+        $this->call(PublicationTypeSeeder::class);
         $this->call(PublicationSeeder::class);
         $this->call(MediathequeItemSeeder::class);
         $this->call(GlossaireTermSeeder::class);

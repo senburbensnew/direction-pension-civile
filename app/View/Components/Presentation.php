@@ -42,8 +42,9 @@ class Presentation extends Component
             $this->mobileImage    = $this->official->photoUrl();
             $this->lienProfil     = $lienProfil  ?: route('quisommesnous.profil', ['role' => $this->official->slug]);
             $this->lienDiscours   = $lienDiscours ?: route('quisommesnous.mots',  ['role' => $this->official->slug]);
-            $this->showProfileLink = $this->official->hasBiographie();
-            $this->showSpeechLink  = $this->official->hasDiscours();
+            // Always expose navigation; destination pages handle empty content gracefully.
+            $this->showProfileLink = true;
+            $this->showSpeechLink  = true;
         } else {
             $this->role           = $role;
             $this->nom            = $nom;

@@ -78,13 +78,26 @@
                         class="{{ $field('lastname') }}" placeholder="Dupont">
                     @error('lastname')<p class="text-red-500 text-xs mt-1">{{ $message }}</p>@enderror
                 </div>
-                <div class="sm:col-span-2">
+                <div>
                     <label class="block text-xs font-medium text-gray-600 mb-1">
                         Nom d'affichage <span class="text-red-500">*</span>
                     </label>
                     <input type="text" name="name" value="{{ old('name', $user->name) }}" required
                         class="{{ $field('name') }}">
                     @error('name')<p class="text-red-500 text-xs mt-1">{{ $message }}</p>@enderror
+                </div>
+                <div>
+                    <label class="block text-xs font-medium text-gray-600 mb-1">Sexe</label>
+                    <select name="gender_id" class="{{ $field('gender_id') }}">
+                        <option value="">— Sélectionner —</option>
+                        @foreach($genders as $gender)
+                            <option value="{{ $gender->id }}"
+                                {{ (string) old('gender_id', $user->gender_id) === (string) $gender->id ? 'selected' : '' }}>
+                                {{ $gender->name }}
+                            </option>
+                        @endforeach
+                    </select>
+                    @error('gender_id')<p class="text-red-500 text-xs mt-1">{{ $message }}</p>@enderror
                 </div>
             </div>
         </div>

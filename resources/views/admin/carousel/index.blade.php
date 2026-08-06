@@ -99,14 +99,14 @@
                     <div class="flex items-center gap-2">
                         <a href="{{ route('admin.carousels.edit', $carousel->id) }}"
                            class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg transition-colors">
-                            <i class="fas fa-pencil-alt text-[10px]"></i> Modifier
+                            <i class="fas fa-pencil-alt text-[10px]"></i>
                         </a>
                         <form action="{{ route('admin.carousels.destroy', $carousel->id) }}" method="POST"
                               onsubmit="return confirm('Supprimer cette diapositive ?')">
                             @csrf @method('DELETE')
                             <button type="submit"
                                     class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium bg-red-50 hover:bg-red-100 text-red-600 rounded-lg transition-colors">
-                                <i class="fas fa-trash-alt text-[10px]"></i> Supprimer
+                                    <i class="fas fa-trash-alt text-[10px]"></i>
                             </button>
                         </form>
                     </div>

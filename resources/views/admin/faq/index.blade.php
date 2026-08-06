@@ -12,20 +12,34 @@
     <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <div>
             <h1 class="text-xl font-bold text-gray-800">FAQ</h1>
-            <p class="text-sm text-gray-500 mt-0.5">Gérez les questions fréquemment posées.</p>
+            <p class="text-sm text-gray-500 mt-0.5">
+                Gérez les questions affichées sur
+                <a href="{{ route('faq.index') }}" target="_blank" class="text-blue-600 hover:underline">/faq</a>.
+            </p>
         </div>
-        <div class="flex items-center gap-2">
-            <form method="GET" class="flex gap-2">
+        <div class="flex items-center gap-2 flex-wrap justify-end">
+            <form method="GET" class="flex gap-2 flex-wrap">
                 <input type="text" name="q" value="{{ request('q') }}"
                     placeholder="Rechercher…"
-                    class="border border-gray-300 rounded-lg px-3 py-2 text-sm w-52 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    class="border border-gray-300 rounded-lg px-3 py-2 text-sm w-44 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                <select name="category" onchange="this.form.submit()"
+                    class="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    <option value="">Toutes catégories</option>
+                    @foreach($categories as $cat)
+                        <option value="{{ $cat }}" {{ request('category') === $cat ? 'selected' : '' }}>{{ $cat }}</option>
+                    @endforeach
+                </select>
                 <button type="submit" class="px-3 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 text-sm rounded-lg">
                     <i class="fas fa-search"></i>
                 </button>
-                @if(request('q'))
+                @if(request('q') || request('category'))
                     <a href="{{ route('admin.faq.index') }}" class="px-3 py-2 text-sm text-gray-500 hover:text-gray-700"><i class="fas fa-times"></i></a>
                 @endif
             </form>
+            <a href="{{ route('faq.index') }}" target="_blank"
+                class="inline-flex items-center gap-1.5 px-4 py-2 border border-gray-300 bg-white hover:bg-gray-50 text-gray-700 text-sm font-medium rounded-lg">
+                <i class="fas fa-eye"></i> Voir le site
+            </a>
             <button @click="openCreate()" class="inline-flex items-center gap-1.5 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg transition-colors">
                 <i class="fas fa-plus"></i> Ajouter
             </button>
@@ -67,7 +81,7 @@
                                 </form>
                                 <button @click="openEdit({{ $item->toJson() }})"
                                     class="px-2 py-1 bg-blue-100 text-blue-700 hover:bg-blue-200 rounded text-xs font-medium">
-                                    <i class="fas fa-pencil-alt"></i> Éditer
+                                    <i class="fas fa-pencil-alt"></i>
                                 </button>
                                 <form action="{{ route('admin.faq.destroy', $item) }}" method="POST"
                                     onsubmit="return confirm('Supprimer cette question ?')">
@@ -101,7 +115,7 @@
         <div class="relative bg-white rounded-xl shadow-xl w-full max-w-lg p-6 space-y-4 z-10">
             <h2 class="text-lg font-bold text-gray-800" x-text="editing ? 'Modifier la question' : 'Ajouter une question'"></h2>
 
-            <form :action="editing ? '/admin/faq/' + form.id : '{{ route('admin.faq.store') }}'" method="POST" class="space-y-3">
+            <form :action="editing ? '{{ url('/admin/faq') }}/' + form.id : '{{ route('admin.faq.store') }}'" method="POST" class="space-y-3">
                 @csrf
                 <template x-if="editing"><input type="hidden" name="_method" value="PUT"></template>
 
@@ -121,6 +135,9 @@
                         <input type="text" name="category" x-model="form.category" list="faq-categories"
                             class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
                         <datalist id="faq-categories">
+                            @foreach($categories as $cat)
+                                <option value="{{ $cat }}">{{ $cat }}</option>
+                            @endforeach
                             <option>Général</option>
                             <option>Éligibilité</option>
                             <option>Documents requis</option>

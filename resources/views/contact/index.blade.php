@@ -13,14 +13,26 @@
             -webkit-text-fill-color: transparent;
         }
         .card-shadow {
-            box-shadow: 0 20px 40px -10px rgba(0, 0, 0, 0.1), 0 10px 20px -5px rgba(0, 0, 0, 0.04);
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1);
         }
         .contact-card {
             transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
         }
+        .contact-card::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0;
+            width: 4px; height: 100%;
+            background: linear-gradient(to bottom, #3b82f6, #1e40af);
+            transform: scaleY(0);
+            transition: transform 0.3s ease;
+        }
+        .contact-card:hover::before { transform: scaleY(1); }
         .contact-card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.15);
+            transform: translateY(-4px);
+            box-shadow: 0 15px 30px -10px rgba(0, 0, 0, 0.15);
         }
         .input-focus:focus {
             box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
@@ -62,16 +74,23 @@
     </style>
 
     <!-- Contact Principal -->
-    <div class="py-8 bg-transparent">
+    <div class="py-10 bg-transparent">
         <section class="relative fade-in">
-            <div class="max-w-7xl mx-auto px-6">
-                <div class="bg-white rounded-2xl card-shadow overflow-hidden">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div class="text-center mb-8">
+                    <h1 class="text-4xl font-bold gradient-text mb-3">Contact</h1>
+                    <p class="text-gray-600 text-lg max-w-2xl mx-auto">
+                        Notre équipe est à votre disposition pour vous accompagner.
+                    </p>
+                </div>
+
+                <div class="bg-white rounded-2xl border border-gray-200 card-shadow overflow-hidden">
                     <div class="grid grid-cols-1 lg:grid-cols-2 gap-0">
                         <!-- Informations de contact -->
-                        <div class="p-10 bg-gradient-to-br from-gray-50 to-blue-50">
-                            <div class="mb-10">
-                                <h2 class="text-3xl font-bold gradient-text mb-2">Connectez-vous avec nous</h2>
-                                <p class="text-gray-600">Notre équipe est à votre disposition pour vous accompagner</p>
+                        <div class="p-8 sm:p-10 bg-gradient-to-br from-gray-50 to-blue-50">
+                            <div class="mb-8">
+                                <h2 class="text-2xl font-bold text-gray-800 mb-2">Nos coordonnées</h2>
+                                <p class="text-gray-600 text-sm">Retrouvez-nous facilement et restez en contact</p>
                             </div>
 
                             <!-- Contact Items -->
@@ -139,10 +158,10 @@
                         </div>
 
                         <!-- Formulaire de contact -->
-                        <div class="p-10">
+                        <div class="p-8 sm:p-10">
                             <div class="mb-8">
-                                <h2 class="text-3xl font-bold text-gray-800 mb-2">Envoyer un message</h2>
-                                <p class="text-gray-600">Remplissez le formulaire ci-dessous et nous vous répondrons dans les plus brefs délais</p>
+                                <h2 class="text-2xl font-bold text-gray-800 mb-2">Envoyer un message</h2>
+                                <p class="text-gray-600 text-sm">Remplissez le formulaire ci-dessous et nous vous répondrons dans les plus brefs délais.</p>
                             </div>
 
                             {{-- Success message --}}
@@ -233,7 +252,7 @@
                                 </div>
 
                                 <button type="submit"
-                                    class="w-full py-4 bg-gradient-to-r from-blue-600 to-blue-800 text-white font-semibold rounded-lg hover:from-blue-700 hover:to-blue-900 transition-all duration-300 flex items-center justify-center gap-2">
+                                    class="w-full py-3.5 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg transition-colors flex items-center justify-center gap-2">
                                     <span>Envoyer le message</span>
                                     <i class="fas fa-paper-plane"></i>
                                 </button>
@@ -246,55 +265,55 @@
         </section>
 
         <!-- Section Carte -->
-        <section class="max-w-7xl mx-auto px-6 pt-16 fade-in">
-            <div class="text-center mb-10">
+        <section class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-14 fade-in">
+            <div class="text-center mb-8">
                 <h2 class="text-3xl font-bold gradient-text mb-3">Notre localisation</h2>
-                <p class="text-gray-600 max-w-2xl mx-auto">Retrouvez-nous facilement à notre siège social situé au cœur de Port-au-Prince</p>
+                <p class="text-gray-600 max-w-2xl mx-auto">Retrouvez-nous facilement à notre siège social situé au cœur de Port-au-Prince.</p>
             </div>
-            <div class="map-container">
+            <div class="map-container border border-gray-200">
                 <iframe
                     src="{{ $contact['contact_map_url'] ?? '' }}"
-                    width="100%" height="450" style="border:0;" allowfullscreen="" loading="lazy"
+                    width="100%" height="420" style="border:0;" allowfullscreen="" loading="lazy"
                     referrerpolicy="no-referrer-when-downgrade"></iframe>
             </div>
         </section>
 
         <!-- Section Directions Départementales -->
-        <section class="max-w-7xl mx-auto px-6 pt-16 fade-in">
-            <div class="text-center mb-10">
+        <section class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-14 fade-in">
+            <div class="text-center mb-8">
                 <h2 class="text-3xl font-bold gradient-text mb-3">Nos Directions Départementales</h2>
                 <p class="text-gray-600 max-w-2xl mx-auto">
                     Retrouvez nos représentations régionales de la Direction de la Pension Civile.
                 </p>
             </div>
 
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
                 @foreach($directions as $dir)
-                <div class="bg-white p-6 rounded-xl border border-gray-200 text-center contact-card">
+                <div class="bg-white p-6 rounded-xl border border-gray-200 text-center contact-card card-shadow">
                     <div class="w-12 h-12 bg-{{ $dir->color }}-100 rounded-lg flex items-center justify-center mx-auto mb-4">
                         <i class="fas fa-map-pin text-{{ $dir->color }}-600 text-xl"></i>
                     </div>
                     <h3 class="text-lg font-semibold text-gray-800 mb-2">{{ $dir->nom }} ({{ $dir->abbr }})</h3>
-                    <p class="text-gray-600">{{ $dir->ville }}</p>
+                    <p class="text-gray-600 text-sm">{{ $dir->ville }}</p>
                 </div>
                 @endforeach
             </div>
         </section>
 
         <!-- Section Services -->
-        <section class="max-w-7xl mx-auto px-6 pt-20 fade-in">
-            <div class="text-center mb-10">
+        <section class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-14 pb-4 fade-in">
+            <div class="text-center mb-8">
                 <h2 class="text-3xl font-bold gradient-text mb-3">Nos Services</h2>
                 <p class="text-gray-600 max-w-2xl mx-auto">Les différents services opérationnels de la DPC / MEF.</p>
             </div>
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
                 @foreach($services as $service)
-                <div class="bg-white p-6 rounded-xl border border-gray-200 text-center contact-card">
+                <div class="bg-white p-6 rounded-xl border border-gray-200 text-center contact-card card-shadow">
                     <div class="w-12 h-12 bg-{{ $service->color ?? 'blue' }}-100 rounded-lg flex items-center justify-center mx-auto mb-4">
                         <i class="fas {{ $service->icon ?? 'fa-building' }} text-{{ $service->color ?? 'blue' }}-600 text-xl"></i>
                     </div>
                     <h3 class="text-lg font-semibold text-gray-800 mb-2">{{ $service->nom }}</h3>
-                    <p class="text-gray-600">Port-au-Prince</p>
+                    <p class="text-gray-600 text-sm">Port-au-Prince</p>
                 </div>
                 @endforeach
             </div>

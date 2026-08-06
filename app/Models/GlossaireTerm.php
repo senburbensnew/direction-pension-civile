@@ -17,6 +17,6 @@ class GlossaireTerm extends Model
 
     public function scopeOrdered($query)
     {
-        return $query->orderBy('term');
+        return $query->orderBy('order_column')->orderBy('term');
     }
 }

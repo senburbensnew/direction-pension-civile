@@ -3,8 +3,10 @@
 namespace App\Http\Controllers;
 
 use App\Models\Publication;
+use App\Models\PublicationType;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Validation\Rule;
 
 class PublicationController extends Controller
 {
@@ -24,8 +26,10 @@ class PublicationController extends Controller
         }
 
         $publications = $query->get()->groupBy('type');
-        $types = Publication::$types;
-        return view('communication.textes_publication', compact('publications', 'types'));
+        $types = PublicationType::options();
+        $typeVisuals = PublicationType::visuals();
+
+        return view('communication.textes_publication', compact('publications', 'types', 'typeVisuals'));
     }
 
     public function download(Publication $publication)
@@ -57,8 +61,10 @@ class PublicationController extends Controller
             $query->where('type', $request->type);
         }
         $publications = $query->paginate(20)->withQueryString();
-        $types = Publication::$types;
-        return view('admin.publications.index', compact('publications', 'types'));
+        $types = PublicationType::options();
+        $publicationTypes = PublicationType::ordered()->get();
+
+        return view('admin.publications.index', compact('publications', 'types', 'publicationTypes'));
     }
 
     public function store(Request $request)
@@ -66,7 +72,7 @@ class PublicationController extends Controller
         $data = $request->validate([
             'title'        => 'required|string|max:300',
             'description'  => 'nullable|string',
-            'type'         => 'required|string|in:' . implode(',', array_keys(Publication::$types)),
+            'type'         => ['required', 'string', Rule::in(array_keys(PublicationType::options()))],
             'file'         => 'nullable|file|mimes:pdf,doc,docx|max:20480',
             'url'          => 'nullable|url|max:500',
             'order_column' => 'nullable|integer|min:0',
@@ -90,7 +96,7 @@ class PublicationController extends Controller
         $data = $request->validate([
             'title'        => 'required|string|max:300',
             'description'  => 'nullable|string',
-            'type'         => 'required|string|in:' . implode(',', array_keys(Publication::$types)),
+            'type'         => ['required', 'string', Rule::in(array_keys(PublicationType::options()))],
             'file'         => 'nullable|file|mimes:pdf,doc,docx|max:20480',
             'url'          => 'nullable|url|max:500',
             'order_column' => 'nullable|integer|min:0',
@@ -125,5 +131,54 @@ class PublicationController extends Controller
     {
         $publication->update(['published' => !$publication->published]);
         return back()->with('success', $publication->published ? 'Publiée.' : 'Dépubliée.');
+    }
+
+    public function storeType(Request $request)
+    {
+        $data = $request->validate([
+            'label'        => 'required|string|max:100',
+            'code'         => 'nullable|string|max:50|alpha_dash|unique:publication_types,code',
+            'icon'         => 'nullable|string|max:50',
+            'badge_class'  => 'nullable|string|max:100',
+            'order_column' => 'nullable|integer|min:0',
+        ]);
+
+        $data['code'] = $data['code'] ?: PublicationType::makeCode($data['label']);
+        $data['icon'] = $data['icon'] ?: 'fa-file';
+        $data['badge_class'] = $data['badge_class'] ?: 'bg-gray-100 text-gray-700';
+        $data['order_column'] = $data['order_column'] ?? ((int) PublicationType::max('order_column') + 1);
+
+        PublicationType::create($data);
+
+        return back()->with('success', 'Type de document ajouté.');
+    }
+
+    public function updateType(Request $request, PublicationType $publicationType)
+    {
+        $data = $request->validate([
+            'label'        => 'required|string|max:100',
+            'icon'         => 'nullable|string|max:50',
+            'badge_class'  => 'nullable|string|max:100',
+            'order_column' => 'nullable|integer|min:0',
+        ]);
+
+        $data['icon'] = $data['icon'] ?: $publicationType->icon;
+        $data['badge_class'] = $data['badge_class'] ?: $publicationType->badge_class;
+        $data['order_column'] = $data['order_column'] ?? $publicationType->order_column;
+
+        $publicationType->update($data);
+
+        return back()->with('success', 'Type de document mis à jour.');
+    }
+
+    public function destroyType(PublicationType $publicationType)
+    {
+        $count = Publication::where('type', $publicationType->code)->count();
+        if ($count > 0) {
+            return back()->with('error', "Impossible de supprimer « {$publicationType->label} » : {$count} publication(s) l'utilisent encore.");
+        }
+
+        $publicationType->delete();
+        return back()->with('success', 'Type de document supprimé.');
     }
 }

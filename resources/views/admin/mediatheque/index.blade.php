@@ -12,9 +12,15 @@
     <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <div>
             <h1 class="text-xl font-bold text-gray-800">Médiathèque</h1>
-            <p class="text-sm text-gray-500 mt-0.5">Gérez les images, vidéos, audios et documents multimédias.</p>
+            <p class="text-sm text-gray-500 mt-0.5">
+                Gérez le contenu affiché sur
+                <a href="{{ route('mediatheque') }}" target="_blank" class="text-blue-600 hover:underline">
+                    /mediatheque <i class="fas fa-external-link-alt text-[10px]"></i>
+                </a>
+                — images, vidéos, audios et documents.
+            </p>
         </div>
-        <div class="flex items-center gap-2">
+        <div class="flex items-center gap-2 flex-wrap justify-end">
             <form method="GET" class="flex gap-2">
                 <input type="text" name="q" value="{{ request('q') }}"
                     placeholder="Rechercher…"
@@ -32,6 +38,10 @@
                     <a href="{{ route('admin.mediatheque.index') }}" class="px-3 py-2 text-sm text-gray-500 hover:text-gray-700"><i class="fas fa-times"></i></a>
                 @endif
             </form>
+            <a href="{{ route('mediatheque') }}" target="_blank"
+                class="inline-flex items-center gap-1.5 px-4 py-2 border border-gray-300 bg-white hover:bg-gray-50 text-gray-700 text-sm font-medium rounded-lg whitespace-nowrap">
+                <i class="fas fa-eye"></i> Voir le site
+            </a>
             <button @click="openCreate()" class="inline-flex items-center gap-1.5 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg whitespace-nowrap">
                 <i class="fas fa-plus"></i> Ajouter
             </button>
@@ -57,7 +67,16 @@
                         $typeIcon = $typeIcons[$item->type] ?? 'fa-file';
                     @endphp
                     <tr class="border-b border-gray-100 last:border-0 hover:bg-gray-50">
-                        <td class="px-4 py-3 font-medium text-gray-800">{{ Str::limit($item->title, 60) }}</td>
+                        <td class="px-4 py-3 font-medium text-gray-800">
+                            <div class="flex items-center gap-2 flex-wrap">
+                                <span>{{ Str::limit($item->title, 55) }}</span>
+                                @if($item->is_featured)
+                                    <span class="text-[10px] font-semibold px-1.5 py-0.5 rounded bg-amber-100 text-amber-700">
+                                        <i class="fas fa-star"></i> Vedette
+                                    </span>
+                                @endif
+                            </div>
+                        </td>
                         <td class="px-4 py-3">
                             <span class="inline-flex items-center gap-1 text-xs text-gray-600">
                                 <i class="fas {{ $typeIcon }}"></i> {{ $item->typeLabel() }}
@@ -90,7 +109,7 @@
                                 </form>
                                 <button @click="openEdit({{ $item->toJson() }})"
                                     class="px-2 py-1 bg-blue-100 text-blue-700 hover:bg-blue-200 rounded text-xs font-medium">
-                                    <i class="fas fa-pencil-alt"></i> Éditer
+                                    <i class="fas fa-pencil-alt"></i>
                                 </button>
                                 <form action="{{ route('admin.mediatheque.destroy', $item) }}" method="POST"
                                     onsubmit="return confirm('Supprimer cet élément ?')">
@@ -124,7 +143,7 @@
         <div class="relative bg-white rounded-xl shadow-xl w-full max-w-lg p-6 space-y-4 z-10 max-h-[90vh] overflow-y-auto">
             <h2 class="text-lg font-bold text-gray-800" x-text="editing ? 'Modifier l\'élément' : 'Ajouter un élément'"></h2>
 
-            <form :action="editing ? '/admin/mediatheque/' + form.id : '{{ route('admin.mediatheque.store') }}'"
+            <form :action="editing ? '{{ url('/admin/mediatheque') }}/' + form.id : '{{ route('admin.mediatheque.store') }}'"
                 method="POST" enctype="multipart/form-data" class="space-y-3">
                 @csrf
                 <template x-if="editing"><input type="hidden" name="_method" value="PUT"></template>
@@ -160,10 +179,23 @@
                     <input type="url" name="url" x-model="form.url" placeholder="https://..."
                         class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
                 </div>
+                <div>
+                    <label class="block text-xs font-medium text-gray-700 mb-1">Ordre d'affichage</label>
+                    <input type="number" name="order_column" x-model="form.order_column" min="0"
+                        class="w-28 border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+                </div>
                 <div class="flex items-center gap-2">
                     <input type="hidden" name="published" value="0">
                     <input type="checkbox" id="media-published" name="published" value="1" x-model="form.published" class="rounded border-gray-300 text-blue-600">
                     <label for="media-published" class="text-sm text-gray-700">Visible sur le site</label>
+                </div>
+                <div class="flex items-start gap-2 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2">
+                    <input type="hidden" name="is_featured" value="0">
+                    <input type="checkbox" id="media-featured" name="is_featured" value="1" x-model="form.is_featured" class="mt-0.5 rounded border-gray-300 text-amber-600">
+                    <label for="media-featured" class="text-sm text-amber-900">
+                        <span class="font-medium">Vidéo / contenu en vedette</span>
+                        <span class="block text-xs text-amber-700 mt-0.5">Affiché en grand en haut de la page publique. Un seul élément peut être en vedette.</span>
+                    </label>
                 </div>
                 <div class="flex gap-2 pt-2">
                     <button type="button" @click="open = false"
@@ -183,15 +215,15 @@ function mediaAdmin() {
     return {
         open: false,
         editing: false,
-        form: { id: null, title: '', type: 'image', description: '', url: '', file_path: null, published: true },
+        form: { id: null, title: '', type: 'image', description: '', url: '', file_path: null, order_column: 0, published: true, is_featured: false },
         openCreate() {
             this.editing = false;
-            this.form = { id: null, title: '', type: 'image', description: '', url: '', file_path: null, published: true };
+            this.form = { id: null, title: '', type: 'video', description: '', url: '', file_path: null, order_column: 0, published: true, is_featured: false };
             this.open = true;
         },
         openEdit(item) {
             this.editing = true;
-            this.form = { ...item, published: !!item.published };
+            this.form = { ...item, published: !!item.published, is_featured: !!item.is_featured };
             this.open = true;
         }
     };

@@ -38,21 +38,39 @@ class ProfileController extends Controller
     }
 
     /**
-     * Update the user's profile information.
+     * Update the user's profile photo.
      */
     public function updateProfilePhoto(ProfilePhotoUpdateRequest $request): RedirectResponse
     {
-        $user = auth()->user();
-    
-        // Supprimer l’ancienne photo si elle existe
+        $user = $request->user();
+        $file = $request->file('profile_photo');
+
+        if (! $file || ! $file->isValid()) {
+            $error = $file?->getError() ?? UPLOAD_ERR_NO_FILE;
+
+            $message = match ($error) {
+                UPLOAD_ERR_INI_SIZE, UPLOAD_ERR_FORM_SIZE => 'Le fichier est trop volumineux pour le serveur.',
+                UPLOAD_ERR_PARTIAL => 'Le téléversement a été interrompu. Réessayez.',
+                UPLOAD_ERR_NO_FILE => 'Veuillez sélectionner une image.',
+                UPLOAD_ERR_NO_TMP_DIR => 'Dossier temporaire introuvable sur le serveur.',
+                UPLOAD_ERR_CANT_WRITE => 'Impossible d’écrire le fichier sur le serveur.',
+                UPLOAD_ERR_EXTENSION => 'Une extension PHP a bloqué le téléversement.',
+                default => 'Le téléversement a échoué. Réessayez avec un JPEG ou PNG (max. 5 Mo).',
+            };
+
+            return Redirect::route('profile.edit')->withErrors([
+                'profile_photo' => $message,
+            ]);
+        }
+
+        Storage::disk('public')->makeDirectory('profile_photos');
+
         if ($user->profile_photo) {
             Storage::disk('public')->delete($user->profile_photo);
         }
 
-        // Stocker la nouvelle photo
-        $path = $request->file('profile_photo')->store('profile_photos', 'public');
+        $path = $file->store('profile_photos', 'public');
 
-        // Sauvegarder en base
         $user->update([
             'profile_photo' => $path,
         ]);

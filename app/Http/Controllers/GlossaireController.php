@@ -15,12 +15,29 @@ class GlossaireController extends Controller
 
     public function adminIndex(Request $request)
     {
-        $query = GlossaireTerm::orderBy('term');
+        $query = GlossaireTerm::orderBy('order_column')->orderBy('term');
+
         if ($request->filled('q')) {
-            $query->where('term', 'like', '%' . $request->q . '%');
+            $q = $request->q;
+            $query->where(function ($builder) use ($q) {
+                $builder->where('term', 'like', '%' . $q . '%')
+                    ->orWhere('definition', 'like', '%' . $q . '%');
+            });
         }
+
+        if ($request->filled('category')) {
+            $query->where('category', $request->category);
+        }
+
         $terms = $query->paginate(20)->withQueryString();
-        return view('admin.glossaire.index', compact('terms'));
+        $categories = GlossaireTerm::query()
+            ->whereNotNull('category')
+            ->where('category', '!=', '')
+            ->distinct()
+            ->orderBy('category')
+            ->pluck('category');
+
+        return view('admin.glossaire.index', compact('terms', 'categories'));
     }
 
     public function store(Request $request)

@@ -122,7 +122,7 @@
                             <div class="flex items-center justify-center gap-2">
                                 <a href="{{ route('admin.users.edit', $user) }}"
                                     class="px-2 py-1 bg-blue-100 text-blue-700 hover:bg-blue-200 rounded text-xs font-medium">
-                                    <i class="fas fa-pencil-alt"></i> Éditer
+                                    <i class="fas fa-pencil-alt"></i>
                                 </a>
                                 @if($user->id !== auth()->id())
                                     <form action="{{ route('admin.users.toggle-active', $user) }}" method="POST">

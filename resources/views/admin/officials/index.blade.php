@@ -93,7 +93,7 @@
                         <div class="flex items-center gap-2">
                             <a href="{{ route('admin.officials.edit', $official) }}"
                                class="text-xs px-3 py-1.5 bg-blue-100 hover:bg-blue-200 text-blue-700 rounded-lg font-medium transition-colors">
-                                <i class="fas fa-pencil-alt mr-1"></i> Modifier
+                                <i class="fas fa-pencil-alt"></i>
                             </a>
                             <form method="POST" action="{{ route('admin.officials.destroy', $official) }}"
                                   onsubmit="return confirm('Supprimer cet officiel ?')">

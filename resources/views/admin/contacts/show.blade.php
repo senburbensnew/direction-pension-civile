@@ -8,6 +8,10 @@
 @endsection
 
 @section('content')
+@php
+    $subjects = ['pension' => 'Pensions', 'documents' => 'Documents', 'rendezvous' => 'Rendez-vous', 'autre' => 'Autre'];
+    $subjectLabel = $subjects[$contact->subject] ?? $contact->subject;
+@endphp
 <div class="max-w-2xl space-y-4">
 
     <div class="flex items-center gap-3">
@@ -30,10 +34,7 @@
                 </p>
             </div>
             <span class="px-2.5 py-1 bg-gray-100 text-gray-600 rounded-full text-xs font-medium flex-shrink-0">
-                @php
-                    $subjects = ['pension'=>'Pensions','documents'=>'Documents','rendezvous'=>'Rendez-vous','autre'=>'Autre'];
-                @endphp
-                {{ $subjects[$contact->subject] ?? $contact->subject }}
+                {{ $subjectLabel }}
             </span>
         </div>
 
@@ -44,7 +45,11 @@
 
         {{-- Actions --}}
         <div class="px-6 py-3 bg-gray-50 border-t border-gray-100 flex items-center gap-3">
-            <a href="mailto:{{ $contact->email }}"
+            @php
+                $replySubject = rawurlencode('Re: Contact DPC — ' . $subjectLabel);
+                $replyBody = rawurlencode("Bonjour {$contact->first_name},\n\n\n\n---\nMessage original du {$contact->created_at->format('d/m/Y à H:i')} :\n{$contact->message}");
+            @endphp
+            <a href="mailto:{{ $contact->email }}?subject={{ $replySubject }}&body={{ $replyBody }}"
                 class="inline-flex items-center gap-1.5 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg transition-colors">
                 <i class="fas fa-reply"></i> Répondre par email
             </a>

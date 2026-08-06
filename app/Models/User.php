@@ -33,6 +33,7 @@ class User extends Authenticatable
         'service_id',
         'pension_code',
         'is_active',
+        'gender_id',
         "created_at",
         "updated_at",
         "profile_photo",

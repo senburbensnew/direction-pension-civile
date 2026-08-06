@@ -9,10 +9,6 @@ class OfficialSeeder extends Seeder
 {
     public function run(): void
     {
-        if (Official::exists()) {
-            return;
-        }
-
         $officials = [
             [
                 'slug'       => 'ministre',
@@ -20,9 +16,9 @@ class OfficialSeeder extends Seeder
                 'nom'        => 'Serge Gabriel COLLIN',
                 'sexe'       => 'M',
                 'photo'      => 'images/ministre.png',
-                'biographie' => null,
-                'discours'   => null,
-                'citation'   => null,
+                'biographie' => "M. Serge Gabriel COLLIN est Ministre de l'Économie et des Finances. Il conduit les orientations stratégiques du ministère en matière de finances publiques, de modernisation de l'administration et de protection sociale des agents de l'État.\n\nSous son autorité, la Direction de la Pension Civile poursuit le renforcement d'un système de retraite plus fiable, plus transparent et plus accessible aux fonctionnaires, retraités et ayants droit.",
+                'discours'   => "Chers compatriotes, chers collaborateurs,\n\nLa protection des droits à pension des fonctionnaires constitue un pilier essentiel de la solidarité nationale et de la crédibilité de l'État employeur. Notre engagement est d'assurer une gestion rigoureuse, moderne et humaine de la pension civile.\n\nJe réaffirme la volonté du Ministère de l'Économie et des Finances d'accompagner la Direction de la Pension Civile dans l'amélioration continue de ses services, la digitalisation des procédures et le respect des délais de traitement.\n\nEnsemble, poursuivons cet effort au service des retraités, des actifs et de leurs familles.\n\nSerge Gabriel COLLIN\nMinistre de l'Économie et des Finances",
+                'citation'   => 'La dignité des retraités est le reflet de la responsabilité de l\'État.',
                 'order'      => 1,
             ],
             [
@@ -50,7 +46,10 @@ class OfficialSeeder extends Seeder
         ];
 
         foreach ($officials as $data) {
-            Official::create($data);
+            Official::updateOrCreate(
+                ['slug' => $data['slug']],
+                $data
+            );
         }
     }
 }

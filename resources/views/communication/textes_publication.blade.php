@@ -58,25 +58,16 @@
             <p>Aucune publication trouvée{{ request('q') || request('type') ? ' pour ces critères' : '' }}.</p>
         </div>
     @else
-        @php
-            $typeIcons = [
-                'loi'        => ['fa-gavel',         'bg-red-100 text-red-700'],
-                'decret'     => ['fa-scroll',        'bg-orange-100 text-orange-700'],
-                'circulaire' => ['fa-envelope-open', 'bg-blue-100 text-blue-700'],
-                'document'   => ['fa-file-alt',      'bg-green-100 text-green-700'],
-                'texte'      => ['fa-file-contract', 'bg-purple-100 text-purple-700'],
-                'autre'      => ['fa-paperclip',     'bg-gray-100 text-gray-700'],
-            ];
-        @endphp
-
         @foreach($publications as $type => $items)
             <div class="mb-10">
-                @php [$icon, $iconClass] = $typeIcons[$type] ?? ['fa-file', 'bg-gray-100 text-gray-700']; @endphp
+                @php
+                    [$icon, $iconClass] = $typeVisuals[$type] ?? ['fa-file', 'bg-gray-100 text-gray-700'];
+                @endphp
                 <h2 class="text-2xl font-bold text-gray-800 mb-5 flex items-center gap-3">
                     <span class="w-10 h-10 {{ $iconClass }} rounded-lg flex items-center justify-center">
                         <i class="fas {{ $icon }}"></i>
                     </span>
-                    {{ \App\Models\Publication::$types[$type] ?? $type }}
+                    {{ $types[$type] ?? $type }}
                     <span class="text-sm font-normal text-gray-400">({{ count($items) }})</span>
                 </h2>
 

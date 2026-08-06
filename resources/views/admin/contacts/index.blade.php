@@ -29,7 +29,7 @@
             @endif
         </div>
 
-        <div class="flex items-center gap-2">
+        <div class="flex items-center gap-2 flex-wrap justify-end">
             @if($unreadCount > 0)
                 <form method="POST" action="{{ route('admin.contacts.markAllRead') }}">
                     @csrf
@@ -51,6 +51,15 @@
                     <option value="read"   {{ request('status') === 'read'   ? 'selected' : '' }}>Lus</option>
                 </select>
             </form>
+
+            <a href="{{ route('admin.contact-parameters.index') }}"
+               class="inline-flex items-center gap-1.5 px-3 py-2 text-xs border border-gray-200 bg-white hover:bg-gray-50 text-gray-700 rounded-lg font-medium">
+                <i class="fas fa-address-card"></i> Infos de contact
+            </a>
+            <a href="{{ route('contact') }}" target="_blank"
+               class="inline-flex items-center gap-1.5 px-3 py-2 text-xs border border-blue-200 text-blue-600 hover:bg-blue-50 rounded-lg font-medium">
+                <i class="fas fa-external-link-alt"></i> Voir le site
+            </a>
         </div>
     </div>
 

@@ -102,7 +102,7 @@
                                 {{-- Edit --}}
                                 <a href="{{ route('admin.reports.edit', $report->id) }}"
                                     class="px-2 py-1 bg-blue-100 text-blue-700 hover:bg-blue-200 rounded text-xs font-medium">
-                                    <i class="fas fa-pencil-alt"></i> Éditer
+                                    <i class="fas fa-pencil-alt"></i>
                                 </a>
 
                                 {{-- View PDF --}}

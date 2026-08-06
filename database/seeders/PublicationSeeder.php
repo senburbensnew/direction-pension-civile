@@ -10,7 +10,7 @@ class PublicationSeeder extends Seeder
     public function run(): void
     {
         $publications = [
-            // From original hardcoded textes_publication view (commit 4ae4dd1) — Documents légaux
+            // Décrets / arrêtés
             [
                 'title'        => 'Arrêté sur la Comptabilité Publique',
                 'description'  => 'Arrêté réglementant les règles de comptabilité publique applicables aux institutions de l\'État haïtien.',
@@ -65,48 +65,88 @@ class PublicationSeeder extends Seeder
                 'order_column' => 6,
                 'published'    => true,
             ],
-            // Autres documents
+
+            // Avis de liquidation
+            [
+                'title'        => 'Avis de liquidation No 2 publié le 4 janvier 2024',
+                'description'  => 'Avis de liquidation n° 2 publié le 4 janvier 2024.',
+                'type'         => 'avis',
+                'file_path'    => 'documents/avis-de-liquidation-no-2-publie-le-4-janvier-2024.pdf',
+                'url'          => null,
+                'order_column' => 7,
+                'published'    => true,
+            ],
+            [
+                'title'        => 'Avis de liquidation No 4 publié le 10 février 2026',
+                'description'  => 'Avis de liquidation n° 4 publié le 10 février 2026.',
+                'type'         => 'avis',
+                'file_path'    => 'documents/avis-de-liquidation-no-4-publie-le-10-fevrier-2026.pdf',
+                'url'          => null,
+                'order_column' => 8,
+                'published'    => true,
+            ],
+            [
+                'title'        => 'Avis de liquidation No 56 publié le 28 août 2025',
+                'description'  => 'Avis de liquidation n° 56 publié le 28 août 2025.',
+                'type'         => 'avis',
+                'file_path'    => 'documents/avis-de-liquidation-no-56-publie-le-28-aout-2025.pdf',
+                'url'          => null,
+                'order_column' => 9,
+                'published'    => true,
+            ],
+
+            // Avis rectificatifs
+            [
+                'title'        => 'Avis rectificatif No 2 publié le 6 janvier 2026',
+                'description'  => 'Avis rectificatif n° 2 publié le 6 janvier 2026.',
+                'type'         => 'avis',
+                'file_path'    => 'documents/avis-rectificatif-no-2-publie-le-6-jan-2026.pdf',
+                'url'          => null,
+                'order_column' => 10,
+                'published'    => true,
+            ],
+            [
+                'title'        => 'Avis Rectificatif No 22 publié le 24 mai 2024',
+                'description'  => 'Avis rectificatif n° 22 publié le 24 mai 2024.',
+                'type'         => 'avis',
+                'file_path'    => 'documents/avis-rectificatif-no-22-publie-le-24-mai-2024.pdf',
+                'url'          => null,
+                'order_column' => 11,
+                'published'    => true,
+            ],
+
+            // Documents d'information
             [
                 'title'        => 'Conseils pour les Retraités et Futurs Retraités',
                 'description'  => 'Guide pratique à l\'attention des pensionnaires et des fonctionnaires en fin de carrière.',
                 'type'         => 'document',
-                'file_path'    => null,
+                'file_path'    => 'documents/conseils-pour-les-retraites-et-futurs-retraites.docx',
                 'url'          => null,
-                'order_column' => 7,
+                'order_column' => 12,
                 'published'    => true,
             ],
             [
                 'title'        => 'Vos droits à la retraite',
                 'description'  => 'Document d\'information synthétisant les droits des fonctionnaires à la pension de retraite.',
                 'type'         => 'document',
-                'file_path'    => null,
+                'file_path'    => 'documents/vos-droits-a-la-retraite.docx',
                 'url'          => null,
-                'order_column' => 8,
-                'published'    => true,
-            ],
-            // Additional entries
-            [
-                'title'        => 'Circulaire no. 12 — Procédures de liquidation des dossiers de pension',
-                'description'  => 'Circulaire interne décrivant les étapes de traitement et de liquidation des dossiers.',
-                'type'         => 'circulaire',
-                'file_path'    => null,
-                'url'          => null,
-                'order_column' => 9,
+                'order_column' => 13,
                 'published'    => true,
             ],
             [
-                'title'        => 'Rapport annuel de la Direction des Pensions — 2024',
-                'description'  => 'Bilan des activités, chiffres clés et perspectives de la Direction pour l\'année 2024.',
-                'type'         => 'autre',
-                'file_path'    => null,
+                'title'        => 'ACE Scanner — 8 juin 2026',
+                'description'  => 'Document scanné du 8 juin 2026.',
+                'type'         => 'document',
+                'file_path'    => 'documents/ACE Scanner_2026_06_08.pdf',
                 'url'          => null,
-                'order_column' => 10,
-                'published'    => false,
+                'order_column' => 14,
+                'published'    => true,
             ],
         ];
 
         foreach ($publications as $data) {
-            Publication::firstOrCreate(['title' => $data['title']], $data);
+            Publication::updateOrCreate(['title' => $data['title']], $data);
         }
     }
 }

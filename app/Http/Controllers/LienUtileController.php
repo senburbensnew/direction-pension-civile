@@ -16,12 +16,29 @@ class LienUtileController extends Controller
     public function adminIndex(Request $request)
     {
         $query = LienUtile::orderBy('order_column')->orderBy('name');
+
         if ($request->filled('q')) {
-            $query->where('name', 'like', '%' . $request->q . '%')
-                  ->orWhere('abbr', 'like', '%' . $request->q . '%');
+            $q = $request->q;
+            $query->where(function ($builder) use ($q) {
+                $builder->where('name', 'like', '%' . $q . '%')
+                    ->orWhere('abbr', 'like', '%' . $q . '%')
+                    ->orWhere('url', 'like', '%' . $q . '%');
+            });
         }
+
+        if ($request->filled('category')) {
+            $query->where('category', $request->category);
+        }
+
         $links = $query->paginate(20)->withQueryString();
-        return view('admin.liens-utiles.index', compact('links'));
+        $categories = LienUtile::query()
+            ->whereNotNull('category')
+            ->where('category', '!=', '')
+            ->distinct()
+            ->orderBy('category')
+            ->pluck('category');
+
+        return view('admin.liens-utiles.index', compact('links', 'categories'));
     }
 
     public function store(Request $request)

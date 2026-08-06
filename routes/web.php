@@ -408,6 +408,9 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'role:admin'])->grou
     Route::put('publications/{publication}',        [PublicationController::class, 'update'])->name('publications.update');
     Route::delete('publications/{publication}',     [PublicationController::class, 'destroy'])->name('publications.destroy');
     Route::post('publications/{publication}/toggle',[PublicationController::class, 'togglePublish'])->name('publications.toggle');
+    Route::post('publication-types',                [PublicationController::class, 'storeType'])->name('publication-types.store');
+    Route::put('publication-types/{publicationType}', [PublicationController::class, 'updateType'])->name('publication-types.update');
+    Route::delete('publication-types/{publicationType}', [PublicationController::class, 'destroyType'])->name('publication-types.destroy');
 
     // Médiathèque admin
     Route::get('mediatheque',                           [MediathequeController::class, 'adminIndex'])->name('mediatheque.index');

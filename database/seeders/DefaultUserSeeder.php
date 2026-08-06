@@ -4,6 +4,7 @@ namespace Database\Seeders;
 
 use App\Enums\UserTypeEnum;
 use Illuminate\Database\Seeder;
+use App\Models\Gender;
 use App\Models\User;
 use App\Models\UserType;
 
@@ -15,6 +16,8 @@ class DefaultUserSeeder extends Seeder
             'name' => UserTypeEnum::FONCTIONNAIRE->value,
         ]);
 
+        $gender = Gender::firstOrCreate(['name' => 'Masculin']);
+
         User::updateOrCreate(
             ['email' => 'admin@example.com'],
             [
@@ -25,6 +28,7 @@ class DefaultUserSeeder extends Seeder
                 'password' => bcrypt(config('app.default_admin_password', 'password123')),
                 'nif' => '123-456-789-0',
                 'user_type_id' => $userType->id,
+                'gender_id' => $gender->id,
             ]
         );
     }

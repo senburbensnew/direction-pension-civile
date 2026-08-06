@@ -11,6 +11,16 @@ class MediathequeItemSeeder extends Seeder
     {
         $items = [
             [
+                'title'        => 'Journée d\'information et d\'orientation sur votre pension / retraite',
+                'description'  => 'Vidéo en vedette — Jounen enfòmasyon ak oryantasyon sou pansyon.',
+                'type'         => 'video',
+                'file_path'    => null,
+                'url'          => 'https://www.youtube.com/watch?v=8sigu4fUheo',
+                'order_column' => 0,
+                'published'    => true,
+                'is_featured'  => true,
+            ],
+            [
                 'title'        => 'Direction Pension Civile',
                 'description'  => 'Presentation audio de la Direction des Pensions Civiles.',
                 'type'         => 'audio',
@@ -18,6 +28,7 @@ class MediathequeItemSeeder extends Seeder
                 'url'          => null,
                 'order_column' => 1,
                 'published'    => true,
+                'is_featured'  => false,
             ],
             [
                 'title'        => 'PRAP',
@@ -27,6 +38,7 @@ class MediathequeItemSeeder extends Seeder
                 'url'          => null,
                 'order_column' => 2,
                 'published'    => true,
+                'is_featured'  => false,
             ],
             [
                 'title'        => 'Retraite Anticipee',
@@ -36,6 +48,7 @@ class MediathequeItemSeeder extends Seeder
                 'url'          => null,
                 'order_column' => 3,
                 'published'    => true,
+                'is_featured'  => false,
             ],
             [
                 'title'        => 'Comment calculer le montant de la pension',
@@ -45,6 +58,7 @@ class MediathequeItemSeeder extends Seeder
                 'url'          => null,
                 'order_column' => 4,
                 'published'    => true,
+                'is_featured'  => false,
             ],
             [
                 'title'        => 'Comment faire une demande de pension',
@@ -54,18 +68,17 @@ class MediathequeItemSeeder extends Seeder
                 'url'          => null,
                 'order_column' => 5,
                 'published'    => true,
+                'is_featured'  => false,
             ],
-            // Informations utiles images — files must be in storage/app/public/mediatheque/images/
-            ['title' => 'Photo institutionnelle 1', 'description' => null, 'type' => 'image', 'file_path' => 'mediatheque/images/photo_2025-11-18_23-36-39.jpg', 'url' => null, 'order_column' => 10, 'published' => true],
-            ['title' => 'Photo institutionnelle 2', 'description' => null, 'type' => 'image', 'file_path' => 'mediatheque/images/photo_2025-11-18_23-36-43.jpg', 'url' => null, 'order_column' => 11, 'published' => true],
-            ['title' => 'Photo institutionnelle 3', 'description' => null, 'type' => 'image', 'file_path' => 'mediatheque/images/photo_2025-11-18_23-36-46.jpg', 'url' => null, 'order_column' => 12, 'published' => true],
-            ['title' => 'Photo institutionnelle 4', 'description' => null, 'type' => 'image', 'file_path' => 'mediatheque/images/photo_2025-11-18_23-36-49.jpg', 'url' => null, 'order_column' => 13, 'published' => true],
-            ['title' => 'Photo institutionnelle 5', 'description' => null, 'type' => 'image', 'file_path' => 'mediatheque/images/photo_2025-11-18_23-36-52.jpg', 'url' => null, 'order_column' => 14, 'published' => true],
-            ['title' => 'Photo institutionnelle 6', 'description' => null, 'type' => 'image', 'file_path' => 'mediatheque/images/photo_2025-11-18_23-36-55.jpg', 'url' => null, 'order_column' => 15, 'published' => true],
         ];
 
         foreach ($items as $data) {
-            MediathequeItem::firstOrCreate(['title' => $data['title']], $data);
+            MediathequeItem::updateOrCreate(['title' => $data['title']], $data);
         }
+
+        // Remove previously seeded default images
+        MediathequeItem::where('type', 'image')
+            ->where('title', 'like', 'Photo institutionnelle%')
+            ->delete();
     }
 }

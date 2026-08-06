@@ -56,7 +56,7 @@
                             <button type="button"
                                 @click="editDirection = {{ $dir->toJson() }}"
                                 class="text-blue-600 hover:text-blue-800 text-xs font-medium mr-3">
-                                <i class="fas fa-pen"></i> Modifier
+                                <i class="fas fa-pen"></i>
                             </button>
                             <form method="POST" action="{{ route('admin.directions.destroy', $dir) }}" class="inline"
                                 onsubmit="return confirm('Supprimer cette direction ?')">

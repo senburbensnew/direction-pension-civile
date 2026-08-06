@@ -86,7 +86,7 @@
                                 <button type="button"
                                     @click="editStatus = {{ $status->toJson() }}"
                                     class="inline-flex items-center gap-1 px-2.5 py-1.5 text-xs font-medium text-blue-600 hover:bg-blue-50 rounded-lg transition-colors">
-                                    <i class="fas fa-pencil-alt"></i> Modifier
+                                    <i class="fas fa-pencil-alt"></i>
                                 </button>
                                 @if($status->demandes_count === 0)
                                     <form method="POST" action="{{ route('admin.etats.destroy', $status) }}"

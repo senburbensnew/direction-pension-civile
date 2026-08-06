@@ -37,4 +37,12 @@ export default {
     },
 
     plugins: [forms, daisyui],
+
+    daisyui: {
+        themes: ["light"],
+        darkTheme: false,
+        base: true,
+        styled: true,
+        utils: true,
+    },
 };

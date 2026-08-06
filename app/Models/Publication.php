@@ -11,24 +11,27 @@ class Publication extends Model
 
     protected $casts = ['published' => 'boolean'];
 
-    public static array $types = [
-        'loi'         => 'Loi',
-        'decret'      => 'Décret',
-        'circulaire'  => 'Circulaire',
-        'document'    => 'Document',
-        'texte'       => 'Texte officiel',
-        'autre'       => 'Autre',
-    ];
+    /** @deprecated Use PublicationType::options() — kept for backward compatibility */
+    public static function types(): array
+    {
+        return PublicationType::options();
+    }
+
+    public function publicationType()
+    {
+        return $this->belongsTo(PublicationType::class, 'type', 'code');
+    }
 
     public function typeLabel(): string
     {
-        return self::$types[$this->type] ?? $this->type;
+        return PublicationType::options()[$this->type]
+            ?? $this->publicationType?->label
+            ?? $this->type;
     }
 
     public function fileUrl(): ?string
     {
         if (!$this->file_path) return null;
-        // files in public/documents/ are served directly; storage disk files via /storage/
         if (str_starts_with($this->file_path, 'documents/')) {
             return asset($this->file_path);
         }

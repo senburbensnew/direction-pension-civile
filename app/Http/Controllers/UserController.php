@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Gender;
 use App\Models\Service;
 use App\Models\User;
 use Illuminate\Http\Request;
@@ -34,8 +35,9 @@ class UserController extends Controller
     {
         $roles    = Role::orderBy('name')->get();
         $services = Service::orderBy('nom')->get();
+        $genders  = Gender::orderBy('name')->get();
 
-        return view('admin.users.create', compact('roles', 'services'));
+        return view('admin.users.create', compact('roles', 'services', 'genders'));
     }
 
     public function store(Request $request)
@@ -49,6 +51,7 @@ class UserController extends Controller
             'password'              => 'required|string|min:8|confirmed',
             'role'                  => 'nullable|string|exists:roles,name',
             'service_id'            => 'nullable|integer|exists:services,id',
+            'gender_id'             => 'nullable|integer|exists:genders,id',
             'user_type'             => 'nullable|string|in:fonctionnaire,pensionnaire,institution',
             'pension_code'          => 'nullable|string|max:50',
             'nif'                   => 'nullable|string|max:20',
@@ -57,6 +60,10 @@ class UserController extends Controller
 
         $role = $validated['role'] ?? null;
         unset($validated['role']);
+
+        if (empty($validated['gender_id'])) {
+            $validated['gender_id'] = null;
+        }
 
         $user = User::create($validated);
 
@@ -72,8 +79,9 @@ class UserController extends Controller
     {
         $roles    = Role::orderBy('name')->get();
         $services = Service::orderBy('nom')->get();
+        $genders  = Gender::orderBy('name')->get();
 
-        return view('admin.users.edit', compact('user', 'roles', 'services'));
+        return view('admin.users.edit', compact('user', 'roles', 'services', 'genders'));
     }
 
     public function update(Request $request, User $user)
@@ -87,6 +95,7 @@ class UserController extends Controller
             'password'     => 'nullable|string|min:8|confirmed',
             'role'         => 'nullable|string|exists:roles,name',
             'service_id'   => 'nullable|integer|exists:services,id',
+            'gender_id'    => 'nullable|integer|exists:genders,id',
             'user_type'    => 'nullable|string|in:fonctionnaire,pensionnaire,institution',
             'pension_code' => 'nullable|string|max:50',
             'nif'          => 'nullable|string|max:20',
@@ -98,6 +107,10 @@ class UserController extends Controller
 
         if (empty($validated['password'])) {
             unset($validated['password']);
+        }
+
+        if (empty($validated['gender_id'])) {
+            $validated['gender_id'] = null;
         }
 
         $user->update($validated);

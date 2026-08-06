@@ -4,6 +4,28 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Force light scheme so native selects stay readable under Windows dark mode */
+html {
+    color-scheme: light;
+}
+
+/*
+ * DaisyUI styles bare <select>/<input> with --color-base-content.
+ * Without data-theme (or when vars fail), text can be invisible on white fields.
+ * Unlayered + !important so this wins over DaisyUI.
+ */
+input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="file"]):not([type="submit"]):not([type="button"]):not([type="reset"]):not([type="image"]):not([type="color"]):not([type="hidden"]),
+textarea,
+select {
+    color: #1f2937 !important;
+    background-color: #fff !important;
+}
+
+select option {
+    color: #1f2937 !important;
+    background-color: #fff !important;
+}
+
 [x-cloak] { display: none !important; }
 
 [cursor-help] {
@@ -31,4 +53,3 @@
 .error-message {
     @apply mt-1 text-sm text-red-600;
 }
-

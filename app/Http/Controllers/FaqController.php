@@ -16,11 +16,28 @@ class FaqController extends Controller
     public function adminIndex(Request $request)
     {
         $query = FaqItem::orderBy('order_column')->orderBy('id');
+
         if ($request->filled('q')) {
-            $query->where('question', 'like', '%' . $request->q . '%');
+            $q = $request->q;
+            $query->where(function ($builder) use ($q) {
+                $builder->where('question', 'like', '%' . $q . '%')
+                    ->orWhere('answer', 'like', '%' . $q . '%');
+            });
         }
+
+        if ($request->filled('category')) {
+            $query->where('category', $request->category);
+        }
+
         $items = $query->paginate(20)->withQueryString();
-        return view('admin.faq.index', compact('items'));
+        $categories = FaqItem::query()
+            ->whereNotNull('category')
+            ->where('category', '!=', '')
+            ->distinct()
+            ->orderBy('category')
+            ->pluck('category');
+
+        return view('admin.faq.index', compact('items', 'categories'));
     }
 
     public function store(Request $request)
