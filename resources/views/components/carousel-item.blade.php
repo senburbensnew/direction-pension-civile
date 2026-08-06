@@ -1,8 +1,8 @@
 @props(['src', 'alt' => ''])
 
 <div
-    class="book-card inline-block w-64 bg-white rounded-xl overflow-hidden shadow-md mx-3 animate-fadeIn align-top cursor-zoom-in"
-    @click="$dispatch('open-lightbox', { src: '{{ $src }}', alt: '{{ $alt }}' })"
+    class="book-card inline-block w-72 sm:w-80 bg-white rounded-xl overflow-hidden shadow-md mx-3 animate-fadeIn align-top cursor-zoom-in border border-gray-100"
+    @click="$dispatch('open-lightbox', { src: @js($src), alt: @js($alt) })"
 >
     <img
         src="{{ $src }}"

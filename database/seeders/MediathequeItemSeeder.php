@@ -70,15 +70,75 @@ class MediathequeItemSeeder extends Seeder
                 'published'    => true,
                 'is_featured'  => false,
             ],
+            // Homepage "Informations utiles" illustrated cards
+            [
+                'title'        => 'A ki laj mwen ka pwan pansyon mwen?',
+                'description'  => 'Kart enfòmasyon sou laj retrèt pou ajan piblik yo.',
+                'type'         => 'image',
+                'file_path'    => 'mediatheque/images/photo_2025-11-18_23-36-39.jpg',
+                'url'          => null,
+                'order_column' => 10,
+                'published'    => true,
+                'is_featured'  => false,
+            ],
+            [
+                'title'        => "Pandan konbyen tan ou ap peye pou pansyon'w",
+                'description'  => 'Kart enfòmasyon sou 60 mwa sèvis obligatwa.',
+                'type'         => 'image',
+                'file_path'    => 'mediatheque/images/photo_2025-11-18_23-36-43.jpg',
+                'url'          => null,
+                'order_column' => 11,
+                'published'    => true,
+                'is_featured'  => false,
+            ],
+            [
+                'title'        => "Enfòmasyon ou dwe konnen sou pansyon'w",
+                'description'  => 'Kart enfòmasyon sou dwa ajan piblik yo.',
+                'type'         => 'image',
+                'file_path'    => 'mediatheque/images/photo_2025-11-18_23-36-46.jpg',
+                'url'          => null,
+                'order_column' => 12,
+                'published'    => true,
+                'is_featured'  => false,
+            ],
+            [
+                'title'        => 'Kisa ki pansyon pa revèsibilite an?',
+                'description'  => 'Kart enfòmasyon sou pansyon sivivan.',
+                'type'         => 'image',
+                'file_path'    => 'mediatheque/images/photo_2025-11-18_23-36-49.jpg',
+                'url'          => null,
+                'order_column' => 13,
+                'published'    => true,
+                'is_featured'  => false,
+            ],
+            [
+                'title'        => "Dokiman pou mande pansyon'w",
+                'description'  => 'Kart enfòmasyon sou dokiman obligatwa.',
+                'type'         => 'image',
+                'file_path'    => 'mediatheque/images/photo_2025-11-18_23-36-52.jpg',
+                'url'          => null,
+                'order_column' => 14,
+                'published'    => true,
+                'is_featured'  => false,
+            ],
+            [
+                'title'        => 'Se kisa PRAP la ye?',
+                'description'  => 'Kart enfòmasyon sou pwogram PRAP.',
+                'type'         => 'image',
+                'file_path'    => 'mediatheque/images/photo_2025-11-18_23-36-55.jpg',
+                'url'          => null,
+                'order_column' => 15,
+                'published'    => true,
+                'is_featured'  => false,
+            ],
         ];
 
         foreach ($items as $data) {
-            MediathequeItem::updateOrCreate(['title' => $data['title']], $data);
-        }
+            $key = ! empty($data['file_path'])
+                ? ['file_path' => $data['file_path']]
+                : ['title' => $data['title']];
 
-        // Remove previously seeded default images
-        MediathequeItem::where('type', 'image')
-            ->where('title', 'like', 'Photo institutionnelle%')
-            ->delete();
+            MediathequeItem::updateOrCreate($key, $data);
+        }
     }
 }

@@ -84,83 +84,89 @@
     @keydown.escape.window="lbOpen = false"
     class="relative px-10 py-2"
 >
-    {{-- Prev button --}}
-    <button
-        @click="prev(); restartAuto()"
-        class="absolute left-0 top-1/2 -translate-y-1/2 z-10 bg-white rounded-full w-10 h-10 flex items-center justify-center shadow-md hover:bg-indigo-50 transition-colors"
-        aria-label="Précédent"
-    >
-        <i class="fas fa-chevron-left text-blue-900"></i>
-    </button>
+    @if($items->isEmpty())
+        <div class="text-center py-10 text-gray-400 text-sm">
+            Aucune image publiée pour le moment.
+            <a href="{{ route('mediatheque') }}" class="text-blue-600 hover:underline ml-1">Voir la médiathèque</a>
+        </div>
+    @else
+        {{-- Prev button --}}
+        <button
+            @click="prev(); restartAuto()"
+            class="absolute left-0 top-1/2 -translate-y-1/2 z-10 bg-white rounded-full w-10 h-10 flex items-center justify-center shadow-md hover:bg-indigo-50 transition-colors"
+            aria-label="Précédent"
+        >
+            <i class="fas fa-chevron-left text-blue-900"></i>
+        </button>
 
-    {{-- Carousel track --}}
-    <div x-ref="track" class="books-slider-track overflow-x-auto whitespace-nowrap py-4">
-        @foreach($items as $item)
-            <x-carousel-item
-                src="{{ $item->fileUrl() }}"
-                alt="{{ $item->title ?? 'Informations utiles' }}"
-            />
-        @endforeach
-    </div>
+        {{-- Carousel track --}}
+        <div x-ref="track" class="books-slider-track overflow-x-auto whitespace-nowrap py-4">
+            @foreach($items as $item)
+                <x-carousel-item
+                    src="{{ $item->fileUrl() }}"
+                    alt="{{ $item->title ?? 'Informations utiles' }}"
+                />
+            @endforeach
+        </div>
 
-    {{-- Next button --}}
-    <button
-        @click="next(); restartAuto()"
-        class="absolute right-0 top-1/2 -translate-y-1/2 z-10 bg-white rounded-full w-10 h-10 flex items-center justify-center shadow-md hover:bg-indigo-50 transition-colors"
-        aria-label="Suivant"
-    >
-        <i class="fas fa-chevron-right text-blue-900"></i>
-    </button>
+        {{-- Next button --}}
+        <button
+            @click="next(); restartAuto()"
+            class="absolute right-0 top-1/2 -translate-y-1/2 z-10 bg-white rounded-full w-10 h-10 flex items-center justify-center shadow-md hover:bg-indigo-50 transition-colors"
+            aria-label="Suivant"
+        >
+            <i class="fas fa-chevron-right text-blue-900"></i>
+        </button>
 
-    {{-- Dot indicators — rendered once pageCount is known --}}
-    <div class="flex justify-center mt-5 space-x-2" x-show="pageCount > 1">
-        <template x-for="i in pageCount" :key="i">
-            <button
-                @click="goTo(i - 1); restartAuto()"
-                :class="current === i - 1 ? 'bg-indigo-600 w-5' : 'bg-gray-300 w-3'"
-                class="h-3 rounded-full transition-all duration-300 hover:bg-indigo-400"
-                :aria-label="`Page ${i}`"
-            ></button>
-        </template>
-    </div>
+        {{-- Dot indicators — rendered once pageCount is known --}}
+        <div class="flex justify-center mt-5 space-x-2" x-show="pageCount > 1">
+            <template x-for="i in pageCount" :key="i">
+                <button
+                    @click="goTo(i - 1); restartAuto()"
+                    :class="current === i - 1 ? 'bg-indigo-600 w-5' : 'bg-gray-300 w-3'"
+                    class="h-3 rounded-full transition-all duration-300 hover:bg-indigo-400"
+                    :aria-label="`Page ${i}`"
+                ></button>
+            </template>
+        </div>
 
-    {{-- Lightbox modal --}}
-    <div
-        x-show="lbOpen"
-        x-transition:enter="transition ease-out duration-200"
-        x-transition:enter-start="opacity-0"
-        x-transition:enter-end="opacity-100"
-        x-transition:leave="transition ease-in duration-150"
-        x-transition:leave-start="opacity-100"
-        x-transition:leave-end="opacity-0"
-        @click.self="lbOpen = false"
-        class="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4"
-        x-cloak
-    >
+        {{-- Lightbox modal --}}
         <div
             x-show="lbOpen"
             x-transition:enter="transition ease-out duration-200"
-            x-transition:enter-start="opacity-0 scale-95"
-            x-transition:enter-end="opacity-100 scale-100"
+            x-transition:enter-start="opacity-0"
+            x-transition:enter-end="opacity-100"
             x-transition:leave="transition ease-in duration-150"
-            x-transition:leave-start="opacity-100 scale-100"
-            x-transition:leave-end="opacity-0 scale-95"
-            class="relative bg-white rounded-2xl shadow-2xl max-w-lg w-full max-h-[90vh] overflow-y-auto"
+            x-transition:leave-start="opacity-100"
+            x-transition:leave-end="opacity-0"
+            @click.self="lbOpen = false"
+            class="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4"
+            x-cloak
         >
-            {{-- Close button --}}
-            <button
-                @click="lbOpen = false"
-                class="absolute top-3 right-3 z-10 bg-white/90 hover:bg-white rounded-full w-8 h-8 flex items-center justify-center shadow-md transition-colors"
-                aria-label="Fermer"
+            <div
+                x-show="lbOpen"
+                x-transition:enter="transition ease-out duration-200"
+                x-transition:enter-start="opacity-0 scale-95"
+                x-transition:enter-end="opacity-100 scale-100"
+                x-transition:leave="transition ease-in duration-150"
+                x-transition:leave-start="opacity-100 scale-100"
+                x-transition:leave-end="opacity-0 scale-95"
+                class="relative bg-white rounded-2xl shadow-2xl max-w-lg w-full max-h-[90vh] overflow-y-auto"
             >
-                <i class="fas fa-times text-gray-600 text-sm"></i>
-            </button>
+                <button
+                    @click="lbOpen = false"
+                    class="absolute top-3 right-3 z-10 bg-white/90 hover:bg-white rounded-full w-8 h-8 flex items-center justify-center shadow-md transition-colors"
+                    aria-label="Fermer"
+                >
+                    <i class="fas fa-times text-gray-600 text-sm"></i>
+                </button>
 
-            <img
-                :src="lbSrc"
-                :alt="lbAlt"
-                class="w-full h-auto block rounded-2xl"
-            >
+                <img
+                    :src="lbSrc"
+                    :alt="lbAlt"
+                    class="w-full h-auto block rounded-2xl"
+                >
+            </div>
         </div>
-    </div>
+    @endif
 </div>

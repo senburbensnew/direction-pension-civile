@@ -37,10 +37,11 @@ class MediathequeItem extends Model
         if (str_starts_with($this->file_path, 'http')) {
             return $this->file_path;
         }
+        // Root-relative URLs work regardless of APP_URL host/port (e.g. :8000).
         if (str_starts_with($this->file_path, 'media/')) {
-            return asset($this->file_path);
+            return '/' . ltrim($this->file_path, '/');
         }
-        return Storage::disk('public')->url($this->file_path);
+        return '/storage/' . ltrim($this->file_path, '/');
     }
 
     public function isLegacyPublicFile(): bool

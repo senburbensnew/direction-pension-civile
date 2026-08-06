@@ -155,7 +155,7 @@
                     </a>
                     <a href="{{ route('admin.officials.index') }}"
                        class="nav-link {{ request()->routeIs('admin.officials.*') ? 'active' : '' }}">
-                       <i class="fas fa-user-tie"></i> Présentations officielles
+                       <i class="fas fa-user-tie"></i> Profil &amp; Discours
                     </a>
                     <a href="{{ route('admin.carousels.index') }}"
                        class="nav-link {{ request()->routeIs('admin.carousels.*') ? 'active' : '' }}">

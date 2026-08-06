@@ -29,8 +29,6 @@ class DatabaseSeeder extends Seeder
         $this->call(ParametersSeeder::class);
         $this->call(TypeDemandeSeeder::class);
         $this->call(CarouselSeeder::class);
-        $this->call(ActualiteSeeder::class);
-        $this->call(ReportSeeder::class);
         $this->call(NewsletterSeeder::class);
         $this->call(InstitutionImageSeeder::class);
         $this->call(PartenaireSeeder::class);

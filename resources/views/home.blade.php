@@ -643,13 +643,11 @@
     <section class="py-14 bg-white fade-in">
         <div class="container mx-auto px-4">
 
-            <div class="flex items-end justify-between mb-10">
-                <div>
-                    <span class="text-xs font-bold text-blue-600 uppercase tracking-widest">Documents officiels</span>
-                    <h2 class="text-3xl md:text-4xl font-bold text-gray-900 mt-1">Publications & Rapports</h2>
-                </div>
+            <div class="text-center mb-10">
+                <span class="text-xs font-bold text-blue-600 uppercase tracking-widest">Documents officiels</span>
+                <h2 class="text-3xl md:text-4xl font-bold text-gray-900 mt-2">Publications & Rapports</h2>
                 <a href="{{ route('reports.index') }}"
-                   class="hidden md:inline-flex items-center gap-2 text-sm font-semibold text-blue-600 hover:text-blue-800 transition-colors">
+                   class="inline-flex items-center gap-2 mt-3 text-sm font-semibold text-blue-600 hover:text-blue-800 transition-colors">
                     Voir tous les rapports <i class="fas fa-arrow-right text-xs"></i>
                 </a>
             </div>
@@ -742,7 +740,7 @@
                             <div class="flex-1">
                                 <input type="email" name="email" required
                                        placeholder="votre@email.com"
-                                       class="w-full px-4 py-3 rounded-xl bg-white/10 border border-white/20 text-white placeholder-blue-300 focus:outline-none focus:ring-2 focus:ring-white/50 text-sm">
+                                       class="w-full px-4 py-3 rounded-xl bg-white border border-gray-200 text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-300 text-sm">
                             </div>
                             <button type="submit"
                                     class="px-6 py-3 bg-white text-blue-800 font-bold rounded-xl hover:bg-blue-50 transition-colors text-sm shrink-0">
@@ -830,14 +828,12 @@
     <section class="py-14 bg-gray-50 fade-in">
         <div class="container mx-auto px-4">
 
-            <div class="flex items-end justify-between mb-10">
-                <div>
-                    <span class="text-xs font-bold text-blue-600 uppercase tracking-widest">Dernières nouvelles</span>
-                    <h2 class="text-3xl md:text-4xl font-bold text-gray-900 mt-1">Actualités pour les Retraités</h2>
-                </div>
+            <div class="text-center mb-10">
+                <span class="text-xs font-bold text-blue-600 uppercase tracking-widest">Dernières nouvelles</span>
+                <h2 class="text-3xl md:text-4xl font-bold text-gray-900 mt-2">Actualités pour les Retraités</h2>
                 @if($latestActualites->count() > 0)
                     <a href="{{ route('actualites.index') }}"
-                       class="hidden md:inline-flex items-center gap-2 text-sm font-semibold text-blue-600 hover:text-blue-800 transition-colors">
+                       class="inline-flex items-center gap-2 mt-3 text-sm font-semibold text-blue-600 hover:text-blue-800 transition-colors">
                         Toutes les actualités <i class="fas fa-arrow-right text-xs"></i>
                     </a>
                 @endif

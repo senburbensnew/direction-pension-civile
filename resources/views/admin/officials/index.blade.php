@@ -1,9 +1,9 @@
 @extends('layouts.admin')
 
-@section('title', 'Gestion des présentations')
+@section('title', 'Profil & Discours')
 
 @section('breadcrumb')
-    <span class="text-gray-700 text-sm">Présentations officielles</span>
+    <span class="text-gray-700 text-sm">Profil &amp; Discours</span>
 @endsection
 
 @section('content')
@@ -11,8 +11,10 @@
 
     <div class="flex items-center justify-between">
         <div>
-            <h1 class="text-xl font-bold text-gray-800">Présentations officielles</h1>
-            <p class="text-sm text-gray-500 mt-0.5">Gérez les profils, biographies et discours des responsables affichés sur le site.</p>
+            <h1 class="text-xl font-bold text-gray-800">Profil &amp; Discours</h1>
+            <p class="text-sm text-gray-500 mt-0.5">
+                Gérez les pages publiques <strong>Profil</strong> et <strong>Discours</strong> des responsables (Ministre, Directeur, etc.).
+            </p>
         </div>
         <a href="{{ route('admin.officials.create') }}"
            class="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg transition-colors">
@@ -40,7 +42,6 @@
         <div class="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
             @foreach($officials as $official)
                 <div class="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
-                    {{-- Header with photo --}}
                     <div class="flex items-center gap-4 p-5 border-b border-gray-100">
                         <img src="{{ $official->photoUrl() }}"
                              alt="{{ $official->nom }}"
@@ -59,50 +60,56 @@
                         </div>
                     </div>
 
-                    {{-- Content status --}}
-                    <div class="px-5 py-3 flex items-center gap-4 bg-gray-50 border-b border-gray-100">
-                        <span class="flex items-center gap-1.5 text-xs {{ $official->hasBiographie() ? 'text-green-600' : 'text-gray-400' }}">
-                            <i class="fas {{ $official->hasBiographie() ? 'fa-check-circle' : 'fa-circle' }} text-[10px]"></i>
-                            Biographie
+                    <div class="px-5 py-3 flex flex-wrap items-center gap-3 bg-gray-50 border-b border-gray-100">
+                        <span class="flex items-center gap-1.5 text-xs {{ $official->hasBiographie() ? 'text-green-600' : 'text-amber-600' }}">
+                            <i class="fas {{ $official->hasBiographie() ? 'fa-check-circle' : 'fa-exclamation-circle' }} text-[10px]"></i>
+                            Profil {{ $official->hasBiographie() ? 'renseigné' : 'à compléter' }}
                         </span>
-                        <span class="flex items-center gap-1.5 text-xs {{ $official->hasDiscours() ? 'text-green-600' : 'text-gray-400' }}">
-                            <i class="fas {{ $official->hasDiscours() ? 'fa-check-circle' : 'fa-circle' }} text-[10px]"></i>
-                            Discours
+                        <span class="flex items-center gap-1.5 text-xs {{ $official->hasDiscours() ? 'text-green-600' : 'text-amber-600' }}">
+                            <i class="fas {{ $official->hasDiscours() ? 'fa-check-circle' : 'fa-exclamation-circle' }} text-[10px]"></i>
+                            Discours {{ $official->hasDiscours() ? 'renseigné' : 'à compléter' }}
                         </span>
-                        @if($official->citation)
-                            <span class="flex items-center gap-1.5 text-xs text-green-600">
-                                <i class="fas fa-check-circle text-[10px]"></i> Citation
-                            </span>
-                        @endif
                     </div>
 
-                    {{-- Actions --}}
-                    <div class="px-5 py-3 flex items-center justify-between gap-2">
-                        <div class="flex items-center gap-2">
-                            <a href="{{ route('quisommesnous.profil', ['role' => $official->slug]) }}"
-                               target="_blank"
-                               class="text-xs px-2.5 py-1.5 bg-gray-100 hover:bg-gray-200 text-gray-600 rounded-lg transition-colors">
-                                <i class="fas fa-eye mr-1"></i> Profil
+                    <div class="px-5 py-3 space-y-2">
+                        <div class="grid grid-cols-2 gap-2">
+                            <a href="{{ route('admin.officials.edit', $official) }}#profil"
+                               class="inline-flex items-center justify-center gap-1.5 text-xs px-2.5 py-2 bg-blue-50 hover:bg-blue-100 text-blue-700 rounded-lg font-medium transition-colors">
+                                <i class="fas fa-id-card"></i> Éditer Profil
                             </a>
-                            <a href="{{ route('quisommesnous.mots', ['role' => $official->slug]) }}"
-                               target="_blank"
-                               class="text-xs px-2.5 py-1.5 bg-gray-100 hover:bg-gray-200 text-gray-600 rounded-lg transition-colors">
-                                <i class="fas fa-comment mr-1"></i> Discours
+                            <a href="{{ route('admin.officials.edit', $official) }}#discours"
+                               class="inline-flex items-center justify-center gap-1.5 text-xs px-2.5 py-2 bg-blue-50 hover:bg-blue-100 text-blue-700 rounded-lg font-medium transition-colors">
+                                <i class="fas fa-microphone"></i> Éditer Discours
                             </a>
                         </div>
-                        <div class="flex items-center gap-2">
-                            <a href="{{ route('admin.officials.edit', $official) }}"
-                               class="text-xs px-3 py-1.5 bg-blue-100 hover:bg-blue-200 text-blue-700 rounded-lg font-medium transition-colors">
-                                <i class="fas fa-pencil-alt"></i>
-                            </a>
-                            <form method="POST" action="{{ route('admin.officials.destroy', $official) }}"
-                                  onsubmit="return confirm('Supprimer cet officiel ?')">
-                                @csrf @method('DELETE')
-                                <button type="submit"
-                                        class="text-xs px-3 py-1.5 bg-red-100 hover:bg-red-200 text-red-600 rounded-lg font-medium transition-colors">
-                                    <i class="fas fa-trash"></i>
-                                </button>
-                            </form>
+                        <div class="flex items-center justify-between gap-2 pt-1">
+                            <div class="flex items-center gap-2">
+                                <a href="{{ route('quisommesnous.profil', ['role' => $official->slug]) }}"
+                                   target="_blank"
+                                   class="text-xs px-2.5 py-1.5 bg-gray-100 hover:bg-gray-200 text-gray-600 rounded-lg transition-colors">
+                                    <i class="fas fa-external-link-alt mr-1"></i> Voir Profil
+                                </a>
+                                <a href="{{ route('quisommesnous.mots', ['role' => $official->slug]) }}"
+                                   target="_blank"
+                                   class="text-xs px-2.5 py-1.5 bg-gray-100 hover:bg-gray-200 text-gray-600 rounded-lg transition-colors">
+                                    <i class="fas fa-external-link-alt mr-1"></i> Voir Discours
+                                </a>
+                            </div>
+                            <div class="flex items-center gap-1">
+                                <a href="{{ route('admin.officials.edit', $official) }}"
+                                   title="Modifier tout"
+                                   class="text-xs px-2.5 py-1.5 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg transition-colors">
+                                    <i class="fas fa-pencil-alt"></i>
+                                </a>
+                                <form method="POST" action="{{ route('admin.officials.destroy', $official) }}"
+                                      onsubmit="return confirm('Supprimer cet officiel ?')">
+                                    @csrf @method('DELETE')
+                                    <button type="submit" title="Supprimer"
+                                            class="text-xs px-2.5 py-1.5 bg-red-50 hover:bg-red-100 text-red-600 rounded-lg transition-colors">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                </form>
+                            </div>
                         </div>
                     </div>
                 </div>

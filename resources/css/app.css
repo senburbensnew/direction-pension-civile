@@ -21,6 +21,12 @@ select {
     background-color: #fff !important;
 }
 
+input::placeholder,
+textarea::placeholder {
+    color: #9ca3af !important;
+    opacity: 1;
+}
+
 select option {
     color: #1f2937 !important;
     background-color: #fff !important;

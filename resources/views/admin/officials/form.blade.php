@@ -1,9 +1,9 @@
 @extends('layouts.admin')
 
-@section('title', isset($official->id) ? 'Modifier l\'officiel' : 'Ajouter un officiel')
+@section('title', isset($official->id) ? 'Modifier Profil & Discours' : 'Ajouter un officiel')
 
 @section('breadcrumb')
-    <a href="{{ route('admin.officials.index') }}" class="text-gray-500 hover:text-gray-700 text-sm">Présentations</a>
+    <a href="{{ route('admin.officials.index') }}" class="text-gray-500 hover:text-gray-700 text-sm">Profil &amp; Discours</a>
     <span class="text-gray-400 mx-1">/</span>
     <span class="text-gray-700 text-sm">{{ isset($official->id) ? 'Modifier' : 'Ajouter' }}</span>
 @endsection
@@ -91,6 +91,14 @@ document.addEventListener('DOMContentLoaded', function () {
         'input-discours',
         @json(old('discours', $official->discours ?? ''))
     );
+
+    // Deep-link from admin list (#profil / #discours)
+    if (window.location.hash) {
+        const target = document.querySelector(window.location.hash);
+        if (target) {
+            setTimeout(() => target.scrollIntoView({ behavior: 'smooth', block: 'start' }), 150);
+        }
+    }
 });
 </script>
 @endpush
@@ -108,10 +116,29 @@ document.addEventListener('DOMContentLoaded', function () {
                 {{ isset($official->id) ? 'Modifier : '.$official->nom : 'Ajouter un officiel' }}
             </h1>
             <p class="text-sm text-gray-500">
-                {{ isset($official->id) ? 'Slug : '.$official->slug : 'Nouveau profil officiel' }}
+                {{ isset($official->id) ? 'Profil & Discours publics · slug : '.$official->slug : 'Nouveau profil officiel' }}
             </p>
         </div>
     </div>
+
+    @if(isset($official->id))
+        <div class="flex flex-wrap gap-2">
+            <a href="#profil" class="text-xs px-3 py-1.5 bg-white border border-gray-200 rounded-lg text-gray-600 hover:border-blue-300 hover:text-blue-700 transition-colors">
+                <i class="fas fa-id-card mr-1"></i> Aller au Profil
+            </a>
+            <a href="#discours" class="text-xs px-3 py-1.5 bg-white border border-gray-200 rounded-lg text-gray-600 hover:border-blue-300 hover:text-blue-700 transition-colors">
+                <i class="fas fa-microphone mr-1"></i> Aller au Discours
+            </a>
+            <a href="{{ route('quisommesnous.profil', ['role' => $official->slug]) }}" target="_blank"
+               class="text-xs px-3 py-1.5 bg-white border border-gray-200 rounded-lg text-gray-600 hover:border-blue-300 hover:text-blue-700 transition-colors">
+                <i class="fas fa-external-link-alt mr-1"></i> Voir Profil
+            </a>
+            <a href="{{ route('quisommesnous.mots', ['role' => $official->slug]) }}" target="_blank"
+               class="text-xs px-3 py-1.5 bg-white border border-gray-200 rounded-lg text-gray-600 hover:border-blue-300 hover:text-blue-700 transition-colors">
+                <i class="fas fa-external-link-alt mr-1"></i> Voir Discours
+            </a>
+        </div>
+    @endif
 
     @if($errors->any())
         <div class="bg-red-50 border border-red-200 rounded-lg px-4 py-3 text-sm text-red-700">
@@ -239,29 +266,27 @@ document.addEventListener('DOMContentLoaded', function () {
             </div>
         </div>
 
-        {{-- ── Biographie ───────────────────────────── --}}
-        <div class="bg-white rounded-xl border border-gray-200 shadow-sm divide-y divide-gray-100">
+        {{-- ── Profil (biographie publique) ──────────── --}}
+        <div id="profil" class="bg-white rounded-xl border border-gray-200 shadow-sm divide-y divide-gray-100 scroll-mt-24">
             <div class="px-6 py-4 flex items-center justify-between">
                 <h2 class="text-sm font-semibold text-gray-700">
-                    <i class="fas fa-user-alt mr-1.5 text-blue-500"></i> Biographie
-                    <span class="ml-1 text-xs font-normal text-gray-400">— page Profil</span>
+                    <i class="fas fa-id-card mr-1.5 text-blue-500"></i> Profil
+                    <span class="ml-1 text-xs font-normal text-gray-400">— contenu de la page publique « Profil »</span>
                 </h2>
                 <span class="text-xs text-gray-400">Gras, titres, listes, liens…</span>
             </div>
             <div class="px-6 py-5">
-                {{-- Hidden input that receives Quill HTML --}}
                 <textarea id="input-biographie" name="biographie" class="hidden">{{ old('biographie', $official->biographie ?? '') }}</textarea>
-                {{-- Quill mount point --}}
                 <div id="editor-biographie" class="rounded-lg"></div>
             </div>
         </div>
 
         {{-- ── Discours ─────────────────────────────── --}}
-        <div class="bg-white rounded-xl border border-gray-200 shadow-sm divide-y divide-gray-100">
+        <div id="discours" class="bg-white rounded-xl border border-gray-200 shadow-sm divide-y divide-gray-100 scroll-mt-24">
             <div class="px-6 py-4 flex items-center justify-between">
                 <h2 class="text-sm font-semibold text-gray-700">
-                    <i class="fas fa-microphone mr-1.5 text-blue-500"></i> Discours / Mot officiel
-                    <span class="ml-1 text-xs font-normal text-gray-400">— page Mots</span>
+                    <i class="fas fa-microphone mr-1.5 text-blue-500"></i> Discours
+                    <span class="ml-1 text-xs font-normal text-gray-400">— contenu de la page publique « Discours »</span>
                 </h2>
                 <span class="text-xs text-gray-400">Gras, titres, listes, liens…</span>
             </div>
