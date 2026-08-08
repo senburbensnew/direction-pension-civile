@@ -84,8 +84,28 @@
                 </div>
             </div>
 
+            {{-- Traitement des dossiers --}}
+            <div x-data="{ open: {{ request()->routeIs('admin.demandes.*', 'admin.rencontres.*') ? 'true' : 'false' }} }">
+                <button @click="open = !open"
+                    class="nav-section mt-2 w-full flex items-center justify-between cursor-pointer hover:text-slate-300 transition-colors">
+                    <span>Traitement des dossiers</span>
+                    <i class="fas fa-chevron-down text-[9px] transition-transform duration-200"
+                       :class="open ? '' : '-rotate-90'"></i>
+                </button>
+                <div x-show="open" x-transition.duration.150ms>
+                    <a href="{{ route('admin.demandes.index') }}"
+                       class="nav-link {{ request()->routeIs('admin.demandes.*') ? 'active' : '' }}">
+                       <i class="fas fa-folder-open"></i> Dossiers
+                    </a>
+                    <a href="{{ route('admin.rencontres.index') }}"
+                       class="nav-link {{ request()->routeIs('admin.rencontres.*') ? 'active' : '' }}">
+                       <i class="fas fa-video"></i> Demandes de rencontre
+                    </a>
+                </div>
+            </div>
+
             {{-- Utilisateurs & Accès --}}
-            <div x-data="{ open: {{ request()->routeIs('admin.users.*', 'admin.roles.*', 'admin.permissions.*', 'admin.services.*', 'admin.flux-transitions.*', 'admin.directions.*', 'admin.statuses.*') ? 'true' : 'false' }} }">
+            <div x-data="{ open: {{ request()->routeIs('admin.users.*', 'admin.roles.*', 'admin.permissions.*') ? 'true' : 'false' }} }">
                 <button @click="open = !open"
                     class="nav-section mt-2 w-full flex items-center justify-between cursor-pointer hover:text-slate-300 transition-colors">
                     <span>Utilisateurs &amp; Accès</span>
@@ -105,13 +125,21 @@
                        class="nav-link {{ request()->routeIs('admin.permissions.*') ? 'active' : '' }}">
                        <i class="fas fa-key"></i> Permissions
                     </a>
+                </div>
+            </div>
+
+            {{-- Organisation --}}
+            <div x-data="{ open: {{ request()->routeIs('admin.services.*', 'admin.directions.*') ? 'true' : 'false' }} }">
+                <button @click="open = !open"
+                    class="nav-section mt-2 w-full flex items-center justify-between cursor-pointer hover:text-slate-300 transition-colors">
+                    <span>Organisation</span>
+                    <i class="fas fa-chevron-down text-[9px] transition-transform duration-200"
+                       :class="open ? '' : '-rotate-90'"></i>
+                </button>
+                <div x-show="open" x-transition.duration.150ms>
                     <a href="{{ route('admin.services.index') }}"
                        class="nav-link {{ request()->routeIs('admin.services.*') ? 'active' : '' }}">
                        <i class="fas fa-sitemap"></i> Services
-                    </a>
-                    <a href="{{ route('admin.flux-transitions.index') }}"
-                       class="nav-link {{ request()->routeIs('admin.flux-transitions.*') ? 'active' : '' }}">
-                       <i class="fas fa-route"></i> Circuit de traitement
                     </a>
                     <a href="{{ route('admin.directions.index') }}"
                        class="nav-link {{ request()->routeIs('admin.directions.*') ? 'active' : '' }}">
@@ -120,11 +148,27 @@
                 </div>
             </div>
 
-            {{-- Contenu --}}
-            <div x-data="{ open: {{ request()->routeIs('admin.actualites.*', 'admin.reports.*', 'admin.publications.*', 'admin.mediatheque.*', 'admin.carousels.*', 'admin.institution-images.*', 'admin.partenaires.*') ? 'true' : 'false' }} }">
+            {{-- Configuration workflow --}}
+            <div x-data="{ open: {{ request()->routeIs('admin.flux-transitions.*', 'admin.workflow-steps.*') ? 'true' : 'false' }} }">
                 <button @click="open = !open"
                     class="nav-section mt-2 w-full flex items-center justify-between cursor-pointer hover:text-slate-300 transition-colors">
-                    <span>Contenu</span>
+                    <span>Configuration workflow</span>
+                    <i class="fas fa-chevron-down text-[9px] transition-transform duration-200"
+                       :class="open ? '' : '-rotate-90'"></i>
+                </button>
+                <div x-show="open" x-transition.duration.150ms>
+                    <a href="{{ route('admin.flux-transitions.index') }}"
+                       class="nav-link {{ request()->routeIs('admin.flux-transitions.*', 'admin.workflow-steps.*') ? 'active' : '' }}">
+                       <i class="fas fa-route"></i> Circuit de traitement
+                    </a>
+                </div>
+            </div>
+
+            {{-- Publications --}}
+            <div x-data="{ open: {{ request()->routeIs('admin.actualites.*', 'admin.reports.*', 'admin.publications.*', 'admin.documents.*') ? 'true' : 'false' }} }">
+                <button @click="open = !open"
+                    class="nav-section mt-2 w-full flex items-center justify-between cursor-pointer hover:text-slate-300 transition-colors">
+                    <span>Publications</span>
                     <i class="fas fa-chevron-down text-[9px] transition-transform duration-200"
                        :class="open ? '' : '-rotate-90'"></i>
                 </button>
@@ -141,6 +185,26 @@
                        class="nav-link {{ request()->routeIs('admin.publications.*') ? 'active' : '' }}">
                        <i class="fas fa-file-contract"></i> Publications légales
                     </a>
+                    <a href="{{ route('admin.documents.index') }}"
+                       class="nav-link {{ request()->routeIs('admin.documents.*') ? 'active' : '' }}">
+                       <i class="fas fa-file-upload"></i> Téléversement documents
+                    </a>
+                </div>
+            </div>
+
+            {{-- Médias & présentation --}}
+            <div x-data="{ open: {{ request()->routeIs('admin.carousels.*', 'admin.mediatheque.*', 'admin.institution-images.*', 'admin.officials.*', 'admin.partenaires.*') ? 'true' : 'false' }} }">
+                <button @click="open = !open"
+                    class="nav-section mt-2 w-full flex items-center justify-between cursor-pointer hover:text-slate-300 transition-colors">
+                    <span>Médias &amp; présentation</span>
+                    <i class="fas fa-chevron-down text-[9px] transition-transform duration-200"
+                       :class="open ? '' : '-rotate-90'"></i>
+                </button>
+                <div x-show="open" x-transition.duration.150ms>
+                    <a href="{{ route('admin.carousels.index') }}"
+                       class="nav-link {{ request()->routeIs('admin.carousels.*') ? 'active' : '' }}">
+                       <i class="fas fa-images"></i> Carrousel
+                    </a>
                     <a href="{{ route('admin.mediatheque.index') }}"
                        class="nav-link {{ request()->routeIs('admin.mediatheque.*') ? 'active' : '' }}">
                        <i class="fas fa-photo-film"></i> Médiathèque
@@ -149,17 +213,13 @@
                        class="nav-link {{ request()->routeIs('admin.institution-images.*') ? 'active' : '' }}">
                        <i class="fas fa-camera"></i> Notre Institution en Images
                     </a>
-                    <a href="{{ route('admin.partenaires.index') }}"
-                       class="nav-link {{ request()->routeIs('admin.partenaires.*') ? 'active' : '' }}">
-                       <i class="fas fa-handshake"></i> Nos Partenaires
-                    </a>
                     <a href="{{ route('admin.officials.index') }}"
                        class="nav-link {{ request()->routeIs('admin.officials.*') ? 'active' : '' }}">
                        <i class="fas fa-user-tie"></i> Profil &amp; Discours
                     </a>
-                    <a href="{{ route('admin.carousels.index') }}"
-                       class="nav-link {{ request()->routeIs('admin.carousels.*') ? 'active' : '' }}">
-                       <i class="fas fa-images"></i> Carrousel
+                    <a href="{{ route('admin.partenaires.index') }}"
+                       class="nav-link {{ request()->routeIs('admin.partenaires.*') ? 'active' : '' }}">
+                       <i class="fas fa-handshake"></i> Nos Partenaires
                     </a>
                 </div>
             </div>
@@ -189,7 +249,7 @@
             </div>
 
             {{-- Communications --}}
-            <div x-data="{ open: {{ request()->routeIs('admin.contacts.*', 'admin.newsletter.*', 'admin.contact-parameters.*') ? 'true' : 'false' }} }">
+            <div x-data="{ open: {{ request()->routeIs('admin.contacts.*', 'admin.newsletter.*') ? 'true' : 'false' }} }">
                 <button @click="open = !open"
                     class="nav-section mt-2 w-full flex items-center justify-between cursor-pointer hover:text-slate-300 transition-colors">
                     <span>Communications</span>
@@ -208,6 +268,22 @@
                     <a href="{{ route('admin.newsletter.admin.index') }}"
                        class="nav-link {{ request()->routeIs('admin.newsletter.*') ? 'active' : '' }}">
                        <i class="fas fa-paper-plane"></i> Newsletter
+                    </a>
+                </div>
+            </div>
+
+            {{-- Paramètres --}}
+            <div x-data="{ open: {{ request()->routeIs('admin.settings', 'admin.contact-parameters.*') ? 'true' : 'false' }} }">
+                <button @click="open = !open"
+                    class="nav-section mt-2 w-full flex items-center justify-between cursor-pointer hover:text-slate-300 transition-colors">
+                    <span>Paramètres</span>
+                    <i class="fas fa-chevron-down text-[9px] transition-transform duration-200"
+                       :class="open ? '' : '-rotate-90'"></i>
+                </button>
+                <div x-show="open" x-transition.duration.150ms>
+                    <a href="{{ route('admin.settings') }}"
+                       class="nav-link {{ request()->routeIs('admin.settings') ? 'active' : '' }}">
+                       <i class="fas fa-cog"></i> Paramètres
                     </a>
                     <a href="{{ route('admin.contact-parameters.index') }}"
                        class="nav-link {{ request()->routeIs('admin.contact-parameters.*') ? 'active' : '' }}">

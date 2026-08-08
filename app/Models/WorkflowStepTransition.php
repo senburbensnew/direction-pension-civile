@@ -126,13 +126,13 @@ class WorkflowStepTransition extends Model
 
     private function guardDocsComplets(Demande $demande): bool
     {
-        if (!$demande->current_service_id) {
+        if (!$demande->current_step_id) {
             return true;
         }
 
-        $required = StepRequiredDocument::forService($demande->current_service_id, $demande->type);
+        $required = StepRequiredDocument::forStep($demande->current_step_id, $demande->type);
         $existing = $demande->getMedia()->pluck('collection_name')->unique();
 
-        return $required->filter(fn($req) => !$existing->contains($req->document_type))->isEmpty();
+        return $required->filter(fn ($req) => !$existing->contains($req->document_type))->isEmpty();
     }
 }

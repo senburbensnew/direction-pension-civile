@@ -7,7 +7,6 @@ use App\Models\Demande;
 use App\Models\DemandeHistory;
 use App\Models\DemandeInteraction;
 use App\Models\DemandeMessage;
-use App\Models\RequiredCircuitService;
 use App\Models\Service;
 use App\Models\WorkflowStep;
 use App\Notifications\DemandeStatusChangedNotification;
@@ -38,23 +37,25 @@ class DemandeManagementController extends Controller
 
     private function buildRequiredConditions(Demande $demande): array
     {
-        $required = RequiredCircuitService::where(function ($q) use ($demande) {
-            $q->where('type_demande', $demande->type)->orWhereNull('type_demande');
-        })->with('service')->get();
-
-        if ($required->isEmpty()) return [];
+        $requiredServiceIds = app(DemandeWorkflowService::class)->requiredServiceIds($demande);
+        if ($requiredServiceIds->isEmpty()) {
+            return [];
+        }
 
         $visitedServiceIds = $demande->interactions()
             ->where('type', DemandeInteraction::TYPE_TRANSFERT)
             ->where('statut', DemandeInteraction::STATUT_ACCEPTE)
             ->whereNotNull('to_service_id')
             ->pluck('to_service_id')
+            ->map(fn ($id) => (int) $id)
             ->unique();
 
-        return $required->map(fn ($req) => [
-            'service_name' => $req->service->nom,
-            'is_met'       => $visitedServiceIds->contains($req->service_id),
-        ])->all();
+        return Service::whereIn('id', $requiredServiceIds)
+            ->get()
+            ->map(fn (Service $service) => [
+                'service_name' => $service->nom,
+                'is_met'       => $visitedServiceIds->contains($service->id),
+            ])->all();
     }
 
     public function updateStatus(Request $request, Demande $demande)
@@ -122,6 +123,8 @@ class DemandeManagementController extends Controller
             'annotation' => 'required|string|max:2000',
         ]);
 
+        $isFirstAnnotation = !$demande->isAnnotated();
+
         DB::transaction(function () use ($demande, $request) {
             $demande->update([
                 'annotation'   => $request->annotation,
@@ -137,6 +140,39 @@ class DemandeManagementController extends Controller
                 'changed_by'  => auth()->id(),
             ]);
         });
+
+        $demande->refresh();
+
+        // Première annotation : transmission automatique au Secrétariat pour dispatching
+        $dispatched = null;
+        if ($isFirstAnnotation) {
+            try {
+                $dispatched = app(DemandeWorkflowService::class)
+                    ->dispatchToSecretariatAfterAnnotation($demande, auth()->user());
+            } catch (\Throwable $e) {
+                Log::error('annotate: dispatch Secrétariat failed', ['error' => $e->getMessage()]);
+            }
+
+            if ($dispatched) {
+                try {
+                    $secretariat = Service::where('code', Service::SECRETARIAT)->first();
+                    foreach ($secretariat?->users ?? [] as $user) {
+                        $user->notify(new DemandeTransferredNotification(
+                            $demande,
+                            $secretariat,
+                            'Dispatch après annotation Direction'
+                        ));
+                    }
+                } catch (\Throwable $e) {
+                    Log::error('annotate: notification Secrétariat failed', ['error' => $e->getMessage()]);
+                }
+
+                return redirect()->route('personal.cart')->with(
+                    'success',
+                    'Dossier annoté et transmis au Secrétariat pour dispatching.'
+                );
+            }
+        }
 
         return redirect()->back()->with('success', 'Dossier annoté avec succès.');
     }
@@ -249,6 +285,15 @@ class DemandeManagementController extends Controller
 
         $toService = Service::findOrFail($request->service_id);
 
+        $allowedIds = $workflowService->availableTransferOptions($demande, auth()->user())
+            ->pluck('service_id')
+            ->all();
+        abort_unless(
+            in_array((int) $toService->id, $allowedIds, true),
+            403,
+            'Destination non autorisée selon le circuit de traitement défini pour ce dossier.'
+        );
+
         $workflowService->transfer($demande, $toService, auth()->user(), $request->commentaire);
 
         activity('demande')->performedOn($demande)->causedBy(auth()->user())
@@ -321,17 +366,17 @@ class DemandeManagementController extends Controller
 
     private function missingRequiredServices(Demande $demande): array
     {
-        $requiredServiceIds = RequiredCircuitService::where(function ($q) use ($demande) {
-            $q->where('type_demande', $demande->type)->orWhereNull('type_demande');
-        })->pluck('service_id')->unique();
-
-        if ($requiredServiceIds->isEmpty()) return [];
+        $requiredServiceIds = app(DemandeWorkflowService::class)->requiredServiceIds($demande);
+        if ($requiredServiceIds->isEmpty()) {
+            return [];
+        }
 
         $visitedServiceIds = $demande->interactions()
             ->where('type', DemandeInteraction::TYPE_TRANSFERT)
             ->where('statut', DemandeInteraction::STATUT_ACCEPTE)
             ->whereNotNull('to_service_id')
             ->pluck('to_service_id')
+            ->map(fn ($id) => (int) $id)
             ->unique();
 
         return Service::whereIn('id', $requiredServiceIds)
@@ -530,14 +575,18 @@ class DemandeManagementController extends Controller
         $request->validate(['motif' => 'nullable|string|max:2000']);
 
         $soumiseStepId = WorkflowStep::idForCode('SOUMISE');
+        $directionId   = Service::where('code', Service::DIRECTION)->value('id');
 
-        DB::transaction(function () use ($demande, $soumiseStepId, $request) {
-            if ($soumiseStepId) $demande->update(['current_step_id' => $soumiseStepId]);
+        DB::transaction(function () use ($demande, $soumiseStepId, $directionId, $request) {
+            $demande->update(array_filter([
+                'current_step_id'    => $soumiseStepId,
+                'current_service_id' => $directionId,
+            ]));
             DemandeHistory::create([
                 'demande_id'  => $demande->id,
                 'event'       => 'REOPENED',
                 'statut'      => 'SOUMISE',
-                'commentaire' => 'Dossier réouvert par la Direction.' . ($request->motif ? ' Motif : ' . $request->motif : ''),
+                'commentaire' => 'Dossier réouvert — repris par la Direction.' . ($request->motif ? ' Motif : ' . $request->motif : ''),
                 'changed_by'  => auth()->id(),
             ]);
         });

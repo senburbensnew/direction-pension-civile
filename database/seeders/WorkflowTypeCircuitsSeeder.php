@@ -101,7 +101,7 @@ class WorkflowTypeCircuitsSeeder extends Seeder
     {
         return match ($group) {
 
-            // Brouillon → Soumission initiale (Direction) → Instruction Secrétariat → Décision (Direction) → terminaux
+            // Brouillon → Direction (annotation) → Secrétariat (dispatch) → Décision → terminaux
             'simple' => [
                 ['BROUILLON',                  null,          1],
                 ['SOUMISE',                    'direction',   5],
@@ -112,13 +112,14 @@ class WorkflowTypeCircuitsSeeder extends Seeder
                 ['ANNULEE',                    'direction',   50],
             ],
 
-            // Soumission directe (formulaire public, sans brouillon) → Décision → terminaux
+            // Soumission directe → Direction (annotation) → Secrétariat (dispatch) → Décision → terminaux
             'rencontre' => [
-                ['SOUMISE',     'direction', 1],
-                ['EN_DECISION', 'direction', 10],
-                ['APPROUVEE',   'direction', 20],
-                ['REJETEE',     'direction', 30],
-                ['ANNULEE',     'direction', 40],
+                ['SOUMISE',                    'direction',   1],
+                ['EN_INSTRUCTION_SECRETARIAT', 'secretariat', 5],
+                ['EN_DECISION',                'direction',   10],
+                ['APPROUVEE',                  'direction',   20],
+                ['REJETEE',                    'direction',   30],
+                ['ANNULEE',                    'direction',   40],
             ],
         };
     }
@@ -134,7 +135,7 @@ class WorkflowTypeCircuitsSeeder extends Seeder
                 // Flux principal
                 ['BROUILLON',                  'SOUMISE',                    'Soumettre',                 false],
                 [null,                         'SOUMISE',                    'Soumettre directement',     false],
-                ['SOUMISE',                    'EN_INSTRUCTION_SECRETARIAT', 'Transmettre au Secrétariat', false],
+                ['SOUMISE',                    'EN_INSTRUCTION_SECRETARIAT', 'Transmettre au Secrétariat pour dispatching', false],
                 ['EN_INSTRUCTION_SECRETARIAT', 'EN_DECISION',                'Soumettre pour décision',   false],
                 ['EN_DECISION',                'APPROUVEE',                  'Approuver',                 false],
                 ['EN_DECISION',                'REJETEE',                    'Rejeter',                   false],
@@ -144,9 +145,10 @@ class WorkflowTypeCircuitsSeeder extends Seeder
             ],
 
             'rencontre' => [
-                [null,          'SOUMISE',     'Soumettre', false],
-                ['SOUMISE',     'EN_DECISION', 'Examiner',  false],
-                ['EN_DECISION', 'APPROUVEE',   'Accepter',  false],
+                [null,                         'SOUMISE',                    'Soumettre', false],
+                ['SOUMISE',                    'EN_INSTRUCTION_SECRETARIAT', 'Transmettre au Secrétariat pour dispatching', false],
+                ['EN_INSTRUCTION_SECRETARIAT', 'EN_DECISION',                'Soumettre pour décision', false],
+                ['EN_DECISION',                'APPROUVEE',                  'Accepter',  false],
                 ['EN_DECISION', 'REJETEE',     'Refuser',   false],
                 ['EN_DECISION', 'ANNULEE',     'Annuler',   false],
             ],

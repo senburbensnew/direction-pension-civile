@@ -21,7 +21,6 @@
         <div class="hidden lg:flex lg:w-1/2 relative flex-col items-center justify-between py-16 px-12 overflow-hidden"
              style="background: linear-gradient(145deg, #1e3a8a 0%, #1d4ed8 60%, #3b82f6 100%);">
 
-
             {{-- Background photo overlay --}}
             <div class="absolute inset-0">
                 <img src="{{ asset('images/directrice-landscape.jpg') }}"
@@ -34,29 +33,8 @@
             <div class="absolute -top-16 -right-16 w-72 h-72 rounded-full opacity-10"
                  style="background: radial-gradient(circle, #bfdbfe, transparent)"></div>
 
-            {{-- Top logo --}}
-            <div class="relative z-10 flex items-center gap-3">
-                <img src="{{ asset('images/setting-logo-1-M13oPLiYoM.png') }}"
-                     class="w-12 h-12 object-contain"
-                     alt="Logo DPC">
-                <span class="text-white/80 text-sm font-medium tracking-wide uppercase">République d'Haïti</span>
-            </div>
-
-            {{-- Centre content --}}
-            <div class="relative z-10 text-center text-white">
-                <img src="{{ asset('images/setting-logo-1-M13oPLiYoM.png') }}"
-                     class="w-28 h-28 object-contain mx-auto mb-8 drop-shadow-lg"
-                     alt="Logo DPC">
-                <h1 class="text-3xl font-bold mb-4 leading-tight">
-                    Direction de la<br>Pension Civile
-                </h1>
-                <p class="text-blue-100 text-base leading-relaxed max-w-xs mx-auto">
-                    Votre partenaire de confiance pour une retraite sereine et sécurisée.
-                </p>
-            </div>
-
             {{-- Bottom tagline --}}
-            <p class="relative z-10 text-blue-200/60 text-xs text-center">
+            <p class="relative z-10 mt-auto text-blue-200/60 text-xs text-center">
                 Ministère de l'Économie et des Finances
             </p>
         </div>

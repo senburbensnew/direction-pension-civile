@@ -75,7 +75,7 @@ class PersonalController extends Controller
             $query->where('type', $request->type);
         }
 
-        $demandes = $query->latest()->get();
+        $demandes = $query->with('currentStep')->latest()->get();
 
         $statuses = WorkflowStep::orderBy('nom')->get();
         $typesDemandes = TypeDemande::orderBy('label')->get();
@@ -288,7 +288,7 @@ class PersonalController extends Controller
 
     public function showRequestForAuthenticatedUser(Request $request, int $id)
     {
-        $demande = Demande::with(['service', 'workflows.toService'])
+        $demande = Demande::with(['service', 'currentStep.service', 'workflows.toService', 'workflows.fromService'])
             ->where('created_by', auth()->id())
             ->findOrFail($id);
 
@@ -330,6 +330,7 @@ class PersonalController extends Controller
 
         DB::transaction(function () use ($demande, $request) {
             $soumiseStepId = WorkflowStep::idForCode('SOUMISE');
+            $directionId   = Service::where('code', Service::DIRECTION)->value('id');
 
             DemandeMessage::create([
                 'demande_id' => $demande->id,
@@ -345,12 +346,16 @@ class PersonalController extends Controller
                 }
             }
 
-            if ($soumiseStepId) $demande->update(['current_step_id' => $soumiseStepId]);
+            // Retour à la Direction après complément (même règle que la soumission initiale)
+            $demande->update(array_filter([
+                'current_step_id'    => $soumiseStepId,
+                'current_service_id' => $directionId,
+            ]));
 
             DemandeHistory::create([
                 'demande_id'  => $demande->id,
                 'statut'      => 'SOUMISE',
-                'commentaire' => 'Réponse de l\'usager : ' . $request->message,
+                'commentaire' => 'Réponse de l\'usager — dossier retourné à la Direction : ' . $request->message,
                 'changed_by'  => auth()->id(),
             ]);
         });
@@ -403,14 +408,25 @@ class PersonalController extends Controller
         }
         unset($folder);
 
-        $pendingAffectations = DemandeInteraction::with(['demande.user'])
+        $actingServiceIds = ($serviceId && auth()->user())
+            ? \App\Models\AgentDelegation::actingServiceIds(auth()->id(), $serviceId)
+            : array_filter([$serviceId]);
+
+        $pendingAffectations = DemandeInteraction::with(['demande.user', 'demande.currentStep'])
             ->where('type', DemandeInteraction::TYPE_AVIS)
-            ->where('to_service_id', $serviceId)
+            ->whereIn('to_service_id', $actingServiceIds)
             ->where('statut', DemandeInteraction::STATUT_EN_ATTENTE)
             ->latest()
             ->get();
 
-        return view('personal.corbeille', compact('folderStats', 'pendingAffectations'));
+        $pendingReceptions = DemandeInteraction::with(['demande.currentStep', 'fromService', 'toService'])
+            ->where('type', DemandeInteraction::TYPE_TRANSFERT)
+            ->whereIn('to_service_id', $actingServiceIds)
+            ->where('statut', DemandeInteraction::STATUT_EN_ATTENTE)
+            ->latest()
+            ->get();
+
+        return view('personal.corbeille', compact('folderStats', 'pendingAffectations', 'pendingReceptions'));
     }
 
     public function requestsDashboardCorbeille(Request $request)
@@ -501,8 +517,20 @@ class PersonalController extends Controller
     {
         $workflowService = app(DemandeWorkflowService::class);
 
-        $requestModel = Demande::with(['affectations.toService'])->findOrFail($id);
-        $allowedServices = $workflowService->availableDestinations($requestModel, auth()->user());
+        $requestModel = Demande::with([
+            'affectations.toService',
+            'currentStep.service',
+            'circuitSnapshot',
+            'workflows.toService',
+            'workflows.fromService',
+            'service',
+        ])->findOrFail($id);
+
+        $transferOptions = $workflowService->availableTransferOptions($requestModel, auth()->user());
+        $allowedServices = $transferOptions
+            ->map(fn ($opt) => (object) ['id' => $opt->service_id, 'nom' => $opt->service_nom])
+            ->values();
+        $circuitLocked = $workflowService->usesCircuitSnapshot($requestModel);
         $affectations = $requestModel->affectations()->with('toService', 'initiatedBy')->get();
 
         // Pending reception workflow visible to the current agent (own service or delegated)
@@ -566,13 +594,15 @@ class PersonalController extends Controller
         $isClosed = $requestModel->isClosed();
 
         return view('personal.request-details', [
-            'from'             => 'cart',
-            'request'          => $requestModel,
-            'requestHistories' => $requestHistories,
-            'allowedServices'  => $allowedServices,
-            'affectations'     => $affectations,
-            'activityLogs'     => $activityLogs,
-            'messages'         => $messages,
+            'from'                  => 'cart',
+            'request'               => $requestModel,
+            'requestHistories'      => $requestHistories,
+            'allowedServices'       => $allowedServices,
+            'transferOptions'       => $transferOptions,
+            'circuitLocked'         => $circuitLocked,
+            'affectations'          => $affectations,
+            'activityLogs'          => $activityLogs,
+            'messages'              => $messages,
             'pendingWorkflow'       => $pendingWorkflow,
             'pendingAffectation'    => $pendingAffectation,
             'isClosed'              => $isClosed,
@@ -591,6 +621,7 @@ class PersonalController extends Controller
             'administratif'   => 'Dossiers administratifs',
             'correspondances' => 'Correspondances',
             'rencontre'       => 'Demandes de rencontre',
+            'autres'          => 'Autres',
             'clotures'        => 'Dossiers clôturés',
         ];
 
@@ -610,7 +641,10 @@ class PersonalController extends Controller
             }
         };
 
-        $requests = Demande::where(fn($q) => $folderScope($q))->latest()->paginate(10);
+        $requests = Demande::with('currentStep')
+            ->where(fn ($q) => $folderScope($q))
+            ->latest()
+            ->paginate(10);
         $type     = $folders[$folder];
 
         $statusCodes = [

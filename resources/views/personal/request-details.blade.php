@@ -56,23 +56,10 @@
                         <div>
                             <div class="flex flex-wrap items-center gap-2 mb-1">
                                 <h1 class="text-lg font-bold text-gray-900 font-mono tracking-tight">#{{ $request->code }}</h1>
-                                @if($request->status)
-                                    @php
-                                        $statusColors = [
-                                            'BROUILLON'         => 'bg-gray-100 text-gray-600 ring-gray-200',
-                                            'SOUMISE'           => 'bg-blue-50 text-blue-700 ring-blue-200',
-                                            'TRANSFEREE'        => 'bg-indigo-50 text-indigo-700 ring-indigo-200',
-                                            'EN_COURS'          => 'bg-violet-50 text-violet-700 ring-violet-200',
-                                            'COMPLEMENT_REQUIS' => 'bg-orange-50 text-orange-700 ring-orange-200',
-                                            'APPROUVEE'         => 'bg-green-50 text-green-700 ring-green-200',
-                                            'REJETEE'           => 'bg-red-50 text-red-700 ring-red-200',
-                                            'CLOTUREE'          => 'bg-slate-100 text-slate-600 ring-slate-200',
-                                        ];
-                                        $sc = $statusColors[$request->currentStep?->code] ?? 'bg-gray-100 text-gray-600 ring-gray-200';
-                                    @endphp
-                                    <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold ring-1 {{ $sc }}">
+                                @if($request->currentStep)
+                                    <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold ring-1 {{ \App\Models\WorkflowStep::getStatusStyle($request->currentStep->code) }}">
                                         <span class="w-1.5 h-1.5 rounded-full bg-current opacity-70"></span>
-                                        {{ $request->currentStep?->nom ?? $request->currentStep?->code }}
+                                        {{ $request->currentStep->nom }}
                                     </span>
                                 @endif
                                 @if($request->is_urgent ?? false)
@@ -141,10 +128,19 @@
                                     </div>
 
                                 @else
-                                    {{-- Transférer --}}
-                                    @if($request->isAnnotated())
+                                    {{-- Transférer — uniquement si le circuit définit une suite --}}
+                                    @php $transferOptions = $transferOptions ?? collect(); @endphp
+                                    @if($request->isAnnotated() && $transferOptions->isNotEmpty())
                                         <button onclick="document.getElementById('transferModal').classList.remove('hidden')"
                                                 class="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-xl transition-all shadow-sm hover:shadow">
+                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"/>
+                                            </svg>
+                                            Transférer
+                                        </button>
+                                    @elseif($request->isAnnotated())
+                                        <button disabled title="Aucune suite définie dans le circuit pour cette étape"
+                                                class="inline-flex items-center gap-2 px-4 py-2 bg-gray-100 text-gray-400 text-sm font-medium rounded-xl cursor-not-allowed">
                                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"/>
                                             </svg>
@@ -337,50 +333,95 @@
     @endif
     {{-- ================================================================ --}}
 
-    {{-- ====================== LOCALISATION DU DOSSIER (vue usager) ====================== --}}
-    @if($from === 'dashboard' && !$request->isDraft())
+    {{-- ====================== CIRCUIT DU DOSSIER (usager + agent) ====================== --}}
+    @php
+        $transferOptions = $transferOptions ?? collect();
+        $circuitLocked = $circuitLocked ?? false;
+        $showCircuitPanel = !$request->isDraft() && ($from === 'dashboard' || $from === 'cart');
+    @endphp
+    @if($showCircuitPanel)
         <div class="bg-blue-50 border border-blue-200 rounded-2xl p-4">
             <div class="flex items-start gap-3">
-                    <svg class="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                              d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/>
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                              d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/>
-                    </svg>
-                    <div class="flex-1">
-                        <p class="text-sm font-semibold text-blue-800 mb-1">{{ __('messages.file_location') }}</p>
-                        <p class="text-sm text-blue-700">
-                            {{ __('messages.file_currently_at') }}
-                            <span class="font-semibold">{{ $request->service?->nom ?? 'Direction des Pensions Civiles' }}</span>
-                        </p>
-
-                        {{-- Parcours / historique des transferts --}}
-                        @if($request->workflows->isNotEmpty())
-                            <div class="mt-3">
-                                <p class="text-xs text-blue-600 font-medium mb-2 uppercase tracking-wide">{{ __('messages.file_circuit') }}</p>
-                                <div class="flex flex-wrap items-center gap-1">
-                                    @foreach($request->workflows as $wf)
-                                        @if($loop->first && $wf->fromService === null)
-                                            <span class="text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded">{{ __('messages.submission') }}</span>
-                                            <svg class="w-3 h-3 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
-                                            </svg>
-                                        @endif
-                                        <span class="text-xs {{ $loop->last ? 'bg-blue-600 text-white font-semibold' : 'bg-white border border-blue-200 text-blue-700' }} px-2 py-0.5 rounded">
-                                            {{ $wf->toService?->nom ?? '—' }}
-                                        </span>
-                                        @if(!$loop->last)
-                                            <svg class="w-3 h-3 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
-                                            </svg>
-                                        @endif
-                                    @endforeach
-                                </div>
-                            </div>
+                <svg class="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                          d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/>
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                          d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/>
+                </svg>
+                <div class="flex-1 min-w-0">
+                    <div class="flex flex-wrap items-center gap-2 mb-1">
+                        <p class="text-sm font-semibold text-blue-800">{{ __('messages.file_circuit') }}</p>
+                        @if($from === 'cart')
+                            @if($circuitLocked)
+                                <span class="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-indigo-100 text-indigo-700" title="Circuit figé à la soumission — les modifications admin n'affectent pas ce dossier">
+                                    Circuit figé
+                                </span>
+                            @else
+                                <span class="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-700" title="Suit le circuit admin en vigueur">
+                                    Circuit live
+                                </span>
+                            @endif
                         @endif
                     </div>
+
+                    <p class="text-sm text-blue-700">
+                        {{ __('messages.file_currently_at') }}
+                        <span class="font-semibold">{{ $request->service?->nom ?? $request->currentStep?->service?->nom ?? '—' }}</span>
+                        @if($request->currentStep)
+                            <span class="text-blue-500">·</span>
+                            <span class="font-medium">{{ $request->currentStep->nom }}</span>
+                            <span class="text-[10px] font-mono text-blue-400">({{ $request->currentStep->code }})</span>
+                        @endif
+                    </p>
+
+                    {{-- Historique des services traversés --}}
+                    @if($request->workflows->isNotEmpty())
+                        <div class="mt-3">
+                            <p class="text-xs text-blue-600 font-medium mb-2 uppercase tracking-wide">Parcours effectué</p>
+                            <div class="flex flex-wrap items-center gap-1">
+                                @foreach($request->workflows as $wf)
+                                    @if($loop->first && $wf->fromService === null)
+                                        <span class="text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded">{{ __('messages.submission') }}</span>
+                                        <svg class="w-3 h-3 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+                                        </svg>
+                                    @endif
+                                    <span class="text-xs {{ $loop->last ? 'bg-blue-600 text-white font-semibold' : 'bg-white border border-blue-200 text-blue-700' }} px-2 py-0.5 rounded">
+                                        {{ $wf->toService?->nom ?? '—' }}
+                                    </span>
+                                    @if(!$loop->last)
+                                        <svg class="w-3 h-3 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+                                        </svg>
+                                    @endif
+                                @endforeach
+                            </div>
+                        </div>
+                    @endif
+
+                    {{-- Suites autorisées par le circuit (agent) --}}
+                    @if($from === 'cart' && !($isClosed ?? false) && !($pendingWorkflow ?? null))
+                        <div class="mt-3 pt-3 border-t border-blue-200/70">
+                            <p class="text-xs text-blue-600 font-medium mb-2 uppercase tracking-wide">Suites possibles (circuit)</p>
+                            @if($transferOptions->isEmpty())
+                                <p class="text-xs text-blue-500 italic">Aucune transition sortante depuis l’étape actuelle selon le circuit défini.</p>
+                            @else
+                                <div class="flex flex-wrap gap-1.5">
+                                    @foreach($transferOptions as $opt)
+                                        <span class="inline-flex items-center gap-1.5 text-xs bg-white border border-blue-200 text-blue-800 px-2.5 py-1 rounded-lg">
+                                            <span class="font-semibold">{{ $opt->action }}</span>
+                                            <span class="text-blue-300">→</span>
+                                            <span>{{ $opt->service_nom }}</span>
+                                            <span class="text-blue-400">({{ $opt->step_nom }})</span>
+                                        </span>
+                                    @endforeach
+                                </div>
+                            @endif
+                        </div>
+                    @endif
                 </div>
             </div>
+        </div>
     @endif
     {{-- ================================================================ --}}
 
@@ -431,7 +472,7 @@
             <div class="p-4">
                 <p class="text-xs text-gray-500 mb-4">
                     Ce dossier vous a été affecté pour consultation le
-                    <strong>{{ $pendingAffectation->date_affectation->format('d/m/Y à H:i') }}</strong>.
+                    <strong>{{ $pendingAffectation->created_at->format('d/m/Y à H:i') }}</strong>.
                     Soumettez votre avis — c'est la seule action disponible pour votre service sur ce dossier.
                 </p>
                 <form method="POST" action="{{ route('admin.interactions.repondre', $pendingAffectation->id) }}">
@@ -840,7 +881,7 @@
                                     <p class="text-xs text-gray-500 mt-1 italic">"{{ $aff->avis }}"</p>
                                 @endif
                                 <p class="text-xs text-gray-400 mt-0.5">
-                                    {{ $aff->date_affectation->format('d/m/Y') }}
+                                    {{ $aff->created_at->format('d/m/Y') }}
                                     @if($aff->date_reponse)
                                         · répondu {{ $aff->date_reponse->format('d/m/Y') }}
                                     @endif
@@ -3093,27 +3134,42 @@
     @if($from === 'cart')
 
 
-        {{-- ── Transfert modal ─────────────────────────────────────────── --}}
+        {{-- ── Transfert modal (destinations = circuit défini) ─────────── --}}
+        @php $transferOptions = $transferOptions ?? collect(); @endphp
         <div id="transferModal" class="absolute inset-0 z-[99999] flex items-center justify-center bg-black/50
-            {{ $errors->any() ? '' : 'hidden' }}">
+            {{ $errors->has('service_id') || $errors->has('demande_id') ? '' : 'hidden' }}">
 
-            <div class="bg-white w-full max-w-md rounded shadow p-6">
+            <div class="bg-white w-full max-w-md rounded-xl shadow-xl p-6">
 
-                <h2 class="text-lg font-semibold mb-4">Transférer le dossier</h2>
+                <h2 class="text-lg font-semibold mb-1">Transférer le dossier</h2>
+                <p class="text-xs text-gray-500 mb-4">
+                    Destinations imposées par le circuit
+                    @if($circuitLocked ?? false)
+                        <span class="text-indigo-600 font-medium">(figé à la soumission)</span>
+                    @else
+                        <span class="text-emerald-600 font-medium">(circuit admin en vigueur)</span>
+                    @endif.
+                    @if($request->currentStep)
+                        Étape actuelle : <strong>{{ $request->currentStep->nom }}</strong>.
+                    @endif
+                </p>
 
                 <form method="POST" action="{{ route('demande.transfert') }}">
                     @csrf
                     <input type="hidden" name="demande_id" value="{{ $request->id }}">
 
                     <div class="mb-4">
-                        <label class="block text-sm font-medium mb-1">Service de destination</label>
-                        @if($allowedServices->isEmpty())
-                            <p class="text-sm text-gray-500 italic">Aucun transfert possible depuis ce service selon le circuit défini.</p>
+                        <label class="block text-sm font-medium mb-1">Destination selon le circuit</label>
+                        @if($transferOptions->isEmpty())
+                            <p class="text-sm text-gray-500 italic">Aucun transfert possible depuis cette étape selon le circuit défini.</p>
                         @else
-                            <select name="service_id" class="w-full border rounded px-3 py-2">
-                                <option value="">-- Choisir un service --</option>
-                                @foreach($allowedServices as $service)
-                                    <option value="{{ $service->id }}">{{ $service->nom }}</option>
+                            <select name="service_id" required
+                                    class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500">
+                                <option value="">— Choisir une destination —</option>
+                                @foreach($transferOptions as $opt)
+                                    <option value="{{ $opt->service_id }}">
+                                        {{ $opt->action }} → {{ $opt->service_nom }} ({{ $opt->step_nom }})
+                                    </option>
                                 @endforeach
                             </select>
                         @endif
@@ -3125,18 +3181,18 @@
                     <div class="mb-4">
                         <label class="block text-sm font-medium mb-1">Commentaire (optionnel)</label>
                         <textarea name="commentaire" rows="3"
-                                  class="w-full border rounded px-3 py-2"
+                                  class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm"
                                   placeholder="Instructions, observations..."></textarea>
                     </div>
 
                     <div class="flex justify-end gap-2">
                         <button type="button"
                                 onclick="document.getElementById('transferModal').classList.add('hidden')"
-                                class="px-4 py-2 border rounded">
+                                class="px-4 py-2 border rounded-lg text-sm">
                             Annuler
                         </button>
-                        <button type="submit" class="px-4 py-2 bg-green-600 text-white rounded"
-                                @if($allowedServices->isEmpty()) disabled @endif>
+                        <button type="submit" class="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg text-sm font-medium"
+                                @if($transferOptions->isEmpty()) disabled @endif>
                             Transférer
                         </button>
                     </div>

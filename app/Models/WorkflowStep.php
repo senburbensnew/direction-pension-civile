@@ -36,6 +36,22 @@ class WorkflowStep extends Model
         return $this->type_noeud === WorkflowStepTypeEnum::TERMINAL;
     }
 
+    /** Étapes techniques (transfert / complément), hors graphe métier. */
+    public function codeIsTransient(): bool
+    {
+        return in_array($this->code, [
+            'TRANSFERT_EN_ATTENTE',
+            'TRANSFERT_REFUSE',
+            'COMPLEMENT_REQUIS',
+        ], true);
+    }
+
+    /** Brouillon uniquement — ne peut pas être destination d'une transition. */
+    public function isDraftEntry(): bool
+    {
+        return $this->code === 'BROUILLON';
+    }
+
     public function service()
     {
         return $this->belongsTo(Service::class);

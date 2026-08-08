@@ -267,6 +267,35 @@ class DemandeModelTest extends TestCase
         $this->assertTrue($demande->isAnnotated());
     }
 
+    // ─── scopeActive ─────────────────────────────────────────────────────────
+
+    /** @test */
+    public function scope_active_includes_soumise_but_excludes_brouillon_and_terminals(): void
+    {
+        $user = $this->makeUser();
+
+        $soumise = Demande::create([
+            'type'       => TypeDemandeEnum::DEMANDE_ATTESTATION->value,
+            'created_by' => $user->id,
+        ]);
+        $soumise->update(['current_step_id' => WorkflowStep::idForCode('SOUMISE')]);
+
+        $brouillon = Demande::create([
+            'type'       => TypeDemandeEnum::DEMANDE_ATTESTATION->value,
+            'created_by' => $user->id,
+        ]);
+
+        $closed = Demande::create([
+            'type'       => TypeDemandeEnum::DEMANDE_ATTESTATION->value,
+            'created_by' => $user->id,
+        ]);
+        $closed->update(['current_step_id' => WorkflowStep::idForCode('APPROUVEE')]);
+
+        $this->assertTrue(Demande::active()->whereKey($soumise->id)->exists());
+        $this->assertFalse(Demande::active()->whereKey($brouillon->id)->exists());
+        $this->assertFalse(Demande::active()->whereKey($closed->id)->exists());
+    }
+
     // ─── hasMedia ─────────────────────────────────────────────────────────
 
     /** @test */

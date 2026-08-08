@@ -21,7 +21,7 @@ class WorkflowStepTransitionSeeder extends Seeder
     {
         /*
          * Circuit global (template — type_demande = null) :
-         *   Brouillon → Soumise (Direction) → Instruction Secrétariat
+         *   Brouillon → Soumise (Direction) —[annotation]→ Secrétariat (dispatch)
          *   → En Décision (Direction) → Approuvée | Rejetée | Annulée
          *
          * Ce circuit reflète le circuit par défaut appliqué à tous les types de demande.
@@ -33,7 +33,7 @@ class WorkflowStepTransitionSeeder extends Seeder
             // ── Flux principal ──────────────────────────────────────────
             ['step:BROUILLON',                  'step:SOUMISE',                    'Soumettre',                  false],
             [null,                              'step:SOUMISE',                    'Soumettre directement',      false],
-            ['step:SOUMISE',                    'step:EN_INSTRUCTION_SECRETARIAT', 'Transmettre au Secrétariat', false],
+            ['step:SOUMISE',                    'step:EN_INSTRUCTION_SECRETARIAT', 'Transmettre au Secrétariat pour dispatching', false],
             ['step:EN_INSTRUCTION_SECRETARIAT', 'step:EN_DECISION',                'Soumettre pour décision',    false],
             ['step:EN_DECISION',                'step:APPROUVEE',                  'Approuver',                  false],
             ['step:EN_DECISION',                'step:REJETEE',                    'Rejeter',                    false],

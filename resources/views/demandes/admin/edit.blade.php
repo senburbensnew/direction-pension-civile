@@ -107,10 +107,10 @@
                         <i class="fas fa-bolt mr-1"></i> Urgent
                     </span>
                 @endif
-                @if($demande->status)
+                @if($demande->currentStep)
                     <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold
-                        {{ \App\Models\WorkflowStep::getStatusStyle($demande->currentStep?->code) }}">
-                        {{ $demande->currentStep?->nom }}
+                        {{ \App\Models\WorkflowStep::getStatusStyle($demande->currentStep->code) }}">
+                        {{ $demande->currentStep->nom }}
                     </span>
                 @endif
                 <a href="{{ route('demande.pdf', $demande) }}" target="_blank"
@@ -154,7 +154,7 @@
         $agentsDisponibles = \App\Models\User::when($demande->current_service_id,
                 fn($q) => $q->where('service_id', $demande->current_service_id)
             )->where('is_active', true)->orderBy('name')->get();
-        $isClosed = in_array($demande->status?->code, ['APPROUVEE', 'FINALISEE', 'REJETEE', 'ANNULEE']);
+        $isClosed = $demande->isClosed();
     @endphp
     @if(!$isClosed)
     <div class="bg-white border border-gray-200 rounded-xl shadow-sm p-5"
@@ -256,7 +256,7 @@
         @php
             $directionServiceId = \App\Models\Service::where('code', \App\Models\Service::DIRECTION)->value('id');
             $isAtDirection = $demande->current_service_id === $directionServiceId;
-            $isClosed = in_array($demande->status?->code, ['APPROUVEE', 'FINALISEE', 'REJETEE', 'ANNULEE']);
+            $isClosed = $demande->isClosed();
             $hasBeenRouted = $demande->interactions()
                 ->where('type', \App\Models\DemandeInteraction::TYPE_TRANSFERT)
                 ->where('statut', \App\Models\DemandeInteraction::STATUT_ACCEPTE)

@@ -10,15 +10,17 @@
 <script src="https://cdn.jsdelivr.net/npm/cytoscape@3.30.2/dist/cytoscape.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/dagre@0.8.5/dist/dagre.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/cytoscape-dagre@2.5.0/cytoscape-dagre.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
 <script>
 document.addEventListener('DOMContentLoaded', function () {
+    const cyContainer = document.getElementById('cy');
+    if (!cyContainer) return;
+
     cytoscape.use(cytoscapeDagre);
 
     @php
-        // ── Build Cytoscape elements from workflow_steps (nodes) + workflow_step_transitions (edges) ──
+        // Build Cytoscape elements from workflow_steps + workflow_step_transitions
 
-        $stepMap = $steps->keyBy('id'); // id → WorkflowStep
+        $stepMap = $steps->keyBy('id');
 
         // Required service map for badge colouring
         $requiredServiceIds = $requiredServices->pluck('service_id')->unique()->values();
@@ -92,17 +94,13 @@ document.addEventListener('DOMContentLoaded', function () {
     @endif
 
 
-    // Dédupliquer les nœuds et supprimer les orphelins (nœuds sans arête)
+    // Dédupliquer les nœuds (les orphelins restent visibles pour le diagnostic)
     const seen = new Set();
     const uniqueNodes = cyNodes.filter(n => {
         if (seen.has(n.data.id)) return false;
         seen.add(n.data.id);
         return true;
     });
-
-    // IDs des nœuds connectés par au moins une arête
-    const connectedIds = new Set();
-    cyEdges.forEach(e => { connectedIds.add(e.data.source); connectedIds.add(e.data.target); });
 
     const elements = {
         nodes: uniqueNodes,
@@ -252,25 +250,27 @@ document.addEventListener('DOMContentLoaded', function () {
     let isBpmn = false;
 
     const cy = cytoscape({
-        container: document.getElementById('cy'),
+        container: cyContainer,
         elements,
         layout: { name: 'dagre', rankDir: 'LR', nodeSep: 50, rankSep: 130, edgeSep: 20, padding: 30 },
         style: [...customStyles, ...sharedStyles],
     });
 
-    document.getElementById('cy-toggle-mode').addEventListener('click', () => {
-        isBpmn = !isBpmn;
-        const btn = document.getElementById('cy-toggle-mode');
-        cy.style([...(isBpmn ? bpmnStyles : customStyles), ...sharedStyles]);
-        btn.innerHTML = isBpmn
-            ? '<i class="fas fa-palette mr-1"></i> Vue métier'
-            : '<i class="fas fa-shapes mr-1"></i> Vue BPMN';
-        btn.classList.toggle('bg-purple-50',  isBpmn);
-        btn.classList.toggle('text-purple-700', isBpmn);
-        btn.classList.toggle('border-purple-300', isBpmn);
-        btn.classList.toggle('text-gray-600', !isBpmn);
-        btn.classList.toggle('border-gray-300', !isBpmn);
-    });
+    const toggleBtn = document.getElementById('cy-toggle-mode');
+    if (toggleBtn) {
+        toggleBtn.addEventListener('click', () => {
+            isBpmn = !isBpmn;
+            cy.style([...(isBpmn ? bpmnStyles : customStyles), ...sharedStyles]);
+            toggleBtn.innerHTML = isBpmn
+                ? '<i class="fas fa-palette mr-1"></i> Vue métier'
+                : '<i class="fas fa-shapes mr-1"></i> Vue BPMN';
+            toggleBtn.classList.toggle('bg-purple-50',  isBpmn);
+            toggleBtn.classList.toggle('text-purple-700', isBpmn);
+            toggleBtn.classList.toggle('border-purple-300', isBpmn);
+            toggleBtn.classList.toggle('text-gray-600', !isBpmn);
+            toggleBtn.classList.toggle('border-gray-300', !isBpmn);
+        });
+    }
 
     cy.on('tap', 'node', e => {
         const n = e.target;
@@ -281,9 +281,9 @@ document.addEventListener('DOMContentLoaded', function () {
     });
     cy.on('tap', e => { if (e.target === cy) cy.elements().removeClass('faded hl'); });
 
-    document.getElementById('cy-fit').addEventListener('click',   () => cy.fit(undefined, 30));
-    document.getElementById('cy-reset').addEventListener('click', () => { cy.elements().removeClass('faded hl'); cy.fit(undefined, 30); });
-    document.getElementById('cy-download').addEventListener('click', () => {
+    document.getElementById('cy-fit')?.addEventListener('click',   () => cy.fit(undefined, 30));
+    document.getElementById('cy-reset')?.addEventListener('click', () => { cy.elements().removeClass('faded hl'); cy.fit(undefined, 30); });
+    document.getElementById('cy-download')?.addEventListener('click', () => {
         const a = document.createElement('a');
         a.href     = cy.png({ bg: 'white', scale: 2, full: true });
         a.download = 'circuit-{{ $selectedType ?? "commun" }}.png';
@@ -295,14 +295,22 @@ document.addEventListener('DOMContentLoaded', function () {
 
 @section('content')
 
-<div class="space-y-5" x-data="{ advanced: false }">
+@php
+    $selectedTypeLabel = $selectedType
+        ? (\App\Enums\TypeDemandeEnum::tryFrom($selectedType)?->label() ?? $selectedType)
+        : null;
+    $openRequiredByDefault = ($requiredServices ?? collect())->isEmpty();
+    $openSlaByDefault = ($slaRules ?? collect())->isEmpty();
+@endphp
+
+<div class="space-y-5">
 
     {{-- ── Header ── --}}
     <div class="bg-white rounded-xl border border-gray-200 shadow-sm p-4">
         <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <div>
                 <h1 class="text-lg font-bold text-gray-800">Circuit de traitement</h1>
-                <p class="text-xs text-gray-400 mt-0.5">États (nœuds) et transitions (arêtes) par type de demande.</p>
+                <p class="text-xs text-gray-400 mt-0.5">États (nœuds) et transitions (arêtes) par type de demande. Les dossiers déjà soumis conservent leur circuit figé.</p>
             </div>
 
             {{-- Sélecteur de type --}}
@@ -330,6 +338,46 @@ document.addEventListener('DOMContentLoaded', function () {
             <i class="fas fa-exclamation-circle text-red-500"></i> {{ session('error') }}
         </div>
     @endif
+    @if($errors->any())
+        <div class="bg-red-50 border border-red-300 text-red-800 rounded-lg px-4 py-3 text-sm">
+            <p class="font-medium flex items-center gap-2 mb-1">
+                <i class="fas fa-exclamation-circle text-red-500"></i> Veuillez corriger les erreurs suivantes :
+            </p>
+            <ul class="list-disc list-inside text-xs space-y-0.5">
+                @foreach($errors->all() as $error)
+                    <li>{{ $error }}</li>
+                @endforeach
+            </ul>
+        </div>
+    @endif
+
+    @if(!empty($healthIssues))
+        <div class="bg-white rounded-xl border border-amber-200 shadow-sm p-4 space-y-2">
+            <h2 class="text-sm font-semibold text-amber-800 flex items-center gap-2">
+                <i class="fas fa-heartbeat text-amber-500"></i> Santé du circuit
+            </h2>
+            <ul class="space-y-1.5">
+                @foreach($healthIssues as $issue)
+                    @php
+                        $tone = match($issue['level'] ?? 'info') {
+                            'error'   => 'text-red-700 bg-red-50 border-red-200',
+                            'warning' => 'text-amber-800 bg-amber-50 border-amber-200',
+                            default   => 'text-slate-600 bg-slate-50 border-slate-200',
+                        };
+                        $icon = match($issue['level'] ?? 'info') {
+                            'error'   => 'fa-times-circle text-red-500',
+                            'warning' => 'fa-exclamation-triangle text-amber-500',
+                            default   => 'fa-info-circle text-slate-400',
+                        };
+                    @endphp
+                    <li class="flex items-start gap-2 text-xs border rounded-lg px-3 py-2 {{ $tone }}">
+                        <i class="fas {{ $icon }} mt-0.5"></i>
+                        <span>{{ $issue['message'] }}</span>
+                    </li>
+                @endforeach
+            </ul>
+        </div>
+    @endif
 
     {{-- ── Graph ── --}}
     <div class="bg-white rounded-xl border border-gray-200 shadow-sm"
@@ -337,8 +385,8 @@ document.addEventListener('DOMContentLoaded', function () {
         <div class="flex items-center justify-between p-5 cursor-pointer select-none" @click="open = !open">
             <h2 class="text-sm font-semibold text-gray-700">
                 <i class="fas fa-project-diagram mr-2 text-blue-400"></i> Graphe des états
-                @if($selectedType)
-                    <span class="ml-1 text-xs font-normal text-blue-500">— {{ \App\Enums\TypeDemandeEnum::from($selectedType)->label() }}</span>
+                @if($selectedTypeLabel)
+                    <span class="ml-1 text-xs font-normal text-blue-500">— {{ $selectedTypeLabel }}</span>
                 @else
                     <span class="ml-1 text-xs font-normal text-gray-400">— circuit commun</span>
                 @endif
@@ -433,7 +481,9 @@ document.addEventListener('DOMContentLoaded', function () {
         </div>
 
         {{-- Modal ajout nœud --}}
-        <div x-show="showAddStep" x-cloak @keydown.escape.window="showAddStep = false"
+        <div x-show="showAddStep" x-cloak
+             @keydown.escape.window="showAddStep = false"
+             @click.self="showAddStep = false"
              class="fixed inset-0 z-50 flex items-center justify-center bg-black/50"
              x-data="addStepModal([])">
             <div class="bg-white w-full max-w-md rounded-xl shadow-xl p-6" @click.stop>
@@ -522,13 +572,20 @@ document.addEventListener('DOMContentLoaded', function () {
                     </div>
                     <div>
                         <label class="block text-xs font-medium text-gray-700 mb-1">Nom <span class="text-red-500">*</span></label>
-                        <input type="text" name="nom" required placeholder="Libellé court"
+                        <input type="text" name="nom" required placeholder="Libellé court" value="{{ old('nom') }}"
                             class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        @error('nom') <p class="text-xs text-red-600 mt-1">{{ $message }}</p> @enderror
+                    </div>
+                    <div>
+                        <label class="block text-xs font-medium text-gray-700 mb-1">Description</label>
+                        <input type="text" name="description" value="{{ old('description') }}" placeholder="Rôle de cette étape dans le circuit"
+                            class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        @error('description') <p class="text-xs text-red-600 mt-1">{{ $message }}</p> @enderror
                     </div>
                     <div class="flex gap-4">
                         <div>
                             <label class="block text-xs font-medium text-gray-700 mb-1">Ordre</label>
-                            <input type="number" name="ordre" value="50" min="0" max="999"
+                            <input type="number" name="ordre" value="{{ old('ordre', 50) }}" min="0" max="999"
                                 class="w-24 px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
                         </div>
                         <div class="flex-1">
@@ -536,13 +593,14 @@ document.addEventListener('DOMContentLoaded', function () {
                             <select name="type_noeud" required
                                 class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
                                 @foreach(\App\Enums\WorkflowStepTypeEnum::cases() as $type)
-                                    <option value="{{ $type->value }}" {{ $type === \App\Enums\WorkflowStepTypeEnum::INTERMEDIAIRE ? 'selected' : '' }}>
+                                    <option value="{{ $type->value }}" {{ old('type_noeud', \App\Enums\WorkflowStepTypeEnum::INTERMEDIAIRE->value) === $type->value ? 'selected' : '' }}>
                                         {{ $type->label() }}
                                     </option>
                                 @endforeach
                             </select>
                         </div>
                     </div>
+                    @error('code') <p class="text-xs text-red-600">{{ $message }}</p> @enderror
 
                     <div class="flex justify-end gap-2 pt-1">
                         <button type="button" @click="showAddStep = false; reset()"
@@ -616,13 +674,17 @@ document.addEventListener('DOMContentLoaded', function () {
                                         class="px-2 py-1 bg-blue-100 text-blue-700 hover:bg-blue-200 rounded text-xs font-medium">
                                         <i class="fas fa-pencil-alt"></i>
                                     </button>
-                                    <div x-show="open" x-cloak class="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+                                    <div x-show="open" x-cloak
+                                         @keydown.escape.window="open = false"
+                                         @click.self="open = false"
+                                         class="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
                                         <div class="bg-white w-full max-w-md rounded-xl shadow-xl p-6" @click.stop>
                                             <h3 class="font-semibold text-gray-800 mb-1">Modifier le nœud</h3>
                                             <p class="text-xs text-gray-400 mb-4 font-mono">{{ $step->code }}</p>
                                             <form method="POST" action="{{ route('admin.workflow-steps.update', $step->id) }}">
                                                 @csrf @method('PATCH')
-                                
+                                                <input type="hidden" name="type_demande" value="{{ $selectedType }}">
+
                                                 <div class="mb-3">
                                                     <label class="block text-xs font-medium text-gray-700 mb-1">Nom <span class="text-red-500">*</span></label>
                                                     <input type="text" name="nom" required value="{{ $step->nom }}"
@@ -678,7 +740,10 @@ document.addEventListener('DOMContentLoaded', function () {
                                         class="px-2 py-1 bg-red-100 text-red-700 hover:bg-red-200 rounded text-xs font-medium">
                                         <i class="fas fa-trash"></i>
                                     </button>
-                                    <div x-show="open" x-cloak class="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+                                    <div x-show="open" x-cloak
+                                         @keydown.escape.window="open = false"
+                                         @click.self="open = false"
+                                         class="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
                                         <div class="bg-white w-full max-w-sm rounded-xl shadow-xl p-6" @click.stop>
                                             <h3 class="font-semibold text-gray-800 mb-3">Supprimer l'état</h3>
                                             <p class="text-sm text-gray-600 mb-5">
@@ -689,6 +754,7 @@ document.addEventListener('DOMContentLoaded', function () {
                                                     class="px-4 py-2 text-sm font-medium text-gray-600">Annuler</button>
                                                 <form method="POST" action="{{ route('admin.workflow-steps.destroy', $step->id) }}">
                                                     @csrf @method('DELETE')
+                                                    <input type="hidden" name="type_demande" value="{{ $selectedType }}">
                                                     <button type="submit"
                                                         class="px-4 py-2 bg-red-600 hover:bg-red-700 text-white text-sm font-medium rounded-lg">Supprimer</button>
                                                 </form>
@@ -734,6 +800,7 @@ document.addEventListener('DOMContentLoaded', function () {
             <form method="POST" action="{{ route('admin.flux-transitions.step-transitions.store') }}"
                   class="flex flex-wrap gap-3 items-end">
                 @csrf
+                <input type="hidden" name="type_demande" value="{{ $selectedType }}">
 
                 <div>
                     <label class="block text-xs font-medium text-gray-600 mb-1">État source</label>
@@ -756,11 +823,12 @@ document.addEventListener('DOMContentLoaded', function () {
                         class="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 min-w-[200px]">
                         <option value="">— Choisir —</option>
                         @foreach($steps as $step)
-                            @unless($step->isInitial())
+                            @unless($step->isDraftEntry())
                                 <option value="{{ $step->id }}">{{ $step->nom }}</option>
                             @endunless
                         @endforeach
                     </select>
+                    @error('to_step_id') <p class="text-xs text-red-600 mt-1">{{ $message }}</p> @enderror
                 </div>
 
                 <div>
@@ -832,12 +900,14 @@ document.addEventListener('DOMContentLoaded', function () {
                             <div class="flex items-center justify-center gap-1">
                                 <form method="POST" action="{{ route('admin.flux-transitions.step-transitions.move-up', $t->id) }}">
                                     @csrf
+                                    <input type="hidden" name="type_demande" value="{{ $selectedType }}">
                                     <button type="submit" class="text-gray-400 hover:text-blue-600" title="Monter">
                                         <i class="fas fa-chevron-up text-xs"></i>
                                     </button>
                                 </form>
                                 <form method="POST" action="{{ route('admin.flux-transitions.step-transitions.move-down', $t->id) }}">
                                     @csrf
+                                    <input type="hidden" name="type_demande" value="{{ $selectedType }}">
                                     <button type="submit" class="text-gray-400 hover:text-blue-600" title="Descendre">
                                         <i class="fas fa-chevron-down text-xs"></i>
                                     </button>
@@ -852,11 +922,15 @@ document.addEventListener('DOMContentLoaded', function () {
                                         class="px-2 py-1 bg-blue-100 text-blue-700 hover:bg-blue-200 rounded text-xs font-medium">
                                         <i class="fas fa-pencil-alt"></i>
                                     </button>
-                                    <div x-show="open" x-cloak class="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+                                    <div x-show="open" x-cloak
+                                         @keydown.escape.window="open = false"
+                                         @click.self="open = false"
+                                         class="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
                                         <div class="bg-white w-full max-w-sm rounded-xl shadow-xl p-6" @click.stop>
                                             <h3 class="font-semibold text-gray-800 mb-4">Modifier la transition</h3>
                                             <form method="POST" action="{{ route('admin.flux-transitions.step-transitions.update', $t->id) }}">
                                                 @csrf @method('PATCH')
+                                                <input type="hidden" name="type_demande" value="{{ $selectedType }}">
                                                 <div class="mb-3">
                                                     <label class="block text-sm font-medium text-gray-700 mb-1">Action</label>
                                                     <input type="text" name="action" required value="{{ $t->action }}"
@@ -886,7 +960,10 @@ document.addEventListener('DOMContentLoaded', function () {
                                         class="px-2 py-1 bg-red-100 text-red-700 hover:bg-red-200 rounded text-xs font-medium">
                                         <i class="fas fa-trash"></i>
                                     </button>
-                                    <div x-show="open" x-cloak class="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+                                    <div x-show="open" x-cloak
+                                         @keydown.escape.window="open = false"
+                                         @click.self="open = false"
+                                         class="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
                                         <div class="bg-white w-full max-w-sm rounded-xl shadow-xl p-6" @click.stop>
                                             <h3 class="font-semibold text-gray-800 mb-3">Supprimer la transition</h3>
                                             <p class="text-sm text-gray-600 mb-5">
@@ -898,6 +975,7 @@ document.addEventListener('DOMContentLoaded', function () {
                                                     class="px-4 py-2 text-sm font-medium text-gray-600">Annuler</button>
                                                 <form method="POST" action="{{ route('admin.flux-transitions.step-transitions.destroy', $t->id) }}">
                                                     @csrf @method('DELETE')
+                                                    <input type="hidden" name="type_demande" value="{{ $selectedType }}">
                                                     <button type="submit"
                                                         class="px-4 py-2 bg-red-600 hover:bg-red-700 text-white text-sm font-medium rounded-lg">Supprimer</button>
                                                 </form>
@@ -923,11 +1001,12 @@ document.addEventListener('DOMContentLoaded', function () {
 
     {{-- ── Étapes obligatoires ── --}}
     <div class="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden"
-         x-data="{ open: false }">
+         x-data="{ open: {{ $openRequiredByDefault ? 'true' : 'false' }} }">
         <div class="px-5 py-4 flex items-start justify-between cursor-pointer select-none" @click="open = !open">
             <div>
                 <h2 class="text-sm font-semibold text-gray-700">
                     <i class="fas fa-shield-alt mr-2 text-orange-400"></i> Étapes obligatoires
+                    <span class="ml-1 text-xs font-normal text-gray-400">({{ $requiredServices->count() }})</span>
                 </h2>
                 <p class="text-xs text-gray-400 mt-0.5">
                     Un dossier ne peut être approuvé que si tous ces services l'ont traité.
@@ -951,6 +1030,7 @@ document.addEventListener('DOMContentLoaded', function () {
                             <option value="{{ $svc->id }}">{{ $svc->nom }}</option>
                         @endforeach
                     </select>
+                    @error('service_id') <p class="text-xs text-red-600 mt-1">{{ $message }}</p> @enderror
                 </div>
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-1">Type de demande</label>
@@ -997,7 +1077,10 @@ document.addEventListener('DOMContentLoaded', function () {
                                     class="px-2 py-1 bg-red-100 text-red-700 hover:bg-red-200 rounded text-xs font-medium">
                                     <i class="fas fa-trash"></i>
                                 </button>
-                                <div x-show="open" x-cloak class="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+                                <div x-show="open" x-cloak
+                                     @keydown.escape.window="open = false"
+                                     @click.self="open = false"
+                                     class="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
                                     <div class="bg-white w-full max-w-sm rounded-xl shadow-xl p-6" @click.stop>
                                         <h3 class="font-semibold text-gray-800 mb-3">Supprimer</h3>
                                         <p class="text-sm text-gray-600 mb-5">
@@ -1009,6 +1092,7 @@ document.addEventListener('DOMContentLoaded', function () {
                                                 class="px-4 py-2 text-sm text-gray-600">Annuler</button>
                                             <form method="POST" action="{{ route('admin.flux-transitions.required.destroy', $req->id) }}">
                                                 @csrf @method('DELETE')
+                                                <input type="hidden" name="type_demande" value="{{ $selectedType }}">
                                                 <button type="submit"
                                                     class="px-4 py-2 bg-red-600 hover:bg-red-700 text-white text-sm font-medium rounded-lg">Supprimer</button>
                                             </form>
@@ -1021,6 +1105,129 @@ document.addEventListener('DOMContentLoaded', function () {
                 @empty
                     <tr>
                         <td colspan="3" class="px-4 py-10 text-center text-gray-400">Aucune étape obligatoire.</td>
+                    </tr>
+                @endforelse
+            </tbody>
+        </table>
+        </div>
+    </div>
+
+    {{-- ── Délais SLA ── --}}
+    <div class="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden"
+         x-data="{ open: {{ $openSlaByDefault ? 'true' : 'false' }} }">
+        <div class="px-5 py-4 flex items-start justify-between cursor-pointer select-none" @click="open = !open">
+            <div>
+                <h2 class="text-sm font-semibold text-gray-700">
+                    <i class="fas fa-clock mr-2 text-teal-500"></i> Délais SLA
+                    <span class="ml-1 text-xs font-normal text-gray-400">({{ $slaRules->count() }})</span>
+                </h2>
+                <p class="text-xs text-gray-400 mt-0.5">
+                    Délai maximal (en jours) de traitement par service avant alerte.
+                </p>
+            </div>
+            <i class="fas fa-chevron-down text-gray-400 text-xs transition-transform duration-200 mt-1 shrink-0 ml-4"
+               :class="open ? '' : '-rotate-90'"></i>
+        </div>
+
+        <div x-show="open" x-transition:enter="transition ease-out duration-150" x-transition:enter-start="opacity-0 -translate-y-1" x-transition:enter-end="opacity-100 translate-y-0">
+        <div class="px-5 py-4 border-b border-gray-100 bg-gray-50">
+            <form method="POST" action="{{ route('admin.flux-transitions.sla.store') }}"
+                  class="flex flex-wrap items-end gap-3">
+                @csrf
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Service <span class="text-red-500">*</span></label>
+                    <select name="service_id" required
+                        class="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-teal-500 min-w-[180px]">
+                        <option value="">— Choisir —</option>
+                        @foreach($services as $svc)
+                            <option value="{{ $svc->id }}">{{ $svc->nom }}</option>
+                        @endforeach
+                    </select>
+                    @error('service_id') <p class="text-xs text-red-600 mt-1">{{ $message }}</p> @enderror
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Type de demande</label>
+                    <select name="type_demande"
+                        class="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-teal-500 min-w-[200px]">
+                        <option value="">— Tous les types —</option>
+                        @foreach($typeDemandeOptions as $type)
+                            <option value="{{ $type->value }}" @selected($selectedType === $type->value)>{{ $type->label() }}</option>
+                        @endforeach
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Délai (jours) <span class="text-red-500">*</span></label>
+                    <input type="number" name="delai_jours" required min="1" max="365" value="{{ old('delai_jours', 5) }}"
+                        class="w-28 px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-teal-500">
+                    @error('delai_jours') <p class="text-xs text-red-600 mt-1">{{ $message }}</p> @enderror
+                </div>
+                <button type="submit"
+                    class="px-4 py-2 bg-teal-600 hover:bg-teal-700 text-white text-sm font-medium rounded-lg transition-colors">
+                    <i class="fas fa-plus mr-1"></i> Enregistrer
+                </button>
+            </form>
+        </div>
+        <table class="w-full text-sm">
+            <thead class="bg-gray-50 border-b border-gray-200">
+                <tr>
+                    <th class="px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide text-left">Service</th>
+                    <th class="px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide text-left">Type</th>
+                    <th class="px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide text-left">Délai</th>
+                    <th class="px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide text-center w-20">Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                @forelse($slaRules as $sla)
+                    <tr class="border-b border-gray-100 last:border-0 hover:bg-gray-50">
+                        <td class="px-4 py-3">
+                            <span class="text-xs font-medium px-2 py-0.5 rounded-full bg-teal-100 text-teal-700">{{ $sla->service->nom }}</span>
+                        </td>
+                        <td class="px-4 py-3">
+                            @if($sla->type_demande)
+                                <span class="text-xs font-medium px-2 py-0.5 rounded-full bg-purple-100 text-purple-700">
+                                    {{ \App\Enums\TypeDemandeEnum::tryFrom($sla->type_demande)?->label() ?? $sla->type_demande }}
+                                </span>
+                            @else
+                                <span class="text-xs text-gray-400 italic">Tous</span>
+                            @endif
+                        </td>
+                        <td class="px-4 py-3 text-gray-700 text-sm font-medium">
+                            {{ $sla->delai_jours }} jour{{ $sla->delai_jours > 1 ? 's' : '' }}
+                        </td>
+                        <td class="px-4 py-3 text-center">
+                            <div x-data="{ open: false }">
+                                <button type="button" @click="open = true"
+                                    class="px-2 py-1 bg-red-100 text-red-700 hover:bg-red-200 rounded text-xs font-medium">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                                <div x-show="open" x-cloak
+                                     @keydown.escape.window="open = false"
+                                     @click.self="open = false"
+                                     class="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+                                    <div class="bg-white w-full max-w-sm rounded-xl shadow-xl p-6" @click.stop>
+                                        <h3 class="font-semibold text-gray-800 mb-3">Supprimer le SLA</h3>
+                                        <p class="text-sm text-gray-600 mb-5">
+                                            Supprimer le délai de <strong>{{ $sla->delai_jours }} j</strong> pour
+                                            <strong>{{ $sla->service->nom }}</strong> ?
+                                        </p>
+                                        <div class="flex justify-end gap-2">
+                                            <button type="button" @click="open = false"
+                                                class="px-4 py-2 text-sm text-gray-600">Annuler</button>
+                                            <form method="POST" action="{{ route('admin.flux-transitions.sla.destroy', $sla->id) }}">
+                                                @csrf @method('DELETE')
+                                                <input type="hidden" name="type_demande" value="{{ $selectedType }}">
+                                                <button type="submit"
+                                                    class="px-4 py-2 bg-red-600 hover:bg-red-700 text-white text-sm font-medium rounded-lg">Supprimer</button>
+                                            </form>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </td>
+                    </tr>
+                @empty
+                    <tr>
+                        <td colspan="4" class="px-4 py-10 text-center text-gray-400">Aucun délai SLA configuré.</td>
                     </tr>
                 @endforelse
             </tbody>

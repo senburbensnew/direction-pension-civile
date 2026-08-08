@@ -26,6 +26,7 @@ use App\Models\PensionType;
 use App\Models\Service;
 use App\Models\WorkflowStep;
 use App\Services\DemandeService;
+use App\Services\DemandeWorkflowService;
 use Exception;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\DB;
@@ -36,10 +37,12 @@ use Log;
 class DemandeController extends Controller
 {
     protected DemandeService $demandeService;
-    
-    public function __construct(DemandeService $demandeService)
+    protected DemandeWorkflowService $workflowService;
+
+    public function __construct(DemandeService $demandeService, DemandeWorkflowService $workflowService)
     {
         $this->demandeService = $demandeService;
+        $this->workflowService = $workflowService;
     }   
     
     // DEMANDES DE VIREMENTS BANCAIRES
@@ -72,7 +75,7 @@ class DemandeController extends Controller
 
         if ($request->action === 'submit') {
             if ($request->demande_id) {
-                $demande = Demande::with('status')->findOrFail($request->demande_id);
+                $demande = Demande::with('currentStep')->findOrFail($request->demande_id);
                 abort_if(
                     $demande->created_by !== auth()->id() ||
                     !$demande->canBeEditedByUser(),
@@ -107,36 +110,14 @@ class DemandeController extends Controller
 
             try {
                 DB::transaction(function () use ($demande, $request) {
-                    $statusId  = WorkflowStep::idForCode('SOUMISE');
-                    $serviceId = Service::where('code', Service::DIRECTION)->value('id');
-
-                    if (! $serviceId) throw new \Exception('Service direction introuvable');
-
                     $demande->update([
-                        'title'              => $request->title,
-                        'current_step_id'          => $statusId,
-                        'current_service_id' => $serviceId,
-                        'submitted_at'       => now(),
-                        'expires_at'         => null,
-                        'is_urgent'          => $request->boolean('is_urgent'),
-                    ]);
-                    $demande->refresh();
-
-                    DemandeHistory::create([
-                        'demande_id'  => $demande->id,
-                        'statut'      => $demande->currentStep?->code,
-                        'commentaire' => 'Demande soumise',
-                        'changed_by'  => auth()->id(),
-                        'data'        => $demande->data,
+                        'title'        => $request->title,
+                        'submitted_at' => now(),
+                        'expires_at'   => null,
+                        'is_urgent'    => $request->boolean('is_urgent'),
                     ]);
 
-                    $demande->workflows()->create([
-                        'from_service_id'   => null,
-                        'to_service_id'     => $demande->current_service_id,
-                        'status_id'         => $demande->status->id,
-                        'action_by_user_id' => auth()->id(),
-                        'commentaire'       => 'Soumission de la demande',
-                    ]);
+                    $this->workflowService->submit($demande, auth()->user());
                 });
 
                 return redirect()->route('personal.index')->with('success', 'Demande soumise avec succès.');
@@ -154,7 +135,7 @@ class DemandeController extends Controller
             $demande = DB::transaction(function () use ($request, $validated, &$storedFilePaths) {
                 $draftStatusId = WorkflowStep::idForCode('BROUILLON');
 
-                $existing = $request->demande_id ? Demande::with('status')->findOrFail($request->demande_id) : null;
+                $existing = $request->demande_id ? Demande::with('currentStep')->findOrFail($request->demande_id) : null;
 
                 $photoPath = $existing?->data['profile_photo'] ?? null;
 
@@ -169,8 +150,8 @@ class DemandeController extends Controller
 
                 if ($existing) {
                     $updateFields = ['data' => $data, 'title' => $request->title];
-                    if ($existing->status->code === DemandeStatusEnum::BROUILLON->value) {
-                        $updateFields['status_id'] = $draftStatusId;
+                    if ($existing->currentStep?->code === DemandeStatusEnum::BROUILLON->value) {
+                        $updateFields['current_step_id'] = $draftStatusId;
                     }
                     $existing->update($updateFields);
                     $demande = $existing;
@@ -225,7 +206,7 @@ class DemandeController extends Controller
 
         if ($request->action === 'submit') {
             if ($request->demande_id) {
-                $demande = Demande::with('status')->findOrFail($request->demande_id);
+                $demande = Demande::with('currentStep')->findOrFail($request->demande_id);
                 abort_if(
                     $demande->created_by !== auth()->id() ||
                     !$demande->canBeEditedByUser(),
@@ -260,36 +241,14 @@ class DemandeController extends Controller
 
             try {
                 DB::transaction(function () use ($demande, $request) {
-                    $statusId  = WorkflowStep::idForCode('SOUMISE');
-                    $serviceId = Service::where('code', Service::DIRECTION)->value('id');
-
-                    if (! $serviceId) throw new \Exception('Service direction introuvable');
-
                     $demande->update([
-                        'title'              => $request->title,
-                        'current_step_id'          => $statusId,
-                        'current_service_id' => $serviceId,
-                        'submitted_at'       => now(),
-                        'expires_at'         => null,
-                        'is_urgent'          => $request->boolean('is_urgent'),
-                    ]);
-                    $demande->refresh();
-
-                    DemandeHistory::create([
-                        'demande_id'  => $demande->id,
-                        'statut'      => $demande->currentStep?->code,
-                        'commentaire' => 'Demande soumise',
-                        'changed_by'  => auth()->id(),
-                        'data'        => $demande->data,
+                        'title'        => $request->title,
+                        'submitted_at' => now(),
+                        'expires_at'   => null,
+                        'is_urgent'    => $request->boolean('is_urgent'),
                     ]);
 
-                    $demande->workflows()->create([
-                        'from_service_id'   => null,
-                        'to_service_id'     => $demande->current_service_id,
-                        'status_id'         => $demande->status->id,
-                        'action_by_user_id' => auth()->id(),
-                        'commentaire'       => 'Soumission de la demande',
-                    ]);
+                    $this->workflowService->submit($demande, auth()->user());
                 });
 
                 return redirect()->route('personal.index')->with('success', 'Demande soumise avec succès.');
@@ -308,10 +267,10 @@ class DemandeController extends Controller
                 $data = collect($validated)->except(['title', 'action', 'demande_id', 'consentement'])->toArray();
 
                 if ($request->demande_id) {
-                    $demande = Demande::with('status')->findOrFail($request->demande_id);
+                    $demande = Demande::with('currentStep')->findOrFail($request->demande_id);
                     $updateFields = ['data' => $data, 'title' => $request->title];
                     if ($demande->currentStep?->code === DemandeStatusEnum::BROUILLON->value) {
-                        $updateFields['status_id'] = $draftStatusId;
+                        $updateFields['current_step_id'] = $draftStatusId;
                     }
                     $demande->update($updateFields);
                 } else {
@@ -365,7 +324,7 @@ class DemandeController extends Controller
 
         if ($request->action === 'submit') {
             if ($request->demande_id) {
-                $demande = Demande::with('status')->findOrFail($request->demande_id);
+                $demande = Demande::with('currentStep')->findOrFail($request->demande_id);
                 abort_if(
                     $demande->created_by !== auth()->id() ||
                     !$demande->canBeEditedByUser(),
@@ -400,36 +359,14 @@ class DemandeController extends Controller
 
             try {
                 DB::transaction(function () use ($demande, $request) {
-                    $statusId  = WorkflowStep::idForCode('SOUMISE');
-                    $serviceId = Service::where('code', Service::DIRECTION)->value('id');
-
-                    if (! $serviceId) throw new \Exception('Service direction introuvable');
-
                     $demande->update([
-                        'title'              => $request->title,
-                        'current_step_id'          => $statusId,
-                        'current_service_id' => $serviceId,
-                        'submitted_at'       => now(),
-                        'expires_at'         => null,
-                        'is_urgent'          => $request->boolean('is_urgent'),
-                    ]);
-                    $demande->refresh();
-
-                    DemandeHistory::create([
-                        'demande_id'  => $demande->id,
-                        'statut'      => $demande->currentStep?->code,
-                        'commentaire' => 'Demande soumise',
-                        'changed_by'  => auth()->id(),
-                        'data'        => $demande->data,
+                        'title'        => $request->title,
+                        'submitted_at' => now(),
+                        'expires_at'   => null,
+                        'is_urgent'    => $request->boolean('is_urgent'),
                     ]);
 
-                    $demande->workflows()->create([
-                        'from_service_id'   => null,
-                        'to_service_id'     => $demande->current_service_id,
-                        'status_id'         => $demande->status->id,
-                        'action_by_user_id' => auth()->id(),
-                        'commentaire'       => 'Soumission de la demande',
-                    ]);
+                    $this->workflowService->submit($demande, auth()->user());
                 });
 
                 return redirect()->route('personal.index')->with('success', 'Demande soumise avec succès.');
@@ -448,10 +385,10 @@ class DemandeController extends Controller
                 $data = collect($validated)->except(['title', 'action', 'demande_id', 'consentement'])->toArray();
 
                 if ($request->demande_id) {
-                    $demande = Demande::with('status')->findOrFail($request->demande_id);
+                    $demande = Demande::with('currentStep')->findOrFail($request->demande_id);
                     $updateFields = ['data' => $data, 'title' => $request->title];
                     if ($demande->currentStep?->code === DemandeStatusEnum::BROUILLON->value) {
-                        $updateFields['status_id'] = $draftStatusId;
+                        $updateFields['current_step_id'] = $draftStatusId;
                     }
                     $demande->update($updateFields);
                 } else {
@@ -505,7 +442,7 @@ class DemandeController extends Controller
 
         if ($request->action === 'submit') {
             if ($request->demande_id) {
-                $demande = Demande::with('status')->findOrFail($request->demande_id);
+                $demande = Demande::with('currentStep')->findOrFail($request->demande_id);
                 abort_if(
                     $demande->created_by !== auth()->id() ||
                     !$demande->canBeEditedByUser(),
@@ -540,36 +477,14 @@ class DemandeController extends Controller
 
             try {
                 DB::transaction(function () use ($demande, $request) {
-                    $statusId  = WorkflowStep::idForCode('SOUMISE');
-                    $serviceId = Service::where('code', Service::DIRECTION)->value('id');
-
-                    if (! $serviceId) throw new \Exception('Service direction introuvable');
-
                     $demande->update([
-                        'title'              => $request->title,
-                        'current_step_id'          => $statusId,
-                        'current_service_id' => $serviceId,
-                        'submitted_at'       => now(),
-                        'expires_at'         => null,
-                        'is_urgent'          => $request->boolean('is_urgent'),
-                    ]);
-                    $demande->refresh();
-
-                    DemandeHistory::create([
-                        'demande_id'  => $demande->id,
-                        'statut'      => $demande->currentStep?->code,
-                        'commentaire' => 'Demande soumise',
-                        'changed_by'  => auth()->id(),
-                        'data'        => $demande->data,
+                        'title'        => $request->title,
+                        'submitted_at' => now(),
+                        'expires_at'   => null,
+                        'is_urgent'    => $request->boolean('is_urgent'),
                     ]);
 
-                    $demande->workflows()->create([
-                        'from_service_id'   => null,
-                        'to_service_id'     => $demande->current_service_id,
-                        'status_id'         => $demande->status->id,
-                        'action_by_user_id' => auth()->id(),
-                        'commentaire'       => 'Soumission de la demande',
-                    ]);
+                    $this->workflowService->submit($demande, auth()->user());
                 });
 
                 return redirect()->route('personal.index')->with('success', 'Demande soumise avec succès.');
@@ -587,7 +502,7 @@ class DemandeController extends Controller
             $demande = DB::transaction(function () use ($request, $validated, &$storedFilePaths) {
                 $draftStatusId = WorkflowStep::idForCode('BROUILLON');
 
-                $existing = $request->demande_id ? Demande::with('status')->findOrFail($request->demande_id) : null;
+                $existing = $request->demande_id ? Demande::with('currentStep')->findOrFail($request->demande_id) : null;
 
                 $existingPieces = $existing?->data['pieces'] ?? [];
                 $uploadedFiles  = $existingPieces;
@@ -607,8 +522,8 @@ class DemandeController extends Controller
 
                 if ($existing) {
                     $updateFields = ['data' => $data, 'title' => $request->title];
-                    if ($existing->status->code === DemandeStatusEnum::BROUILLON->value) {
-                        $updateFields['status_id'] = $draftStatusId;
+                    if ($existing->currentStep?->code === DemandeStatusEnum::BROUILLON->value) {
+                        $updateFields['current_step_id'] = $draftStatusId;
                     }
                     $existing->update($updateFields);
                     $demande = $existing;
@@ -665,7 +580,7 @@ class DemandeController extends Controller
 
         if ($request->action === 'submit') {
             if ($request->demande_id) {
-                $demande = Demande::with('status')->findOrFail($request->demande_id);
+                $demande = Demande::with('currentStep')->findOrFail($request->demande_id);
                 abort_if(
                     $demande->created_by !== auth()->id() ||
                     !$demande->canBeEditedByUser(),
@@ -700,36 +615,14 @@ class DemandeController extends Controller
 
             try {
                 DB::transaction(function () use ($demande, $request) {
-                    $statusId  = WorkflowStep::idForCode('SOUMISE');
-                    $serviceId = Service::where('code', Service::DIRECTION)->value('id');
-
-                    if (! $serviceId) throw new \Exception('Service direction introuvable');
-
                     $demande->update([
-                        'title'              => $request->title,
-                        'current_step_id'          => $statusId,
-                        'current_service_id' => $serviceId,
-                        'submitted_at'       => now(),
-                        'expires_at'         => null,
-                        'is_urgent'          => $request->boolean('is_urgent'),
-                    ]);
-                    $demande->refresh();
-
-                    DemandeHistory::create([
-                        'demande_id'  => $demande->id,
-                        'statut'      => $demande->currentStep?->code,
-                        'commentaire' => 'Demande soumise',
-                        'changed_by'  => auth()->id(),
-                        'data'        => $demande->data,
+                        'title'        => $request->title,
+                        'submitted_at' => now(),
+                        'expires_at'   => null,
+                        'is_urgent'    => $request->boolean('is_urgent'),
                     ]);
 
-                    $demande->workflows()->create([
-                        'from_service_id'   => null,
-                        'to_service_id'     => $demande->current_service_id,
-                        'status_id'         => $demande->status->id,
-                        'action_by_user_id' => auth()->id(),
-                        'commentaire'       => 'Soumission de la demande',
-                    ]);
+                    $this->workflowService->submit($demande, auth()->user());
                 });
 
                 return redirect()->route('personal.index')->with('success', 'Demande soumise avec succès.');
@@ -748,10 +641,10 @@ class DemandeController extends Controller
                 $data = collect($validated)->except(['title', 'action', 'demande_id'])->toArray();
 
                 if ($request->demande_id) {
-                    $demande = Demande::with('status')->findOrFail($request->demande_id);
+                    $demande = Demande::with('currentStep')->findOrFail($request->demande_id);
                     $updateFields = ['data' => $data, 'title' => $request->title];
                     if ($demande->currentStep?->code === DemandeStatusEnum::BROUILLON->value) {
-                        $updateFields['status_id'] = $draftStatusId;
+                        $updateFields['current_step_id'] = $draftStatusId;
                     }
                     $demande->update($updateFields);
                 } else {
@@ -804,7 +697,7 @@ class DemandeController extends Controller
 
         if ($request->action === 'submit') {
             if ($request->demande_id) {
-                $demande = Demande::with('status')->findOrFail($request->demande_id);
+                $demande = Demande::with('currentStep')->findOrFail($request->demande_id);
                 abort_if(
                     $demande->created_by !== auth()->id() ||
                     !$demande->canBeEditedByUser(),
@@ -839,36 +732,14 @@ class DemandeController extends Controller
 
             try {
                 DB::transaction(function () use ($demande, $request) {
-                    $statusId  = WorkflowStep::idForCode('SOUMISE');
-                    $serviceId = Service::where('code', Service::DIRECTION)->value('id');
-
-                    if (! $serviceId) throw new \Exception('Service direction introuvable');
-
                     $demande->update([
-                        'title'              => $request->title,
-                        'current_step_id'          => $statusId,
-                        'current_service_id' => $serviceId,
-                        'submitted_at'       => now(),
-                        'expires_at'         => null,
-                        'is_urgent'          => $request->boolean('is_urgent'),
-                    ]);
-                    $demande->refresh();
-
-                    DemandeHistory::create([
-                        'demande_id'  => $demande->id,
-                        'statut'      => $demande->currentStep?->code,
-                        'commentaire' => 'Demande soumise',
-                        'changed_by'  => auth()->id(),
-                        'data'        => $demande->data,
+                        'title'        => $request->title,
+                        'submitted_at' => now(),
+                        'expires_at'   => null,
+                        'is_urgent'    => $request->boolean('is_urgent'),
                     ]);
 
-                    $demande->workflows()->create([
-                        'from_service_id'   => null,
-                        'to_service_id'     => $demande->current_service_id,
-                        'status_id'         => $demande->status->id,
-                        'action_by_user_id' => auth()->id(),
-                        'commentaire'       => 'Soumission de la demande',
-                    ]);
+                    $this->workflowService->submit($demande, auth()->user());
                 });
 
                 return redirect()->route('personal.index')->with('success', 'Demande soumise avec succès.');
@@ -887,10 +758,10 @@ class DemandeController extends Controller
                 $data = collect($validated)->except(['title', 'action', 'demande_id', 'consentement'])->toArray();
 
                 if ($request->demande_id) {
-                    $demande = Demande::with('status')->findOrFail($request->demande_id);
+                    $demande = Demande::with('currentStep')->findOrFail($request->demande_id);
                     $updateFields = ['data' => $data, 'title' => $request->title];
                     if ($demande->currentStep?->code === DemandeStatusEnum::BROUILLON->value) {
-                        $updateFields['status_id'] = $draftStatusId;
+                        $updateFields['current_step_id'] = $draftStatusId;
                     }
                     $demande->update($updateFields);
                 } else {
@@ -945,7 +816,7 @@ class DemandeController extends Controller
         $validated = $request->validated();
 
         if ($request->action === 'submit') {
-            $demande = Demande::with('status')->findOrFail($request->demande_id);
+            $demande = Demande::with('currentStep')->findOrFail($request->demande_id);
 
             abort_if(
                 $demande->created_by !== auth()->id() ||
@@ -955,36 +826,14 @@ class DemandeController extends Controller
 
             try {
                 DB::transaction(function () use ($demande, $request) {
-                    $statusId  = WorkflowStep::idForCode('SOUMISE');
-                    $serviceId = Service::where('code', Service::DIRECTION)->value('id');
-
-                    if (! $serviceId) throw new \Exception('Service direction introuvable');
-
                     $demande->update([
-                        'title'              => $request->title,
-                        'current_step_id'          => $statusId,
-                        'current_service_id' => $serviceId,
-                        'submitted_at'       => now(),
-                        'expires_at'         => null,
-                        'is_urgent'          => $request->boolean('is_urgent'),
-                    ]);
-                    $demande->refresh();
-
-                    DemandeHistory::create([
-                        'demande_id'  => $demande->id,
-                        'statut'      => $demande->currentStep?->code,
-                        'commentaire' => 'Demande soumise',
-                        'changed_by'  => auth()->id(),
-                        'data'        => $demande->data,
+                        'title'        => $request->title,
+                        'submitted_at' => now(),
+                        'expires_at'   => null,
+                        'is_urgent'    => $request->boolean('is_urgent'),
                     ]);
 
-                    $demande->workflows()->create([
-                        'from_service_id'   => null,
-                        'to_service_id'     => $demande->current_service_id,
-                        'status_id'         => $demande->status->id,
-                        'action_by_user_id' => auth()->id(),
-                        'commentaire'       => 'Soumission de la demande',
-                    ]);
+                    $this->workflowService->submit($demande, auth()->user());
                 });
 
                 return redirect()->route('personal.index')->with('success', 'Demande soumise avec succès.');
@@ -1002,7 +851,7 @@ class DemandeController extends Controller
             $demande = DB::transaction(function () use ($request, $validated, &$storedFilePaths) {
                 $draftStatusId = WorkflowStep::idForCode('BROUILLON');
 
-                $existing = $request->demande_id ? Demande::with('status')->findOrFail($request->demande_id) : null;
+                $existing = $request->demande_id ? Demande::with('currentStep')->findOrFail($request->demande_id) : null;
 
                 $photoPath = $existing?->data['documents']['profile_photo'] ?? null;
 
@@ -1017,8 +866,8 @@ class DemandeController extends Controller
 
                 if ($existing) {
                     $updateFields = ['data' => $data, 'title' => $request->title];
-                    if ($existing->status->code === DemandeStatusEnum::BROUILLON->value) {
-                        $updateFields['status_id'] = $draftStatusId;
+                    if ($existing->currentStep?->code === DemandeStatusEnum::BROUILLON->value) {
+                        $updateFields['current_step_id'] = $draftStatusId;
                     }
                     $existing->update($updateFields);
                     $demande = $existing;
@@ -1096,40 +945,14 @@ class DemandeController extends Controller
 
             try {
                 DB::transaction(function () use ($demande, $request) {
-
-                    $statusId  = WorkflowStep::idForCode('SOUMISE');
-                    $serviceId = Service::where('code', 'direction')->value('id');
-
-                    if (!$serviceId) {
-                        throw new \Exception('Service direction introuvable');
-                    }
-
                     $demande->update([
-                        'title'              => $request->title,
-                        'current_step_id'          => $statusId,
-                        'current_service_id' => $serviceId,
-                        'submitted_at'       => now(),
-                        'expires_at'         => null,
-                        'is_urgent'          => $request->boolean('is_urgent'),
+                        'title'        => $request->title,
+                        'submitted_at' => now(),
+                        'expires_at'   => null,
+                        'is_urgent'    => $request->boolean('is_urgent'),
                     ]);
 
-                    $demande->refresh();
-
-                    DemandeHistory::create([
-                        'demande_id'  => $demande->id,
-                        'statut'      => $demande->currentStep?->code,
-                        'commentaire' => 'Demande soumise',
-                        'changed_by'  => auth()->id(),
-                        'data'        => $demande->data,
-                    ]);
-
-                    $demande->workflows()->create([
-                        'from_service_id' => null,
-                        'to_service_id'   => $demande->current_service_id,
-                        'status_id'       => $demande->status->id,
-                        'action_by_user_id' => auth()->id(),
-                        'commentaire'     => 'Soumission de la demande',
-                    ]);
+                    $this->workflowService->submit($demande, auth()->user());
                 });
 
                 return redirect()
@@ -1236,15 +1059,10 @@ class DemandeController extends Controller
                     TypeDemandeEnum::DEMANDE_ETAT_CARRIERE->value,
                     (new Demande())->getTable()
                 );
-                $validated['current_step_id'] = WorkflowStep::idForCode('EN_ATTENTE');
+                $validated['current_step_id'] = WorkflowStep::idForCode('BROUILLON');
                 $validated['created_by'] = auth()->id();
                 $validated['type'] = TypeDemandeEnum::DEMANDE_ETAT_CARRIERE->value;
-                $serviceId = Service::where('code', Service::DIRECTION)
-                                    ->value('id');
-                if (! $serviceId) {
-                    throw new \Exception('Service secrétariat introuvable');
-                }
-                $validated['current_service_id'] = $serviceId;
+                // Soumission via workflowService::submit() → Direction / SOUMISE
 
                 // ----------------------------------
                 // Handle file uploads
@@ -1304,6 +1122,7 @@ class DemandeController extends Controller
                         'created_by',
                         'type',
                         'current_service_id',
+                        'current_step_id',
                         'code',
                         'bulletins_salaire',
                         'documents_carriere',
@@ -1333,13 +1152,7 @@ class DemandeController extends Controller
                     'data' => $demande->data
                 ]);
 
-                $demande->workflows()->create([
-                    'from_service_id' => null,
-                    'to_service_id'   => $demande->current_service_id,
-                    'status_id'       => $demande->status->id,
-                    'action_by_user_id' => auth()->id(),
-                    'commentaire'     => 'Soumission de la demande',
-                ]);
+                $this->workflowService->submit($demande, auth()->user());
             });
 
            return back()->with('success', 'Demande enregistrée avec succès.');
@@ -1447,40 +1260,14 @@ class DemandeController extends Controller
 
             try {
                 DB::transaction(function () use ($demande, $request) {
-
-                    $statusId  = WorkflowStep::idForCode('SOUMISE');
-                    $serviceId = Service::where('code', 'direction')->value('id');
-
-                    if (!$serviceId) {
-                        throw new \Exception('Service direction introuvable');
-                    }
-
                     $demande->update([
-                        'title'              => $request->title,
-                        'current_step_id'          => $statusId,
-                        'current_service_id' => $serviceId,
-                        'submitted_at'       => now(),
-                        'expires_at'         => null,
-                        'is_urgent'          => $request->boolean('is_urgent'),
+                        'title'        => $request->title,
+                        'submitted_at' => now(),
+                        'expires_at'   => null,
+                        'is_urgent'    => $request->boolean('is_urgent'),
                     ]);
 
-                    $demande->refresh();
-
-                    DemandeHistory::create([
-                        'demande_id'  => $demande->id,
-                        'statut'      => $demande->currentStep?->code,
-                        'commentaire' => 'Demande soumise',
-                        'changed_by'  => auth()->id(),
-                        'data'        => $demande->data,
-                    ]);
-
-                    $demande->workflows()->create([
-                        'from_service_id' => null,
-                        'to_service_id'   => $demande->current_service_id,
-                        'status_id'       => $demande->status->id,
-                        'action_by_user_id' => auth()->id(),
-                        'commentaire'     => 'Soumission de la demande',
-                    ]);
+                    $this->workflowService->submit($demande, auth()->user());
                 });
 
                 return redirect()
@@ -1640,40 +1427,14 @@ class DemandeController extends Controller
 
             try {
                 DB::transaction(function () use ($demande, $request) {
-
-                    $statusId  = WorkflowStep::idForCode('SOUMISE');
-                    $serviceId = Service::where('code', 'direction')->value('id');
-
-                    if (!$serviceId) {
-                        throw new \Exception('Service direction introuvable');
-                    }
-
                     $demande->update([
-                        'title'              => $request->title,
-                        'current_step_id'          => $statusId,
-                        'current_service_id' => $serviceId,
-                        'submitted_at'       => now(),
-                        'expires_at'         => null,
-                        'is_urgent'          => $request->boolean('is_urgent'),
+                        'title'        => $request->title,
+                        'submitted_at' => now(),
+                        'expires_at'   => null,
+                        'is_urgent'    => $request->boolean('is_urgent'),
                     ]);
 
-                    $demande->refresh();
-
-                    DemandeHistory::create([
-                        'demande_id'  => $demande->id,
-                        'statut'      => $demande->currentStep?->code,
-                        'commentaire' => 'Demande soumise',
-                        'changed_by'  => auth()->id(),
-                        'data'        => $demande->data,
-                    ]);
-
-                    $demande->workflows()->create([
-                        'from_service_id' => null,
-                        'to_service_id'   => $demande->current_service_id,
-                        'status_id'       => $demande->status->id,
-                        'action_by_user_id' => auth()->id(),
-                        'commentaire'     => 'Soumission de la demande',
-                    ]);
+                    $this->workflowService->submit($demande, auth()->user());
                 });
 
                 return redirect()
@@ -1844,40 +1605,14 @@ class DemandeController extends Controller
 
             try {
                 DB::transaction(function () use ($demande, $request) {
-
-                    $statusId  = WorkflowStep::idForCode('SOUMISE');
-                    $serviceId = Service::where('code', 'direction')->value('id');
-
-                    if (!$serviceId) {
-                        throw new \Exception('Service direction introuvable');
-                    }
-
                     $demande->update([
-                        'title'              => $request->title,
-                        'current_step_id'          => $statusId,
-                        'current_service_id' => $serviceId,
-                        'submitted_at'       => now(),
-                        'expires_at'         => null,
-                        'is_urgent'          => $request->boolean('is_urgent'),
+                        'title'        => $request->title,
+                        'submitted_at' => now(),
+                        'expires_at'   => null,
+                        'is_urgent'    => $request->boolean('is_urgent'),
                     ]);
 
-                    $demande->refresh();
-
-                    DemandeHistory::create([
-                        'demande_id'  => $demande->id,
-                        'statut'      => $demande->currentStep?->code,
-                        'commentaire' => 'Demande soumise',
-                        'changed_by'  => auth()->id(),
-                        'data'        => $demande->data,
-                    ]);
-
-                    $demande->workflows()->create([
-                        'from_service_id' => null,
-                        'to_service_id'   => $demande->current_service_id,
-                        'status_id'       => $demande->status->id,
-                        'action_by_user_id' => auth()->id(),
-                        'commentaire'     => 'Soumission de la demande',
-                    ]);
+                    $this->workflowService->submit($demande, auth()->user());
                 });
 
                 return redirect()
@@ -2018,7 +1753,7 @@ class DemandeController extends Controller
         */
         if ($request->action === 'submit') {
             if ($request->demande_id) {
-                $demande = Demande::with('status')->findOrFail($request->demande_id);
+                $demande = Demande::with('currentStep')->findOrFail($request->demande_id);
 
                 abort_if(
                     $demande->created_by !== auth()->id() ||
@@ -2056,40 +1791,14 @@ class DemandeController extends Controller
 
             try {
                 DB::transaction(function () use ($demande, $request) {
-
-                    $statusId  = WorkflowStep::idForCode('SOUMISE');
-                    $serviceId = Service::where('code', 'direction')->value('id');
-
-                    if (!$serviceId) {
-                        throw new \Exception('Service direction introuvable');
-                    }
-
                     $demande->update([
-                        'title'              => $request->title,
-                        'current_step_id'          => $statusId,
-                        'current_service_id' => $serviceId,
-                        'submitted_at'       => now(),
-                        'expires_at'         => null,
-                        'is_urgent'          => $request->boolean('is_urgent'),
+                        'title'        => $request->title,
+                        'submitted_at' => now(),
+                        'expires_at'   => null,
+                        'is_urgent'    => $request->boolean('is_urgent'),
                     ]);
 
-                    $demande->refresh();
-
-                    DemandeHistory::create([
-                        'demande_id'  => $demande->id,
-                        'statut'      => $demande->currentStep?->code,
-                        'commentaire' => 'Demande soumise',
-                        'changed_by'  => auth()->id(),
-                        'data'        => $demande->data,
-                    ]);
-
-                    $demande->workflows()->create([
-                        'from_service_id'    => null,
-                        'to_service_id'      => $demande->current_service_id,
-                        'status_id'          => $demande->status->id,
-                        'action_by_user_id'  => auth()->id(),
-                        'commentaire'        => 'Soumission de la demande',
-                    ]);
+                    $this->workflowService->submit($demande, auth()->user());
                 });
 
                 return redirect()

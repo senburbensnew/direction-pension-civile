@@ -132,7 +132,7 @@ return [
     'modify_annotation'      => 'Edit annotation',
     'annotation_direction'   => 'Direction Annotation',
     'save_annotation'        => 'Save annotation',
-    'not_annotated_msg'      => 'This file has not yet been annotated by the Direction. Transfer, printing and download are blocked until annotation.',
+    'not_annotated_msg'      => 'This file has not yet been annotated by the Direction. After annotation, it will be sent to the Secretariat for dispatching. Printing and download remain blocked until annotation.',
     'annotated_by'           => 'Annotated by',
     'folder_label'           => 'Folder / Classification',
     'complement_required'    => 'Complement required',

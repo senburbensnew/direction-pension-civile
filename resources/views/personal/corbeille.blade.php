@@ -7,15 +7,69 @@
 
     <div class="px-5 py-8">
         @if (session('success'))
-            <div class="mb-6 p-4 bg-green-50 border border-green-200 text-green-700 rounded">
+            <div class="mb-6 p-4 bg-green-50 border border-green-200 text-green-700 rounded-xl">
                 {{ session('success') }}
+            </div>
+        @endif
+        @if (session('error'))
+            <div class="mb-6 p-4 bg-red-50 border border-red-200 text-red-700 rounded-xl">
+                {{ session('error') }}
+            </div>
+        @endif
+
+        {{-- ===================== RÉCEPTIONS EN ATTENTE (circuit) ===================== --}}
+        @if(isset($pendingReceptions) && $pendingReceptions->isNotEmpty())
+            <div class="bg-white rounded-2xl border-2 border-amber-300 shadow-sm overflow-hidden mb-6">
+                <div class="bg-amber-500 px-5 py-3 flex flex-wrap items-center justify-between gap-2">
+                    <div class="flex items-center gap-2">
+                        <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
+                        </svg>
+                        <span class="text-white font-bold text-sm tracking-wide">RÉCEPTIONS EN ATTENTE</span>
+                        <span class="bg-white/30 text-white text-xs font-bold px-2 py-0.5 rounded-full">{{ $pendingReceptions->count() }}</span>
+                    </div>
+                    <p class="text-amber-100 text-xs">Confirmez la réception pour débloquer le traitement selon le circuit.</p>
+                </div>
+
+                <div class="divide-y divide-gray-100">
+                    @foreach($pendingReceptions as $wf)
+                        <div class="px-5 py-4 flex flex-wrap items-center justify-between gap-4 hover:bg-amber-50 transition-colors">
+                            <div class="flex items-start gap-3">
+                                <div class="w-9 h-9 rounded-xl bg-amber-100 flex items-center justify-center flex-shrink-0">
+                                    <svg class="w-4 h-4 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"/>
+                                    </svg>
+                                </div>
+                                <div>
+                                    <p class="font-bold text-gray-800 font-mono text-sm">#{{ $wf->demande->code ?? $wf->demande_id }}</p>
+                                    <p class="text-xs text-gray-500 mt-0.5">{{ str_replace('_', ' ', $wf->demande->type ?? '—') }}</p>
+                                    <p class="text-xs text-gray-400 mt-0.5">
+                                        Depuis <span class="font-medium text-gray-600">{{ $wf->fromService?->nom ?? '—' }}</span>
+                                        <span class="text-gray-300 mx-1">·</span>
+                                        {{ $wf->created_at?->diffForHumans() }}
+                                    </p>
+                                    @if($wf->demande?->currentStep)
+                                        <p class="text-xs text-amber-700 mt-1">
+                                            Étape : {{ $wf->demande->currentStep->nom }}
+                                        </p>
+                                    @endif
+                                </div>
+                            </div>
+
+                            <a href="{{ route('personal.request.show', $wf->demande_id) }}"
+                               class="inline-flex items-center gap-2 px-4 py-2 bg-amber-500 hover:bg-amber-600 text-white text-sm font-semibold rounded-xl transition-all shadow-sm hover:shadow">
+                                Confirmer la réception
+                            </a>
+                        </div>
+                    @endforeach
+                </div>
             </div>
         @endif
 
         {{-- ===================== AVIS EN ATTENTE ===================== --}}
         @if(isset($pendingAffectations) && $pendingAffectations->isNotEmpty())
             <div class="bg-white rounded-2xl border-2 border-orange-300 shadow-sm overflow-hidden mb-6">
-                <div class="bg-orange-400 px-5 py-3 flex items-center justify-between">
+                <div class="bg-orange-400 px-5 py-3 flex flex-wrap items-center justify-between gap-2">
                     <div class="flex items-center gap-2">
                         <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/>
@@ -23,7 +77,7 @@
                         <span class="text-white font-bold text-sm tracking-wide">AVIS EN ATTENTE</span>
                         <span class="bg-white/30 text-white text-xs font-bold px-2 py-0.5 rounded-full">{{ $pendingAffectations->count() }}</span>
                     </div>
-                    <p class="text-orange-100 text-xs">Ces dossiers vous ont été affectés pour consultation — votre avis est requis.</p>
+                    <p class="text-orange-100 text-xs">Dossiers affectés pour consultation — votre avis est requis.</p>
                 </div>
 
                 <div class="divide-y divide-gray-100">
@@ -36,36 +90,24 @@
                                     </svg>
                                 </div>
                                 <div>
-                                    <p class="font-bold text-gray-800 font-mono text-sm">#{{ $aff->demande->code ?? $aff->demande->id }}</p>
+                                    <p class="font-bold text-gray-800 font-mono text-sm">#{{ $aff->demande->code ?? $aff->demande_id }}</p>
                                     <p class="text-xs text-gray-500 mt-0.5">{{ str_replace('_', ' ', $aff->demande->type ?? '—') }}</p>
                                     <p class="text-xs text-gray-400 mt-0.5">
-                                        Affecté le {{ $aff->date_affectation->format('d/m/Y à H:i') }}
-                                        <span class="text-gray-300 mx-1">·</span>
-                                        {{ $aff->date_affectation->diffForHumans() }}
+                                        Affecté {{ $aff->created_at?->diffForHumans() }}
                                     </p>
                                 </div>
                             </div>
 
                             <div class="flex items-center gap-3">
-                                @if($aff->demande->status)
-                                    @php
-                                        $statusColors = [
-                                            'SOUMISE'    => 'bg-blue-50 text-blue-700 ring-blue-200',
-                                            'TRANSFEREE' => 'bg-indigo-50 text-indigo-700 ring-indigo-200',
-                                            'EN_COURS'   => 'bg-violet-50 text-violet-700 ring-violet-200',
-                                        ];
-                                        $sc = $statusColors[$aff->demande->status->code] ?? 'bg-gray-100 text-gray-600 ring-gray-200';
-                                    @endphp
-                                    <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium ring-1 {{ $sc }}">
-                                        {{ $aff->demande->status->label ?? $aff->demande->status->code }}
+                                @if($aff->demande?->currentStep)
+                                    <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium ring-1
+                                        {{ \App\Models\WorkflowStep::getStatusStyle($aff->demande->currentStep->code) }}">
+                                        {{ $aff->demande->currentStep->nom }}
                                     </span>
                                 @endif
 
                                 <a href="{{ route('personal.request.show', $aff->demande_id) }}"
                                    class="inline-flex items-center gap-2 px-4 py-2 bg-orange-500 hover:bg-orange-600 text-white text-sm font-semibold rounded-xl transition-all shadow-sm hover:shadow">
-                                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
-                                    </svg>
                                     Donner mon avis
                                 </a>
                             </div>
@@ -81,6 +123,9 @@
                 <i class="fas fa-folder-open mr-2 text-blue-400"></i> Répertoire de dossiers
             </legend>
             <div class="py-6 px-5">
+                <p class="text-xs text-gray-500 mb-4">
+                    Dossiers actuellement dans <strong>votre service</strong>, classés par catégorie. Ouvrez un dossier pour le faire avancer selon le circuit défini.
+                </p>
                 <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-7 gap-4">
                     @foreach($folderStats as $folder)
                         @php

@@ -25,8 +25,8 @@ class DemandeObserver
         $newCode = $demande->currentStep?->code;
         $owner   = $demande->user;
 
-        // Notify direction users when a demande is first submitted.
-        // Skip if transitioning from COMPLEMENT_REQUIS — that is a complement response, not a new submission.
+        // Soumission initiale : notifier la Direction + confirmer à l'usager.
+        // Skip Direction si retour après COMPLEMENT_REQUIS (déjà géré ailleurs).
         if ($newCode === 'SOUMISE') {
             $previousStepId = $demande->getOriginal('current_step_id');
             $previousCode = $previousStepId
@@ -35,6 +35,7 @@ class DemandeObserver
 
             if ($previousCode !== 'COMPLEMENT_REQUIS') {
                 $this->notifyDirectionUsers($demande);
+                $this->notifyOwnerOnSubmission($demande, $owner);
             }
             return;
         }
@@ -50,6 +51,30 @@ class DemandeObserver
                     'error'      => $e->getMessage(),
                 ]);
             }
+        }
+    }
+
+    /**
+     * Confirme à l'usager que sa demande a bien été soumise / reçue.
+     */
+    private function notifyOwnerOnSubmission(Demande $demande, ?User $owner): void
+    {
+        if (!$owner) {
+            return;
+        }
+
+        try {
+            $owner->notify(new DemandeStatusChangedNotification(
+                $demande,
+                'SOUMISE',
+                'Votre demande a bien été soumise et reçue par la Direction.'
+            ));
+        } catch (\Throwable $e) {
+            Log::error('DemandeObserver: could not notify owner on submission', [
+                'user_id'    => $owner->id,
+                'demande_id' => $demande->id,
+                'error'      => $e->getMessage(),
+            ]);
         }
     }
 

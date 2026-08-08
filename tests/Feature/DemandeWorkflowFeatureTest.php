@@ -7,6 +7,7 @@ use App\Models\Demande;
 use App\Models\DemandeInteraction;
 use App\Models\Service;
 use App\Models\WorkflowStep;
+use App\Models\WorkflowStepTransition;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
@@ -263,15 +264,29 @@ class DemandeWorkflowFeatureTest extends TestCase
     /** @test */
     public function direction_user_can_transfer_annotated_demande(): void
     {
-        // No service-specific WorkflowSteps configured → validateTransition returns true (allow-all)
         $dirUser = $this->makeUser('direction', $this->direction()->id);
+        $soumise = WorkflowStep::forCode('SOUMISE');
+        $liqStep = WorkflowStep::create([
+            'code'       => 'LIQ_TEST',
+            'nom'        => 'Liquidation test',
+            'service_id' => $this->liquidation()->id,
+            'ordre'      => 20,
+            'type_noeud' => 'intermediaire',
+        ]);
+        WorkflowStepTransition::create([
+            'from_step_id' => $soumise->id,
+            'to_step_id'   => $liqStep->id,
+            'action'       => 'Transmettre',
+            'ordre'        => 10,
+        ]);
+
         $demande = $this->makeDemande($dirUser);
         $demande->update([
             'current_service_id' => $this->direction()->id,
             'annotation'         => 'Dossier examiné',
             'annotated_by'       => $dirUser->id,
             'annotated_at'       => now(),
-            'current_step_id'    => WorkflowStep::idForCode('SOUMISE'),
+            'current_step_id'    => $soumise->id,
         ]);
 
         $response = $this->actingAs($dirUser)

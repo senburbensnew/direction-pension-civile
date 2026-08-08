@@ -49,8 +49,8 @@ class WorkflowStepSeeder extends Seeder
             // Étape canonique du circuit par défaut (secrétariat)
             [
                 'code'        => 'EN_INSTRUCTION_SECRETARIAT',
-                'nom'         => 'Instruction au secrétariat',
-                'description' => 'Dossier en cours d\'instruction par le secrétariat',
+                'nom'         => 'Dispatch — Secrétariat',
+                'description' => 'Dossier reçu de la Direction après annotation ; le Secrétariat assure le dispatching vers les services compétents',
                 'service'     => 'secretariat',
                 'ordre'       => 25,
                 'type_noeud'  => WorkflowStepTypeEnum::INTERMEDIAIRE,
@@ -161,7 +161,7 @@ class WorkflowStepSeeder extends Seeder
                 : null;
 
             WorkflowStep::updateOrCreate(
-                ['code' => $step['code']],
+                ['code' => $step['code'], 'type_demande' => null],
                 [
                     'nom'         => $step['nom'],
                     'description' => $step['description'],

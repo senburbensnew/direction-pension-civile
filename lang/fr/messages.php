@@ -132,7 +132,7 @@ return [
     'modify_annotation'      => 'Modifier l\'annotation',
     'annotation_direction'   => 'Annotation de la Direction',
     'save_annotation'        => 'Enregistrer l\'annotation',
-    'not_annotated_msg'      => 'Ce dossier n\'a pas encore été annoté par la Direction. Le transfert, l\'impression et le téléchargement sont bloqués jusqu\'à l\'annotation.',
+    'not_annotated_msg'      => 'Ce dossier n\'a pas encore été annoté par la Direction. Après annotation, il sera transmis au Secrétariat pour dispatching. Impression et téléchargement restent bloqués jusqu\'à l\'annotation.',
     'annotated_by'           => 'Annoté par',
     'folder_label'           => 'Dossier / Classement',
     'complement_required'    => 'Complément requis',

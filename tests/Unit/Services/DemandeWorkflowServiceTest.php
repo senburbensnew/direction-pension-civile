@@ -10,8 +10,11 @@ use App\Models\WorkflowStep;
 use App\Models\WorkflowStepTransition;
 use App\Models\Service;
 use App\Models\User;
+use App\Notifications\DemandeStatusChangedNotification;
+use App\Notifications\DemandeSubmittedNotification;
 use App\Services\DemandeWorkflowService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Notification;
 use Tests\TestCase;
 use Tests\Traits\SeedsRequiredData;
 
@@ -69,6 +72,12 @@ class DemandeWorkflowServiceTest extends TestCase
 
         $this->assertEquals('SOUMISE', $demande->currentStep?->code);
         $this->assertEquals($this->direction()->id, $demande->current_service_id);
+        $this->assertEquals($this->direction()->id, $demande->currentStep?->service_id);
+        $this->assertDatabaseHas('demande_interactions', [
+            'demande_id'    => $demande->id,
+            'to_service_id' => $this->direction()->id,
+            'statut'        => DemandeInteraction::STATUT_ACCEPTE,
+        ]);
     }
 
     /** @test */
@@ -85,6 +94,62 @@ class DemandeWorkflowServiceTest extends TestCase
             'to_service_id' => $this->direction()->id,
             'statut'        => DemandeInteraction::STATUT_ACCEPTE,
         ]);
+    }
+
+    /** @test */
+    public function submit_notifies_owner_and_direction_users(): void
+    {
+        Notification::fake();
+
+        WorkflowStep::forCode('SOUMISE')?->update(['service_id' => $this->direction()->id]);
+
+        $owner = $this->makeUser('pensionnaire');
+        $dirUser = User::factory()->create(['service_id' => $this->direction()->id]);
+        $dirUser->assignRole('direction');
+
+        $demande = Demande::create([
+            'type'            => TypeDemandeEnum::DEMANDE_ATTESTATION->value,
+            'created_by'      => $owner->id,
+            'current_step_id' => WorkflowStep::idForCode('BROUILLON'),
+        ]);
+
+        $this->workflowService->submit($demande, $owner);
+
+        Notification::assertSentTo($owner, DemandeStatusChangedNotification::class, function ($n) {
+            return $n->newStatusCode === 'SOUMISE';
+        });
+        Notification::assertSentTo($dirUser, DemandeSubmittedNotification::class);
+    }
+
+    /** @test */
+    public function submit_captures_circuit_snapshot(): void
+    {
+        $demande = $this->makeDemande();
+        $user    = $this->makeUser();
+
+        $this->workflowService->submit($demande, $user);
+
+        $demande->refresh();
+        $this->assertNotNull($demande->circuitSnapshot);
+        $this->assertArrayHasKey('step_transitions', $demande->circuitSnapshot->snapshot);
+        $this->assertArrayHasKey('required_services', $demande->circuitSnapshot->snapshot);
+    }
+
+    /** @test */
+    public function available_transfer_options_follow_live_circuit_edges(): void
+    {
+        $fromStep = $this->makeStepTransition();
+        $demande = $this->makeDemande();
+        $demande->update([
+            'current_service_id' => $this->direction()->id,
+            'current_step_id'    => $fromStep->id,
+        ]);
+
+        $options = $this->workflowService->availableTransferOptions($demande);
+
+        $this->assertCount(1, $options);
+        $this->assertEquals($this->liquidation()->id, $options->first()->service_id);
+        $this->assertEquals('transfer', $options->first()->action);
     }
 
     // ─── validateTransition() ────────────────────────────────────────────────
@@ -121,9 +186,78 @@ class DemandeWorkflowServiceTest extends TestCase
         ));
     }
 
+    private function secretariat(): Service
+    {
+        return Service::where('code', Service::SECRETARIAT)->first();
+    }
+
+    // ─── dispatchToSecretariatAfterAnnotation() ──────────────────────────────
+
+    /** @test */
+    public function dispatch_to_secretariat_after_annotation_transfers_when_edge_exists(): void
+    {
+        $soumise = WorkflowStep::forCode('SOUMISE');
+        $soumise->update(['service_id' => $this->direction()->id]);
+
+        $secStep = WorkflowStep::create([
+            'code'       => 'EN_INSTRUCTION_SECRETARIAT',
+            'nom'        => 'Dispatch — Secrétariat',
+            'service_id' => $this->secretariat()->id,
+            'ordre'      => 25,
+            'type_noeud' => 'intermediaire',
+        ]);
+
+        WorkflowStepTransition::create([
+            'from_step_id' => $soumise->id,
+            'to_step_id'   => $secStep->id,
+            'action'       => 'Transmettre au Secrétariat pour dispatching',
+            'ordre'        => 10,
+        ]);
+
+        $user = $this->makeUser('direction');
+        $demande = $this->makeDemande();
+        $demande->update([
+            'current_service_id' => $this->direction()->id,
+            'current_step_id'    => $soumise->id,
+            'annotation'         => 'Annoté',
+            'annotated_by'       => $user->id,
+            'annotated_at'       => now(),
+        ]);
+
+        $interaction = $this->workflowService->dispatchToSecretariatAfterAnnotation($demande, $user);
+
+        $demande->refresh();
+
+        $this->assertInstanceOf(DemandeInteraction::class, $interaction);
+        $this->assertEquals($this->secretariat()->id, $demande->current_service_id);
+        $this->assertEquals('TRANSFERT_EN_ATTENTE', $demande->currentStep?->code);
+        $this->assertEquals($this->secretariat()->id, $interaction->to_service_id);
+    }
+
+    /** @test */
+    public function dispatch_to_secretariat_returns_null_without_circuit_edge(): void
+    {
+        $soumise = WorkflowStep::forCode('SOUMISE');
+        $soumise->update(['service_id' => $this->direction()->id]);
+
+        $user = $this->makeUser('direction');
+        $demande = $this->makeDemande();
+        $demande->update([
+            'current_service_id' => $this->direction()->id,
+            'current_step_id'    => $soumise->id,
+            'annotation'         => 'Annoté',
+            'annotated_by'       => $user->id,
+            'annotated_at'       => now(),
+        ]);
+
+        $this->assertNull(
+            $this->workflowService->dispatchToSecretariatAfterAnnotation($demande, $user)
+        );
+    }
+
     // ─── transfer() ──────────────────────────────────────────────────────────
 
-    private function makeStepTransition(): void
+    private function makeStepTransition(): WorkflowStep
     {
         $fromStep = WorkflowStep::create(['code' => 'DIR', 'nom' => 'Direction',   'service_id' => $this->direction()->id,   'ordre' => 10]);
         $toStep   = WorkflowStep::create(['code' => 'LIQ', 'nom' => 'Liquidation', 'service_id' => $this->liquidation()->id, 'ordre' => 20]);
@@ -134,16 +268,19 @@ class DemandeWorkflowServiceTest extends TestCase
             'action'       => 'transfer',
             'ordre'        => 10,
         ]);
+
+        return $fromStep;
     }
 
     /** @test */
     public function transfer_moves_demande_to_destination_with_pending_statut(): void
     {
-        $this->makeStepTransition();
+        $fromStep = $this->makeStepTransition();
 
         $demande = $this->makeDemande();
         $demande->update([
             'current_service_id' => $this->direction()->id,
+            'current_step_id'    => $fromStep->id,
             'annotation'         => 'Test',
             'annotated_by'       => 1,
             'annotated_at'       => now(),
@@ -164,11 +301,12 @@ class DemandeWorkflowServiceTest extends TestCase
     /** @test */
     public function transfer_creates_history_record(): void
     {
-        $this->makeStepTransition();
+        $fromStep = $this->makeStepTransition();
 
         $demande = $this->makeDemande();
         $demande->update([
             'current_service_id' => $this->direction()->id,
+            'current_step_id'    => $fromStep->id,
             'annotation'         => 'Note',
             'annotated_by'       => 1,
             'annotated_at'       => now(),
@@ -188,11 +326,14 @@ class DemandeWorkflowServiceTest extends TestCase
     public function transfer_aborts_403_when_transition_not_allowed(): void
     {
         // Steps exist but no transition between them → 403
-        WorkflowStep::create(['code' => 'DIR', 'nom' => 'Direction',   'service_id' => $this->direction()->id,   'ordre' => 10]);
+        $fromStep = WorkflowStep::create(['code' => 'DIR', 'nom' => 'Direction',   'service_id' => $this->direction()->id,   'ordre' => 10]);
         WorkflowStep::create(['code' => 'LIQ', 'nom' => 'Liquidation', 'service_id' => $this->liquidation()->id, 'ordre' => 20]);
 
         $demande = $this->makeDemande();
-        $demande->update(['current_service_id' => $this->direction()->id]);
+        $demande->update([
+            'current_service_id' => $this->direction()->id,
+            'current_step_id'    => $fromStep->id,
+        ]);
 
         $user = $this->makeUser();
 

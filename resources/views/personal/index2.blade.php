@@ -28,7 +28,7 @@
                                 @foreach ($statuses as $status)
                                     <option value="{{ $status->id }}"
                                         {{ request('status_id') == $status->id ? 'selected' : '' }}>
-                                        {{ $status->label }}
+                                        {{ $status->nom }}
                                     </option>
                                 @endforeach
                             </select>
@@ -81,8 +81,9 @@
                                     <td class="px-6 py-4">{{ $demande->submitted_at ?? '--' }}</td>
                                     <td class="px-6 py-4">{{ $demande->expires_at ?? '--' }}</td>
                                     <td class="px-6 py-4">
+                                        @php $stepCode = $demande->currentStep?->code; @endphp
                                         <span class="px-2 py-1 text-sm rounded-full
-                                            @switch($demande->status->code)
+                                            @switch($stepCode)
 
                                                 @case('BROUILLON')
                                                     bg-gray-100 text-gray-800
@@ -97,6 +98,8 @@
                                                     @break
 
                                                 @case('EN_COURS')
+                                                @case('EN_INSTRUCTION_SECRETARIAT')
+                                                @case('TRANSFERT_EN_ATTENTE')
                                                     bg-indigo-100 text-indigo-800
                                                     @break
 
@@ -116,11 +119,15 @@
                                                     bg-gray-200 text-gray-600
                                                     @break
 
+                                                @case('COMPLEMENT_REQUIS')
+                                                    bg-orange-100 text-orange-800
+                                                    @break
+
                                                 @default
                                                     bg-gray-100 text-gray-800
                                             @endswitch
                                         ">
-                                            {{ $demande->status->label }}
+                                            {{ $demande->currentStep?->nom ?? '—' }}
                                         </span>
                                     </td>
                                     <td class="px-6 py-4">

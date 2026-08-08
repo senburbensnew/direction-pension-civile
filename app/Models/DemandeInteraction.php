@@ -23,6 +23,7 @@ class DemandeInteraction extends Model
         'type',
         'from_service_id',
         'to_service_id',
+        'to_step_id',
         'initiated_by',
         'commentaire',
         'statut',
@@ -50,6 +51,11 @@ class DemandeInteraction extends Model
     public function toService()
     {
         return $this->belongsTo(Service::class, 'to_service_id');
+    }
+
+    public function toStep()
+    {
+        return $this->belongsTo(WorkflowStep::class, 'to_step_id');
     }
 
     public function initiatedBy()

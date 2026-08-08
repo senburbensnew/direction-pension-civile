@@ -7,6 +7,7 @@ use App\Models\Demande;
 use App\Models\DemandeInteraction;
 use App\Models\Service;
 use App\Models\WorkflowStep;
+use App\Models\WorkflowStepTransition;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
@@ -153,6 +154,53 @@ class DemandeManagementFeatureTest extends TestCase
         $demande->refresh();
         $this->assertTrue($demande->isAnnotated());
         $this->assertEquals('Dossier examiné et validé pour transfert.', $demande->annotation);
+    }
+
+    /** @test */
+    public function first_annotation_auto_dispatches_to_secretariat_when_circuit_allows(): void
+    {
+        $directionId = Service::where('code', Service::DIRECTION)->value('id');
+        $secretariat = Service::where('code', Service::SECRETARIAT)->first();
+
+        $dirUser = User::factory()->create(['service_id' => $directionId]);
+        $dirUser->assignRole('direction');
+
+        $soumise = WorkflowStep::forCode('SOUMISE');
+        $soumise->update(['service_id' => $directionId]);
+
+        $secStep = WorkflowStep::create([
+            'code'       => 'EN_INSTRUCTION_SECRETARIAT',
+            'nom'        => 'Dispatch — Secrétariat',
+            'service_id' => $secretariat->id,
+            'ordre'      => 25,
+            'type_noeud' => 'intermediaire',
+        ]);
+        WorkflowStepTransition::create([
+            'from_step_id' => $soumise->id,
+            'to_step_id'   => $secStep->id,
+            'action'       => 'Transmettre au Secrétariat pour dispatching',
+            'ordre'        => 10,
+        ]);
+
+        $owner   = $this->makeRegularUser();
+        $demande = $this->makeDemande($owner);
+        $demande->update([
+            'current_service_id' => $directionId,
+            'current_step_id'    => $soumise->id,
+        ]);
+
+        $response = $this->actingAs($dirUser)
+            ->post(route('demande.annotate', $demande), [
+                'annotation' => 'Prêt pour dispatch.',
+            ]);
+
+        $response->assertRedirect(route('personal.cart'));
+        $response->assertSessionHas('success');
+
+        $demande->refresh();
+        $this->assertTrue($demande->isAnnotated());
+        $this->assertEquals($secretariat->id, $demande->current_service_id);
+        $this->assertEquals('TRANSFERT_EN_ATTENTE', $demande->currentStep?->code);
     }
 
     /** @test */

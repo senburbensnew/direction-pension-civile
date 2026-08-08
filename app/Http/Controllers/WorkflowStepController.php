@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\WorkflowStep;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 
 class WorkflowStepController extends Controller
@@ -12,7 +13,6 @@ class WorkflowStepController extends Controller
         $request->validate([
             'code'         => ['required', 'string', 'max:80', 'regex:/^[A-Z0-9_]+$/'],
             'service_id'   => ['nullable', 'exists:services,id'],
-            'status_id'    => ['nullable', 'exists:etats,id'],
             'type_demande' => ['nullable', 'string', 'max:100'],
             'nom'          => ['required', 'string', 'max:150'],
             'description'  => ['nullable', 'string', 'max:500'],
@@ -24,7 +24,8 @@ class WorkflowStepController extends Controller
         $code = strtoupper($request->code);
 
         if (WorkflowStep::where('code', $code)->where('type_demande', $type)->exists()) {
-            return redirect()->back()->with('error', "Un nœud avec le code « {$code} » existe déjà pour ce type.");
+            return $this->redirectToIndex($request)
+                ->with('error', "Un nœud avec le code « {$code} » existe déjà pour ce type.");
         }
 
         WorkflowStep::create([
@@ -37,7 +38,7 @@ class WorkflowStepController extends Controller
             'type_noeud'   => $request->type_noeud,
         ]);
 
-        return redirect()->back()->with('success', 'Étape ajoutée.');
+        return $this->redirectToIndex($request)->with('success', 'Étape ajoutée.');
     }
 
     public function clone(Request $request, WorkflowStep $workflowStep)
@@ -45,7 +46,8 @@ class WorkflowStepController extends Controller
         $type = $request->input('type_demande') ?: null;
 
         if (WorkflowStep::where('code', $workflowStep->code)->where('type_demande', $type)->exists()) {
-            return redirect()->back()->with('error', "Le nœud « {$workflowStep->code} » existe déjà dans ce circuit.");
+            return $this->redirectToIndex($request)
+                ->with('error', "Le nœud « {$workflowStep->code} » existe déjà dans ce circuit.");
         }
 
         WorkflowStep::create([
@@ -53,24 +55,25 @@ class WorkflowStepController extends Controller
             'nom'          => $workflowStep->nom,
             'description'  => $workflowStep->description,
             'service_id'   => $workflowStep->service_id,
-            'status_id'    => $workflowStep->status_id,
             'type_demande' => $type,
             'ordre'        => $workflowStep->ordre,
             'type_noeud'   => $workflowStep->type_noeud,
         ]);
 
-        return redirect()->back()->with('success', "Nœud « {$workflowStep->nom} » ajouté au circuit.");
+        return $this->redirectToIndex($request)
+            ->with('success', "Nœud « {$workflowStep->nom} » ajouté au circuit.");
     }
 
     public function update(Request $request, WorkflowStep $workflowStep)
     {
         abort_if($workflowStep->isInitial(), 403, 'Cet état système ne peut pas être modifié.');
         $request->validate([
-            'nom'         => ['required', 'string', 'max:150'],
-            'service_id'  => ['nullable', 'exists:services,id'],
-            'description' => ['nullable', 'string', 'max:500'],
-            'ordre'       => ['required', 'integer', 'min:0'],
-            'type_noeud'  => ['required', 'string', 'in:initial,intermediaire,terminal'],
+            'nom'          => ['required', 'string', 'max:150'],
+            'service_id'   => ['nullable', 'exists:services,id'],
+            'description'  => ['nullable', 'string', 'max:500'],
+            'ordre'        => ['required', 'integer', 'min:0'],
+            'type_noeud'   => ['required', 'string', 'in:initial,intermediaire,terminal'],
+            'type_demande' => ['nullable', 'string', 'max:100'],
         ]);
 
         $workflowStep->update([
@@ -81,13 +84,24 @@ class WorkflowStepController extends Controller
             'type_noeud'  => $request->type_noeud,
         ]);
 
-        return redirect()->back()->with('success', 'Étape mise à jour.');
+        return $this->redirectToIndex($request)->with('success', 'Étape mise à jour.');
     }
 
-    public function destroy(WorkflowStep $workflowStep)
+    public function destroy(Request $request, WorkflowStep $workflowStep)
     {
         abort_if($workflowStep->isInitial(), 403, 'Cet état système ne peut pas être supprimé.');
         $workflowStep->delete();
-        return redirect()->back()->with('success', 'Étape supprimée.');
+        return $this->redirectToIndex($request)->with('success', 'Étape supprimée.');
+    }
+
+    private function redirectToIndex(Request $request): RedirectResponse
+    {
+        $type = $request->input('type_demande') ?: $request->query('type');
+        $params = [];
+        if ($type) {
+            $params['type'] = $type;
+        }
+
+        return redirect()->route('admin.flux-transitions.index', $params);
     }
 }

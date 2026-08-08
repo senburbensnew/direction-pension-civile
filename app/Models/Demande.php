@@ -208,10 +208,15 @@ class Demande extends Model implements HasMedia
         return $this->currentStep?->isTerminal() ?? false;
     }
 
+    /**
+     * Dossiers en cours de traitement (hors brouillon usager et hors terminaux).
+     * Inclut SOUMISE (type_noeud=initial) pour qu'ils apparaissent en corbeille Direction.
+     */
     public function scopeActive($query)
     {
-        return $query->whereHas('currentStep', fn($q) =>
-            $q->where('type_noeud', WorkflowStepTypeEnum::INTERMEDIAIRE->value)
+        return $query->whereHas('currentStep', fn ($q) =>
+            $q->where('code', '!=', 'BROUILLON')
+              ->where('type_noeud', '!=', WorkflowStepTypeEnum::TERMINAL->value)
         );
     }
 

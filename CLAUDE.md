@@ -55,11 +55,13 @@ Documents are attached to demandes via `DemandeDocument` model. Document require
 
 ### Workflow / Status Tracking
 
-Two parallel tracking systems exist:
-- `DemandeWorkflow` — records service-to-service transfers (from/to `Service` model IDs)
-- `DemandeHistory` — records all status changes with actor and comments
+The circuit de traitement is a step-based graph:
+- `WorkflowStep` / `WorkflowStepTransition` — configurable nodes and edges (admin “Circuit de traitement”)
+- `DemandeCircuitSnapshot` — freezes the circuit (+ required services) at submission
+- `DemandeInteraction` — runtime trail (`TRANSFERT` between services, `AVIS` consultations)
+- `DemandeHistory` — audit log of status/events with actor and comments
 
-Status values live in the `statuses` table (not an enum), identified by a `code` string (e.g., `BROUILLON`, `SOUMISE`, `TRANSFEREE`). The `Status` model has static helpers like `Status::SUBMITTED` for ID lookups.
+Dossier pointers: `current_step_id` (logical state) and `current_service_id` (location). Runtime engine: `DemandeWorkflowService` (`submit`, `transfer`, reception, destinations).
 
 ### Authorization
 

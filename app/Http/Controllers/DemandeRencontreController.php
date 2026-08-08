@@ -5,13 +5,17 @@ namespace App\Http\Controllers;
 use App\Enums\TypeDemandeEnum;
 use App\Helpers\CodeGeneratorService;
 use App\Models\Demande;
-use App\Models\Service;
 use App\Models\WorkflowStep;
+use App\Services\DemandeWorkflowService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
 class DemandeRencontreController extends Controller
 {
+    public function __construct(private DemandeWorkflowService $workflowService)
+    {
+    }
+
     public function create()
     {
         return view('demandes.rencontre.create');
@@ -65,22 +69,28 @@ class DemandeRencontreController extends Controller
         ]);
 
         $demande = DB::transaction(function () use ($validated) {
-            $serviceId = Service::where('code', Service::DIRECTION)->value('id');
-            $soumiseId = WorkflowStep::idForCode('SOUMISE');
+            $brouillonId = WorkflowStep::idForCode('BROUILLON');
 
-            return Demande::create([
-                'code'               => CodeGeneratorService::generateUniqueRequestCode(
+            $demande = Demande::create([
+                'code'            => CodeGeneratorService::generateUniqueRequestCode(
                     TypeDemandeEnum::DEMANDE_RENCONTRE->value,
                     (new Demande())->getTable()
                 ),
-                'type'               => TypeDemandeEnum::DEMANDE_RENCONTRE->value,
-                'created_by'         => auth()->id(),
-                'current_step_id'    => $soumiseId,
-                'current_service_id' => $serviceId,
-                'submitted_at'       => now(),
-                'is_urgent'          => false,
-                'data'               => $validated,
+                'type'            => TypeDemandeEnum::DEMANDE_RENCONTRE->value,
+                'created_by'      => auth()->id(),
+                'current_step_id' => $brouillonId,
+                'is_urgent'       => false,
+                'data'            => $validated,
             ]);
+
+            $actor = auth()->user()
+                ?? \App\Models\User::role('admin')->first()
+                ?? \App\Models\User::query()->first();
+            abort_unless($actor, 500, 'Impossible d\'enregistrer la demande : aucun utilisateur système.');
+
+            $this->workflowService->submit($demande, $actor);
+
+            return $demande->fresh();
         });
 
         return redirect()->route('demandes.rencontre.create')

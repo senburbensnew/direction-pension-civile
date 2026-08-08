@@ -132,7 +132,7 @@ return [
     'modify_annotation'      => 'Modifye annòtasyon',
     'annotation_direction'   => 'Annòtasyon Direksyon an',
     'save_annotation'        => 'Anrejistre annòtasyon',
-    'not_annotated_msg'      => 'Dosye sa a pa ankò annote pa Direksyon an. Transfè, enpresyon ak telechajman bloke jiskaske dosye a annote.',
+    'not_annotated_msg'      => 'Dosye sa a pa ankò annote pa Direksyon an. Apre annòtasyon, li pral ale nan Sekretarya pou dispatching. Enpresyon ak telechajman rete bloke jiskaske annòtasyon an.',
     'annotated_by'           => 'Annote pa',
     'folder_label'           => 'Katye / Klasifikasyon',
     'complement_required'    => 'Konpleman obligatwa',
