@@ -135,10 +135,10 @@ class PublicationSeeder extends Seeder
                 'published'    => true,
             ],
             [
-                'title'        => 'ACE Scanner — 8 juin 2026',
-                'description'  => 'Document scanné du 8 juin 2026.',
+                'title'        => 'Avis de liquidation de pension pris en faveur de certains agents publics — 27 février 2026',
+                'description'  => 'Avis de liquidation de pension pris en faveur de certains agents publics — 27 février 2026',
                 'type'         => 'document',
-                'file_path'    => 'documents/ACE Scanner_2026_06_08.pdf',
+                'file_path'    => 'documents/avis-liquidation-pension-en-faveur-certains-agents-publics.pdf',
                 'url'          => null,
                 'order_column' => 14,
                 'published'    => true,
