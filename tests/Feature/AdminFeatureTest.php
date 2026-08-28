@@ -5,7 +5,6 @@ namespace Tests\Feature;
 use App\Models\Service;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Spatie\Permission\Models\Role;
 use Tests\TestCase;
 use Tests\Traits\SeedsRequiredData;
 
@@ -25,6 +24,7 @@ class AdminFeatureTest extends TestCase
     {
         $user = User::factory()->create();
         $user->assignRole('admin');
+
         return $user;
     }
 
@@ -78,18 +78,18 @@ class AdminFeatureTest extends TestCase
     /** @test */
     public function admin_can_create_user(): void
     {
-        $admin   = $this->makeAdmin();
+        $admin = $this->makeAdmin();
         $service = Service::first();
 
         $response = $this->actingAs($admin)->post(route('admin.users.store'), [
-            'name'                  => 'Nouveau Agent',
-            'firstname'             => 'Nouveau',
-            'lastname'              => 'Agent',
-            'email'                 => 'agent@example.com',
-            'password'              => 'Password1!',
+            'name' => 'Nouveau Agent',
+            'firstname' => 'Nouveau',
+            'lastname' => 'Agent',
+            'email' => 'agent@example.com',
+            'password' => 'Password1!',
             'password_confirmation' => 'Password1!',
-            'role'                  => 'admin',
-            'service_id'            => $service->id,
+            'role' => 'admin',
+            'service_id' => $service->id,
         ]);
 
         $response->assertRedirect(route('admin.users.index'));
@@ -97,20 +97,20 @@ class AdminFeatureTest extends TestCase
 
         $this->assertDatabaseHas('users', [
             'email' => 'agent@example.com',
-            'name'  => 'Nouveau Agent',
+            'name' => 'Nouveau Agent',
         ]);
     }
 
     /** @test */
     public function admin_cannot_create_user_with_duplicate_email(): void
     {
-        $admin   = $this->makeAdmin();
+        $admin = $this->makeAdmin();
         User::factory()->create(['email' => 'existing@example.com']);
 
         $response = $this->actingAs($admin)->post(route('admin.users.store'), [
-            'name'                  => 'Dupliqué',
-            'email'                 => 'existing@example.com',
-            'password'              => 'Password1!',
+            'name' => 'Dupliqué',
+            'email' => 'existing@example.com',
+            'password' => 'Password1!',
             'password_confirmation' => 'Password1!',
         ]);
 
@@ -120,11 +120,11 @@ class AdminFeatureTest extends TestCase
     /** @test */
     public function admin_can_edit_user(): void
     {
-        $admin  = $this->makeAdmin();
+        $admin = $this->makeAdmin();
         $target = User::factory()->create(['name' => 'Ancien Nom']);
 
         $response = $this->actingAs($admin)->put(route('admin.users.update', $target), [
-            'name'  => 'Nouveau Nom',
+            'name' => 'Nouveau Nom',
             'email' => $target->email,
         ]);
 
@@ -136,7 +136,7 @@ class AdminFeatureTest extends TestCase
     /** @test */
     public function admin_can_toggle_user_active_status(): void
     {
-        $admin  = $this->makeAdmin();
+        $admin = $this->makeAdmin();
         $target = User::factory()->create(['is_active' => true]);
 
         $response = $this->actingAs($admin)
@@ -165,7 +165,7 @@ class AdminFeatureTest extends TestCase
     /** @test */
     public function admin_can_delete_user(): void
     {
-        $admin  = $this->makeAdmin();
+        $admin = $this->makeAdmin();
         $target = User::factory()->create();
 
         $response = $this->actingAs($admin)
@@ -178,7 +178,7 @@ class AdminFeatureTest extends TestCase
     /** @test */
     public function regular_user_cannot_delete_users(): void
     {
-        $user   = $this->makeRegularUser();
+        $user = $this->makeRegularUser();
         $target = User::factory()->create();
 
         $response = $this->actingAs($user)
@@ -197,23 +197,108 @@ class AdminFeatureTest extends TestCase
 
         $response = $this->actingAs($admin)->get(route('admin.flux-transitions.index'));
 
-        $response->assertOk();
+        $response->assertRedirect(route('admin.flux-transitions.index', [
+            'type' => \App\Enums\TypeDemandeEnum::DEMANDE_VIREMENT_BANCAIRE->value,
+        ]));
+
+        $this->actingAs($admin)
+            ->get(route('admin.flux-transitions.index', [
+                'type' => \App\Enums\TypeDemandeEnum::DEMANDE_VIREMENT_BANCAIRE->value,
+            ]))
+            ->assertOk()
+            ->assertDontSee('— Commun (global) —', false)
+            ->assertSee('Nouveau type')
+            ->assertSee('Supprimer');
+    }
+
+    /** @test */
+    public function admin_can_create_a_demande_type_and_clone_the_base_circuit(): void
+    {
+        $admin = $this->makeAdmin();
+        $source = \App\Models\WorkflowStep::where('code', 'SOUMISE')->whereNull('type_demande')->first();
+
+        $response = $this->actingAs($admin)->post(route('admin.flux-transitions.types.store'), [
+            'type_code' => 'DEMANDE_CERTIFICAT',
+            'type_label' => 'Demande de certificat',
+            'description' => 'Pièce administrative',
+            'clone_from' => '__global__',
+        ]);
+
+        $response->assertRedirect(route('admin.flux-transitions.index', [
+            'type' => 'DEMANDE_CERTIFICAT',
+        ]));
+        $response->assertSessionHas('success');
+
+        $this->assertDatabaseHas('types_demandes', [
+            'code' => 'DEMANDE_CERTIFICAT',
+            'label' => 'Demande de certificat',
+        ]);
+
+        $this->assertDatabaseHas('workflow_steps', [
+            'code' => 'SOUMISE',
+            'type_demande' => 'DEMANDE_CERTIFICAT',
+        ]);
+
+        $this->assertNotNull($source);
+    }
+
+    /** @test */
+    public function admin_can_delete_a_custom_demande_type(): void
+    {
+        $admin = $this->makeAdmin();
+
+        $this->actingAs($admin)->post(route('admin.flux-transitions.types.store'), [
+            'type_code' => 'DEMANDE_CERTIFICAT',
+            'type_label' => 'Demande de certificat',
+            'clone_from' => '__global__',
+        ]);
+
+        $this->assertDatabaseHas('types_demandes', ['code' => 'DEMANDE_CERTIFICAT']);
+        $this->assertDatabaseHas('workflow_steps', [
+            'code' => 'SOUMISE',
+            'type_demande' => 'DEMANDE_CERTIFICAT',
+        ]);
+
+        $response = $this->actingAs($admin)->delete(route('admin.flux-transitions.types.destroy', 'DEMANDE_CERTIFICAT'));
+
+        $response->assertRedirect(route('admin.flux-transitions.index', [
+            'type' => \App\Enums\TypeDemandeEnum::DEMANDE_VIREMENT_BANCAIRE->value,
+        ]));
+        $response->assertSessionHas('success');
+
+        $this->assertDatabaseMissing('types_demandes', ['code' => 'DEMANDE_CERTIFICAT']);
+        $this->assertDatabaseMissing('workflow_steps', [
+            'code' => 'SOUMISE',
+            'type_demande' => 'DEMANDE_CERTIFICAT',
+        ]);
+    }
+
+    /** @test */
+    public function admin_cannot_delete_a_system_demande_type(): void
+    {
+        $admin = $this->makeAdmin();
+        $code = \App\Enums\TypeDemandeEnum::DEMANDE_ATTESTATION->value;
+
+        $response = $this->actingAs($admin)->delete(route('admin.flux-transitions.types.destroy', $code));
+
+        $response->assertRedirect(route('admin.flux-transitions.index', ['type' => $code]));
+        $response->assertSessionHas('error');
     }
 
     /** @test */
     public function admin_can_create_step_transition(): void
     {
-        $admin  = $this->makeAdmin();
+        $admin = $this->makeAdmin();
         $source = Service::where('code', Service::DIRECTION)->first();
-        $dest   = Service::where('code', Service::LIQUIDATION)->first();
+        $dest = Service::where('code', Service::LIQUIDATION)->first();
 
         $fromStep = \App\Models\WorkflowStep::create(['code' => 'DIR',  'nom' => 'Direction',   'service_id' => $source->id, 'ordre' => 10]);
-        $toStep   = \App\Models\WorkflowStep::create(['code' => 'LIQ',  'nom' => 'Liquidation', 'service_id' => $dest->id,   'ordre' => 20]);
+        $toStep = \App\Models\WorkflowStep::create(['code' => 'LIQ',  'nom' => 'Liquidation', 'service_id' => $dest->id,   'ordre' => 20]);
 
         $response = $this->actingAs($admin)->post(route('admin.flux-transitions.step-transitions.store'), [
-            'from_step_id'   => $fromStep->id,
-            'to_step_id'     => $toStep->id,
-            'action'         => 'transfer',
+            'from_step_id' => $fromStep->id,
+            'to_step_id' => $toStep->id,
+            'action' => 'transfer',
             'is_urgent_only' => false,
         ]);
 
@@ -222,25 +307,25 @@ class AdminFeatureTest extends TestCase
 
         $this->assertDatabaseHas('workflow_step_transitions', [
             'from_step_id' => $fromStep->id,
-            'to_step_id'   => $toStep->id,
+            'to_step_id' => $toStep->id,
         ]);
     }
 
     /** @test */
     public function admin_can_delete_step_transition(): void
     {
-        $admin  = $this->makeAdmin();
+        $admin = $this->makeAdmin();
         $source = Service::where('code', Service::DIRECTION)->first();
-        $dest   = Service::where('code', Service::LIQUIDATION)->first();
+        $dest = Service::where('code', Service::LIQUIDATION)->first();
 
         $fromStep = \App\Models\WorkflowStep::create(['code' => 'DIR', 'nom' => 'Direction',   'service_id' => $source->id, 'ordre' => 10]);
-        $toStep   = \App\Models\WorkflowStep::create(['code' => 'LIQ', 'nom' => 'Liquidation', 'service_id' => $dest->id,   'ordre' => 20]);
+        $toStep = \App\Models\WorkflowStep::create(['code' => 'LIQ', 'nom' => 'Liquidation', 'service_id' => $dest->id,   'ordre' => 20]);
 
         $transition = \App\Models\WorkflowStepTransition::create([
             'from_step_id' => $fromStep->id,
-            'to_step_id'   => $toStep->id,
-            'action'       => 'transfer',
-            'ordre'        => 10,
+            'to_step_id' => $toStep->id,
+            'action' => 'transfer',
+            'ordre' => 10,
         ]);
 
         $response = $this->actingAs($admin)
@@ -313,7 +398,7 @@ class AdminFeatureTest extends TestCase
     /** @test */
     public function admin_can_filter_users_by_role(): void
     {
-        $admin   = $this->makeAdmin();
+        $admin = $this->makeAdmin();
         $dirUser = User::factory()->create(['name' => 'Directeur Test']);
         $dirUser->assignRole('direction');
 

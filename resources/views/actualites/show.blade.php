@@ -24,7 +24,7 @@
 
             {{-- Hero image --}}
             <div class="relative w-full bg-gray-100 overflow-hidden" style="aspect-ratio: 16/7;">
-                <img src="{{ $actu->images->isNotEmpty() ? Storage::url($actu->images->first()->image_path) : asset('images/image_placeholder.png') }}"
+                <img src="{{ $actu->coverUrl() }}"
                      alt="{{ $actu->title }}"
                      class="w-full h-full object-cover">
                 {{-- Gradient overlay for meta readability --}}
@@ -82,7 +82,7 @@
                     <x-carousel>
                         @foreach($actu->images as $image)
                             <div class="swiper-slide">
-                                <img src="{{ Storage::url($image->image_path) }}"
+                                <img src="{{ $image->url() }}"
                                      class="w-full h-64 md:h-80 object-cover"
                                      alt="Photo — {{ $actu->title }}" />
                             </div>

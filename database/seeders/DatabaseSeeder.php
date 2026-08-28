@@ -35,6 +35,8 @@ class DatabaseSeeder extends Seeder
         $this->call(OfficialSeeder::class);
         $this->call(PublicationTypeSeeder::class);
         $this->call(PublicationSeeder::class);
+        $this->call(ActualiteSeeder::class);
+        $this->call(ReportSeeder::class);
         $this->call(MediathequeItemSeeder::class);
         $this->call(GlossaireTermSeeder::class);
         $this->call(FaqItemSeeder::class);

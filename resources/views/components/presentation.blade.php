@@ -9,7 +9,7 @@
 @endphp
 
 <div class="relative w-full bg-inherit text-center p-3">
-    <span class="text-lg font-bold text-blue-600 block mb-2">
+    <span class="text-lg font-bold text-[#033159] block mb-2">
         {{ $role }}
     </span>
 
@@ -22,11 +22,11 @@
         />
     </div>
 
-    <p class="text-base font-bold text-blue-600">
+    <p class="text-base font-bold text-[#033159]">
         {{ $nom }}
     </p>
 
-    <div class="mt-3 text-sm text-gray-500 space-y-1">
+    <div class="mt-3 text-sm text-[#657786] space-y-1">
         @if($showProfileLink && $lienProfil)
             <a href="{{ $lienProfil }}"
                class="block py-1.5 hover:text-blue-600 hover:underline transition-colors">

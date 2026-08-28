@@ -297,7 +297,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
 @php
     $selectedTypeLabel = $selectedType
-        ? (\App\Enums\TypeDemandeEnum::tryFrom($selectedType)?->label() ?? $selectedType)
+        ? (\App\Models\TypeDemande::labelFor($selectedType) ?? $selectedType)
         : null;
     $openRequiredByDefault = ($requiredServices ?? collect())->isEmpty();
     $openSlaByDefault = ($slaRules ?? collect())->isEmpty();
@@ -314,17 +314,114 @@ document.addEventListener('DOMContentLoaded', function () {
             </div>
 
             {{-- Sélecteur de type --}}
-            <form method="GET" action="{{ route('admin.flux-transitions.index') }}">
-                <select name="type" onchange="this.form.submit()"
-                    class="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 min-w-[220px]">
-                    <option value="" {{ $selectedType === null ? 'selected' : '' }}>— Commun (global) —</option>
-                    @foreach($typeDemandeOptions as $typeEnum)
-                        <option value="{{ $typeEnum->value }}" {{ $selectedType === $typeEnum->value ? 'selected' : '' }}>
-                            {{ $typeEnum->label() }}
-                        </option>
-                    @endforeach
-                </select>
-            </form>
+            <div class="flex items-center gap-2" x-data="{ showNewType: {{ $errors->hasAny(['type_code', 'type_label', 'description', 'clone_from']) ? 'true' : 'false' }}, showDeleteType: false }">
+                <form method="GET" action="{{ route('admin.flux-transitions.index') }}">
+                    <select name="type" onchange="this.form.submit()"
+                        class="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 min-w-[220px]">
+                        @foreach($typeDemandeOptions as $typeEnum)
+                            <option value="{{ $typeEnum->value }}" {{ $selectedType === $typeEnum->value ? 'selected' : '' }}>
+                                {{ $typeEnum->label }}
+                            </option>
+                        @endforeach
+                    </select>
+                </form>
+                <button type="button" @click="showNewType = true"
+                    class="inline-flex items-center gap-1.5 px-3 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg transition-colors whitespace-nowrap">
+                    <i class="fas fa-plus"></i> Nouveau type
+                </button>
+                <button type="button"
+                    @if($canDeleteSelectedType)
+                        @click="showDeleteType = true"
+                        class="inline-flex items-center gap-1.5 px-3 py-2 border border-red-300 text-red-700 hover:bg-red-50 text-sm font-medium rounded-lg transition-colors whitespace-nowrap"
+                    @else
+                        disabled
+                        title="Les types métier prédéfinis ne peuvent pas être supprimés."
+                        class="inline-flex items-center gap-1.5 px-3 py-2 border border-gray-200 text-gray-400 text-sm font-medium rounded-lg cursor-not-allowed whitespace-nowrap"
+                    @endif>
+                    <i class="fas fa-trash"></i> Supprimer
+                </button>
+
+                <div x-show="showDeleteType" x-cloak
+                     @keydown.escape.window="showDeleteType = false"
+                     @click.self="showDeleteType = false"
+                     class="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+                    <div class="bg-white w-full max-w-sm rounded-xl shadow-xl p-6" @click.stop>
+                        <h3 class="font-semibold text-gray-800 mb-2">
+                            <i class="fas fa-trash-alt mr-2 text-red-500"></i> Supprimer ce type
+                        </h3>
+                        <p class="text-sm text-gray-600 mb-5">
+                            Supprimer <strong>{{ $selectedTypeLabel }}</strong> et son circuit de traitement ?
+                            Cette action est irréversible.
+                        </p>
+                        <div class="flex justify-end gap-2">
+                            <button type="button" @click="showDeleteType = false"
+                                class="px-4 py-2 text-sm font-medium text-gray-600 hover:text-gray-800">Annuler</button>
+                            <form method="POST" action="{{ route('admin.flux-transitions.types.destroy', $selectedType) }}">
+                                @csrf @method('DELETE')
+                                <button type="submit"
+                                    class="px-4 py-2 bg-red-600 hover:bg-red-700 text-white text-sm font-medium rounded-lg">
+                                    Supprimer
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+
+                <div x-show="showNewType" x-cloak
+                     @keydown.escape.window="showNewType = false"
+                     @click.self="showNewType = false"
+                     class="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+                    <div class="bg-white w-full max-w-md rounded-xl shadow-xl p-6" @click.stop>
+                        <h3 class="font-semibold text-gray-800 text-base mb-1">
+                            <i class="fas fa-plus-circle mr-2 text-blue-500"></i> Nouveau type de demande
+                        </h3>
+                        <p class="text-xs text-gray-400 mb-4">Le circuit sera propre à ce type. Vous pouvez copier un circuit existant comme point de départ.</p>
+                        <form method="POST" action="{{ route('admin.flux-transitions.types.store') }}" class="space-y-4">
+                            @csrf
+                            <div>
+                                <label class="block text-xs font-medium text-gray-700 mb-1">Code <span class="text-red-500">*</span></label>
+                                <input type="text" name="type_code" required maxlength="50" placeholder="ex : DEMANDE_CERTIFICAT"
+                                    value="{{ old('type_code') }}"
+                                    class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm font-mono focus:outline-none focus:ring-2 focus:ring-blue-500 uppercase"
+                                    oninput="this.value = this.value.toUpperCase().replace(/[^A-Z0-9_]/g, '')">
+                                @error('type_code') <p class="text-xs text-red-600 mt-1">{{ $message }}</p> @enderror
+                            </div>
+                            <div>
+                                <label class="block text-xs font-medium text-gray-700 mb-1">Libellé <span class="text-red-500">*</span></label>
+                                <input type="text" name="type_label" required maxlength="150" placeholder="Nom affiché"
+                                    value="{{ old('type_label') }}"
+                                    class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                @error('type_label') <p class="text-xs text-red-600 mt-1">{{ $message }}</p> @enderror
+                            </div>
+                            <div>
+                                <label class="block text-xs font-medium text-gray-700 mb-1">Description</label>
+                                <input type="text" name="description" maxlength="500" placeholder="Optionnel"
+                                    value="{{ old('description') }}"
+                                    class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-medium text-gray-700 mb-1">Copier le circuit de</label>
+                                <select name="clone_from"
+                                    class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                    <option value="">— Circuit vide —</option>
+                                    <option value="__global__" @selected(old('clone_from') === '__global__')>Modèle de base (étapes partagées)</option>
+                                    @foreach($typeDemandeOptions as $typeEnum)
+                                        <option value="{{ $typeEnum->value }}" @selected(old('clone_from') === $typeEnum->value)>{{ $typeEnum->label }}</option>
+                                    @endforeach
+                                </select>
+                            </div>
+                            <div class="flex justify-end gap-2 pt-1">
+                                <button type="button" @click="showNewType = false"
+                                    class="px-4 py-2 text-sm font-medium text-gray-600 hover:text-gray-800">Annuler</button>
+                                <button type="submit"
+                                    class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg">
+                                    Créer
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -387,8 +484,6 @@ document.addEventListener('DOMContentLoaded', function () {
                 <i class="fas fa-project-diagram mr-2 text-blue-400"></i> Graphe des états
                 @if($selectedTypeLabel)
                     <span class="ml-1 text-xs font-normal text-blue-500">— {{ $selectedTypeLabel }}</span>
-                @else
-                    <span class="ml-1 text-xs font-normal text-gray-400">— circuit commun</span>
                 @endif
             </h2>
             <div class="flex gap-2 items-center">
@@ -517,7 +612,7 @@ document.addEventListener('DOMContentLoaded', function () {
                                 class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
                                 <option value="">— Sélectionner —</option>
                                 @foreach($reusableSteps->groupBy(fn($s) => $s->type_demande ?? 'Commun') as $group => $groupSteps)
-                                    <optgroup label="{{ $group === 'Commun' ? 'Commun (global)' : (\App\Enums\TypeDemandeEnum::tryFrom($group)?->label() ?? $group) }}">
+                                    <optgroup label="{{ $group === 'Commun' ? 'Modèle de base' : (\App\Models\TypeDemande::labelFor($group) ?? $group) }}">
                                         @foreach($groupSteps as $rs)
                                             <option value="{{ $rs->id }}">
                                                 {{ $rs->nom }}{{ $rs->service ? ' (' . $rs->service->nom . ')' : '' }}
@@ -658,7 +753,7 @@ document.addEventListener('DOMContentLoaded', function () {
                         <td class="px-4 py-3 text-center">
                             @if($step->type_demande)
                                 <span class="text-[10px] font-medium px-2 py-0.5 rounded-full bg-purple-100 text-purple-700">
-                                    {{ \App\Enums\TypeDemandeEnum::tryFrom($step->type_demande)?->label() ?? $step->type_demande }}
+                                    {{ \App\Models\TypeDemande::labelFor($step->type_demande) }}
                                 </span>
                             @else
                                 <span class="text-[10px] text-gray-400 italic">Global</span>
@@ -1038,7 +1133,7 @@ document.addEventListener('DOMContentLoaded', function () {
                         class="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 min-w-[200px]">
                         <option value="">— Tous les types —</option>
                         @foreach($typeDemandeOptions as $type)
-                            <option value="{{ $type->value }}" @selected($selectedType === $type->value)>{{ $type->label() }}</option>
+                            <option value="{{ $type->value }}" @selected($selectedType === $type->value)>{{ $type->label }}</option>
                         @endforeach
                     </select>
                 </div>
@@ -1065,7 +1160,7 @@ document.addEventListener('DOMContentLoaded', function () {
                         <td class="px-4 py-3">
                             @if($req->type_demande)
                                 <span class="text-xs font-medium px-2 py-0.5 rounded-full bg-purple-100 text-purple-700">
-                                    {{ \App\Enums\TypeDemandeEnum::tryFrom($req->type_demande)?->label() ?? $req->type_demande }}
+                                    {{ \App\Models\TypeDemande::labelFor($req->type_demande) }}
                                 </span>
                             @else
                                 <span class="text-xs text-gray-400 italic">Tous</span>
@@ -1085,7 +1180,7 @@ document.addEventListener('DOMContentLoaded', function () {
                                         <h3 class="font-semibold text-gray-800 mb-3">Supprimer</h3>
                                         <p class="text-sm text-gray-600 mb-5">
                                             Supprimer <strong>{{ $req->service->nom }}</strong>
-                                            @if($req->type_demande) pour <strong>{{ \App\Enums\TypeDemandeEnum::tryFrom($req->type_demande)?->label() }}</strong>@else (tous les types)@endif ?
+                                            @if($req->type_demande) pour <strong>{{ \App\Models\TypeDemande::labelFor($req->type_demande) }}</strong>@else (tous les types)@endif ?
                                         </p>
                                         <div class="flex justify-end gap-2">
                                             <button type="button" @click="open = false"
@@ -1151,7 +1246,7 @@ document.addEventListener('DOMContentLoaded', function () {
                         class="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-teal-500 min-w-[200px]">
                         <option value="">— Tous les types —</option>
                         @foreach($typeDemandeOptions as $type)
-                            <option value="{{ $type->value }}" @selected($selectedType === $type->value)>{{ $type->label() }}</option>
+                            <option value="{{ $type->value }}" @selected($selectedType === $type->value)>{{ $type->label }}</option>
                         @endforeach
                     </select>
                 </div>
@@ -1185,7 +1280,7 @@ document.addEventListener('DOMContentLoaded', function () {
                         <td class="px-4 py-3">
                             @if($sla->type_demande)
                                 <span class="text-xs font-medium px-2 py-0.5 rounded-full bg-purple-100 text-purple-700">
-                                    {{ \App\Enums\TypeDemandeEnum::tryFrom($sla->type_demande)?->label() ?? $sla->type_demande }}
+                                    {{ \App\Models\TypeDemande::labelFor($sla->type_demande) }}
                                 </span>
                             @else
                                 <span class="text-xs text-gray-400 italic">Tous</span>

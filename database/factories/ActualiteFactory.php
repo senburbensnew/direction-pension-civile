@@ -27,7 +27,7 @@ class ActualiteFactory extends Factory
                 'Facebook',
                 'Journal officiel',
             ]),
-            'published_at'  => $this->faker->optional(0.8)->dateTimeBetween('-6 months', 'now'),
+            'published'     => $this->faker->boolean(80),
         ];
     }
 
@@ -37,7 +37,7 @@ class ActualiteFactory extends Factory
     public function published(): static
     {
         return $this->state(fn () => [
-            'published_at' => now(),
+            'published' => true,
         ]);
     }
 
@@ -47,7 +47,7 @@ class ActualiteFactory extends Factory
     public function draft(): static
     {
         return $this->state(fn () => [
-            'published_at' => null,
+            'published' => false,
         ]);
     }
 }

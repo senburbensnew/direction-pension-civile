@@ -16,6 +16,7 @@ class Report extends Model
         'description',
         'file_name',
         'file_path',
+        'cover_path',
         'mime_type',
         'file_size',
         'status',
@@ -40,6 +41,18 @@ class Report extends Model
         return Storage::disk('public')->url($this->file_path);
     }
 
+    public function coverUrl(): string
+    {
+        $path = $this->cover_path;
 
+        if (! $path) {
+            return asset('images/image_placeholder.png');
+        }
 
+        if (str_starts_with($path, 'images/')) {
+            return asset($path);
+        }
+
+        return Storage::disk('public')->url($path);
+    }
 }

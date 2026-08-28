@@ -3,12 +3,6 @@
 namespace App\Models;
 
 use App\Enums\WorkflowStepTypeEnum;
-use App\Models\CivilStatus;
-use App\Models\Gender;
-use App\Models\PensionCategory;
-use App\Models\PensionType;
-use App\Models\Service;
-use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Spatie\Activitylog\LogOptions;
@@ -18,7 +12,7 @@ use Spatie\MediaLibrary\InteractsWithMedia;
 
 class Demande extends Model implements HasMedia
 {
-    use HasFactory, LogsActivity, InteractsWithMedia;
+    use HasFactory, InteractsWithMedia, LogsActivity;
 
     public function getActivitylogOptions(): LogOptions
     {
@@ -38,7 +32,7 @@ class Demande extends Model implements HasMedia
             foreach (['multiple', 'single'] as $group) {
                 foreach ($typeConfig['documents'][$group] ?? [] as $collectionName => $cfg) {
                     $collection = $this->addMediaCollection($collectionName);
-                    if (!($cfg['multiple'] ?? true)) {
+                    if (! ($cfg['multiple'] ?? true)) {
                         $collection->singleFile();
                     }
                 }
@@ -71,11 +65,11 @@ class Demande extends Model implements HasMedia
     ];
 
     protected $casts = [
-        'data'         => 'array',
+        'data' => 'array',
         'submitted_at' => 'datetime',
-        'expires_at'   => 'datetime',
+        'expires_at' => 'datetime',
         'annotated_at' => 'datetime',
-        'is_urgent'    => 'boolean',
+        'is_urgent' => 'boolean',
     ];
 
     protected static function booted()
@@ -87,19 +81,26 @@ class Demande extends Model implements HasMedia
         });
 
         static::saving(function ($demande) {
+            $enum = $demande->type
+                ? \App\Enums\TypeDemandeEnum::tryFrom($demande->type)
+                : null;
+
             if (empty($demande->title) && $demande->type) {
-                $demande->title = \App\Enums\TypeDemandeEnum::from($demande->type)->label();
+                $demande->title = $enum?->label()
+                    ?? \App\Models\TypeDemande::labelFor($demande->type)
+                    ?? $demande->type;
             }
             if (empty($demande->code) && $demande->type) {
-                $prefix = $demande->type . '-' . now()->format('Ymd') . '-';
+                $prefix = $demande->type.'-'.now()->format('Ymd').'-';
                 do {
                     $random = str_pad(mt_rand(1, 999999), 6, '0', STR_PAD_LEFT);
-                    $code   = $prefix . $random;
+                    $code = $prefix.$random;
                 } while (static::where('code', $code)->exists());
                 $demande->code = $code;
             }
             if ($demande->type) {
-                $typeCat = \App\Enums\TypeDemandeEnum::from($demande->type)->categorie()->value;
+                $typeCat = $enum?->categorie()->value
+                    ?? \App\Enums\CategorieDossierEnum::AUTRES->value;
                 $demande->categorie = $demande->is_urgent
                     ? \App\Enums\CategorieDossierEnum::DOSSIERS_URGENTS->value
                     : $typeCat;
@@ -176,12 +177,12 @@ class Demande extends Model implements HasMedia
     public function addTransfert($toServiceId, $commentaire = null): DemandeInteraction
     {
         return $this->interactions()->create([
-            'type'            => DemandeInteraction::TYPE_TRANSFERT,
+            'type' => DemandeInteraction::TYPE_TRANSFERT,
             'from_service_id' => $this->getOriginal('current_service_id') ?? $this->current_service_id,
-            'to_service_id'   => $toServiceId,
-            'initiated_by'    => auth()->id(),
-            'commentaire'     => $commentaire,
-            'statut'          => DemandeInteraction::STATUT_EN_ATTENTE,
+            'to_service_id' => $toServiceId,
+            'initiated_by' => auth()->id(),
+            'commentaire' => $commentaire,
+            'statut' => DemandeInteraction::STATUT_EN_ATTENTE,
         ]);
     }
 
@@ -190,12 +191,13 @@ class Demande extends Model implements HasMedia
         if ($this->currentStep) {
             return $this->currentStep->nom;
         }
+
         return $this->service?->nom ?? '—';
     }
 
     public function isAnnotated(): bool
     {
-        return !is_null($this->annotated_at);
+        return ! is_null($this->annotated_at);
     }
 
     public function isDraft(): bool
@@ -214,16 +216,14 @@ class Demande extends Model implements HasMedia
      */
     public function scopeActive($query)
     {
-        return $query->whereHas('currentStep', fn ($q) =>
-            $q->where('code', '!=', 'BROUILLON')
-              ->where('type_noeud', '!=', WorkflowStepTypeEnum::TERMINAL->value)
+        return $query->whereHas('currentStep', fn ($q) => $q->where('code', '!=', 'BROUILLON')
+            ->where('type_noeud', '!=', WorkflowStepTypeEnum::TERMINAL->value)
         );
     }
 
     public function scopeClosed($query)
     {
-        return $query->whereHas('currentStep', fn($q) =>
-            $q->where('type_noeud', WorkflowStepTypeEnum::TERMINAL->value)
+        return $query->whereHas('currentStep', fn ($q) => $q->where('type_noeud', WorkflowStepTypeEnum::TERMINAL->value)
         );
     }
 
@@ -262,6 +262,7 @@ class Demande extends Model implements HasMedia
         if ($this->is_urgent) {
             return true;
         }
+
         return $this->submitted_at && $this->submitted_at->diffInDays(now()) > 30;
     }
 
@@ -279,9 +280,10 @@ class Demande extends Model implements HasMedia
 
     public function civilStatus($name = 'civil_status_id')
     {
-        if (!isset($this->data[$name])) {
+        if (! isset($this->data[$name])) {
             return null;
         }
+
         return CivilStatus::find($this->data[$name]);
     }
 
@@ -292,17 +294,19 @@ class Demande extends Model implements HasMedia
 
     public function pensionType($name = 'pension_type_id')
     {
-        if (!isset($this->data[$name])) {
+        if (! isset($this->data[$name])) {
             return null;
         }
+
         return PensionType::find($this->data[$name]);
     }
 
     public function pensionCategory($name = 'pension_category_id')
     {
-        if (!isset($this->data[$name])) {
+        if (! isset($this->data[$name])) {
             return null;
         }
+
         return PensionCategory::find($this->data[$name]);
     }
 
@@ -318,31 +322,31 @@ class Demande extends Model implements HasMedia
 
     public function scopePending($query)
     {
-        return $query->whereHas('currentStep', fn($q) => $q->where('code', 'EN_ATTENTE'));
+        return $query->whereHas('currentStep', fn ($q) => $q->where('code', 'EN_ATTENTE'));
     }
 
     public function scopeApproved($query)
     {
-        return $query->whereHas('currentStep', fn($q) => $q->where('code', 'APPROUVEE'));
+        return $query->whereHas('currentStep', fn ($q) => $q->where('code', 'APPROUVEE'));
     }
 
     public function scopeInProgress($query)
     {
-        return $query->whereHas('currentStep', fn($q) => $q->where('code', 'EN_COURS'));
+        return $query->whereHas('currentStep', fn ($q) => $q->where('code', 'EN_COURS'));
     }
 
     public function scopeRejected($query)
     {
-        return $query->whereHas('currentStep', fn($q) => $q->where('code', 'REJETEE'));
+        return $query->whereHas('currentStep', fn ($q) => $q->where('code', 'REJETEE'));
     }
 
     public function scopeCanceled($query)
     {
-        return $query->whereHas('currentStep', fn($q) => $q->where('code', 'ANNULEE'));
+        return $query->whereHas('currentStep', fn ($q) => $q->where('code', 'ANNULEE'));
     }
 
     public function scopeCompleted($query)
     {
-        return $query->whereHas('currentStep', fn($q) => $q->where('code', 'FINALISEE'));
+        return $query->whereHas('currentStep', fn ($q) => $q->where('code', 'FINALISEE'));
     }
 }

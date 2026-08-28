@@ -23,9 +23,10 @@
     <div class="bg-gradient-to-r from-blue-900 to-blue-700 py-8">
         <div class="container mx-auto px-4 max-w-5xl">
             <div class="flex items-start gap-5">
-                <div class="w-14 h-14 bg-white/20 rounded-2xl flex items-center justify-center shrink-0">
-                    @php $mime = $report->mime_type ?? ''; @endphp
-                    <i class="fas {{ str_contains($mime, 'pdf') ? 'fa-file-pdf' : 'fa-file-alt' }} text-white text-2xl"></i>
+                <div class="w-20 h-16 rounded-xl overflow-hidden bg-white/10 shrink-0 border border-white/20">
+                    <img src="{{ $report->coverUrl() }}"
+                         alt="{{ $report->title }}"
+                         class="w-full h-full object-cover">
                 </div>
                 <div class="flex-1 min-w-0">
                     <div class="flex flex-wrap items-center gap-2 mb-2">

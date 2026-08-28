@@ -29,5 +29,12 @@ class Actualite extends Model
     {
         return $this->hasMany(ActualiteImage::class);
     }
+
+    public function coverUrl(): string
+    {
+        $image = $this->images->first();
+
+        return $image?->url() ?? asset('images/image_placeholder.png');
+    }
 }
 

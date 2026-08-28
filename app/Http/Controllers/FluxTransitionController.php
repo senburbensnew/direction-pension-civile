@@ -3,38 +3,48 @@
 namespace App\Http\Controllers;
 
 use App\Enums\TypeDemandeEnum;
+use App\Models\Demande;
 use App\Models\RequiredCircuitService;
 use App\Models\Service;
 use App\Models\ServiceSla;
+use App\Models\StepRequiredDocument;
+use App\Models\TypeDemande;
 use App\Models\WorkflowStep;
 use App\Models\WorkflowStepTransition;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\Rule;
 
 class FluxTransitionController extends Controller
 {
     public function index(Request $request)
     {
+        $typeDemandeOptions = $this->typeDemandeOptions();
         $rawType = $request->query('type');
-        $selectedType = null;
 
-        if ($rawType !== null && $rawType !== '') {
-            $enum = TypeDemandeEnum::tryFrom($rawType);
-            if (!$enum) {
-                return redirect()
-                    ->route('admin.flux-transitions.index')
-                    ->with('error', 'Type de demande invalide.');
+        if ($rawType === null || $rawType === '') {
+            $first = $typeDemandeOptions->first();
+            if (! $first) {
+                abort(500, 'Aucun type de demande n’est défini.');
             }
-            $selectedType = $enum->value;
+
+            return redirect()->route('admin.flux-transitions.index', ['type' => $first->value]);
         }
 
+        if (! TypeDemande::isKnown($rawType)) {
+            $first = $typeDemandeOptions->first();
+
+            return redirect()
+                ->route('admin.flux-transitions.index', $first ? ['type' => $first->value] : [])
+                ->with('error', 'Type de demande invalide.');
+        }
+
+        $selectedType = $rawType;
+
         $steps = WorkflowStep::with('service')
-            ->when(
-                $selectedType,
-                fn ($q) => $q->where('type_demande', $selectedType),
-                fn ($q) => $q->whereNull('type_demande')
-            )
+            ->where('type_demande', $selectedType)
             ->orderBy('ordre')
             ->get();
 
@@ -50,22 +60,18 @@ class FluxTransitionController extends Controller
         $services = Service::orderBy('nom')->get();
 
         $requiredServices = RequiredCircuitService::with('service')
-            ->when($selectedType, fn ($q) => $q->where(fn ($q2) =>
-                $q2->whereNull('type_demande')->orWhere('type_demande', $selectedType)
+            ->when($selectedType, fn ($q) => $q->where(fn ($q2) => $q2->whereNull('type_demande')->orWhere('type_demande', $selectedType)
             ))
             ->orderBy('type_demande')
             ->orderBy('service_id')
             ->get();
 
         $slaRules = ServiceSla::with('service')
-            ->when($selectedType, fn ($q) => $q->where(fn ($q2) =>
-                $q2->whereNull('type_demande')->orWhere('type_demande', $selectedType)
+            ->when($selectedType, fn ($q) => $q->where(fn ($q2) => $q2->whereNull('type_demande')->orWhere('type_demande', $selectedType)
             ))
             ->orderBy('service_id')
             ->orderBy('type_demande')
             ->get();
-
-        $typeDemandeOptions = TypeDemandeEnum::cases();
 
         $currentCodes = $steps->pluck('code')->unique();
         $reusableSteps = WorkflowStep::with('service')
@@ -76,13 +82,96 @@ class FluxTransitionController extends Controller
             ->get();
 
         $healthIssues = $this->buildHealthIssues($steps, $stepTransitions, $requiredServices);
+        $canDeleteSelectedType = TypeDemande::isCustom($selectedType);
 
         return view('admin.flux-transitions.index', compact(
             'steps', 'stepTransitions', 'services',
             'requiredServices', 'slaRules',
             'selectedType', 'typeDemandeOptions',
-            'reusableSteps', 'healthIssues'
+            'reusableSteps', 'healthIssues',
+            'canDeleteSelectedType'
         ));
+    }
+
+    public function storeType(Request $request)
+    {
+        $knownCodes = $this->typeDemandeOptions()->pluck('value')->all();
+
+        $validated = $request->validate([
+            'type_code' => [
+                'required',
+                'string',
+                'max:50',
+                'regex:/^[A-Z0-9_]+$/',
+                'unique:types_demandes,code',
+                function (string $attribute, mixed $value, \Closure $fail) {
+                    if (TypeDemandeEnum::tryFrom($value)) {
+                        $fail('Ce code correspond déjà à un type de demande existant.');
+                    }
+                },
+            ],
+            'type_label' => ['required', 'string', 'max:150'],
+            'description' => ['nullable', 'string', 'max:500'],
+            'clone_from' => ['nullable', 'string', Rule::in(array_merge($knownCodes, ['__global__']))],
+        ]);
+
+        $code = strtoupper($validated['type_code']);
+
+        DB::transaction(function () use ($validated, $code) {
+            TypeDemande::create([
+                'code' => $code,
+                'label' => $validated['type_label'],
+                'description' => $validated['description'] ?? null,
+                'active' => true,
+            ]);
+
+            $cloneFrom = $validated['clone_from'] ?? null;
+            if ($cloneFrom) {
+                $this->cloneCircuit($cloneFrom === '__global__' ? null : $cloneFrom, $code);
+            }
+        });
+
+        return redirect()
+            ->route('admin.flux-transitions.index', ['type' => $code])
+            ->with('success', 'Type de demande créé.');
+    }
+
+    public function destroyType(string $typeCode)
+    {
+        $code = strtoupper($typeCode);
+
+        if (! TypeDemande::isCustom($code)) {
+            return redirect()
+                ->route('admin.flux-transitions.index', ['type' => $code])
+                ->with('error', 'Ce type de demande ne peut pas être supprimé.');
+        }
+
+        if (Demande::where('type', $code)->exists()) {
+            return redirect()
+                ->route('admin.flux-transitions.index', ['type' => $code])
+                ->with('error', 'Impossible de supprimer ce type : des dossiers l’utilisent encore.');
+        }
+
+        $label = TypeDemande::labelFor($code);
+
+        DB::transaction(function () use ($code) {
+            $stepIds = WorkflowStep::where('type_demande', $code)->pluck('id');
+            if ($stepIds->isNotEmpty()) {
+                StepRequiredDocument::whereIn('workflow_step_id', $stepIds)->delete();
+                WorkflowStep::whereIn('id', $stepIds)->delete();
+            }
+
+            RequiredCircuitService::where('type_demande', $code)->delete();
+            ServiceSla::where('type_demande', $code)->delete();
+            StepRequiredDocument::where('type_demande', $code)->delete();
+            TypeDemande::where('code', $code)->delete();
+        });
+
+        $fallback = $this->typeDemandeOptions()->first();
+
+        return redirect()
+            ->route('admin.flux-transitions.index', $fallback ? ['type' => $fallback->value] : [])
+            ->with('success', 'Type « '.$label.' » supprimé.');
     }
 
     /* ── Step-transition CRUD ─────────────────────────────────────── */
@@ -90,11 +179,11 @@ class FluxTransitionController extends Controller
     public function storeStepTransition(Request $request)
     {
         $request->validate([
-            'from_step_id'   => 'nullable|exists:workflow_steps,id',
-            'to_step_id'     => 'required|exists:workflow_steps,id|different:from_step_id',
-            'action'         => 'required|string|max:100',
+            'from_step_id' => 'nullable|exists:workflow_steps,id',
+            'to_step_id' => 'required|exists:workflow_steps,id|different:from_step_id',
+            'action' => 'required|string|max:100',
             'is_urgent_only' => 'boolean',
-            'type_demande'   => 'nullable|string|max:100',
+            'type_demande' => 'nullable|string|max:100',
         ]);
 
         $from = $request->from_step_id ?: null;
@@ -120,11 +209,11 @@ class FluxTransitionController extends Controller
         $maxOrdre = WorkflowStepTransition::where('from_step_id', $from)->max('ordre') ?? 0;
 
         WorkflowStepTransition::create([
-            'from_step_id'   => $from,
-            'to_step_id'     => $request->to_step_id,
-            'action'         => $request->action,
+            'from_step_id' => $from,
+            'to_step_id' => $request->to_step_id,
+            'action' => $request->action,
             'is_urgent_only' => $request->boolean('is_urgent_only'),
-            'ordre'          => $maxOrdre + 10,
+            'ordre' => $maxOrdre + 10,
         ]);
 
         return $this->redirectToIndex($request)->with('success', 'Transition ajoutée.');
@@ -133,13 +222,13 @@ class FluxTransitionController extends Controller
     public function updateStepTransition(Request $request, WorkflowStepTransition $stepTransition)
     {
         $request->validate([
-            'action'         => 'required|string|max:100',
+            'action' => 'required|string|max:100',
             'is_urgent_only' => 'boolean',
-            'type_demande'   => 'nullable|string|max:100',
+            'type_demande' => 'nullable|string|max:100',
         ]);
 
         $stepTransition->update([
-            'action'         => $request->action,
+            'action' => $request->action,
             'is_urgent_only' => $request->boolean('is_urgent_only'),
         ]);
 
@@ -149,6 +238,7 @@ class FluxTransitionController extends Controller
     public function destroyStepTransition(Request $request, WorkflowStepTransition $stepTransition)
     {
         $stepTransition->delete();
+
         return $this->redirectToIndex($request)->with('success', 'Transition supprimée.');
     }
 
@@ -193,7 +283,7 @@ class FluxTransitionController extends Controller
     public function storeRequired(Request $request)
     {
         $request->validate([
-            'service_id'   => 'required|exists:services,id',
+            'service_id' => 'required|exists:services,id',
             'type_demande' => 'nullable|string|max:100',
         ]);
 
@@ -206,7 +296,7 @@ class FluxTransitionController extends Controller
         }
 
         RequiredCircuitService::create([
-            'service_id'   => $request->service_id,
+            'service_id' => $request->service_id,
             'type_demande' => $request->type_demande ?: null,
         ]);
 
@@ -216,6 +306,7 @@ class FluxTransitionController extends Controller
     public function destroyRequired(Request $request, RequiredCircuitService $requiredCircuitService)
     {
         $requiredCircuitService->delete();
+
         return $this->redirectToIndex($request)->with('success', 'Étape obligatoire supprimée.');
     }
 
@@ -224,9 +315,9 @@ class FluxTransitionController extends Controller
     public function storeSla(Request $request)
     {
         $request->validate([
-            'service_id'   => 'required|exists:services,id',
+            'service_id' => 'required|exists:services,id',
             'type_demande' => 'nullable|string|max:100',
-            'delai_jours'  => 'required|integer|min:1|max:365',
+            'delai_jours' => 'required|integer|min:1|max:365',
         ]);
 
         ServiceSla::updateOrCreate(
@@ -240,6 +331,7 @@ class FluxTransitionController extends Controller
     public function destroySla(Request $request, ServiceSla $serviceSla)
     {
         $serviceSla->delete();
+
         return $this->redirectToIndex($request)->with('success', 'SLA supprimé.');
     }
 
@@ -263,7 +355,7 @@ class FluxTransitionController extends Controller
 
         if ($steps->isEmpty()) {
             return [[
-                'level'   => 'warning',
+                'level' => 'warning',
                 'message' => 'Aucun état défini pour ce circuit. Ajoutez des nœuds pour commencer.',
             ]];
         }
@@ -277,15 +369,14 @@ class FluxTransitionController extends Controller
         }
         $connectedIds = $connectedIds->unique();
 
-        $orphans = $steps->filter(fn (WorkflowStep $s) =>
-            !$s->isDraftEntry() && !$connectedIds->contains($s->id)
+        $orphans = $steps->filter(fn (WorkflowStep $s) => ! $s->isDraftEntry() && ! $connectedIds->contains($s->id)
         );
         if ($orphans->isNotEmpty()) {
             $names = $orphans->pluck('nom')->take(5)->implode(', ');
             $extra = $orphans->count() > 5 ? '…' : '';
             $issues[] = [
-                'level'   => 'warning',
-                'message' => 'Nœud(s) orphelin(s) sans transition : ' . $names . $extra . '.',
+                'level' => 'warning',
+                'message' => 'Nœud(s) orphelin(s) sans transition : '.$names.$extra.'.',
             ];
         }
 
@@ -294,13 +385,13 @@ class FluxTransitionController extends Controller
             $directionId = Service::where('code', Service::DIRECTION)->value('id');
             if ($directionId && (int) $soumise->service_id !== (int) $directionId) {
                 $issues[] = [
-                    'level'   => 'error',
+                    'level' => 'error',
                     'message' => 'L’étape SOUMISE doit être rattachée au service Direction — toute demande y est reçue au départ.',
                 ];
             }
-            if (!$transitions->contains(fn ($t) => (int) $t->from_step_id === (int) $soumise->id)) {
+            if (! $transitions->contains(fn ($t) => (int) $t->from_step_id === (int) $soumise->id)) {
                 $issues[] = [
-                    'level'   => 'error',
+                    'level' => 'error',
                     'message' => 'Aucune transition sortante depuis « Soumission » (SOUMISE). Les dossiers ne pourront pas être transférés.',
                 ];
             }
@@ -310,9 +401,9 @@ class FluxTransitionController extends Controller
                 return (int) $t->from_step_id === (int) $soumise->id
                     && (int) ($t->toStep?->service_id) === (int) $secretariatId;
             });
-            if (!$hasSecretariatDispatch) {
+            if (! $hasSecretariatDispatch) {
                 $issues[] = [
-                    'level'   => 'warning',
+                    'level' => 'warning',
                     'message' => 'Aucune arête SOUMISE → Secrétariat. Après annotation, les dossiers ne seront pas dispatchés automatiquement au Secrétariat.',
                 ];
             }
@@ -326,9 +417,9 @@ class FluxTransitionController extends Controller
 
             return $t->from_step_id === null || $t->fromStep?->code === 'BROUILLON';
         });
-        if ($soumise && !$hasSubmitEdge) {
+        if ($soumise && ! $hasSubmitEdge) {
             $issues[] = [
-                'level'   => 'warning',
+                'level' => 'warning',
                 'message' => 'Aucune arête de soumission (Brouillon → Soumise ou Soumission initiale → Soumise).',
             ];
         }
@@ -336,24 +427,24 @@ class FluxTransitionController extends Controller
         $terminals = $steps->filter(fn (WorkflowStep $s) => $s->isTerminal());
         if ($terminals->isNotEmpty() && $soumise) {
             $reachable = $this->reachableStepIds($soumise->id, $transitions);
-            $unreachableTerminals = $terminals->filter(fn (WorkflowStep $s) => !$reachable->contains($s->id));
+            $unreachableTerminals = $terminals->filter(fn (WorkflowStep $s) => ! $reachable->contains($s->id));
             if ($unreachableTerminals->isNotEmpty()) {
                 $names = $unreachableTerminals->pluck('nom')->implode(', ');
                 $issues[] = [
-                    'level'   => 'warning',
-                    'message' => 'Terminal(aux) inatteignable(s) depuis SOUMISE : ' . $names . '.',
+                    'level' => 'warning',
+                    'message' => 'Terminal(aux) inatteignable(s) depuis SOUMISE : '.$names.'.',
                 ];
             }
         } elseif ($terminals->isEmpty()) {
             $issues[] = [
-                'level'   => 'info',
+                'level' => 'info',
                 'message' => 'Aucun nœud terminal (Approuvée, Rejetée, etc.) dans ce circuit.',
             ];
         }
 
         if ($requiredServices->isEmpty()) {
             $issues[] = [
-                'level'   => 'info',
+                'level' => 'info',
                 'message' => 'Aucune étape obligatoire : l’approbation ne vérifiera pas le passage par un service donné.',
             ];
         }
@@ -375,7 +466,7 @@ class FluxTransitionController extends Controller
         while ($queue) {
             $current = array_shift($queue);
             foreach ($adj[$current] ?? [] as $next) {
-                if (!$seen->contains($next)) {
+                if (! $seen->contains($next)) {
                     $seen->push($next);
                     $queue[] = $next;
                 }
@@ -383,5 +474,94 @@ class FluxTransitionController extends Controller
         }
 
         return $seen;
+    }
+
+    /**
+     * @return Collection<int, object{value: string, label: string}>
+     */
+    private function typeDemandeOptions(): Collection
+    {
+        $dbByCode = TypeDemande::query()->orderBy('label')->get()->keyBy('code');
+
+        $options = collect(TypeDemandeEnum::cases())->map(fn (TypeDemandeEnum $e) => (object) [
+            'value' => $e->value,
+            'label' => $dbByCode->get($e->value)?->label ?? $e->label(),
+        ]);
+
+        $extras = $dbByCode
+            ->reject(fn (TypeDemande $t) => TypeDemandeEnum::tryFrom($t->code) !== null)
+            ->map(fn (TypeDemande $t) => (object) [
+                'value' => $t->code,
+                'label' => $t->label,
+            ]);
+
+        return $options->concat($extras->values());
+    }
+
+    private function cloneCircuit(?string $sourceType, string $targetType): void
+    {
+        $sourceSteps = WorkflowStep::query()
+            ->when(
+                $sourceType,
+                fn ($q) => $q->where('type_demande', $sourceType),
+                fn ($q) => $q->whereNull('type_demande')
+            )
+            ->orderBy('ordre')
+            ->get();
+
+        if ($sourceSteps->isEmpty()) {
+            return;
+        }
+
+        $idMap = [];
+        $seenCodes = [];
+        foreach ($sourceSteps as $step) {
+            if (isset($seenCodes[$step->code])) {
+                continue;
+            }
+            $seenCodes[$step->code] = true;
+
+            if (WorkflowStep::where('code', $step->code)->where('type_demande', $targetType)->exists()) {
+                continue;
+            }
+
+            $clone = $step->replicate();
+            $clone->type_demande = $targetType;
+            $clone->save();
+            $idMap[$step->id] = $clone->id;
+        }
+
+        $sourceIds = $sourceSteps->pluck('id');
+        $transitions = WorkflowStepTransition::query()
+            ->whereIn('to_step_id', $sourceIds)
+            ->where(function ($q) use ($sourceIds) {
+                $q->whereNull('from_step_id')->orWhereIn('from_step_id', $sourceIds);
+            })
+            ->get();
+
+        foreach ($transitions as $transition) {
+            $toId = $idMap[$transition->to_step_id] ?? null;
+            if (! $toId) {
+                continue;
+            }
+
+            $fromId = $transition->from_step_id
+                ? ($idMap[$transition->from_step_id] ?? null)
+                : null;
+
+            if ($transition->from_step_id && ! $fromId) {
+                continue;
+            }
+
+            WorkflowStepTransition::create([
+                'from_step_id' => $fromId,
+                'to_step_id' => $toId,
+                'action' => $transition->action,
+                'is_urgent_only' => $transition->is_urgent_only,
+                'ordre' => $transition->ordre,
+                'required_permission' => $transition->required_permission,
+                'guard_conditions' => $transition->guard_conditions,
+            ]);
+        }
     }
 }

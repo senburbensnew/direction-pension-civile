@@ -70,66 +70,9 @@
             </div>
         @else
 
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
                 @foreach($reports as $report)
-                    <div class="bg-white rounded-xl border border-gray-100 shadow-sm hover:shadow-md transition-all duration-300 hover:-translate-y-0.5 flex flex-col overflow-hidden group">
-
-                        {{-- Card header --}}
-                        <div class="bg-gradient-to-br from-blue-700 to-blue-900 px-5 py-5 flex items-start gap-3">
-                            <div class="w-11 h-11 bg-white/20 rounded-xl flex items-center justify-center shrink-0 mt-0.5">
-                                @php
-                                    $mime = $report->mime_type ?? '';
-                                    $icon = str_contains($mime, 'pdf') ? 'fa-file-pdf' : (str_contains($mime, 'word') ? 'fa-file-word' : 'fa-file-alt');
-                                @endphp
-                                <i class="fas {{ $icon }} text-white text-lg"></i>
-                            </div>
-                            <div class="flex-1 min-w-0">
-                                <h3 class="text-white font-bold text-sm leading-snug line-clamp-2 mb-2">
-                                    {{ $report->title }}
-                                </h3>
-                                <div class="flex flex-wrap items-center gap-1.5">
-                                    @if($report->year)
-                                        <span class="text-xs font-semibold bg-white/20 text-white px-2 py-0.5 rounded-full">
-                                            {{ $report->year }}
-                                        </span>
-                                    @endif
-                                    @if($report->file_size)
-                                        <span class="text-xs text-blue-200">
-                                            {{ number_format($report->file_size / 1024, 0) }} Ko
-                                        </span>
-                                    @endif
-                                </div>
-                            </div>
-                        </div>
-
-                        {{-- Card body --}}
-                        <div class="p-5 flex flex-col flex-1">
-                            <p class="text-xs text-gray-500 leading-relaxed line-clamp-3 flex-1 mb-4">
-                                {{ $report->description ?: 'Aucune description disponible pour ce document.' }}
-                            </p>
-
-                            {{-- Published date --}}
-                            @if($report->published_at)
-                                <div class="flex items-center gap-1.5 text-xs text-gray-400 mb-4">
-                                    <i class="far fa-calendar-alt text-gray-300"></i>
-                                    Publié le {{ $report->published_at->translatedFormat('d F Y') }}
-                                </div>
-                            @endif
-
-                            {{-- Actions --}}
-                            <div class="flex gap-2 mt-auto">
-                                <a href="{{ route('reports.show', $report) }}"
-                                   class="flex-1 inline-flex items-center justify-center gap-1.5 px-3 py-2 bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold rounded-lg transition-colors">
-                                    <i class="fas fa-eye text-[10px]"></i> Consulter
-                                </a>
-                                <a href="{{ route('reports.download', $report) }}"
-                                   class="flex-1 inline-flex items-center justify-center gap-1.5 px-3 py-2 border border-gray-200 hover:bg-gray-50 text-gray-600 text-xs font-semibold rounded-lg transition-colors">
-                                    <i class="fas fa-download text-[10px]"></i> Télécharger
-                                </a>
-                            </div>
-                        </div>
-
-                    </div>
+                    <x-report-card :report="$report" />
                 @endforeach
             </div>
 

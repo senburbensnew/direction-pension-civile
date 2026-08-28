@@ -2,7 +2,7 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Factories\HasFactory;
+use App\Enums\TypeDemandeEnum;
 use Illuminate\Database\Eloquent\Model;
 
 class TypeDemande extends Model
@@ -13,6 +13,36 @@ class TypeDemande extends Model
         'code',
         'label',
         'description',
-        'active'
+        'active',
     ];
+
+    protected $casts = [
+        'active' => 'boolean',
+    ];
+
+    public static function labelFor(?string $code): ?string
+    {
+        if (! $code) {
+            return null;
+        }
+
+        $fromDb = static::query()->where('code', $code)->value('label');
+        if ($fromDb) {
+            return $fromDb;
+        }
+
+        return TypeDemandeEnum::tryFrom($code)?->label() ?? $code;
+    }
+
+    public static function isKnown(string $code): bool
+    {
+        return TypeDemandeEnum::tryFrom($code) !== null
+            || static::query()->where('code', $code)->exists();
+    }
+
+    public static function isCustom(string $code): bool
+    {
+        return TypeDemandeEnum::tryFrom($code) === null
+            && static::query()->where('code', $code)->exists();
+    }
 }

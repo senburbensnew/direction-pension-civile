@@ -111,7 +111,7 @@
                 <div class="flex flex-wrap gap-3">
                     @foreach($actualiteEdit->images as $image)
                         <div class="relative group w-36 h-28 flex-shrink-0 rounded-lg overflow-hidden border border-gray-200">
-                            <img src="{{ Storage::url($image->image_path) }}" alt="Image"
+                            <img src="{{ $image->url() }}" alt="Image"
                                 class="w-full h-full object-cover">
                             <label class="absolute inset-0 flex items-center justify-center cursor-pointer
                                 bg-transparent group-hover:bg-black/10 transition-colors">

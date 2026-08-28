@@ -13,10 +13,11 @@ export default {
     theme: {
         extend: {
             fontFamily: {
-                serif: ["Georgia", "serif"],
-                sans: ["Figtree", ...defaultTheme.fontFamily.sans],
+                serif: ['"Source Serif 4"', "Georgia", "Cambria", "Times New Roman", "serif"],
+                sans: ['"Source Sans 3"', "system-ui", ...defaultTheme.fontFamily.sans],
             },
             colors: {
+                navy: "#173052",
                 "custom-blue": "#074482",
                 "link-color": "#5156be",
                 "link-hover": "#3b3f9e",

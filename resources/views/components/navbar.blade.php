@@ -1,6 +1,5 @@
-    <div class="container mx-auto relative bg-blue-900 text-white bg-cover bg-center z-[1001]"
-            style="background-image: url({{ asset('images/carousel/slide2.jpg') }});">
-        <div class="absolute inset-0 bg-blue-900 bg-opacity-70"></div>
+    <div class="container mx-auto relative text-white z-[1001] bg-[#173052] bg-motif-dots">
+        <div class="absolute inset-0 bg-opacity-70"></div>
 
         <div class="container mx-auto px-4 py-4 relative z-10">
             <div class="flex flex-wrap lg:flex-nowrap justify-between lg:justify-start items-center gap-x-3 gap-y-0">
@@ -11,10 +10,10 @@
                              alt="Logo"
                              class="w-10 h-10 md:w-16 md:h-16 transition-transform group-hover:scale-105">
                         <div class="flex flex-col">
-                            <span class="font-semibold text-base md:text-lg leading-tight group-hover:text-orange-500 transition-colors">
+                            <span class="text-base md:text-lg font-semibold tracking-tight leading-tight group-hover:text-orange-500 transition-colors">
                                 {{ __('messages.direction') }}
                             </span>
-                            <span class="text-sm leading-tight">
+                            <span class="text-sm font-normal tracking-wide text-white/80 leading-tight">
                                 {{ __('messages.republic') }}
                             </span>
                         </div>
@@ -24,7 +23,7 @@
                 <!-- Main Navigation
                      Mobile: order-3 + w-full → drops to its own full-width row below logo & user section
                      Desktop: order-2 + w-auto → sits inline, to the left of the user section -->
-                <nav class="order-3 lg:order-2 w-full lg:w-auto flex flex-wrap lg:flex-nowrap justify-center gap-3 lg:gap-5 text-base
+                <nav class="order-3 lg:order-2 w-full lg:w-auto flex flex-wrap lg:flex-nowrap justify-center gap-3 lg:gap-5 text-[15px] font-medium
                             mt-3 pt-3 lg:mt-0 lg:pt-0 border-t border-white/20 lg:border-0">
                     <a href="{{ route('home') }}"
                        class="hover:text-orange-500 transition-colors py-1 border-b-2 border-transparent hover:border-orange-500">
@@ -34,10 +33,6 @@
                        class="hover:text-orange-500 transition-colors py-1 border-b-2 border-transparent hover:border-orange-500">
                         {{ __('messages.links') }}
                     </a>
-                    <a href="{{ route('contact') }}"
-                       class="hover:text-orange-500 transition-colors py-1 border-b-2 border-transparent hover:border-orange-500">
-                        {{ __('messages.contact') }}
-                    </a>
                     <a href="{{ route('faq.index') }}"
                        class="hover:text-orange-500 transition-colors py-1 border-b-2 border-transparent hover:border-orange-500">
                         {{ __('messages.faq') }}
@@ -45,6 +40,10 @@
                     <a href="{{ route('glossaire') }}"
                        class="hover:text-orange-500 transition-colors py-1 border-b-2 border-transparent hover:border-orange-500">
                         {{ __('messages.glossaire') }}
+                    </a>
+                    <a href="{{ route('contact') }}"
+                       class="hover:text-orange-500 transition-colors py-1 border-b-2 border-transparent hover:border-orange-500">
+                        {{ __('messages.contact') }}
                     </a>
                 </nav>
 
@@ -66,7 +65,7 @@
                                     <span x-show="unreadCount > 0"
                                           x-text="unreadCount > 9 ? '9+' : unreadCount"
                                           x-cloak
-                                          class="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-4 w-4 flex items-center justify-center font-bold leading-none">
+                                          class="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-4 w-4 flex items-center justify-center leading-none">
                                     </span>
                                 </button>
 
