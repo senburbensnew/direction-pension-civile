@@ -86,10 +86,11 @@
 
 <style>
     .hero-carousel {
+        width: 100%;
         height: 280px;
     }
-    @media (min-width: 768px)  { .hero-carousel { height: 380px; } }
-    @media (min-width: 1024px) { .hero-carousel { height: 480px; } }
+    @media (min-width: 768px)  { .hero-carousel { height: 400px; } }
+    @media (min-width: 1024px) { .hero-carousel { height: 520px; } }
 
     /* Slides stack on top of each other and crossfade */
     .hero-carousel .swiper-slide {

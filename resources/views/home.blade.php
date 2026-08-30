@@ -1,6 +1,6 @@
 @extends('layouts.main')
 
-@section('title', 'Accueil')
+@section('title', __('messages.home'))
 
 @section('content')
 <style>
@@ -264,6 +264,10 @@
         box-shadow: inset 0 -90px 70px -25px rgba(23, 48, 82, 0.28);
     }
 
+    .home-band {
+        border-top: 1px solid #e5e7eb;
+    }
+
     .hero-carousel .swiper-slide img.hero-accueil-photo {
         width: 100%;
         height: 100%;
@@ -273,41 +277,38 @@
         mask-image: linear-gradient(to right, transparent 0%, #000 18%, #000 100%);
     }
 </style>
-
-<div class="py-0">
-    <section class="py-0 gap-4 flex flex-col lg:flex-row lg:justify-between items-center bg-gray-100 w-full overflow-hidden">
+    <section class="w-full">
         <x-carousel>
             <div class="swiper-slide">
                 <div class="hero-accueil w-full h-full grid grid-cols-1 md:grid-cols-2 items-center">
-                    <div class="px-6 sm:px-8 lg:px-10 py-6">
+                    <div class="px-6 sm:px-8 lg:px-12 py-6">
                         <h1 class="text-3xl md:text-4xl font-bold text-navy">
-                            Pension Civile
+                            {{ __('home.hero_title') }}
                         </h1>
                         <p class="mt-2 text-lg md:text-xl font-semibold text-orange-500">
-                            Votre retraite, notre engagement
+                            {{ __('home.hero_tagline') }}
                         </p>
                         <p class="mt-3 text-gray-500 text-sm md:text-base max-w-md leading-relaxed">
-                            Nous accompagnons les fonctionnaires et retraités dans leurs démarches
-                            liées à la retraite et aux prestations sociales.
+                            {{ __('home.hero_body') }}
                         </p>
                         <div class="mt-5 flex flex-wrap gap-3">
                             <a href="{{ route('login') }}"
                                class="inline-flex items-center justify-center px-5 py-2.5 bg-orange-500 hover:bg-orange-600 text-white font-semibold text-sm rounded-lg transition-colors">
-                                Faire une démarche
+                                {{ __('home.hero_cta_demarche') }}
                             </a>
                             <a href="{{ route('login') }}"
                                class="inline-flex items-center justify-center px-5 py-2.5 border-2 border-blue-600 text-blue-600 hover:bg-blue-600 hover:text-white font-semibold text-sm rounded-xl transition-all duration-300">
-                                Suivre mon dossier
+                                {{ __('home.hero_cta_suivi') }}
                             </a>
                             <a href="{{ route('simulateur-calcul') }}"
                                class="inline-flex items-center justify-center px-5 py-2.5 bg-navy hover:bg-orange-500 text-white font-semibold text-sm rounded-lg transition-colors">
-                                Calculer ma pension
+                                {{ __('home.hero_cta_calcul') }}
                             </a>
                         </div>
                     </div>
                     <div class="relative hidden md:block h-full">
                         <img src="{{ asset('images/pension-hero-couple-salon.png') }}"
-                             alt="Retraités utilisant les services de la Pension Civile"
+                             alt="{{ __('home.hero_photo_alt') }}"
                              class="hero-accueil-photo absolute inset-0">
                     </div>
                 </div>
@@ -386,125 +387,275 @@
                 </div>
             @endforeach
         </x-carousel>
-        <div class="w-full lg:w-auto mt-0 lg:mt-0 px-4 lg:px-0">
-            <x-presentation slug="ministre" />
+    </section>
+
+    {{-- ═══════════════════════════════════════
+         VISION ET MISSION
+    ════════════════════════════════════════ --}}
+    @php
+        $videoItem = \App\Models\MediathequeItem::published()->featured()->where('type', 'video')->first()
+            ?? \App\Models\MediathequeItem::published()->where('type', 'video')->ordered()->first();
+        $videoTitle = $videoItem?->title ?? 'Jounen enfòmasyon ak oryantasyon';
+        $videoEmbed = $videoItem?->embedUrl();
+        $videoSrc = $videoItem?->fileUrl();
+        if (! $videoSrc && $videoItem?->url && preg_match('/\.(mp4|webm|ogg)(\?|$)/i', $videoItem->url)) {
+            $videoSrc = $videoItem->url;
+        }
+    @endphp
+    <section class="py-16 bg-slate-100 bg-motif fade-in home-band">
+        <div class="container mx-auto px-4">
+            <div class="grid lg:grid-cols-12 gap-8 items-start">
+                <aside class="lg:col-span-3 max-w-sm mx-auto lg:max-w-none lg:mx-0">
+                    <x-presentation slug="ministre" variant="card" />
+                </aside>
+                <div class="lg:col-span-9">
+                    <h2 class="text-3xl md:text-4xl font-bold text-navy text-center mb-10">
+                        {{ __('home.vision_mission_title') }}
+                    </h2>
+                    <div class="grid md:grid-cols-3 gap-5 items-stretch">
+                        <article class="bg-white rounded-2xl p-6 md:p-7">
+                            <h3 class="text-lg font-bold text-navy mb-2">{{ __('home.vision_title') }}</h3>
+                            <p class="text-sm text-gray-600 leading-relaxed">
+                                {{ __('home.vision_body') }}
+                            </p>
+                        </article>
+
+                        <article class="bg-white rounded-2xl p-6 md:p-7">
+                            <h3 class="text-lg font-bold text-navy mb-3">{{ __('home.mission_title') }}</h3>
+                            <ul class="space-y-2.5 text-sm text-gray-600">
+                                @foreach(['home.mission_1', 'home.mission_2', 'home.mission_3', 'home.mission_4'] as $point)
+                                    <li class="flex items-start gap-2">
+                                        <i class="fas fa-check text-emerald-500 mt-0.5 text-xs"></i>
+                                        <span>{{ __($point) }}</span>
+                                    </li>
+                                @endforeach
+                            </ul>
+                        </article>
+
+                        <article class="bg-[#1e4a7a] rounded-2xl p-6 md:p-7 flex flex-col">
+                            <h3 class="text-lg font-bold text-white mb-1">{{ __('home.video_title') }}</h3>
+                            <p class="text-sm text-blue-100 mb-4">{{ __('home.video_subtitle') }}</p>
+                            @if($videoSrc)
+                                <video
+                                    class="w-full aspect-video rounded-xl bg-navy mt-auto"
+                                    controls
+                                    playsinline
+                                    preload="metadata"
+                                >
+                                    <source src="{{ $videoSrc }}">
+                                    {{ $videoTitle }}
+                                </video>
+                            @elseif($videoEmbed)
+                                <div class="relative w-full aspect-video rounded-xl overflow-hidden bg-navy mt-auto">
+                                    <iframe
+                                        class="absolute inset-0 w-full h-full"
+                                        src="{{ $videoEmbed }}"
+                                        title="{{ $videoTitle }}"
+                                        loading="lazy"
+                                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                                        allowfullscreen
+                                        style="border:0;"
+                                    ></iframe>
+                                </div>
+                            @endif
+                        </article>
+                    </div>
+                </div>
+            </div>
         </div>
     </section>
 
     {{-- ═══════════════════════════════════════
          NOS SERVICES
     ════════════════════════════════════════ --}}
-    <section class="py-14 bg-gray-50 bg-motif fade-in">
+    <section class="py-16 bg-white bg-motif fade-in home-band">
         <div class="container mx-auto px-4">
+                    <div class="text-center mb-10">
+                        <span class="text-xs font-bold text-blue-600 uppercase tracking-widest">{{ __('home.services_kicker') }}</span>
+                        <h2 class="text-3xl md:text-4xl font-bold text-navy mt-2 mb-3">{{ __('home.services_title') }}</h2>
+                        <p class="text-gray-500 max-w-xl mx-auto">
+                            {{ __('home.services_intro') }}
+                        </p>
+                    </div>
+                    @php
+                        $serviceCards = [
+                            [
+                                'icon' => 'fa-user-tie',
+                                'audience' => __('home.service_pensionnaire_audience'),
+                                'title' => __('home.service_pensionnaire_title'),
+                                'desc' => __('home.service_pensionnaire_desc'),
+                                'items' => [
+                                    [__('home.service_pensionnaire_reversion'), route('demandes.demande-pension-reversion.create')],
+                                    [__('home.service_pensionnaire_enregistrement'), route('demandes.pension-pensionnaire.create')],
+                                    [__('home.service_pensionnaire_arret_virement'), route('demandes.demande-arret-virement.create')],
+                                    [__('home.service_pensionnaire_attestation'), route('demandes.attestations.create')],
+                                ],
+                            ],
+                            [
+                                'icon' => 'fa-id-badge',
+                                'audience' => __('home.service_fonctionnaire_audience'),
+                                'title' => __('home.service_fonctionnaire_title'),
+                                'desc' => __('home.service_fonctionnaire_desc'),
+                                'items' => [
+                                    [__('home.service_fonctionnaire_carriere'), route('demandes.demande-etat-carriere.create')],
+                                    [__('home.service_fonctionnaire_pension'), route('demandes.demande-pension.index')],
+                                    [__('home.service_fonctionnaire_simulateur'), route('simulateur-calcul')],
+                                ],
+                            ],
+                            [
+                                'icon' => 'fa-building-columns',
+                                'audience' => __('home.service_institution_audience'),
+                                'title' => __('home.service_institution_title'),
+                                'desc' => __('home.service_institution_desc'),
+                                'items' => [
+                                    [__('home.service_institution_adhesion'), route('demandes.demande-adhesion.create')],
+                                    [__('home.service_institution_transmission'), route('demandes.demande-pension.index')],
+                                    [__('home.service_institution_rdv'), route('demandes.rencontre.create')],
+                                ],
+                            ],
+                        ];
+                    @endphp
+                    <div class="grid md:grid-cols-3 gap-6 items-stretch">
+                        @foreach($serviceCards as $card)
+                            <article class="flex flex-col bg-white rounded-2xl border border-slate-200/80 shadow-[0_8px_28px_rgba(23,48,82,0.06)] overflow-hidden hover:-translate-y-1 hover:shadow-[0_16px_36px_rgba(23,48,82,0.12)] transition-all duration-300">
+                                <div class="bg-navy bg-motif-dark px-7 py-6 text-white">
+                                    <div class="w-11 h-11 rounded-lg bg-white/10 text-white flex items-center justify-center mb-4">
+                                        <i class="fas {{ $card['icon'] }}"></i>
+                                    </div>
+                                    <p class="text-[11px] font-bold text-blue-200 uppercase tracking-widest">{{ $card['audience'] }}</p>
+                                    <h3 class="text-xl font-bold mt-1">{{ $card['title'] }}</h3>
+                                    <p class="text-sm text-blue-100/90 mt-1.5 leading-relaxed">{{ $card['desc'] }}</p>
+                                </div>
+                                <ul class="flex-1 p-4 space-y-1">
+                                    @foreach($card['items'] as [$item, $href])
+                                        <li>
+                                            <a href="{{ $href }}"
+                                               class="group flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm text-gray-600 hover:bg-slate-50 hover:text-navy transition-colors">
+                                                <span class="w-1.5 h-1.5 rounded-full bg-orange-400 shrink-0"></span>
+                                                <span class="flex-1 leading-snug">{{ $item }}</span>
+                                                <i class="fas fa-arrow-right text-[10px] text-gray-300 group-hover:text-orange-500 group-hover:translate-x-0.5 transition-all"></i>
+                                            </a>
+                                        </li>
+                                    @endforeach
+                                </ul>
+                            </article>
+                        @endforeach
+                    </div>
+        </div>
+    </section>
 
+
+    {{-- ═══════════════════════════════════════
+         ACCÈS RAPIDE
+    ════════════════════════════════════════ --}}
+    <section class="py-16 bg-slate-100 bg-motif fade-in home-band">
+        <div class="container mx-auto px-4">
+            @php
+                $accesRapide = [
+                    ['num' => '01', 'icon' => 'fa-calculator', 'title' => __('home.acces_simulateur_title'), 'desc' => __('home.acces_simulateur_desc'), 'href' => route('simulateur-calcul')],
+                    ['num' => '02', 'icon' => 'fa-scale-balanced', 'title' => __('home.acces_textes_title'), 'desc' => __('home.acces_textes_desc'), 'href' => route('textes_documents_legaux')],
+                    ['num' => '03', 'icon' => 'fa-circle-question', 'title' => __('home.acces_faq_title'), 'desc' => __('home.acces_faq_desc'), 'href' => route('faq.index')],
+                    ['num' => '04', 'icon' => 'fa-photo-film', 'title' => __('home.acces_media_title'), 'desc' => __('home.acces_media_desc'), 'href' => route('mediatheque')],
+                    ['num' => '05', 'icon' => 'fa-book', 'title' => __('home.acces_glossaire_title'), 'desc' => __('home.acces_glossaire_desc'), 'href' => route('glossaire')],
+                    ['num' => '06', 'icon' => 'fa-envelope', 'title' => __('home.acces_contact_title'), 'desc' => __('home.acces_contact_desc'), 'href' => route('contact')],
+                ];
+            @endphp
             <div class="text-center mb-12">
-                <span class="text-xs font-bold text-blue-600 uppercase tracking-widest">Ce que nous offrons</span>
-                <h2 class="text-3xl md:text-4xl font-bold text-navy mt-2 mb-3">Nos services</h2>
-                <p class="text-gray-500 max-w-xl mx-auto">
-                    Des démarches simplifiées pour les pensionnaires, fonctionnaires et institutions partenaires.
+                <span class="text-xs font-bold text-blue-600 uppercase tracking-widest">{{ __('home.acces_kicker') }}</span>
+                <h2 class="text-3xl md:text-4xl font-bold text-navy mt-2">{{ __('home.acces_title') }}</h2>
+                <p class="text-gray-500 text-sm max-w-xl mx-auto mt-3">
+                    {{ __('home.acces_intro') }}
                 </p>
             </div>
-
-            <div class="grid md:grid-cols-3 gap-6">
-
-                {{-- Pensionnaire --}}
-                <div class="group relative bg-white rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition-shadow duration-300 overflow-hidden">
-                    <div class="absolute top-0 left-0 right-0 h-[3px] bg-navy"></div>
-                    <div class="p-7">
-                        <div class="w-12 h-12 rounded-lg bg-navy text-white flex items-center justify-center mb-5">
-                            <i class="fas fa-user-tie"></i>
+            <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-5">
+                @foreach($accesRapide as $item)
+                    <a href="{{ $item['href'] }}"
+                       class="group flex flex-col rounded-2xl border border-slate-200/80 bg-white p-6 md:p-7 shadow-[0_6px_24px_rgba(23,48,82,0.05)] hover:-translate-y-1 hover:border-navy/15 hover:shadow-[0_16px_36px_rgba(23,48,82,0.11)] transition-all duration-300">
+                        <div class="flex items-start justify-between mb-5">
+                            <span class="w-12 h-12 rounded-xl bg-navy text-white flex items-center justify-center group-hover:bg-orange-500 transition-colors duration-200">
+                                <i class="fas {{ $item['icon'] }}"></i>
+                            </span>
+                            <span class="text-2xl font-bold text-slate-100 leading-none group-hover:text-orange-100 transition-colors">
+                                {{ $item['num'] }}
+                            </span>
                         </div>
-                        <h3 class="text-lg font-bold text-navy mb-1">Pensionnaire</h3>
-                        <p class="text-xs text-gray-400 mb-5">Gérez votre dossier de retraite en ligne</p>
-                        <ul class="space-y-1.5">
-                            @foreach([
-                                ['Demande de pension de réversion', route('demandes.demande-pension-reversion.create')],
-                                ['Enregistrement de pensionnaire', route('demandes.pension-pensionnaire.create')],
-                                ["Demande d'arrêt de virement", route('demandes.demande-arret-virement.create')],
-                                ['Attestation de pension', route('demandes.attestations.create')],
-                            ] as [$item, $href])
-                            <li>
-                                <a href="{{ $href }}" class="flex items-center justify-between px-3 py-2 rounded-lg text-sm text-gray-600 hover:bg-slate-50 hover:text-navy transition-colors">
-                                    {{ $item }}
-                                    <i class="fas fa-arrow-right text-[10px] text-gray-300 group-hover:text-orange-500"></i>
-                                </a>
-                            </li>
-                            @endforeach
-                        </ul>
-                    </div>
-                </div>
-
-                {{-- Fonctionnaire --}}
-                <div class="group relative bg-white rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition-shadow duration-300 overflow-hidden">
-                    <div class="absolute top-0 left-0 right-0 h-[3px] bg-navy"></div>
-                    <div class="p-7">
-                        <div class="w-12 h-12 rounded-lg bg-navy text-white flex items-center justify-center mb-5">
-                            <i class="fas fa-id-badge"></i>
-                        </div>
-                        <h3 class="text-lg font-bold text-navy mb-1">Fonctionnaire</h3>
-                        <p class="text-xs text-gray-400 mb-5">Préparez et suivez votre dossier de mise à la retraite</p>
-                        <ul class="space-y-1.5">
-                            @foreach([
-                                ["Demande d'état de carrière", route('demandes.demande-etat-carriere.create')],
-                                ['Demande de pension', route('demandes.demande-pension.index')],
-                                ['Simulateur de pension', route('simulateur-calcul')],
-                            ] as [$item, $href])
-                            <li>
-                                <a href="{{ $href }}" class="flex items-center justify-between px-3 py-2 rounded-lg text-sm text-gray-600 hover:bg-slate-50 hover:text-navy transition-colors">
-                                    {{ $item }}
-                                    <i class="fas fa-arrow-right text-[10px] text-gray-300 group-hover:text-orange-500"></i>
-                                </a>
-                            </li>
-                            @endforeach
-                        </ul>
-                    </div>
-                </div>
-
-                {{-- Institution --}}
-                <div class="group relative bg-white rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition-shadow duration-300 overflow-hidden">
-                    <div class="absolute top-0 left-0 right-0 h-[3px] bg-navy"></div>
-                    <div class="p-7">
-                        <div class="w-12 h-12 rounded-lg bg-navy text-white flex items-center justify-center mb-5">
-                            <i class="fas fa-building-columns"></i>
-                        </div>
-                        <h3 class="text-lg font-bold text-navy mb-1">Institution</h3>
-                        <p class="text-xs text-gray-400 mb-5">Gérez vos démarches institutionnelles</p>
-                        <ul class="space-y-1.5">
-                            @foreach([
-                                ["Demande d'adhésion", route('demandes.demande-adhesion.create')],
-                                ['Transmission des demandes de pensions', route('demandes.demande-pension.index')],
-                                ['Prendre rendez-vous', route('demandes.rencontre.create')],
-                            ] as [$item, $href])
-                            <li>
-                                <a href="{{ $href }}" class="flex items-center justify-between px-3 py-2 rounded-lg text-sm text-gray-600 hover:bg-slate-50 hover:text-navy transition-colors">
-                                    {{ $item }}
-                                    <i class="fas fa-arrow-right text-[10px] text-gray-300 group-hover:text-orange-500"></i>
-                                </a>
-                            </li>
-                            @endforeach
-                        </ul>
-                    </div>
-                </div>
-
+                        <h3 class="text-lg font-bold text-navy">{{ $item['title'] }}</h3>
+                        <p class="text-sm text-gray-500 leading-relaxed flex-1 mt-2 mb-5">{{ $item['desc'] }}</p>
+                        <span class="inline-flex items-center gap-1.5 text-sm font-semibold text-blue-600 group-hover:text-orange-500 transition-colors">
+                            {{ __('home.acces_cta') }}
+                            <i class="fas fa-arrow-right text-[10px] transition-transform duration-200 group-hover:translate-x-1"></i>
+                        </span>
+                    </a>
+                @endforeach
             </div>
+        </div>
+    </section>
+
+    {{-- ═══════════════════════════════════════
+         INFORMATIONS UTILES
+    ════════════════════════════════════════ --}}
+    <section class="py-16 bg-white bg-motif fade-in home-band">
+        <div class="container mx-auto px-4">
+            <div class="text-center mb-8">
+                <span class="text-xs font-bold text-blue-600 uppercase tracking-widest">{{ __('home.infos_kicker') }}</span>
+                <h2 class="text-3xl md:text-4xl font-bold text-navy mt-2">{{ __('home.infos_title') }}</h2>
+                <p class="text-gray-500 text-sm max-w-xl mx-auto mt-3">
+                    {{ __('home.infos_intro') }}
+                </p>
+            </div>
+            <x-books-slider />
+        </div>
+    </section>
+
+
+    {{-- ═══════════════════════════════════════
+         ACTUALITÉS
+    ════════════════════════════════════════ --}}
+    <section class="py-16 bg-slate-100 bg-motif fade-in home-band">
+        <div class="container mx-auto px-4">
+            <div class="text-center mb-10">
+                <span class="text-xs font-bold text-blue-600 uppercase tracking-widest">{{ __('home.news_kicker') }}</span>
+                <h2 class="text-3xl md:text-4xl font-bold text-navy mt-2">{{ __('home.news_title') }}</h2>
+                <p class="text-gray-500 text-sm max-w-xl mx-auto mt-3">
+                    {{ __('home.news_intro') }}
+                </p>
+                @if($latestActualites->isNotEmpty())
+                    <a href="{{ route('actualites.index') }}"
+                       class="inline-flex items-center justify-center mt-5 px-5 py-2.5 border-2 border-blue-600 text-blue-600 hover:bg-blue-600 hover:text-white font-semibold text-sm rounded-xl transition-all duration-300">
+                        {{ __('home.news_more') }}
+                    </a>
+                @endif
+            </div>
+            @if($latestActualites->isEmpty())
+                <div class="text-center text-gray-400 py-10">
+                    <i class="fas fa-newspaper text-3xl mb-3 block"></i>
+                    {{ __('home.news_empty') }}
+                </div>
+            @else
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    @foreach($latestActualites as $actu)
+                        <x-actualite-card :actualite="$actu" />
+                    @endforeach
+                </div>
+            @endif
         </div>
     </section>
 
     {{-- ═══════════════════════════════════════
          PUBLICATIONS DES RAPPORTS
     ════════════════════════════════════════ --}}
-    <section class="py-14 bg-white bg-motif fade-in">
+    <section class="py-16 bg-white bg-motif fade-in home-band">
         <div class="container mx-auto px-4">
             <div class="text-center mb-10">
-                <span class="text-xs font-bold text-blue-600 uppercase tracking-widest">Documents officiels</span>
-                <h2 class="text-3xl md:text-4xl font-bold text-navy mt-2">Publications &amp; Rapports</h2>
+                <span class="text-xs font-bold text-blue-600 uppercase tracking-widest">{{ __('home.reports_kicker') }}</span>
+                <h2 class="text-3xl md:text-4xl font-bold text-navy mt-2">{{ __('home.reports_title') }}</h2>
                 <p class="text-gray-500 text-sm max-w-xl mx-auto mt-3">
-                    Rapports annuels, notes officielles et documents administratifs publiés par la Direction de la Pension Civile.
+                    {{ __('home.reports_intro') }}
                 </p>
                 @if($recentReports->isNotEmpty())
                     <a href="{{ route('reports.index') }}"
                        class="inline-flex items-center justify-center mt-5 px-5 py-2.5 border-2 border-blue-600 text-blue-600 hover:bg-blue-600 hover:text-white font-semibold text-sm rounded-xl transition-all duration-300">
-                        Plus de rapports
+                        {{ __('home.reports_more') }}
                     </a>
                 @endif
             </div>
@@ -512,7 +663,7 @@
             @if($recentReports->isEmpty())
                 <div class="text-center text-gray-400 py-10">
                     <i class="fas fa-folder-open text-3xl mb-3 block"></i>
-                    Aucun rapport récent disponible.
+                    {{ __('home.reports_empty') }}
                 </div>
             @else
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -527,189 +678,43 @@
     {{-- ═══════════════════════════════════════
          NEWSLETTER
     ════════════════════════════════════════ --}}
-    <section class="py-14 bg-gray-50 bg-motif fade-in">
-        <div class="container">
-            <div class="bg-navy bg-motif-dark">
-                <div class="px-8 py-12 md:px-12 md:py-14 text-center">
-                    <span class="text-xs font-bold text-blue-200 uppercase tracking-widest">Restez informé</span>
-                    <h2 class="text-3xl md:text-4xl font-bold text-white mt-2 mb-3">
-                        Abonnez-vous à notre newsletter
-                    </h2>
-                    <p class="text-blue-200 mb-7 max-w-lg mx-auto">
-                        Recevez les dernières actualités, annonces officielles et mises à jour directement dans votre boîte mail.
-                    </p>
-
-                    <form method="POST" action="{{ route('newsletter.souscription') }}"
-                          class="flex flex-col sm:flex-row gap-3 max-w-md mx-auto">
-                            @csrf
-                            <div class="flex-1">
-                                <input type="email" name="email" required
-                                       placeholder="votre@email.com"
-                                       class="w-full px-4 py-3 rounded-xl bg-white border border-gray-200 text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-300 text-sm">
-                            </div>
-                            <button type="submit"
-                                    class="px-6 py-3 bg-orange-500 hover:bg-orange-600 text-white font-semibold text-sm rounded-lg transition-colors shrink-0">
-                                S'abonner
-                            </button>
-                        </form>
-
-                        @if(session('newsletter_success'))
-                            <p class="text-green-300 text-sm mt-3 flex items-center justify-center gap-2">
-                                <i class="fas fa-check-circle"></i> {{ session('newsletter_success') }}
-                            </p>
-                        @endif
-                        @if(session('newsletter_error') || session('error'))
-                            <p class="text-red-300 text-sm mt-3 flex items-center justify-center gap-2">
-                                <i class="fas fa-exclamation-circle"></i> {{ session('newsletter_error') ?? session('error') }}
-                            </p>
-                        @endif
-                        @if(session('success') && !session('newsletter_error'))
-                            <p class="text-green-300 text-sm mt-3 flex items-center justify-center gap-2">
-                                <i class="fas fa-check-circle"></i> {{ session('success') }}
-                            </p>
-                        @endif
-                </div>
-            </div>
-        </div>
-    </section>
-
-    {{-- ═══════════════════════════════════════
-         ACCÈS RAPIDE
-    ════════════════════════════════════════ --}}
-    <section class="py-14 bg-white bg-motif fade-in">
+    <section class="py-14 bg-navy bg-motif-dark fade-in home-band">
         <div class="container mx-auto px-4">
-            @php
-                $accesRapide = [
-                    [
-                        'num'   => '01',
-                        'icon'  => 'fa-calculator',
-                        'title' => 'Simulateur de pension',
-                        'desc'  => 'Estimez vos droits à la retraite à partir de votre carrière.',
-                        'href'  => route('simulateur-calcul'),
-                    ],
-                    [
-                        'num'   => '02',
-                        'icon'  => 'fa-scale-balanced',
-                        'title' => 'Textes légaux',
-                        'desc'  => 'Décrets, lois et documents officiels encadrant la pension civile.',
-                        'href'  => route('textes_documents_legaux'),
-                    ],
-                    [
-                        'num'   => '03',
-                        'icon'  => 'fa-circle-question',
-                        'title' => 'Foire aux questions',
-                        'desc'  => 'Réponses aux questions les plus fréquentes des usagers.',
-                        'href'  => route('faq.index'),
-                    ],
-                    [
-                        'num'   => '04',
-                        'icon'  => 'fa-photo-film',
-                        'title' => 'Médiathèque',
-                        'desc'  => 'Photos, vidéos et documents de la Direction.',
-                        'href'  => route('mediatheque'),
-                    ],
-                    [
-                        'num'   => '05',
-                        'icon'  => 'fa-book',
-                        'title' => 'Glossaire',
-                        'desc'  => 'Définitions des termes utilisés dans vos démarches.',
-                        'href'  => route('glossaire'),
-                    ],
-                    [
-                        'num'   => '06',
-                        'icon'  => 'fa-envelope',
-                        'title' => 'Nous contacter',
-                        'desc'  => 'Adresse, horaires et formulaire de correspondance.',
-                        'href'  => route('contact'),
-                    ],
-                ];
-            @endphp
-
-            <div class="text-center mb-10">
-                <span class="text-xs font-bold text-blue-600 uppercase tracking-widest">Services</span>
-                <h2 class="text-3xl md:text-4xl font-bold text-navy mt-2">Accès rapide</h2>
-                <p class="text-gray-500 text-sm max-w-xl mx-auto mt-3">
-                    Les outils et ressources les plus consultés par les pensionnaires, fonctionnaires et institutions.
+            <div class="px-4 py-4 md:px-8 md:py-6 text-center">
+                <span class="text-xs font-bold text-blue-200 uppercase tracking-widest">{{ __('home.newsletter_kicker') }}</span>
+                <h2 class="text-3xl md:text-4xl font-bold text-white mt-2 mb-3">
+                    {{ __('home.newsletter_title') }}
+                </h2>
+                <p class="text-blue-200 mb-7 max-w-lg mx-auto">
+                    {{ __('home.newsletter_intro') }}
                 </p>
-            </div>
-
-            <div class="rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
-                    <div class="h-[3px] bg-[#173052]"></div>
-                    <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-px bg-gray-100">
-                        @foreach($accesRapide as $item)
-                            <a href="{{ $item['href'] }}"
-                               class="group relative flex flex-col bg-white p-6 md:p-7 hover:bg-slate-50 transition-colors duration-200">
-                                <div class="flex items-start justify-between mb-5">
-                                    <span class="w-11 h-11 rounded-lg bg-[#173052] text-white flex items-center justify-center group-hover:bg-orange-500 transition-colors duration-200">
-                                        <i class="fas {{ $item['icon'] }} text-sm"></i>
-                                    </span>
-                                    <span class="text-xs font-bold text-gray-300 tracking-widest group-hover:text-blue-600 transition-colors">
-                                        {{ $item['num'] }}
-                                    </span>
-                                </div>
-                                <h3 class="text-[15px] font-bold text-gray-900 mb-1.5 group-hover:text-[#173052] transition-colors">
-                                    {{ $item['title'] }}
-                                </h3>
-                                <p class="text-sm text-gray-500 leading-relaxed flex-1 mb-4">
-                                    {{ $item['desc'] }}
-                                </p>
-                                <span class="inline-flex items-center gap-1.5 text-sm font-semibold text-blue-600 group-hover:text-orange-500 transition-colors">
-                                    Accéder
-                                    <i class="fas fa-arrow-right text-[10px] transition-transform duration-200 group-hover:translate-x-1"></i>
-                                </span>
-                            </a>
-                        @endforeach
+                <form method="POST" action="{{ route('newsletter.souscription') }}"
+                      class="flex flex-col sm:flex-row gap-3 max-w-md mx-auto">
+                    @csrf
+                    <div class="flex-1">
+                        <input type="email" name="email" required
+                               placeholder="{{ __('home.newsletter_placeholder') }}"
+                               class="w-full px-4 py-3 rounded-xl bg-white border border-gray-200 text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-300 text-sm">
                     </div>
-                </div>
-        </div>
-    </section>
-
-    {{-- ═══════════════════════════════════════
-         ACTUALITÉS ET PUBLICATIONS
-    ════════════════════════════════════════ --}}
-    <section class="py-14 bg-gray-50 bg-motif fade-in">
-        <div class="container mx-auto px-4">
-            <div class="text-center mb-10">
-                <span class="text-xs font-bold text-blue-600 uppercase tracking-widest">Dernières nouvelles</span>
-                <h2 class="text-3xl md:text-4xl font-bold text-navy mt-2">Actualités</h2>
-                <p class="text-gray-500 text-sm max-w-xl mx-auto mt-3">
-                    Les dernières nouvelles concernant les actions et services de la Direction de la Pension Civile.
-                </p>
-                @if($latestActualites->isNotEmpty())
-                    <a href="{{ route('actualites.index') }}"
-                       class="inline-flex items-center justify-center mt-5 px-5 py-2.5 border-2 border-blue-600 text-blue-600 hover:bg-blue-600 hover:text-white font-semibold text-sm rounded-xl transition-all duration-300">
-                        Plus d'actualités
-                    </a>
-                @endif
+                    <button type="submit"
+                            class="px-6 py-3 bg-orange-500 hover:bg-orange-600 text-white font-semibold text-sm rounded-lg transition-colors shrink-0">
+                        {{ __('home.newsletter_submit') }}
+                    </button>
+                </form>
             </div>
-
-            @if($latestActualites->isEmpty())
-                <div class="text-center text-gray-400 py-10">
-                    <i class="fas fa-newspaper text-3xl mb-3 block"></i>
-                    Aucune actualité disponible pour le moment.
-                </div>
-            @else
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-                    @foreach($latestActualites as $actu)
-                        <x-actualite-card :actualite="$actu" />
-                    @endforeach
-                </div>
-            @endif
         </div>
     </section>
 
     {{-- ═══════════════════════════════════════
          NOS PARTENAIRES
     ════════════════════════════════════════ --}}
-    <section class="py-12 bg-white bg-motif fade-in">
+    <section class="py-14 bg-white bg-motif fade-in home-band">
         <div class="container mx-auto px-4">
             <div class="text-center mb-8">
-                <span class="text-xs font-bold text-blue-600 uppercase tracking-widest">Réseau institutionnel</span>
-                <h2 class="text-3xl md:text-4xl font-bold text-navy mt-2">Nos institutions partenaires</h2>
+                <span class="text-xs font-bold text-blue-600 uppercase tracking-widest">{{ __('home.partners_kicker') }}</span>
+                <h2 class="text-3xl md:text-4xl font-bold text-navy mt-2">{{ __('home.partners_title') }}</h2>
             </div>
             <x-institutions-carousel speed="40" />
         </div>
     </section>
-
-</div>
 @endsection

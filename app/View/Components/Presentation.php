@@ -18,6 +18,7 @@ class Presentation extends Component
     public string $desktopImage;
     public bool $showProfileLink;
     public bool $showSpeechLink;
+    public string $variant;
     public ?Official $official;
 
     public function __construct(
@@ -31,7 +32,9 @@ class Presentation extends Component
         string  $desktopImage  = '',
         bool    $showProfileLink = false,
         bool    $showSpeechLink  = false,
+        string  $variant       = 'default',
     ) {
+        $this->variant = $variant;
         $this->official = $slug ? Official::findBySlug($slug) : null;
 
         if ($this->official) {
