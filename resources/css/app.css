@@ -9,6 +9,33 @@ html {
     color-scheme: light;
 }
 
+:root {
+    --dpc-font: "Source Sans 3", system-ui, sans-serif;
+}
+
+html, body {
+    font-family: var(--dpc-font);
+}
+
+.ql-container,
+.ql-editor,
+.flatpickr-calendar,
+.flatpickr-input {
+    font-family: inherit;
+}
+
+.fas, .far, .fal, .fa-solid, .fa-regular,
+.fas::before, .far::before, .fa-solid::before, .fa-regular::before {
+    font-family: "Font Awesome 6 Free" !important;
+    font-weight: 900;
+}
+
+.fab, .fa-brands,
+.fab::before, .fa-brands::before {
+    font-family: "Font Awesome 6 Brands" !important;
+    font-weight: 400;
+}
+
 @layer base {
     html {
         @apply font-sans antialiased;
@@ -16,8 +43,13 @@ html {
         text-rendering: optimizeLegibility;
     }
 
+    html, body, button, input, textarea, select {
+        font-family: inherit;
+    }
+
     h1, h2, h3 {
         letter-spacing: -0.02em;
+        font-family: inherit;
     }
 }
 

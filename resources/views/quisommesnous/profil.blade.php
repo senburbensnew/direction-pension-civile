@@ -15,7 +15,7 @@
         <div class="flex-1 bg-white rounded-2xl shadow-sm border border-gray-200 p-8 md:p-12">
 
             <div class="mb-8 pb-6 border-b border-gray-200">
-                <h1 class="text-3xl md:text-4xl font-extrabold text-gray-900 font-serif mb-2">
+                <h1 class="text-3xl md:text-4xl font-extrabold text-gray-900 mb-2">
                     Présentation — {{ $official->role }}
                 </h1>
                 <p class="text-gray-500">{{ $official->nom }}</p>

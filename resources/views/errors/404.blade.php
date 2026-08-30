@@ -7,9 +7,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>404</title>
     @vite(['resources/css/app.css'])
+    <x-fonts />
 </head>
 
-<body>
+<body class="font-sans antialiased">
     <div class="flex items-center justify-center h-screen">
         <div class="text-center px-4">
             <!-- SVG Icon -->

@@ -1,10 +1,5 @@
 @extends('layouts.main')
 
-@push('styles')
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=Oswald:wght@400;600&display=swap" rel="stylesheet">
-@endpush
-
 @section('title', 'Accueil')
 
 @section('content')
@@ -70,29 +65,31 @@
         animation: fadeIn 0.6s ease-in-out;
     }
 
-    <blade keyframes|%20fadeIn%20%7B>from {
-        opacity: 0;
-        transform: translateY(10px);
-    }
+    @keyframes fadeIn {
+        from {
+            opacity: 0;
+            transform: translateY(10px);
+        }
 
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
     }
 
     .pulse-slow {
         animation: pulse 3s infinite;
     }
 
-    <blade keyframes|%20pulse%20%7B>0%,
-    100% {
-        transform: scale(1);
-    }
+    @keyframes pulse {
+        0%,
+        100% {
+            transform: scale(1);
+        }
 
-    50% {
-        transform: scale(1.02);
-    }
+        50% {
+            transform: scale(1.02);
+        }
     }
 
     .carousel-slide-content {
@@ -228,29 +225,30 @@
     }
 
     /* Animation automatique pour le carrousel */
-    <blade keyframes|%20slide%20%7B>0%,
-    20% {
-        transform: translateX(0);
-    }
+    @keyframes slide {
+        0%,
+        20% {
+            transform: translateX(0);
+        }
 
-    25%,
-    45% {
-        transform: translateX(-100%);
-    }
+        25%,
+        45% {
+            transform: translateX(-100%);
+        }
 
-    50%,
-    70% {
-        transform: translateX(-200%);
-    }
+        50%,
+        70% {
+            transform: translateX(-200%);
+        }
 
-    75%,
-    95% {
-        transform: translateX(-300%);
-    }
+        75%,
+        95% {
+            transform: translateX(-300%);
+        }
 
-    100% {
-        transform: translateX(-400%);
-    }
+        100% {
+            transform: translateX(-400%);
+        }
     }
 
     .auto-carousel {
@@ -260,28 +258,57 @@
     .auto-carousel:hover {
         animation-play-state: paused;
     }
+
+    .hero-accueil {
+        background: linear-gradient(180deg, #eef5fb 0%, #d9e6f2 60%, #9aafc6 100%);
+        box-shadow: inset 0 -90px 70px -25px rgba(23, 48, 82, 0.28);
+    }
+
+    .hero-carousel .swiper-slide img.hero-accueil-photo {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        object-position: center 40%;
+        -webkit-mask-image: linear-gradient(to right, transparent 0%, #000 18%, #000 100%);
+        mask-image: linear-gradient(to right, transparent 0%, #000 18%, #000 100%);
+    }
 </style>
 
 <div class="py-0">
     <section class="py-0 gap-4 flex flex-col lg:flex-row lg:justify-between items-center bg-gray-100 w-full overflow-hidden">
         <x-carousel>
-            <!-- Slide 1 -->
             <div class="swiper-slide">
-                <div class="gradient-bg bg-motif-dark w-full h-full flex items-center justify-center">
-                    <div class="carousel-text-content fade-in">
-                        <h1 class="text-2xl sm:text-4xl md:text-6xl font-bold mb-4 md:mb-6 text-white">Direction de la Pension Civile</h1>
-                        <p class="text-base sm:text-xl md:text-2xl text-blue-100 mb-5 md:mb-8 max-w-3xl mx-auto">
-                            Votre partenaire de confiance pour une retraite sereine et sécurisée
+                <div class="hero-accueil w-full h-full grid grid-cols-1 md:grid-cols-2 items-center">
+                    <div class="px-6 sm:px-8 lg:px-10 py-6">
+                        <h1 class="text-3xl md:text-4xl font-bold text-navy">
+                            Pension Civile
+                        </h1>
+                        <p class="mt-2 text-lg md:text-xl font-semibold text-orange-500">
+                            Votre retraite, notre engagement
                         </p>
-
-                        <div class="flex flex-col sm:flex-row gap-4 justify-center">
-                            <a href="{{ route('simulateur-calcul') }}" class="focus-soft">
-                                <button
-                                    class="bg-white text-navy px-8 py-4 rounded-lg font-semibold text-lg hover:bg-orange-500 hover:text-white transition-colors">
-                                    Calculer ma pension
-                                </button>
+                        <p class="mt-3 text-gray-500 text-sm md:text-base max-w-md leading-relaxed">
+                            Nous accompagnons les fonctionnaires et retraités dans leurs démarches
+                            liées à la retraite et aux prestations sociales.
+                        </p>
+                        <div class="mt-5 flex flex-wrap gap-3">
+                            <a href="{{ route('login') }}"
+                               class="inline-flex items-center justify-center px-5 py-2.5 bg-orange-500 hover:bg-orange-600 text-white font-semibold text-sm rounded-lg transition-colors">
+                                Faire une démarche
+                            </a>
+                            <a href="{{ route('login') }}"
+                               class="inline-flex items-center justify-center px-5 py-2.5 border-2 border-blue-600 text-blue-600 hover:bg-blue-600 hover:text-white font-semibold text-sm rounded-xl transition-all duration-300">
+                                Suivre mon dossier
+                            </a>
+                            <a href="{{ route('simulateur-calcul') }}"
+                               class="inline-flex items-center justify-center px-5 py-2.5 bg-navy hover:bg-orange-500 text-white font-semibold text-sm rounded-lg transition-colors">
+                                Calculer ma pension
                             </a>
                         </div>
+                    </div>
+                    <div class="relative hidden md:block h-full">
+                        <img src="{{ asset('images/pension-hero-couple-salon.png') }}"
+                             alt="Retraités utilisant les services de la Pension Civile"
+                             class="hero-accueil-photo absolute inset-0">
                     </div>
                 </div>
             </div>
@@ -313,10 +340,9 @@
                     };
                     $textColor  = $slide->text_color ?? '#ffffff';
                     $textStyles = $slide->text_styles ?? [];
-                    $fontCss    = \App\Models\Carousel::FONT_CSS[$slide->font_family ?? 'sans'] ?? \App\Models\Carousel::FONT_CSS['sans'];
                     $styleExtra = $slide->textStyleClasses();
-                    $titleStyle = "color: {$textColor}; font-family: {$fontCss};";
-                    $descStyle  = "color: {$textColor}; font-family: {$fontCss}; opacity: 0.85;";
+                    $titleStyle = "color: {$textColor};";
+                    $descStyle  = "color: {$textColor}; opacity: 0.85;";
                     $hasOverlay = $slide->title || $slide->description || $slide->cta_label;
                 @endphp
                 <div class="swiper-slide">
@@ -522,7 +548,7 @@
                                        class="w-full px-4 py-3 rounded-xl bg-white border border-gray-200 text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-300 text-sm">
                             </div>
                             <button type="submit"
-                                    class="px-6 py-3 bg-white text-navy font-bold rounded-xl hover:bg-orange-500 hover:text-white transition-colors text-sm shrink-0">
+                                    class="px-6 py-3 bg-orange-500 hover:bg-orange-600 text-white font-semibold text-sm rounded-lg transition-colors shrink-0">
                                 S'abonner
                             </button>
                         </form>

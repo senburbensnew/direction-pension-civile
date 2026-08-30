@@ -19,10 +19,7 @@
             }
         </script>
         <style>
-            @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
-
             body {
-                font-family: 'Inter', sans-serif;
                 background: linear-gradient(135deg, #f0f9ff 0%, #e6f3ff 100%);
             }
 

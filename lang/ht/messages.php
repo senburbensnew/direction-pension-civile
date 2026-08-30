@@ -160,4 +160,10 @@ return [
     'see_details'            => 'Wè detay',
     'submitted_on'           => 'Soumèt le',
     'created_on'             => 'Kreye le',
+
+    // Contact info bar
+    'opening_hours'          => 'Orè ouvèti : Lin - Vandredi 8.00 am - 4.00 pm',
+    'call_on'                => 'Rele sou : :phone',
+    'weekdays_short'         => ['dim.', 'len.', 'mad.', 'mèk.', 'jed.', 'van.', 'sam.'],
+    'months_short'           => ['janv.', 'fev.', 'mas', 'avr.', 'me', 'jen', 'jiy.', 'out', 'sep.', 'oktòb', 'nov.', 'des.'],
 ];

@@ -51,12 +51,14 @@ class Carousel extends Model
         'condensed' => 'Condensé',
     ];
 
+    public const FONT_STACK = '"Source Sans 3", system-ui, sans-serif';
+
     public const FONT_CSS = [
-        'sans'      => "system-ui, -apple-system, sans-serif",
-        'serif'     => "Georgia, 'Times New Roman', serif",
-        'playfair'  => "'Playfair Display', Georgia, serif",
-        'oswald'    => "'Oswald', 'Arial Narrow', sans-serif",
-        'condensed' => "'Arial Narrow', Impact, sans-serif",
+        'sans'      => self::FONT_STACK,
+        'serif'     => self::FONT_STACK,
+        'playfair'  => self::FONT_STACK,
+        'oswald'    => self::FONT_STACK,
+        'condensed' => self::FONT_STACK,
     ];
 
     public function scopeOrdered($query)

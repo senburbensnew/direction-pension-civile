@@ -160,4 +160,10 @@ return [
     'see_details'            => 'View details',
     'submitted_on'           => 'Submitted on',
     'created_on'             => 'Created on',
+
+    // Contact info bar
+    'opening_hours'          => 'Opening hours: Mon – Fri 8.00 am – 4.00 pm',
+    'call_on'                => 'Call: :phone',
+    'weekdays_short'         => ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'],
+    'months_short'           => ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'],
 ];

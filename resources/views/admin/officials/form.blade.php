@@ -11,7 +11,7 @@
 @push('styles')
 <link href="https://cdn.quilljs.com/1.3.7/quill.snow.css" rel="stylesheet">
 <style>
-    .ql-container { font-family: inherit; font-size: 0.875rem; border-bottom-left-radius: 0.5rem; border-bottom-right-radius: 0.5rem; }
+    .ql-container, .ql-editor { font-family: inherit !important; font-size: 0.875rem; border-bottom-left-radius: 0.5rem; border-bottom-right-radius: 0.5rem; }
     .ql-toolbar { border-top-left-radius: 0.5rem; border-top-right-radius: 0.5rem; background: #f9fafb; border-color: #d1d5db !important; }
     .ql-container { border-color: #d1d5db !important; }
     .ql-editor { min-height: 220px; line-height: 1.75; color: #374151; }

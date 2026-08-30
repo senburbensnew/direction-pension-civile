@@ -7,11 +7,11 @@
             <td style="padding: 0 8px 0 0; vertical-align: middle;">
                 <div style="width: 36px; height: 36px; background-color: #1e3a8a; border-radius: 6px;
                             display: inline-flex; align-items: center; justify-content: center;
-                            font-size: 18px; color: #ffffff; font-weight: 900; font-family: Georgia, serif;
+                            font-size: 18px; color: #ffffff; font-weight: 900; font-family: "Source Sans 3", Arial, Helvetica, sans-serif;
                             line-height: 36px; text-align: center;">D</div>
             </td>
             <td style="vertical-align: middle;">
-                <span style="font-family: Georgia, 'Times New Roman', serif; font-size: 15px;
+                <span style="font-family: 'Source Sans 3', Arial, Helvetica, sans-serif; font-size: 15px;
                              font-weight: 700; color: #1e3a8a; letter-spacing: 0.3px;">
                     Direction de la Pension Civile
                 </span>

@@ -160,4 +160,10 @@ return [
     'see_details'            => 'Voir détails',
     'submitted_on'           => 'Soumis le',
     'created_on'             => 'Créé le',
+
+    // Contact info bar
+    'opening_hours'          => "Horaires d'ouverture : Lun - Ven 8.00 am - 4.00 pm",
+    'call_on'                => 'Appeler sur : :phone',
+    'weekdays_short'         => ['dim.', 'lun.', 'mar.', 'mer.', 'jeu.', 'ven.', 'sam.'],
+    'months_short'           => ['janv.', 'févr.', 'mars', 'avr.', 'mai', 'juin', 'juil.', 'août', 'sept.', 'oct.', 'nov.', 'déc.'],
 ];

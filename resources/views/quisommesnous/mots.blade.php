@@ -14,7 +14,7 @@
     <div class="flex-1 bg-white rounded-2xl shadow-sm border border-gray-200 p-8 md:p-12">
 
         <div class="mb-8 pb-6 border-b border-gray-200">
-            <h2 class="text-3xl md:text-4xl font-bold text-gray-900 font-serif tracking-tight mb-3">
+            <h2 class="text-3xl md:text-4xl font-bold text-gray-900 tracking-tight mb-3">
                 Mots {{ $official->sexe === 'F' ? 'de la' : 'du' }} {{ $official->role }}
             </h2>
             @if($official->citation)

@@ -2,11 +2,6 @@
 
 @section('title', 'Nouvelle diapositive')
 
-@push('styles')
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=Oswald:wght@400;600&display=swap" rel="stylesheet">
-@endpush
-
 @section('content')
 <div class="max-w-6xl mx-auto"
      x-data="{
@@ -26,13 +21,13 @@
 
         get fontFamilyCss() {
             const map = {
-                'sans':      'system-ui, -apple-system, sans-serif',
-                'serif':     "Georgia, 'Times New Roman', serif",
-                'playfair':  "'Playfair Display', Georgia, serif",
-                'oswald':    "'Oswald', 'Arial Narrow', sans-serif",
-                'condensed': "'Arial Narrow', Impact, sans-serif",
+                'sans':      '"Source Sans 3", system-ui, sans-serif',
+                'serif':     '"Source Sans 3", system-ui, sans-serif',
+                'playfair':  '"Source Sans 3", system-ui, sans-serif',
+                'oswald':    '"Source Sans 3", system-ui, sans-serif',
+                'condensed': '"Source Sans 3", system-ui, sans-serif',
             };
-            return map[this.fontFamily] || 'system-ui, sans-serif';
+            return map[this.fontFamily] || '"Source Sans 3", system-ui, sans-serif';
         },
 
         handleFile(e) {
@@ -277,7 +272,7 @@
                                     <div class="border-2 rounded-lg py-2 px-3 text-center text-sm transition-colors
                                                 peer-checked:border-blue-500 peer-checked:bg-blue-50 peer-checked:text-blue-700
                                                 border-gray-200 text-gray-500 hover:border-gray-300"
-                                         style="font-family: {{ \App\Models\Carousel::FONT_CSS[$key] }}">
+                                         style="font-family: inherit">
                                         {{ $name }}
                                     </div>
                                 </label>
@@ -372,7 +367,7 @@
                                 <div :class="(overlayPosition === 'bottom-center' || overlayPosition === 'top-center' || overlayPosition === 'center') ? 'text-center' : 'text-left'">
                                     <p x-show="title" x-text="title"
                                        class="leading-tight drop-shadow-lg mb-1"
-                                       :style="`color: ${textColor}; font-family: ${fontFamilyCss};`"
+                                       :style="`color: ${textColor};`"
                                        :class="{
                                            'text-xs':   textSize === 'sm',
                                            'text-sm':   textSize === 'md',
@@ -386,7 +381,7 @@
                                        }"></p>
                                     <p x-show="description" x-text="description"
                                        class="leading-snug drop-shadow mb-2"
-                                       :style="`color: ${textColor}; font-family: ${fontFamilyCss}; opacity: 0.85;`"
+                                       :style="`color: ${textColor}; opacity: 0.85;`"
                                        :class="{
                                            'text-[10px]': textSize === 'sm',
                                            'text-xs':     textSize === 'md',

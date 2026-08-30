@@ -13,8 +13,8 @@ export default {
     theme: {
         extend: {
             fontFamily: {
-                serif: ['"Source Serif 4"', "Georgia", "Cambria", "Times New Roman", "serif"],
                 sans: ['"Source Sans 3"', "system-ui", ...defaultTheme.fontFamily.sans],
+                serif: ['"Source Sans 3"', "system-ui", ...defaultTheme.fontFamily.sans],
             },
             colors: {
                 navy: "#173052",

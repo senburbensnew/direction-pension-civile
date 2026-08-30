@@ -1,10 +1,5 @@
 @extends('layouts.admin')
 
-@push('styles')
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=Oswald:wght@400;600&display=swap" rel="stylesheet">
-@endpush
-
 @section('title', 'Modifier la diapositive')
 @section('breadcrumb')
     <a href="{{ route('admin.carousels.index') }}" class="hover:text-gray-800">Carrousel</a>
@@ -192,7 +187,7 @@
                             <div class="border-2 rounded-lg py-2 px-3 text-center text-sm transition-colors
                                         peer-checked:border-blue-500 peer-checked:bg-blue-50 peer-checked:text-blue-700
                                         border-gray-200 text-gray-500 hover:border-gray-300"
-                                 style="font-family: {{ \App\Models\Carousel::FONT_CSS[$key] }}">
+                                 style="font-family: inherit">
                                 {{ $name }}
                             </div>
                         </label>
