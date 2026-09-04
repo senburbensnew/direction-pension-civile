@@ -292,14 +292,14 @@
                             {{ __('home.hero_body') }}
                         </p>
                         <div class="mt-5 flex flex-wrap gap-3">
-                            <a href="{{ route('login') }}"
+                            <!-- <a href="{{ route('login') }}"
                                class="inline-flex items-center justify-center px-5 py-2.5 bg-orange-500 hover:bg-orange-600 text-white font-semibold text-sm rounded-lg transition-colors">
                                 {{ __('home.hero_cta_demarche') }}
                             </a>
                             <a href="{{ route('login') }}"
                                class="inline-flex items-center justify-center px-5 py-2.5 border-2 border-blue-600 text-blue-600 hover:bg-blue-600 hover:text-white font-semibold text-sm rounded-xl transition-all duration-300">
                                 {{ __('home.hero_cta_suivi') }}
-                            </a>
+                            </a> -->
                             <a href="{{ route('simulateur-calcul') }}"
                                class="inline-flex items-center justify-center px-5 py-2.5 bg-navy hover:bg-orange-500 text-white font-semibold text-sm rounded-lg transition-colors">
                                 {{ __('home.hero_cta_calcul') }}
