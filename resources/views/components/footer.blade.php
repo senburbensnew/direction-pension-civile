@@ -6,33 +6,39 @@
             <h3 class="font-bold text-lg md:text-xl mb-3 border-b-2 border-white pb-2">{{ __('messages.who_are_we') }}
             </h3>
             <ul class="space-y-2">
-{{--                 <li><a href="{{ route('quisommesnous.mots') }}"
-                        class="hover:text-orange-500 transition">{{ __('messages.director') }}</a></li> --}}
                 <li><a href="{{ route('quisommesnous.missions') }}"
                         class="hover:text-orange-500 transition">{{ __('messages.mission_and_responsibilities') }}</a>
                 </li>
-                <li><a href="{{ route('quisommesnous.historique') }}"
-                        class="hover:text-orange-500 transition">{{ __('messages.history') }}</a></li>
                 <li><a href="{{ route('quisommesnous.structure-organique') }}"
                         class="hover:text-orange-500 transition">{{ __('messages.organizational_structure') }}</a></li>
+                <li><a href="{{ route('quisommesnous.mots', ['role' => 'ministre']) }}"
+                        class="hover:text-orange-500 transition">Mots du Ministre</a></li>
             </ul>
         </div>
 
-                <!-- LIENS UTILES Column -->
+                <!-- DIRECTIONS ET SERVICES Column -->
         <div class="w-full md:w-1/3">
             <h3 class="font-bold text-lg md:text-xl mb-3 border-b-2 border-white pb-2">Directions et Services
             </h3>
             @php
-                $footerServices = \App\Models\Service::query()
-                    ->whereNotIn('code', ['direction'])
-                    ->orderBy('nom')
-                    ->get();
+                $footerServices = \App\Models\Service::publicOrdered();
+                $footerDirections = \App\Models\DirectionDepartementale::ordered()->get();
             @endphp
-            <ul class="space-y-2">
+            <p class="text-sm font-semibold text-white/80 mb-2">Services</p>
+            <ul class="space-y-2 mb-5">
                 @foreach($footerServices as $footerService)
                 <li>
                     <a href="{{ route('services.show', $footerService) }}"
                        class="hover:text-orange-500 transition">{{ $footerService->nom }}</a>
+                </li>
+                @endforeach
+            </ul>
+            <p class="text-sm font-semibold text-white/80 mb-2">Directions départementales</p>
+            <ul class="space-y-2">
+                @foreach($footerDirections as $footerDirection)
+                <li>
+                    <a href="{{ route('directions.show', $footerDirection) }}"
+                       class="hover:text-orange-500 transition">{{ $footerDirection->nom }} ({{ $footerDirection->abbr }})</a>
                 </li>
                 @endforeach
             </ul>

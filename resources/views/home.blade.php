@@ -425,7 +425,7 @@
                             <ul class="space-y-2.5 text-sm text-gray-600">
                                 @foreach(['home.mission_1', 'home.mission_2', 'home.mission_3', 'home.mission_4'] as $point)
                                     <li class="flex items-start gap-2">
-                                        <i class="fas fa-check text-emerald-500 mt-0.5 text-xs"></i>
+                                        <i class="fas fa-check text-navy mt-0.5 text-xs"></i>
                                         <span>{{ __($point) }}</span>
                                     </li>
                                 @endforeach
@@ -478,66 +478,39 @@
                         </p>
                     </div>
                     @php
-                        $serviceCards = [
-                            [
-                                'icon' => 'fa-user-tie',
-                                'audience' => __('home.service_pensionnaire_audience'),
-                                'title' => __('home.service_pensionnaire_title'),
-                                'desc' => __('home.service_pensionnaire_desc'),
-                                'items' => [
-                                    [__('home.service_pensionnaire_reversion'), route('demandes.demande-pension-reversion.create')],
-                                    [__('home.service_pensionnaire_enregistrement'), route('demandes.pension-pensionnaire.create')],
-                                    [__('home.service_pensionnaire_arret_virement'), route('demandes.demande-arret-virement.create')],
-                                    [__('home.service_pensionnaire_attestation'), route('demandes.attestations.create')],
-                                ],
-                            ],
-                            [
-                                'icon' => 'fa-id-badge',
-                                'audience' => __('home.service_fonctionnaire_audience'),
-                                'title' => __('home.service_fonctionnaire_title'),
-                                'desc' => __('home.service_fonctionnaire_desc'),
-                                'items' => [
-                                    [__('home.service_fonctionnaire_carriere'), route('demandes.demande-etat-carriere.create')],
-                                    [__('home.service_fonctionnaire_pension'), route('demandes.demande-pension.index')],
-                                    [__('home.service_fonctionnaire_simulateur'), route('simulateur-calcul')],
-                                ],
-                            ],
-                            [
-                                'icon' => 'fa-building-columns',
-                                'audience' => __('home.service_institution_audience'),
-                                'title' => __('home.service_institution_title'),
-                                'desc' => __('home.service_institution_desc'),
-                                'items' => [
-                                    [__('home.service_institution_adhesion'), route('demandes.demande-adhesion.create')],
-                                    [__('home.service_institution_transmission'), route('demandes.demande-pension.index')],
-                                    [__('home.service_institution_rdv'), route('demandes.rencontre.create')],
-                                ],
-                            ],
-                        ];
+                        $serviceCards = collect(config('dpc_services'))->map(function ($service) {
+                            $href = $service['code'] ? route('services.show', $service['code']) : null;
+
+                            return [
+                                'icon' => $service['icon'] ?? 'fa-building',
+                                'audience' => __('home.services_audience'),
+                                'title' => $service['nom'],
+                                'desc' => $service['resume'] ?? '',
+                                'href' => $href,
+                            ];
+                        })->all();
                     @endphp
-                    <div class="grid md:grid-cols-3 gap-6 items-stretch">
+                    <div class="grid sm:grid-cols-2 xl:grid-cols-4 gap-4 items-stretch">
                         @foreach($serviceCards as $card)
                             <article class="flex flex-col bg-white rounded-2xl border border-slate-200/80 shadow-[0_8px_28px_rgba(23,48,82,0.06)] overflow-hidden hover:-translate-y-1 hover:shadow-[0_16px_36px_rgba(23,48,82,0.12)] transition-all duration-300">
-                                <div class="bg-navy bg-motif-dark px-7 py-6 text-white">
-                                    <div class="w-11 h-11 rounded-lg bg-white/10 text-white flex items-center justify-center mb-4">
-                                        <i class="fas {{ $card['icon'] }}"></i>
+                                <div class="bg-navy bg-motif-dark px-4 py-3 text-white">
+                                    <p class="text-[10px] font-bold text-blue-200 uppercase tracking-widest mb-1.5">{{ $card['audience'] }}</p>
+                                    <div class="flex items-center gap-2.5">
+                                        <span class="w-8 h-8 rounded-md bg-white/10 text-white flex items-center justify-center shrink-0 text-sm">
+                                            <i class="fas {{ $card['icon'] }}"></i>
+                                        </span>
+                                        <h3 class="text-sm font-bold leading-snug">{{ $card['title'] }}</h3>
                                     </div>
-                                    <p class="text-[11px] font-bold text-blue-200 uppercase tracking-widest">{{ $card['audience'] }}</p>
-                                    <h3 class="text-xl font-bold mt-1">{{ $card['title'] }}</h3>
-                                    <p class="text-sm text-blue-100/90 mt-1.5 leading-relaxed">{{ $card['desc'] }}</p>
+                                    <p class="text-xs text-blue-100/90 mt-2 leading-relaxed line-clamp-2">{{ $card['desc'] }}</p>
                                 </div>
-                                <ul class="flex-1 p-4 space-y-1">
-                                    @foreach($card['items'] as [$item, $href])
-                                        <li>
-                                            <a href="{{ $href }}"
-                                               class="group flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm text-gray-600 hover:bg-slate-50 hover:text-navy transition-colors">
-                                                <span class="w-1.5 h-1.5 rounded-full bg-orange-400 shrink-0"></span>
-                                                <span class="flex-1 leading-snug">{{ $item }}</span>
-                                                <i class="fas fa-arrow-right text-[10px] text-gray-300 group-hover:text-orange-500 group-hover:translate-x-0.5 transition-all"></i>
-                                            </a>
-                                        </li>
-                                    @endforeach
-                                </ul>
+                                @if($card['href'])
+                                    <a href="{{ $card['href'] }}"
+                                       class="group flex items-center gap-2 px-4 py-2 text-xs font-medium text-gray-600 hover:bg-slate-50 hover:text-navy transition-colors border-t border-slate-100">
+                                        <span class="w-1.5 h-1.5 rounded-full bg-orange-400 shrink-0"></span>
+                                        <span class="flex-1">{{ __('home.services_see') }}</span>
+                                        <i class="fas fa-arrow-right text-[10px] text-gray-300 group-hover:text-orange-500 group-hover:translate-x-0.5 transition-all"></i>
+                                    </a>
+                                @endif
                             </article>
                         @endforeach
                     </div>

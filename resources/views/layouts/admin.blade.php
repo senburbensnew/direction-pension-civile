@@ -225,7 +225,7 @@
             </div>
 
             {{-- Informations --}}
-            <div x-data="{ open: {{ request()->routeIs('admin.faq.*', 'admin.glossaire.*', 'admin.liens-utiles.*') ? 'true' : 'false' }} }">
+            <div x-data="{ open: {{ request()->routeIs('admin.faq.*', 'admin.glossaire.*') ? 'true' : 'false' }} }">
                 <button @click="open = !open"
                     class="nav-section mt-2 w-full flex items-center justify-between cursor-pointer hover:text-slate-300 transition-colors">
                     <span>Informations</span>
@@ -240,10 +240,6 @@
                     <a href="{{ route('admin.glossaire.index') }}"
                        class="nav-link {{ request()->routeIs('admin.glossaire.*') ? 'active' : '' }}">
                        <i class="fas fa-book"></i> Glossaire
-                    </a>
-                    <a href="{{ route('admin.liens-utiles.index') }}"
-                       class="nav-link {{ request()->routeIs('admin.liens-utiles.*') ? 'active' : '' }}">
-                       <i class="fas fa-link"></i> Liens utiles
                     </a>
                 </div>
             </div>

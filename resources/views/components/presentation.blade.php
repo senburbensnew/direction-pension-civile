@@ -12,7 +12,7 @@
 
 <div @class([
     'relative w-full text-center',
-    'bg-transparent border border-gray-200 border-l-0 p-4' => $isCard,
+    'bg-slate-50 border border-gray-200 border-l-0 p-4' => $isCard,
     'bg-transparent p-3' => ! $isCard,
 ])>
     <span @class([

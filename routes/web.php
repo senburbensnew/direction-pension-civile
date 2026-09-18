@@ -18,7 +18,6 @@ use App\Http\Controllers\FaqController;
 use App\Http\Controllers\FluxTransitionController;
 use App\Http\Controllers\GlossaireController;
 use App\Http\Controllers\InstitutionImageController;
-use App\Http\Controllers\LienUtileController;
 use App\Http\Controllers\LocaleController;
 use App\Http\Controllers\MediathequeController;
 use App\Http\Controllers\NewsletterController;
@@ -70,7 +69,6 @@ Route::get('/glossaire', [GlossaireController::class,   'publicIndex'])->name('g
 Route::get('/faq', [FaqController::class,          'publicIndex'])->name('faq.index');
 Route::get('/textes_documents_legaux', [PublicationController::class, 'publicIndex'])->name('textes_documents_legaux');
 Route::get('/publications/{publication}/download', [PublicationController::class, 'download'])->name('publications.download');
-Route::get('/liens-utiles', [LienUtileController::class,    'publicIndex'])->name('liens-utiles');
 
 Route::get('/contact', [ContactController::class, 'index'])->name('contact');
 Route::post('/contact', [ContactController::class, 'store'])->name('contact.store');
@@ -80,10 +78,11 @@ Route::get('/directions-departementales/{direction:abbr}', [DirectionDepartement
 
 // Qui sommes-nous
 Route::prefix('quisommesnous')->name('quisommesnous.')->group(function () {
+    Route::redirect('/presentation', '/quisommesnous/missions');
+    Route::redirect('/historique', '/quisommesnous/missions');
     Route::get('/mots', [QuiSommesNousController::class, 'mots'])->name('mots');
     Route::get('/profil', [QuiSommesNousController::class, 'profil'])->name('profil');
     Route::get('/missions', [QuiSommesNousController::class, 'missions'])->name('missions');
-    Route::get('/historique', [QuiSommesNousController::class, 'historique'])->name('historique');
     Route::get('/structure-organique', [QuiSommesNousController::class, 'structureOrganique'])->name('structure-organique');
     Route::get('/financement', [QuiSommesNousController::class, 'financement'])->name('financement');
 });
@@ -406,13 +405,6 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'role:admin'])->grou
     Route::put('glossaire/{glossaireTerm}', [GlossaireController::class, 'update'])->name('glossaire.update');
     Route::delete('glossaire/{glossaireTerm}', [GlossaireController::class, 'destroy'])->name('glossaire.destroy');
     Route::post('glossaire/{glossaireTerm}/toggle', [GlossaireController::class, 'togglePublish'])->name('glossaire.toggle');
-
-    // Liens utiles admin
-    Route::get('liens-utiles', [LienUtileController::class, 'adminIndex'])->name('liens-utiles.index');
-    Route::post('liens-utiles', [LienUtileController::class, 'store'])->name('liens-utiles.store');
-    Route::put('liens-utiles/{lienUtile}', [LienUtileController::class, 'update'])->name('liens-utiles.update');
-    Route::delete('liens-utiles/{lienUtile}', [LienUtileController::class, 'destroy'])->name('liens-utiles.destroy');
-    Route::post('liens-utiles/{lienUtile}/toggle', [LienUtileController::class, 'togglePublish'])->name('liens-utiles.toggle');
 
     // Publications admin
     Route::get('publications', [PublicationController::class, 'adminIndex'])->name('publications.index');

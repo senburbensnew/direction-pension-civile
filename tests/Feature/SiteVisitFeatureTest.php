@@ -33,6 +33,19 @@ class SiteVisitFeatureTest extends TestCase
     }
 
     /** @test */
+    public function unique_visitors_are_counted_by_ip_per_day(): void
+    {
+        $this->withServerVariables(['REMOTE_ADDR' => '203.0.113.10'])->get('/');
+        $this->withServerVariables(['REMOTE_ADDR' => '203.0.113.10'])->get('/');
+        $this->withServerVariables(['REMOTE_ADDR' => '198.51.100.25'])->get('/');
+
+        $today = SiteVisit::query()->whereDate('visited_on', now()->toDateString())->first();
+        $this->assertNotNull($today);
+        $this->assertSame(3, $today->hits);
+        $this->assertSame(2, $today->visitors);
+    }
+
+    /** @test */
     public function admin_and_bot_requests_are_not_counted(): void
     {
         $this->get('/admin/dashboard');
@@ -59,6 +72,7 @@ class SiteVisitFeatureTest extends TestCase
 
         $this->assertSame(8, $summary['total_hits']);
         $this->assertSame(5, $summary['today_hits']);
+        $this->assertSame(3, $summary['total_visitors']);
         $this->assertSame(2, $summary['today_visitors']);
     }
 

@@ -40,7 +40,6 @@ class DatabaseSeeder extends Seeder
         $this->call(MediathequeItemSeeder::class);
         $this->call(GlossaireTermSeeder::class);
         $this->call(FaqItemSeeder::class);
-        $this->call(LienUtileSeeder::class);
         $this->call(DirectionDepartementaleSeeder::class);
         $this->call(ContactSubjectSeeder::class);
     }

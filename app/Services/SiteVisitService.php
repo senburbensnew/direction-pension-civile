@@ -11,8 +11,6 @@ use Illuminate\Support\Facades\DB;
 
 class SiteVisitService
 {
-    public const SESSION_KEY = 'site_visit_counted_on';
-
     public function record(Request $request): void
     {
         if (! $this->shouldRecord($request)) {
@@ -20,22 +18,28 @@ class SiteVisitService
         }
 
         $today = now()->toDateString();
-        $isNewVisitor = $request->session()->get(self::SESSION_KEY) !== $today;
+        $ipHash = $this->hashIp((string) $request->ip());
 
         $this->ensureDayRow($today);
 
         DB::table('site_visits')->where('visited_on', $today)->increment('hits');
 
-        if ($isNewVisitor) {
+        $inserted = DB::table('site_visit_ips')->insertOrIgnore([
+            'visited_on' => $today,
+            'ip_hash' => $ipHash,
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        if ($inserted) {
             DB::table('site_visits')->where('visited_on', $today)->increment('visitors');
-            $request->session()->put(self::SESSION_KEY, $today);
         }
 
         Cache::forget('site_visits.summary');
     }
 
     /**
-     * @return array{total_hits: int, today_hits: int, today_visitors: int}
+     * @return array{total_hits: int, today_hits: int, total_visitors: int, today_visitors: int}
      */
     public function summary(): array
     {
@@ -45,6 +49,7 @@ class SiteVisitService
             return [
                 'total_hits' => (int) SiteVisit::query()->sum('hits'),
                 'today_hits' => (int) ($todayRow?->hits ?? 0),
+                'total_visitors' => (int) SiteVisit::query()->sum('visitors'),
                 'today_visitors' => (int) ($todayRow?->visitors ?? 0),
             ];
         });
@@ -138,5 +143,10 @@ class SiteVisitService
         }
 
         return true;
+    }
+
+    protected function hashIp(string $ip): string
+    {
+        return hash('sha256', $ip.'|'.(string) config('app.key'));
     }
 }

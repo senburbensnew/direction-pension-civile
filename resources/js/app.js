@@ -36,4 +36,11 @@ function initDatepickers() {
 document.addEventListener('DOMContentLoaded', initDatepickers);
 document.addEventListener('livewire:navigated', initDatepickers);
 
+document.addEventListener('DOMContentLoaded', () => {
+    if (document.getElementById('dpc-chronogramme')) {
+        import('./chronogramme.js').then(({ initDpcChronogramme }) => initDpcChronogramme());
+    }
+});
+
+
 

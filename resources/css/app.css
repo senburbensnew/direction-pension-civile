@@ -179,3 +179,33 @@ select option {
     background-size: 22px 22px, cover;
     background-position: 0 0, center;
 }
+
+.dpc-chronogramme {
+    border: 1px solid #e5e7eb;
+    background: #f8fafc;
+}
+
+.dpc-chronogramme .vis-timeline {
+    border: none;
+    font-family: inherit;
+}
+
+.dpc-chronogramme .vis-item.dpc-chrono-item {
+    background-color: #173052;
+    border-color: #173052;
+    color: #fff;
+    font-weight: 700;
+    font-size: 12px;
+    border-radius: 0;
+}
+
+.dpc-chronogramme .vis-item.dpc-chrono-item.vis-selected {
+    background-color: #ea580c;
+    border-color: #ea580c;
+}
+
+.dpc-chronogramme .vis-time-axis .vis-text {
+    color: #173052;
+    font-weight: 600;
+}
+

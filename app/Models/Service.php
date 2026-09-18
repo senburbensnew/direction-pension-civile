@@ -18,6 +18,8 @@ class Service extends Model
     public const COMPTABILITE         = 'service_comptabilite';
     public const FORMALITE            = 'service_formalite';
     public const ASSURANCE            = 'service_assurance';
+    public const ARCHIVES             = 'service_archives';
+    public const ADMINISTRATIF        = 'cellule_administration';
 
     protected $fillable = [
         'code',
@@ -26,6 +28,38 @@ class Service extends Model
         'icon',
         'color',
     ];
+
+    /**
+     * @return list<string>
+     */
+    public static function publicCodes(): array
+    {
+        return array_column(config('dpc_services'), 'code');
+    }
+
+    public static function publicOrdered()
+    {
+        $order = array_flip(self::publicCodes());
+
+        return self::query()
+            ->whereIn('code', self::publicCodes())
+            ->get()
+            ->sortBy(fn (self $service) => $order[$service->code] ?? 99)
+            ->values();
+    }
+
+    public function catalog(): ?array
+    {
+        return collect(config('dpc_services'))->firstWhere('code', $this->code);
+    }
+
+    /**
+     * @return list<string>
+     */
+    public function attributions(): array
+    {
+        return $this->catalog()['attributions'] ?? [];
+    }
 
     public function demandes()
     {

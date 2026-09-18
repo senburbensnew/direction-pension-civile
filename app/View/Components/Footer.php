@@ -18,11 +18,11 @@ class Footer extends Component
         try {
             $summary = $visits->summary();
         } catch (\Throwable) {
-            $summary = ['total_hits' => 0, 'today_hits' => 0];
+            $summary = ['total_hits' => 0, 'today_hits' => 0, 'total_visitors' => 0, 'today_visitors' => 0];
         }
 
-        $this->totalVisits = $summary['total_hits'];
-        $this->todayVisits = $summary['today_hits'];
+        $this->totalVisits = $summary['total_visitors'];
+        $this->todayVisits = $summary['today_visitors'];
     }
 
     public function render(): View|Closure|string

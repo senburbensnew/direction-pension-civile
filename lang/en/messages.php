@@ -27,7 +27,7 @@ return [
 
     'who_are_we' => 'Who are we',
     'words_from_the_director' => 'Words from the Director',
-    'mission_and_responsibilities' => 'Mission and Responsibilities',
+    'mission_and_responsibilities' => 'Presentation, mission and responsibilities, history',
     'history' => 'History',
     'organizational_structure' => 'Organizational Structure',
     'funding' => 'Funding',

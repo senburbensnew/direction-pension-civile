@@ -29,10 +29,6 @@
                        class="hover:text-orange-500 transition-colors py-1 border-b-2 border-transparent hover:border-orange-500">
                         {{ __('messages.home') }}
                     </a>
-                    <a href="{{ route('liens-utiles') }}"
-                       class="hover:text-orange-500 transition-colors py-1 border-b-2 border-transparent hover:border-orange-500">
-                        {{ __('messages.links') }}
-                    </a>
                     <a href="{{ route('faq.index') }}"
                        class="hover:text-orange-500 transition-colors py-1 border-b-2 border-transparent hover:border-orange-500">
                         {{ __('messages.faq') }}

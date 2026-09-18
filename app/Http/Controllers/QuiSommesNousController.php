@@ -33,10 +33,6 @@ class QuiSommesNousController extends Controller
     {
         return view('quisommesnous.missions');
     }
-    public function historique()
-    {
-        return view('quisommesnous.historique');
-    }
 
     public function structureOrganique()
     {

@@ -27,9 +27,9 @@ return [
 
     'who_are_we' => 'Qui sommes-nous',
     'words_from_the_director' => 'Mots de la directrice',
-    'mission_and_responsibilities' => 'Mission et Attributions',
+    'mission_and_responsibilities' => 'Présentation, mission et attributions, historique',
     'history' => 'Historique',
-    'organizational_structure' => 'Structure Organique',
+    'organizational_structure' => 'Structure organisationnelle',
     'funding' => 'Financement',
 
     'pensioner' => 'Pensionnaire',

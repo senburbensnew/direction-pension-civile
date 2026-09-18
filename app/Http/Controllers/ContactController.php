@@ -24,7 +24,7 @@ class ContactController extends Controller
 
         $subjects = ContactSubject::active()->ordered()->get();
         $directions = DirectionDepartementale::ordered()->get();
-        $services = Service::whereNotIn('code', ['direction'])->orderBy('nom')->get();
+        $services = Service::publicOrdered();
 
         return view('contact.index', [
             'contact'    => $params,
@@ -140,9 +140,7 @@ class ContactController extends Controller
      */
     private function destinataireKeys(): array
     {
-        $serviceKeys = Service::query()
-            ->whereNotIn('code', ['direction'])
-            ->pluck('code')
+        $serviceKeys = collect(Service::publicCodes())
             ->map(fn (string $code) => Contact::destinataireKey('service', $code));
 
         $directionKeys = DirectionDepartementale::query()

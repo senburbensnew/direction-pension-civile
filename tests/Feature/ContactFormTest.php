@@ -91,7 +91,7 @@ class ContactFormTest extends TestCase
         $this->assertDatabaseHas('contacts', [
             'email' => 'jean@example.com',
             'telephone' => '+50938123456',
-            'destinataire' => Contact::destinataireKey('service', Service::SECRETARIAT),
+            'destinataire' => Contact::destinataireKey('service', Service::FORMALITE),
         ]);
     }
 
@@ -192,7 +192,7 @@ class ContactFormTest extends TestCase
             'last_name' => 'Pierre',
             'email' => 'jean@example.com',
             'telephone' => '+50938123456',
-            'destinataire' => Contact::destinataireKey('service', Service::SECRETARIAT),
+            'destinataire' => Contact::destinataireKey('service', Service::FORMALITE),
             'subject' => 'pension',
             'message' => 'Bonjour, j’ai une question sur ma pension.',
         ], $overrides);

@@ -24,8 +24,16 @@
             </div>
 
             <p class="text-gray-700 leading-relaxed text-[15px]">
-                {{ $service->description ?: "Service opérationnel de la Direction de la Pension Civile." }}
+                {{ data_get($service->catalog(), 'intro') ?: $service->description ?: "Service opérationnel de la Direction de la Pension Civile." }}
             </p>
+
+            @if($service->attributions())
+                <ul class="mt-5 list-disc pl-5 space-y-2 text-gray-700 text-[15px] leading-relaxed">
+                    @foreach($service->attributions() as $item)
+                        <li>{{ $item }}</li>
+                    @endforeach
+                </ul>
+            @endif
 
             <div class="mt-8 grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div class="border border-gray-200 rounded-lg p-4">

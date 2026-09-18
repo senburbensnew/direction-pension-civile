@@ -27,7 +27,7 @@ return [
 
     'who_are_we' => 'Kiyès nou ye',
     'words_from_the_director' => 'Mo Direktè a',
-    'mission_and_responsibilities' => 'Misyon ak Responsablite',
+    'mission_and_responsibilities' => 'Prezantasyon, misyon ak responsablite, istwa',
     'history' => 'Istwa',
     'organizational_structure' => 'Estrikti Òganizasyonèl',
     'funding' => 'Finansman',

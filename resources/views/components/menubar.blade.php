@@ -90,27 +90,11 @@
                 <ul class="dropdown-content bg-white md:shadow-lg md:border md:rounded-md"
                     aria-label="Sous-menu Qui sommes nous">
                     <li>
-                        <a href="{{ route('quisommesnous.mots', ['role' => 'ministre']) }}"
-                            class="text-slate-600 block px-4 py-3 hover:bg-gray-100
-                                   transition-colors text-base truncate-text
-                                   focus:outline-none focus:ring-2 ">
-                            Mots du Ministre
-                        </a>
-                    </li>
-                    <li>
                         <a href="{{ route('quisommesnous.missions') }}"
                             class="text-slate-600 block px-4 py-3 hover:bg-gray-100
-                                   transition-colors text-base truncate-text
+                                   transition-colors text-base
                                    focus:outline-none focus:ring-2 ">
                             {{ __('messages.mission_and_responsibilities') }}
-                        </a>
-                    </li>
-                    <li>
-                        <a href="{{ route('quisommesnous.historique') }}"
-                            class="text-slate-600 block px-4 py-3 hover:bg-gray-100
-                                   transition-colors text-base truncate-text
-                                   focus:outline-none focus:ring-2 ">
-                            {{ __('messages.history') }}
                         </a>
                     </li>
                     <li>
@@ -122,11 +106,11 @@
                         </a>
                     </li>
                     <li>
-                        <a href="{{ route('quisommesnous.financement') }}"
+                        <a href="{{ route('quisommesnous.mots', ['role' => 'ministre']) }}"
                             class="text-slate-600 block px-4 py-3 hover:bg-gray-100
                                    transition-colors text-base truncate-text
                                    focus:outline-none focus:ring-2 ">
-                            {{ __('messages.funding') }}
+                            Mots du Ministre
                         </a>
                     </li>
                 </ul>
