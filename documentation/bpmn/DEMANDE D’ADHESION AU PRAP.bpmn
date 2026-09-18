@@ -1,0 +1,151 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:zeebe="http://camunda.org/schema/zeebe/1.0" xmlns:di="http://www.omg.org/spec/DD/20100524/DI" xmlns:modeler="http://camunda.org/schema/modeler/1.0" id="Definitions_AdhesionPRAP" targetNamespace="http://bpmn.io/schema/bpmn" exporter="Camunda Modeler" exporterVersion="5.50.1" modeler:executionPlatform="Camunda Cloud" modeler:executionPlatformVersion="8.9.0">
+  <bpmn:collaboration id="Collaboration_AdhesionPRAP">
+    <bpmn:participant id="Participant_AdhesionPRAP" name="Direction de la Pension Civile" processRef="Process_AdhesionPRAP" />
+    <bpmn:textAnnotation id="TextAnnotation_AdhesionPRAP">
+      <bpmn:text>Pièces : Transmission de l'état d'émargement de l'institution, Formulaire de demande d'adhésion, Formulaire d'affiliation des agents</bpmn:text>
+    </bpmn:textAnnotation>
+    <bpmn:association id="Association_AdhesionPRAP" sourceRef="Activity_Soumettre_Adhesion" targetRef="TextAnnotation_AdhesionPRAP" />
+  </bpmn:collaboration>
+  <bpmn:process id="Process_AdhesionPRAP" isExecutable="true">
+    <bpmn:laneSet id="LaneSet_Adhesion">
+      <bpmn:lane id="Lane_ServiceControle_SLP_Adhesion" name="Contrôle &#38; Placement / SLP">
+        <bpmn:flowNodeRef>Activity_Traitement_Controle_SLP_Adhesion</bpmn:flowNodeRef>
+      </bpmn:lane>
+      <bpmn:lane id="Lane_Direction_Adhesion" name="Direction">
+        <bpmn:flowNodeRef>Activity_Annotation_Direction_Adhesion</bpmn:flowNodeRef>
+      </bpmn:lane>
+      <bpmn:lane id="Lane_Secretariat_Adhesion" name="Secrétariat">
+        <bpmn:flowNodeRef>Activity_Reception_Secretariat_Adhesion</bpmn:flowNodeRef>
+      </bpmn:lane>
+      <bpmn:lane id="Lane_Institution_Adhesion" name="Institution">
+        <bpmn:flowNodeRef>StartEvent_Adhesion</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Activity_Soumettre_Adhesion</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>EndEvent_Adhesion</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Activity_Notification_Institution_Adhesion</bpmn:flowNodeRef>
+      </bpmn:lane>
+    </bpmn:laneSet>
+    <bpmn:startEvent id="StartEvent_Adhesion" name="Soumission par institution">
+      <bpmn:outgoing>Flow_Start_To_Soumettre_Adhesion</bpmn:outgoing>
+    </bpmn:startEvent>
+    <bpmn:userTask id="Activity_Soumettre_Adhesion" name="Transmettre demande d&#39;adhésion">
+      <bpmn:extensionElements>
+        <zeebe:userTask />
+      </bpmn:extensionElements>
+      <bpmn:incoming>Flow_Start_To_Soumettre_Adhesion</bpmn:incoming>
+      <bpmn:outgoing>Flow_Soumettre_To_ReceptionSec_Adhesion</bpmn:outgoing>
+    </bpmn:userTask>
+    <bpmn:receiveTask id="Activity_Reception_Secretariat_Adhesion" name="Réception Secrétariat">
+      <bpmn:incoming>Flow_Soumettre_To_ReceptionSec_Adhesion</bpmn:incoming>
+      <bpmn:outgoing>Flow_ReceptionSec_To_AnnotationDir_Adhesion</bpmn:outgoing>
+    </bpmn:receiveTask>
+    <bpmn:userTask id="Activity_Annotation_Direction_Adhesion" name="Annotation Direction">
+      <bpmn:extensionElements>
+        <zeebe:userTask />
+      </bpmn:extensionElements>
+      <bpmn:incoming>Flow_ReceptionSec_To_AnnotationDir_Adhesion</bpmn:incoming>
+      <bpmn:outgoing>Flow_AnnotationDir_To_TraitementControle_Adhesion</bpmn:outgoing>
+    </bpmn:userTask>
+    <bpmn:userTask id="Activity_Traitement_Controle_SLP_Adhesion" name="Traitement service contrôle &#38; placement et SLP">
+      <bpmn:extensionElements>
+        <zeebe:userTask />
+      </bpmn:extensionElements>
+      <bpmn:incoming>Flow_AnnotationDir_To_TraitementControle_Adhesion</bpmn:incoming>
+      <bpmn:outgoing>Flow_TraitementControle_To_Notification_Adhesion</bpmn:outgoing>
+    </bpmn:userTask>
+    <bpmn:endEvent id="EndEvent_Adhesion" name="FIN">
+      <bpmn:incoming>Flow_Notification_To_End_Adhesion</bpmn:incoming>
+    </bpmn:endEvent>
+    <bpmn:serviceTask id="Activity_Notification_Institution_Adhesion" name="Notifier l&#39;institution">
+      <bpmn:incoming>Flow_TraitementControle_To_Notification_Adhesion</bpmn:incoming>
+      <bpmn:outgoing>Flow_Notification_To_End_Adhesion</bpmn:outgoing>
+    </bpmn:serviceTask>
+    <bpmn:sequenceFlow id="Flow_Start_To_Soumettre_Adhesion" sourceRef="StartEvent_Adhesion" targetRef="Activity_Soumettre_Adhesion" />
+    <bpmn:sequenceFlow id="Flow_Soumettre_To_ReceptionSec_Adhesion" sourceRef="Activity_Soumettre_Adhesion" targetRef="Activity_Reception_Secretariat_Adhesion" />
+    <bpmn:sequenceFlow id="Flow_ReceptionSec_To_AnnotationDir_Adhesion" sourceRef="Activity_Reception_Secretariat_Adhesion" targetRef="Activity_Annotation_Direction_Adhesion" />
+    <bpmn:sequenceFlow id="Flow_AnnotationDir_To_TraitementControle_Adhesion" sourceRef="Activity_Annotation_Direction_Adhesion" targetRef="Activity_Traitement_Controle_SLP_Adhesion" />
+    <bpmn:sequenceFlow id="Flow_TraitementControle_To_Notification_Adhesion" sourceRef="Activity_Traitement_Controle_SLP_Adhesion" targetRef="Activity_Notification_Institution_Adhesion" />
+    <bpmn:sequenceFlow id="Flow_Notification_To_End_Adhesion" sourceRef="Activity_Notification_Institution_Adhesion" targetRef="EndEvent_Adhesion" />
+  </bpmn:process>
+  <bpmndi:BPMNDiagram id="BPMNDiagram_Adhesion">
+    <bpmndi:BPMNPlane id="BPMNPlane_Adhesion" bpmnElement="Collaboration_AdhesionPRAP">
+      <bpmndi:BPMNShape id="Participant_Adhesion_di" bpmnElement="Participant_AdhesionPRAP" isHorizontal="true">
+        <dc:Bounds x="160" y="240" width="1070" height="500" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Lane_ServiceControle_SLP_Adhesion_di" bpmnElement="Lane_ServiceControle_SLP_Adhesion" isHorizontal="true">
+        <dc:Bounds x="190" y="500" width="1040" height="100" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Lane_Direction_Adhesion_di" bpmnElement="Lane_Direction_Adhesion" isHorizontal="true">
+        <dc:Bounds x="190" y="420" width="1040" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Lane_Secretariat_Adhesion_di" bpmnElement="Lane_Secretariat_Adhesion" isHorizontal="true">
+        <dc:Bounds x="190" y="340" width="1040" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Lane_Institution_Adhesion_di" bpmnElement="Lane_Institution_Adhesion" isHorizontal="true">
+        <dc:Bounds x="190" y="240" width="1040" height="100" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="StartEvent_Adhesion_di" bpmnElement="StartEvent_Adhesion">
+        <dc:Bounds x="252" y="272" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="234" y="315" width="76" height="27" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_Soumettre_Adhesion_di" bpmnElement="Activity_Soumettre_Adhesion">
+        <dc:Bounds x="380" y="250" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_Reception_Secretariat_Adhesion_di" bpmnElement="Activity_Reception_Secretariat_Adhesion">
+        <dc:Bounds x="520" y="340" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_Annotation_Direction_Adhesion_di" bpmnElement="Activity_Annotation_Direction_Adhesion">
+        <dc:Bounds x="710" y="420" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_Traitement_Controle_SLP_Adhesion_di" bpmnElement="Activity_Traitement_Controle_SLP_Adhesion">
+        <dc:Bounds x="840" y="510" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="EndEvent_Adhesion_di" bpmnElement="EndEvent_Adhesion">
+        <dc:Bounds x="1152" y="272" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="1157" y="315" width="18" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_Notification_Institution_Adhesion_di" bpmnElement="Activity_Notification_Institution_Adhesion">
+        <dc:Bounds x="950" y="250" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="Flow_Start_To_Soumettre_Adhesion_di" bpmnElement="Flow_Start_To_Soumettre_Adhesion">
+        <di:waypoint x="288" y="290" />
+        <di:waypoint x="380" y="290" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_Soumettre_To_ReceptionSec_Adhesion_di" bpmnElement="Flow_Soumettre_To_ReceptionSec_Adhesion">
+        <di:waypoint x="480" y="290" />
+        <di:waypoint x="570" y="290" />
+        <di:waypoint x="570" y="340" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_ReceptionSec_To_AnnotationDir_Adhesion_di" bpmnElement="Flow_ReceptionSec_To_AnnotationDir_Adhesion">
+        <di:waypoint x="620" y="380" />
+        <di:waypoint x="760" y="380" />
+        <di:waypoint x="760" y="420" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_AnnotationDir_To_TraitementControle_Adhesion_di" bpmnElement="Flow_AnnotationDir_To_TraitementControle_Adhesion">
+        <di:waypoint x="810" y="460" />
+        <di:waypoint x="890" y="460" />
+        <di:waypoint x="890" y="510" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_TraitementControle_To_Notification_Adhesion_di" bpmnElement="Flow_TraitementControle_To_Notification_Adhesion">
+        <di:waypoint x="940" y="550" />
+        <di:waypoint x="1000" y="550" />
+        <di:waypoint x="1000" y="330" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_Notification_To_End_Adhesion_di" bpmnElement="Flow_Notification_To_End_Adhesion">
+        <di:waypoint x="1050" y="290" />
+        <di:waypoint x="1152" y="290" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Association_AdhesionPRAP_di" bpmnElement="Association_AdhesionPRAP">
+        <di:waypoint x="431" y="250" />
+        <di:waypoint x="460" y="130" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNShape id="TextAnnotation_AdhesionPRAP_di" bpmnElement="TextAnnotation_AdhesionPRAP">
+        <dc:Bounds x="460" y="80" width="240" height="100" />
+      </bpmndi:BPMNShape>
+    </bpmndi:BPMNPlane>
+  </bpmndi:BPMNDiagram>
+</bpmn:definitions>

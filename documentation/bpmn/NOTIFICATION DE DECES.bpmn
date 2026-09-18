@@ -1,0 +1,180 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:zeebe="http://camunda.org/schema/zeebe/1.0" xmlns:di="http://www.omg.org/spec/DD/20100524/DI" xmlns:modeler="http://camunda.org/schema/modeler/1.0" id="Definitions_Deces" targetNamespace="http://bpmn.io/schema/bpmn" exporter="Camunda Modeler" exporterVersion="5.50.1" modeler:executionPlatform="Camunda Cloud" modeler:executionPlatformVersion="8.9.0">
+  <bpmn:collaboration id="Collaboration_Deces">
+    <bpmn:participant id="Participant_Deces" name="Direction de la Pension Civile" processRef="Process_Deces" />
+    <bpmn:textAnnotation id="TextAnnotation_Deces">
+      <bpmn:text>Pièces : Carte de pension, Matricule fiscal du pensionné, CINU du bénéficiaire, Acte de décès, Dernier chèque retiré</bpmn:text>
+    </bpmn:textAnnotation>
+    <bpmn:association id="Association_Deces" sourceRef="Activity_Soumettre_Deces" targetRef="TextAnnotation_Deces" />
+  </bpmn:collaboration>
+  <bpmn:process id="Process_Deces" isExecutable="true">
+    <bpmn:laneSet id="LaneSet_Deces">
+      <bpmn:lane id="Lane_Agent_Deces" name="Agent">
+        <bpmn:flowNodeRef>Activity_Traitement_Deces</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Activity_Pension_Cesse_Deces</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Activity_Attente_Documents_Deces</bpmn:flowNodeRef>
+      </bpmn:lane>
+      <bpmn:lane id="Lane_ChefService_Deces" name="Chef de service">
+        <bpmn:flowNodeRef>Activity_Reception_Chef_Deces</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Activity_Dispatching_Deces</bpmn:flowNodeRef>
+      </bpmn:lane>
+      <bpmn:lane id="Lane_Direction_Deces" name="Direction">
+        <bpmn:flowNodeRef>Activity_Annotation_Direction_Deces</bpmn:flowNodeRef>
+      </bpmn:lane>
+      <bpmn:lane id="Lane_Demandeur" name="Ayant droit / Mandataire">
+        <bpmn:flowNodeRef>StartEvent_Deces</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Activity_Soumettre_Deces</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>EndEvent_Deces</bpmn:flowNodeRef>
+      </bpmn:lane>
+    </bpmn:laneSet>
+    <bpmn:startEvent id="StartEvent_Deces" name="Soumission">
+      <bpmn:outgoing>Flow_Start_To_Soumettre_Deces</bpmn:outgoing>
+    </bpmn:startEvent>
+    <bpmn:userTask id="Activity_Soumettre_Deces" name="Soumettre notification">
+      <bpmn:extensionElements>
+        <zeebe:userTask />
+      </bpmn:extensionElements>
+      <bpmn:incoming>Flow_Start_To_Soumettre_Deces</bpmn:incoming>
+      <bpmn:outgoing>Flow_Soumettre_To_Annotation_Deces</bpmn:outgoing>
+    </bpmn:userTask>
+    <bpmn:userTask id="Activity_Annotation_Direction_Deces" name="Annotation Direction">
+      <bpmn:extensionElements>
+        <zeebe:userTask />
+      </bpmn:extensionElements>
+      <bpmn:incoming>Flow_Soumettre_To_Annotation_Deces</bpmn:incoming>
+      <bpmn:outgoing>Flow_Annotation_To_ReceptionChef_Deces</bpmn:outgoing>
+    </bpmn:userTask>
+    <bpmn:receiveTask id="Activity_Reception_Chef_Deces" name="Réception Chef de service">
+      <bpmn:incoming>Flow_Annotation_To_ReceptionChef_Deces</bpmn:incoming>
+      <bpmn:outgoing>Flow_ReceptionChef_To_Dispatching_Deces</bpmn:outgoing>
+    </bpmn:receiveTask>
+    <bpmn:userTask id="Activity_Dispatching_Deces" name="Dispatching">
+      <bpmn:extensionElements>
+        <zeebe:userTask />
+      </bpmn:extensionElements>
+      <bpmn:incoming>Flow_ReceptionChef_To_Dispatching_Deces</bpmn:incoming>
+      <bpmn:outgoing>Flow_Dispatching_To_Traitement_Deces</bpmn:outgoing>
+    </bpmn:userTask>
+    <bpmn:userTask id="Activity_Traitement_Deces" name="Traitement du dossier">
+      <bpmn:extensionElements>
+        <zeebe:userTask />
+      </bpmn:extensionElements>
+      <bpmn:incoming>Flow_Dispatching_To_Traitement_Deces</bpmn:incoming>
+      <bpmn:outgoing>Flow_Traitement_To_PensionCesse_Deces</bpmn:outgoing>
+    </bpmn:userTask>
+    <bpmn:serviceTask id="Activity_Pension_Cesse_Deces" name="Pension cesse">
+      <bpmn:incoming>Flow_Traitement_To_PensionCesse_Deces</bpmn:incoming>
+      <bpmn:outgoing>Flow_PensionCesse_To_Attente_Deces</bpmn:outgoing>
+    </bpmn:serviceTask>
+    <bpmn:userTask id="Activity_Attente_Documents_Deces" name="Attente ajout documents (réversion / contribution)">
+      <bpmn:extensionElements>
+        <zeebe:userTask />
+      </bpmn:extensionElements>
+      <bpmn:incoming>Flow_PensionCesse_To_Attente_Deces</bpmn:incoming>
+      <bpmn:outgoing>Flow_Attente_To_End_Deces</bpmn:outgoing>
+    </bpmn:userTask>
+    <bpmn:sequenceFlow id="Flow_Start_To_Soumettre_Deces" sourceRef="StartEvent_Deces" targetRef="Activity_Soumettre_Deces" />
+    <bpmn:sequenceFlow id="Flow_Soumettre_To_Annotation_Deces" sourceRef="Activity_Soumettre_Deces" targetRef="Activity_Annotation_Direction_Deces" />
+    <bpmn:sequenceFlow id="Flow_Annotation_To_ReceptionChef_Deces" sourceRef="Activity_Annotation_Direction_Deces" targetRef="Activity_Reception_Chef_Deces" />
+    <bpmn:sequenceFlow id="Flow_ReceptionChef_To_Dispatching_Deces" sourceRef="Activity_Reception_Chef_Deces" targetRef="Activity_Dispatching_Deces" />
+    <bpmn:sequenceFlow id="Flow_Dispatching_To_Traitement_Deces" sourceRef="Activity_Dispatching_Deces" targetRef="Activity_Traitement_Deces" />
+    <bpmn:sequenceFlow id="Flow_Traitement_To_PensionCesse_Deces" sourceRef="Activity_Traitement_Deces" targetRef="Activity_Pension_Cesse_Deces" />
+    <bpmn:sequenceFlow id="Flow_PensionCesse_To_Attente_Deces" sourceRef="Activity_Pension_Cesse_Deces" targetRef="Activity_Attente_Documents_Deces" />
+    <bpmn:sequenceFlow id="Flow_Attente_To_End_Deces" sourceRef="Activity_Attente_Documents_Deces" targetRef="EndEvent_Deces" />
+    <bpmn:endEvent id="EndEvent_Deces" name="FIN">
+      <bpmn:incoming>Flow_Attente_To_End_Deces</bpmn:incoming>
+    </bpmn:endEvent>
+  </bpmn:process>
+  <bpmndi:BPMNDiagram id="BPMNDiagram_Deces">
+    <bpmndi:BPMNPlane id="BPMNPlane_Deces" bpmnElement="Collaboration_Deces">
+      <bpmndi:BPMNShape id="Participant_Deces_di" bpmnElement="Participant_Deces" isHorizontal="true">
+        <dc:Bounds x="160" y="290" width="1100" height="420" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Lane_Agent_Deces_di" bpmnElement="Lane_Agent_Deces" isHorizontal="true">
+        <dc:Bounds x="190" y="530" width="1070" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Lane_ChefService_Deces_di" bpmnElement="Lane_ChefService_Deces" isHorizontal="true">
+        <dc:Bounds x="190" y="450" width="1070" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Lane_Direction_Deces_di" bpmnElement="Lane_Direction_Deces" isHorizontal="true">
+        <dc:Bounds x="190" y="370" width="1070" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Lane_Demandeur_di" bpmnElement="Lane_Demandeur" isHorizontal="true">
+        <dc:Bounds x="190" y="290" width="1070" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="StartEvent_Deces_di" bpmnElement="StartEvent_Deces">
+        <dc:Bounds x="252" y="312" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="243" y="355" width="57" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_Soumettre_Deces_di" bpmnElement="Activity_Soumettre_Deces">
+        <dc:Bounds x="380" y="290" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_Annotation_Direction_Deces_di" bpmnElement="Activity_Annotation_Direction_Deces">
+        <dc:Bounds x="380" y="370" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_Reception_Chef_Deces_di" bpmnElement="Activity_Reception_Chef_Deces">
+        <dc:Bounds x="380" y="450" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_Dispatching_Deces_di" bpmnElement="Activity_Dispatching_Deces">
+        <dc:Bounds x="560" y="450" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_Traitement_Deces_di" bpmnElement="Activity_Traitement_Deces">
+        <dc:Bounds x="560" y="530" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_Pension_Cesse_Deces_di" bpmnElement="Activity_Pension_Cesse_Deces">
+        <dc:Bounds x="740" y="530" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_Attente_Documents_Deces_di" bpmnElement="Activity_Attente_Documents_Deces">
+        <dc:Bounds x="920" y="530" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="EndEvent_Deces_di" bpmnElement="EndEvent_Deces">
+        <dc:Bounds x="1042" y="312" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="1047" y="355" width="18" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="Flow_Start_To_Soumettre_Deces_di" bpmnElement="Flow_Start_To_Soumettre_Deces">
+        <di:waypoint x="288" y="330" />
+        <di:waypoint x="380" y="330" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_Soumettre_To_Annotation_Deces_di" bpmnElement="Flow_Soumettre_To_Annotation_Deces">
+        <di:waypoint x="430" y="370" />
+        <di:waypoint x="430" y="370" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_Annotation_To_ReceptionChef_Deces_di" bpmnElement="Flow_Annotation_To_ReceptionChef_Deces">
+        <di:waypoint x="430" y="450" />
+        <di:waypoint x="430" y="450" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_ReceptionChef_To_Dispatching_Deces_di" bpmnElement="Flow_ReceptionChef_To_Dispatching_Deces">
+        <di:waypoint x="480" y="490" />
+        <di:waypoint x="560" y="490" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_Dispatching_To_Traitement_Deces_di" bpmnElement="Flow_Dispatching_To_Traitement_Deces">
+        <di:waypoint x="610" y="530" />
+        <di:waypoint x="610" y="530" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_Traitement_To_PensionCesse_Deces_di" bpmnElement="Flow_Traitement_To_PensionCesse_Deces">
+        <di:waypoint x="660" y="570" />
+        <di:waypoint x="740" y="570" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_PensionCesse_To_Attente_Deces_di" bpmnElement="Flow_PensionCesse_To_Attente_Deces">
+        <di:waypoint x="840" y="570" />
+        <di:waypoint x="920" y="570" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_Attente_To_End_Deces_di" bpmnElement="Flow_Attente_To_End_Deces">
+        <di:waypoint x="970" y="530" />
+        <di:waypoint x="970" y="330" />
+        <di:waypoint x="1042" y="330" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Association_Deces_di" bpmnElement="Association_Deces">
+        <di:waypoint x="437" y="290" />
+        <di:waypoint x="500" y="130" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNShape id="TextAnnotation_Deces_di" bpmnElement="TextAnnotation_Deces">
+        <dc:Bounds x="500" y="80" width="220" height="100" />
+      </bpmndi:BPMNShape>
+    </bpmndi:BPMNPlane>
+  </bpmndi:BPMNDiagram>
+</bpmn:definitions>

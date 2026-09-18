@@ -1,0 +1,313 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL"
+                  xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI"
+                  xmlns:dc="http://www.omg.org/spec/DD/20100524/DC"
+                  xmlns:zeebe="http://camunda.org/schema/zeebe/1.0"
+                  xmlns:di="http://www.omg.org/spec/DD/20100524/DI"
+                  xmlns:modeler="http://camunda.org/schema/modeler/1.0"
+                  id="Definitions_ContributionFuneraire"
+                  targetNamespace="http://bpmn.io/schema/bpmn"
+                  exporter="Camunda Modeler"
+                  exporterVersion="5.50.1"
+                  modeler:executionPlatform="Camunda Cloud"
+                  modeler:executionPlatformVersion="8.9.0">
+  <bpmn:collaboration id="Collaboration_ContributionFuneraire">
+    <bpmn:participant id="Participant_ContributionFuneraire" name="Direction de la Pension Civile" processRef="Process_ContributionFuneraire" />
+    <bpmn:textAnnotation id="TextAnnotation_ContributionFuneraire">
+      <bpmn:text>Pièces : Carte de pension, Matricule fiscal du bénéficiaire, CINU du bénéficiaire, Acte de décès, Certificat de non-dissolution de mariage, Acte de mariage, Acte notarié, Formulaire de demande contribution funéraire</bpmn:text>
+    </bpmn:textAnnotation>
+    <bpmn:association id="Association_ContributionFuneraire" sourceRef="Activity_Soumettre_CF" targetRef="TextAnnotation_ContributionFuneraire" />
+  </bpmn:collaboration>
+
+  <bpmn:process id="Process_ContributionFuneraire" isExecutable="true">
+    <bpmn:laneSet id="LaneSet_CF">
+      <bpmn:lane id="Lane_Pensionne_CF" name="Pensionné">
+        <bpmn:flowNodeRef>StartEvent_CF</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Activity_Soumettre_CF</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Activity_Notification_CF</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>EndEvent_CF</bpmn:flowNodeRef>
+      </bpmn:lane>
+      <bpmn:lane id="Lane_Secretariat_CF" name="Secrétariat">
+        <bpmn:flowNodeRef>Activity_Reception_Secretariat_CF</bpmn:flowNodeRef>
+      </bpmn:lane>
+      <bpmn:lane id="Lane_Direction_CF" name="Direction">
+        <bpmn:flowNodeRef>Activity_Annotation_Direction_CF</bpmn:flowNodeRef>
+      </bpmn:lane>
+      <bpmn:lane id="Lane_SecretariatFormalite_CF" name="Secrétariat Formalité">
+        <bpmn:flowNodeRef>Activity_Reception_Formalite_CF</bpmn:flowNodeRef>
+      </bpmn:lane>
+      <bpmn:lane id="Lane_ChefService_CF" name="Chef de service">
+        <bpmn:flowNodeRef>Activity_Annotation_Chef_CF</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Activity_Dispatching_CF</bpmn:flowNodeRef>
+      </bpmn:lane>
+      <bpmn:lane id="Lane_Agent_CF" name="Agent">
+        <bpmn:flowNodeRef>Activity_Traitement_CF</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Activity_Transmission_OFATMA_CF</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Activity_Cheque_Recu_CF</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Activity_Attente_Documents_CF</bpmn:flowNodeRef>
+      </bpmn:lane>
+    </bpmn:laneSet>
+
+    <bpmn:startEvent id="StartEvent_CF" name="Soumission">
+      <bpmn:outgoing>Flow_Start_To_Soumettre_CF</bpmn:outgoing>
+    </bpmn:startEvent>
+
+    <bpmn:userTask id="Activity_Soumettre_CF" name="Soumettre réclamation">
+      <bpmn:extensionElements><zeebe:userTask /></bpmn:extensionElements>
+      <bpmn:incoming>Flow_Start_To_Soumettre_CF</bpmn:incoming>
+      <bpmn:outgoing>Flow_Soumettre_To_ReceptionSec_CF</bpmn:outgoing>
+    </bpmn:userTask>
+
+    <bpmn:receiveTask id="Activity_Reception_Secretariat_CF" name="Réception Secrétariat">
+      <bpmn:incoming>Flow_Soumettre_To_ReceptionSec_CF</bpmn:incoming>
+      <bpmn:outgoing>Flow_ReceptionSec_To_AnnotationDir_CF</bpmn:outgoing>
+    </bpmn:receiveTask>
+
+    <bpmn:userTask id="Activity_Annotation_Direction_CF" name="Annotation Direction">
+      <bpmn:extensionElements><zeebe:userTask /></bpmn:extensionElements>
+      <bpmn:incoming>Flow_ReceptionSec_To_AnnotationDir_CF</bpmn:incoming>
+      <bpmn:outgoing>Flow_AnnotationDir_To_ReceptionFormalite_CF</bpmn:outgoing>
+    </bpmn:userTask>
+
+    <bpmn:receiveTask id="Activity_Reception_Formalite_CF" name="Réception Secrétariat Formalité">
+      <bpmn:incoming>Flow_AnnotationDir_To_ReceptionFormalite_CF</bpmn:incoming>
+      <bpmn:outgoing>Flow_ReceptionFormalite_To_AnnotationChef_CF</bpmn:outgoing>
+    </bpmn:receiveTask>
+
+    <bpmn:userTask id="Activity_Annotation_Chef_CF" name="Annotation Chef de service">
+      <bpmn:extensionElements><zeebe:userTask /></bpmn:extensionElements>
+      <bpmn:incoming>Flow_ReceptionFormalite_To_AnnotationChef_CF</bpmn:incoming>
+      <bpmn:outgoing>Flow_AnnotationChef_To_Dispatching_CF</bpmn:outgoing>
+    </bpmn:userTask>
+
+    <bpmn:userTask id="Activity_Dispatching_CF" name="Dispatching">
+      <bpmn:extensionElements><zeebe:userTask /></bpmn:extensionElements>
+      <bpmn:incoming>Flow_AnnotationChef_To_Dispatching_CF</bpmn:incoming>
+      <bpmn:outgoing>Flow_Dispatching_To_Traitement_CF</bpmn:outgoing>
+    </bpmn:userTask>
+
+    <bpmn:userTask id="Activity_Traitement_CF" name="Traitement du dossier">
+      <bpmn:extensionElements><zeebe:userTask /></bpmn:extensionElements>
+      <bpmn:incoming>Flow_Dispatching_To_Traitement_CF</bpmn:incoming>
+      <bpmn:outgoing>Flow_Traitement_To_OFATMA_CF</bpmn:outgoing>
+    </bpmn:userTask>
+
+    <bpmn:serviceTask id="Activity_Transmission_OFATMA_CF" name="Transmission OFATMA">
+      <bpmn:incoming>Flow_Traitement_To_OFATMA_CF</bpmn:incoming>
+      <bpmn:outgoing>Flow_OFATMA_To_Gateway_CF</bpmn:outgoing>
+    </bpmn:serviceTask>
+
+    <bpmn:exclusiveGateway id="Gateway_Decision_CF" name="Décision OFATMA">
+      <bpmn:incoming>Flow_OFATMA_To_Gateway_CF</bpmn:incoming>
+      <bpmn:outgoing>Flow_Gateway_To_Cheque_CF</bpmn:outgoing>
+      <bpmn:outgoing>Flow_Gateway_To_Attente_CF</bpmn:outgoing>
+    </bpmn:exclusiveGateway>
+
+    <bpmn:serviceTask id="Activity_Cheque_Recu_CF" name="Chèque reçu">
+      <bpmn:incoming>Flow_Gateway_To_Cheque_CF</bpmn:incoming>
+      <bpmn:outgoing>Flow_Cheque_To_Fusion_CF</bpmn:outgoing>
+    </bpmn:serviceTask>
+
+    <bpmn:userTask id="Activity_Attente_Documents_CF" name="Attente ajout documents">
+      <bpmn:extensionElements><zeebe:userTask /></bpmn:extensionElements>
+      <bpmn:incoming>Flow_Gateway_To_Attente_CF</bpmn:incoming>
+      <bpmn:outgoing>Flow_Attente_To_Fusion_CF</bpmn:outgoing>
+    </bpmn:userTask>
+
+    <bpmn:exclusiveGateway id="Gateway_Fusion_CF">
+      <bpmn:incoming>Flow_Cheque_To_Fusion_CF</bpmn:incoming>
+      <bpmn:incoming>Flow_Attente_To_Fusion_CF</bpmn:incoming>
+      <bpmn:outgoing>Flow_Fusion_To_Notification_CF</bpmn:outgoing>
+    </bpmn:exclusiveGateway>
+
+    <bpmn:serviceTask id="Activity_Notification_CF" name="Notifier pensionné">
+      <bpmn:incoming>Flow_Fusion_To_Notification_CF</bpmn:incoming>
+      <bpmn:outgoing>Flow_Notification_To_End_CF</bpmn:outgoing>
+    </bpmn:serviceTask>
+
+    <bpmn:endEvent id="EndEvent_CF" name="FIN">
+      <bpmn:incoming>Flow_Notification_To_End_CF</bpmn:incoming>
+    </bpmn:endEvent>
+
+    <!-- Sequence Flows -->
+    <bpmn:sequenceFlow id="Flow_Start_To_Soumettre_CF" sourceRef="StartEvent_CF" targetRef="Activity_Soumettre_CF" />
+    <bpmn:sequenceFlow id="Flow_Soumettre_To_ReceptionSec_CF" sourceRef="Activity_Soumettre_CF" targetRef="Activity_Reception_Secretariat_CF" />
+    <bpmn:sequenceFlow id="Flow_ReceptionSec_To_AnnotationDir_CF" sourceRef="Activity_Reception_Secretariat_CF" targetRef="Activity_Annotation_Direction_CF" />
+    <bpmn:sequenceFlow id="Flow_AnnotationDir_To_ReceptionFormalite_CF" sourceRef="Activity_Annotation_Direction_CF" targetRef="Activity_Reception_Formalite_CF" />
+    <bpmn:sequenceFlow id="Flow_ReceptionFormalite_To_AnnotationChef_CF" sourceRef="Activity_Reception_Formalite_CF" targetRef="Activity_Annotation_Chef_CF" />
+    <bpmn:sequenceFlow id="Flow_AnnotationChef_To_Dispatching_CF" sourceRef="Activity_Annotation_Chef_CF" targetRef="Activity_Dispatching_CF" />
+    <bpmn:sequenceFlow id="Flow_Dispatching_To_Traitement_CF" sourceRef="Activity_Dispatching_CF" targetRef="Activity_Traitement_CF" />
+    <bpmn:sequenceFlow id="Flow_Traitement_To_OFATMA_CF" sourceRef="Activity_Traitement_CF" targetRef="Activity_Transmission_OFATMA_CF" />
+    <bpmn:sequenceFlow id="Flow_OFATMA_To_Gateway_CF" sourceRef="Activity_Transmission_OFATMA_CF" targetRef="Gateway_Decision_CF" />
+    <bpmn:sequenceFlow id="Flow_Gateway_To_Cheque_CF" sourceRef="Gateway_Decision_CF" targetRef="Activity_Cheque_Recu_CF" name="chèque reçu" />
+    <bpmn:sequenceFlow id="Flow_Gateway_To_Attente_CF" sourceRef="Gateway_Decision_CF" targetRef="Activity_Attente_Documents_CF" name="attente documents" />
+    <bpmn:sequenceFlow id="Flow_Cheque_To_Fusion_CF" sourceRef="Activity_Cheque_Recu_CF" targetRef="Gateway_Fusion_CF" />
+    <bpmn:sequenceFlow id="Flow_Attente_To_Fusion_CF" sourceRef="Activity_Attente_Documents_CF" targetRef="Gateway_Fusion_CF" />
+    <bpmn:sequenceFlow id="Flow_Fusion_To_Notification_CF" sourceRef="Gateway_Fusion_CF" targetRef="Activity_Notification_CF" />
+    <bpmn:sequenceFlow id="Flow_Notification_To_End_CF" sourceRef="Activity_Notification_CF" targetRef="EndEvent_CF" />
+
+  </bpmn:process>
+
+  <!-- BPMN Diagram -->
+  <bpmndi:BPMNDiagram id="BPMNDiagram_ContributionFuneraire">
+    <bpmndi:BPMNPlane id="BPMNPlane_ContributionFuneraire" bpmnElement="Collaboration_ContributionFuneraire">
+      <!-- Pool -->
+      <bpmndi:BPMNShape id="Participant_ContributionFuneraire_di" bpmnElement="Participant_ContributionFuneraire" isHorizontal="true">
+        <dc:Bounds x="160" y="560" width="1400" height="700" />
+      </bpmndi:BPMNShape>
+
+      <!-- Lanes -->
+      <bpmndi:BPMNShape id="Lane_Pensionne_CF_di" bpmnElement="Lane_Pensionne_CF" isHorizontal="true">
+        <dc:Bounds x="190" y="560" width="1370" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Lane_Secretariat_CF_di" bpmnElement="Lane_Secretariat_CF" isHorizontal="true">
+        <dc:Bounds x="190" y="640" width="1370" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Lane_Direction_CF_di" bpmnElement="Lane_Direction_CF" isHorizontal="true">
+        <dc:Bounds x="190" y="720" width="1370" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Lane_SecretariatFormalite_CF_di" bpmnElement="Lane_SecretariatFormalite_CF" isHorizontal="true">
+        <dc:Bounds x="190" y="800" width="1370" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Lane_ChefService_CF_di" bpmnElement="Lane_ChefService_CF" isHorizontal="true">
+        <dc:Bounds x="190" y="880" width="1370" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Lane_Agent_CF_di" bpmnElement="Lane_Agent_CF" isHorizontal="true">
+        <dc:Bounds x="190" y="960" width="1370" height="80" />
+      </bpmndi:BPMNShape>
+
+      <!-- Formes -->
+      <bpmndi:BPMNShape id="StartEvent_CF_di" bpmnElement="StartEvent_CF">
+        <dc:Bounds x="252" y="582" width="36" height="36" />
+        <bpmndi:BPMNLabel><dc:Bounds x="235" y="625" width="73" height="27" /></bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+
+      <bpmndi:BPMNShape id="Activity_Soumettre_CF_di" bpmnElement="Activity_Soumettre_CF">
+        <dc:Bounds x="380" y="560" width="100" height="80" />
+      </bpmndi:BPMNShape>
+
+      <bpmndi:BPMNShape id="Activity_Reception_Secretariat_CF_di" bpmnElement="Activity_Reception_Secretariat_CF">
+        <dc:Bounds x="380" y="640" width="100" height="80" />
+      </bpmndi:BPMNShape>
+
+      <bpmndi:BPMNShape id="Activity_Annotation_Direction_CF_di" bpmnElement="Activity_Annotation_Direction_CF">
+        <dc:Bounds x="380" y="720" width="100" height="80" />
+      </bpmndi:BPMNShape>
+
+      <bpmndi:BPMNShape id="Activity_Reception_Formalite_CF_di" bpmnElement="Activity_Reception_Formalite_CF">
+        <dc:Bounds x="380" y="800" width="100" height="80" />
+      </bpmndi:BPMNShape>
+
+      <bpmndi:BPMNShape id="Activity_Annotation_Chef_CF_di" bpmnElement="Activity_Annotation_Chef_CF">
+        <dc:Bounds x="380" y="880" width="100" height="80" />
+      </bpmndi:BPMNShape>
+
+      <bpmndi:BPMNShape id="Activity_Dispatching_CF_di" bpmnElement="Activity_Dispatching_CF">
+        <dc:Bounds x="560" y="880" width="100" height="80" />
+      </bpmndi:BPMNShape>
+
+      <bpmndi:BPMNShape id="Activity_Traitement_CF_di" bpmnElement="Activity_Traitement_CF">
+        <dc:Bounds x="560" y="960" width="100" height="80" />
+      </bpmndi:BPMNShape>
+
+      <bpmndi:BPMNShape id="Activity_Transmission_OFATMA_CF_di" bpmnElement="Activity_Transmission_OFATMA_CF">
+        <dc:Bounds x="740" y="960" width="100" height="80" />
+      </bpmndi:BPMNShape>
+
+      <bpmndi:BPMNShape id="Gateway_Decision_CF_di" bpmnElement="Gateway_Decision_CF" isMarkerVisible="true">
+        <dc:Bounds x="920" y="975" width="50" height="50" />
+        <bpmndi:BPMNLabel><dc:Bounds x="923" y="1030" width="43" height="14" /></bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+
+      <bpmndi:BPMNShape id="Activity_Cheque_Recu_CF_di" bpmnElement="Activity_Cheque_Recu_CF">
+        <dc:Bounds x="1060" y="960" width="100" height="80" />
+      </bpmndi:BPMNShape>
+
+      <bpmndi:BPMNShape id="Activity_Attente_Documents_CF_di" bpmnElement="Activity_Attente_Documents_CF">
+        <dc:Bounds x="1060" y="800" width="100" height="80" />
+      </bpmndi:BPMNShape>
+
+      <bpmndi:BPMNShape id="Gateway_Fusion_CF_di" bpmnElement="Gateway_Fusion_CF" isMarkerVisible="true">
+        <dc:Bounds x="920" y="820" width="50" height="50" />
+      </bpmndi:BPMNShape>
+
+      <bpmndi:BPMNShape id="Activity_Notification_CF_di" bpmnElement="Activity_Notification_CF">
+        <dc:Bounds x="1060" y="580" width="100" height="80" />
+      </bpmndi:BPMNShape>
+
+      <bpmndi:BPMNShape id="EndEvent_CF_di" bpmnElement="EndEvent_CF">
+        <dc:Bounds x="1250" y="592" width="36" height="36" />
+        <bpmndi:BPMNLabel><dc:Bounds x="1255" y="635" width="18" height="14" /></bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+
+      <bpmndi:BPMNShape id="TextAnnotation_ContributionFuneraire_di" bpmnElement="TextAnnotation_ContributionFuneraire">
+        <dc:Bounds x="530" y="80" width="220" height="120" />
+      </bpmndi:BPMNShape>
+
+      <!-- Arêtes -->
+      <bpmndi:BPMNEdge id="Flow_Start_To_Soumettre_CF_di" bpmnElement="Flow_Start_To_Soumettre_CF">
+        <di:waypoint x="288" y="600" /><di:waypoint x="380" y="600" />
+      </bpmndi:BPMNEdge>
+
+      <bpmndi:BPMNEdge id="Flow_Soumettre_To_ReceptionSec_CF_di" bpmnElement="Flow_Soumettre_To_ReceptionSec_CF">
+        <di:waypoint x="430" y="640" /><di:waypoint x="430" y="640" />
+      </bpmndi:BPMNEdge>
+
+      <bpmndi:BPMNEdge id="Flow_ReceptionSec_To_AnnotationDir_CF_di" bpmnElement="Flow_ReceptionSec_To_AnnotationDir_CF">
+        <di:waypoint x="430" y="720" /><di:waypoint x="430" y="720" />
+      </bpmndi:BPMNEdge>
+
+      <bpmndi:BPMNEdge id="Flow_AnnotationDir_To_ReceptionFormalite_CF_di" bpmnElement="Flow_AnnotationDir_To_ReceptionFormalite_CF">
+        <di:waypoint x="430" y="800" /><di:waypoint x="430" y="800" />
+      </bpmndi:BPMNEdge>
+
+      <bpmndi:BPMNEdge id="Flow_ReceptionFormalite_To_AnnotationChef_CF_di" bpmnElement="Flow_ReceptionFormalite_To_AnnotationChef_CF">
+        <di:waypoint x="430" y="880" /><di:waypoint x="430" y="880" />
+      </bpmndi:BPMNEdge>
+
+      <bpmndi:BPMNEdge id="Flow_AnnotationChef_To_Dispatching_CF_di" bpmnElement="Flow_AnnotationChef_To_Dispatching_CF">
+        <di:waypoint x="480" y="920" /><di:waypoint x="560" y="920" />
+      </bpmndi:BPMNEdge>
+
+      <bpmndi:BPMNEdge id="Flow_Dispatching_To_Traitement_CF_di" bpmnElement="Flow_Dispatching_To_Traitement_CF">
+        <di:waypoint x="610" y="960" /><di:waypoint x="610" y="960" />
+      </bpmndi:BPMNEdge>
+
+      <bpmndi:BPMNEdge id="Flow_Traitement_To_OFATMA_CF_di" bpmnElement="Flow_Traitement_To_OFATMA_CF">
+        <di:waypoint x="660" y="1000" /><di:waypoint x="740" y="1000" />
+      </bpmndi:BPMNEdge>
+
+      <bpmndi:BPMNEdge id="Flow_OFATMA_To_Gateway_CF_di" bpmnElement="Flow_OFATMA_To_Gateway_CF">
+        <di:waypoint x="840" y="1000" /><di:waypoint x="920" y="1000" />
+      </bpmndi:BPMNEdge>
+
+      <bpmndi:BPMNEdge id="Flow_Gateway_To_Cheque_CF_di" bpmnElement="Flow_Gateway_To_Cheque_CF">
+        <di:waypoint x="970" y="1000" /><di:waypoint x="1060" y="1000" />
+      </bpmndi:BPMNEdge>
+
+      <bpmndi:BPMNEdge id="Flow_Gateway_To_Attente_CF_di" bpmnElement="Flow_Gateway_To_Attente_CF">
+        <di:waypoint x="945" y="975" /><di:waypoint x="945" y="840" /><di:waypoint x="1060" y="840" />
+      </bpmndi:BPMNEdge>
+
+      <bpmndi:BPMNEdge id="Flow_Cheque_To_Fusion_CF_di" bpmnElement="Flow_Cheque_To_Fusion_CF">
+        <di:waypoint x="1110" y="960" /><di:waypoint x="1110" y="845" /><di:waypoint x="970" y="845" />
+      </bpmndi:BPMNEdge>
+
+      <bpmndi:BPMNEdge id="Flow_Attente_To_Fusion_CF_di" bpmnElement="Flow_Attente_To_Fusion_CF">
+        <di:waypoint x="1160" y="840" /><di:waypoint x="970" y="840" />
+      </bpmndi:BPMNEdge>
+
+      <bpmndi:BPMNEdge id="Flow_Fusion_To_Notification_CF_di" bpmnElement="Flow_Fusion_To_Notification_CF">
+        <di:waypoint x="945" y="820" /><di:waypoint x="945" y="620" /><di:waypoint x="1060" y="620" />
+      </bpmndi:BPMNEdge>
+
+      <bpmndi:BPMNEdge id="Flow_Notification_To_End_CF_di" bpmnElement="Flow_Notification_To_End_CF">
+        <di:waypoint x="1160" y="620" /><di:waypoint x="1250" y="620" />
+      </bpmndi:BPMNEdge>
+
+      <bpmndi:BPMNEdge id="Association_ContributionFuneraire_di" bpmnElement="Association_ContributionFuneraire">
+        <di:waypoint x="430" y="560" /><di:waypoint x="530" y="140" />
+      </bpmndi:BPMNEdge>
+    </bpmndi:BPMNPlane>
+  </bpmndi:BPMNDiagram>
+</bpmn:definitions>

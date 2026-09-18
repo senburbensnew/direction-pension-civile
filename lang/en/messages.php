@@ -166,4 +166,9 @@ return [
     'call_on'                => 'Call: :phone',
     'weekdays_short'         => ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'],
     'months_short'           => ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'],
+
+    // Visit counter
+    'visit_counter'          => 'Website visit count',
+    'visits_total'           => 'Visits',
+    'visits_today'           => 'Today',
 ];

@@ -1,0 +1,270 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:zeebe="http://camunda.org/schema/zeebe/1.0" xmlns:di="http://www.omg.org/spec/DD/20100524/DI" xmlns:modeler="http://camunda.org/schema/modeler/1.0" id="Definitions_Reversion" targetNamespace="http://bpmn.io/schema/bpmn" exporter="Camunda Modeler" exporterVersion="5.50.1" modeler:executionPlatform="Camunda Cloud" modeler:executionPlatformVersion="8.9.0">
+  <bpmn:collaboration id="Collaboration_Reversion">
+    <bpmn:participant id="Participant_Reversion" name="Direction de la Pension Civile" processRef="Process_Reversion" />
+    <bpmn:textAnnotation id="TextAnnotation_Reversion">
+      <bpmn:text>Pièces : Acte décès, Certificat non-dissolution mariage, Extrait mariage, Extrait naissance, Matricule fiscal, Carte électorale, 2 photos, PV tuteur, Certificat médical, Copie Moniteur, Carte pension défunt, Souche chèque, Attestation scolaire, Formulaire réversion</bpmn:text>
+    </bpmn:textAnnotation>
+    <bpmn:association id="Association_Reversion" sourceRef="Activity_Soumettre_Reversion" targetRef="TextAnnotation_Reversion" />
+  </bpmn:collaboration>
+  <bpmn:process id="Process_Reversion" isExecutable="true">
+    <bpmn:laneSet id="LaneSet_Reversion">
+      <bpmn:lane id="Lane_SLP" name="SLP (Liquidation)">
+        <bpmn:flowNodeRef>Activity_Traitement_SLP_Reversion</bpmn:flowNodeRef>
+      </bpmn:lane>
+      <bpmn:lane id="Lane_Direction" name="Direction DPC">
+        <bpmn:flowNodeRef>Activity_Annotation_Directeur_Reversion</bpmn:flowNodeRef>
+      </bpmn:lane>
+      <bpmn:lane id="Lane_Courrier_MEF" name="Service Courrier MEF">
+        <bpmn:flowNodeRef>Activity_Numero_Reception_Reversion</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Activity_Transfert_DPC_Reversion</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Activity_Verification_Courrier_Reversion</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Activity_Depot_Courrier_Reversion</bpmn:flowNodeRef>
+      </bpmn:lane>
+      <bpmn:lane id="Lane_Secretariat_DPC" name="Secrétariat DPC">
+        <bpmn:flowNodeRef>Activity_Accuse_Reception_Reversion</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Activity_Verification_Secretariat_Reversion</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Activity_Depot_Secretariat_Reversion</bpmn:flowNodeRef>
+      </bpmn:lane>
+      <bpmn:lane id="Lane_Usager" name="Usager / Institution">
+        <bpmn:flowNodeRef>StartEvent_Reversion</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Activity_Soumettre_Reversion</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Gateway_Choix_Voie_Reversion</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Gateway_Fusion_Voies_Reversion</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>EndEvent_Reversion</bpmn:flowNodeRef>
+      </bpmn:lane>
+    </bpmn:laneSet>
+    <bpmn:startEvent id="StartEvent_Reversion" name="Demande de réversion">
+      <bpmn:outgoing>Flow_Start_To_Soumettre_Reversion</bpmn:outgoing>
+    </bpmn:startEvent>
+    <bpmn:userTask id="Activity_Soumettre_Reversion" name="Soumettre la demande">
+      <bpmn:extensionElements>
+        <zeebe:userTask />
+      </bpmn:extensionElements>
+      <bpmn:incoming>Flow_Start_To_Soumettre_Reversion</bpmn:incoming>
+      <bpmn:outgoing>Flow_Soumettre_To_Gateway_Voie_Reversion</bpmn:outgoing>
+    </bpmn:userTask>
+    <bpmn:sequenceFlow id="Flow_Start_To_Soumettre_Reversion" sourceRef="StartEvent_Reversion" targetRef="Activity_Soumettre_Reversion" />
+    <bpmn:sequenceFlow id="Flow_Soumettre_To_Gateway_Voie_Reversion" sourceRef="Activity_Soumettre_Reversion" targetRef="Gateway_Choix_Voie_Reversion" />
+    <bpmn:sequenceFlow id="Flow_Gateway_To_Secretariat_Reversion" name="via Secrétariat DPC" sourceRef="Gateway_Choix_Voie_Reversion" targetRef="Activity_Depot_Secretariat_Reversion" />
+    <bpmn:sequenceFlow id="Flow_Gateway_To_Courrier_Reversion" name="via Courrier MEF" sourceRef="Gateway_Choix_Voie_Reversion" targetRef="Activity_Depot_Courrier_Reversion" />
+    <bpmn:sequenceFlow id="Flow_Secretariat_To_VerifSec_Reversion" sourceRef="Activity_Depot_Secretariat_Reversion" targetRef="Activity_Verification_Secretariat_Reversion" />
+    <bpmn:sequenceFlow id="Flow_VerifSec_To_Accuse_Reversion" sourceRef="Activity_Verification_Secretariat_Reversion" targetRef="Activity_Accuse_Reception_Reversion" />
+    <bpmn:sequenceFlow id="Flow_Accuse_To_Fusion_Reversion" sourceRef="Activity_Accuse_Reception_Reversion" targetRef="Gateway_Fusion_Voies_Reversion" />
+    <bpmn:sequenceFlow id="Flow_Courrier_To_VerifCour_Reversion" sourceRef="Activity_Depot_Courrier_Reversion" targetRef="Activity_Verification_Courrier_Reversion" />
+    <bpmn:sequenceFlow id="Flow_VerifCour_To_Numero_Reversion" sourceRef="Activity_Verification_Courrier_Reversion" targetRef="Activity_Numero_Reception_Reversion" />
+    <bpmn:sequenceFlow id="Flow_Numero_To_Transfert_Reversion" sourceRef="Activity_Numero_Reception_Reversion" targetRef="Activity_Transfert_DPC_Reversion" />
+    <bpmn:sequenceFlow id="Flow_Transfert_To_Fusion_Reversion" sourceRef="Activity_Transfert_DPC_Reversion" targetRef="Gateway_Fusion_Voies_Reversion" />
+    <bpmn:sequenceFlow id="Flow_Fusion_To_AnnotationDirecteur_Reversion" sourceRef="Gateway_Fusion_Voies_Reversion" targetRef="Activity_Annotation_Directeur_Reversion" />
+    <bpmn:sequenceFlow id="Flow_AnnotationDirecteur_To_SLP_Reversion" sourceRef="Activity_Annotation_Directeur_Reversion" targetRef="Activity_Traitement_SLP_Reversion" />
+    <bpmn:sequenceFlow id="Flow_SLP_To_End_Reversion" sourceRef="Activity_Traitement_SLP_Reversion" targetRef="EndEvent_Reversion" />
+    <bpmn:exclusiveGateway id="Gateway_Choix_Voie_Reversion" name="Voie de dépôt">
+      <bpmn:incoming>Flow_Soumettre_To_Gateway_Voie_Reversion</bpmn:incoming>
+      <bpmn:outgoing>Flow_Gateway_To_Secretariat_Reversion</bpmn:outgoing>
+      <bpmn:outgoing>Flow_Gateway_To_Courrier_Reversion</bpmn:outgoing>
+    </bpmn:exclusiveGateway>
+    <bpmn:serviceTask id="Activity_Accuse_Reception_Reversion" name="Accusé de réception">
+      <bpmn:incoming>Flow_VerifSec_To_Accuse_Reversion</bpmn:incoming>
+      <bpmn:outgoing>Flow_Accuse_To_Fusion_Reversion</bpmn:outgoing>
+    </bpmn:serviceTask>
+    <bpmn:serviceTask id="Activity_Numero_Reception_Reversion" name="Attribution du numéro de réception">
+      <bpmn:incoming>Flow_VerifCour_To_Numero_Reversion</bpmn:incoming>
+      <bpmn:outgoing>Flow_Numero_To_Transfert_Reversion</bpmn:outgoing>
+    </bpmn:serviceTask>
+    <bpmn:serviceTask id="Activity_Transfert_DPC_Reversion" name="Transfert du dossier à la DPC">
+      <bpmn:incoming>Flow_Numero_To_Transfert_Reversion</bpmn:incoming>
+      <bpmn:outgoing>Flow_Transfert_To_Fusion_Reversion</bpmn:outgoing>
+    </bpmn:serviceTask>
+    <bpmn:exclusiveGateway id="Gateway_Fusion_Voies_Reversion">
+      <bpmn:incoming>Flow_Accuse_To_Fusion_Reversion</bpmn:incoming>
+      <bpmn:incoming>Flow_Transfert_To_Fusion_Reversion</bpmn:incoming>
+      <bpmn:outgoing>Flow_Fusion_To_AnnotationDirecteur_Reversion</bpmn:outgoing>
+    </bpmn:exclusiveGateway>
+    <bpmn:userTask id="Activity_Annotation_Directeur_Reversion" name="Annotation Directeur">
+      <bpmn:extensionElements>
+        <zeebe:userTask />
+      </bpmn:extensionElements>
+      <bpmn:incoming>Flow_Fusion_To_AnnotationDirecteur_Reversion</bpmn:incoming>
+      <bpmn:outgoing>Flow_AnnotationDirecteur_To_SLP_Reversion</bpmn:outgoing>
+    </bpmn:userTask>
+    <bpmn:serviceTask id="Activity_Traitement_SLP_Reversion" name="Traitement SLP (Liquidation)">
+      <bpmn:incoming>Flow_AnnotationDirecteur_To_SLP_Reversion</bpmn:incoming>
+      <bpmn:outgoing>Flow_SLP_To_End_Reversion</bpmn:outgoing>
+    </bpmn:serviceTask>
+    <bpmn:endEvent id="EndEvent_Reversion" name="FIN">
+      <bpmn:incoming>Flow_SLP_To_End_Reversion</bpmn:incoming>
+    </bpmn:endEvent>
+    <bpmn:userTask id="Activity_Verification_Secretariat_Reversion" name="Vérification par le secrétariat">
+      <bpmn:extensionElements>
+        <zeebe:userTask />
+      </bpmn:extensionElements>
+      <bpmn:incoming>Flow_Secretariat_To_VerifSec_Reversion</bpmn:incoming>
+      <bpmn:outgoing>Flow_VerifSec_To_Accuse_Reversion</bpmn:outgoing>
+    </bpmn:userTask>
+    <bpmn:receiveTask id="Activity_Depot_Secretariat_Reversion" name="Dépôt au secrétariat DPC">
+      <bpmn:incoming>Flow_Gateway_To_Secretariat_Reversion</bpmn:incoming>
+      <bpmn:outgoing>Flow_Secretariat_To_VerifSec_Reversion</bpmn:outgoing>
+    </bpmn:receiveTask>
+    <bpmn:userTask id="Activity_Verification_Courrier_Reversion" name="Vérification par l&#39;agent">
+      <bpmn:extensionElements>
+        <zeebe:userTask />
+      </bpmn:extensionElements>
+      <bpmn:incoming>Flow_Courrier_To_VerifCour_Reversion</bpmn:incoming>
+      <bpmn:outgoing>Flow_VerifCour_To_Numero_Reversion</bpmn:outgoing>
+    </bpmn:userTask>
+    <bpmn:receiveTask id="Activity_Depot_Courrier_Reversion" name="Dépôt au Service courrier MEF">
+      <bpmn:incoming>Flow_Gateway_To_Courrier_Reversion</bpmn:incoming>
+      <bpmn:outgoing>Flow_Courrier_To_VerifCour_Reversion</bpmn:outgoing>
+    </bpmn:receiveTask>
+  </bpmn:process>
+  <bpmndi:BPMNDiagram id="BPMNDiagram_Reversion">
+    <bpmndi:BPMNPlane id="BPMNPlane_Reversion" bpmnElement="Collaboration_Reversion">
+      <bpmndi:BPMNShape id="Participant_Reversion_di" bpmnElement="Participant_Reversion" isHorizontal="true">
+        <dc:Bounds x="160" y="280" width="2180" height="700" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Lane_SLP_di" bpmnElement="Lane_SLP" isHorizontal="true">
+        <dc:Bounds x="190" y="660" width="2150" height="100" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Lane_Direction_di" bpmnElement="Lane_Direction" isHorizontal="true">
+        <dc:Bounds x="190" y="580" width="2150" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Lane_Courrier_MEF_di" bpmnElement="Lane_Courrier_MEF" isHorizontal="true">
+        <dc:Bounds x="190" y="480" width="2150" height="100" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Lane_Secretariat_DPC_di" bpmnElement="Lane_Secretariat_DPC" isHorizontal="true">
+        <dc:Bounds x="190" y="380" width="2150" height="100" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Lane_Usager_di" bpmnElement="Lane_Usager" isHorizontal="true">
+        <dc:Bounds x="190" y="280" width="2150" height="100" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="StartEvent_Reversion_di" bpmnElement="StartEvent_Reversion">
+        <dc:Bounds x="252" y="312" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="240" y="355" width="63" height="27" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_Soumettre_Reversion_di" bpmnElement="Activity_Soumettre_Reversion">
+        <dc:Bounds x="380" y="290" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Gateway_Choix_Voie_Reversion_di" bpmnElement="Gateway_Choix_Voie_Reversion" isMarkerVisible="true">
+        <dc:Bounds x="615" y="305" width="50" height="50" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="596" y="293" width="68" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_Accuse_Reception_Reversion_di" bpmnElement="Activity_Accuse_Reception_Reversion">
+        <dc:Bounds x="1120" y="390" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_Numero_Reception_Reversion_di" bpmnElement="Activity_Numero_Reception_Reversion">
+        <dc:Bounds x="1120" y="490" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_Transfert_DPC_Reversion_di" bpmnElement="Activity_Transfert_DPC_Reversion">
+        <dc:Bounds x="1300" y="490" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Gateway_Fusion_Voies_Reversion_di" bpmnElement="Gateway_Fusion_Voies_Reversion" isMarkerVisible="true">
+        <dc:Bounds x="1480" y="305" width="50" height="50" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_Annotation_Directeur_Reversion_di" bpmnElement="Activity_Annotation_Directeur_Reversion">
+        <dc:Bounds x="1660" y="590" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_Traitement_SLP_Reversion_di" bpmnElement="Activity_Traitement_SLP_Reversion">
+        <dc:Bounds x="1840" y="670" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="EndEvent_Reversion_di" bpmnElement="EndEvent_Reversion">
+        <dc:Bounds x="2020" y="312" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="2025" y="355" width="18" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_Verification_Secretariat_Reversion_di" bpmnElement="Activity_Verification_Secretariat_Reversion">
+        <dc:Bounds x="945" y="390" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_Depot_Secretariat_Reversion_di" bpmnElement="Activity_Depot_Secretariat_Reversion">
+        <dc:Bounds x="750" y="390" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_Verification_Courrier_Reversion_di" bpmnElement="Activity_Verification_Courrier_Reversion">
+        <dc:Bounds x="750" y="490" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_Depot_Courrier_Reversion_di" bpmnElement="Activity_Depot_Courrier_Reversion">
+        <dc:Bounds x="590" y="490" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="Flow_Start_To_Soumettre_Reversion_di" bpmnElement="Flow_Start_To_Soumettre_Reversion">
+        <di:waypoint x="288" y="330" />
+        <di:waypoint x="380" y="330" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_Soumettre_To_Gateway_Voie_Reversion_di" bpmnElement="Flow_Soumettre_To_Gateway_Voie_Reversion">
+        <di:waypoint x="480" y="330" />
+        <di:waypoint x="615" y="330" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_Gateway_To_Secretariat_Reversion_di" bpmnElement="Flow_Gateway_To_Secretariat_Reversion">
+        <di:waypoint x="665" y="330" />
+        <di:waypoint x="800" y="330" />
+        <di:waypoint x="800" y="390" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="704" y="286" width="71" height="27" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_Gateway_To_Courrier_Reversion_di" bpmnElement="Flow_Gateway_To_Courrier_Reversion">
+        <di:waypoint x="640" y="355" />
+        <di:waypoint x="640" y="490" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="613" y="413" width="84" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_Secretariat_To_VerifSec_Reversion_di" bpmnElement="Flow_Secretariat_To_VerifSec_Reversion">
+        <di:waypoint x="850" y="430" />
+        <di:waypoint x="945" y="430" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_VerifSec_To_Accuse_Reversion_di" bpmnElement="Flow_VerifSec_To_Accuse_Reversion">
+        <di:waypoint x="1045" y="430" />
+        <di:waypoint x="1120" y="430" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_Accuse_To_Fusion_Reversion_di" bpmnElement="Flow_Accuse_To_Fusion_Reversion">
+        <di:waypoint x="1220" y="430" />
+        <di:waypoint x="1330" y="430" />
+        <di:waypoint x="1330" y="330" />
+        <di:waypoint x="1480" y="330" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_Courrier_To_VerifCour_Reversion_di" bpmnElement="Flow_Courrier_To_VerifCour_Reversion">
+        <di:waypoint x="690" y="530" />
+        <di:waypoint x="750" y="530" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_VerifCour_To_Numero_Reversion_di" bpmnElement="Flow_VerifCour_To_Numero_Reversion">
+        <di:waypoint x="850" y="530" />
+        <di:waypoint x="1120" y="530" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_Numero_To_Transfert_Reversion_di" bpmnElement="Flow_Numero_To_Transfert_Reversion">
+        <di:waypoint x="1220" y="530" />
+        <di:waypoint x="1300" y="530" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_Transfert_To_Fusion_Reversion_di" bpmnElement="Flow_Transfert_To_Fusion_Reversion">
+        <di:waypoint x="1400" y="530" />
+        <di:waypoint x="1505" y="530" />
+        <di:waypoint x="1505" y="355" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_Fusion_To_AnnotationDirecteur_Reversion_di" bpmnElement="Flow_Fusion_To_AnnotationDirecteur_Reversion">
+        <di:waypoint x="1530" y="330" />
+        <di:waypoint x="1590" y="330" />
+        <di:waypoint x="1590" y="630" />
+        <di:waypoint x="1660" y="630" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_AnnotationDirecteur_To_SLP_Reversion_di" bpmnElement="Flow_AnnotationDirecteur_To_SLP_Reversion">
+        <di:waypoint x="1760" y="630" />
+        <di:waypoint x="1890" y="630" />
+        <di:waypoint x="1890" y="670" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_SLP_To_End_Reversion_di" bpmnElement="Flow_SLP_To_End_Reversion">
+        <di:waypoint x="1940" y="710" />
+        <di:waypoint x="1940" y="330" />
+        <di:waypoint x="2020" y="330" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Association_Reversion_di" bpmnElement="Association_Reversion">
+        <di:waypoint x="440" y="290" />
+        <di:waypoint x="510" y="150" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNShape id="TextAnnotation_Reversion_di" bpmnElement="TextAnnotation_Reversion">
+        <dc:Bounds x="510" y="80" width="280" height="140" />
+      </bpmndi:BPMNShape>
+    </bpmndi:BPMNPlane>
+  </bpmndi:BPMNDiagram>
+</bpmn:definitions>

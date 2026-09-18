@@ -162,6 +162,14 @@
     <div class="flex flex-col md:flex-row justify-between items-center space-y-4 md:space-y-0">
         <div class="w-full md:w-1/3 text-center md:text-left">
             <p class="text-sm">&copy;{{ date('Y') }} {{ __('messages.direction') }}. Tous droits réservés.</p>
+            <p class="text-sm mt-2 text-white/80" aria-label="{{ __('messages.visit_counter') }}">
+                <i class="fas fa-eye mr-1 text-orange-400" aria-hidden="true"></i>
+                {{ __('messages.visits_total') }} :
+                <span class="font-semibold text-white">{{ number_format($totalVisits, 0, ',', ' ') }}</span>
+                <span class="mx-1.5 text-white/40">·</span>
+                {{ __('messages.visits_today') }} :
+                <span class="font-semibold text-white">{{ number_format($todayVisits, 0, ',', ' ') }}</span>
+            </p>
         </div>
         <div class="w-full md:w-1/3 text-center">
             <p class="text-sm">        <a href="{{ route('privacy.policy') }}" class="text-sm md:text-base text-white hover:text-orange-500 transition text-center md:text-right">

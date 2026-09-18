@@ -1,0 +1,245 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL"
+                  xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI"
+                  xmlns:dc="http://www.omg.org/spec/DD/20100524/DC"
+                  xmlns:zeebe="http://camunda.org/schema/zeebe/1.0"
+                  xmlns:di="http://www.omg.org/spec/DD/20100524/DI"
+                  xmlns:modeler="http://camunda.org/schema/modeler/1.0"
+                  id="Definitions_ArretContrat"
+                  targetNamespace="http://bpmn.io/schema/bpmn"
+                  exporter="Camunda Modeler"
+                  exporterVersion="5.50.1"
+                  modeler:executionPlatform="Camunda Cloud"
+                  modeler:executionPlatformVersion="8.9.0">
+  <bpmn:collaboration id="Collaboration_ArretContrat">
+    <bpmn:participant id="Participant_ArretContrat" name="Direction de la Pension Civile" processRef="Process_ArretContrat" />
+    <bpmn:textAnnotation id="TextAnnotation_ArretContrat">
+      <bpmn:text>Pièces : Carte de pension, Matricule fiscal, CINU, Copie du contrat, Formulaire de cessation de pension, Dernier chèque retiré</bpmn:text>
+    </bpmn:textAnnotation>
+    <bpmn:association id="Association_ArretContrat" sourceRef="Activity_Soumettre_ArretContrat" targetRef="TextAnnotation_ArretContrat" />
+  </bpmn:collaboration>
+
+  <bpmn:process id="Process_ArretContrat" isExecutable="true">
+    <bpmn:laneSet id="LaneSet_ArretContrat">
+      <bpmn:lane id="Lane_Pensionne" name="Pensionné">
+        <bpmn:flowNodeRef>StartEvent_ArretContrat</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Activity_Soumettre_ArretContrat</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Activity_Notification_ArretContrat</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>EndEvent_ArretContrat</bpmn:flowNodeRef>
+      </bpmn:lane>
+      <bpmn:lane id="Lane_Secretariat" name="Secrétariat">
+        <bpmn:flowNodeRef>Activity_Reception_Secretariat_ArretContrat</bpmn:flowNodeRef>
+      </bpmn:lane>
+      <bpmn:lane id="Lane_Direction" name="Direction">
+        <bpmn:flowNodeRef>Activity_Annotation_Direction_ArretContrat</bpmn:flowNodeRef>
+      </bpmn:lane>
+      <bpmn:lane id="Lane_SecretariatCompta" name="Secrétariat Comptabilité">
+        <bpmn:flowNodeRef>Activity_Reception_Compta_ArretContrat</bpmn:flowNodeRef>
+      </bpmn:lane>
+      <bpmn:lane id="Lane_ChefService" name="Chef de service">
+        <bpmn:flowNodeRef>Activity_Annotation_Chef_ArretContrat</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Activity_Dispatching_ArretContrat</bpmn:flowNodeRef>
+      </bpmn:lane>
+      <bpmn:lane id="Lane_Agent" name="Agent">
+        <bpmn:flowNodeRef>Activity_Traitement_ArretContrat</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Activity_Pension_Cesse_ArretContrat</bpmn:flowNodeRef>
+      </bpmn:lane>
+    </bpmn:laneSet>
+
+    <bpmn:startEvent id="StartEvent_ArretContrat" name="Soumission">
+      <bpmn:outgoing>Flow_Start_To_Soumettre_ArretContrat</bpmn:outgoing>
+    </bpmn:startEvent>
+
+    <bpmn:userTask id="Activity_Soumettre_ArretContrat" name="Soumettre notification">
+      <bpmn:extensionElements><zeebe:userTask /></bpmn:extensionElements>
+      <bpmn:incoming>Flow_Start_To_Soumettre_ArretContrat</bpmn:incoming>
+      <bpmn:outgoing>Flow_Soumettre_To_ReceptionSec_ArretContrat</bpmn:outgoing>
+    </bpmn:userTask>
+
+    <bpmn:receiveTask id="Activity_Reception_Secretariat_ArretContrat" name="Réception Secrétariat">
+      <bpmn:incoming>Flow_Soumettre_To_ReceptionSec_ArretContrat</bpmn:incoming>
+      <bpmn:outgoing>Flow_ReceptionSec_To_AnnotationDir_ArretContrat</bpmn:outgoing>
+    </bpmn:receiveTask>
+
+    <bpmn:userTask id="Activity_Annotation_Direction_ArretContrat" name="Annotation Direction">
+      <bpmn:extensionElements><zeebe:userTask /></bpmn:extensionElements>
+      <bpmn:incoming>Flow_ReceptionSec_To_AnnotationDir_ArretContrat</bpmn:incoming>
+      <bpmn:outgoing>Flow_AnnotationDir_To_ReceptionCompta_ArretContrat</bpmn:outgoing>
+    </bpmn:userTask>
+
+    <bpmn:receiveTask id="Activity_Reception_Compta_ArretContrat" name="Réception Secrétariat Comptabilité">
+      <bpmn:incoming>Flow_AnnotationDir_To_ReceptionCompta_ArretContrat</bpmn:incoming>
+      <bpmn:outgoing>Flow_ReceptionCompta_To_AnnotationChef_ArretContrat</bpmn:outgoing>
+    </bpmn:receiveTask>
+
+    <bpmn:userTask id="Activity_Annotation_Chef_ArretContrat" name="Annotation Chef de service">
+      <bpmn:extensionElements><zeebe:userTask /></bpmn:extensionElements>
+      <bpmn:incoming>Flow_ReceptionCompta_To_AnnotationChef_ArretContrat</bpmn:incoming>
+      <bpmn:outgoing>Flow_AnnotationChef_To_Dispatching_ArretContrat</bpmn:outgoing>
+    </bpmn:userTask>
+
+    <bpmn:userTask id="Activity_Dispatching_ArretContrat" name="Dispatching">
+      <bpmn:extensionElements><zeebe:userTask /></bpmn:extensionElements>
+      <bpmn:incoming>Flow_AnnotationChef_To_Dispatching_ArretContrat</bpmn:incoming>
+      <bpmn:outgoing>Flow_Dispatching_To_Traitement_ArretContrat</bpmn:outgoing>
+    </bpmn:userTask>
+
+    <bpmn:userTask id="Activity_Traitement_ArretContrat" name="Traitement du dossier">
+      <bpmn:extensionElements><zeebe:userTask /></bpmn:extensionElements>
+      <bpmn:incoming>Flow_Dispatching_To_Traitement_ArretContrat</bpmn:incoming>
+      <bpmn:outgoing>Flow_Traitement_To_PensionCesse_ArretContrat</bpmn:outgoing>
+    </bpmn:userTask>
+
+    <bpmn:serviceTask id="Activity_Pension_Cesse_ArretContrat" name="Pension cesse">
+      <bpmn:incoming>Flow_Traitement_To_PensionCesse_ArretContrat</bpmn:incoming>
+      <bpmn:outgoing>Flow_PensionCesse_To_Notification_ArretContrat</bpmn:outgoing>
+    </bpmn:serviceTask>
+
+    <bpmn:serviceTask id="Activity_Notification_ArretContrat" name="Notifier pensionné">
+      <bpmn:incoming>Flow_PensionCesse_To_Notification_ArretContrat</bpmn:incoming>
+      <bpmn:outgoing>Flow_Notification_To_End_ArretContrat</bpmn:outgoing>
+    </bpmn:serviceTask>
+
+    <bpmn:endEvent id="EndEvent_ArretContrat" name="FIN">
+      <bpmn:incoming>Flow_Notification_To_End_ArretContrat</bpmn:incoming>
+    </bpmn:endEvent>
+
+    <bpmn:sequenceFlow id="Flow_Start_To_Soumettre_ArretContrat" sourceRef="StartEvent_ArretContrat" targetRef="Activity_Soumettre_ArretContrat" />
+    <bpmn:sequenceFlow id="Flow_Soumettre_To_ReceptionSec_ArretContrat" sourceRef="Activity_Soumettre_ArretContrat" targetRef="Activity_Reception_Secretariat_ArretContrat" />
+    <bpmn:sequenceFlow id="Flow_ReceptionSec_To_AnnotationDir_ArretContrat" sourceRef="Activity_Reception_Secretariat_ArretContrat" targetRef="Activity_Annotation_Direction_ArretContrat" />
+    <bpmn:sequenceFlow id="Flow_AnnotationDir_To_ReceptionCompta_ArretContrat" sourceRef="Activity_Annotation_Direction_ArretContrat" targetRef="Activity_Reception_Compta_ArretContrat" />
+    <bpmn:sequenceFlow id="Flow_ReceptionCompta_To_AnnotationChef_ArretContrat" sourceRef="Activity_Reception_Compta_ArretContrat" targetRef="Activity_Annotation_Chef_ArretContrat" />
+    <bpmn:sequenceFlow id="Flow_AnnotationChef_To_Dispatching_ArretContrat" sourceRef="Activity_Annotation_Chef_ArretContrat" targetRef="Activity_Dispatching_ArretContrat" />
+    <bpmn:sequenceFlow id="Flow_Dispatching_To_Traitement_ArretContrat" sourceRef="Activity_Dispatching_ArretContrat" targetRef="Activity_Traitement_ArretContrat" />
+    <bpmn:sequenceFlow id="Flow_Traitement_To_PensionCesse_ArretContrat" sourceRef="Activity_Traitement_ArretContrat" targetRef="Activity_Pension_Cesse_ArretContrat" />
+    <bpmn:sequenceFlow id="Flow_PensionCesse_To_Notification_ArretContrat" sourceRef="Activity_Pension_Cesse_ArretContrat" targetRef="Activity_Notification_ArretContrat" />
+    <bpmn:sequenceFlow id="Flow_Notification_To_End_ArretContrat" sourceRef="Activity_Notification_ArretContrat" targetRef="EndEvent_ArretContrat" />
+
+  </bpmn:process>
+
+  <!-- BPMN Diagram -->
+  <bpmndi:BPMNDiagram id="BPMNDiagram_ArretContrat">
+    <bpmndi:BPMNPlane id="BPMNPlane_ArretContrat" bpmnElement="Collaboration_ArretContrat">
+      <!-- Pool -->
+      <bpmndi:BPMNShape id="Participant_ArretContrat_di" bpmnElement="Participant_ArretContrat" isHorizontal="true">
+        <dc:Bounds x="160" y="560" width="1400" height="700" />
+      </bpmndi:BPMNShape>
+
+      <!-- Lanes -->
+      <bpmndi:BPMNShape id="Lane_Pensionne_di_ArretContrat" bpmnElement="Lane_Pensionne" isHorizontal="true">
+        <dc:Bounds x="190" y="560" width="1370" height="100" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Lane_Secretariat_di_ArretContrat" bpmnElement="Lane_Secretariat" isHorizontal="true">
+        <dc:Bounds x="190" y="660" width="1370" height="100" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Lane_Direction_di_ArretContrat" bpmnElement="Lane_Direction" isHorizontal="true">
+        <dc:Bounds x="190" y="760" width="1370" height="100" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Lane_SecretariatCompta_di_ArretContrat" bpmnElement="Lane_SecretariatCompta" isHorizontal="true">
+        <dc:Bounds x="190" y="860" width="1370" height="100" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Lane_ChefService_di_ArretContrat" bpmnElement="Lane_ChefService" isHorizontal="true">
+        <dc:Bounds x="190" y="960" width="1370" height="100" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Lane_Agent_di_ArretContrat" bpmnElement="Lane_Agent" isHorizontal="true">
+        <dc:Bounds x="190" y="1060" width="1370" height="100" />
+      </bpmndi:BPMNShape>
+
+      <!-- Formes -->
+      <bpmndi:BPMNShape id="StartEvent_ArretContrat_di" bpmnElement="StartEvent_ArretContrat">
+        <dc:Bounds x="252" y="592" width="36" height="36" />
+        <bpmndi:BPMNLabel><dc:Bounds x="235" y="635" width="73" height="27" /></bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+
+      <bpmndi:BPMNShape id="Activity_Soumettre_ArretContrat_di" bpmnElement="Activity_Soumettre_ArretContrat">
+        <dc:Bounds x="380" y="570" width="100" height="80" />
+      </bpmndi:BPMNShape>
+
+      <bpmndi:BPMNShape id="Activity_Reception_Secretariat_ArretContrat_di" bpmnElement="Activity_Reception_Secretariat_ArretContrat">
+        <dc:Bounds x="380" y="670" width="100" height="80" />
+      </bpmndi:BPMNShape>
+
+      <bpmndi:BPMNShape id="Activity_Annotation_Direction_ArretContrat_di" bpmnElement="Activity_Annotation_Direction_ArretContrat">
+        <dc:Bounds x="380" y="770" width="100" height="80" />
+      </bpmndi:BPMNShape>
+
+      <bpmndi:BPMNShape id="Activity_Reception_Compta_ArretContrat_di" bpmnElement="Activity_Reception_Compta_ArretContrat">
+        <dc:Bounds x="380" y="870" width="100" height="80" />
+      </bpmndi:BPMNShape>
+
+      <bpmndi:BPMNShape id="Activity_Annotation_Chef_ArretContrat_di" bpmnElement="Activity_Annotation_Chef_ArretContrat">
+        <dc:Bounds x="380" y="970" width="100" height="80" />
+      </bpmndi:BPMNShape>
+
+      <bpmndi:BPMNShape id="Activity_Dispatching_ArretContrat_di" bpmnElement="Activity_Dispatching_ArretContrat">
+        <dc:Bounds x="560" y="970" width="100" height="80" />
+      </bpmndi:BPMNShape>
+
+      <bpmndi:BPMNShape id="Activity_Traitement_ArretContrat_di" bpmnElement="Activity_Traitement_ArretContrat">
+        <dc:Bounds x="560" y="1070" width="100" height="80" />
+      </bpmndi:BPMNShape>
+
+      <bpmndi:BPMNShape id="Activity_Pension_Cesse_ArretContrat_di" bpmnElement="Activity_Pension_Cesse_ArretContrat">
+        <dc:Bounds x="740" y="1070" width="100" height="80" />
+      </bpmndi:BPMNShape>
+
+      <bpmndi:BPMNShape id="Activity_Notification_ArretContrat_di" bpmnElement="Activity_Notification_ArretContrat">
+        <dc:Bounds x="920" y="570" width="100" height="80" />
+      </bpmndi:BPMNShape>
+
+      <bpmndi:BPMNShape id="EndEvent_ArretContrat_di" bpmnElement="EndEvent_ArretContrat">
+        <dc:Bounds x="1100" y="592" width="36" height="36" />
+        <bpmndi:BPMNLabel><dc:Bounds x="1105" y="635" width="18" height="14" /></bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+
+      <bpmndi:BPMNShape id="TextAnnotation_ArretContrat_di" bpmnElement="TextAnnotation_ArretContrat">
+        <dc:Bounds x="530" y="80" width="220" height="120" />
+      </bpmndi:BPMNShape>
+
+      <!-- Arêtes -->
+      <bpmndi:BPMNEdge id="Flow_Start_To_Soumettre_ArretContrat_di" bpmnElement="Flow_Start_To_Soumettre_ArretContrat">
+        <di:waypoint x="288" y="610" /><di:waypoint x="380" y="610" />
+      </bpmndi:BPMNEdge>
+
+      <bpmndi:BPMNEdge id="Flow_Soumettre_To_ReceptionSec_ArretContrat_di" bpmnElement="Flow_Soumettre_To_ReceptionSec_ArretContrat">
+        <di:waypoint x="430" y="650" /><di:waypoint x="430" y="670" />
+      </bpmndi:BPMNEdge>
+
+      <bpmndi:BPMNEdge id="Flow_ReceptionSec_To_AnnotationDir_ArretContrat_di" bpmnElement="Flow_ReceptionSec_To_AnnotationDir_ArretContrat">
+        <di:waypoint x="430" y="750" /><di:waypoint x="430" y="770" />
+      </bpmndi:BPMNEdge>
+
+      <bpmndi:BPMNEdge id="Flow_AnnotationDir_To_ReceptionCompta_ArretContrat_di" bpmnElement="Flow_AnnotationDir_To_ReceptionCompta_ArretContrat">
+        <di:waypoint x="430" y="850" /><di:waypoint x="430" y="870" />
+      </bpmndi:BPMNEdge>
+
+      <bpmndi:BPMNEdge id="Flow_ReceptionCompta_To_AnnotationChef_ArretContrat_di" bpmnElement="Flow_ReceptionCompta_To_AnnotationChef_ArretContrat">
+        <di:waypoint x="430" y="950" /><di:waypoint x="430" y="970" />
+      </bpmndi:BPMNEdge>
+
+      <bpmndi:BPMNEdge id="Flow_AnnotationChef_To_Dispatching_ArretContrat_di" bpmnElement="Flow_AnnotationChef_To_Dispatching_ArretContrat">
+        <di:waypoint x="480" y="1010" /><di:waypoint x="560" y="1010" />
+      </bpmndi:BPMNEdge>
+
+      <bpmndi:BPMNEdge id="Flow_Dispatching_To_Traitement_ArretContrat_di" bpmnElement="Flow_Dispatching_To_Traitement_ArretContrat">
+        <di:waypoint x="610" y="1050" /><di:waypoint x="610" y="1070" />
+      </bpmndi:BPMNEdge>
+
+      <bpmndi:BPMNEdge id="Flow_Traitement_To_PensionCesse_ArretContrat_di" bpmnElement="Flow_Traitement_To_PensionCesse_ArretContrat">
+        <di:waypoint x="660" y="1110" /><di:waypoint x="740" y="1110" />
+      </bpmndi:BPMNEdge>
+
+      <bpmndi:BPMNEdge id="Flow_PensionCesse_To_Notification_ArretContrat_di" bpmnElement="Flow_PensionCesse_To_Notification_ArretContrat">
+        <di:waypoint x="790" y="1070" /><di:waypoint x="790" y="610" /><di:waypoint x="920" y="610" />
+      </bpmndi:BPMNEdge>
+
+      <bpmndi:BPMNEdge id="Flow_Notification_To_End_ArretContrat_di" bpmnElement="Flow_Notification_To_End_ArretContrat">
+        <di:waypoint x="1020" y="610" /><di:waypoint x="1100" y="610" />
+      </bpmndi:BPMNEdge>
+
+      <bpmndi:BPMNEdge id="Association_ArretContrat_di" bpmnElement="Association_ArretContrat">
+        <di:waypoint x="430" y="570" /><di:waypoint x="530" y="140" />
+      </bpmndi:BPMNEdge>
+    </bpmndi:BPMNPlane>
+  </bpmndi:BPMNDiagram>
+</bpmn:definitions>

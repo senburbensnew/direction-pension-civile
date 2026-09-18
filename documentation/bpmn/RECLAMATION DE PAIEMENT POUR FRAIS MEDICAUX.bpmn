@@ -1,0 +1,314 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL"
+                  xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI"
+                  xmlns:dc="http://www.omg.org/spec/DD/20100524/DC"
+                  xmlns:zeebe="http://camunda.org/schema/zeebe/1.0"
+                  xmlns:di="http://www.omg.org/spec/DD/20100524/DI"
+                  xmlns:modeler="http://camunda.org/schema/modeler/1.0"
+                  id="Definitions_FraisMedicaux"
+                  targetNamespace="http://bpmn.io/schema/bpmn"
+                  exporter="Camunda Modeler"
+                  exporterVersion="5.50.1"
+                  modeler:executionPlatform="Camunda Cloud"
+                  modeler:executionPlatformVersion="8.9.0">
+  <bpmn:collaboration id="Collaboration_FraisMedicaux">
+    <bpmn:participant id="Participant_FraisMedicaux" name="Direction de la Pension Civile" processRef="Process_FraisMedicaux" />
+    <bpmn:textAnnotation id="TextAnnotation_FraisMedicaux">
+      <bpmn:text>Pièces : 1 photo, Carte pension, Matricule fiscal, CINU, Formulaire remboursement frais médicaux, Pièces justificatives</bpmn:text>
+    </bpmn:textAnnotation>
+    <bpmn:association id="Association_FraisMedicaux" sourceRef="Activity_Soumettre_FM" targetRef="TextAnnotation_FraisMedicaux" />
+  </bpmn:collaboration>
+
+  <bpmn:process id="Process_FraisMedicaux" isExecutable="true">
+    <bpmn:laneSet id="LaneSet_FM">
+      <bpmn:lane id="Lane_Pensionne_FM" name="Pensionné">
+        <bpmn:flowNodeRef>StartEvent_FM</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Activity_Soumettre_FM</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Activity_Notification_FM</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>EndEvent_FM</bpmn:flowNodeRef>
+      </bpmn:lane>
+      <bpmn:lane id="Lane_Secretariat_FM" name="Secrétariat">
+        <bpmn:flowNodeRef>Activity_Reception_Secretariat_FM</bpmn:flowNodeRef>
+      </bpmn:lane>
+      <bpmn:lane id="Lane_Direction_FM" name="Direction">
+        <bpmn:flowNodeRef>Activity_Annotation_Direction_FM</bpmn:flowNodeRef>
+      </bpmn:lane>
+      <bpmn:lane id="Lane_SecretariatFormalite_FM" name="Secrétariat Formalité">
+        <bpmn:flowNodeRef>Activity_Reception_Formalite_FM</bpmn:flowNodeRef>
+      </bpmn:lane>
+      <bpmn:lane id="Lane_ChefService_FM" name="Chef de service">
+        <bpmn:flowNodeRef>Activity_Annotation_Chef_FM</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Activity_Dispatching_FM</bpmn:flowNodeRef>
+      </bpmn:lane>
+      <bpmn:lane id="Lane_Agent_FM" name="Agent">
+        <bpmn:flowNodeRef>Activity_Traitement_FM</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Activity_Transmission_OFATMA_FM</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Activity_Cheque_Recu_FM</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Activity_Attente_Documents_FM</bpmn:flowNodeRef>
+      </bpmn:lane>
+    </bpmn:laneSet>
+
+    <bpmn:startEvent id="StartEvent_FM" name="Soumission">
+      <bpmn:outgoing>Flow_Start_To_Soumettre_FM</bpmn:outgoing>
+    </bpmn:startEvent>
+
+    <bpmn:userTask id="Activity_Soumettre_FM" name="Soumettre réclamation">
+      <bpmn:extensionElements><zeebe:userTask /></bpmn:extensionElements>
+      <bpmn:incoming>Flow_Start_To_Soumettre_FM</bpmn:incoming>
+      <bpmn:outgoing>Flow_Soumettre_To_ReceptionSec_FM</bpmn:outgoing>
+    </bpmn:userTask>
+
+    <bpmn:receiveTask id="Activity_Reception_Secretariat_FM" name="Réception Secrétariat">
+      <bpmn:incoming>Flow_Soumettre_To_ReceptionSec_FM</bpmn:incoming>
+      <bpmn:outgoing>Flow_ReceptionSec_To_AnnotationDir_FM</bpmn:outgoing>
+    </bpmn:receiveTask>
+
+    <bpmn:userTask id="Activity_Annotation_Direction_FM" name="Annotation Direction">
+      <bpmn:extensionElements><zeebe:userTask /></bpmn:extensionElements>
+      <bpmn:incoming>Flow_ReceptionSec_To_AnnotationDir_FM</bpmn:incoming>
+      <bpmn:outgoing>Flow_AnnotationDir_To_ReceptionFormalite_FM</bpmn:outgoing>
+    </bpmn:userTask>
+
+    <bpmn:receiveTask id="Activity_Reception_Formalite_FM" name="Réception Secrétariat Formalité">
+      <bpmn:incoming>Flow_AnnotationDir_To_ReceptionFormalite_FM</bpmn:incoming>
+      <bpmn:outgoing>Flow_ReceptionFormalite_To_AnnotationChef_FM</bpmn:outgoing>
+    </bpmn:receiveTask>
+
+    <bpmn:userTask id="Activity_Annotation_Chef_FM" name="Annotation Chef de service">
+      <bpmn:extensionElements><zeebe:userTask /></bpmn:extensionElements>
+      <bpmn:incoming>Flow_ReceptionFormalite_To_AnnotationChef_FM</bpmn:incoming>
+      <bpmn:outgoing>Flow_AnnotationChef_To_Dispatching_FM</bpmn:outgoing>
+    </bpmn:userTask>
+
+    <bpmn:userTask id="Activity_Dispatching_FM" name="Dispatching">
+      <bpmn:extensionElements><zeebe:userTask /></bpmn:extensionElements>
+      <bpmn:incoming>Flow_AnnotationChef_To_Dispatching_FM</bpmn:incoming>
+      <bpmn:outgoing>Flow_Dispatching_To_Traitement_FM</bpmn:outgoing>
+    </bpmn:userTask>
+
+    <bpmn:userTask id="Activity_Traitement_FM" name="Traitement du dossier">
+      <bpmn:extensionElements><zeebe:userTask /></bpmn:extensionElements>
+      <bpmn:incoming>Flow_Dispatching_To_Traitement_FM</bpmn:incoming>
+      <bpmn:outgoing>Flow_Traitement_To_OFATMA_FM</bpmn:outgoing>
+    </bpmn:userTask>
+
+    <bpmn:serviceTask id="Activity_Transmission_OFATMA_FM" name="Transmission OFATMA">
+      <bpmn:incoming>Flow_Traitement_To_OFATMA_FM</bpmn:incoming>
+      <bpmn:outgoing>Flow_OFATMA_To_Gateway_FM</bpmn:outgoing>
+    </bpmn:serviceTask>
+
+    <!-- Gateway exclusive -->
+    <bpmn:exclusiveGateway id="Gateway_Decision_FM" name="Décision OFATMA">
+      <bpmn:incoming>Flow_OFATMA_To_Gateway_FM</bpmn:incoming>
+      <bpmn:outgoing>Flow_Gateway_To_Cheque_FM</bpmn:outgoing>
+      <bpmn:outgoing>Flow_Gateway_To_Attente_FM</bpmn:outgoing>
+    </bpmn:exclusiveGateway>
+
+    <bpmn:serviceTask id="Activity_Cheque_Recu_FM" name="Chèque reçu">
+      <bpmn:incoming>Flow_Gateway_To_Cheque_FM</bpmn:incoming>
+      <bpmn:outgoing>Flow_Cheque_To_Fusion_FM</bpmn:outgoing>
+    </bpmn:serviceTask>
+
+    <bpmn:userTask id="Activity_Attente_Documents_FM" name="Attente ajout documents">
+      <bpmn:extensionElements><zeebe:userTask /></bpmn:extensionElements>
+      <bpmn:incoming>Flow_Gateway_To_Attente_FM</bpmn:incoming>
+      <bpmn:outgoing>Flow_Attente_To_Fusion_FM</bpmn:outgoing>
+    </bpmn:userTask>
+
+    <!-- Gateway de fusion -->
+    <bpmn:exclusiveGateway id="Gateway_Fusion_FM">
+      <bpmn:incoming>Flow_Cheque_To_Fusion_FM</bpmn:incoming>
+      <bpmn:incoming>Flow_Attente_To_Fusion_FM</bpmn:incoming>
+      <bpmn:outgoing>Flow_Fusion_To_Notification_FM</bpmn:outgoing>
+    </bpmn:exclusiveGateway>
+
+    <bpmn:serviceTask id="Activity_Notification_FM" name="Notifier pensionné">
+      <bpmn:incoming>Flow_Fusion_To_Notification_FM</bpmn:incoming>
+      <bpmn:outgoing>Flow_Notification_To_End_FM</bpmn:outgoing>
+    </bpmn:serviceTask>
+
+    <bpmn:endEvent id="EndEvent_FM" name="FIN">
+      <bpmn:incoming>Flow_Notification_To_End_FM</bpmn:incoming>
+    </bpmn:endEvent>
+
+    <!-- Sequence Flows -->
+    <bpmn:sequenceFlow id="Flow_Start_To_Soumettre_FM" sourceRef="StartEvent_FM" targetRef="Activity_Soumettre_FM" />
+    <bpmn:sequenceFlow id="Flow_Soumettre_To_ReceptionSec_FM" sourceRef="Activity_Soumettre_FM" targetRef="Activity_Reception_Secretariat_FM" />
+    <bpmn:sequenceFlow id="Flow_ReceptionSec_To_AnnotationDir_FM" sourceRef="Activity_Reception_Secretariat_FM" targetRef="Activity_Annotation_Direction_FM" />
+    <bpmn:sequenceFlow id="Flow_AnnotationDir_To_ReceptionFormalite_FM" sourceRef="Activity_Annotation_Direction_FM" targetRef="Activity_Reception_Formalite_FM" />
+    <bpmn:sequenceFlow id="Flow_ReceptionFormalite_To_AnnotationChef_FM" sourceRef="Activity_Reception_Formalite_FM" targetRef="Activity_Annotation_Chef_FM" />
+    <bpmn:sequenceFlow id="Flow_AnnotationChef_To_Dispatching_FM" sourceRef="Activity_Annotation_Chef_FM" targetRef="Activity_Dispatching_FM" />
+    <bpmn:sequenceFlow id="Flow_Dispatching_To_Traitement_FM" sourceRef="Activity_Dispatching_FM" targetRef="Activity_Traitement_FM" />
+    <bpmn:sequenceFlow id="Flow_Traitement_To_OFATMA_FM" sourceRef="Activity_Traitement_FM" targetRef="Activity_Transmission_OFATMA_FM" />
+    <bpmn:sequenceFlow id="Flow_OFATMA_To_Gateway_FM" sourceRef="Activity_Transmission_OFATMA_FM" targetRef="Gateway_Decision_FM" />
+    <bpmn:sequenceFlow id="Flow_Gateway_To_Cheque_FM" sourceRef="Gateway_Decision_FM" targetRef="Activity_Cheque_Recu_FM" name="chèque reçu" />
+    <bpmn:sequenceFlow id="Flow_Gateway_To_Attente_FM" sourceRef="Gateway_Decision_FM" targetRef="Activity_Attente_Documents_FM" name="attente documents" />
+    <bpmn:sequenceFlow id="Flow_Cheque_To_Fusion_FM" sourceRef="Activity_Cheque_Recu_FM" targetRef="Gateway_Fusion_FM" />
+    <bpmn:sequenceFlow id="Flow_Attente_To_Fusion_FM" sourceRef="Activity_Attente_Documents_FM" targetRef="Gateway_Fusion_FM" />
+    <bpmn:sequenceFlow id="Flow_Fusion_To_Notification_FM" sourceRef="Gateway_Fusion_FM" targetRef="Activity_Notification_FM" />
+    <bpmn:sequenceFlow id="Flow_Notification_To_End_FM" sourceRef="Activity_Notification_FM" targetRef="EndEvent_FM" />
+
+  </bpmn:process>
+
+  <!-- BPMN Diagram -->
+  <bpmndi:BPMNDiagram id="BPMNDiagram_FM">
+    <bpmndi:BPMNPlane id="BPMNPlane_FM" bpmnElement="Collaboration_FraisMedicaux">
+      <!-- Pool -->
+      <bpmndi:BPMNShape id="Participant_FM_di" bpmnElement="Participant_FraisMedicaux" isHorizontal="true">
+        <dc:Bounds x="160" y="560" width="1400" height="700" />
+      </bpmndi:BPMNShape>
+      <!-- Lanes -->
+      <bpmndi:BPMNShape id="Lane_Pensionne_FM_di" bpmnElement="Lane_Pensionne_FM" isHorizontal="true">
+        <dc:Bounds x="190" y="560" width="1370" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Lane_Secretariat_FM_di" bpmnElement="Lane_Secretariat_FM" isHorizontal="true">
+        <dc:Bounds x="190" y="640" width="1370" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Lane_Direction_FM_di" bpmnElement="Lane_Direction_FM" isHorizontal="true">
+        <dc:Bounds x="190" y="720" width="1370" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Lane_SecretariatFormalite_FM_di" bpmnElement="Lane_SecretariatFormalite_FM" isHorizontal="true">
+        <dc:Bounds x="190" y="800" width="1370" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Lane_ChefService_FM_di" bpmnElement="Lane_ChefService_FM" isHorizontal="true">
+        <dc:Bounds x="190" y="880" width="1370" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Lane_Agent_FM_di" bpmnElement="Lane_Agent_FM" isHorizontal="true">
+        <dc:Bounds x="190" y="960" width="1370" height="80" />
+      </bpmndi:BPMNShape>
+
+      <!-- Formes -->
+      <bpmndi:BPMNShape id="StartEvent_FM_di" bpmnElement="StartEvent_FM">
+        <dc:Bounds x="252" y="582" width="36" height="36" />
+        <bpmndi:BPMNLabel><dc:Bounds x="235" y="625" width="73" height="27" /></bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+
+      <bpmndi:BPMNShape id="Activity_Soumettre_FM_di" bpmnElement="Activity_Soumettre_FM">
+        <dc:Bounds x="380" y="560" width="100" height="80" />
+      </bpmndi:BPMNShape>
+
+      <bpmndi:BPMNShape id="Activity_Reception_Secretariat_FM_di" bpmnElement="Activity_Reception_Secretariat_FM">
+        <dc:Bounds x="380" y="640" width="100" height="80" />
+      </bpmndi:BPMNShape>
+
+      <bpmndi:BPMNShape id="Activity_Annotation_Direction_FM_di" bpmnElement="Activity_Annotation_Direction_FM">
+        <dc:Bounds x="380" y="720" width="100" height="80" />
+      </bpmndi:BPMNShape>
+
+      <bpmndi:BPMNShape id="Activity_Reception_Formalite_FM_di" bpmnElement="Activity_Reception_Formalite_FM">
+        <dc:Bounds x="380" y="800" width="100" height="80" />
+      </bpmndi:BPMNShape>
+
+      <bpmndi:BPMNShape id="Activity_Annotation_Chef_FM_di" bpmnElement="Activity_Annotation_Chef_FM">
+        <dc:Bounds x="380" y="880" width="100" height="80" />
+      </bpmndi:BPMNShape>
+
+      <bpmndi:BPMNShape id="Activity_Dispatching_FM_di" bpmnElement="Activity_Dispatching_FM">
+        <dc:Bounds x="560" y="880" width="100" height="80" />
+      </bpmndi:BPMNShape>
+
+      <bpmndi:BPMNShape id="Activity_Traitement_FM_di" bpmnElement="Activity_Traitement_FM">
+        <dc:Bounds x="560" y="960" width="100" height="80" />
+      </bpmndi:BPMNShape>
+
+      <bpmndi:BPMNShape id="Activity_Transmission_OFATMA_FM_di" bpmnElement="Activity_Transmission_OFATMA_FM">
+        <dc:Bounds x="740" y="960" width="100" height="80" />
+      </bpmndi:BPMNShape>
+
+      <bpmndi:BPMNShape id="Gateway_Decision_FM_di" bpmnElement="Gateway_Decision_FM" isMarkerVisible="true">
+        <dc:Bounds x="920" y="975" width="50" height="50" />
+        <bpmndi:BPMNLabel><dc:Bounds x="923" y="1030" width="43" height="14" /></bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+
+      <bpmndi:BPMNShape id="Activity_Cheque_Recu_FM_di" bpmnElement="Activity_Cheque_Recu_FM">
+        <dc:Bounds x="1060" y="960" width="100" height="80" />
+      </bpmndi:BPMNShape>
+
+      <bpmndi:BPMNShape id="Activity_Attente_Documents_FM_di" bpmnElement="Activity_Attente_Documents_FM">
+        <dc:Bounds x="1060" y="800" width="100" height="80" />
+      </bpmndi:BPMNShape>
+
+      <bpmndi:BPMNShape id="Gateway_Fusion_FM_di" bpmnElement="Gateway_Fusion_FM" isMarkerVisible="true">
+        <dc:Bounds x="920" y="820" width="50" height="50" />
+      </bpmndi:BPMNShape>
+
+      <bpmndi:BPMNShape id="Activity_Notification_FM_di" bpmnElement="Activity_Notification_FM">
+        <dc:Bounds x="1060" y="580" width="100" height="80" />
+      </bpmndi:BPMNShape>
+
+      <bpmndi:BPMNShape id="EndEvent_FM_di" bpmnElement="EndEvent_FM">
+        <dc:Bounds x="1250" y="592" width="36" height="36" />
+        <bpmndi:BPMNLabel><dc:Bounds x="1255" y="635" width="18" height="14" /></bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+
+      <bpmndi:BPMNShape id="TextAnnotation_FraisMedicaux_di" bpmnElement="TextAnnotation_FraisMedicaux">
+        <dc:Bounds x="530" y="80" width="200" height="120" />
+      </bpmndi:BPMNShape>
+
+      <!-- Arêtes -->
+      <bpmndi:BPMNEdge id="Flow_Start_To_Soumettre_FM_di" bpmnElement="Flow_Start_To_Soumettre_FM">
+        <di:waypoint x="288" y="600" /><di:waypoint x="380" y="600" />
+      </bpmndi:BPMNEdge>
+
+      <bpmndi:BPMNEdge id="Flow_Soumettre_To_ReceptionSec_FM_di" bpmnElement="Flow_Soumettre_To_ReceptionSec_FM">
+        <di:waypoint x="430" y="640" /><di:waypoint x="430" y="640" />
+      </bpmndi:BPMNEdge>
+
+      <bpmndi:BPMNEdge id="Flow_ReceptionSec_To_AnnotationDir_FM_di" bpmnElement="Flow_ReceptionSec_To_AnnotationDir_FM">
+        <di:waypoint x="430" y="720" /><di:waypoint x="430" y="720" />
+      </bpmndi:BPMNEdge>
+
+      <bpmndi:BPMNEdge id="Flow_AnnotationDir_To_ReceptionFormalite_FM_di" bpmnElement="Flow_AnnotationDir_To_ReceptionFormalite_FM">
+        <di:waypoint x="430" y="800" /><di:waypoint x="430" y="800" />
+      </bpmndi:BPMNEdge>
+
+      <bpmndi:BPMNEdge id="Flow_ReceptionFormalite_To_AnnotationChef_FM_di" bpmnElement="Flow_ReceptionFormalite_To_AnnotationChef_FM">
+        <di:waypoint x="430" y="880" /><di:waypoint x="430" y="880" />
+      </bpmndi:BPMNEdge>
+
+      <bpmndi:BPMNEdge id="Flow_AnnotationChef_To_Dispatching_FM_di" bpmnElement="Flow_AnnotationChef_To_Dispatching_FM">
+        <di:waypoint x="480" y="920" /><di:waypoint x="560" y="920" />
+      </bpmndi:BPMNEdge>
+
+      <bpmndi:BPMNEdge id="Flow_Dispatching_To_Traitement_FM_di" bpmnElement="Flow_Dispatching_To_Traitement_FM">
+        <di:waypoint x="610" y="960" /><di:waypoint x="610" y="960" />
+      </bpmndi:BPMNEdge>
+
+      <bpmndi:BPMNEdge id="Flow_Traitement_To_OFATMA_FM_di" bpmnElement="Flow_Traitement_To_OFATMA_FM">
+        <di:waypoint x="660" y="1000" /><di:waypoint x="740" y="1000" />
+      </bpmndi:BPMNEdge>
+
+      <bpmndi:BPMNEdge id="Flow_OFATMA_To_Gateway_FM_di" bpmnElement="Flow_OFATMA_To_Gateway_FM">
+        <di:waypoint x="840" y="1000" /><di:waypoint x="920" y="1000" />
+      </bpmndi:BPMNEdge>
+
+      <bpmndi:BPMNEdge id="Flow_Gateway_To_Cheque_FM_di" bpmnElement="Flow_Gateway_To_Cheque_FM">
+        <di:waypoint x="970" y="1000" /><di:waypoint x="1060" y="1000" />
+      </bpmndi:BPMNEdge>
+
+      <bpmndi:BPMNEdge id="Flow_Gateway_To_Attente_FM_di" bpmnElement="Flow_Gateway_To_Attente_FM">
+        <di:waypoint x="945" y="975" /><di:waypoint x="945" y="840" /><di:waypoint x="1060" y="840" />
+      </bpmndi:BPMNEdge>
+
+      <bpmndi:BPMNEdge id="Flow_Cheque_To_Fusion_FM_di" bpmnElement="Flow_Cheque_To_Fusion_FM">
+        <di:waypoint x="1110" y="960" /><di:waypoint x="1110" y="845" /><di:waypoint x="970" y="845" />
+      </bpmndi:BPMNEdge>
+
+      <bpmndi:BPMNEdge id="Flow_Attente_To_Fusion_FM_di" bpmnElement="Flow_Attente_To_Fusion_FM">
+        <di:waypoint x="1160" y="840" /><di:waypoint x="970" y="840" />
+      </bpmndi:BPMNEdge>
+
+      <bpmndi:BPMNEdge id="Flow_Fusion_To_Notification_FM_di" bpmnElement="Flow_Fusion_To_Notification_FM">
+        <di:waypoint x="945" y="820" /><di:waypoint x="945" y="620" /><di:waypoint x="1060" y="620" />
+      </bpmndi:BPMNEdge>
+
+      <bpmndi:BPMNEdge id="Flow_Notification_To_End_FM_di" bpmnElement="Flow_Notification_To_End_FM">
+        <di:waypoint x="1160" y="620" /><di:waypoint x="1250" y="620" />
+      </bpmndi:BPMNEdge>
+
+      <bpmndi:BPMNEdge id="Association_FraisMedicaux_di" bpmnElement="Association_FraisMedicaux">
+        <di:waypoint x="430" y="560" /><di:waypoint x="530" y="140" />
+      </bpmndi:BPMNEdge>
+    </bpmndi:BPMNPlane>
+  </bpmndi:BPMNDiagram>
+</bpmn:definitions>

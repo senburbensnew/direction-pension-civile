@@ -1,0 +1,154 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:zeebe="http://camunda.org/schema/zeebe/1.0" xmlns:di="http://www.omg.org/spec/DD/20100524/DI" xmlns:modeler="http://camunda.org/schema/modeler/1.0" id="Definitions_AttestationPension" targetNamespace="http://bpmn.io/schema/bpmn" exporter="Camunda Modeler" exporterVersion="5.50.1" modeler:executionPlatform="Camunda Cloud" modeler:executionPlatformVersion="8.9.0">
+  <bpmn:collaboration id="Collaboration_AttestationPension">
+    <bpmn:participant id="Participant_AttestationPension" name="Direction de la Pension Civile" processRef="Process_AttestationPension" />
+    <bpmn:textAnnotation id="TextAnnotation_AttestationPension">
+      <bpmn:text>Pièces : Carte de pension, Formulaire de demande d’attestation de pension</bpmn:text>
+    </bpmn:textAnnotation>
+    <bpmn:association id="Association_AttestationPension" sourceRef="Activity_Soumettre_Attestation" targetRef="TextAnnotation_AttestationPension" />
+  </bpmn:collaboration>
+  <bpmn:process id="Process_AttestationPension" isExecutable="true">
+    <bpmn:laneSet id="LaneSet_AttestationPension">
+      <bpmn:lane id="Lane_DG" name="Direction Générale">
+        <bpmn:flowNodeRef>Activity_Transmission_DG_Attestation</bpmn:flowNodeRef>
+      </bpmn:lane>
+      <bpmn:lane id="Lane_Direction" name="Direction">
+        <bpmn:flowNodeRef>Activity_Validation_Direction_Attestation</bpmn:flowNodeRef>
+      </bpmn:lane>
+      <bpmn:lane id="Lane_Secretariat" name="Secrétariat">
+        <bpmn:flowNodeRef>Activity_Traitement_Secretariat_Attestation</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Activity_Reception_Secretariat_Attestation</bpmn:flowNodeRef>
+      </bpmn:lane>
+      <bpmn:lane id="Lane_Pensionne" name="Pensionné">
+        <bpmn:flowNodeRef>StartEvent_Attestation</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Activity_Soumettre_Attestation</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>EndEvent_Attestation</bpmn:flowNodeRef>
+      </bpmn:lane>
+    </bpmn:laneSet>
+    <bpmn:startEvent id="StartEvent_Attestation" name="Soumission">
+      <bpmn:outgoing>Flow_Start_To_Soumettre_Attestation</bpmn:outgoing>
+    </bpmn:startEvent>
+    <bpmn:userTask id="Activity_Soumettre_Attestation" name="Soumettre demande">
+      <bpmn:extensionElements>
+        <zeebe:userTask />
+      </bpmn:extensionElements>
+      <bpmn:incoming>Flow_Start_To_Soumettre_Attestation</bpmn:incoming>
+      <bpmn:outgoing>Flow_Soumettre_To_Reception_Attestation</bpmn:outgoing>
+    </bpmn:userTask>
+    <bpmn:endEvent id="EndEvent_Attestation" name="FIN">
+      <bpmn:incoming>Flow_Transmission_To_End_Attestation</bpmn:incoming>
+    </bpmn:endEvent>
+    <bpmn:userTask id="Activity_Validation_Direction_Attestation" name="Validation Direction">
+      <bpmn:extensionElements>
+        <zeebe:userTask />
+      </bpmn:extensionElements>
+      <bpmn:incoming>Flow_Traitement_To_Validation_Attestation</bpmn:incoming>
+      <bpmn:outgoing>Flow_Validation_To_Transmission_Attestation</bpmn:outgoing>
+    </bpmn:userTask>
+    <bpmn:serviceTask id="Activity_Transmission_DG_Attestation" name="Transmission Direction Générale">
+      <bpmn:incoming>Flow_Validation_To_Transmission_Attestation</bpmn:incoming>
+      <bpmn:outgoing>Flow_Transmission_To_End_Attestation</bpmn:outgoing>
+    </bpmn:serviceTask>
+    <bpmn:userTask id="Activity_Traitement_Secretariat_Attestation" name="Traitement Secrétariat">
+      <bpmn:extensionElements>
+        <zeebe:userTask />
+      </bpmn:extensionElements>
+      <bpmn:incoming>Flow_Reception_To_Traitement_Attestation</bpmn:incoming>
+      <bpmn:outgoing>Flow_Traitement_To_Validation_Attestation</bpmn:outgoing>
+    </bpmn:userTask>
+    <bpmn:receiveTask id="Activity_Reception_Secretariat_Attestation" name="Réception Secrétariat">
+      <bpmn:incoming>Flow_Soumettre_To_Reception_Attestation</bpmn:incoming>
+      <bpmn:outgoing>Flow_Reception_To_Traitement_Attestation</bpmn:outgoing>
+    </bpmn:receiveTask>
+    <bpmn:sequenceFlow id="Flow_Start_To_Soumettre_Attestation" sourceRef="StartEvent_Attestation" targetRef="Activity_Soumettre_Attestation" />
+    <bpmn:sequenceFlow id="Flow_Soumettre_To_Reception_Attestation" sourceRef="Activity_Soumettre_Attestation" targetRef="Activity_Reception_Secretariat_Attestation" />
+    <bpmn:sequenceFlow id="Flow_Transmission_To_End_Attestation" sourceRef="Activity_Transmission_DG_Attestation" targetRef="EndEvent_Attestation" />
+    <bpmn:sequenceFlow id="Flow_Traitement_To_Validation_Attestation" sourceRef="Activity_Traitement_Secretariat_Attestation" targetRef="Activity_Validation_Direction_Attestation" />
+    <bpmn:sequenceFlow id="Flow_Validation_To_Transmission_Attestation" sourceRef="Activity_Validation_Direction_Attestation" targetRef="Activity_Transmission_DG_Attestation" />
+    <bpmn:sequenceFlow id="Flow_Reception_To_Traitement_Attestation" sourceRef="Activity_Reception_Secretariat_Attestation" targetRef="Activity_Traitement_Secretariat_Attestation" />
+  </bpmn:process>
+  <bpmndi:BPMNDiagram id="BPMNDiagram_AttestationPension">
+    <bpmndi:BPMNPlane id="BPMNPlane_AttestationPension" bpmnElement="Collaboration_AttestationPension">
+      <bpmndi:BPMNShape id="Participant_AttestationPension_di" bpmnElement="Participant_AttestationPension" isHorizontal="true">
+        <dc:Bounds x="160" y="260" width="1070" height="410" />
+        <bpmndi:BPMNLabel />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Lane_DG_di_Attestation" bpmnElement="Lane_DG" isHorizontal="true">
+        <dc:Bounds x="190" y="500" width="1040" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Lane_Direction_di_Attestation" bpmnElement="Lane_Direction" isHorizontal="true">
+        <dc:Bounds x="190" y="420" width="1040" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Lane_Secretariat_di_Attestation" bpmnElement="Lane_Secretariat" isHorizontal="true">
+        <dc:Bounds x="190" y="340" width="1040" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Lane_Pensionne_di_Attestation" bpmnElement="Lane_Pensionne" isHorizontal="true">
+        <dc:Bounds x="190" y="260" width="1040" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="StartEvent_Attestation_di" bpmnElement="StartEvent_Attestation">
+        <dc:Bounds x="252" y="282" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="243" y="325" width="57" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_Soumettre_Attestation_di" bpmnElement="Activity_Soumettre_Attestation">
+        <dc:Bounds x="380" y="260" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="EndEvent_Attestation_di" bpmnElement="EndEvent_Attestation">
+        <dc:Bounds x="1032" y="282" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="1037" y="325" width="18" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_Validation_Direction_Attestation_di" bpmnElement="Activity_Validation_Direction_Attestation">
+        <dc:Bounds x="760" y="420" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_Transmission_DG_Attestation_di" bpmnElement="Activity_Transmission_DG_Attestation">
+        <dc:Bounds x="870" y="500" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_Traitement_Secretariat_Attestation_di" bpmnElement="Activity_Traitement_Secretariat_Attestation">
+        <dc:Bounds x="610" y="340" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_Reception_Secretariat_Attestation_di" bpmnElement="Activity_Reception_Secretariat_Attestation">
+        <dc:Bounds x="490" y="340" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="Flow_Start_To_Soumettre_Attestation_di" bpmnElement="Flow_Start_To_Soumettre_Attestation">
+        <di:waypoint x="288" y="300" />
+        <di:waypoint x="380" y="300" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_Soumettre_To_Reception_Attestation_di" bpmnElement="Flow_Soumettre_To_Reception_Attestation">
+        <di:waypoint x="430" y="260" />
+        <di:waypoint x="430" y="240" />
+        <di:waypoint x="540" y="240" />
+        <di:waypoint x="540" y="340" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_Transmission_To_End_Attestation_di" bpmnElement="Flow_Transmission_To_End_Attestation">
+        <di:waypoint x="970" y="540" />
+        <di:waypoint x="1000" y="540" />
+        <di:waypoint x="1000" y="300" />
+        <di:waypoint x="1032" y="300" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_Traitement_To_Validation_Attestation_di" bpmnElement="Flow_Traitement_To_Validation_Attestation">
+        <di:waypoint x="700" y="420" />
+        <di:waypoint x="760" y="420" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_Validation_To_Transmission_Attestation_di" bpmnElement="Flow_Validation_To_Transmission_Attestation">
+        <di:waypoint x="810" y="420" />
+        <di:waypoint x="810" y="400" />
+        <di:waypoint x="920" y="400" />
+        <di:waypoint x="920" y="500" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_Reception_To_Traitement_Attestation_di" bpmnElement="Flow_Reception_To_Traitement_Attestation">
+        <di:waypoint x="590" y="380" />
+        <di:waypoint x="610" y="380" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Association_AttestationPension_di" bpmnElement="Association_AttestationPension">
+        <di:waypoint x="407" y="260" />
+        <di:waypoint x="374" y="160" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNShape id="TextAnnotation_AttestationPension_di" bpmnElement="TextAnnotation_AttestationPension">
+        <dc:Bounds x="360" y="80" width="200" height="80" />
+      </bpmndi:BPMNShape>
+    </bpmndi:BPMNPlane>
+  </bpmndi:BPMNDiagram>
+</bpmn:definitions>

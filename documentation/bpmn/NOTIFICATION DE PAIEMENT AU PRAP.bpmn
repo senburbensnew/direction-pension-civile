@@ -1,0 +1,152 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:zeebe="http://camunda.org/schema/zeebe/1.0" xmlns:di="http://www.omg.org/spec/DD/20100524/DI" xmlns:modeler="http://camunda.org/schema/modeler/1.0" id="Definitions_PaiementPRAP" targetNamespace="http://bpmn.io/schema/bpmn" exporter="Camunda Modeler" exporterVersion="5.50.1" modeler:executionPlatform="Camunda Cloud" modeler:executionPlatformVersion="8.9.0">
+  <bpmn:collaboration id="Collaboration_PaiementPRAP">
+    <bpmn:participant id="Participant_PaiementPRAP" name="Direction de la Pension Civile" processRef="Process_PaiementPRAP" />
+    <bpmn:textAnnotation id="TextAnnotation_PaiementPRAP">
+      <bpmn:text>Pièces : État d'émargement de l'institution, Listing des employés, Copie du chèque de direction</bpmn:text>
+    </bpmn:textAnnotation>
+    <bpmn:association id="Association_PaiementPRAP" sourceRef="Activity_Soumettre_PRAP" targetRef="TextAnnotation_PaiementPRAP" />
+  </bpmn:collaboration>
+  <bpmn:process id="Process_PaiementPRAP" isExecutable="true">
+    <bpmn:laneSet id="LaneSet_PRAP">
+      <bpmn:lane id="Lane_ServiceControle_SLP" name="Contrôle &#38; Placement / SLP">
+        <bpmn:flowNodeRef>Activity_Traitement_Controle_SLP_PRAP</bpmn:flowNodeRef>
+      </bpmn:lane>
+      <bpmn:lane id="Lane_Direction_PRAP" name="Direction">
+        <bpmn:flowNodeRef>Activity_Annotation_Direction_PRAP</bpmn:flowNodeRef>
+      </bpmn:lane>
+      <bpmn:lane id="Lane_Secretariat_PRAP" name="Secrétariat">
+        <bpmn:flowNodeRef>Activity_Reception_Secretariat_PRAP</bpmn:flowNodeRef>
+      </bpmn:lane>
+      <bpmn:lane id="Lane_Institution" name="Institution">
+        <bpmn:flowNodeRef>StartEvent_PRAP</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Activity_Soumettre_PRAP</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>EndEvent_PRAP</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Activity_Notification_Institution</bpmn:flowNodeRef>
+      </bpmn:lane>
+    </bpmn:laneSet>
+    <bpmn:startEvent id="StartEvent_PRAP" name="Soumission par institution">
+      <bpmn:outgoing>Flow_Start_To_Soumettre_PRAP</bpmn:outgoing>
+    </bpmn:startEvent>
+    <bpmn:userTask id="Activity_Soumettre_PRAP" name="Transmettre documents">
+      <bpmn:extensionElements>
+        <zeebe:userTask />
+      </bpmn:extensionElements>
+      <bpmn:incoming>Flow_Start_To_Soumettre_PRAP</bpmn:incoming>
+      <bpmn:outgoing>Flow_Soumettre_To_ReceptionSec_PRAP</bpmn:outgoing>
+    </bpmn:userTask>
+    <bpmn:endEvent id="EndEvent_PRAP" name="FIN">
+      <bpmn:incoming>Flow_Notification_To_End_PRAP</bpmn:incoming>
+    </bpmn:endEvent>
+    <bpmn:serviceTask id="Activity_Notification_Institution" name="Notifier l&#39;institution">
+      <bpmn:incoming>Flow_TraitementControle_To_Notification_PRAP</bpmn:incoming>
+      <bpmn:outgoing>Flow_Notification_To_End_PRAP</bpmn:outgoing>
+    </bpmn:serviceTask>
+    <bpmn:userTask id="Activity_Traitement_Controle_SLP_PRAP" name="Traitement service contrôle &#38; placement et SLP">
+      <bpmn:extensionElements>
+        <zeebe:userTask />
+      </bpmn:extensionElements>
+      <bpmn:incoming>Flow_AnnotationDir_To_TraitementControle_PRAP</bpmn:incoming>
+      <bpmn:outgoing>Flow_TraitementControle_To_Notification_PRAP</bpmn:outgoing>
+    </bpmn:userTask>
+    <bpmn:userTask id="Activity_Annotation_Direction_PRAP" name="Annotation Direction">
+      <bpmn:extensionElements>
+        <zeebe:userTask />
+      </bpmn:extensionElements>
+      <bpmn:incoming>Flow_ReceptionSec_To_AnnotationDir_PRAP</bpmn:incoming>
+      <bpmn:outgoing>Flow_AnnotationDir_To_TraitementControle_PRAP</bpmn:outgoing>
+    </bpmn:userTask>
+    <bpmn:receiveTask id="Activity_Reception_Secretariat_PRAP" name="Réception Secrétariat">
+      <bpmn:incoming>Flow_Soumettre_To_ReceptionSec_PRAP</bpmn:incoming>
+      <bpmn:outgoing>Flow_ReceptionSec_To_AnnotationDir_PRAP</bpmn:outgoing>
+    </bpmn:receiveTask>
+    <bpmn:sequenceFlow id="Flow_Start_To_Soumettre_PRAP" sourceRef="StartEvent_PRAP" targetRef="Activity_Soumettre_PRAP" />
+    <bpmn:sequenceFlow id="Flow_Soumettre_To_ReceptionSec_PRAP" sourceRef="Activity_Soumettre_PRAP" targetRef="Activity_Reception_Secretariat_PRAP" />
+    <bpmn:sequenceFlow id="Flow_Notification_To_End_PRAP" sourceRef="Activity_Notification_Institution" targetRef="EndEvent_PRAP" />
+    <bpmn:sequenceFlow id="Flow_TraitementControle_To_Notification_PRAP" sourceRef="Activity_Traitement_Controle_SLP_PRAP" targetRef="Activity_Notification_Institution" />
+    <bpmn:sequenceFlow id="Flow_AnnotationDir_To_TraitementControle_PRAP" sourceRef="Activity_Annotation_Direction_PRAP" targetRef="Activity_Traitement_Controle_SLP_PRAP" />
+    <bpmn:sequenceFlow id="Flow_ReceptionSec_To_AnnotationDir_PRAP" sourceRef="Activity_Reception_Secretariat_PRAP" targetRef="Activity_Annotation_Direction_PRAP" />
+  </bpmn:process>
+  <bpmndi:BPMNDiagram id="BPMNDiagram_PRAP">
+    <bpmndi:BPMNPlane id="BPMNPlane_PRAP" bpmnElement="Collaboration_PaiementPRAP">
+      <bpmndi:BPMNShape id="Participant_PRAP_di" bpmnElement="Participant_PaiementPRAP" isHorizontal="true">
+        <dc:Bounds x="160" y="250" width="1200" height="500" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Lane_ServiceControle_SLP_di" bpmnElement="Lane_ServiceControle_SLP" isHorizontal="true">
+        <dc:Bounds x="190" y="510" width="1170" height="100" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Lane_Direction_PRAP_di" bpmnElement="Lane_Direction_PRAP" isHorizontal="true">
+        <dc:Bounds x="190" y="430" width="1170" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Lane_Secretariat_PRAP_di" bpmnElement="Lane_Secretariat_PRAP" isHorizontal="true">
+        <dc:Bounds x="190" y="350" width="1170" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Lane_Institution_di" bpmnElement="Lane_Institution" isHorizontal="true">
+        <dc:Bounds x="190" y="250" width="1170" height="100" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="StartEvent_PRAP_di" bpmnElement="StartEvent_PRAP">
+        <dc:Bounds x="252" y="282" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="234" y="325" width="76" height="27" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_Soumettre_PRAP_di" bpmnElement="Activity_Soumettre_PRAP">
+        <dc:Bounds x="380" y="260" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="EndEvent_PRAP_di" bpmnElement="EndEvent_PRAP">
+        <dc:Bounds x="1172" y="282" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="1177" y="325" width="18" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_Notification_Institution_di" bpmnElement="Activity_Notification_Institution">
+        <dc:Bounds x="940" y="260" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_Traitement_Controle_SLP_PRAP_di" bpmnElement="Activity_Traitement_Controle_SLP_PRAP">
+        <dc:Bounds x="780" y="520" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_Annotation_Direction_PRAP_di" bpmnElement="Activity_Annotation_Direction_PRAP">
+        <dc:Bounds x="650" y="430" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_Reception_Secretariat_PRAP_di" bpmnElement="Activity_Reception_Secretariat_PRAP">
+        <dc:Bounds x="520" y="350" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="Flow_Start_To_Soumettre_PRAP_di" bpmnElement="Flow_Start_To_Soumettre_PRAP">
+        <di:waypoint x="288" y="300" />
+        <di:waypoint x="380" y="300" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_Soumettre_To_ReceptionSec_PRAP_di" bpmnElement="Flow_Soumettre_To_ReceptionSec_PRAP">
+        <di:waypoint x="480" y="300" />
+        <di:waypoint x="500" y="300" />
+        <di:waypoint x="500" y="390" />
+        <di:waypoint x="520" y="390" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_ReceptionSec_To_AnnotationDir_PRAP_di" bpmnElement="Flow_ReceptionSec_To_AnnotationDir_PRAP">
+        <di:waypoint x="610" y="430" />
+        <di:waypoint x="660" y="430" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_AnnotationDir_To_TraitementControle_PRAP_di" bpmnElement="Flow_AnnotationDir_To_TraitementControle_PRAP">
+        <di:waypoint x="700" y="510" />
+        <di:waypoint x="700" y="560" />
+        <di:waypoint x="780" y="560" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_TraitementControle_To_Notification_PRAP_di" bpmnElement="Flow_TraitementControle_To_Notification_PRAP">
+        <di:waypoint x="880" y="560" />
+        <di:waypoint x="910" y="560" />
+        <di:waypoint x="910" y="300" />
+        <di:waypoint x="940" y="300" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_Notification_To_End_PRAP_di" bpmnElement="Flow_Notification_To_End_PRAP">
+        <di:waypoint x="1040" y="300" />
+        <di:waypoint x="1172" y="300" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Association_PaiementPRAP_di" bpmnElement="Association_PaiementPRAP">
+        <di:waypoint x="428" y="260" />
+        <di:waypoint x="450" y="130" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNShape id="TextAnnotation_PaiementPRAP_di" bpmnElement="TextAnnotation_PaiementPRAP">
+        <dc:Bounds x="450" y="80" width="220" height="100" />
+      </bpmndi:BPMNShape>
+    </bpmndi:BPMNPlane>
+  </bpmndi:BPMNDiagram>
+</bpmn:definitions>

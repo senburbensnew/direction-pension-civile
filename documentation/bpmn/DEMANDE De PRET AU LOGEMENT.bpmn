@@ -1,0 +1,148 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:zeebe="http://camunda.org/schema/zeebe/1.0" xmlns:di="http://www.omg.org/spec/DD/20100524/DI" xmlns:modeler="http://camunda.org/schema/modeler/1.0" id="Definitions_PretLogement" targetNamespace="http://bpmn.io/schema/bpmn" exporter="Camunda Modeler" exporterVersion="5.50.1" modeler:executionPlatform="Camunda Cloud" modeler:executionPlatformVersion="8.9.0">
+  <bpmn:collaboration id="Collaboration_PretLogement">
+    <bpmn:participant id="Participant_PretLogement" name="Direction de la Pension Civile" processRef="Process_PretLogement" />
+    <bpmn:textAnnotation id="TextAnnotation_PretLogement">
+      <bpmn:text>Pièces : Titres de propriété / Bail, PV arpentage, Plan construction, Permis construire, Quittance CFPB, Promesse vente, Preuve paiement, Lettre travail, Police assurance, CINU, Formulaire</bpmn:text>
+    </bpmn:textAnnotation>
+    <bpmn:association id="Association_PretLogement" sourceRef="Activity_Soumettre_Pret" targetRef="TextAnnotation_PretLogement" />
+  </bpmn:collaboration>
+  <bpmn:process id="Process_PretLogement" isExecutable="true">
+    <bpmn:laneSet id="LaneSet_PretLogement">
+      <bpmn:lane id="Lane_ControlePlacement_Pret" name="Contrôle et Placement">
+        <bpmn:flowNodeRef>Activity_Traitement_Controle_Pret</bpmn:flowNodeRef>
+      </bpmn:lane>
+      <bpmn:lane id="Lane_Direction_Pret" name="Direction">
+        <bpmn:flowNodeRef>Activity_Annotation_Direction_Pret</bpmn:flowNodeRef>
+      </bpmn:lane>
+      <bpmn:lane id="Lane_Secretariat_Pret" name="Secrétariat">
+        <bpmn:flowNodeRef>Activity_Reception_Secretariat_Pret</bpmn:flowNodeRef>
+      </bpmn:lane>
+      <bpmn:lane id="Lane_Fonctionnaire" name="Fonctionnaire">
+        <bpmn:flowNodeRef>StartEvent_Pret</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Activity_Soumettre_Pret</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Activity_Notification_Pret</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>EndEvent_Pret</bpmn:flowNodeRef>
+      </bpmn:lane>
+    </bpmn:laneSet>
+    <bpmn:startEvent id="StartEvent_Pret" name="Soumission par fonctionnaire">
+      <bpmn:outgoing>Flow_Start_To_Soumettre_Pret</bpmn:outgoing>
+    </bpmn:startEvent>
+    <bpmn:userTask id="Activity_Soumettre_Pret" name="Soumettre demande">
+      <bpmn:extensionElements>
+        <zeebe:userTask />
+      </bpmn:extensionElements>
+      <bpmn:incoming>Flow_Start_To_Soumettre_Pret</bpmn:incoming>
+      <bpmn:outgoing>Flow_Soumettre_To_ReceptionSec_Pret</bpmn:outgoing>
+    </bpmn:userTask>
+    <bpmn:receiveTask id="Activity_Reception_Secretariat_Pret" name="Réception Secrétariat">
+      <bpmn:incoming>Flow_Soumettre_To_ReceptionSec_Pret</bpmn:incoming>
+      <bpmn:outgoing>Flow_ReceptionSec_To_AnnotationDir_Pret</bpmn:outgoing>
+    </bpmn:receiveTask>
+    <bpmn:userTask id="Activity_Annotation_Direction_Pret" name="Annotation Direction">
+      <bpmn:extensionElements>
+        <zeebe:userTask />
+      </bpmn:extensionElements>
+      <bpmn:incoming>Flow_ReceptionSec_To_AnnotationDir_Pret</bpmn:incoming>
+      <bpmn:outgoing>Flow_AnnotationDir_To_TraitementControle_Pret</bpmn:outgoing>
+    </bpmn:userTask>
+    <bpmn:userTask id="Activity_Traitement_Controle_Pret" name="Traitement service contrôle et placement">
+      <bpmn:extensionElements>
+        <zeebe:userTask />
+      </bpmn:extensionElements>
+      <bpmn:incoming>Flow_AnnotationDir_To_TraitementControle_Pret</bpmn:incoming>
+      <bpmn:outgoing>Flow_TraitementControle_To_Notification_Pret</bpmn:outgoing>
+    </bpmn:userTask>
+    <bpmn:serviceTask id="Activity_Notification_Pret" name="Notifier fonctionnaire pour suivi">
+      <bpmn:incoming>Flow_TraitementControle_To_Notification_Pret</bpmn:incoming>
+      <bpmn:outgoing>Flow_Notification_To_End_Pret</bpmn:outgoing>
+    </bpmn:serviceTask>
+    <bpmn:endEvent id="EndEvent_Pret" name="FIN">
+      <bpmn:incoming>Flow_Notification_To_End_Pret</bpmn:incoming>
+    </bpmn:endEvent>
+    <bpmn:sequenceFlow id="Flow_Start_To_Soumettre_Pret" sourceRef="StartEvent_Pret" targetRef="Activity_Soumettre_Pret" />
+    <bpmn:sequenceFlow id="Flow_Soumettre_To_ReceptionSec_Pret" sourceRef="Activity_Soumettre_Pret" targetRef="Activity_Reception_Secretariat_Pret" />
+    <bpmn:sequenceFlow id="Flow_ReceptionSec_To_AnnotationDir_Pret" sourceRef="Activity_Reception_Secretariat_Pret" targetRef="Activity_Annotation_Direction_Pret" />
+    <bpmn:sequenceFlow id="Flow_AnnotationDir_To_TraitementControle_Pret" sourceRef="Activity_Annotation_Direction_Pret" targetRef="Activity_Traitement_Controle_Pret" />
+    <bpmn:sequenceFlow id="Flow_TraitementControle_To_Notification_Pret" sourceRef="Activity_Traitement_Controle_Pret" targetRef="Activity_Notification_Pret" />
+    <bpmn:sequenceFlow id="Flow_Notification_To_End_Pret" sourceRef="Activity_Notification_Pret" targetRef="EndEvent_Pret" />
+  </bpmn:process>
+  <bpmndi:BPMNDiagram id="BPMNDiagram_PretLogement">
+    <bpmndi:BPMNPlane id="BPMNPlane_PretLogement" bpmnElement="Collaboration_PretLogement">
+      <bpmndi:BPMNShape id="Participant_PretLogement_di" bpmnElement="Participant_PretLogement" isHorizontal="true">
+        <dc:Bounds x="160" y="250" width="1200" height="460" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Lane_ControlePlacement_Pret_di" bpmnElement="Lane_ControlePlacement_Pret" isHorizontal="true">
+        <dc:Bounds x="190" y="510" width="1170" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Lane_Direction_Pret_di" bpmnElement="Lane_Direction_Pret" isHorizontal="true">
+        <dc:Bounds x="190" y="430" width="1170" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Lane_Secretariat_Pret_di" bpmnElement="Lane_Secretariat_Pret" isHorizontal="true">
+        <dc:Bounds x="190" y="350" width="1170" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Lane_Fonctionnaire_di" bpmnElement="Lane_Fonctionnaire" isHorizontal="true">
+        <dc:Bounds x="190" y="250" width="1170" height="100" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="StartEvent_Pret_di" bpmnElement="StartEvent_Pret">
+        <dc:Bounds x="252" y="282" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="234" y="325" width="76" height="27" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_Soumettre_Pret_di" bpmnElement="Activity_Soumettre_Pret">
+        <dc:Bounds x="380" y="260" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_Reception_Secretariat_Pret_di" bpmnElement="Activity_Reception_Secretariat_Pret">
+        <dc:Bounds x="380" y="350" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_Annotation_Direction_Pret_di" bpmnElement="Activity_Annotation_Direction_Pret">
+        <dc:Bounds x="380" y="430" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_Traitement_Controle_Pret_di" bpmnElement="Activity_Traitement_Controle_Pret">
+        <dc:Bounds x="380" y="520" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_Notification_Pret_di" bpmnElement="Activity_Notification_Pret">
+        <dc:Bounds x="560" y="260" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="EndEvent_Pret_di" bpmnElement="EndEvent_Pret">
+        <dc:Bounds x="740" y="282" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="745" y="325" width="18" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="Flow_Start_To_Soumettre_Pret_di" bpmnElement="Flow_Start_To_Soumettre_Pret">
+        <di:waypoint x="288" y="300" />
+        <di:waypoint x="380" y="300" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_Soumettre_To_ReceptionSec_Pret_di" bpmnElement="Flow_Soumettre_To_ReceptionSec_Pret">
+        <di:waypoint x="430" y="340" />
+        <di:waypoint x="430" y="350" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_ReceptionSec_To_AnnotationDir_Pret_di" bpmnElement="Flow_ReceptionSec_To_AnnotationDir_Pret">
+        <di:waypoint x="430" y="430" />
+        <di:waypoint x="430" y="430" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_AnnotationDir_To_TraitementControle_Pret_di" bpmnElement="Flow_AnnotationDir_To_TraitementControle_Pret">
+        <di:waypoint x="430" y="510" />
+        <di:waypoint x="430" y="520" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_TraitementControle_To_Notification_Pret_di" bpmnElement="Flow_TraitementControle_To_Notification_Pret">
+        <di:waypoint x="480" y="560" />
+        <di:waypoint x="480" y="300" />
+        <di:waypoint x="560" y="300" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_Notification_To_End_Pret_di" bpmnElement="Flow_Notification_To_End_Pret">
+        <di:waypoint x="660" y="300" />
+        <di:waypoint x="740" y="300" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Association_PretLogement_di" bpmnElement="Association_PretLogement">
+        <di:waypoint x="442" y="260" />
+        <di:waypoint x="510" y="130" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNShape id="TextAnnotation_PretLogement_di" bpmnElement="TextAnnotation_PretLogement">
+        <dc:Bounds x="510" y="80" width="240" height="100" />
+      </bpmndi:BPMNShape>
+    </bpmndi:BPMNPlane>
+  </bpmndi:BPMNDiagram>
+</bpmn:definitions>

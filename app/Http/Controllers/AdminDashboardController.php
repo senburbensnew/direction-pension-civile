@@ -11,6 +11,7 @@ use App\Models\Report;
 use App\Models\Service;
 use App\Models\User;
 use App\Models\WorkflowStep;
+use App\Services\SiteVisitService;
 use Illuminate\Support\Facades\DB;
 use Spatie\Permission\Models\Permission;
 use Spatie\Permission\Models\Role;
@@ -75,6 +76,10 @@ class AdminDashboardController extends Controller
         $recentContacts = Contact::where('read', false)->latest()->take(6)->get();
         $recentActualites = Actualite::latest()->take(5)->get();
 
+        $visitService = app(SiteVisitService::class);
+        $visitStats = $visitService->summary();
+        $visitesQuotidiennes = $visitService->dailySeries(14);
+
         return view('admin.dashboard', compact(
             'stats',
             'dossierStats',
@@ -83,7 +88,9 @@ class AdminDashboardController extends Controller
             'dossierParType',
             'tauxRefus',
             'recentContacts',
-            'recentActualites'
+            'recentActualites',
+            'visitStats',
+            'visitesQuotidiennes'
         ));
     }
 }

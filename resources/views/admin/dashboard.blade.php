@@ -103,6 +103,61 @@
 
     </div>
 
+    {{-- ── Fréquentation du site ──────────────────────────────────────── --}}
+    <div>
+        <h2 class="text-sm font-semibold text-gray-600 uppercase tracking-wide mb-3">Fréquentation du site</h2>
+        <div class="grid grid-cols-2 lg:grid-cols-3 gap-4 mb-4">
+            <div class="bg-white rounded-xl border border-gray-200 p-4 shadow-sm">
+                <div class="w-10 h-10 rounded-lg bg-cyan-50 flex items-center justify-center">
+                    <i class="fas fa-calendar-day text-cyan-600"></i>
+                </div>
+                <p class="text-2xl font-bold text-gray-800 mt-3">{{ number_format($visitStats['today_hits'], 0, ',', ' ') }}</p>
+                <p class="text-sm text-gray-500">Aujourd'hui</p>
+                <p class="text-xs text-gray-400 mt-1">{{ number_format($visitStats['today_visitors'], 0, ',', ' ') }} visiteurs uniques</p>
+            </div>
+            <div class="bg-white rounded-xl border border-gray-200 p-4 shadow-sm">
+                <div class="w-10 h-10 rounded-lg bg-indigo-50 flex items-center justify-center">
+                    <i class="fas fa-user-check text-indigo-600"></i>
+                </div>
+                <p class="text-2xl font-bold text-gray-800 mt-3">{{ number_format($visitStats['today_visitors'], 0, ',', ' ') }}</p>
+                <p class="text-sm text-gray-500">Visiteurs uniques aujourd'hui</p>
+            </div>
+            <div class="bg-white rounded-xl border border-gray-200 p-4 shadow-sm">
+                <div class="w-10 h-10 rounded-lg bg-sky-50 flex items-center justify-center">
+                    <i class="fas fa-eye text-sky-600"></i>
+                </div>
+                <p class="text-2xl font-bold text-gray-800 mt-3">{{ number_format($visitStats['total_hits'], 0, ',', ' ') }}</p>
+                <p class="text-sm text-gray-500">Visites totales</p>
+            </div>
+        </div>
+
+        <div class="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
+            <div class="px-5 py-3 border-b border-gray-100">
+                <h3 class="font-semibold text-gray-700 text-sm">Suivi quotidien (14 jours)</h3>
+            </div>
+            <div class="overflow-x-auto">
+                <table class="min-w-full text-sm">
+                    <thead class="bg-gray-50 text-gray-500">
+                        <tr>
+                            <th class="text-left font-medium px-5 py-2">Jour</th>
+                            <th class="text-right font-medium px-5 py-2">Pages vues</th>
+                            <th class="text-right font-medium px-5 py-2">Visiteurs</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-gray-50">
+                        @foreach($visitesQuotidiennes as $jour)
+                            <tr @class(['bg-cyan-50/40' => $jour['date'] === now()->toDateString()])>
+                                <td class="px-5 py-2 text-gray-700">{{ \Illuminate\Support\Carbon::parse($jour['date'])->translatedFormat('D d M Y') }}</td>
+                                <td class="px-5 py-2 text-right font-medium text-gray-800">{{ number_format($jour['hits'], 0, ',', ' ') }}</td>
+                                <td class="px-5 py-2 text-right text-gray-600">{{ number_format($jour['visitors'], 0, ',', ' ') }}</td>
+                            </tr>
+                        @endforeach
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
     {{-- ── Métriques dossiers ──────────────────────────────────────────── --}}
     <div>
         <h2 class="text-sm font-semibold text-gray-600 uppercase tracking-wide mb-3">Suivi des dossiers</h2>

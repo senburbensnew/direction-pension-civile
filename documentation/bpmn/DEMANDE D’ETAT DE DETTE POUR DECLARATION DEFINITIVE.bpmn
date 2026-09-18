@@ -1,0 +1,145 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:zeebe="http://camunda.org/schema/zeebe/1.0" xmlns:di="http://www.omg.org/spec/DD/20100524/DI" xmlns:modeler="http://camunda.org/schema/modeler/1.0" id="Definitions_EtatDette" targetNamespace="http://bpmn.io/schema/bpmn" exporter="Camunda Modeler" exporterVersion="5.50.1" modeler:executionPlatform="Camunda Cloud" modeler:executionPlatformVersion="8.9.0">
+  <bpmn:collaboration id="Collaboration_EtatDette">
+    <bpmn:participant id="Participant_EtatDette" name="Direction de la Pension Civile" processRef="Process_EtatDette" />
+    <bpmn:textAnnotation id="TextAnnotation_EtatDette">
+      <bpmn:text>Demande d'état de dette pour déclaration définitive</bpmn:text>
+    </bpmn:textAnnotation>
+    <bpmn:association id="Association_EtatDette" sourceRef="Activity_Soumettre_EtatDette" targetRef="TextAnnotation_EtatDette" />
+  </bpmn:collaboration>
+  <bpmn:process id="Process_EtatDette" isExecutable="true">
+    <bpmn:laneSet id="LaneSet_EtatDette">
+      <bpmn:lane id="Lane_ControlePlacement" name="Contrôle et Placement">
+        <bpmn:flowNodeRef>Activity_Traitement_Controle_EtatDette</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Activity_Verification_EtatDette</bpmn:flowNodeRef>
+      </bpmn:lane>
+      <bpmn:lane id="Lane_SCP" name="SCP (Secrétariat)">
+        <bpmn:flowNodeRef>Activity_Reception_SCP_EtatDette</bpmn:flowNodeRef>
+      </bpmn:lane>
+      <bpmn:lane id="Lane_Fonctionnaire" name="Fonctionnaire">
+        <bpmn:flowNodeRef>StartEvent_EtatDette</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Activity_Soumettre_EtatDette</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Activity_Reception_Transmission_EtatDette</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>EndEvent_EtatDette</bpmn:flowNodeRef>
+      </bpmn:lane>
+    </bpmn:laneSet>
+    <bpmn:startEvent id="StartEvent_EtatDette" name="Soumission par fonctionnaire">
+      <bpmn:outgoing>Flow_Start_To_Soumettre_EtatDette</bpmn:outgoing>
+    </bpmn:startEvent>
+    <bpmn:userTask id="Activity_Soumettre_EtatDette" name="Soumettre demande">
+      <bpmn:extensionElements>
+        <zeebe:userTask />
+      </bpmn:extensionElements>
+      <bpmn:incoming>Flow_Start_To_Soumettre_EtatDette</bpmn:incoming>
+      <bpmn:outgoing>Flow_Soumettre_To_ReceptionSCP_EtatDette</bpmn:outgoing>
+    </bpmn:userTask>
+    <bpmn:userTask id="Activity_Traitement_Controle_EtatDette" name="Traitement service contrôle et placement">
+      <bpmn:extensionElements>
+        <zeebe:userTask />
+      </bpmn:extensionElements>
+      <bpmn:incoming>Flow_ReceptionSCP_To_TraitementControle_EtatDette</bpmn:incoming>
+      <bpmn:outgoing>Flow_TraitementControle_To_Verification_EtatDette</bpmn:outgoing>
+    </bpmn:userTask>
+    <bpmn:receiveTask id="Activity_Reception_SCP_EtatDette" name="Réception SCP">
+      <bpmn:incoming>Flow_Soumettre_To_ReceptionSCP_EtatDette</bpmn:incoming>
+      <bpmn:outgoing>Flow_ReceptionSCP_To_TraitementControle_EtatDette</bpmn:outgoing>
+    </bpmn:receiveTask>
+    <bpmn:userTask id="Activity_Verification_EtatDette" name="Vérification">
+      <bpmn:extensionElements>
+        <zeebe:userTask />
+      </bpmn:extensionElements>
+      <bpmn:incoming>Flow_TraitementControle_To_Verification_EtatDette</bpmn:incoming>
+      <bpmn:outgoing>Flow_Verification_To_Transmission_EtatDette</bpmn:outgoing>
+    </bpmn:userTask>
+    <bpmn:serviceTask id="Activity_Reception_Transmission_EtatDette" name="Transmission de l&#39;état de dette au fonctionnaire">
+      <bpmn:incoming>Flow_Verification_To_Transmission_EtatDette</bpmn:incoming>
+      <bpmn:outgoing>Flow_Transmission_To_End_EtatDette</bpmn:outgoing>
+    </bpmn:serviceTask>
+    <bpmn:endEvent id="EndEvent_EtatDette" name="FIN">
+      <bpmn:incoming>Flow_Transmission_To_End_EtatDette</bpmn:incoming>
+    </bpmn:endEvent>
+    <bpmn:sequenceFlow id="Flow_Start_To_Soumettre_EtatDette" sourceRef="StartEvent_EtatDette" targetRef="Activity_Soumettre_EtatDette" />
+    <bpmn:sequenceFlow id="Flow_Soumettre_To_ReceptionSCP_EtatDette" sourceRef="Activity_Soumettre_EtatDette" targetRef="Activity_Reception_SCP_EtatDette" />
+    <bpmn:sequenceFlow id="Flow_ReceptionSCP_To_TraitementControle_EtatDette" sourceRef="Activity_Reception_SCP_EtatDette" targetRef="Activity_Traitement_Controle_EtatDette" />
+    <bpmn:sequenceFlow id="Flow_TraitementControle_To_Verification_EtatDette" sourceRef="Activity_Traitement_Controle_EtatDette" targetRef="Activity_Verification_EtatDette" />
+    <bpmn:sequenceFlow id="Flow_Verification_To_Transmission_EtatDette" sourceRef="Activity_Verification_EtatDette" targetRef="Activity_Reception_Transmission_EtatDette" />
+    <bpmn:sequenceFlow id="Flow_Transmission_To_End_EtatDette" sourceRef="Activity_Reception_Transmission_EtatDette" targetRef="EndEvent_EtatDette" />
+  </bpmn:process>
+  <bpmndi:BPMNDiagram id="BPMNDiagram_EtatDette">
+    <bpmndi:BPMNPlane id="BPMNPlane_EtatDette" bpmnElement="Collaboration_EtatDette">
+      <bpmndi:BPMNShape id="Participant_EtatDette_di" bpmnElement="Participant_EtatDette" isHorizontal="true">
+        <dc:Bounds x="160" y="210" width="1270" height="420" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Lane_ControlePlacement_di" bpmnElement="Lane_ControlePlacement" isHorizontal="true">
+        <dc:Bounds x="190" y="390" width="1240" height="100" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Lane_SCP_di" bpmnElement="Lane_SCP" isHorizontal="true">
+        <dc:Bounds x="190" y="310" width="1240" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Lane_Fonctionnaire_di" bpmnElement="Lane_Fonctionnaire" isHorizontal="true">
+        <dc:Bounds x="190" y="210" width="1240" height="100" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="StartEvent_EtatDette_di" bpmnElement="StartEvent_EtatDette">
+        <dc:Bounds x="252" y="252" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="234" y="216" width="76" height="27" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_Soumettre_EtatDette_di" bpmnElement="Activity_Soumettre_EtatDette">
+        <dc:Bounds x="380" y="230" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_Traitement_Controle_EtatDette_di" bpmnElement="Activity_Traitement_Controle_EtatDette">
+        <dc:Bounds x="850" y="400" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_Reception_SCP_EtatDette_di" bpmnElement="Activity_Reception_SCP_EtatDette">
+        <dc:Bounds x="610" y="310" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_Verification_EtatDette_di" bpmnElement="Activity_Verification_EtatDette">
+        <dc:Bounds x="1040" y="400" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_Reception_Transmission_EtatDette_di" bpmnElement="Activity_Reception_Transmission_EtatDette">
+        <dc:Bounds x="1190" y="230" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="EndEvent_EtatDette_di" bpmnElement="EndEvent_EtatDette">
+        <dc:Bounds x="1362" y="252" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="1367" y="295" width="18" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="Flow_Start_To_Soumettre_EtatDette_di" bpmnElement="Flow_Start_To_Soumettre_EtatDette">
+        <di:waypoint x="288" y="270" />
+        <di:waypoint x="380" y="270" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_Soumettre_To_ReceptionSCP_EtatDette_di" bpmnElement="Flow_Soumettre_To_ReceptionSCP_EtatDette">
+        <di:waypoint x="480" y="270" />
+        <di:waypoint x="660" y="270" />
+        <di:waypoint x="660" y="310" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_ReceptionSCP_To_TraitementControle_EtatDette_di" bpmnElement="Flow_ReceptionSCP_To_TraitementControle_EtatDette">
+        <di:waypoint x="710" y="340" />
+        <di:waypoint x="900" y="340" />
+        <di:waypoint x="900" y="400" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_TraitementControle_To_Verification_EtatDette_di" bpmnElement="Flow_TraitementControle_To_Verification_EtatDette">
+        <di:waypoint x="950" y="440" />
+        <di:waypoint x="1040" y="440" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_Verification_To_Transmission_EtatDette_di" bpmnElement="Flow_Verification_To_Transmission_EtatDette">
+        <di:waypoint x="1090" y="400" />
+        <di:waypoint x="1090" y="270" />
+        <di:waypoint x="1190" y="270" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_Transmission_To_End_EtatDette_di" bpmnElement="Flow_Transmission_To_End_EtatDette">
+        <di:waypoint x="1290" y="270" />
+        <di:waypoint x="1362" y="270" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Association_EtatDette_di" bpmnElement="Association_EtatDette">
+        <di:waypoint x="447" y="230" />
+        <di:waypoint x="520" y="120" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNShape id="TextAnnotation_EtatDette_di" bpmnElement="TextAnnotation_EtatDette">
+        <dc:Bounds x="520" y="80" width="200" height="80" />
+      </bpmndi:BPMNShape>
+    </bpmndi:BPMNPlane>
+  </bpmndi:BPMNDiagram>
+</bpmn:definitions>

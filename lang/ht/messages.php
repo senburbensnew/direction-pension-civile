@@ -166,4 +166,9 @@ return [
     'call_on'                => 'Rele sou : :phone',
     'weekdays_short'         => ['dim.', 'len.', 'mad.', 'mèk.', 'jed.', 'van.', 'sam.'],
     'months_short'           => ['janv.', 'fev.', 'mas', 'avr.', 'me', 'jen', 'jiy.', 'out', 'sep.', 'oktòb', 'nov.', 'des.'],
+
+    // Visit counter
+    'visit_counter'          => 'Konte vizit sit la',
+    'visits_total'           => 'Vizit',
+    'visits_today'           => 'Jodi a',
 ];

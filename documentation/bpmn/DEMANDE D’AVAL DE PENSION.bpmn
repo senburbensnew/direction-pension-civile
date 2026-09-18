@@ -1,0 +1,199 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:zeebe="http://camunda.org/schema/zeebe/1.0" xmlns:di="http://www.omg.org/spec/DD/20100524/DI" xmlns:modeler="http://camunda.org/schema/modeler/1.0" id="Definitions_AvalPension" targetNamespace="http://bpmn.io/schema/bpmn" exporter="Camunda Modeler" exporterVersion="5.50.1" modeler:executionPlatform="Camunda Cloud" modeler:executionPlatformVersion="8.9.0">
+  <bpmn:collaboration id="Collaboration_AvalPension">
+    <bpmn:participant id="Participant_AvalPension" name="Direction de la Pension Civile" processRef="Process_AvalPension" />
+    <bpmn:textAnnotation id="TextAnnotation_AvalPension">
+      <bpmn:text>Pièces : Carte de pension, Matricule fiscal, CINU, Souche de chèque ou preuve de virement, Formulaire de demande d'aval de pension</bpmn:text>
+    </bpmn:textAnnotation>
+    <bpmn:association id="Association_AvalPension" sourceRef="Activity_Soumettre_Aval" targetRef="TextAnnotation_AvalPension" />
+  </bpmn:collaboration>
+  <bpmn:process id="Process_AvalPension" isExecutable="true">
+    <bpmn:laneSet id="LaneSet_Aval">
+      <bpmn:lane id="Lane_CPCNC_Aval" name="CPCNC">
+        <bpmn:flowNodeRef>Activity_Transmission_CPCNC_Aval</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Activity_Emission_Cheque_Aval</bpmn:flowNodeRef>
+      </bpmn:lane>
+      <bpmn:lane id="Lane_DG_Aval" name="Direction Générale">
+        <bpmn:flowNodeRef>Activity_Transmission_DG_Aval</bpmn:flowNodeRef>
+      </bpmn:lane>
+      <bpmn:lane id="Lane_ControlePlacement_Aval" name="Contrôle et Placement">
+        <bpmn:flowNodeRef>Activity_Traitement_Controle_Aval</bpmn:flowNodeRef>
+      </bpmn:lane>
+      <bpmn:lane id="Lane_Direction_Aval" name="Direction">
+        <bpmn:flowNodeRef>Activity_Annotation_Direction_Aval</bpmn:flowNodeRef>
+      </bpmn:lane>
+      <bpmn:lane id="Lane_Secretariat_Aval" name="Secrétariat">
+        <bpmn:flowNodeRef>Activity_Reception_Secretariat_Aval</bpmn:flowNodeRef>
+      </bpmn:lane>
+      <bpmn:lane id="Lane_Pensionne_Aval" name="Pensionné">
+        <bpmn:flowNodeRef>StartEvent_Aval</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Activity_Soumettre_Aval</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Activity_Notification_Aval</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>EndEvent_Aval</bpmn:flowNodeRef>
+      </bpmn:lane>
+    </bpmn:laneSet>
+    <bpmn:startEvent id="StartEvent_Aval" name="Soumission par pensionné">
+      <bpmn:outgoing>Flow_Start_To_Soumettre_Aval</bpmn:outgoing>
+    </bpmn:startEvent>
+    <bpmn:userTask id="Activity_Soumettre_Aval" name="Soumettre demande">
+      <bpmn:extensionElements>
+        <zeebe:userTask />
+      </bpmn:extensionElements>
+      <bpmn:incoming>Flow_Start_To_Soumettre_Aval</bpmn:incoming>
+      <bpmn:outgoing>Flow_Soumettre_To_ReceptionSec_Aval</bpmn:outgoing>
+    </bpmn:userTask>
+    <bpmn:receiveTask id="Activity_Reception_Secretariat_Aval" name="Réception Secrétariat">
+      <bpmn:incoming>Flow_Soumettre_To_ReceptionSec_Aval</bpmn:incoming>
+      <bpmn:outgoing>Flow_ReceptionSec_To_AnnotationDir_Aval</bpmn:outgoing>
+    </bpmn:receiveTask>
+    <bpmn:userTask id="Activity_Annotation_Direction_Aval" name="Annotation Direction">
+      <bpmn:extensionElements>
+        <zeebe:userTask />
+      </bpmn:extensionElements>
+      <bpmn:incoming>Flow_ReceptionSec_To_AnnotationDir_Aval</bpmn:incoming>
+      <bpmn:outgoing>Flow_AnnotationDir_To_TraitementControle_Aval</bpmn:outgoing>
+    </bpmn:userTask>
+    <bpmn:userTask id="Activity_Traitement_Controle_Aval" name="Traitement service contrôle et placement">
+      <bpmn:extensionElements>
+        <zeebe:userTask />
+      </bpmn:extensionElements>
+      <bpmn:incoming>Flow_AnnotationDir_To_TraitementControle_Aval</bpmn:incoming>
+      <bpmn:outgoing>Flow_TraitementControle_To_TransmissionDG_Aval</bpmn:outgoing>
+    </bpmn:userTask>
+    <bpmn:serviceTask id="Activity_Transmission_DG_Aval" name="Transmission DG">
+      <bpmn:incoming>Flow_TraitementControle_To_TransmissionDG_Aval</bpmn:incoming>
+      <bpmn:outgoing>Flow_TransmissionDG_To_TransmissionCPCNC_Aval</bpmn:outgoing>
+    </bpmn:serviceTask>
+    <bpmn:serviceTask id="Activity_Transmission_CPCNC_Aval" name="Transmission CPCNC">
+      <bpmn:incoming>Flow_TransmissionDG_To_TransmissionCPCNC_Aval</bpmn:incoming>
+      <bpmn:outgoing>Flow_TransmissionCPCNC_To_EmissionCheque_Aval</bpmn:outgoing>
+    </bpmn:serviceTask>
+    <bpmn:serviceTask id="Activity_Emission_Cheque_Aval" name="Émission du chèque">
+      <bpmn:incoming>Flow_TransmissionCPCNC_To_EmissionCheque_Aval</bpmn:incoming>
+      <bpmn:outgoing>Flow_EmissionCheque_To_Notification_Aval</bpmn:outgoing>
+    </bpmn:serviceTask>
+    <bpmn:serviceTask id="Activity_Notification_Aval" name="Notifier pensionné pour retrait">
+      <bpmn:incoming>Flow_EmissionCheque_To_Notification_Aval</bpmn:incoming>
+      <bpmn:outgoing>Flow_Notification_To_End_Aval</bpmn:outgoing>
+    </bpmn:serviceTask>
+    <bpmn:endEvent id="EndEvent_Aval" name="FIN">
+      <bpmn:incoming>Flow_Notification_To_End_Aval</bpmn:incoming>
+    </bpmn:endEvent>
+    <bpmn:sequenceFlow id="Flow_Start_To_Soumettre_Aval" sourceRef="StartEvent_Aval" targetRef="Activity_Soumettre_Aval" />
+    <bpmn:sequenceFlow id="Flow_Soumettre_To_ReceptionSec_Aval" sourceRef="Activity_Soumettre_Aval" targetRef="Activity_Reception_Secretariat_Aval" />
+    <bpmn:sequenceFlow id="Flow_ReceptionSec_To_AnnotationDir_Aval" sourceRef="Activity_Reception_Secretariat_Aval" targetRef="Activity_Annotation_Direction_Aval" />
+    <bpmn:sequenceFlow id="Flow_AnnotationDir_To_TraitementControle_Aval" sourceRef="Activity_Annotation_Direction_Aval" targetRef="Activity_Traitement_Controle_Aval" />
+    <bpmn:sequenceFlow id="Flow_TraitementControle_To_TransmissionDG_Aval" sourceRef="Activity_Traitement_Controle_Aval" targetRef="Activity_Transmission_DG_Aval" />
+    <bpmn:sequenceFlow id="Flow_TransmissionDG_To_TransmissionCPCNC_Aval" sourceRef="Activity_Transmission_DG_Aval" targetRef="Activity_Transmission_CPCNC_Aval" />
+    <bpmn:sequenceFlow id="Flow_TransmissionCPCNC_To_EmissionCheque_Aval" sourceRef="Activity_Transmission_CPCNC_Aval" targetRef="Activity_Emission_Cheque_Aval" />
+    <bpmn:sequenceFlow id="Flow_EmissionCheque_To_Notification_Aval" sourceRef="Activity_Emission_Cheque_Aval" targetRef="Activity_Notification_Aval" />
+    <bpmn:sequenceFlow id="Flow_Notification_To_End_Aval" sourceRef="Activity_Notification_Aval" targetRef="EndEvent_Aval" />
+  </bpmn:process>
+  <bpmndi:BPMNDiagram id="BPMNDiagram_Aval">
+    <bpmndi:BPMNPlane id="BPMNPlane_Aval" bpmnElement="Collaboration_AvalPension">
+      <bpmndi:BPMNShape id="Participant_Aval_di" bpmnElement="Participant_AvalPension" isHorizontal="true">
+        <dc:Bounds x="160" y="260" width="1600" height="620" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Lane_CPCNC_Aval_di" bpmnElement="Lane_CPCNC_Aval" isHorizontal="true">
+        <dc:Bounds x="190" y="680" width="1570" height="100" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Lane_DG_Aval_di" bpmnElement="Lane_DG_Aval" isHorizontal="true">
+        <dc:Bounds x="190" y="600" width="1570" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Lane_ControlePlacement_Aval_di" bpmnElement="Lane_ControlePlacement_Aval" isHorizontal="true">
+        <dc:Bounds x="190" y="520" width="1570" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Lane_Direction_Aval_di" bpmnElement="Lane_Direction_Aval" isHorizontal="true">
+        <dc:Bounds x="190" y="440" width="1570" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Lane_Secretariat_Aval_di" bpmnElement="Lane_Secretariat_Aval" isHorizontal="true">
+        <dc:Bounds x="190" y="360" width="1570" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Lane_Pensionne_Aval_di" bpmnElement="Lane_Pensionne_Aval" isHorizontal="true">
+        <dc:Bounds x="190" y="260" width="1570" height="100" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="StartEvent_Aval_di" bpmnElement="StartEvent_Aval">
+        <dc:Bounds x="252" y="292" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="234" y="335" width="76" height="27" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_Soumettre_Aval_di" bpmnElement="Activity_Soumettre_Aval">
+        <dc:Bounds x="380" y="270" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_Reception_Secretariat_Aval_di" bpmnElement="Activity_Reception_Secretariat_Aval">
+        <dc:Bounds x="380" y="360" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_Annotation_Direction_Aval_di" bpmnElement="Activity_Annotation_Direction_Aval">
+        <dc:Bounds x="380" y="440" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_Traitement_Controle_Aval_di" bpmnElement="Activity_Traitement_Controle_Aval">
+        <dc:Bounds x="380" y="530" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_Transmission_DG_Aval_di" bpmnElement="Activity_Transmission_DG_Aval">
+        <dc:Bounds x="560" y="610" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_Transmission_CPCNC_Aval_di" bpmnElement="Activity_Transmission_CPCNC_Aval">
+        <dc:Bounds x="740" y="690" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_Emission_Cheque_Aval_di" bpmnElement="Activity_Emission_Cheque_Aval">
+        <dc:Bounds x="920" y="690" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_Notification_Aval_di" bpmnElement="Activity_Notification_Aval">
+        <dc:Bounds x="1100" y="270" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="EndEvent_Aval_di" bpmnElement="EndEvent_Aval">
+        <dc:Bounds x="1280" y="292" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="1285" y="335" width="18" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="Flow_Start_To_Soumettre_Aval_di" bpmnElement="Flow_Start_To_Soumettre_Aval">
+        <di:waypoint x="288" y="310" />
+        <di:waypoint x="380" y="310" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_Soumettre_To_ReceptionSec_Aval_di" bpmnElement="Flow_Soumettre_To_ReceptionSec_Aval">
+        <di:waypoint x="430" y="350" />
+        <di:waypoint x="430" y="360" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_ReceptionSec_To_AnnotationDir_Aval_di" bpmnElement="Flow_ReceptionSec_To_AnnotationDir_Aval">
+        <di:waypoint x="430" y="440" />
+        <di:waypoint x="430" y="440" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_AnnotationDir_To_TraitementControle_Aval_di" bpmnElement="Flow_AnnotationDir_To_TraitementControle_Aval">
+        <di:waypoint x="430" y="520" />
+        <di:waypoint x="430" y="530" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_TraitementControle_To_TransmissionDG_Aval_di" bpmnElement="Flow_TraitementControle_To_TransmissionDG_Aval">
+        <di:waypoint x="480" y="570" />
+        <di:waypoint x="480" y="610" />
+        <di:waypoint x="560" y="650" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_TransmissionDG_To_TransmissionCPCNC_Aval_di" bpmnElement="Flow_TransmissionDG_To_TransmissionCPCNC_Aval">
+        <di:waypoint x="660" y="650" />
+        <di:waypoint x="740" y="650" />
+        <di:waypoint x="790" y="690" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_TransmissionCPCNC_To_EmissionCheque_Aval_di" bpmnElement="Flow_TransmissionCPCNC_To_EmissionCheque_Aval">
+        <di:waypoint x="840" y="730" />
+        <di:waypoint x="920" y="730" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_EmissionCheque_To_Notification_Aval_di" bpmnElement="Flow_EmissionCheque_To_Notification_Aval">
+        <di:waypoint x="970" y="690" />
+        <di:waypoint x="970" y="310" />
+        <di:waypoint x="1100" y="310" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_Notification_To_End_Aval_di" bpmnElement="Flow_Notification_To_End_Aval">
+        <di:waypoint x="1200" y="310" />
+        <di:waypoint x="1280" y="310" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Association_AvalPension_di" bpmnElement="Association_AvalPension">
+        <di:waypoint x="450" y="270" />
+        <di:waypoint x="550" y="130" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNShape id="TextAnnotation_AvalPension_di" bpmnElement="TextAnnotation_AvalPension">
+        <dc:Bounds x="550" y="80" width="240" height="100" />
+      </bpmndi:BPMNShape>
+    </bpmndi:BPMNPlane>
+  </bpmndi:BPMNDiagram>
+</bpmn:definitions>

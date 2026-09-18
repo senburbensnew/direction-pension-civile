@@ -1,0 +1,207 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL"
+                  xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI"
+                  xmlns:dc="http://www.omg.org/spec/DD/20100524/DC"
+                  xmlns:zeebe="http://camunda.org/schema/zeebe/1.0"
+                  xmlns:di="http://www.omg.org/spec/DD/20100524/DI"
+                  xmlns:modeler="http://camunda.org/schema/modeler/1.0"
+                  id="Definitions_CertificatPret7Etapes"
+                  targetNamespace="http://bpmn.io/schema/bpmn"
+                  exporter="Camunda Modeler"
+                  exporterVersion="5.50.1"
+                  modeler:executionPlatform="Camunda Cloud"
+                  modeler:executionPlatformVersion="8.9.0">
+  <bpmn:collaboration id="Collaboration_CertificatPret7Etapes">
+    <bpmn:participant id="Participant_CertificatPret7Etapes" name="Direction de la Pension Civile" processRef="Process_CertificatPret7Etapes" />
+    <bpmn:textAnnotation id="TextAnnotation_CertificatPret7Etapes">
+      <bpmn:text>Demande de certificat de prêt au logement</bpmn:text>
+    </bpmn:textAnnotation>
+    <bpmn:association id="Association_CertificatPret7Etapes" sourceRef="Activity_Soumettre_CertificatPret7Etapes" targetRef="TextAnnotation_CertificatPret7Etapes" />
+  </bpmn:collaboration>
+
+  <bpmn:process id="Process_CertificatPret7Etapes" isExecutable="true">
+    <bpmn:laneSet id="LaneSet_CertificatPret7Etapes">
+      <bpmn:lane id="Lane_Fonctionnaire" name="Fonctionnaire">
+        <bpmn:flowNodeRef>StartEvent_CertificatPret7Etapes</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Activity_Soumettre_CertificatPret7Etapes</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Activity_Transmission_Certificat7Etapes</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Activity_RendezVous7Etapes</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>EndEvent_CertificatPret7Etapes</bpmn:flowNodeRef>
+      </bpmn:lane>
+      <bpmn:lane id="Lane_Secretariat" name="Secrétariat">
+        <bpmn:flowNodeRef>Activity_Reception_Secretariat_Certificat7Etapes</bpmn:flowNodeRef>
+      </bpmn:lane>
+      <bpmn:lane id="Lane_Direction" name="Direction">
+        <bpmn:flowNodeRef>Activity_Annotation_Direction_Certificat7Etapes</bpmn:flowNodeRef>
+      </bpmn:lane>
+      <bpmn:lane id="Lane_ControlePlacement" name="Contrôle et Placement">
+        <bpmn:flowNodeRef>Activity_Traitement_Controle_Certificat7Etapes</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Activity_Verification_Certificat7Etapes</bpmn:flowNodeRef>
+      </bpmn:lane>
+    </bpmn:laneSet>
+
+    <!-- Start Event -->
+    <bpmn:startEvent id="StartEvent_CertificatPret7Etapes" name="Soumission par fonctionnaire">
+      <bpmn:outgoing>Flow_Start_To_Soumettre_7Etapes</bpmn:outgoing>
+    </bpmn:startEvent>
+
+    <!-- Étape 0 : Soumission -->
+    <bpmn:userTask id="Activity_Soumettre_CertificatPret7Etapes" name="Soumettre demande">
+      <bpmn:extensionElements><zeebe:userTask /></bpmn:extensionElements>
+      <bpmn:incoming>Flow_Start_To_Soumettre_7Etapes</bpmn:incoming>
+      <bpmn:outgoing>Flow_Soumettre_To_ReceptionSec_7Etapes</bpmn:outgoing>
+    </bpmn:userTask>
+
+    <!-- 1. Réception Secrétariat -->
+    <bpmn:receiveTask id="Activity_Reception_Secretariat_Certificat7Etapes" name="Réception Secrétariat">
+      <bpmn:incoming>Flow_Soumettre_To_ReceptionSec_7Etapes</bpmn:incoming>
+      <bpmn:outgoing>Flow_ReceptionSec_To_AnnotationDir_7Etapes</bpmn:outgoing>
+    </bpmn:receiveTask>
+
+    <!-- 2. Annotation Direction -->
+    <bpmn:userTask id="Activity_Annotation_Direction_Certificat7Etapes" name="Annotation Direction">
+      <bpmn:extensionElements><zeebe:userTask /></bpmn:extensionElements>
+      <bpmn:incoming>Flow_ReceptionSec_To_AnnotationDir_7Etapes</bpmn:incoming>
+      <bpmn:outgoing>Flow_AnnotationDir_To_TraitementControle_7Etapes</bpmn:outgoing>
+    </bpmn:userTask>
+
+    <!-- 3. Traitement service contrôle et placement -->
+    <bpmn:userTask id="Activity_Traitement_Controle_Certificat7Etapes" name="Traitement service contrôle et placement">
+      <bpmn:extensionElements><zeebe:userTask /></bpmn:extensionElements>
+      <bpmn:incoming>Flow_AnnotationDir_To_TraitementControle_7Etapes</bpmn:incoming>
+      <bpmn:outgoing>Flow_TraitementControle_To_Verification_7Etapes</bpmn:outgoing>
+    </bpmn:userTask>
+
+    <!-- 4. Vérification -->
+    <bpmn:userTask id="Activity_Verification_Certificat7Etapes" name="Vérification">
+      <bpmn:extensionElements><zeebe:userTask /></bpmn:extensionElements>
+      <bpmn:incoming>Flow_TraitementControle_To_Verification_7Etapes</bpmn:incoming>
+      <bpmn:outgoing>Flow_Verification_To_Transmission_7Etapes</bpmn:outgoing>
+    </bpmn:userTask>
+
+    <!-- 5. Transmission du certificat au fonctionnaire -->
+    <bpmn:serviceTask id="Activity_Transmission_Certificat7Etapes" name="Transmission du certificat au fonctionnaire">
+      <bpmn:incoming>Flow_Verification_To_Transmission_7Etapes</bpmn:incoming>
+      <bpmn:outgoing>Flow_Transmission_To_RendezVous_7Etapes</bpmn:outgoing>
+    </bpmn:serviceTask>
+
+    <!-- 6. Rendez-vous pour remise de dossier -->
+    <bpmn:userTask id="Activity_RendezVous7Etapes" name="Rendez-vous pour remise de dossier">
+      <bpmn:extensionElements><zeebe:userTask /></bpmn:extensionElements>
+      <bpmn:incoming>Flow_Transmission_To_RendezVous_7Etapes</bpmn:incoming>
+      <bpmn:outgoing>Flow_RendezVous_To_End_7Etapes</bpmn:outgoing>
+    </bpmn:userTask>
+
+    <!-- 7. Fin -->
+    <bpmn:endEvent id="EndEvent_CertificatPret7Etapes" name="FIN">
+      <bpmn:incoming>Flow_RendezVous_To_End_7Etapes</bpmn:incoming>
+    </bpmn:endEvent>
+
+    <!-- Sequence Flows -->
+    <bpmn:sequenceFlow id="Flow_Start_To_Soumettre_7Etapes" sourceRef="StartEvent_CertificatPret7Etapes" targetRef="Activity_Soumettre_CertificatPret7Etapes" />
+    <bpmn:sequenceFlow id="Flow_Soumettre_To_ReceptionSec_7Etapes" sourceRef="Activity_Soumettre_CertificatPret7Etapes" targetRef="Activity_Reception_Secretariat_Certificat7Etapes" />
+    <bpmn:sequenceFlow id="Flow_ReceptionSec_To_AnnotationDir_7Etapes" sourceRef="Activity_Reception_Secretariat_Certificat7Etapes" targetRef="Activity_Annotation_Direction_Certificat7Etapes" />
+    <bpmn:sequenceFlow id="Flow_AnnotationDir_To_TraitementControle_7Etapes" sourceRef="Activity_Annotation_Direction_Certificat7Etapes" targetRef="Activity_Traitement_Controle_Certificat7Etapes" />
+    <bpmn:sequenceFlow id="Flow_TraitementControle_To_Verification_7Etapes" sourceRef="Activity_Traitement_Controle_Certificat7Etapes" targetRef="Activity_Verification_Certificat7Etapes" />
+    <bpmn:sequenceFlow id="Flow_Verification_To_Transmission_7Etapes" sourceRef="Activity_Verification_Certificat7Etapes" targetRef="Activity_Transmission_Certificat7Etapes" />
+    <bpmn:sequenceFlow id="Flow_Transmission_To_RendezVous_7Etapes" sourceRef="Activity_Transmission_Certificat7Etapes" targetRef="Activity_RendezVous7Etapes" />
+    <bpmn:sequenceFlow id="Flow_RendezVous_To_End_7Etapes" sourceRef="Activity_RendezVous7Etapes" targetRef="EndEvent_CertificatPret7Etapes" />
+
+  </bpmn:process>
+
+  <!-- BPMN Diagram -->
+  <bpmndi:BPMNDiagram id="BPMNDiagram_CertificatPret7Etapes">
+    <bpmndi:BPMNPlane id="BPMNPlane_CertificatPret7Etapes" bpmnElement="Collaboration_CertificatPret7Etapes">
+      <!-- Pool -->
+      <bpmndi:BPMNShape id="Participant_Certificat7_di" bpmnElement="Participant_CertificatPret7Etapes" isHorizontal="true">
+        <dc:Bounds x="160" y="560" width="1400" height="500" />
+      </bpmndi:BPMNShape>
+
+      <!-- Lanes -->
+      <bpmndi:BPMNShape id="Lane_Fonctionnaire_di_7" bpmnElement="Lane_Fonctionnaire" isHorizontal="true">
+        <dc:Bounds x="190" y="560" width="1370" height="100" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Lane_Secretariat_di_7" bpmnElement="Lane_Secretariat" isHorizontal="true">
+        <dc:Bounds x="190" y="660" width="1370" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Lane_Direction_di_7" bpmnElement="Lane_Direction" isHorizontal="true">
+        <dc:Bounds x="190" y="740" width="1370" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Lane_ControlePlacement_di_7" bpmnElement="Lane_ControlePlacement" isHorizontal="true">
+        <dc:Bounds x="190" y="820" width="1370" height="100" />
+      </bpmndi:BPMNShape>
+
+      <!-- Formes -->
+      <bpmndi:BPMNShape id="StartEvent_Certificat7_di" bpmnElement="StartEvent_CertificatPret7Etapes">
+        <dc:Bounds x="252" y="592" width="36" height="36" />
+        <bpmndi:BPMNLabel><dc:Bounds x="235" y="635" width="73" height="27" /></bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+
+      <bpmndi:BPMNShape id="Activity_Soumettre_Certificat7_di" bpmnElement="Activity_Soumettre_CertificatPret7Etapes">
+        <dc:Bounds x="380" y="570" width="100" height="80" />
+      </bpmndi:BPMNShape>
+
+      <bpmndi:BPMNShape id="Activity_Reception_Secretariat_Certificat7_di" bpmnElement="Activity_Reception_Secretariat_Certificat7Etapes">
+        <dc:Bounds x="380" y="660" width="100" height="80" />
+      </bpmndi:BPMNShape>
+
+      <bpmndi:BPMNShape id="Activity_Annotation_Direction_Certificat7_di" bpmnElement="Activity_Annotation_Direction_Certificat7Etapes">
+        <dc:Bounds x="380" y="740" width="100" height="80" />
+      </bpmndi:BPMNShape>
+
+      <bpmndi:BPMNShape id="Activity_Traitement_Controle_Certificat7_di" bpmnElement="Activity_Traitement_Controle_Certificat7Etapes">
+        <dc:Bounds x="380" y="830" width="100" height="80" />
+      </bpmndi:BPMNShape>
+
+      <bpmndi:BPMNShape id="Activity_Verification_Certificat7_di" bpmnElement="Activity_Verification_Certificat7Etapes">
+        <dc:Bounds x="560" y="830" width="100" height="80" />
+      </bpmndi:BPMNShape>
+
+      <bpmndi:BPMNShape id="Activity_Transmission_Certificat7_di" bpmnElement="Activity_Transmission_Certificat7Etapes">
+        <dc:Bounds x="740" y="570" width="100" height="80" />
+      </bpmndi:BPMNShape>
+
+      <bpmndi:BPMNShape id="Activity_RendezVous7_di" bpmnElement="Activity_RendezVous7Etapes">
+        <dc:Bounds x="920" y="570" width="100" height="80" />
+      </bpmndi:BPMNShape>
+
+      <bpmndi:BPMNShape id="EndEvent_Certificat7_di" bpmnElement="EndEvent_CertificatPret7Etapes">
+        <dc:Bounds x="1100" y="592" width="36" height="36" />
+        <bpmndi:BPMNLabel><dc:Bounds x="1105" y="635" width="18" height="14" /></bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+
+      <bpmndi:BPMNShape id="TextAnnotation_Certificat7_di" bpmnElement="TextAnnotation_CertificatPret7Etapes">
+        <dc:Bounds x="530" y="80" width="200" height="80" />
+      </bpmndi:BPMNShape>
+
+      <!-- Arêtes -->
+      <bpmndi:BPMNEdge id="Flow_Start_To_Soumettre_7_di" bpmnElement="Flow_Start_To_Soumettre_7Etapes">
+        <di:waypoint x="288" y="610" /><di:waypoint x="380" y="610" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_Soumettre_To_ReceptionSec_7_di" bpmnElement="Flow_Soumettre_To_ReceptionSec_7Etapes">
+        <di:waypoint x="430" y="650" /><di:waypoint x="430" y="660" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_ReceptionSec_To_AnnotationDir_7_di" bpmnElement="Flow_ReceptionSec_To_AnnotationDir_7Etapes">
+        <di:waypoint x="430" y="740" /><di:waypoint x="430" y="740" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_AnnotationDir_To_TraitementControle_7_di" bpmnElement="Flow_AnnotationDir_To_TraitementControle_7Etapes">
+        <di:waypoint x="430" y="820" /><di:waypoint x="430" y="830" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_TraitementControle_To_Verification_7_di" bpmnElement="Flow_TraitementControle_To_Verification_7Etapes">
+        <di:waypoint x="480" y="870" /><di:waypoint x="560" y="870" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_Verification_To_Transmission_7_di" bpmnElement="Flow_Verification_To_Transmission_7Etapes">
+        <di:waypoint x="610" y="830" /><di:waypoint x="610" y="610" /><di:waypoint x="740" y="610" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_Transmission_To_RendezVous_7_di" bpmnElement="Flow_Transmission_To_RendezVous_7Etapes">
+        <di:waypoint x="840" y="610" /><di:waypoint x="920" y="610" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_RendezVous_To_End_7_di" bpmnElement="Flow_RendezVous_To_End_7Etapes">
+        <di:waypoint x="1020" y="610" /><di:waypoint x="1100" y="610" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Association_Certificat7_di" bpmnElement="Association_CertificatPret7Etapes">
+        <di:waypoint x="430" y="570" /><di:waypoint x="530" y="120" />
+      </bpmndi:BPMNEdge>
+    </bpmndi:BPMNPlane>
+  </bpmndi:BPMNDiagram>
+</bpmn:definitions>

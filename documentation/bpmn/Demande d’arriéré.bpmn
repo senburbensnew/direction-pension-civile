@@ -1,0 +1,275 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL"
+                  xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI"
+                  xmlns:dc="http://www.omg.org/spec/DD/20100524/DC"
+                  xmlns:zeebe="http://camunda.org/schema/zeebe/1.0"
+                  xmlns:di="http://www.omg.org/spec/DD/20100524/DI"
+                  xmlns:modeler="http://camunda.org/schema/modeler/1.0"
+                  id="Definitions_Arriere"
+                  targetNamespace="http://bpmn.io/schema/bpmn"
+                  exporter="Camunda Modeler"
+                  exporterVersion="5.50.1"
+                  modeler:executionPlatform="Camunda Cloud"
+                  modeler:executionPlatformVersion="8.9.0">
+  <bpmn:collaboration id="Collaboration_Arriere">
+    <bpmn:participant id="Participant_Arriere" name="Direction de la Pension Civile" processRef="Process_Arriere" />
+    <bpmn:textAnnotation id="TextAnnotation_Arriere">
+      <bpmn:text>Pièces : Carte de pension, Matricule fiscal, Formulaire de demande d’arriérés de chèque</bpmn:text>
+    </bpmn:textAnnotation>
+    <bpmn:association id="Association_Arriere" sourceRef="Activity_Soumettre_Arriere" targetRef="TextAnnotation_Arriere" />
+  </bpmn:collaboration>
+
+  <bpmn:process id="Process_Arriere" isExecutable="true">
+    <bpmn:laneSet id="LaneSet_Arriere">
+      <bpmn:lane id="Lane_Pensionne" name="Pensionné">
+        <bpmn:flowNodeRef>StartEvent_Arriere</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Activity_Soumettre_Arriere</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Activity_Notification_Arriere</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>EndEvent_Arriere</bpmn:flowNodeRef>
+      </bpmn:lane>
+      <bpmn:lane id="Lane_Secretariat" name="Secrétariat">
+        <bpmn:flowNodeRef>Activity_Reception_Secretariat_Arriere</bpmn:flowNodeRef>
+      </bpmn:lane>
+      <bpmn:lane id="Lane_Direction" name="Direction">
+        <bpmn:flowNodeRef>Activity_Annotation_Direction_Arriere</bpmn:flowNodeRef>
+      </bpmn:lane>
+      <bpmn:lane id="Lane_ServiceCompta" name="Service Comptabilité">
+        <bpmn:flowNodeRef>Activity_Traitement_Compta_Arriere</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Activity_Transmission_UCDD_Arriere</bpmn:flowNodeRef>
+      </bpmn:lane>
+      <bpmn:lane id="Lane_SecretariatCompta" name="Secrétariat Comptabilité">
+        <bpmn:flowNodeRef>Activity_Reception_Compta_Arriere</bpmn:flowNodeRef>
+      </bpmn:lane>
+      <bpmn:lane id="Lane_ChefService" name="Chef de service">
+        <bpmn:flowNodeRef>Activity_Annotation_Chef_Arriere</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Activity_Dispatching_Arriere</bpmn:flowNodeRef>
+      </bpmn:lane>
+      <bpmn:lane id="Lane_Agent" name="Agent">
+        <bpmn:flowNodeRef>Activity_Verification_Arriere</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Activity_Validation_Arriere</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Activity_Saisie_Syspens_Arriere</bpmn:flowNodeRef>
+      </bpmn:lane>
+    </bpmn:laneSet>
+
+    <bpmn:startEvent id="StartEvent_Arriere" name="Soumission">
+      <bpmn:outgoing>Flow_Start_To_Soumettre_Arriere</bpmn:outgoing>
+    </bpmn:startEvent>
+
+    <bpmn:userTask id="Activity_Soumettre_Arriere" name="Soumettre demande">
+      <bpmn:extensionElements><zeebe:userTask /></bpmn:extensionElements>
+      <bpmn:incoming>Flow_Start_To_Soumettre_Arriere</bpmn:incoming>
+      <bpmn:outgoing>Flow_Soumettre_To_ReceptionSec_Arriere</bpmn:outgoing>
+    </bpmn:userTask>
+
+    <bpmn:receiveTask id="Activity_Reception_Secretariat_Arriere" name="Réception Secrétariat">
+      <bpmn:incoming>Flow_Soumettre_To_ReceptionSec_Arriere</bpmn:incoming>
+      <bpmn:outgoing>Flow_ReceptionSec_To_AnnotationDir_Arriere</bpmn:outgoing>
+    </bpmn:receiveTask>
+
+    <bpmn:userTask id="Activity_Annotation_Direction_Arriere" name="Annotation Direction">
+      <bpmn:extensionElements><zeebe:userTask /></bpmn:extensionElements>
+      <bpmn:incoming>Flow_ReceptionSec_To_AnnotationDir_Arriere</bpmn:incoming>
+      <bpmn:outgoing>Flow_AnnotationDir_To_TraitementCompta_Arriere</bpmn:outgoing>
+    </bpmn:userTask>
+
+    <bpmn:userTask id="Activity_Traitement_Compta_Arriere" name="Traitement Service Comptabilité">
+      <bpmn:extensionElements><zeebe:userTask /></bpmn:extensionElements>
+      <bpmn:incoming>Flow_AnnotationDir_To_TraitementCompta_Arriere</bpmn:incoming>
+      <bpmn:outgoing>Flow_TraitementCompta_To_UCDD_Arriere</bpmn:outgoing>
+    </bpmn:userTask>
+
+    <!-- NOUVELLE TÂCHE : TRANSMISSION UCDD -->
+    <bpmn:serviceTask id="Activity_Transmission_UCDD_Arriere" name="Transmission UCDD">
+      <bpmn:incoming>Flow_TraitementCompta_To_UCDD_Arriere</bpmn:incoming>
+      <bpmn:outgoing>Flow_UCDD_To_ReceptionCompta_Arriere</bpmn:outgoing>
+    </bpmn:serviceTask>
+
+    <bpmn:receiveTask id="Activity_Reception_Compta_Arriere" name="Réception Secrétariat Comptabilité">
+      <bpmn:incoming>Flow_UCDD_To_ReceptionCompta_Arriere</bpmn:incoming>
+      <bpmn:outgoing>Flow_ReceptionCompta_To_AnnotationChef_Arriere</bpmn:outgoing>
+    </bpmn:receiveTask>
+
+    <bpmn:userTask id="Activity_Annotation_Chef_Arriere" name="Annotation Chef de service">
+      <bpmn:extensionElements><zeebe:userTask /></bpmn:extensionElements>
+      <bpmn:incoming>Flow_ReceptionCompta_To_AnnotationChef_Arriere</bpmn:incoming>
+      <bpmn:outgoing>Flow_AnnotationChef_To_Dispatching_Arriere</bpmn:outgoing>
+    </bpmn:userTask>
+
+    <bpmn:userTask id="Activity_Dispatching_Arriere" name="Dispatching">
+      <bpmn:extensionElements><zeebe:userTask /></bpmn:extensionElements>
+      <bpmn:incoming>Flow_AnnotationChef_To_Dispatching_Arriere</bpmn:incoming>
+      <bpmn:outgoing>Flow_Dispatching_To_Verification_Arriere</bpmn:outgoing>
+    </bpmn:userTask>
+
+    <bpmn:userTask id="Activity_Verification_Arriere" name="Vérification dossier">
+      <bpmn:extensionElements><zeebe:userTask /></bpmn:extensionElements>
+      <bpmn:incoming>Flow_Dispatching_To_Verification_Arriere</bpmn:incoming>
+      <bpmn:outgoing>Flow_Verification_To_Validation_Arriere</bpmn:outgoing>
+    </bpmn:userTask>
+
+    <bpmn:userTask id="Activity_Validation_Arriere" name="Validation requête">
+      <bpmn:extensionElements><zeebe:userTask /></bpmn:extensionElements>
+      <bpmn:incoming>Flow_Verification_To_Validation_Arriere</bpmn:incoming>
+      <bpmn:outgoing>Flow_Validation_To_Saisie_Arriere</bpmn:outgoing>
+    </bpmn:userTask>
+
+    <bpmn:userTask id="Activity_Saisie_Syspens_Arriere" name="Saisie sur SYSPENS">
+      <bpmn:extensionElements><zeebe:userTask /></bpmn:extensionElements>
+      <bpmn:incoming>Flow_Validation_To_Saisie_Arriere</bpmn:incoming>
+      <bpmn:outgoing>Flow_Saisie_To_Notification_Arriere</bpmn:outgoing>
+    </bpmn:userTask>
+
+    <bpmn:serviceTask id="Activity_Notification_Arriere" name="Notifier pensionné">
+      <bpmn:incoming>Flow_Saisie_To_Notification_Arriere</bpmn:incoming>
+      <bpmn:outgoing>Flow_Notification_To_End_Arriere</bpmn:outgoing>
+    </bpmn:serviceTask>
+
+    <bpmn:endEvent id="EndEvent_Arriere" name="FIN">
+      <bpmn:incoming>Flow_Notification_To_End_Arriere</bpmn:incoming>
+    </bpmn:endEvent>
+
+    <!-- Flux séquentiels mis à jour -->
+    <bpmn:sequenceFlow id="Flow_Start_To_Soumettre_Arriere" sourceRef="StartEvent_Arriere" targetRef="Activity_Soumettre_Arriere" />
+    <bpmn:sequenceFlow id="Flow_Soumettre_To_ReceptionSec_Arriere" sourceRef="Activity_Soumettre_Arriere" targetRef="Activity_Reception_Secretariat_Arriere" />
+    <bpmn:sequenceFlow id="Flow_ReceptionSec_To_AnnotationDir_Arriere" sourceRef="Activity_Reception_Secretariat_Arriere" targetRef="Activity_Annotation_Direction_Arriere" />
+    <bpmn:sequenceFlow id="Flow_AnnotationDir_To_TraitementCompta_Arriere" sourceRef="Activity_Annotation_Direction_Arriere" targetRef="Activity_Traitement_Compta_Arriere" />
+    <bpmn:sequenceFlow id="Flow_TraitementCompta_To_UCDD_Arriere" sourceRef="Activity_Traitement_Compta_Arriere" targetRef="Activity_Transmission_UCDD_Arriere" />
+    <bpmn:sequenceFlow id="Flow_UCDD_To_ReceptionCompta_Arriere" sourceRef="Activity_Transmission_UCDD_Arriere" targetRef="Activity_Reception_Compta_Arriere" />
+    <bpmn:sequenceFlow id="Flow_ReceptionCompta_To_AnnotationChef_Arriere" sourceRef="Activity_Reception_Compta_Arriere" targetRef="Activity_Annotation_Chef_Arriere" />
+    <bpmn:sequenceFlow id="Flow_AnnotationChef_To_Dispatching_Arriere" sourceRef="Activity_Annotation_Chef_Arriere" targetRef="Activity_Dispatching_Arriere" />
+    <bpmn:sequenceFlow id="Flow_Dispatching_To_Verification_Arriere" sourceRef="Activity_Dispatching_Arriere" targetRef="Activity_Verification_Arriere" />
+    <bpmn:sequenceFlow id="Flow_Verification_To_Validation_Arriere" sourceRef="Activity_Verification_Arriere" targetRef="Activity_Validation_Arriere" />
+    <bpmn:sequenceFlow id="Flow_Validation_To_Saisie_Arriere" sourceRef="Activity_Validation_Arriere" targetRef="Activity_Saisie_Syspens_Arriere" />
+    <bpmn:sequenceFlow id="Flow_Saisie_To_Notification_Arriere" sourceRef="Activity_Saisie_Syspens_Arriere" targetRef="Activity_Notification_Arriere" />
+    <bpmn:sequenceFlow id="Flow_Notification_To_End_Arriere" sourceRef="Activity_Notification_Arriere" targetRef="EndEvent_Arriere" />
+
+  </bpmn:process>
+
+  <!-- DIAGRAMME AVEC LES NOUVELLES POSITIONS -->
+  <bpmndi:BPMNDiagram id="BPMNDiagram_Arriere">
+    <bpmndi:BPMNPlane id="BPMNPlane_Arriere" bpmnElement="Collaboration_Arriere">
+      <!-- Pool -->
+      <bpmndi:BPMNShape id="Participant_Arriere_di" bpmnElement="Participant_Arriere" isHorizontal="true">
+        <dc:Bounds x="160" y="560" width="1400" height="760" />
+      </bpmndi:BPMNShape>
+      <!-- Lanes -->
+      <bpmndi:BPMNShape id="Lane_Pensionne_di_Arriere" bpmnElement="Lane_Pensionne" isHorizontal="true">
+        <dc:Bounds x="190" y="560" width="1370" height="100" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Lane_Secretariat_di_Arriere" bpmnElement="Lane_Secretariat" isHorizontal="true">
+        <dc:Bounds x="190" y="660" width="1370" height="100" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Lane_Direction_di_Arriere" bpmnElement="Lane_Direction" isHorizontal="true">
+        <dc:Bounds x="190" y="760" width="1370" height="100" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Lane_ServiceCompta_di_Arriere" bpmnElement="Lane_ServiceCompta" isHorizontal="true">
+        <dc:Bounds x="190" y="860" width="1370" height="110" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Lane_SecretariatCompta_di_Arriere" bpmnElement="Lane_SecretariatCompta" isHorizontal="true">
+        <dc:Bounds x="190" y="970" width="1370" height="100" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Lane_ChefService_di_Arriere" bpmnElement="Lane_ChefService" isHorizontal="true">
+        <dc:Bounds x="190" y="1070" width="1370" height="100" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Lane_Agent_di_Arriere" bpmnElement="Lane_Agent" isHorizontal="true">
+        <dc:Bounds x="190" y="1170" width="1370" height="100" />
+      </bpmndi:BPMNShape>
+
+      <!-- Formes -->
+      <bpmndi:BPMNShape id="StartEvent_Arriere_di" bpmnElement="StartEvent_Arriere">
+        <dc:Bounds x="252" y="592" width="36" height="36" />
+        <bpmndi:BPMNLabel><dc:Bounds x="235" y="635" width="73" height="27" /></bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_Soumettre_Arriere_di" bpmnElement="Activity_Soumettre_Arriere">
+        <dc:Bounds x="380" y="570" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_Reception_Secretariat_Arriere_di" bpmnElement="Activity_Reception_Secretariat_Arriere">
+        <dc:Bounds x="380" y="670" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_Annotation_Direction_Arriere_di" bpmnElement="Activity_Annotation_Direction_Arriere">
+        <dc:Bounds x="380" y="770" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_Traitement_Compta_Arriere_di" bpmnElement="Activity_Traitement_Compta_Arriere">
+        <dc:Bounds x="380" y="870" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <!-- NOUVELLE TÂCHE Transmission UCDD -->
+      <bpmndi:BPMNShape id="Activity_Transmission_UCDD_Arriere_di" bpmnElement="Activity_Transmission_UCDD_Arriere">
+        <dc:Bounds x="560" y="870" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_Reception_Compta_Arriere_di" bpmnElement="Activity_Reception_Compta_Arriere">
+        <dc:Bounds x="380" y="980" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_Annotation_Chef_Arriere_di" bpmnElement="Activity_Annotation_Chef_Arriere">
+        <dc:Bounds x="380" y="1080" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_Dispatching_Arriere_di" bpmnElement="Activity_Dispatching_Arriere">
+        <dc:Bounds x="560" y="1080" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_Verification_Arriere_di" bpmnElement="Activity_Verification_Arriere">
+        <dc:Bounds x="560" y="1180" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_Validation_Arriere_di" bpmnElement="Activity_Validation_Arriere">
+        <dc:Bounds x="740" y="1180" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_Saisie_Syspens_Arriere_di" bpmnElement="Activity_Saisie_Syspens_Arriere">
+        <dc:Bounds x="920" y="1180" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_Notification_Arriere_di" bpmnElement="Activity_Notification_Arriere">
+        <dc:Bounds x="1100" y="570" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="EndEvent_Arriere_di" bpmnElement="EndEvent_Arriere">
+        <dc:Bounds x="1290" y="592" width="36" height="36" />
+        <bpmndi:BPMNLabel><dc:Bounds x="1295" y="635" width="18" height="14" /></bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="TextAnnotation_Arriere_di" bpmnElement="TextAnnotation_Arriere">
+        <dc:Bounds x="530" y="80" width="200" height="100" />
+      </bpmndi:BPMNShape>
+
+      <!-- Arêtes -->
+      <bpmndi:BPMNEdge id="Flow_Start_To_Soumettre_Arriere_di" bpmnElement="Flow_Start_To_Soumettre_Arriere">
+        <di:waypoint x="288" y="610" /><di:waypoint x="380" y="610" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_Soumettre_To_ReceptionSec_Arriere_di" bpmnElement="Flow_Soumettre_To_ReceptionSec_Arriere">
+        <di:waypoint x="430" y="650" /><di:waypoint x="430" y="670" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_ReceptionSec_To_AnnotationDir_Arriere_di" bpmnElement="Flow_ReceptionSec_To_AnnotationDir_Arriere">
+        <di:waypoint x="430" y="750" /><di:waypoint x="430" y="770" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_AnnotationDir_To_TraitementCompta_Arriere_di" bpmnElement="Flow_AnnotationDir_To_TraitementCompta_Arriere">
+        <di:waypoint x="430" y="850" /><di:waypoint x="430" y="870" />
+      </bpmndi:BPMNEdge>
+      <!-- Nouveau flux vers UCDD -->
+      <bpmndi:BPMNEdge id="Flow_TraitementCompta_To_UCDD_Arriere_di" bpmnElement="Flow_TraitementCompta_To_UCDD_Arriere">
+        <di:waypoint x="480" y="910" /><di:waypoint x="560" y="910" />
+      </bpmndi:BPMNEdge>
+      <!-- Flux UCDD -> Réception Compta -->
+      <bpmndi:BPMNEdge id="Flow_UCDD_To_ReceptionCompta_Arriere_di" bpmnElement="Flow_UCDD_To_ReceptionCompta_Arriere">
+        <di:waypoint x="610" y="950" /><di:waypoint x="610" y="980" /><di:waypoint x="480" y="980" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_ReceptionCompta_To_AnnotationChef_Arriere_di" bpmnElement="Flow_ReceptionCompta_To_AnnotationChef_Arriere">
+        <di:waypoint x="430" y="1060" /><di:waypoint x="430" y="1080" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_AnnotationChef_To_Dispatching_Arriere_di" bpmnElement="Flow_AnnotationChef_To_Dispatching_Arriere">
+        <di:waypoint x="480" y="1120" /><di:waypoint x="560" y="1120" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_Dispatching_To_Verification_Arriere_di" bpmnElement="Flow_Dispatching_To_Verification_Arriere">
+        <di:waypoint x="610" y="1160" /><di:waypoint x="610" y="1180" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_Verification_To_Validation_Arriere_di" bpmnElement="Flow_Verification_To_Validation_Arriere">
+        <di:waypoint x="660" y="1220" /><di:waypoint x="740" y="1220" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_Validation_To_Saisie_Arriere_di" bpmnElement="Flow_Validation_To_Saisie_Arriere">
+        <di:waypoint x="840" y="1220" /><di:waypoint x="920" y="1220" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_Saisie_To_Notification_Arriere_di" bpmnElement="Flow_Saisie_To_Notification_Arriere">
+        <di:waypoint x="970" y="1180" /><di:waypoint x="970" y="610" /><di:waypoint x="1100" y="610" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_Notification_To_End_Arriere_di" bpmnElement="Flow_Notification_To_End_Arriere">
+        <di:waypoint x="1200" y="610" /><di:waypoint x="1290" y="610" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Association_Arriere_di" bpmnElement="Association_Arriere">
+        <di:waypoint x="430" y="570" /><di:waypoint x="530" y="130" />
+      </bpmndi:BPMNEdge>
+    </bpmndi:BPMNPlane>
+  </bpmndi:BPMNDiagram>
+</bpmn:definitions>

@@ -1,0 +1,273 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:zeebe="http://camunda.org/schema/zeebe/1.0" xmlns:di="http://www.omg.org/spec/DD/20100524/DI" xmlns:modeler="http://camunda.org/schema/modeler/1.0" id="Definitions_Reclamation" targetNamespace="http://bpmn.io/schema/bpmn" exporter="Camunda Modeler" exporterVersion="5.50.1" modeler:executionPlatform="Camunda Cloud" modeler:executionPlatformVersion="8.9.0">
+  <bpmn:collaboration id="Collaboration_Reclamation">
+    <bpmn:participant id="Participant_Reclamation" name="Direction de la Pension Civile" processRef="Process_Reclamation" />
+    <bpmn:textAnnotation id="TextAnnotation_0vl77nw">
+      <bpmn:text>1) Carte de pension 
+2) Matricule fiscal
+3) Fiche de dépôt /Attestation de bancaire indiquant clairement le titulaire du compte et le numéro de et le type de compte
+4) Relevé de compte pour la période indiquée
+5) Certificat de perte de document bancaire (livret, carte,..) délivré par la Police.
+6) Formulaire de demande de réclamation de virement pour non-réception</bpmn:text>
+    </bpmn:textAnnotation>
+    <bpmn:association id="Association_05fis0u" associationDirection="None" sourceRef="Activity_Soumettre" targetRef="TextAnnotation_0vl77nw" />
+  </bpmn:collaboration>
+  <bpmn:process id="Process_Reclamation" isExecutable="true">
+    <bpmn:laneSet id="LaneSet_Reclamation">
+      <bpmn:lane id="Lane_Direction" name="Direction">
+        <bpmn:flowNodeRef>Activity_Valider</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Gateway_Decision</bpmn:flowNodeRef>
+      </bpmn:lane>
+      <bpmn:lane id="Lane_Agent" name="Agent de service">
+        <bpmn:flowNodeRef>Activity_Verifier</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Activity_Paiement</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Activity_Refus</bpmn:flowNodeRef>
+      </bpmn:lane>
+      <bpmn:lane id="Lane_Chef" name="Chef de service">
+        <bpmn:flowNodeRef>Activity_Dispatching</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Activity_Annoter</bpmn:flowNodeRef>
+      </bpmn:lane>
+      <bpmn:lane id="Lane_Secretariat" name="Secrétariat Comptabilité">
+        <bpmn:flowNodeRef>Activity_Recevoir</bpmn:flowNodeRef>
+      </bpmn:lane>
+      <bpmn:lane id="Lane_Pensionne" name="Pensionné">
+        <bpmn:flowNodeRef>StartEvent_Reclamation</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Activity_Soumettre</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Gateway_1sf18rz</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Activity_Notification</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>EndEvent_Fin</bpmn:flowNodeRef>
+      </bpmn:lane>
+    </bpmn:laneSet>
+    <bpmn:startEvent id="StartEvent_Reclamation" name="Soumission de réclamation">
+      <bpmn:outgoing>Flow_Start_To_Soumettre</bpmn:outgoing>
+    </bpmn:startEvent>
+    <bpmn:userTask id="Activity_Soumettre" name="Soumettre réclamation">
+      <bpmn:extensionElements>
+        <zeebe:userTask />
+      </bpmn:extensionElements>
+      <bpmn:incoming>Flow_Start_To_Soumettre</bpmn:incoming>
+      <bpmn:outgoing>Flow_Soumettre_To_Recevoir</bpmn:outgoing>
+    </bpmn:userTask>
+    <bpmn:userTask id="Activity_Valider" name="Valider">
+      <bpmn:extensionElements>
+        <zeebe:userTask />
+      </bpmn:extensionElements>
+      <bpmn:incoming>Flow_Verifier_To_Valider</bpmn:incoming>
+      <bpmn:outgoing>Flow_Valider_To_Decision</bpmn:outgoing>
+    </bpmn:userTask>
+    <bpmn:userTask id="Activity_Dispatching" name="Dispatching">
+      <bpmn:extensionElements>
+        <zeebe:userTask />
+      </bpmn:extensionElements>
+      <bpmn:incoming>Flow_Annoter_To_Dispatching</bpmn:incoming>
+      <bpmn:outgoing>Flow_Dispatching_To_Verifier</bpmn:outgoing>
+    </bpmn:userTask>
+    <bpmn:userTask id="Activity_Verifier" name="Vérifier">
+      <bpmn:extensionElements>
+        <zeebe:userTask />
+      </bpmn:extensionElements>
+      <bpmn:incoming>Flow_Dispatching_To_Verifier</bpmn:incoming>
+      <bpmn:outgoing>Flow_Verifier_To_Valider</bpmn:outgoing>
+    </bpmn:userTask>
+    <bpmn:userTask id="Activity_Paiement" name="Paiement">
+      <bpmn:extensionElements>
+        <zeebe:userTask />
+      </bpmn:extensionElements>
+      <bpmn:incoming>Flow_Decision_To_Paiement</bpmn:incoming>
+      <bpmn:outgoing>Flow_Paiement_To_Gateway</bpmn:outgoing>
+    </bpmn:userTask>
+    <bpmn:receiveTask id="Activity_Recevoir" name="Recevoir réclamation">
+      <bpmn:incoming>Flow_Soumettre_To_Recevoir</bpmn:incoming>
+      <bpmn:outgoing>Flow_Recevoir_To_Annoter</bpmn:outgoing>
+    </bpmn:receiveTask>
+    <bpmn:serviceTask id="Activity_Notification" name="Notifier">
+      <bpmn:incoming>Flow_Gateway_To_Notification</bpmn:incoming>
+      <bpmn:outgoing>Flow_Notification_To_End</bpmn:outgoing>
+    </bpmn:serviceTask>
+    <bpmn:exclusiveGateway id="Gateway_Decision" name="Décision">
+      <bpmn:incoming>Flow_Valider_To_Decision</bpmn:incoming>
+      <bpmn:outgoing>Flow_Decision_To_Paiement</bpmn:outgoing>
+      <bpmn:outgoing>Flow_Decision_To_Refus</bpmn:outgoing>
+    </bpmn:exclusiveGateway>
+    <bpmn:exclusiveGateway id="Gateway_1sf18rz">
+      <bpmn:incoming>Flow_Paiement_To_Gateway</bpmn:incoming>
+      <bpmn:incoming>Flow_Refus_To_Gateway</bpmn:incoming>
+      <bpmn:outgoing>Flow_Gateway_To_Notification</bpmn:outgoing>
+    </bpmn:exclusiveGateway>
+    <bpmn:endEvent id="EndEvent_Fin" name="FIN">
+      <bpmn:incoming>Flow_Notification_To_End</bpmn:incoming>
+    </bpmn:endEvent>
+    <bpmn:sequenceFlow id="Flow_Start_To_Soumettre" sourceRef="StartEvent_Reclamation" targetRef="Activity_Soumettre" />
+    <bpmn:sequenceFlow id="Flow_Soumettre_To_Recevoir" sourceRef="Activity_Soumettre" targetRef="Activity_Recevoir" />
+    <bpmn:sequenceFlow id="Flow_Recevoir_To_Annoter" sourceRef="Activity_Recevoir" targetRef="Activity_Annoter" />
+    <bpmn:sequenceFlow id="Flow_Annoter_To_Dispatching" sourceRef="Activity_Annoter" targetRef="Activity_Dispatching" />
+    <bpmn:sequenceFlow id="Flow_Dispatching_To_Verifier" sourceRef="Activity_Dispatching" targetRef="Activity_Verifier" />
+    <bpmn:sequenceFlow id="Flow_Verifier_To_Valider" sourceRef="Activity_Verifier" targetRef="Activity_Valider" />
+    <bpmn:sequenceFlow id="Flow_Valider_To_Decision" sourceRef="Activity_Valider" targetRef="Gateway_Decision" />
+    <bpmn:sequenceFlow id="Flow_Decision_To_Paiement" name="paiement" sourceRef="Gateway_Decision" targetRef="Activity_Paiement" />
+    <bpmn:sequenceFlow id="Flow_Decision_To_Refus" name="refus" sourceRef="Gateway_Decision" targetRef="Activity_Refus" />
+    <bpmn:sequenceFlow id="Flow_Paiement_To_Gateway" sourceRef="Activity_Paiement" targetRef="Gateway_1sf18rz" />
+    <bpmn:sequenceFlow id="Flow_Refus_To_Gateway" sourceRef="Activity_Refus" targetRef="Gateway_1sf18rz" />
+    <bpmn:sequenceFlow id="Flow_Gateway_To_Notification" sourceRef="Gateway_1sf18rz" targetRef="Activity_Notification" />
+    <bpmn:sequenceFlow id="Flow_Notification_To_End" sourceRef="Activity_Notification" targetRef="EndEvent_Fin" />
+    <bpmn:userTask id="Activity_Annoter" name="Annoter">
+      <bpmn:extensionElements>
+        <zeebe:userTask />
+      </bpmn:extensionElements>
+      <bpmn:incoming>Flow_Recevoir_To_Annoter</bpmn:incoming>
+      <bpmn:outgoing>Flow_Annoter_To_Dispatching</bpmn:outgoing>
+    </bpmn:userTask>
+    <bpmn:userTask id="Activity_Refus" name="Refus">
+      <bpmn:extensionElements>
+        <zeebe:userTask />
+      </bpmn:extensionElements>
+      <bpmn:incoming>Flow_Decision_To_Refus</bpmn:incoming>
+      <bpmn:outgoing>Flow_Refus_To_Gateway</bpmn:outgoing>
+    </bpmn:userTask>
+  </bpmn:process>
+  <bpmndi:BPMNDiagram id="BPMNDiagram_Reclamation">
+    <bpmndi:BPMNPlane id="BPMNPlane_Reclamation" bpmnElement="Collaboration_Reclamation">
+      <bpmndi:BPMNShape id="Participant_Reclamation_di" bpmnElement="Participant_Reclamation" isHorizontal="true">
+        <dc:Bounds x="160" y="560" width="1200" height="640" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Lane_Pensionne_di" bpmnElement="Lane_Pensionne" isHorizontal="true">
+        <dc:Bounds x="190" y="560" width="1170" height="120" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Lane_Secretariat_di" bpmnElement="Lane_Secretariat" isHorizontal="true">
+        <dc:Bounds x="190" y="680" width="1170" height="100" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Lane_Chef_di" bpmnElement="Lane_Chef" isHorizontal="true">
+        <dc:Bounds x="190" y="780" width="1170" height="100" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Lane_Agent_di" bpmnElement="Lane_Agent" isHorizontal="true">
+        <dc:Bounds x="190" y="880" width="1170" height="160" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Lane_Direction_di" bpmnElement="Lane_Direction" isHorizontal="true">
+        <dc:Bounds x="190" y="1040" width="1170" height="160" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="StartEvent_Reclamation_di" bpmnElement="StartEvent_Reclamation">
+        <dc:Bounds x="252" y="602" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="235" y="645" width="73" height="27" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_Soumettre_di" bpmnElement="Activity_Soumettre">
+        <dc:Bounds x="400" y="580" width="100" height="80" />
+        <bpmndi:BPMNLabel />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_Valider_di" bpmnElement="Activity_Valider">
+        <dc:Bounds x="580" y="1080" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_Dispatching_di" bpmnElement="Activity_Dispatching">
+        <dc:Bounds x="450" y="790" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_Verifier_di" bpmnElement="Activity_Verifier">
+        <dc:Bounds x="690" y="920" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_Paiement_di" bpmnElement="Activity_Paiement">
+        <dc:Bounds x="890" y="890" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_Recevoir_di" bpmnElement="Activity_Recevoir">
+        <dc:Bounds x="580" y="690" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_1wsmobe_di" bpmnElement="Activity_Notification">
+        <dc:Bounds x="1110" y="580" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Gateway_Decision_di" bpmnElement="Gateway_Decision" isMarkerVisible="true">
+        <dc:Bounds x="805" y="1095" width="50" height="50" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="808" y="1150" width="43" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Gateway_1sf18rz_di" bpmnElement="Gateway_1sf18rz" isMarkerVisible="true">
+        <dc:Bounds x="985" y="595" width="50" height="50" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="EndEvent_Fin_di" bpmnElement="EndEvent_Fin">
+        <dc:Bounds x="1302" y="602" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="1307" y="645" width="18" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_Annoter_di" bpmnElement="Activity_Annoter">
+        <dc:Bounds x="710" y="790" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_Refus_di" bpmnElement="Activity_Refus">
+        <dc:Bounds x="1040" y="940" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="Flow_Start_To_Soumettre_di" bpmnElement="Flow_Start_To_Soumettre">
+        <di:waypoint x="288" y="620" />
+        <di:waypoint x="400" y="620" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_Soumettre_To_Recevoir_di" bpmnElement="Flow_Soumettre_To_Recevoir">
+        <di:waypoint x="500" y="620" />
+        <di:waypoint x="540" y="620" />
+        <di:waypoint x="540" y="730" />
+        <di:waypoint x="580" y="730" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_Recevoir_To_Annoter_di" bpmnElement="Flow_Recevoir_To_Annoter">
+        <di:waypoint x="680" y="730" />
+        <di:waypoint x="695" y="730" />
+        <di:waypoint x="695" y="830" />
+        <di:waypoint x="710" y="830" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_Annoter_To_Dispatching_di" bpmnElement="Flow_Annoter_To_Dispatching">
+        <di:waypoint x="710" y="850" />
+        <di:waypoint x="550" y="850" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_Dispatching_To_Verifier_di" bpmnElement="Flow_Dispatching_To_Verifier">
+        <di:waypoint x="500" y="870" />
+        <di:waypoint x="500" y="960" />
+        <di:waypoint x="690" y="960" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_Verifier_To_Valider_di" bpmnElement="Flow_Verifier_To_Valider">
+        <di:waypoint x="740" y="1000" />
+        <di:waypoint x="740" y="1020" />
+        <di:waypoint x="630" y="1020" />
+        <di:waypoint x="630" y="1080" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_Valider_To_Decision_di" bpmnElement="Flow_Valider_To_Decision">
+        <di:waypoint x="680" y="1120" />
+        <di:waypoint x="805" y="1120" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_Decision_To_Paiement_di" bpmnElement="Flow_Decision_To_Paiement">
+        <di:waypoint x="830" y="1095" />
+        <di:waypoint x="830" y="930" />
+        <di:waypoint x="890" y="930" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_Decision_To_Refus_di" bpmnElement="Flow_Decision_To_Refus">
+        <di:waypoint x="855" y="1120" />
+        <di:waypoint x="1090" y="1120" />
+        <di:waypoint x="1090" y="1020" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="966" y="1129" width="25" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_Paiement_To_Gateway_di" bpmnElement="Flow_Paiement_To_Gateway">
+        <di:waypoint x="990" y="930" />
+        <di:waypoint x="1010" y="930" />
+        <di:waypoint x="1010" y="645" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_Refus_To_Gateway_di" bpmnElement="Flow_Refus_To_Gateway">
+        <di:waypoint x="1090" y="940" />
+        <di:waypoint x="1090" y="798" />
+        <di:waypoint x="1010" y="798" />
+        <di:waypoint x="1010" y="645" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_Gateway_To_Notification_di" bpmnElement="Flow_Gateway_To_Notification">
+        <di:waypoint x="1035" y="620" />
+        <di:waypoint x="1110" y="620" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_Notification_To_End_di" bpmnElement="Flow_Notification_To_End">
+        <di:waypoint x="1210" y="620" />
+        <di:waypoint x="1302" y="620" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNShape id="TextAnnotation_0vl77nw_di" bpmnElement="TextAnnotation_0vl77nw">
+        <dc:Bounds x="530" y="80" width="108.097" height="388" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="Association_05fis0u_di" bpmnElement="Association_05fis0u">
+        <di:waypoint x="460" y="580" />
+        <di:waypoint x="530" y="300" />
+      </bpmndi:BPMNEdge>
+    </bpmndi:BPMNPlane>
+  </bpmndi:BPMNDiagram>
+</bpmn:definitions>

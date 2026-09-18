@@ -166,4 +166,9 @@ return [
     'call_on'                => 'Appeler sur : :phone',
     'weekdays_short'         => ['dim.', 'lun.', 'mar.', 'mer.', 'jeu.', 'ven.', 'sam.'],
     'months_short'           => ['janv.', 'févr.', 'mars', 'avr.', 'mai', 'juin', 'juil.', 'août', 'sept.', 'oct.', 'nov.', 'déc.'],
+
+    // Visit counter
+    'visit_counter'          => 'Décompte des visites du site',
+    'visits_total'           => 'Visites',
+    'visits_today'           => "Aujourd'hui",
 ];

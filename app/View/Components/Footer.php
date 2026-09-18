@@ -2,23 +2,29 @@
 
 namespace App\View\Components;
 
+use App\Services\SiteVisitService;
 use Closure;
 use Illuminate\Contracts\View\View;
 use Illuminate\View\Component;
 
 class Footer extends Component
 {
-    /**
-     * Create a new component instance.
-     */
-    public function __construct()
+    public int $totalVisits;
+
+    public int $todayVisits;
+
+    public function __construct(SiteVisitService $visits)
     {
-        //
+        try {
+            $summary = $visits->summary();
+        } catch (\Throwable) {
+            $summary = ['total_hits' => 0, 'today_hits' => 0];
+        }
+
+        $this->totalVisits = $summary['total_hits'];
+        $this->todayVisits = $summary['today_hits'];
     }
 
-    /**
-     * Get the view / contents that represent the component.
-     */
     public function render(): View|Closure|string
     {
         return view('components.footer');

@@ -1,0 +1,501 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL"
+                  xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI"
+                  xmlns:dc="http://www.omg.org/spec/DD/20100524/DC"
+                  xmlns:zeebe="http://camunda.org/schema/zeebe/1.0"
+                  xmlns:di="http://www.omg.org/spec/DD/20100524/DI"
+                  xmlns:modeler="http://camunda.org/schema/modeler/1.0"
+                  id="Definitions_DroitPropre"
+                  targetNamespace="http://bpmn.io/schema/bpmn"
+                  exporter="Camunda Modeler"
+                  exporterVersion="5.50.1"
+                  modeler:executionPlatform="Camunda Cloud"
+                  modeler:executionPlatformVersion="8.9.0">
+  <bpmn:collaboration id="Collaboration_DroitPropre">
+    <bpmn:participant id="Participant_DroitPropre" name="Direction de la Pension Civile" processRef="Process_DroitPropre" />
+    <bpmn:textAnnotation id="TextAnnotation_DroitPropre">
+      <bpmn:text>Pièces : Certificat de carrière, Copie Moniteur, Extrait mariage, Extrait naissance, Acte divorce, Matricule fiscal + CIN, 2 photos, Certificat médical, Souche chèque, Formulaire droit direct</bpmn:text>
+    </bpmn:textAnnotation>
+    <bpmn:association id="Association_DroitPropre" sourceRef="Activity_Soumettre_DroitPropre" targetRef="TextAnnotation_DroitPropre" />
+  </bpmn:collaboration>
+
+  <bpmn:process id="Process_DroitPropre" isExecutable="true">
+    <bpmn:laneSet id="LaneSet_DroitPropre">
+      <!-- Lanes -->
+      <bpmn:lane id="Lane_Demandeur" name="Demandeur / Institution">
+        <bpmn:flowNodeRef>StartEvent_DroitPropre</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Activity_Soumettre_DroitPropre</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Activity_Notification_Finale</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>EndEvent_DroitPropre</bpmn:flowNodeRef>
+      </bpmn:lane>
+      <bpmn:lane id="Lane_Secretariat_DPC" name="Secrétariat DPC">
+        <bpmn:flowNodeRef>Activity_Depot_Secretariat_DroitPropre</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Activity_Verification_Secretariat_DroitPropre</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Activity_Accuse_Reception_DroitPropre</bpmn:flowNodeRef>
+      </bpmn:lane>
+      <bpmn:lane id="Lane_Courrier_MEF" name="Service Courrier MEF">
+        <bpmn:flowNodeRef>Activity_Depot_Courrier_DroitPropre</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Activity_Depot_Courrier_PasEnService</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Activity_Verification_Courrier_DroitPropre</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Activity_Numero_Reception_DroitPropre</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Activity_Transfert_DPC_DroitPropre</bpmn:flowNodeRef>
+      </bpmn:lane>
+      <bpmn:lane id="Lane_Direction" name="Direction DPC">
+        <bpmn:flowNodeRef>Activity_Annotation_Directeur_DroitPropre</bpmn:flowNodeRef>
+      </bpmn:lane>
+      <bpmn:lane id="Lane_SLP" name="SLP">
+        <bpmn:flowNodeRef>Activity_Reception_SLP_DroitPropre</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Activity_Annotation_Chef_SLP_DroitPropre</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Activity_Dispatching_SLP_DroitPropre</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Activity_Traitement_SLP_DroitPropre</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Activity_Transmission_Tresor_DroitPropre</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Activity_Retour_Fiche_Tresor_DroitPropre</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Activity_Liquidation_DroitPropre</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Activity_Envoi_Avis_Ministre_DroitPropre</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Activity_Transmission_Palais_DroitPropre</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Activity_Diffusion_Institutions_DroitPropre</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Activity_Saisie_SYSPENS_DroitPropre</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Activity_Accueil_Identification_DroitPropre</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Activity_Paiement_DroitPropre</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Activity_Preparation_Payroll_DroitPropre</bpmn:flowNodeRef>
+      </bpmn:lane>
+    </bpmn:laneSet>
+
+    <!-- ==================== ÉVÉNEMENTS ET TÂCHES ==================== -->
+    <bpmn:startEvent id="StartEvent_DroitPropre" name="Demande de pension">
+      <bpmn:outgoing>Flow_Start_To_Soumettre_DroitPropre</bpmn:outgoing>
+    </bpmn:startEvent>
+
+    <bpmn:userTask id="Activity_Soumettre_DroitPropre" name="Soumettre la demande">
+      <bpmn:extensionElements><zeebe:userTask /></bpmn:extensionElements>
+      <bpmn:incoming>Flow_Start_To_Soumettre_DroitPropre</bpmn:incoming>
+      <bpmn:outgoing>Flow_Soumettre_To_Gateway_Voie_DroitPropre</bpmn:outgoing>
+    </bpmn:userTask>
+
+    <bpmn:exclusiveGateway id="Gateway_Choix_Voie_DroitPropre" name="Voie de dépôt">
+      <bpmn:incoming>Flow_Soumettre_To_Gateway_Voie_DroitPropre</bpmn:incoming>
+      <bpmn:outgoing>Flow_Gateway_To_Secretariat_DPC</bpmn:outgoing>
+      <bpmn:outgoing>Flow_Gateway_To_Courrier_MEF_EnService</bpmn:outgoing>
+      <bpmn:outgoing>Flow_Gateway_To_Courrier_MEF_PasEnService</bpmn:outgoing>
+    </bpmn:exclusiveGateway>
+
+    <!-- Voie 1 -->
+    <bpmn:receiveTask id="Activity_Depot_Secretariat_DroitPropre" name="Dépôt au secrétariat DPC">
+      <bpmn:incoming>Flow_Gateway_To_Secretariat_DPC</bpmn:incoming>
+      <bpmn:outgoing>Flow_Secretariat_To_VerifSec_DroitPropre</bpmn:outgoing>
+    </bpmn:receiveTask>
+    <bpmn:userTask id="Activity_Verification_Secretariat_DroitPropre" name="Vérification par secrétariat">
+      <bpmn:extensionElements><zeebe:userTask /></bpmn:extensionElements>
+      <bpmn:incoming>Flow_Secretariat_To_VerifSec_DroitPropre</bpmn:incoming>
+      <bpmn:outgoing>Flow_VerifSec_To_Accuse_DroitPropre</bpmn:outgoing>
+    </bpmn:userTask>
+    <bpmn:serviceTask id="Activity_Accuse_Reception_DroitPropre" name="Accusé de réception">
+      <bpmn:incoming>Flow_VerifSec_To_Accuse_DroitPropre</bpmn:incoming>
+      <bpmn:outgoing>Flow_Accuse_To_Fusion_DroitPropre</bpmn:outgoing>
+    </bpmn:serviceTask>
+
+    <!-- Voie 2 -->
+    <bpmn:receiveTask id="Activity_Depot_Courrier_DroitPropre" name="Dépôt au Service courrier MEF (en service)">
+      <bpmn:incoming>Flow_Gateway_To_Courrier_MEF_EnService</bpmn:incoming>
+      <bpmn:outgoing>Flow_Courrier_To_VerifCour_DroitPropre</bpmn:outgoing>
+    </bpmn:receiveTask>
+    <!-- Voie 3 -->
+    <bpmn:receiveTask id="Activity_Depot_Courrier_PasEnService" name="Dépôt au Service courrier MEF (pas en service)">
+      <bpmn:incoming>Flow_Gateway_To_Courrier_MEF_PasEnService</bpmn:incoming>
+      <bpmn:outgoing>Flow_CourrierPasEnService_To_VerifCour_DroitPropre</bpmn:outgoing>
+    </bpmn:receiveTask>
+
+    <!-- Vérification courrier (commune aux voies 2 et 3) -->
+    <bpmn:userTask id="Activity_Verification_Courrier_DroitPropre" name="Vérification par l'agent">
+      <bpmn:extensionElements><zeebe:userTask /></bpmn:extensionElements>
+      <bpmn:incoming>Flow_Courrier_To_VerifCour_DroitPropre</bpmn:incoming>
+      <bpmn:incoming>Flow_CourrierPasEnService_To_VerifCour_DroitPropre</bpmn:incoming>
+      <bpmn:outgoing>Flow_VerifCour_To_Numero_DroitPropre</bpmn:outgoing>
+    </bpmn:userTask>
+    <bpmn:serviceTask id="Activity_Numero_Reception_DroitPropre" name="Attribution numéro de réception">
+      <bpmn:incoming>Flow_VerifCour_To_Numero_DroitPropre</bpmn:incoming>
+      <bpmn:outgoing>Flow_Numero_To_Transfert_DroitPropre</bpmn:outgoing>
+    </bpmn:serviceTask>
+    <bpmn:serviceTask id="Activity_Transfert_DPC_DroitPropre" name="Transfert du dossier à la DPC">
+      <bpmn:incoming>Flow_Numero_To_Transfert_DroitPropre</bpmn:incoming>
+      <bpmn:outgoing>Flow_Transfert_To_Fusion_DroitPropre</bpmn:outgoing>
+    </bpmn:serviceTask>
+
+    <!-- Fusion -->
+    <bpmn:exclusiveGateway id="Gateway_Fusion_Voies_DroitPropre">
+      <bpmn:incoming>Flow_Accuse_To_Fusion_DroitPropre</bpmn:incoming>
+      <bpmn:incoming>Flow_Transfert_To_Fusion_DroitPropre</bpmn:incoming>
+      <bpmn:outgoing>Flow_Fusion_To_AnnotationDirecteur_DroitPropre</bpmn:outgoing>
+    </bpmn:exclusiveGateway>
+
+    <!-- Commun -->
+    <bpmn:userTask id="Activity_Annotation_Directeur_DroitPropre" name="Annotation Directeur">
+      <bpmn:extensionElements><zeebe:userTask /></bpmn:extensionElements>
+      <bpmn:incoming>Flow_Fusion_To_AnnotationDirecteur_DroitPropre</bpmn:incoming>
+      <bpmn:outgoing>Flow_AnnotationDirecteur_To_ReceptionSLP_DroitPropre</bpmn:outgoing>
+    </bpmn:userTask>
+
+    <!-- SLP -->
+    <bpmn:receiveTask id="Activity_Reception_SLP_DroitPropre" name="Réception Secrétariat SLP">
+      <bpmn:incoming>Flow_AnnotationDirecteur_To_ReceptionSLP_DroitPropre</bpmn:incoming>
+      <bpmn:outgoing>Flow_ReceptionSLP_To_AnnotationChef_SLP_DroitPropre</bpmn:outgoing>
+    </bpmn:receiveTask>
+    <bpmn:userTask id="Activity_Annotation_Chef_SLP_DroitPropre" name="Annotation Chef de service SLP">
+      <bpmn:extensionElements><zeebe:userTask /></bpmn:extensionElements>
+      <bpmn:incoming>Flow_ReceptionSLP_To_AnnotationChef_SLP_DroitPropre</bpmn:incoming>
+      <bpmn:outgoing>Flow_AnnotationChef_To_Dispatching_SLP_DroitPropre</bpmn:outgoing>
+    </bpmn:userTask>
+    <bpmn:userTask id="Activity_Dispatching_SLP_DroitPropre" name="Dispatching entre agents SLP">
+      <bpmn:extensionElements><zeebe:userTask /></bpmn:extensionElements>
+      <bpmn:incoming>Flow_AnnotationChef_To_Dispatching_SLP_DroitPropre</bpmn:incoming>
+      <bpmn:outgoing>Flow_Dispatching_To_Traitement_SLP_DroitPropre</bpmn:outgoing>
+    </bpmn:userTask>
+    <bpmn:userTask id="Activity_Traitement_SLP_DroitPropre" name="Traitement du dossier SLP">
+      <bpmn:extensionElements><zeebe:userTask /></bpmn:extensionElements>
+      <bpmn:incoming>Flow_Dispatching_To_Traitement_SLP_DroitPropre</bpmn:incoming>
+      <bpmn:outgoing>Flow_TraitementSLP_To_Transmission_Tresor_DroitPropre</bpmn:outgoing>
+    </bpmn:userTask>
+    <bpmn:serviceTask id="Activity_Transmission_Tresor_DroitPropre" name="Transmission aux archives du Trésor">
+      <bpmn:incoming>Flow_TraitementSLP_To_Transmission_Tresor_DroitPropre</bpmn:incoming>
+      <bpmn:outgoing>Flow_TransmissionTresor_To_RetourFiche_DroitPropre</bpmn:outgoing>
+    </bpmn:serviceTask>
+    <bpmn:receiveTask id="Activity_Retour_Fiche_Tresor_DroitPropre" name="Retour de la Fiche du Trésor">
+      <bpmn:incoming>Flow_TransmissionTresor_To_RetourFiche_DroitPropre</bpmn:incoming>
+      <bpmn:outgoing>Flow_RetourFiche_To_Liquidation_DroitPropre</bpmn:outgoing>
+    </bpmn:receiveTask>
+    <bpmn:userTask id="Activity_Liquidation_DroitPropre" name="Liquidation et préparation avis">
+      <bpmn:extensionElements><zeebe:userTask /></bpmn:extensionElements>
+      <bpmn:incoming>Flow_RetourFiche_To_Liquidation_DroitPropre</bpmn:incoming>
+      <bpmn:outgoing>Flow_Liquidation_To_EnvoiAvis_DroitPropre</bpmn:outgoing>
+    </bpmn:userTask>
+    <bpmn:serviceTask id="Activity_Envoi_Avis_Ministre_DroitPropre" name="Envoi de l'Avis au Ministre">
+      <bpmn:incoming>Flow_Liquidation_To_EnvoiAvis_DroitPropre</bpmn:incoming>
+      <bpmn:outgoing>Flow_EnvoiAvis_To_TransmissionPalais_DroitPropre</bpmn:outgoing>
+    </bpmn:serviceTask>
+    <bpmn:serviceTask id="Activity_Transmission_Palais_DroitPropre" name="Transmission au Palais National (JO)">
+      <bpmn:incoming>Flow_EnvoiAvis_To_TransmissionPalais_DroitPropre</bpmn:incoming>
+      <bpmn:outgoing>Flow_TransmissionPalais_To_Diffusion_DroitPropre</bpmn:outgoing>
+    </bpmn:serviceTask>
+    <bpmn:serviceTask id="Activity_Diffusion_Institutions_DroitPropre" name="Diffusion aux institutions concernées">
+      <bpmn:incoming>Flow_TransmissionPalais_To_Diffusion_DroitPropre</bpmn:incoming>
+      <bpmn:outgoing>Flow_Diffusion_To_SaisieSYSPENS_DroitPropre</bpmn:outgoing>
+    </bpmn:serviceTask>
+    <bpmn:userTask id="Activity_Saisie_SYSPENS_DroitPropre" name="Saisie des nouveaux pensionnés dans SYSPENS">
+      <bpmn:extensionElements><zeebe:userTask /></bpmn:extensionElements>
+      <bpmn:incoming>Flow_Diffusion_To_SaisieSYSPENS_DroitPropre</bpmn:incoming>
+      <bpmn:outgoing>Flow_SaisieSYSPENS_To_Accueil_DroitPropre</bpmn:outgoing>
+    </bpmn:userTask>
+    <bpmn:userTask id="Activity_Accueil_Identification_DroitPropre" name="Accueil, identification et formalité">
+      <bpmn:extensionElements><zeebe:userTask /></bpmn:extensionElements>
+      <bpmn:incoming>Flow_SaisieSYSPENS_To_Accueil_DroitPropre</bpmn:incoming>
+      <bpmn:outgoing>Flow_Accueil_To_Paiement_DroitPropre</bpmn:outgoing>
+    </bpmn:userTask>
+    <bpmn:serviceTask id="Activity_Paiement_DroitPropre" name="Paiement des pensionnés">
+      <bpmn:incoming>Flow_Accueil_To_Paiement_DroitPropre</bpmn:incoming>
+      <bpmn:outgoing>Flow_Paiement_To_Payroll_DroitPropre</bpmn:outgoing>
+    </bpmn:serviceTask>
+    <bpmn:userTask id="Activity_Preparation_Payroll_DroitPropre" name="Préparation du Payroll">
+      <bpmn:extensionElements><zeebe:userTask /></bpmn:extensionElements>
+      <bpmn:incoming>Flow_Paiement_To_Payroll_DroitPropre</bpmn:incoming>
+      <bpmn:outgoing>Flow_Payroll_To_Notification_Finale_DroitPropre</bpmn:outgoing>
+    </bpmn:userTask>
+
+    <!-- Notification finale -->
+    <bpmn:serviceTask id="Activity_Notification_Finale" name="Notifier le pensionné">
+      <bpmn:incoming>Flow_Payroll_To_Notification_Finale_DroitPropre</bpmn:incoming>
+      <bpmn:outgoing>Flow_Notification_To_End_DroitPropre</bpmn:outgoing>
+    </bpmn:serviceTask>
+
+    <bpmn:endEvent id="EndEvent_DroitPropre" name="FIN">
+      <bpmn:incoming>Flow_Notification_To_End_DroitPropre</bpmn:incoming>
+    </bpmn:endEvent>
+
+    <!-- ==================== SEQUENCE FLOWS (logiques) ==================== -->
+    <bpmn:sequenceFlow id="Flow_Start_To_Soumettre_DroitPropre" sourceRef="StartEvent_DroitPropre" targetRef="Activity_Soumettre_DroitPropre" />
+    <bpmn:sequenceFlow id="Flow_Soumettre_To_Gateway_Voie_DroitPropre" sourceRef="Activity_Soumettre_DroitPropre" targetRef="Gateway_Choix_Voie_DroitPropre" />
+    <bpmn:sequenceFlow id="Flow_Gateway_To_Secretariat_DPC" sourceRef="Gateway_Choix_Voie_DroitPropre" targetRef="Activity_Depot_Secretariat_DroitPropre" name="via Secrétariat DPC" />
+    <bpmn:sequenceFlow id="Flow_Gateway_To_Courrier_MEF_EnService" sourceRef="Gateway_Choix_Voie_DroitPropre" targetRef="Activity_Depot_Courrier_DroitPropre" name="via Courrier MEF (en service)" />
+    <bpmn:sequenceFlow id="Flow_Gateway_To_Courrier_MEF_PasEnService" sourceRef="Gateway_Choix_Voie_DroitPropre" targetRef="Activity_Depot_Courrier_PasEnService" name="via Courrier MEF (pas en service)" />
+    <bpmn:sequenceFlow id="Flow_Secretariat_To_VerifSec_DroitPropre" sourceRef="Activity_Depot_Secretariat_DroitPropre" targetRef="Activity_Verification_Secretariat_DroitPropre" />
+    <bpmn:sequenceFlow id="Flow_VerifSec_To_Accuse_DroitPropre" sourceRef="Activity_Verification_Secretariat_DroitPropre" targetRef="Activity_Accuse_Reception_DroitPropre" />
+    <bpmn:sequenceFlow id="Flow_Accuse_To_Fusion_DroitPropre" sourceRef="Activity_Accuse_Reception_DroitPropre" targetRef="Gateway_Fusion_Voies_DroitPropre" />
+    <bpmn:sequenceFlow id="Flow_Courrier_To_VerifCour_DroitPropre" sourceRef="Activity_Depot_Courrier_DroitPropre" targetRef="Activity_Verification_Courrier_DroitPropre" />
+    <bpmn:sequenceFlow id="Flow_CourrierPasEnService_To_VerifCour_DroitPropre" sourceRef="Activity_Depot_Courrier_PasEnService" targetRef="Activity_Verification_Courrier_DroitPropre" />
+    <bpmn:sequenceFlow id="Flow_VerifCour_To_Numero_DroitPropre" sourceRef="Activity_Verification_Courrier_DroitPropre" targetRef="Activity_Numero_Reception_DroitPropre" />
+    <bpmn:sequenceFlow id="Flow_Numero_To_Transfert_DroitPropre" sourceRef="Activity_Numero_Reception_DroitPropre" targetRef="Activity_Transfert_DPC_DroitPropre" />
+    <bpmn:sequenceFlow id="Flow_Transfert_To_Fusion_DroitPropre" sourceRef="Activity_Transfert_DPC_DroitPropre" targetRef="Gateway_Fusion_Voies_DroitPropre" />
+    <bpmn:sequenceFlow id="Flow_Fusion_To_AnnotationDirecteur_DroitPropre" sourceRef="Gateway_Fusion_Voies_DroitPropre" targetRef="Activity_Annotation_Directeur_DroitPropre" />
+    <bpmn:sequenceFlow id="Flow_AnnotationDirecteur_To_ReceptionSLP_DroitPropre" sourceRef="Activity_Annotation_Directeur_DroitPropre" targetRef="Activity_Reception_SLP_DroitPropre" />
+    <bpmn:sequenceFlow id="Flow_ReceptionSLP_To_AnnotationChef_SLP_DroitPropre" sourceRef="Activity_Reception_SLP_DroitPropre" targetRef="Activity_Annotation_Chef_SLP_DroitPropre" />
+    <bpmn:sequenceFlow id="Flow_AnnotationChef_To_Dispatching_SLP_DroitPropre" sourceRef="Activity_Annotation_Chef_SLP_DroitPropre" targetRef="Activity_Dispatching_SLP_DroitPropre" />
+    <bpmn:sequenceFlow id="Flow_Dispatching_To_Traitement_SLP_DroitPropre" sourceRef="Activity_Dispatching_SLP_DroitPropre" targetRef="Activity_Traitement_SLP_DroitPropre" />
+    <bpmn:sequenceFlow id="Flow_TraitementSLP_To_Transmission_Tresor_DroitPropre" sourceRef="Activity_Traitement_SLP_DroitPropre" targetRef="Activity_Transmission_Tresor_DroitPropre" />
+    <bpmn:sequenceFlow id="Flow_TransmissionTresor_To_RetourFiche_DroitPropre" sourceRef="Activity_Transmission_Tresor_DroitPropre" targetRef="Activity_Retour_Fiche_Tresor_DroitPropre" />
+    <bpmn:sequenceFlow id="Flow_RetourFiche_To_Liquidation_DroitPropre" sourceRef="Activity_Retour_Fiche_Tresor_DroitPropre" targetRef="Activity_Liquidation_DroitPropre" />
+    <bpmn:sequenceFlow id="Flow_Liquidation_To_EnvoiAvis_DroitPropre" sourceRef="Activity_Liquidation_DroitPropre" targetRef="Activity_Envoi_Avis_Ministre_DroitPropre" />
+    <bpmn:sequenceFlow id="Flow_EnvoiAvis_To_TransmissionPalais_DroitPropre" sourceRef="Activity_Envoi_Avis_Ministre_DroitPropre" targetRef="Activity_Transmission_Palais_DroitPropre" />
+    <bpmn:sequenceFlow id="Flow_TransmissionPalais_To_Diffusion_DroitPropre" sourceRef="Activity_Transmission_Palais_DroitPropre" targetRef="Activity_Diffusion_Institutions_DroitPropre" />
+    <bpmn:sequenceFlow id="Flow_Diffusion_To_SaisieSYSPENS_DroitPropre" sourceRef="Activity_Diffusion_Institutions_DroitPropre" targetRef="Activity_Saisie_SYSPENS_DroitPropre" />
+    <bpmn:sequenceFlow id="Flow_SaisieSYSPENS_To_Accueil_DroitPropre" sourceRef="Activity_Saisie_SYSPENS_DroitPropre" targetRef="Activity_Accueil_Identification_DroitPropre" />
+    <bpmn:sequenceFlow id="Flow_Accueil_To_Paiement_DroitPropre" sourceRef="Activity_Accueil_Identification_DroitPropre" targetRef="Activity_Paiement_DroitPropre" />
+    <bpmn:sequenceFlow id="Flow_Paiement_To_Payroll_DroitPropre" sourceRef="Activity_Paiement_DroitPropre" targetRef="Activity_Preparation_Payroll_DroitPropre" />
+    <bpmn:sequenceFlow id="Flow_Payroll_To_Notification_Finale_DroitPropre" sourceRef="Activity_Preparation_Payroll_DroitPropre" targetRef="Activity_Notification_Finale" />
+    <bpmn:sequenceFlow id="Flow_Notification_To_End_DroitPropre" sourceRef="Activity_Notification_Finale" targetRef="EndEvent_DroitPropre" />
+
+  </bpmn:process>
+
+  <!-- ==================== DIAGRAMME AVEC TOUTES LES FLÈCHES ==================== -->
+  <bpmndi:BPMNDiagram id="BPMNDiagram_DroitPropre">
+    <bpmndi:BPMNPlane id="BPMNPlane_DroitPropre" bpmnElement="Collaboration_DroitPropre">
+      <!-- Pool -->
+      <bpmndi:BPMNShape id="Participant_DroitPropre_di" bpmnElement="Participant_DroitPropre" isHorizontal="true">
+        <dc:Bounds x="160" y="560" width="2200" height="720" />
+      </bpmndi:BPMNShape>
+
+      <!-- Lanes -->
+      <bpmndi:BPMNShape id="Lane_Demandeur_di" bpmnElement="Lane_Demandeur" isHorizontal="true">
+        <dc:Bounds x="190" y="560" width="2170" height="100" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Lane_Secretariat_DPC_di" bpmnElement="Lane_Secretariat_DPC" isHorizontal="true">
+        <dc:Bounds x="190" y="660" width="2170" height="100" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Lane_Courrier_MEF_di" bpmnElement="Lane_Courrier_MEF" isHorizontal="true">
+        <dc:Bounds x="190" y="760" width="2170" height="100" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Lane_Direction_di" bpmnElement="Lane_Direction" isHorizontal="true">
+        <dc:Bounds x="190" y="860" width="2170" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Lane_SLP_di" bpmnElement="Lane_SLP" isHorizontal="true">
+        <dc:Bounds x="190" y="940" width="2170" height="120" />
+      </bpmndi:BPMNShape>
+
+      <!-- Formes -->
+      <bpmndi:BPMNShape id="StartEvent_DroitPropre_di" bpmnElement="StartEvent_DroitPropre">
+        <dc:Bounds x="252" y="592" width="36" height="36" />
+        <bpmndi:BPMNLabel><dc:Bounds x="235" y="635" width="73" height="27" /></bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_Soumettre_DroitPropre_di" bpmnElement="Activity_Soumettre_DroitPropre">
+        <dc:Bounds x="380" y="570" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Gateway_Choix_Voie_DroitPropre_di" bpmnElement="Gateway_Choix_Voie_DroitPropre" isMarkerVisible="true">
+        <dc:Bounds x="560" y="585" width="50" height="50" />
+        <bpmndi:BPMNLabel><dc:Bounds x="563" y="640" width="43" height="27" /></bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+
+      <!-- Voie 1 -->
+      <bpmndi:BPMNShape id="Activity_Depot_Secretariat_DroitPropre_di" bpmnElement="Activity_Depot_Secretariat_DroitPropre">
+        <dc:Bounds x="380" y="670" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_Verification_Secretariat_DroitPropre_di" bpmnElement="Activity_Verification_Secretariat_DroitPropre">
+        <dc:Bounds x="560" y="670" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_Accuse_Reception_DroitPropre_di" bpmnElement="Activity_Accuse_Reception_DroitPropre">
+        <dc:Bounds x="740" y="670" width="100" height="80" />
+      </bpmndi:BPMNShape>
+
+      <!-- Voie 2 -->
+      <bpmndi:BPMNShape id="Activity_Depot_Courrier_DroitPropre_di" bpmnElement="Activity_Depot_Courrier_DroitPropre">
+        <dc:Bounds x="380" y="770" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <!-- Voie 3 -->
+      <bpmndi:BPMNShape id="Activity_Depot_Courrier_PasEnService_di" bpmnElement="Activity_Depot_Courrier_PasEnService">
+        <dc:Bounds x="380" y="870" width="100" height="80" />
+      </bpmndi:BPMNShape>
+
+      <!-- Courrier commun -->
+      <bpmndi:BPMNShape id="Activity_Verification_Courrier_DroitPropre_di" bpmnElement="Activity_Verification_Courrier_DroitPropre">
+        <dc:Bounds x="560" y="770" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_Numero_Reception_DroitPropre_di" bpmnElement="Activity_Numero_Reception_DroitPropre">
+        <dc:Bounds x="740" y="770" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_Transfert_DPC_DroitPropre_di" bpmnElement="Activity_Transfert_DPC_DroitPropre">
+        <dc:Bounds x="920" y="770" width="100" height="80" />
+      </bpmndi:BPMNShape>
+
+      <!-- Fusion -->
+      <bpmndi:BPMNShape id="Gateway_Fusion_Voies_DroitPropre_di" bpmnElement="Gateway_Fusion_Voies_DroitPropre" isMarkerVisible="true">
+        <dc:Bounds x="1100" y="585" width="50" height="50" />
+      </bpmndi:BPMNShape>
+
+      <!-- Commun -->
+      <bpmndi:BPMNShape id="Activity_Annotation_Directeur_DroitPropre_di" bpmnElement="Activity_Annotation_Directeur_DroitPropre">
+        <dc:Bounds x="1280" y="870" width="100" height="80" />
+      </bpmndi:BPMNShape>
+
+      <!-- SLP première ligne -->
+      <bpmndi:BPMNShape id="Activity_Reception_SLP_DroitPropre_di" bpmnElement="Activity_Reception_SLP_DroitPropre">
+        <dc:Bounds x="1460" y="950" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_Annotation_Chef_SLP_DroitPropre_di" bpmnElement="Activity_Annotation_Chef_SLP_DroitPropre">
+        <dc:Bounds x="1640" y="950" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_Dispatching_SLP_DroitPropre_di" bpmnElement="Activity_Dispatching_SLP_DroitPropre">
+        <dc:Bounds x="1820" y="950" width="100" height="80" />
+      </bpmndi:BPMNShape>
+
+      <!-- SLP deuxième ligne (suite) -->
+      <bpmndi:BPMNShape id="Activity_Traitement_SLP_DroitPropre_di" bpmnElement="Activity_Traitement_SLP_DroitPropre">
+        <dc:Bounds x="380" y="1040" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_Transmission_Tresor_DroitPropre_di" bpmnElement="Activity_Transmission_Tresor_DroitPropre">
+        <dc:Bounds x="560" y="1040" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_Retour_Fiche_Tresor_DroitPropre_di" bpmnElement="Activity_Retour_Fiche_Tresor_DroitPropre">
+        <dc:Bounds x="740" y="1040" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_Liquidation_DroitPropre_di" bpmnElement="Activity_Liquidation_DroitPropre">
+        <dc:Bounds x="920" y="1040" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_Envoi_Avis_Ministre_DroitPropre_di" bpmnElement="Activity_Envoi_Avis_Ministre_DroitPropre">
+        <dc:Bounds x="1100" y="1040" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_Transmission_Palais_DroitPropre_di" bpmnElement="Activity_Transmission_Palais_DroitPropre">
+        <dc:Bounds x="1280" y="1040" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_Diffusion_Institutions_DroitPropre_di" bpmnElement="Activity_Diffusion_Institutions_DroitPropre">
+        <dc:Bounds x="1460" y="1040" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_Saisie_SYSPENS_DroitPropre_di" bpmnElement="Activity_Saisie_SYSPENS_DroitPropre">
+        <dc:Bounds x="1640" y="1040" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_Accueil_Identification_DroitPropre_di" bpmnElement="Activity_Accueil_Identification_DroitPropre">
+        <dc:Bounds x="1820" y="1040" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_Paiement_DroitPropre_di" bpmnElement="Activity_Paiement_DroitPropre">
+        <dc:Bounds x="2000" y="1040" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_Preparation_Payroll_DroitPropre_di" bpmnElement="Activity_Preparation_Payroll_DroitPropre">
+        <dc:Bounds x="2000" y="950" width="100" height="80" />
+      </bpmndi:BPMNShape>
+
+      <!-- Notification et fin -->
+      <bpmndi:BPMNShape id="Activity_Notification_Finale_di" bpmnElement="Activity_Notification_Finale">
+        <dc:Bounds x="2000" y="570" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="EndEvent_DroitPropre_di" bpmnElement="EndEvent_DroitPropre">
+        <dc:Bounds x="2180" y="592" width="36" height="36" />
+        <bpmndi:BPMNLabel><dc:Bounds x="2185" y="635" width="18" height="14" /></bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+
+      <bpmndi:BPMNShape id="TextAnnotation_DroitPropre_di" bpmnElement="TextAnnotation_DroitPropre">
+        <dc:Bounds x="530" y="80" width="280" height="140" />
+      </bpmndi:BPMNShape>
+
+      <!-- ========== ARÊTES (FLÈCHES) ========== -->
+      <bpmndi:BPMNEdge id="Flow_Start_To_Soumettre_DroitPropre_di" bpmnElement="Flow_Start_To_Soumettre_DroitPropre">
+        <di:waypoint x="288" y="610" /><di:waypoint x="380" y="610" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_Soumettre_To_Gateway_Voie_DroitPropre_di" bpmnElement="Flow_Soumettre_To_Gateway_Voie_DroitPropre">
+        <di:waypoint x="480" y="610" /><di:waypoint x="560" y="610" />
+      </bpmndi:BPMNEdge>
+
+      <!-- Vers voie 1 -->
+      <bpmndi:BPMNEdge id="Flow_Gateway_To_Secretariat_DPC_di" bpmnElement="Flow_Gateway_To_Secretariat_DPC">
+        <di:waypoint x="585" y="635" /><di:waypoint x="585" y="670" /><di:waypoint x="430" y="670" />
+      </bpmndi:BPMNEdge>
+      <!-- Vers voie 2 -->
+      <bpmndi:BPMNEdge id="Flow_Gateway_To_Courrier_MEF_EnService_di" bpmnElement="Flow_Gateway_To_Courrier_MEF_EnService">
+        <di:waypoint x="585" y="635" /><di:waypoint x="585" y="770" /><di:waypoint x="430" y="770" />
+      </bpmndi:BPMNEdge>
+      <!-- Vers voie 3 -->
+      <bpmndi:BPMNEdge id="Flow_Gateway_To_Courrier_MEF_PasEnService_di" bpmnElement="Flow_Gateway_To_Courrier_MEF_PasEnService">
+        <di:waypoint x="585" y="635" /><di:waypoint x="585" y="870" /><di:waypoint x="430" y="870" />
+      </bpmndi:BPMNEdge>
+
+      <!-- Voie 1 -->
+      <bpmndi:BPMNEdge id="Flow_Secretariat_To_VerifSec_DroitPropre_di" bpmnElement="Flow_Secretariat_To_VerifSec_DroitPropre">
+        <di:waypoint x="480" y="710" /><di:waypoint x="560" y="710" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_VerifSec_To_Accuse_DroitPropre_di" bpmnElement="Flow_VerifSec_To_Accuse_DroitPropre">
+        <di:waypoint x="660" y="710" /><di:waypoint x="740" y="710" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_Accuse_To_Fusion_DroitPropre_di" bpmnElement="Flow_Accuse_To_Fusion_DroitPropre">
+        <di:waypoint x="840" y="710" /><di:waypoint x="840" y="610" /><di:waypoint x="1100" y="610" />
+      </bpmndi:BPMNEdge>
+
+      <!-- Voie 2 et 3 (communes) -->
+      <bpmndi:BPMNEdge id="Flow_Courrier_To_VerifCour_DroitPropre_di" bpmnElement="Flow_Courrier_To_VerifCour_DroitPropre">
+        <di:waypoint x="480" y="810" /><di:waypoint x="560" y="810" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_CourrierPasEnService_To_VerifCour_DroitPropre_di" bpmnElement="Flow_CourrierPasEnService_To_VerifCour_DroitPropre">
+        <di:waypoint x="480" y="910" /><di:waypoint x="480" y="810" /><di:waypoint x="560" y="810" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_VerifCour_To_Numero_DroitPropre_di" bpmnElement="Flow_VerifCour_To_Numero_DroitPropre">
+        <di:waypoint x="660" y="810" /><di:waypoint x="740" y="810" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_Numero_To_Transfert_DroitPropre_di" bpmnElement="Flow_Numero_To_Transfert_DroitPropre">
+        <di:waypoint x="840" y="810" /><di:waypoint x="920" y="810" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_Transfert_To_Fusion_DroitPropre_di" bpmnElement="Flow_Transfert_To_Fusion_DroitPropre">
+        <di:waypoint x="1020" y="810" /><di:waypoint x="1020" y="610" /><di:waypoint x="1100" y="610" />
+      </bpmndi:BPMNEdge>
+
+      <!-- Fusion → Annotation Directeur -->
+      <bpmndi:BPMNEdge id="Flow_Fusion_To_AnnotationDirecteur_DroitPropre_di" bpmnElement="Flow_Fusion_To_AnnotationDirecteur_DroitPropre">
+        <di:waypoint x="1150" y="610" /><di:waypoint x="1150" y="870" /><di:waypoint x="1280" y="910" />
+      </bpmndi:BPMNEdge>
+
+      <!-- Annotation Directeur → SLP -->
+      <bpmndi:BPMNEdge id="Flow_AnnotationDirecteur_To_ReceptionSLP_DroitPropre_di" bpmnElement="Flow_AnnotationDirecteur_To_ReceptionSLP_DroitPropre">
+        <di:waypoint x="1380" y="910" /><di:waypoint x="1460" y="990" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_ReceptionSLP_To_AnnotationChef_SLP_DroitPropre_di" bpmnElement="Flow_ReceptionSLP_To_AnnotationChef_SLP_DroitPropre">
+        <di:waypoint x="1560" y="990" /><di:waypoint x="1640" y="990" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_AnnotationChef_To_Dispatching_SLP_DroitPropre_di" bpmnElement="Flow_AnnotationChef_To_Dispatching_SLP_DroitPropre">
+        <di:waypoint x="1740" y="990" /><di:waypoint x="1820" y="990" />
+      </bpmndi:BPMNEdge>
+
+      <!-- SLP : descente vers la deuxième ligne -->
+      <bpmndi:BPMNEdge id="Flow_Dispatching_To_Traitement_SLP_DroitPropre_di" bpmnElement="Flow_Dispatching_To_Traitement_SLP_DroitPropre">
+        <di:waypoint x="1870" y="1030" /><di:waypoint x="1870" y="1040" /><di:waypoint x="480" y="1040" />
+      </bpmndi:BPMNEdge>
+
+      <!-- Deuxième ligne SLP -->
+      <bpmndi:BPMNEdge id="Flow_TraitementSLP_To_Transmission_Tresor_DroitPropre_di" bpmnElement="Flow_TraitementSLP_To_Transmission_Tresor_DroitPropre">
+        <di:waypoint x="480" y="1080" /><di:waypoint x="560" y="1080" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_TransmissionTresor_To_RetourFiche_DroitPropre_di" bpmnElement="Flow_TransmissionTresor_To_RetourFiche_DroitPropre">
+        <di:waypoint x="660" y="1080" /><di:waypoint x="740" y="1080" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_RetourFiche_To_Liquidation_DroitPropre_di" bpmnElement="Flow_RetourFiche_To_Liquidation_DroitPropre">
+        <di:waypoint x="840" y="1080" /><di:waypoint x="920" y="1080" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_Liquidation_To_EnvoiAvis_DroitPropre_di" bpmnElement="Flow_Liquidation_To_EnvoiAvis_DroitPropre">
+        <di:waypoint x="1020" y="1080" /><di:waypoint x="1100" y="1080" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_EnvoiAvis_To_TransmissionPalais_DroitPropre_di" bpmnElement="Flow_EnvoiAvis_To_TransmissionPalais_DroitPropre">
+        <di:waypoint x="1200" y="1080" /><di:waypoint x="1280" y="1080" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_TransmissionPalais_To_Diffusion_DroitPropre_di" bpmnElement="Flow_TransmissionPalais_To_Diffusion_DroitPropre">
+        <di:waypoint x="1380" y="1080" /><di:waypoint x="1460" y="1080" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_Diffusion_To_SaisieSYSPENS_DroitPropre_di" bpmnElement="Flow_Diffusion_To_SaisieSYSPENS_DroitPropre">
+        <di:waypoint x="1560" y="1080" /><di:waypoint x="1640" y="1080" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_SaisieSYSPENS_To_Accueil_DroitPropre_di" bpmnElement="Flow_SaisieSYSPENS_To_Accueil_DroitPropre">
+        <di:waypoint x="1740" y="1080" /><di:waypoint x="1820" y="1080" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_Accueil_To_Paiement_DroitPropre_di" bpmnElement="Flow_Accueil_To_Paiement_DroitPropre">
+        <di:waypoint x="1920" y="1080" /><di:waypoint x="2000" y="1080" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_Paiement_To_Payroll_DroitPropre_di" bpmnElement="Flow_Paiement_To_Payroll_DroitPropre">
+        <di:waypoint x="2050" y="1040" /><di:waypoint x="2050" y="990" /><di:waypoint x="2000" y="990" />
+      </bpmndi:BPMNEdge>
+
+      <!-- Payroll → Notification -->
+      <bpmndi:BPMNEdge id="Flow_Payroll_To_Notification_Finale_DroitPropre_di" bpmnElement="Flow_Payroll_To_Notification_Finale_DroitPropre">
+        <di:waypoint x="2050" y="950" /><di:waypoint x="2050" y="610" /><di:waypoint x="2000" y="610" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_Notification_To_End_DroitPropre_di" bpmnElement="Flow_Notification_To_End_DroitPropre">
+        <di:waypoint x="2100" y="610" /><di:waypoint x="2180" y="610" />
+      </bpmndi:BPMNEdge>
+
+      <!-- Association -->
+      <bpmndi:BPMNEdge id="Association_DroitPropre_di" bpmnElement="Association_DroitPropre">
+        <di:waypoint x="430" y="570" /><di:waypoint x="530" y="150" />
+      </bpmndi:BPMNEdge>
+    </bpmndi:BPMNPlane>
+  </bpmndi:BPMNDiagram>
+</bpmn:definitions>
