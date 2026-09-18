@@ -6,6 +6,7 @@ use App\Http\Controllers\AdminDashboardController;
 use App\Http\Controllers\CarouselController;
 use App\Http\Controllers\ContactController;
 use App\Http\Controllers\ContactParameterController;
+use App\Http\Controllers\ContactSubjectController;
 use App\Http\Controllers\DemandeController;
 use App\Http\Controllers\DemandeDocumentController;
 use App\Http\Controllers\DemandeManagementController;
@@ -73,6 +74,9 @@ Route::get('/liens-utiles', [LienUtileController::class,    'publicIndex'])->nam
 
 Route::get('/contact', [ContactController::class, 'index'])->name('contact');
 Route::post('/contact', [ContactController::class, 'store'])->name('contact.store');
+
+Route::get('/services/{service:code}', [ServiceController::class, 'publicShow'])->name('services.show');
+Route::get('/directions-departementales/{direction:abbr}', [DirectionDepartementaleController::class, 'publicShow'])->name('directions.show');
 
 // Qui sommes-nous
 Route::prefix('quisommesnous')->name('quisommesnous.')->group(function () {
@@ -453,6 +457,10 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'role:admin'])->grou
     // Contact parameters admin
     Route::get('contact-parameters', [ContactParameterController::class, 'index'])->name('contact-parameters.index');
     Route::put('contact-parameters', [ContactParameterController::class, 'update'])->name('contact-parameters.update');
+    Route::post('contact-subjects', [ContactSubjectController::class, 'store'])->name('contact-subjects.store');
+    Route::put('contact-subjects/{contactSubject}', [ContactSubjectController::class, 'update'])->name('contact-subjects.update');
+    Route::delete('contact-subjects/{contactSubject}', [ContactSubjectController::class, 'destroy'])->name('contact-subjects.destroy');
+    Route::post('contact-subjects/{contactSubject}/toggle', [ContactSubjectController::class, 'toggle'])->name('contact-subjects.toggle');
 
     // Partenaires admin
     Route::get('partenaires', [PartenaireController::class, 'index'])->name('partenaires.index');

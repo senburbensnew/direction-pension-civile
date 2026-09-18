@@ -7,6 +7,16 @@ use Illuminate\Http\Request;
 
 class ServiceController extends Controller
 {
+    public function publicShow(Service $service)
+    {
+        $others = Service::query()
+            ->whereNotIn('code', ['direction', $service->code])
+            ->orderBy('nom')
+            ->get();
+
+        return view('services.show', compact('service', 'others'));
+    }
+
     /**
      * Display a listing of the resource.
      */

@@ -22,7 +22,7 @@
     <div class="flex items-center justify-between">
         <div>
             <h1 class="text-xl font-bold text-gray-800">Informations de contact</h1>
-            <p class="text-sm text-gray-500 mt-0.5">Coordonnées et liens affichés sur la page Contact publique.</p>
+            <p class="text-sm text-gray-500 mt-0.5">Coordonnées, réseaux sociaux et sujets du formulaire de contact.</p>
         </div>
         <a href="{{ route('contact') }}" target="_blank"
            class="inline-flex items-center gap-1.5 text-xs text-blue-600 hover:text-blue-800 border border-blue-200 hover:border-blue-400 rounded-lg px-3 py-1.5 transition-colors">
@@ -260,5 +260,146 @@
         </div>
     </form>
 
+    {{-- Sujets du formulaire --}}
+    <div class="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden" x-data="contactSubjectsAdmin()">
+        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 px-5 py-4 border-b border-gray-100 bg-gray-50">
+            <div class="flex items-center gap-3">
+                <div class="w-8 h-8 bg-orange-100 rounded-lg flex items-center justify-center">
+                    <i class="fa-solid fa-list text-orange-600 text-sm"></i>
+                </div>
+                <div>
+                    <p class="text-sm font-semibold text-gray-800">Sujets du formulaire</p>
+                    <p class="text-xs text-gray-400">Ajoutez, masquez ou retirez les options du menu Sujet</p>
+                </div>
+            </div>
+            <button type="button" @click="openCreate()"
+                class="inline-flex items-center gap-1.5 px-3 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg">
+                <i class="fa-solid fa-plus"></i> Ajouter un sujet
+            </button>
+        </div>
+        <div class="overflow-x-auto">
+            <table class="w-full text-sm">
+                <thead class="bg-gray-50 border-b border-gray-100">
+                    <tr>
+                        <th class="px-5 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Libellé</th>
+                        <th class="px-5 py-3 text-center text-xs font-semibold text-gray-500 uppercase">Ordre</th>
+                        <th class="px-5 py-3 text-center text-xs font-semibold text-gray-500 uppercase">Sujet libre</th>
+                        <th class="px-5 py-3 text-center text-xs font-semibold text-gray-500 uppercase">Statut</th>
+                        <th class="px-5 py-3 text-center text-xs font-semibold text-gray-500 uppercase">Actions</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-gray-100">
+                    @forelse($subjects as $subject)
+                        <tr class="{{ $subject->is_active ? '' : 'bg-gray-50' }}">
+                            <td class="px-5 py-3 font-medium text-gray-800">{{ $subject->label }}</td>
+                            <td class="px-5 py-3 text-center text-gray-500">{{ $subject->position }}</td>
+                            <td class="px-5 py-3 text-center">
+                                @if($subject->allows_custom)
+                                    <span class="text-xs px-2 py-0.5 rounded-full bg-teal-100 text-teal-700">Oui</span>
+                                @else
+                                    <span class="text-xs text-gray-400">Non</span>
+                                @endif
+                            </td>
+                            <td class="px-5 py-3 text-center">
+                                <span class="text-xs font-medium px-2 py-0.5 rounded-full {{ $subject->is_active ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-600' }}">
+                                    {{ $subject->is_active ? 'Visible' : 'Masqué' }}
+                                </span>
+                            </td>
+                            <td class="px-5 py-3">
+                                <div class="flex items-center justify-center gap-2">
+                                    <form action="{{ route('admin.contact-subjects.toggle', $subject) }}" method="POST">
+                                        @csrf
+                                        <button type="submit" title="{{ $subject->is_active ? 'Masquer' : 'Afficher' }}"
+                                            class="px-2 py-1 rounded text-xs font-medium {{ $subject->is_active ? 'bg-yellow-100 text-yellow-700 hover:bg-yellow-200' : 'bg-green-100 text-green-700 hover:bg-green-200' }}">
+                                            <i class="fa-solid {{ $subject->is_active ? 'fa-eye-slash' : 'fa-eye' }}"></i>
+                                        </button>
+                                    </form>
+                                    <button type="button" @click="openEdit({{ $subject->toJson() }})"
+                                        class="px-2 py-1 bg-blue-100 text-blue-700 hover:bg-blue-200 rounded text-xs font-medium">
+                                        <i class="fa-solid fa-pencil"></i>
+                                    </button>
+                                    <form action="{{ route('admin.contact-subjects.destroy', $subject) }}" method="POST"
+                                        onsubmit="return confirm('Retirer ce sujet de la liste ?')">
+                                        @csrf @method('DELETE')
+                                        <button type="submit" class="px-2 py-1 bg-red-100 text-red-700 hover:bg-red-200 rounded text-xs font-medium">
+                                            <i class="fa-solid fa-trash"></i>
+                                        </button>
+                                    </form>
+                                </div>
+                            </td>
+                        </tr>
+                    @empty
+                        <tr>
+                            <td colspan="5" class="px-5 py-8 text-center text-gray-400">Aucun sujet. Ajoutez-en un pour le formulaire public.</td>
+                        </tr>
+                    @endforelse
+                </tbody>
+            </table>
+        </div>
+
+        <div x-show="open" x-cloak class="fixed inset-0 z-50 flex items-center justify-center p-4">
+            <div class="absolute inset-0 bg-black/50" @click="open = false"></div>
+            <div class="relative bg-white rounded-xl shadow-xl w-full max-w-md p-6 space-y-4 z-10">
+                <h2 class="text-lg font-bold text-gray-800" x-text="editing ? 'Modifier le sujet' : 'Ajouter un sujet'"></h2>
+                <form :action="editing ? '{{ url('/admin/contact-subjects') }}/' + form.id : '{{ route('admin.contact-subjects.store') }}'" method="POST" class="space-y-3">
+                    @csrf
+                    <template x-if="editing"><input type="hidden" name="_method" value="PUT"></template>
+                    <div>
+                        <label class="block text-xs font-semibold text-gray-600 mb-1.5">Libellé <span class="text-red-500">*</span></label>
+                        <input type="text" name="label" x-model="form.label" required maxlength="150"
+                            class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-gray-600 mb-1.5">Ordre d’affichage</label>
+                        <input type="number" name="position" x-model="form.position" min="0"
+                            class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400">
+                    </div>
+                    <label class="flex items-center gap-2 text-sm text-gray-700">
+                        <input type="hidden" name="is_active" value="0">
+                        <input type="checkbox" name="is_active" value="1" x-model="form.is_active" class="rounded border-gray-300 text-blue-600">
+                        Visible sur le formulaire public
+                    </label>
+                    <label class="flex items-center gap-2 text-sm text-gray-700">
+                        <input type="hidden" name="allows_custom" value="0">
+                        <input type="checkbox" name="allows_custom" value="1" x-model="form.allows_custom" class="rounded border-gray-300 text-blue-600">
+                        Demander un sujet libre (comme « Autre »)
+                    </label>
+                    <div class="flex justify-end gap-2 pt-2">
+                        <button type="button" @click="open = false" class="px-3 py-2 text-sm text-gray-600 hover:bg-gray-100 rounded-lg">Annuler</button>
+                        <button type="submit" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg">Enregistrer</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
 </div>
 @endsection
+
+@push('scripts')
+<script>
+    function contactSubjectsAdmin() {
+        return {
+            open: false,
+            editing: false,
+            form: { id: null, label: '', position: 0, is_active: true, allows_custom: false },
+            openCreate() {
+                this.editing = false;
+                this.form = { id: null, label: '', position: {{ (int) ($subjects->max('position') ?? 0) + 1 }}, is_active: true, allows_custom: false };
+                this.open = true;
+            },
+            openEdit(item) {
+                this.editing = true;
+                this.form = {
+                    id: item.id,
+                    label: item.label,
+                    position: item.position,
+                    is_active: !!item.is_active,
+                    allows_custom: !!item.allows_custom,
+                };
+                this.open = true;
+            },
+        };
+    }
+</script>
+@endpush
+

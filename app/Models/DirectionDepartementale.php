@@ -6,7 +6,7 @@ use Illuminate\Database\Eloquent\Model;
 
 class DirectionDepartementale extends Model
 {
-    protected $fillable = ['abbr', 'nom', 'ville', 'color', 'order'];
+    protected $fillable = ['abbr', 'nom', 'ville', 'description', 'color', 'order'];
 
     public function scopeOrdered($query)
     {

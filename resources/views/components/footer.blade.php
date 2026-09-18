@@ -22,25 +22,19 @@
         <div class="w-full md:w-1/3">
             <h3 class="font-bold text-lg md:text-xl mb-3 border-b-2 border-white pb-2">Directions et Services
             </h3>
+            @php
+                $footerServices = \App\Models\Service::query()
+                    ->whereNotIn('code', ['direction'])
+                    ->orderBy('nom')
+                    ->get();
+            @endphp
             <ul class="space-y-2">
-                <li><a href="#" target="_blank"
-                        class="hover:text-orange-500 transition">Secrétariat</a>
+                @foreach($footerServices as $footerService)
+                <li>
+                    <a href="{{ route('services.show', $footerService) }}"
+                       class="hover:text-orange-500 transition">{{ $footerService->nom }}</a>
                 </li>
-                <li><a href="#" target="_blank"
-                        class="hover:text-orange-500 transition">Réception</a></li>
-                <li><a href="#" target="_blank"
-                        class="hover:text-orange-500 transition">Service Contrôle et Placements (SCP)</a></li>
-                <li><a href="#" target="_blank" class="hover:text-orange-500 transition">Cellule Administration (CA)</a>
-                </li>
-                <li><a href="#" target="_blank"
-                        class="hover:text-orange-500 transition">Service Liquidation de Pension (SLP)</a></li>
-                <li><a href="#" target="_blank"
-                        class="hover:text-orange-500 transition">Service Comptabilité (SC)</a></li>
-                <li><a href="#" target="_blank"
-                        class="hover:text-orange-500 transition">Service des Formalités (SF)</a></li>
-                <li><a href="#"
-                        class="hover:text-orange-500 transition">Service Assurance (SA)</a></li>
-
+                @endforeach
             </ul>
         </div>
 

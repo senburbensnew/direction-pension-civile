@@ -32,18 +32,16 @@
             <div class="value">{{ $contact->email }}</div>
         </div>
         <div class="row">
+            <div class="label">Téléphone</div>
+            <div class="value">{{ $contact->telephone }}</div>
+        </div>
+        <div class="row">
             <div class="label">Sujet</div>
-            <div class="value">
-                @php
-                    $subjects = [
-                        'pension'    => 'Question sur les pensions',
-                        'documents'  => 'Demande de documents',
-                        'rendezvous' => 'Prise de rendez-vous',
-                        'autre'      => 'Autre',
-                    ];
-                @endphp
-                {{ $subjects[$contact->subject] ?? $contact->subject }}
-            </div>
+            <div class="value">{{ $contact->subjectLabel() }}</div>
+        </div>
+        <div class="row">
+            <div class="label">Destinataire</div>
+            <div class="value">{{ $contact->destinataireLabel() }}</div>
         </div>
         <div class="row">
             <div class="label">Message</div>

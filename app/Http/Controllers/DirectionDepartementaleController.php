@@ -7,6 +7,15 @@ use Illuminate\Http\Request;
 
 class DirectionDepartementaleController extends Controller
 {
+    public function publicShow(DirectionDepartementale $direction)
+    {
+        $others = DirectionDepartementale::ordered()
+            ->where('id', '!=', $direction->id)
+            ->get();
+
+        return view('directions.show', compact('direction', 'others'));
+    }
+
     public function index()
     {
         $directions = DirectionDepartementale::ordered()->get();
@@ -19,6 +28,7 @@ class DirectionDepartementaleController extends Controller
             'abbr'  => 'required|string|max:20|unique:direction_departementales,abbr',
             'nom'   => 'required|string|max:255',
             'ville' => 'required|string|max:100',
+            'description' => 'nullable|string|max:3000',
             'color' => 'required|string|max:30',
             'order' => 'nullable|integer|min:0',
         ]);
@@ -34,6 +44,7 @@ class DirectionDepartementaleController extends Controller
             'abbr'  => 'required|string|max:20|unique:direction_departementales,abbr,' . $direction->id,
             'nom'   => 'required|string|max:255',
             'ville' => 'required|string|max:100',
+            'description' => 'nullable|string|max:3000',
             'color' => 'required|string|max:30',
             'order' => 'nullable|integer|min:0',
         ]);

@@ -6,8 +6,6 @@
     @stack('meta')
     <title>@yield('title', 'Direction de la Pension Civile')</title>
     <x-fonts />
-    <!-- Font Awesome -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css" />
     @vite(['resources/css/app.css', 'resources/js/app.js'])
     {{-- <link href="{{ asset('build/assets/app-CFGfTGFn.css') }}" rel="stylesheet"> --}}
     @stack('styles')

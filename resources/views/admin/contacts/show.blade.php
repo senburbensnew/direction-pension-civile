@@ -9,8 +9,7 @@
 
 @section('content')
 @php
-    $subjects = ['pension' => 'Pensions', 'documents' => 'Documents', 'rendezvous' => 'Rendez-vous', 'autre' => 'Autre'];
-    $subjectLabel = $subjects[$contact->subject] ?? $contact->subject;
+    $subjectLabel = $contact->subjectLabel();
 @endphp
 <div class="max-w-2xl space-y-4">
 
@@ -30,8 +29,17 @@
                 </h2>
                 <p class="text-sm text-gray-500 mt-0.5">
                     <a href="mailto:{{ $contact->email }}" class="hover:underline text-blue-600">{{ $contact->email }}</a>
+                    @if($contact->telephone)
+                        &mdash;
+                        <a href="tel:{{ $contact->telephone }}" class="hover:underline text-blue-600">{{ $contact->telephone }}</a>
+                    @endif
                     &mdash; {{ $contact->created_at->format('d/m/Y à H:i') }}
                 </p>
+                @if($contact->destinataire)
+                    <p class="text-sm text-gray-500 mt-1">
+                        Destinataire : <span class="font-medium text-gray-700">{{ $contact->destinataireLabel() }}</span>
+                    </p>
+                @endif
             </div>
             <span class="px-2.5 py-1 bg-gray-100 text-gray-600 rounded-full text-xs font-medium flex-shrink-0">
                 {{ $subjectLabel }}

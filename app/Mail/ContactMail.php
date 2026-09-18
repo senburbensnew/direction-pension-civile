@@ -17,16 +17,9 @@ class ContactMail extends Mailable
 
     public function envelope(): Envelope
     {
-        $subjects = [
-            'pension'    => 'Question sur les pensions',
-            'documents'  => 'Demande de documents',
-            'rendezvous' => 'Prise de rendez-vous',
-            'autre'      => 'Autre',
-        ];
-
         return new Envelope(
             replyTo: [$this->contact->email],
-            subject: '[Contact] ' . ($subjects[$this->contact->subject] ?? $this->contact->subject),
+            subject: '[Contact] ' . $this->contact->subjectLabel(),
         );
     }
 

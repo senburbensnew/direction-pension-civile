@@ -4,12 +4,15 @@ namespace App\Http\Controllers;
 
 use App\Mail\ContactMail;
 use App\Models\Contact;
+use App\Models\ContactSubject;
 use App\Models\DirectionDepartementale;
 use App\Models\Service;
+use App\Rules\Telephone;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
+use Illuminate\Validation\Rule;
 
 class ContactController extends Controller
 {
@@ -19,22 +22,43 @@ class ContactController extends Controller
             ->whereIn('name', ['contact_address','contact_phone','contact_hours','contact_email','contact_map_url','social_facebook','social_twitter','social_linkedin','social_youtube'])
             ->pluck('value', 'name');
 
+        $subjects = ContactSubject::active()->ordered()->get();
+        $directions = DirectionDepartementale::ordered()->get();
+        $services = Service::whereNotIn('code', ['direction'])->orderBy('nom')->get();
+
         return view('contact.index', [
             'contact'    => $params,
-            'directions' => DirectionDepartementale::ordered()->get(),
-            'services'   => Service::whereNotIn('code', ['direction'])->get(),
+            'directions' => $directions,
+            'services'   => $services,
+            'subjects'   => $subjects,
         ]);
     }
 
     public function store(Request $request)
     {
+        $subjects = ContactSubject::active()->ordered()->get();
+        $customSlugs = $subjects->where('allows_custom', true)->pluck('slug')->values()->all();
+        $destinataireKeys = $this->destinataireKeys();
+
         $validated = $request->validate([
-            'first_name' => 'required|string|max:100',
-            'last_name'  => 'required|string|max:100',
-            'email'      => 'required|email|max:255',
-            'subject'    => 'required|in:pension,documents,rendezvous,autre',
-            'message'    => 'required|string|max:3000',
+            'first_name'     => 'required|string|max:100',
+            'last_name'      => 'required|string|max:100',
+            'email'          => 'required|email|max:255',
+            'telephone'      => ['required', 'string', 'max:20', new Telephone()],
+            'subject'        => ['required', Rule::in($subjects->pluck('slug'))],
+            'custom_subject' => ['nullable', 'string', 'max:150', Rule::requiredIf(in_array($request->input('subject'), $customSlugs, true))],
+            'destinataire'   => ['required', 'string', Rule::in($destinataireKeys)],
+            'message'        => 'required|string|max:' . Contact::MESSAGE_MAX_LENGTH,
+        ], [
+            'destinataire.required' => 'Veuillez sélectionner un destinataire.',
+            'destinataire.in'       => 'Le destinataire sélectionné n’est pas valide.',
+            'message.max'           => 'Le message ne peut pas dépasser :max caractères.',
         ]);
+
+        if (in_array($validated['subject'], $customSlugs, true)) {
+            $validated['subject'] = trim($validated['custom_subject']);
+        }
+        unset($validated['custom_subject']);
 
         $contact = Contact::create($validated);
 
@@ -58,7 +82,8 @@ class ContactController extends Controller
             $query->where(function ($q) use ($request) {
                 $q->where('first_name', 'like', '%' . $request->q . '%')
                   ->orWhere('last_name',  'like', '%' . $request->q . '%')
-                  ->orWhere('email',      'like', '%' . $request->q . '%');
+                  ->orWhere('email',      'like', '%' . $request->q . '%')
+                  ->orWhere('telephone',  'like', '%' . $request->q . '%');
             });
         }
 
@@ -66,10 +91,15 @@ class ContactController extends Controller
             $query->where('read', $request->status === 'read');
         }
 
+        if ($request->filled('destinataire')) {
+            $query->where('destinataire', $request->destinataire);
+        }
+
         $contacts  = $query->latest()->paginate(20);
         $unreadCount = Contact::where('read', false)->count();
+        $subjectLabels = ContactSubject::query()->pluck('label', 'slug');
 
-        return view('admin.contacts.index', compact('contacts', 'unreadCount'));
+        return view('admin.contacts.index', compact('contacts', 'unreadCount', 'subjectLabels'));
     }
 
     public function adminShow(Contact $contact)
@@ -103,5 +133,22 @@ class ContactController extends Controller
     {
         $contact->delete();
         return back()->with('success', 'Message supprimé.');
+    }
+
+    /**
+     * @return list<string>
+     */
+    private function destinataireKeys(): array
+    {
+        $serviceKeys = Service::query()
+            ->whereNotIn('code', ['direction'])
+            ->pluck('code')
+            ->map(fn (string $code) => Contact::destinataireKey('service', $code));
+
+        $directionKeys = DirectionDepartementale::query()
+            ->pluck('abbr')
+            ->map(fn (string $abbr) => Contact::destinataireKey('direction', $abbr));
+
+        return $serviceKeys->merge($directionKeys)->values()->all();
     }
 }

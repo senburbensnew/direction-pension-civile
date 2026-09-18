@@ -42,5 +42,6 @@ class DatabaseSeeder extends Seeder
         $this->call(FaqItemSeeder::class);
         $this->call(LienUtileSeeder::class);
         $this->call(DirectionDepartementaleSeeder::class);
+        $this->call(ContactSubjectSeeder::class);
     }
 }

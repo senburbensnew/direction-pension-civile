@@ -70,6 +70,7 @@
                 <tr>
                     <th class="w-2 px-4 py-3"></th>
                     <th class="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">Expéditeur</th>
+                    <th class="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">Destinataire</th>
                     <th class="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">Sujet</th>
                     <th class="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide hidden md:table-cell">Message</th>
                     <th class="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide whitespace-nowrap">Date</th>
@@ -79,13 +80,7 @@
             <tbody class="divide-y divide-gray-100">
                 @forelse($contacts as $contact)
                     @php
-                        $subjects = [
-                            'pension'    => ['label' => 'Pensions',    'color' => 'bg-blue-100 text-blue-700'],
-                            'documents'  => ['label' => 'Documents',   'color' => 'bg-purple-100 text-purple-700'],
-                            'rendezvous' => ['label' => 'Rendez-vous', 'color' => 'bg-orange-100 text-orange-700'],
-                            'autre'      => ['label' => 'Autre',       'color' => 'bg-gray-100 text-gray-600'],
-                        ];
-                        $subj = $subjects[$contact->subject] ?? ['label' => $contact->subject, 'color' => 'bg-gray-100 text-gray-600'];
+                        $subjLabel = $subjectLabels[$contact->subject] ?? $contact->subjectLabel();
                     @endphp
                     <tr class="{{ !$contact->read ? 'bg-blue-50/50' : '' }} hover:bg-gray-50 transition-colors">
 
@@ -102,12 +97,19 @@
                                 {{ $contact->first_name }} {{ $contact->last_name }}
                             </p>
                             <p class="text-xs text-gray-400 mt-0.5">{{ $contact->email }}</p>
+                            @if($contact->telephone)
+                                <p class="text-xs text-gray-400">{{ $contact->telephone }}</p>
+                            @endif
+                        </td>
+
+                        <td class="px-4 py-3 text-gray-600 text-xs">
+                            {{ $contact->destinataireLabel() }}
                         </td>
 
                         {{-- Subject badge --}}
                         <td class="px-4 py-3">
-                            <span class="inline-flex px-2 py-0.5 rounded-full text-xs font-medium {{ $subj['color'] }}">
-                                {{ $subj['label'] }}
+                            <span class="inline-flex px-2 py-0.5 rounded-full text-xs font-medium {{ isset($subjectLabels[$contact->subject]) ? 'bg-blue-100 text-blue-700' : 'bg-teal-100 text-teal-700' }}">
+                                {{ $subjLabel }}
                             </span>
                         </td>
 
@@ -164,7 +166,7 @@
                     </tr>
                 @empty
                     <tr>
-                        <td colspan="6" class="px-4 py-12 text-center">
+                        <td colspan="7" class="px-4 py-12 text-center">
                             <i class="fas fa-inbox text-4xl text-gray-200 mb-3 block"></i>
                             <p class="text-gray-400 font-medium">Aucun message trouvé</p>
                             @if(request('q') || request('status'))

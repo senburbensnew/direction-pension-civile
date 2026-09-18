@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\ContactSubject;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
@@ -18,7 +19,9 @@ class ContactParameterController extends Controller
             ->whereIn('name', self::KEYS)
             ->pluck('value', 'name');
 
-        return view('admin.contact-parameters.index', compact('params'));
+        $subjects = ContactSubject::ordered()->get();
+
+        return view('admin.contact-parameters.index', compact('params', 'subjects'));
     }
 
     public function update(Request $request)

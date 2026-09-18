@@ -99,6 +99,10 @@
                     <label class="block text-xs font-medium text-gray-700 mb-1">Nom complet *</label>
                     <input type="text" name="nom" required class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
                 </div>
+                <div>
+                    <label class="block text-xs font-medium text-gray-700 mb-1">Description (page publique)</label>
+                    <textarea name="description" rows="3" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"></textarea>
+                </div>
                 <div class="grid grid-cols-2 gap-4">
                     <div>
                         <label class="block text-xs font-medium text-gray-700 mb-1">Couleur *</label>
@@ -141,6 +145,10 @@
                     <div>
                         <label class="block text-xs font-medium text-gray-700 mb-1">Nom complet *</label>
                         <input type="text" name="nom" :value="editDirection.nom" required class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-medium text-gray-700 mb-1">Description (page publique)</label>
+                        <textarea name="description" rows="3" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" x-model="editDirection.description"></textarea>
                     </div>
                     <div class="grid grid-cols-2 gap-4">
                         <div>
