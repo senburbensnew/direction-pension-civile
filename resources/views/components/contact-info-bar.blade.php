@@ -11,7 +11,7 @@
     @if($borderType === 'top') border-t border-white/20 @endif
     @if($borderType === 'bottom') border-b border-white/20 @endif
 ">
-    <div class="relative z-10 px-4 py-2 min-h-10 flex flex-col lg:flex-row items-center justify-center lg:justify-between gap-1 lg:gap-4">
+    <div class="relative z-10 px-4 sm:px-6 lg:px-8 py-2 min-h-10 flex flex-col lg:flex-row items-center justify-center lg:justify-between gap-1 lg:gap-4">
             <!-- Contact Info + Hours -->
             <div class="flex flex-col md:flex-row md:items-center gap-1 md:gap-4 text-center md:text-left">
                 <!-- Hours -->

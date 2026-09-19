@@ -1,7 +1,5 @@
     <div class="container mx-auto relative text-white z-[1001] bg-[#173052] bg-motif-dots">
-        <div class="absolute inset-0 bg-opacity-70"></div>
-
-        <div class="container mx-auto px-4 py-4 relative z-10">
+        <div class="px-4 sm:px-6 lg:px-8 py-4 relative z-10">
             <div class="flex flex-wrap lg:flex-nowrap justify-between lg:justify-start items-center gap-x-3 gap-y-0">
                 <!-- Logo — lg:mr-auto pushes nav+user to the right on large screens -->
                 <div class="flex items-center flex-shrink-0 lg:mr-auto">

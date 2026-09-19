@@ -1,4 +1,4 @@
-<header class="w-full bg-white shadow">
+<header>
     <x-contact-info-bar borderType="bottom"  />
     <x-navbar />
     <x-menubar />

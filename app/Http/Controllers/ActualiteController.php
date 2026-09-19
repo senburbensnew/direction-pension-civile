@@ -9,11 +9,21 @@ use Illuminate\Support\Facades\Storage;
 
 class ActualiteController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
-        $actualites = Actualite::with('images')
-            ->latest()
-            ->paginate(9);
+        $query = Actualite::with('images')->latest();
+
+        if ($request->filled('q')) {
+            $q = $request->q;
+            $query->where(function ($inner) use ($q) {
+                $inner->where('title', 'like', '%'.$q.'%')
+                    ->orWhere('description', 'like', '%'.$q.'%')
+                    ->orWhere('category', 'like', '%'.$q.'%')
+                    ->orWhere('content_text', 'like', '%'.$q.'%');
+            });
+        }
+
+        $actualites = $query->paginate(9);
 
         return view('actualites.index', compact('actualites'));
     }
@@ -109,7 +119,7 @@ class ActualiteController extends Controller
     // Display the specified resource
     public function show($id)
     {
-        $actu = Actualite::findOrFail($id);
+        $actu = Actualite::with('images')->findOrFail($id);
         return view('actualites.show', compact('actu'));
     }
 

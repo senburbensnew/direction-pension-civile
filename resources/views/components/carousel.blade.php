@@ -72,13 +72,15 @@
     </button>
 
     {{-- Dot indicators --}}
-    <div class="absolute bottom-4 left-1/2 -translate-x-1/2 z-20 flex items-center gap-2">
+    <div class="hero-dots absolute bottom-4 left-1/2 -translate-x-1/2 z-30 flex items-center gap-2 rounded-full bg-black/40 backdrop-blur-sm px-3 py-1.5">
         <template x-for="i in total" :key="i">
             <button
+                type="button"
                 @click="goTo(i - 1); restartAuto()"
-                :class="current === i - 1 ? 'bg-white w-5' : 'bg-white/50 w-3'"
-                class="h-3 rounded-full transition-all duration-300 hover:bg-white/80"
+                :class="current === i - 1 ? 'bg-orange-500 w-6' : 'bg-white/80 w-2.5 hover:bg-white'"
+                class="h-2.5 rounded-full transition-all duration-300"
                 :aria-label="`Diapositive ${i}`"
+                :aria-current="current === i - 1 ? 'true' : 'false'"
             ></button>
         </template>
     </div>

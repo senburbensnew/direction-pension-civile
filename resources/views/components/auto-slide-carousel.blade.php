@@ -6,8 +6,8 @@
 >
     <div class="relative overflow-hidden rounded-xl">
         {{-- Edge fade masks --}}
-        <div class="absolute left-0 top-0 bottom-0 w-16 md:w-24 bg-gradient-to-r from-gray-50 to-transparent z-10 pointer-events-none"></div>
-        <div class="absolute right-0 top-0 bottom-0 w-16 md:w-24 bg-gradient-to-l from-gray-50 to-transparent z-10 pointer-events-none"></div>
+        <div class="absolute left-0 top-0 bottom-0 w-16 md:w-24 bg-gradient-to-r from-white to-transparent z-10 pointer-events-none"></div>
+        <div class="absolute right-0 top-0 bottom-0 w-16 md:w-24 bg-gradient-to-l from-white to-transparent z-10 pointer-events-none"></div>
 
         <div class="overflow-hidden py-3">
             {{--
@@ -20,7 +20,7 @@
                     @foreach ($images as $image)
                         <div
                             class="asc-item cursor-zoom-in"
-                            @click="$dispatch('open-slide-lightbox', { src: '{{ $image['src'] }}', alt: '{{ $image['alt'] }}' })"
+                            @click="$dispatch('open-slide-lightbox', { src: @js($image['src']), alt: @js($image['alt']) })"
                         >
                             <img
                                 src="{{ $image['src'] }}"

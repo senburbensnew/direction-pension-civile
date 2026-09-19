@@ -20,6 +20,10 @@ class AutoSlideCarousel extends Component
 
     public function render()
     {
+        if (empty($this->images)) {
+            return '';
+        }
+
         return view('components.auto-slide-carousel');
     }
 }
