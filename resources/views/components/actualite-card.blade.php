@@ -9,7 +9,7 @@
              loading="lazy" />
     </a>
     <div class="flex flex-col flex-1 p-5">
-        <p class="text-[11px] font-bold text-orange-500 uppercase tracking-widest mb-2">
+        <p class="text-xs font-bold text-orange-500 uppercase tracking-widest mb-2">
             {{ $actualite->category ?: 'Actualité' }}
             @if($actualite->created_at)
                 <span class="text-gray-400 font-normal normal-case tracking-normal"> · {{ $actualite->created_at->translatedFormat('d/m/Y') }}</span>
@@ -19,8 +19,8 @@
             <a href="{{ route('actualites.show', $actualite->id) }}" class="hover:text-orange-500">{{ $actualite->title }}</a>
         </h3>
         @if($actualite->posted_in)
-            <p class="text-sm text-gray-500 mb-4">
-                <i class="fa-solid fa-location-dot text-xs text-navy mr-1" aria-hidden="true"></i>
+            <p class="text-base text-gray-700 mb-4 leading-relaxed">
+                <i class="fa-solid fa-location-dot text-sm text-navy mr-1" aria-hidden="true"></i>
                 {{ $actualite->posted_in }}
             </p>
         @else
@@ -28,7 +28,7 @@
         @endif
         <div class="mt-auto">
             <a href="{{ route('actualites.show', $actualite->id) }}"
-               class="inline-flex items-center gap-1.5 text-sm px-3 py-1.5 bg-orange-500 hover:bg-orange-600 text-white font-medium">
+               class="inline-flex items-center gap-1.5 text-base px-4 py-2 bg-orange-500 hover:bg-orange-600 text-white font-medium">
                 Lire la suite
             </a>
         </div>

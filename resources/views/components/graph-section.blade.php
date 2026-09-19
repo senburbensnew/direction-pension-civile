@@ -147,16 +147,16 @@
 
         <!-- Graph Navigation Tabs -->
         <div class="flex flex-wrap justify-center gap-3 mb-6">
-            <button class="graph-tab active bg-blue-600 text-white px-4 py-2 rounded-lg font-semibold transition-all text-sm" data-graph="pension-evolution">
+            <button class="graph-tab active bg-blue-600 text-white px-4 py-2 rounded-lg font-semibold transition-all text-base" data-graph="pension-evolution">
                 Évolution des Pensions
             </button>
-            <button class="graph-tab bg-white text-blue-600 border border-blue-600 px-4 py-2 rounded-lg font-semibold transition-all hover:bg-blue-50 text-sm" data-graph="beneficiaires">
+            <button class="graph-tab bg-white text-blue-600 border border-blue-600 px-4 py-2 rounded-lg font-semibold transition-all hover:bg-blue-50 text-base" data-graph="beneficiaires">
                 Bénéficiaires
             </button>
-            <button class="graph-tab bg-white text-blue-600 border border-blue-600 px-4 py-2 rounded-lg font-semibold transition-all hover:bg-blue-50 text-sm" data-graph="repartition">
+            <button class="graph-tab bg-white text-blue-600 border border-blue-600 px-4 py-2 rounded-lg font-semibold transition-all hover:bg-blue-50 text-base" data-graph="repartition">
                 Répartition
             </button>
-            <button class="graph-tab bg-white text-blue-600 border border-blue-600 px-4 py-2 rounded-lg font-semibold transition-all hover:bg-blue-50 text-sm" data-graph="performance">
+            <button class="graph-tab bg-white text-blue-600 border border-blue-600 px-4 py-2 rounded-lg font-semibold transition-all hover:bg-blue-50 text-base" data-graph="performance">
                 Performance
             </button>
         </div>
@@ -168,12 +168,12 @@
                 <div class="graph-header flex flex-col lg:flex-row justify-between items-start lg:items-center mb-4">
                     <h3 class="text-lg font-bold text-gray-800 mb-2 lg:mb-0">Évolution du Montant des Pensions (2018-2024)</h3>
                     <div class="graph-controls flex gap-2">
-                        <select class="graph-filter bg-gray-100 border-0 rounded-lg px-3 py-1 text-xs">
+                        <select class="graph-filter bg-gray-100 border-0 rounded-lg px-3 py-1 text-sm">
                             <option>Annuel</option>
                             <option>Trimestriel</option>
                             <option>Mensuel</option>
                         </select>
-                        <button class="export-btn bg-blue-600 text-white px-3 py-1 rounded-lg text-xs hover:bg-blue-700">
+                        <button class="export-btn bg-blue-600 text-white px-3 py-1 rounded-lg text-sm hover:bg-blue-700">
                             <i class="fas fa-download mr-1"></i>Exporter
                         </button>
                     </div>
@@ -181,7 +181,7 @@
                 <div class="graph-container" id="lineChartContainer">
                     <!-- D3 Line Chart will be rendered here -->
                 </div>
-                <div class="graph-footer mt-2 text-xs text-gray-600">
+                <div class="graph-footer mt-2 text-sm text-gray-600">
                     <p>Source: Direction de la Pension Civile - Données actualisées en temps réel</p>
                 </div>
             </div>
@@ -191,12 +191,12 @@
                 <div class="graph-header flex flex-col lg:flex-row justify-between items-start lg:items-center mb-4">
                     <h3 class="text-lg font-bold text-gray-800 mb-2 lg:mb-0">Répartition des Bénéficiaires par Catégorie</h3>
                     <div class="graph-controls flex gap-2">
-                        <select class="graph-filter bg-gray-100 border-0 rounded-lg px-3 py-1 text-xs">
+                        <select class="graph-filter bg-gray-100 border-0 rounded-lg px-3 py-1 text-sm">
                             <option>2024</option>
                             <option>2023</option>
                             <option>2022</option>
                         </select>
-                        <button class="export-btn bg-blue-600 text-white px-3 py-1 rounded-lg text-xs hover:bg-blue-700">
+                        <button class="export-btn bg-blue-600 text-white px-3 py-1 rounded-lg text-sm hover:bg-blue-700">
                             <i class="fas fa-download mr-1"></i>Exporter
                         </button>
                     </div>
@@ -204,7 +204,7 @@
                 <div class="graph-container" id="pieChartContainer">
                     <!-- D3 Pie Chart will be rendered here -->
                 </div>
-                <div class="graph-footer mt-2 text-xs text-gray-600">
+                <div class="graph-footer mt-2 text-sm text-gray-600">
                     <p>Répartition par secteur d'activité et catégorie professionnelle</p>
                 </div>
             </div>
@@ -214,12 +214,12 @@
                 <div class="graph-header flex flex-col lg:flex-row justify-between items-start lg:items-center mb-4">
                     <h3 class="text-lg font-bold text-gray-800 mb-2 lg:mb-0">Répartition Géographique des Bénéficiaires</h3>
                     <div class="graph-controls flex gap-2">
-                        <select class="graph-filter bg-gray-100 border-0 rounded-lg px-3 py-1 text-xs">
+                        <select class="graph-filter bg-gray-100 border-0 rounded-lg px-3 py-1 text-sm">
                             <option>Par Région</option>
                             <option>Par Département</option>
                             <option>Par Ville</option>
                         </select>
-                        <button class="export-btn bg-blue-600 text-white px-3 py-1 rounded-lg text-xs hover:bg-blue-700">
+                        <button class="export-btn bg-blue-600 text-white px-3 py-1 rounded-lg text-sm hover:bg-blue-700">
                             <i class="fas fa-download mr-1"></i>Exporter
                         </button>
                     </div>
@@ -227,7 +227,7 @@
                 <div class="graph-container" id="barChartContainer">
                     <!-- D3 Bar Chart will be rendered here -->
                 </div>
-                <div class="graph-footer mt-2 text-xs text-gray-600">
+                <div class="graph-footer mt-2 text-sm text-gray-600">
                     <p>Distribution des bénéficiaires sur l'ensemble du territoire national</p>
                 </div>
             </div>
@@ -237,12 +237,12 @@
                 <div class="graph-header flex flex-col lg:flex-row justify-between items-start lg:items-center mb-4">
                     <h3 class="text-lg font-bold text-gray-800 mb-2 lg:mb-0">Performance du Traitement des Dossiers</h3>
                     <div class="graph-controls flex gap-2">
-                        <select class="graph-filter bg-gray-100 border-0 rounded-lg px-3 py-1 text-xs">
+                        <select class="graph-filter bg-gray-100 border-0 rounded-lg px-3 py-1 text-sm">
                             <option>Délais Moyens</option>
                             <option>Taux de Résolution</option>
                             <option>Volume Traité</option>
                         </select>
-                        <button class="export-btn bg-blue-600 text-white px-3 py-1 rounded-lg text-xs hover:bg-blue-700">
+                        <button class="export-btn bg-blue-600 text-white px-3 py-1 rounded-lg text-sm hover:bg-blue-700">
                             <i class="fas fa-download mr-1"></i>Exporter
                         </button>
                     </div>
@@ -250,7 +250,7 @@
                 <div class="graph-container" id="mixedChartContainer">
                     <!-- D3 Mixed Chart will be rendered here -->
                 </div>
-                <div class="graph-footer mt-2 text-xs text-gray-600">
+                <div class="graph-footer mt-2 text-sm text-gray-600">
                     <p>Indicateurs de performance et délais de traitement moyens</p>
                 </div>
             </div>
@@ -260,19 +260,19 @@
         <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mt-6">
             <div class="bg-white rounded-lg p-3 card-shadow text-center">
                 <div class="text-xl font-bold text-blue-600 mb-1">1,354</div>
-                <div class="text-xs text-gray-600">Dossiers traités</div>
+                <div class="text-sm text-gray-600">Dossiers traités</div>
             </div>
             <div class="bg-white rounded-lg p-3 card-shadow text-center">
                 <div class="text-xl font-bold text-green-600 mb-1">97%</div>
-                <div class="text-xs text-gray-600">Taux de satisfaction</div>
+                <div class="text-sm text-gray-600">Taux de satisfaction</div>
             </div>
             <div class="bg-white rounded-lg p-3 card-shadow text-center">
                 <div class="text-xl font-bold text-purple-600 mb-1">15j</div>
-                <div class="text-xs text-gray-600">Délai moyen</div>
+                <div class="text-sm text-gray-600">Délai moyen</div>
             </div>
             <div class="bg-white rounded-lg p-3 card-shadow text-center">
                 <div class="text-xl font-bold text-orange-600 mb-1">680+</div>
-                <div class="text-xs text-gray-600">Nouveaux bénéficiaires</div>
+                <div class="text-sm text-gray-600">Nouveaux bénéficiaires</div>
             </div>
         </div>
     </div>

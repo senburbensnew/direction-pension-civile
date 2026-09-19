@@ -50,7 +50,7 @@
                 « La Direction de la Pension est chargée de l’application de la loi régissant la Pension Civile et la Pension Militaire. Elle établit et maintient à jour la liste des pensionnaires, étudie les dossiers de demande et recommande toute liquidation de pension », conformément aux dispositions de l’article 17 de la loi organique du Ministère de l’Économie et des Finances.
             </p>
             <p class="text-gray-700 leading-relaxed">En outre, la DPC s’occupe de :</p>
-            <ul class="space-y-2.5 text-gray-700 text-sm leading-relaxed">
+            <ul class="space-y-2.5 text-gray-700 text-base leading-relaxed">
                 @foreach([
                     'La gestion et l’administration du plan de retraite de l’administration publique en Haïti.',
                     'La gestion des comptes de pension civile.',
@@ -116,7 +116,7 @@
                 </span>
                 <h2 class="text-xl font-bold text-navy">Dates importantes</h2>
             </div>
-            <p class="text-sm text-gray-500 mb-6">Chronogramme interactif 1843 — 2015. Déplacez et zoomez pour parcourir l’historique. Cliquez une date pour afficher le détail.</p>
+            <p class="text-base text-gray-700 mb-6">Chronogramme interactif 1843 — 2015. Déplacez et zoomez pour parcourir l’historique. Cliquez une date pour afficher le détail.</p>
 
             <div id="dpc-chronogramme"
                  class="dpc-chronogramme mb-10"
@@ -140,14 +140,14 @@
                                 </span>
                             </div>
                             <article class="pt-1 sm:pt-2">
-                                <p class="text-gray-800 leading-relaxed text-[15px]">{{ $event['texte'] }}</p>
+                                <p class="text-gray-800 leading-relaxed text-base">{{ $event['texte'] }}</p>
                                 @if(!empty($event['images']))
                                     @foreach($event['images'] as $image)
                                         <figure class="mt-5">
                                             <img src="{{ asset($image['src']) }}"
                                                  alt="{{ $image['alt'] }}"
                                                  class="w-full max-w-2xl bg-white">
-                                            <figcaption class="mt-2 text-xs text-gray-500">{{ $image['alt'] }}</figcaption>
+                                            <figcaption class="mt-2 text-sm text-gray-600">{{ $image['alt'] }}</figcaption>
                                         </figure>
                                     @endforeach
                                 @endif

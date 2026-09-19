@@ -23,12 +23,12 @@
                 </div>
             </div>
 
-            <p class="text-gray-700 leading-relaxed text-[15px]">
+            <p class="text-gray-700 leading-relaxed text-base">
                 {{ data_get($service->catalog(), 'intro') ?: $service->description ?: "Service opérationnel de la Direction de la Pension Civile." }}
             </p>
 
             @if($service->attributions())
-                <ul class="mt-5 list-disc pl-5 space-y-2 text-gray-700 text-[15px] leading-relaxed">
+                <ul class="mt-5 list-disc pl-5 space-y-2 text-gray-700 text-base leading-relaxed">
                     @foreach($service->attributions() as $item)
                         <li>{{ $item }}</li>
                     @endforeach
@@ -56,7 +56,7 @@
                    class="bg-white rounded-none border border-gray-200 p-5 hover:border-navy/40 transition-colors">
                     <i class="fa-solid fa-fw {{ $other->icon ?: 'fa-building' }} text-navy mb-2" aria-hidden="true"></i>
                     <h3 class="font-semibold text-gray-800">{{ $other->nom }}</h3>
-                    <p class="text-sm text-gray-500 mt-1">Port-au-Prince</p>
+                    <p class="text-base text-gray-600 mt-1">Port-au-Prince</p>
                 </a>
                 @endforeach
             </div>

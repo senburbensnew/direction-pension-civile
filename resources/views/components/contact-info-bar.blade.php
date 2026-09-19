@@ -7,7 +7,7 @@
         .$months[$now->month - 1]
         .' '.$now->format('Y, H:i:s');
 @endphp
-<div class="container mx-auto relative overflow-hidden bg-[#173052] bg-motif-dots text-white text-sm
+<div class="container mx-auto relative overflow-hidden bg-[#173052] bg-motif-dots text-white text-base
     @if($borderType === 'top') border-t border-white/20 @endif
     @if($borderType === 'bottom') border-b border-white/20 @endif
 ">

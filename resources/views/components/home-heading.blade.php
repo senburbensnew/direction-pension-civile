@@ -2,7 +2,7 @@
 
 <div {{ $attributes->class('text-center mb-10 md:mb-12') }}>
     <span @class([
-        'inline-flex items-center gap-3 text-[11px] font-bold uppercase tracking-[0.22em]',
+        'inline-flex items-center gap-3 text-sm font-bold uppercase tracking-[0.18em]',
         'text-orange-500' => $tone !== 'light',
         'text-orange-300' => $tone === 'light',
     ])>
@@ -17,8 +17,8 @@
     ])>{{ $title }}</h2>
     @if($intro)
         <p @class([
-            'max-w-2xl mx-auto mt-3 leading-relaxed text-[15px]',
-            'text-gray-500' => $tone !== 'light',
+            'max-w-2xl mx-auto mt-3 leading-relaxed text-base',
+            'text-gray-600' => $tone !== 'light',
             'text-blue-100' => $tone === 'light',
         ])>{{ $intro }}</p>
     @endif

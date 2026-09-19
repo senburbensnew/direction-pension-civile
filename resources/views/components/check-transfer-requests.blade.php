@@ -40,7 +40,7 @@
 
             {{-- Titre personnalisé --}}
             <div class="mb-4">
-                <label for="title" class="block text-sm font-medium text-gray-700">
+                <label for="title" class="block text-base font-medium text-gray-700">
                     Titre personnalisé <span class="text-gray-400 font-normal">(optionnel)</span>
                 </label>
                 <input
@@ -56,13 +56,13 @@
             <fieldset class="shadow-md rounded-lg p-5 border mb-6">
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
-                        <label for="fiscal_year" class="block text-sm font-medium text-gray-700 mb-1">
+                        <label for="fiscal_year" class="block text-base font-medium text-gray-700 mb-1">
                             Année fiscale
                         </label>
                         <input type="text" name="annee_fiscale" id="annee_fiscale" value="{{ old('annee_fiscale', $demande?->data['annee_fiscale'] ?? '') }}"
                             placeholder="ex:2025/2026" class="w-full rounded-md @error('annee_fiscale') border-red-500 @else border-gray-300 @enderror focus:border-blue-500 focus:ring-blue-500">
                         @error('annee_fiscale')
-                            <p class="mt-2 text-sm text-red-600">{{ $message }}</p>
+                            <p class="mt-2 text-base text-red-600">{{ $message }}</p>
                         @enderror
                     </div>
                 </div>
@@ -70,26 +70,26 @@
 
             <!-- Date & Month Section -->
             <fieldset class="shadow-md rounded-lg p-5 border mb-6">
-                <legend class="text-sm font-medium text-gray-700 mb-2">Période de transfert</legend>
+                <legend class="text-base font-medium text-gray-700 mb-2">Période de transfert</legend>
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
-                        <label for="mois_debut" class="block text-sm font-medium text-gray-700 mb-1">
+                        <label for="mois_debut" class="block text-base font-medium text-gray-700 mb-1">
                             À partir du mois de *
                         </label>
                         <input type="month" name="mois_debut" id="mois_debut" value="{{ old('mois_debut', $demande?->data['mois_debut'] ?? '') }}"
                             class="w-full rounded-md @error('mois_debut') border-red-500 @else border-gray-300 @enderror focus:border-blue-500 focus:ring-blue-500">
                         @error('mois_debut')
-                            <p class="mt-2 text-sm text-red-600">{{ $message }}</p>
+                            <p class="mt-2 text-base text-red-600">{{ $message }}</p>
                         @enderror
                     </div>
                     <div>
-                        <label for="date_demande" class="block text-sm font-medium text-gray-700 mb-1">
+                        <label for="date_demande" class="block text-base font-medium text-gray-700 mb-1">
                             Date de demande *
                         </label>
                         <input type="date" name="date_demande" id="date_demande" value="{{ old('date_demande', $demande?->data['date_demande'] ?? '') }}"
                             class="w-full rounded-md @error('date_demande') border-red-500 @else border-gray-300 @enderror focus:border-blue-500 focus:ring-blue-500">
                         @error('date_demande')
-                            <p class="mt-2 text-sm text-red-600">{{ $message }}</p>
+                            <p class="mt-2 text-base text-red-600">{{ $message }}</p>
                         @enderror
                     </div>
                 </div>
@@ -98,7 +98,7 @@
             <!-- Pension Regime Section -->
             <fieldset
                 class="shadow-md rounded-lg p-5 border mb-6 @error('categorie_pension__id') border-red-500 @else border-gray-300 @enderror">
-                <legend class="text-sm font-medium text-gray-700 mb-2">Régime de Pension *</legend>
+                <legend class="text-base font-medium text-gray-700 mb-2">Régime de Pension *</legend>
                 <div class="flex space-x-4">
                     @foreach ($pensionCategories as $type)
                         <div class="flex items-center">
@@ -113,7 +113,7 @@
                     @endforeach
                 </div>
                 @error('categorie_pension_id')
-                    <p class="mt-2 text-sm text-red-600">{{ $message }}</p>
+                    <p class="mt-2 text-base text-red-600">{{ $message }}</p>
                 @enderror
             </fieldset>
 
@@ -121,7 +121,7 @@
             <fieldset class="shadow-md rounded-lg p-5 border mb-6">
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
-                        <label for="code_pension" class="block text-sm font-medium text-gray-700 mb-1">
+                        <label for="code_pension" class="block text-base font-medium text-gray-700 mb-1">
                             Code pension *
                         </label>
                         <input type="text" name="code_pension" id="code_pension"
@@ -130,18 +130,18 @@
                             class="w-full rounded-md @error('code_pension') border-red-500 @else border-gray-300 @enderror focus:border-blue-500 focus:ring-blue-500"
                             >
                         @error('code_pension')
-                            <p class="mt-2 text-sm text-red-600">{{ $message }}</p>
+                            <p class="mt-2 text-base text-red-600">{{ $message }}</p>
                         @enderror
                     </div>
                     <div>
-                        <label for="montant" class="block text-sm font-medium text-gray-700 mb-1">
+                        <label for="montant" class="block text-base font-medium text-gray-700 mb-1">
                             Montant (en Gdes) *
                         </label>
                         <input type="number" name="montant" id="montant" value="{{ old('montant', $demande?->data['montant'] ?? '') }}"
                             class="w-full rounded-md @error('montant') border-red-500 @else border-gray-300 @enderror focus:border-blue-500 focus:ring-blue-500"
                             step="0.01" min="0">
                         @error('montant')
-                            <p class="mt-2 text-sm text-red-600">{{ $message }}</p>
+                            <p class="mt-2 text-base text-red-600">{{ $message }}</p>
                         @enderror
                     </div>
                 </div>
@@ -149,37 +149,37 @@
 
             <!-- Personal Information -->
             <fieldset class="shadow-md rounded-lg p-5 border mb-6">
-                <legend class="text-sm font-medium text-gray-700 mb-2">Informations personnelles</legend>
+                <legend class="text-base font-medium text-gray-700 mb-2">Informations personnelles</legend>
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                     <div>
-                        <label for="nom" class="block text-sm font-medium text-gray-700 mb-1">
+                        <label for="nom" class="block text-base font-medium text-gray-700 mb-1">
                             Nom *
                         </label>
                         <input type="text" name="nom" id="nom" value="{{ old('nom', $demande?->data['nom'] ?? '') }}"
                             class="w-full rounded-md @error('nom') border-red-500 @else border-gray-300 @enderror focus:border-blue-500 focus:ring-blue-500">
                         @error('nom')
-                            <p class="mt-2 text-sm text-red-600">{{ $message }}</p>
+                            <p class="mt-2 text-base text-red-600">{{ $message }}</p>
                         @enderror
                     </div>
                     <div>
-                        <label for="prenom" class="block text-sm font-medium text-gray-700 mb-1">
+                        <label for="prenom" class="block text-base font-medium text-gray-700 mb-1">
                             Prénom *
                         </label>
                         <input type="text" name="prenom" id="prenom" value="{{ old('prenom', $demande?->data['prenom'] ?? '') }}"
                             class="w-full rounded-md @error('prenom') border-red-500 @else border-gray-300 @enderror focus:border-blue-500 focus:ring-blue-500">
                         @error('prenom')
-                            <p class="mt-2 text-sm text-red-600">{{ $message }}</p>
+                            <p class="mt-2 text-base text-red-600">{{ $message }}</p>
                         @enderror
                     </div>
                     <div>
-                        <label for="nom_jeune_fille" class="block text-sm font-medium text-gray-700 mb-1">
+                        <label for="nom_jeune_fille" class="block text-base font-medium text-gray-700 mb-1">
                             Nom de Jeune Fille
                         </label>
                         <input type="text" name="nom_jeune_fille" id="nom_jeune_fille"
                             value="{{ old('nom_jeune_fille', $demande?->data['nom_jeune_fille'] ?? '') }}"
                             class="w-full rounded-md border-gray-300 focus:border-blue-500 focus:ring-blue-500 @error('nom_jeune_fille') border-red-500 @else border-gray-300 @enderror">
                         @error('nom_jeune_fille')
-                            <p class="mt-2 text-sm text-red-600">{{ $message }}</p>
+                            <p class="mt-2 text-base text-red-600">{{ $message }}</p>
                         @enderror
                     </div>
                 </div>
@@ -189,55 +189,55 @@
             <fieldset class="shadow-md rounded-lg p-5 border mb-6">
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
-                        <label for="nif" class="block text-sm font-medium text-gray-700 mb-1">
+                        <label for="nif" class="block text-base font-medium text-gray-700 mb-1">
                             NIF *
                         </label>
                         <input placeholder="998-369-226-3" type="text" name="nif" id="nif" value="{{ old('nif', $demande?->data['nif'] ?? auth()->user()->nif) }}"
                             class="w-full rounded-md @error('nif') border-red-500 @else border-gray-300 @enderror focus:border-blue-500 focus:ring-blue-500"
                             >
                         @error('nif')
-                            <p class="mt-2 text-sm text-red-600">{{ $message }}</p>
+                            <p class="mt-2 text-base text-red-600">{{ $message }}</p>
                         @enderror
                     </div>
                     <div>
-                        <label for="ninu" class="block text-sm font-medium text-gray-700 mb-1">
+                        <label for="ninu" class="block text-base font-medium text-gray-700 mb-1">
                             NINU *
                         </label>
                         <input type="text" name="ninu" id="ninu" value="{{ old('ninu', $demande?->data['ninu'] ?? '') }}"
                             class="w-full rounded-md @error('ninu') border-red-500 @else border-gray-300 @enderror focus:border-blue-500 focus:ring-blue-500">
                         @error('ninu')
-                            <p class="mt-2 text-sm text-red-600">{{ $message }}</p>
+                            <p class="mt-2 text-base text-red-600">{{ $message }}</p>
                         @enderror
                     </div>
                     <div>
-                        <label for="adresse" class="block text-sm font-medium text-gray-700 mb-1">
+                        <label for="adresse" class="block text-base font-medium text-gray-700 mb-1">
                             Adresse *
                         </label>
                         <input type="text" name="adresse" id="adresse" value="{{ old('adresse', $demande?->data['adresse'] ?? '') }}"
                             class="w-full rounded-md @error('adresse') border-red-500 @else border-gray-300 @enderror focus:border-blue-500 focus:ring-blue-500">
                         @error('adresse')
-                            <p class="mt-2 text-sm text-red-600">{{ $message }}</p>
+                            <p class="mt-2 text-base text-red-600">{{ $message }}</p>
                         @enderror
                     </div>
                     <div>
-                        <label for="telephone" class="block text-sm font-medium text-gray-700 mb-1">
+                        <label for="telephone" class="block text-base font-medium text-gray-700 mb-1">
                             Téléphone *
                         </label>
                         <input placeholder="+509 XXXX-XXXX" type="tel" name="telephone" id="telephone" value="{{ old('telephone', $demande?->data['telephone'] ?? '') }}"
                             class="w-full rounded-md @error('telephone') border-red-500 @else border-gray-300 @enderror focus:border-blue-500 focus:ring-blue-500"
                             >
                         @error('telephone')
-                            <p class="mt-2 text-sm text-red-600">{{ $message }}</p>
+                            <p class="mt-2 text-base text-red-600">{{ $message }}</p>
                         @enderror
                     </div>
                     <div>
-                        <label for="email" class="block text-sm font-medium text-gray-700 mb-1">
+                        <label for="email" class="block text-base font-medium text-gray-700 mb-1">
                             Courriel
                         </label>
                         <input placeholder="nom.prenom@example.com" type="email" name="email" id="email" value="{{ old('email', $demande?->data['email'] ?? '') }}"
                             class="w-full rounded-md border-gray-300 focus:border-blue-500 focus:ring-blue-500 @error('email') border-red-500 @else border-gray-300 @enderror">
                         @error('email')
-                            <p class="mt-2 text-sm text-red-600">{{ $message }}</p>
+                            <p class="mt-2 text-base text-red-600">{{ $message }}</p>
                         @enderror
                     </div>
                 </div>
@@ -245,37 +245,37 @@
 
             <!-- Transfer Details -->
             <fieldset class="shadow-md rounded-lg p-5 border mb-6">
-                <legend class="text-sm font-medium text-gray-700 mb-2">Détails du transfert</legend>
+                <legend class="text-base font-medium text-gray-700 mb-2">Détails du transfert</legend>
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
-                        <label for="from" class="block text-sm font-medium text-gray-700 mb-1">
+                        <label for="from" class="block text-base font-medium text-gray-700 mb-1">
                             De *
                         </label>
                         <input type="date" name="de" id="de" value="{{ old('de', $demande?->data['de'] ?? '') }}"
                             class="w-full rounded-md @error('de') border-red-500 @else border-gray-300 @enderror focus:border-blue-500 focus:ring-blue-500">
                         @error('de')
-                            <p class="mt-2 text-sm text-red-600">{{ $message }}</p>
+                            <p class="mt-2 text-base text-red-600">{{ $message }}</p>
                         @enderror
                     </div>
                     <div>
-                        <label for="to" class="block text-sm font-medium text-gray-700 mb-1">
+                        <label for="to" class="block text-base font-medium text-gray-700 mb-1">
                             À *
                         </label>
                         <input type="date" name="a" id="a" value="{{ old('a', $demande?->data['a'] ?? '') }}"
                             class="w-full rounded-md @error('a') border-red-500 @else border-gray-300 @enderror focus:border-blue-500 focus:ring-blue-500">
                         @error('a')
-                            <p class="mt-2 text-sm text-red-600">{{ $message }}</p>
+                            <p class="mt-2 text-base text-red-600">{{ $message }}</p>
                         @enderror
                     </div>
                 </div>
                 <div class="mt-4">
-                    <label for="raison_transfert" class="block text-sm font-medium text-gray-700 mb-1">
+                    <label for="raison_transfert" class="block text-base font-medium text-gray-700 mb-1">
                         Motif du transfert *
                     </label>
                     <textarea name="raison_transfert" id="raison_transfert" rows="3"
                         class="w-full rounded-md @error('raison_transfert') border-red-500 @else border-gray-300 @enderror focus:border-blue-500 focus:ring-blue-500">{{ old('raison_transfert', $demande?->data['raison_transfert'] ?? '') }}</textarea>
                     @error('raison_transfert')
-                        <p class="mt-2 text-sm text-red-600">{{ $message }}</p>
+                        <p class="mt-2 text-base text-red-600">{{ $message }}</p>
                     @enderror
                 </div>
             </fieldset>

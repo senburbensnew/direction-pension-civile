@@ -40,6 +40,9 @@ return [
     'comm_docs_2' => 'Matricule fiscal',
     'comm_docs_3' => 'Preuve de paiement',
 
+    'essentials_kicker' => 'En quelques clics',
+    'essentials_title' => 'Démarches essentielles',
+
     'quick_guide_title' => 'Guide du pensionné',
     'quick_guide_desc' => 'Formalités, avis et contacts utiles',
     'quick_sim_title' => 'Simulateur',
@@ -64,6 +67,15 @@ return [
     'accueil_title' => 'Organisation de l’accueil des pensionnés',
     'accueil_body' => 'Afin de faciliter le paiement des prestations et d’éviter les encombrements, l’accueil et le traitement des pensionnés sont organisés par ordre alphabétique, selon un calendrier établi à cet effet.',
     'accueil_note' => 'Les pensionnés sont invités à respecter la période qui leur est indiquée afin de contribuer à la fluidité et à l’efficacité du service.',
+    'accueil_calendar_intro' => 'L’accueil est organisé selon le calendrier alphabétique suivant :',
+    'accueil_calendar_caption' => 'Calendrier d’accueil des pensionnés par jour et par lettre',
+    'accueil_calendar_days' => 'Jours',
+    'accueil_calendar_letters' => 'Lettres',
+    'accueil_day_lundi' => 'Lundi',
+    'accueil_day_mardi' => 'Mardi',
+    'accueil_day_mercredi' => 'Mercredi',
+    'accueil_day_jeudi' => 'Jeudi',
+    'accueil_day_vendredi' => 'Vendredi',
 
     'rappel_title' => 'Rappel important aux pensionnés et mandataires',
     'rappel_payment' => 'Il est rappelé que le paiement de la rente est disponible à la fin de chaque mois.',

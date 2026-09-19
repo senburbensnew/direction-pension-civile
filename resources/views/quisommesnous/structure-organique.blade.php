@@ -42,13 +42,13 @@
                     </span>
                     <div>
                         <h2 class="text-lg font-bold text-navy">Organigramme</h2>
-                        <p class="text-xs text-gray-500 mt-0.5">Organisation des services de la DPC</p>
+                        <p class="text-sm text-gray-600 mt-0.5">Organisation des services de la DPC</p>
                     </div>
                 </div>
                 <a href="{{ asset('images/dpc_organigram.jpg') }}?v=20260918"
                    target="_blank"
                    rel="noopener noreferrer"
-                   class="text-xs font-semibold text-navy hover:text-orange-500 inline-flex items-center gap-1.5">
+                   class="text-sm font-semibold text-navy hover:text-orange-500 inline-flex items-center gap-1.5">
                     Agrandir <i class="fa-solid fa-arrow-up-right-from-square"></i>
                 </a>
             </div>
@@ -72,7 +72,7 @@
                             </h2>
                         </div>
                         @if($service['code'])
-                            <a href="{{ route('services.show', $service['code']) }}" class="text-sm font-medium text-navy hover:text-orange-500 shrink-0 inline-flex items-center gap-1.5">
+                            <a href="{{ route('services.show', $service['code']) }}" class="text-base font-medium text-navy hover:text-orange-500 shrink-0 inline-flex items-center gap-1.5">
                                 Voir la page du service <i class="fa-solid fa-arrow-right text-xs" aria-hidden="true"></i>
                             </a>
                         @endif
@@ -81,7 +81,7 @@
                         <p class="text-gray-700 leading-relaxed mb-3">{{ $service['intro'] }}</p>
                     @endif
                     @if(!empty($service['attributions']))
-                        <ul class="space-y-2.5 text-gray-700 text-sm leading-relaxed">
+                        <ul class="space-y-2.5 text-gray-700 text-base leading-relaxed">
                             @foreach($service['attributions'] as $item)
                                 <li class="flex items-start gap-2.5">
                                     <i class="fa-solid fa-check text-navy mt-1 text-xs" aria-hidden="true"></i>

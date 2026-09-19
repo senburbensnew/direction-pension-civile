@@ -85,7 +85,7 @@
     class="relative px-10 py-2"
 >
     @if($items->isEmpty())
-        <div class="text-center py-10 text-gray-400 text-sm">
+        <div class="text-center py-10 text-gray-600 text-base">
             Aucune image publiée pour le moment.
             <a href="{{ route('mediatheque') }}" class="text-blue-600 hover:underline ml-1">Voir la médiathèque</a>
         </div>

@@ -34,22 +34,22 @@
                     </span>
                     <input type="text" name="q" value="{{ request('q') }}"
                            placeholder="Rechercher un document…"
-                           class="w-full pl-9 pr-4 py-2.5 border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-navy/20 focus:border-navy">
+                           class="w-full pl-9 pr-4 py-2.5 border border-gray-200 text-base focus:outline-none focus:ring-2 focus:ring-navy/20 focus:border-navy">
                 </div>
                 <select name="type"
-                        class="border border-gray-200 px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-navy/20 focus:border-navy min-w-[160px]">
+                        class="border border-gray-200 px-3 py-2.5 text-base focus:outline-none focus:ring-2 focus:ring-navy/20 focus:border-navy min-w-[160px]">
                     <option value="">Tous les types</option>
                     @foreach($types as $key => $label)
                         <option value="{{ $key }}" {{ request('type') === $key ? 'selected' : '' }}>{{ $label }}</option>
                     @endforeach
                 </select>
                 <button type="submit"
-                        class="px-5 py-2.5 bg-navy text-white text-sm font-semibold hover:opacity-90 whitespace-nowrap">
+                        class="px-5 py-2.5 bg-navy text-white text-base font-semibold hover:opacity-90 whitespace-nowrap">
                     Rechercher
                 </button>
                 @if(request('q') || request('type'))
                     <a href="{{ route('textes_documents_legaux') }}"
-                       class="px-4 py-2.5 border border-gray-200 text-gray-700 hover:bg-gray-50 text-sm whitespace-nowrap flex items-center justify-center gap-1.5">
+                       class="px-4 py-2.5 border border-gray-200 text-gray-700 hover:bg-gray-50 text-base whitespace-nowrap flex items-center justify-center gap-1.5">
                         <i class="fa-solid fa-xmark text-xs"></i> Effacer
                     </a>
                 @endif
@@ -97,21 +97,21 @@
                                     <h3 class="text-lg font-bold text-navy leading-snug">{{ $pub->title }}</h3>
                                 </div>
                                 @if($pub->description)
-                                    <p class="text-gray-700 text-sm leading-relaxed mb-4">{{ Str::limit($pub->description, 120) }}</p>
+                                    <p class="text-gray-700 text-base leading-relaxed mb-4">{{ Str::limit($pub->description, 120) }}</p>
                                 @endif
                                 <div class="flex items-center gap-2 mt-auto flex-wrap">
                                     @if($pub->file_path)
                                         <a href="{{ $pub->fileUrl() }}" target="_blank"
-                                           class="inline-flex items-center gap-1.5 text-sm px-3 py-1.5 bg-orange-500 hover:bg-orange-600 text-white font-medium transition">
+                                           class="inline-flex items-center gap-1.5 text-base px-3 py-1.5 bg-orange-500 hover:bg-orange-600 text-white font-medium transition">
                                             <i class="fa-solid fa-eye text-xs"></i> Voir
                                         </a>
                                         <a href="{{ route('publications.download', $pub) }}"
-                                           class="inline-flex items-center gap-1.5 text-sm px-3 py-1.5 border border-gray-200 text-navy font-medium hover:bg-gray-50">
+                                           class="inline-flex items-center gap-1.5 text-base px-3 py-1.5 border border-gray-200 text-navy font-medium hover:bg-gray-50">
                                             <i class="fa-solid fa-download text-xs"></i> Télécharger
                                         </a>
                                     @elseif($pub->url)
                                         <a href="{{ $pub->url }}" target="_blank"
-                                           class="inline-flex items-center gap-1.5 text-sm px-3 py-1.5 bg-navy text-white font-medium hover:opacity-90">
+                                           class="inline-flex items-center gap-1.5 text-base px-3 py-1.5 bg-navy text-white font-medium hover:opacity-90">
                                             <i class="fa-solid fa-arrow-up-right-from-square text-xs"></i> Consulter
                                         </a>
                                     @else

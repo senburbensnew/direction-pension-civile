@@ -108,7 +108,7 @@
 
             <div id="newsletter" class="mt-8">
                 <h3 class="font-bold text-lg md:text-xl mb-3 border-b-2 border-white pb-2">Newsletter</h3>
-                <p class="text-sm text-white/75 mb-3">
+                <p class="text-base text-white/90 mb-3 leading-relaxed">
                     Recevez les actualités et annonces officielles par e-mail.
                 </p>
                 <form method="POST" action="{{ route('newsletter.souscription') }}" class="space-y-2">
@@ -116,26 +116,26 @@
                     <input type="email" name="email" required value="{{ old('email') }}"
                            placeholder="votre@email.com"
                            aria-label="Adresse e-mail"
-                           class="w-full px-3 py-2.5 rounded-lg bg-white text-gray-800 text-sm placeholder-gray-400 border border-transparent focus:outline-none focus:ring-2 focus:ring-orange-400">
+                           class="w-full px-3 py-2.5 rounded-lg bg-white text-gray-800 text-base placeholder-gray-500 border border-transparent focus:outline-none focus:ring-2 focus:ring-orange-400">
                     <button type="submit"
-                            class="w-full px-6 py-3 bg-orange-500 hover:bg-orange-600 text-white font-semibold text-sm rounded-lg transition-colors">
+                            class="w-full px-6 py-3 bg-orange-500 hover:bg-orange-600 text-white font-semibold text-base rounded-lg transition-colors">
                         S'abonner
                     </button>
                 </form>
                 @if(session('success'))
-                    <p class="text-green-300 text-sm mt-2 flex items-start gap-2">
+                    <p class="text-green-300 text-base mt-2 flex items-start gap-2">
                         <i class="fas fa-check-circle mt-0.5"></i>
                         <span>{{ session('success') }}</span>
                     </p>
                 @endif
                 @if(session('error'))
-                    <p class="text-red-300 text-sm mt-2 flex items-start gap-2">
+                    <p class="text-red-300 text-base mt-2 flex items-start gap-2">
                         <i class="fas fa-exclamation-circle mt-0.5"></i>
                         <span>{{ session('error') }}</span>
                     </p>
                 @endif
                 @error('email')
-                    <p class="text-red-300 text-sm mt-2">{{ $message }}</p>
+                    <p class="text-red-300 text-base mt-2">{{ $message }}</p>
                 @enderror
             </div>
         </div>
@@ -146,8 +146,8 @@
 <div class="container mx-auto py-6 px-4 sm:px-6 lg:px-8 text-white border-t-2 border-white bg-[#173052] bg-motif-dots">
     <div class="flex flex-col md:flex-row justify-between items-center space-y-4 md:space-y-0">
         <div class="w-full md:w-1/3 text-center md:text-left">
-            <p class="text-sm">&copy;{{ date('Y') }} {{ __('messages.direction') }}. Tous droits réservés.</p>
-            <p class="text-sm mt-2 text-white/80" aria-label="{{ __('messages.visit_counter') }}">
+            <p class="text-base">&copy;{{ date('Y') }} {{ __('messages.direction') }}. Tous droits réservés.</p>
+            <p class="text-base mt-2 text-white/90" aria-label="{{ __('messages.visit_counter') }}">
                 <i class="fas fa-eye mr-1 text-orange-400" aria-hidden="true"></i>
                 {{ __('messages.visits_total') }} :
                 <span class="font-semibold text-white">{{ number_format($totalVisits, 0, ',', ' ') }}</span>
@@ -157,7 +157,7 @@
             </p>
         </div>
         <div class="w-full md:w-1/3 text-center">
-            <p class="text-sm">        <a href="{{ route('privacy.policy') }}" class="text-sm md:text-base text-white hover:text-orange-500 transition text-center md:text-right">
+            <p class="text-base">        <a href="{{ route('privacy.policy') }}" class="text-base text-white hover:text-orange-500 transition text-center md:text-right">
             Politique de Confidentialité et de la Protection des Données des Utilisateurs
         </a></p>
         </div>

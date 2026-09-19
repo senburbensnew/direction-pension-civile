@@ -6,8 +6,8 @@
             @apply border-red-500 focus:border-red-500 focus:ring-red-500;
         }
 
-        .mt-1 text-sm text-red-600 {
-            @apply mt-1 text-sm text-red-600;
+        .mt-1 text-base text-red-600 {
+            @apply mt-1 text-base text-red-600;
         }
     </style>
 
@@ -35,25 +35,25 @@
 
                 <!-- Informations du Pensionnaire -->
                 <fieldset class="shadow-md rounded-lg p-5 border">
-                    <legend class="text-sm font-medium text-gray-700 mb-2">Informations du Pensionnaire</legend>
+                    <legend class="text-base font-medium text-gray-700 mb-2">Informations du Pensionnaire</legend>
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div>
-                            <label for="pensioner_code" class="block text-sm font-medium text-gray-700 mb-1">Code Pension
+                            <label for="pensioner_code" class="block text-base font-medium text-gray-700 mb-1">Code Pension
                                 *</label>
                             <input type="text" id="code_pension" name="pensioner_code" placeholder="Code Pension"
                                 class="w-full rounded-md border-gray-300 focus:border-blue-500 focus:ring-blue-500 @error('pensioner_code') border-red-500 @enderror">
                             @error('pensioner_code')
-                                <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                                <p class="mt-1 text-base text-red-600">{{ $message }}</p>
                             @enderror
                         </div>
 
                         <!-- Repeat similar structure for other fields -->
                         <div>
-                            <label for="name" class="block text-sm font-medium text-gray-700 mb-1">Nom *</label>
+                            <label for="name" class="block text-base font-medium text-gray-700 mb-1">Nom *</label>
                             <input type="text" id="name" name="name" placeholder="Nom"
                                 class="w-full rounded-md border-gray-300 focus:border-blue-500 focus:ring-blue-500 @error('name') border-red-500 @enderror">
                             @error('name')
-                                <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                                <p class="mt-1 text-base text-red-600">{{ $message }}</p>
                             @enderror
                         </div>
 
@@ -64,11 +64,11 @@
 
                 <!-- Informations sur l'Assurance -->
                 <fieldset class="shadow-md rounded-lg p-5 border">
-                    <legend class="text-sm font-medium text-gray-700 mb-2">Informations sur l'Assurance</legend>
+                    <legend class="text-base font-medium text-gray-700 mb-2">Informations sur l'Assurance</legend>
                     <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                         <div>
                             <label for="company"
-                                class="block text-sm font-medium text-gray-700 mb-1">Compagnie</label>
+                                class="block text-base font-medium text-gray-700 mb-1">Compagnie</label>
                             <input type="text" id="company" name="company"
                                 placeholder="Nom de la compagnie"
                                 class="w-full rounded-md border-gray-300 focus:border-blue-500 focus:ring-blue-500">
@@ -79,10 +79,10 @@
 
                 <!-- Contribution Funéraire -->
                 <fieldset class="shadow-md rounded-lg p-5 border">
-                    <legend class="text-sm font-medium text-gray-700 mb-2">Contribution Funéraire</legend>
+                    <legend class="text-base font-medium text-gray-700 mb-2">Contribution Funéraire</legend>
                     <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                         <div class="md:col-span-2">
-                            <label for="personne_habilitee" class="block text-sm font-medium text-gray-700 mb-1">Personne(s)
+                            <label for="personne_habilitee" class="block text-base font-medium text-gray-700 mb-1">Personne(s)
                                 habilitée(s) *</label>
                             <input type="text" id="personne_habilitee" name="personne_habilitee"
                                 placeholder="Nom et prénom"
@@ -94,7 +94,7 @@
 
                 <!-- Partie I -->
 {{--                 <fieldset class="shadow-md rounded-lg p-5 border">
-                    <legend class="text-sm font-medium text-gray-700 mb-2">Partie I: Désignation du Dépendant Éligible
+                    <legend class="text-base font-medium text-gray-700 mb-2">Partie I: Désignation du Dépendant Éligible
                     </legend>
                     <textarea id="partie1" name="partie1" rows="4" placeholder="Informations complémentaires..."
                         class="w-full rounded-md border-gray-300 focus:border-blue-500 focus:ring-blue-500"></textarea>
@@ -102,10 +102,10 @@
 
                 <!-- Dépendant Éligible / Conjoint(e) -->
                 <fieldset class="shadow-md rounded-lg p-5 border">
-                    <legend class="text-sm font-medium text-gray-700 mb-2">Dépendant Éligible / Conjoint(e)</legend>
+                    <legend class="text-base font-medium text-gray-700 mb-2">Dépendant Éligible / Conjoint(e)</legend>
                     <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                         <div>
-                            <label for="nom_conjoint" class="block text-sm font-medium text-gray-700 mb-1">Nom *</label>
+                            <label for="nom_conjoint" class="block text-base font-medium text-gray-700 mb-1">Nom *</label>
                             <input type="text" id="nom_conjoint" name="nom_conjoint" placeholder="Nom du conjoint(e)"
                                 class="w-full rounded-md border-gray-300 focus:border-blue-500 focus:ring-blue-500">
                         </div>
@@ -117,12 +117,12 @@
 {{--                 <fieldset class="shadow-md rounded-lg p-5 border">
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div>
-                            <label for="signature" class="block text-sm font-medium text-gray-700 mb-1">Signature *</label>
+                            <label for="signature" class="block text-base font-medium text-gray-700 mb-1">Signature *</label>
                             <input type="text" id="signature" name="signature" placeholder="Nom complet"
                                 class="w-full rounded-md border-gray-300 focus:border-blue-500 focus:ring-blue-500">
                         </div>
                         <div>
-                            <label for="date_signature" class="block text-sm font-medium text-gray-700 mb-1">Date *</label>
+                            <label for="date_signature" class="block text-base font-medium text-gray-700 mb-1">Date *</label>
                             <input type="date" id="date_signature" name="date_signature"
                                 class="w-full rounded-md border-gray-300 focus:border-blue-500 focus:ring-blue-500">
                         </div>

@@ -40,6 +40,9 @@ return [
     'comm_docs_2' => 'Tax identification number (NIF)',
     'comm_docs_3' => 'Proof of payment',
 
+    'essentials_kicker' => 'A few clicks',
+    'essentials_title' => 'Essential steps',
+
     'quick_guide_title' => 'Pensioner guide',
     'quick_guide_desc' => 'Formalities, notices and useful contacts',
     'quick_sim_title' => 'Simulator',
@@ -64,6 +67,15 @@ return [
     'accueil_title' => 'How pensioner reception is organised',
     'accueil_body' => 'To make benefit payments easier and avoid crowding, pensioners are received and processed in alphabetical order, according to a schedule established for that purpose.',
     'accueil_note' => 'Pensioners are asked to attend during the period assigned to them, so that the service can remain smooth and efficient.',
+    'accueil_calendar_intro' => 'Reception follows this alphabetical schedule:',
+    'accueil_calendar_caption' => 'Pensioner reception schedule by day and last-name initial',
+    'accueil_calendar_days' => 'Days',
+    'accueil_calendar_letters' => 'Letters',
+    'accueil_day_lundi' => 'Monday',
+    'accueil_day_mardi' => 'Tuesday',
+    'accueil_day_mercredi' => 'Wednesday',
+    'accueil_day_jeudi' => 'Thursday',
+    'accueil_day_vendredi' => 'Friday',
 
     'rappel_title' => 'Important reminder for pensioners and representatives',
     'rappel_payment' => 'Pension payments are available at the end of each month.',

@@ -22,7 +22,7 @@
             /* Half of the width for centering */
             opacity: 0;
             transition: opacity 0.3s;
-            font-size: 12px;
+            font-size: 0.875rem;
             box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
         }
 

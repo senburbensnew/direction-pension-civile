@@ -54,6 +54,14 @@
     ];
 
     $homeDirections = \App\Models\DirectionDepartementale::ordered()->get();
+
+    $accueilCalendar = [
+        ['day' => 'home.accueil_day_lundi', 'letters' => 'A, B, C, D, E'],
+        ['day' => 'home.accueil_day_mardi', 'letters' => 'F, G, H, I, J'],
+        ['day' => 'home.accueil_day_mercredi', 'letters' => 'K, L, M, N, O'],
+        ['day' => 'home.accueil_day_jeudi', 'letters' => 'Q, R, S, T, U'],
+        ['day' => 'home.accueil_day_vendredi', 'letters' => 'P, V, W, X, Y, Z'],
+    ];
 @endphp
 
 <div x-data="{
@@ -73,24 +81,24 @@
      ">
 <section class="relative overflow-hidden">
     <div class="absolute inset-y-0 left-0 w-1.5 bg-orange-500"></div>
-    <div class="bg-navy bg-motif-dark py-5 md:py-6">
+    <div class="bg-navy py-6 md:py-7">
     <div class="container mx-auto px-4">
         <div class="flex flex-col md:flex-row md:items-center gap-4 md:gap-8 pl-2">
             <div class="flex items-center gap-3 shrink-0">
-                <span class="w-11 h-11 rounded-full bg-orange-500 text-white flex items-center justify-center shadow-lg shadow-orange-500/30">
-                    <i class="fas fa-triangle-exclamation"></i>
+                <span class="w-12 h-12 rounded-full bg-orange-500 text-white flex items-center justify-center shadow-lg shadow-orange-500/30">
+                    <i class="fas fa-triangle-exclamation text-lg"></i>
                 </span>
-                <p class="text-[11px] font-bold uppercase tracking-[0.18em] text-orange-300">{{ __('home.hub_urgent_label') }}</p>
+                <p class="text-sm font-bold uppercase tracking-[0.14em] text-orange-300">{{ __('home.hub_urgent_label') }}</p>
             </div>
             <div class="md:flex-1">
-                <p class="text-white font-semibold leading-snug">{{ __('home.rappel_expiry') }}</p>
-                <p class="text-blue-100 text-sm mt-1 leading-relaxed">{{ __('home.rappel_renewal') }}</p>
+                <p class="text-white text-lg md:text-xl font-semibold leading-snug">{{ __('home.rappel_expiry') }}</p>
+                <p class="text-blue-50 text-base mt-2 leading-relaxed">{{ __('home.rappel_renewal') }}</p>
             </div>
             <button type="button"
                     @click="setTab('mandats')"
-                    class="inline-flex items-center justify-center px-5 py-2.5 bg-orange-500 hover:bg-orange-600 text-white text-sm font-semibold rounded-full transition-colors shrink-0">
+                    class="inline-flex items-center justify-center px-6 py-3 bg-orange-500 hover:bg-orange-600 text-white text-base font-semibold rounded-full transition-colors shrink-0">
                 {{ __('home.hub_tab_mandats') }}
-                <i class="fas fa-arrow-right text-[10px] ml-2"></i>
+                <i class="fas fa-arrow-right text-xs ml-2"></i>
             </button>
         </div>
     </div>
@@ -112,7 +120,7 @@
                         <i class="fas {{ $offer['icon'] }}"></i>
                     </span>
                     <h3 class="text-lg font-bold text-navy mb-2">{{ __($offer['title']) }}</h3>
-                    <p class="text-sm text-gray-600 leading-relaxed">{{ __($offer['body']) }}</p>
+                    <p class="text-base text-gray-700 leading-relaxed">{{ __($offer['body']) }}</p>
                 </article>
             @endforeach
         </div>
@@ -126,7 +134,7 @@
             </div>
             <ul class="space-y-3">
                 @foreach(['home.comm_docs_1', 'home.comm_docs_2', 'home.comm_docs_3'] as $doc)
-                    <li class="flex items-center gap-2 text-sm text-gray-700 bg-slate-50 rounded-xl px-4 py-3">
+                    <li class="flex items-center gap-2 text-base text-gray-700 bg-slate-50 rounded-xl px-4 py-3 leading-relaxed">
                         <i class="fas fa-check text-orange-500 text-xs"></i>
                         <span>{{ __($doc) }}</span>
                     </li>
@@ -148,7 +156,7 @@
                         :aria-selected="tab === '{{ $guideTab['id'] }}'"
                         @click="setTab('{{ $guideTab['id'] }}')"
                         :class="tab === '{{ $guideTab['id'] }}' ? 'bg-navy text-white shadow-md' : 'text-navy hover:bg-white'"
-                        class="inline-flex items-center gap-2 whitespace-nowrap px-4 py-2.5 rounded-xl text-sm font-semibold transition-colors">
+                        class="inline-flex items-center gap-2 whitespace-nowrap px-4 py-3 rounded-xl text-base font-semibold transition-colors">
                     <i class="fas {{ $guideTab['icon'] }} text-xs opacity-80"></i>
                     {{ __($guideTab['label']) }}
                 </button>
@@ -156,7 +164,7 @@
             </div>
         </div>
 
-        <div x-ref="panel" class="max-w-5xl mx-auto scroll-mt-28">
+        <div x-ref="panel" class="guide-pensionne-content max-w-5xl mx-auto scroll-mt-28">
             <div x-show="tab === 'accueil'" x-cloak role="tabpanel">
                 <article class="home-card p-6 md:p-8 space-y-6">
                     <div class="flex items-start gap-4">
@@ -166,6 +174,28 @@
                         <div>
                             <h3 class="text-xl md:text-2xl font-bold text-navy">{{ __('home.accueil_title') }}</h3>
                             <p class="text-gray-700 leading-relaxed mt-3">{{ __('home.accueil_body') }}</p>
+                        </div>
+                    </div>
+                    <div>
+                        <p class="text-gray-700 leading-relaxed mb-3">{{ __('home.accueil_calendar_intro') }}</p>
+                        <div class="overflow-x-auto">
+                            <table class="w-full min-w-[320px] border-collapse text-left">
+                                <caption class="sr-only">{{ __('home.accueil_calendar_caption') }}</caption>
+                                <thead>
+                                    <tr class="bg-navy text-white">
+                                        <th scope="col" class="border border-navy px-4 py-2.5 text-sm font-bold uppercase tracking-wide">{{ __('home.accueil_calendar_days') }}</th>
+                                        <th scope="col" class="border border-navy px-4 py-2.5 text-sm font-bold uppercase tracking-wide">{{ __('home.accueil_calendar_letters') }}</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach($accueilCalendar as $row)
+                                        <tr class="{{ $loop->even ? 'bg-slate-50' : 'bg-white' }}">
+                                            <th scope="row" class="border border-slate-300 px-4 py-2.5 text-sm font-semibold text-navy uppercase">{{ __($row['day']) }}</th>
+                                            <td class="border border-slate-300 px-4 py-2.5 text-sm text-gray-800 tracking-wide">{{ $row['letters'] }}</td>
+                                        </tr>
+                                    @endforeach
+                                </tbody>
+                            </table>
                         </div>
                     </div>
                     <p class="text-gray-700 leading-relaxed bg-slate-50 border-l-4 border-orange-500 pl-4 py-3 rounded-r-lg">
@@ -253,7 +283,7 @@
 
             <div x-show="tab === 'paiements'" x-cloak role="tabpanel">
                 <div class="space-y-4">
-                    <article class="bg-navy text-white rounded-2xl p-6 md:p-8 shadow-[0_8px_28px_rgba(23,48,82,0.12)]">
+                    <article class="bg-navy text-white rounded-none p-6 md:p-8 shadow-[0_8px_28px_rgba(23,48,82,0.12)]">
                         <h3 class="text-xl md:text-2xl font-bold">{{ __('home.avis_rente_title') }}</h3>
                         <p class="text-lg font-semibold text-orange-300 mt-3">{{ __('home.avis_rente_lead') }}</p>
                         <p class="text-blue-100 leading-relaxed mt-2">{{ __('home.avis_rente_body') }}</p>
@@ -328,7 +358,7 @@
                         <p class="text-gray-700 leading-relaxed">{{ __('home.incompat_body') }}</p>
                     </article>
 
-                    <article class="bg-white rounded-2xl border border-red-100 p-6 md:p-8 shadow-[0_8px_28px_rgba(23,48,82,0.06)]">
+                    <article class="bg-white rounded-none border border-red-100 p-6 md:p-8 shadow-[0_8px_28px_rgba(23,48,82,0.06)]">
                         <div class="flex items-start gap-4 mb-3">
                             <span class="w-11 h-11 rounded-lg bg-red-600 text-white flex items-center justify-center shrink-0">
                                 <i class="fas fa-heart-crack"></i>

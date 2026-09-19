@@ -18,6 +18,65 @@ html, body {
     font-family: var(--dpc-font);
 }
 
+/* Public pages: slightly larger type, stronger contrast, calmer reading rhythm */
+html.site-public-root {
+    font-size: 106.25%;
+}
+
+.site-public {
+    line-height: 1.65;
+    color: #1f2937;
+}
+
+.site-public main p,
+.site-public main li,
+.site-public footer p,
+.site-public footer li {
+    line-height: 1.7;
+}
+
+.site-public .text-sm,
+.site-public .sm\:text-sm,
+.site-public .md\:text-sm,
+.site-public .lg\:text-sm {
+    font-size: 1rem !important;
+    line-height: 1.65;
+}
+
+.site-public .text-xs,
+.site-public .sm\:text-xs,
+.site-public .md\:text-xs,
+.site-public .lg\:text-xs {
+    font-size: 0.8125rem !important;
+    line-height: 1.5;
+}
+
+.site-public [class*="text-[10px]"],
+.site-public [class*="text-[11px]"] {
+    font-size: 0.8125rem !important;
+    line-height: 1.5;
+}
+
+.site-public [class*="text-[15px]"] {
+    font-size: 1rem !important;
+    line-height: 1.7;
+}
+
+.site-public .text-gray-500 {
+    color: #4b5563;
+}
+
+.site-public .text-gray-400 {
+    color: #6b7280;
+}
+
+.site-public input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="file"]):not([type="hidden"]),
+.site-public textarea,
+.site-public select {
+    font-size: 1rem !important;
+    line-height: 1.5;
+}
+
 .ql-container,
 .ql-editor,
 .flatpickr-calendar,
@@ -117,9 +176,9 @@ select option {
     pointer-events: none;
     z-index: 0;
     background-image:
-        radial-gradient(rgba(23, 48, 82, 0.11) 0.7px, transparent 0.8px),
-        url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='1400' height='480' fill='none'%3E%3Cpath d='M-40 340 C 200 250, 420 400, 700 300 S 1140 200, 1480 290' stroke='%23173052' stroke-opacity='.09' stroke-width='1.15'/%3E%3Cpath d='M-40 220 C 260 140, 520 300, 820 200 S 1200 110, 1480 180' stroke='%23173052' stroke-opacity='.07' stroke-width='1'/%3E%3Cpath d='M-40 90 C 280 40, 560 160, 900 80 S 1240 20, 1480 70' stroke='%23173052' stroke-opacity='.055' stroke-width='.9'/%3E%3C/svg%3E");
-    background-size: 20px 20px, 1400px 480px;
+        radial-gradient(rgba(23, 48, 82, 0.045) 0.55px, transparent 0.7px),
+        url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='1400' height='480' fill='none'%3E%3Cpath d='M-40 320 C 240 250, 520 380, 820 290 S 1220 210, 1480 280' stroke='%23173052' stroke-opacity='.035' stroke-width='1'/%3E%3C/svg%3E");
+    background-size: 32px 32px, 1400px 480px;
     background-repeat: repeat, no-repeat;
     background-position: 0 0, center top;
 }
@@ -139,8 +198,8 @@ select option {
     inset: 0;
     pointer-events: none;
     z-index: 0;
-    background-image: radial-gradient(rgba(255, 255, 255, 0.16) 0.7px, transparent 0.8px);
-    background-size: 20px 20px;
+    background-image: radial-gradient(rgba(255, 255, 255, 0.07) 0.55px, transparent 0.7px);
+    background-size: 28px 28px;
     background-repeat: repeat;
 }
 
@@ -160,9 +219,9 @@ select option {
     pointer-events: none;
     z-index: 0;
     background-image:
-        radial-gradient(rgba(255, 255, 255, 0.16) 0.7px, transparent 0.8px),
-        url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='1400' height='480' fill='none'%3E%3Cpath d='M-40 340 C 200 250, 420 400, 700 300 S 1140 200, 1480 290' stroke='%23ffffff' stroke-opacity='.08' stroke-width='1.15'/%3E%3Cpath d='M-40 220 C 260 140, 520 300, 820 200 S 1200 110, 1480 180' stroke='%23ffffff' stroke-opacity='.06' stroke-width='1'/%3E%3C/svg%3E");
-    background-size: 20px 20px, 1400px 480px;
+        radial-gradient(rgba(255, 255, 255, 0.06) 0.55px, transparent 0.7px),
+        url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='1400' height='480' fill='none'%3E%3Cpath d='M-40 320 C 240 250, 520 380, 820 290 S 1220 210, 1480 280' stroke='%23ffffff' stroke-opacity='.04' stroke-width='1'/%3E%3C/svg%3E");
+    background-size: 32px 32px, 1400px 480px;
     background-repeat: repeat, no-repeat;
     background-position: 0 0, center;
 }
@@ -174,9 +233,9 @@ select option {
 
 .hero-carousel .bg-motif-dark::before {
     background-image:
-        radial-gradient(rgba(255, 255, 255, 0.2) 0.85px, transparent 0.95px),
-        url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='1400' height='480' fill='none'%3E%3Cpath d='M-40 360 C 180 240, 440 410, 720 280 S 1160 170, 1480 300' stroke='%23ffffff' stroke-opacity='.12' stroke-width='1.25'/%3E%3Cpath d='M-40 230 C 240 130, 540 310, 860 190 S 1220 90, 1480 170' stroke='%23ffffff' stroke-opacity='.085' stroke-width='1.1'/%3E%3Cpath d='M-40 80 C 300 20, 620 150, 940 60 S 1260 10, 1480 80' stroke='%23ffffff' stroke-opacity='.06' stroke-width='1'/%3E%3C/svg%3E");
-    background-size: 22px 22px, cover;
+        radial-gradient(rgba(255, 255, 255, 0.08) 0.6px, transparent 0.8px),
+        url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='1400' height='480' fill='none'%3E%3Cpath d='M-40 360 C 180 240, 440 410, 720 280 S 1160 170, 1480 300' stroke='%23ffffff' stroke-opacity='.05' stroke-width='1'/%3E%3C/svg%3E");
+    background-size: 32px 32px, cover;
     background-position: 0 0, center;
 }
 

@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="{{ str_replace('_', '-', app()->getLocale()) }}" data-theme="light">
+<html lang="{{ str_replace('_', '-', app()->getLocale()) }}" class="site-public-root" data-theme="light">
 
 <head>
     <meta charset="utf-8">
@@ -16,7 +16,7 @@
      @vite(['resources/css/app.css', 'resources/js/app.js'])
 </head>
 
-<body class="font-sans antialiased bg-gray-100 min-h-screen flex flex-col">
+<body class="site-public font-sans antialiased bg-gray-100 min-h-screen flex flex-col">
     <noscript>
         <div class="fixed inset-0 z-[10001] flex items-center justify-center bg-black bg-opacity-80">
             <div class="bg-white max-w-md w-full mx-4 p-6 rounded-xl shadow-xl text-center">

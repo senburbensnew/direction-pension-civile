@@ -11,7 +11,7 @@
                             <span class="text-base md:text-lg font-semibold tracking-tight leading-tight group-hover:text-orange-500 transition-colors">
                                 {{ __('messages.direction') }}
                             </span>
-                            <span class="text-sm font-normal tracking-wide text-white/80 leading-tight">
+                            <span class="text-base font-normal tracking-wide text-white/80 leading-tight">
                                 {{ __('messages.republic') }}
                             </span>
                         </div>
@@ -21,7 +21,7 @@
                 <!-- Main Navigation
                      Mobile: order-3 + w-full → drops to its own full-width row below logo & user section
                      Desktop: order-2 + w-auto → sits inline, to the left of the user section -->
-                <nav class="order-3 lg:order-2 w-full lg:w-auto flex flex-wrap lg:flex-nowrap justify-center gap-3 lg:gap-5 text-[15px] font-medium
+                <nav class="order-3 lg:order-2 w-full lg:w-auto flex flex-wrap lg:flex-nowrap justify-center gap-3 lg:gap-5 text-base font-medium
                             mt-3 pt-3 lg:mt-0 lg:pt-0 border-t border-white/20 lg:border-0">
                     <a href="{{ route('home') }}"
                        class="hover:text-orange-500 transition-colors py-1 border-b-2 border-transparent hover:border-orange-500">
@@ -67,10 +67,10 @@
                                 <div x-show="open" x-cloak x-transition
                                      class="absolute right-0 mt-2 w-80 bg-white rounded-lg shadow-xl z-50 overflow-hidden">
                                     <div class="flex items-center justify-between px-4 py-3 bg-gray-50 border-b">
-                                        <span class="font-semibold text-gray-700 text-sm">{{ __('messages.notifications') }}</span>
+                                        <span class="font-semibold text-gray-800 text-base">{{ __('messages.notifications') }}</span>
                                         <form x-show="unreadCount > 0" method="POST" action="{{ route('notifications.markAllAsRead') }}">
                                             @csrf
-                                            <button type="submit" class="text-xs text-blue-600 hover:underline">
+                                            <button type="submit" class="text-base text-navy hover:underline">
                                                 {{ __('messages.mark_all_as_read') }}
                                             </button>
                                         </form>
@@ -99,10 +99,10 @@
                                                     }).then(r => r.json()).then(d => { if (d.ok) read = true; })">
                                                     <div class="flex items-start justify-between gap-2">
                                                         <div class="flex-1 min-w-0">
-                                                            <p class="text-sm text-gray-800 font-medium leading-snug">
+                                                            <p class="text-base text-gray-800 font-medium leading-snug">
                                                                 {{ $data['message'] ?? 'Notification' }}
                                                             </p>
-                                                            <p class="text-xs text-gray-400 mt-1">
+                                                            <p class="text-base text-gray-600 mt-1">
                                                                 {{ $notification->created_at->diffForHumans() }}
                                                             </p>
                                                         </div>
@@ -137,15 +137,15 @@
                                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6 6 0 10-12 0v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/>
                                                 </svg>
                                             </div>
-                                            <p class="text-sm font-medium text-gray-500">{{ __('messages.no_notification') }}</p>
-                                            <p class="text-xs text-gray-400">Vous êtes à jour !</p>
+                                            <p class="text-base font-medium text-gray-700">{{ __('messages.no_notification') }}</p>
+                                            <p class="text-base text-gray-600">Vous êtes à jour !</p>
                                         </div>
                                         @if ($bellNotifications->count() > 0)
                                             <div x-show="visible > 0" class="border-t"></div>
                                         @endif
                                     </div>
                                     <div class="px-4 py-2 bg-gray-50 border-t text-center">
-                                        <a href="{{ route('notifications.index') }}" class="text-xs text-blue-600 hover:underline">
+                                        <a href="{{ route('notifications.index') }}" class="text-base text-navy hover:underline">
                                             {{ __('messages.see_all_notifications') }}
                                         </a>
                                     </div>
@@ -156,7 +156,7 @@
                         <!-- Login/User Info -->
                         @guest
                             <a href="{{ route('login') }}" class="inline-block">
-                                <button class="bg-orange-500 hover:bg-orange-600 text-white px-4 py-2 rounded transition-colors text-sm md:text-base shadow-md hover:shadow-lg">
+                                <button class="bg-orange-500 hover:bg-orange-600 text-white px-5 py-2.5 rounded transition-colors text-base shadow-md hover:shadow-lg">
                                     {{ __('messages.login') }}
                                 </button>
                             </a>
@@ -164,7 +164,7 @@
                             <!-- User Dropdown -->
                             <x-dropdown align="right" width="48" >
                                 <x-slot name="trigger">
-                                    <button class="text-white hover:text-orange-500 cursor-pointer text-sm md:text-base flex items-center transition-colors focus:outline-none focus:ring-2 focus:ring-orange-500 focus:ring-opacity-50 rounded-md p-1">
+                                    <button class="text-white hover:text-orange-500 cursor-pointer text-base flex items-center transition-colors focus:outline-none focus:ring-2 focus:ring-orange-500 focus:ring-opacity-50 rounded-md p-1">
                                         @if (Auth::user()->profile_photo)
                                             <div class="h-8 w-8 rounded-full overflow-hidden mr-2 border-2 border-orange-500">
                                                 <img src="{{ Storage::url(Auth::user()->profile_photo) }}"

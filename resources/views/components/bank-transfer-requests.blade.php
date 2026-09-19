@@ -5,7 +5,7 @@
 <div id="bank-transfer-request" class="max-w-6xl mx-auto p-6 m-2 bg-white">
 
     <!-- Breadcrumb -->
-    <nav class="text-sm text-gray-600 mb-4">
+    <nav class="text-base text-gray-600 mb-4">
         <span class="text-gray-800">Pensionnaire</span>
         <span class="mx-2">></span>
         <span class="text-gray-800">Demande de virement</span>
@@ -75,7 +75,7 @@
             <!-- SUBMIT -->
             <div class="mt-6 flex items-center gap-2">
                 <input type="checkbox" name="is_urgent" id="is_urgent" value="1" class="w-4 h-4 accent-red-600">
-                <label for="is_urgent" class="text-sm font-medium text-red-600 cursor-pointer">Marquer comme urgent</label>
+                <label for="is_urgent" class="text-base font-medium text-red-600 cursor-pointer">Marquer comme urgent</label>
             </div>
             <div class="mt-4 text-right">
                 <button type="submit"

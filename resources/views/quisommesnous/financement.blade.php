@@ -55,7 +55,7 @@
                         </div>
                         <div>
                             <h3 class="font-semibold text-gray-900 mb-1">Cotisations des fonctionnaires</h3>
-                            <p class="text-sm text-gray-600">
+                            <p class="text-base text-gray-700">
                                 Prélèvements obligatoires sur les salaires des agents publics.
                             </p>
                         </div>
@@ -69,7 +69,7 @@
                         </div>
                         <div>
                             <h3 class="font-semibold text-gray-900 mb-1">Contributions de l’État</h3>
-                            <p class="text-sm text-gray-600">
+                            <p class="text-base text-gray-700">
                                 Subventions directes du gouvernement pour garantir le versement des pensions.
                             </p>
                         </div>
@@ -83,7 +83,7 @@
                         </div>
                         <div>
                             <h3 class="font-semibold text-gray-900 mb-1">Revenus d’investissement</h3>
-                            <p class="text-sm text-gray-600">
+                            <p class="text-base text-gray-700">
                                 Placements financiers réalisés pour optimiser la gestion des fonds de pension.
                             </p>
                         </div>
@@ -97,7 +97,7 @@
                         </div>
                         <div>
                             <h3 class="font-semibold text-gray-900 mb-1">Autres sources</h3>
-                            <p class="text-sm text-gray-600">
+                            <p class="text-base text-gray-700">
                                 Contributions spéciales et financements exceptionnels en cas de déséquilibre budgétaire.
                             </p>
                         </div>
@@ -115,7 +115,7 @@
                         <i class="fas fa-money-check-alt text-emerald-600"></i>
                     </div>
                     <h3 class="font-semibold text-gray-900 mb-1">Paiement des pensions</h3>
-                    <p class="text-sm text-gray-600">Assure le versement régulier aux retraités.</p>
+                    <p class="text-base text-gray-700">Assure le versement régulier aux retraités.</p>
                 </div>
 
                 <div class="bg-white rounded-xl border border-gray-200 card-shadow p-5 text-center">
@@ -123,7 +123,7 @@
                         <i class="fas fa-building text-amber-600"></i>
                     </div>
                     <h3 class="font-semibold text-gray-900 mb-1">Gestion administrative</h3>
-                    <p class="text-sm text-gray-600">Frais de fonctionnement et gestion du personnel.</p>
+                    <p class="text-base text-gray-700">Frais de fonctionnement et gestion du personnel.</p>
                 </div>
 
                 <div class="bg-white rounded-xl border border-gray-200 card-shadow p-5 text-center">
@@ -131,7 +131,7 @@
                         <i class="fas fa-piggy-bank text-indigo-600"></i>
                     </div>
                     <h3 class="font-semibold text-gray-900 mb-1">Fonds de réserve</h3>
-                    <p class="text-sm text-gray-600">Provision pour garantir la stabilité du système.</p>
+                    <p class="text-base text-gray-700">Provision pour garantir la stabilité du système.</p>
                 </div>
 
                 <div class="bg-white rounded-xl border border-gray-200 card-shadow p-5 text-center">
@@ -139,7 +139,7 @@
                         <i class="fas fa-cogs text-sky-600"></i>
                     </div>
                     <h3 class="font-semibold text-gray-900 mb-1">Modernisation</h3>
-                    <p class="text-sm text-gray-600">Digitalisation et amélioration des services.</p>
+                    <p class="text-base text-gray-700">Digitalisation et amélioration des services.</p>
                 </div>
             </div>
         </section>
@@ -157,7 +157,7 @@
                         avec des audits réguliers et des rapports publiés annuellement.
                     </p>
                     <a href="{{ route('reports.index') }}"
-                       class="inline-flex items-center gap-2 mt-4 text-sm font-semibold text-blue-600 hover:text-blue-800 transition-colors">
+                       class="inline-flex items-center gap-2 mt-4 text-base font-semibold text-blue-600 hover:text-blue-800 transition-colors">
                         Consulter les rapports <i class="fas fa-arrow-right text-xs"></i>
                     </a>
                 </div>

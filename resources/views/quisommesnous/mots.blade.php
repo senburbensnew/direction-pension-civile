@@ -39,7 +39,7 @@
                      onerror="this.onerror=null; this.src='{{ $avatar }}';">
                 <p class="font-semibold text-navy">{{ $official->nom }}</p>
                 <a href="{{ route('quisommesnous.profil', ['role' => $official->slug]) }}"
-                   class="inline-flex items-center gap-1.5 mt-3 text-sm font-medium text-navy hover:text-orange-500">
+                   class="inline-flex items-center gap-1.5 mt-3 text-base font-medium text-navy hover:text-orange-500">
                     {{ __('messages.director_profile') }}
                     <i class="fa-solid fa-arrow-right text-xs" aria-hidden="true"></i>
                 </a>
@@ -67,7 +67,7 @@
                     <div class="py-10 text-center text-gray-500">
                         <i class="fa-solid fa-microphone-slash text-navy mb-3" aria-hidden="true"></i>
                         <p class="font-medium text-navy">Aucun discours disponible pour le moment.</p>
-                        <p class="text-sm mt-1">Ce contenu sera disponible prochainement.</p>
+                        <p class="text-base mt-1">Ce contenu sera disponible prochainement.</p>
                     </div>
                 @endif
             </section>

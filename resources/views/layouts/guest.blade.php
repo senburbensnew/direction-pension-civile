@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="{{ str_replace('_', '-', app()->getLocale()) }}" data-theme="light">
+<html lang="{{ str_replace('_', '-', app()->getLocale()) }}" class="site-public-root" data-theme="light">
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -11,7 +11,7 @@
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 </head>
 
-<body class="font-sans antialiased">
+<body class="site-public font-sans antialiased">
 
     <div class="min-h-screen flex">
 
@@ -32,7 +32,7 @@
                  style="background: radial-gradient(circle, #bfdbfe, transparent)"></div>
 
             {{-- Bottom tagline --}}
-            <p class="relative z-10 mt-auto text-blue-200/60 text-xs text-center">
+            <p class="relative z-10 mt-auto text-blue-100 text-sm text-center">
                 Ministère de l'Économie et des Finances
             </p>
         </div>
@@ -48,14 +48,14 @@
                              class="w-20 h-20 object-contain mb-3 hover:opacity-80 transition-opacity"
                              alt="Logo DPC">
                     </a>
-                    <p class="text-gray-500 text-xs font-medium tracking-wide uppercase text-center">
+                    <p class="text-gray-700 text-sm font-medium tracking-wide uppercase text-center">
                         Direction de la Pension Civile
                     </p>
                 </div>
                 {{ $slot }}
             </div>
 
-            <p class="mt-8 text-xs text-gray-400 text-center">
+            <p class="mt-8 text-sm text-gray-600 text-center">
                 &copy; {{ date('Y') }} Direction de la Pension Civile — République d'Haïti
             </p>
         </div>

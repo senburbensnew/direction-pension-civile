@@ -6,7 +6,7 @@
     {{-- Heading --}}
     <div class="mb-6 text-center">
         <h2 class="text-xl font-bold text-gray-800">Connexion</h2>
-        <p class="text-sm text-gray-500 mt-1">Bienvenue. Veuillez vous identifier pour continuer.</p>
+        <p class="text-base text-gray-700 mt-1">Bienvenue. Veuillez vous identifier pour continuer.</p>
     </div>
 
     <form method="POST" action="{{ route('login') }}" class="space-y-5">
@@ -14,7 +14,7 @@
 
         {{-- Email --}}
         <div>
-            <label for="email" class="block text-sm font-medium text-gray-700 mb-1">
+            <label for="email" class="block text-base font-medium text-gray-700 mb-1">
                 {{ __('messages.email') }}
             </label>
             <div class="relative">
@@ -29,7 +29,7 @@
                     required
                     autofocus
                     autocomplete="username"
-                    class="w-full py-2.5 border rounded-lg text-sm focus:outline-none focus:ring-2 transition {{ $errors->has('email') ? 'border-red-400 focus:ring-red-400' : 'border-gray-300 focus:ring-blue-500 focus:border-blue-500' }}"
+                    class="w-full py-2.5 border rounded-lg text-base focus:outline-none focus:ring-2 transition {{ $errors->has('email') ? 'border-red-400 focus:ring-red-400' : 'border-gray-300 focus:ring-blue-500 focus:border-blue-500' }}"
                     style="padding-left: 2.25rem; padding-right: 1rem;"
                     placeholder="votre@email.com"
                 >
@@ -39,7 +39,7 @@
 
         {{-- Password --}}
         <div x-data="{ show: false }">
-            <label for="password" class="block text-sm font-medium text-gray-700 mb-1">
+            <label for="password" class="block text-base font-medium text-gray-700 mb-1">
                 {{ __('messages.password') }}
             </label>
             <div class="relative">
@@ -52,7 +52,7 @@
                     name="password"
                     required
                     autocomplete="current-password"
-                    class="w-full py-2.5 border rounded-lg text-sm focus:outline-none focus:ring-2 transition {{ $errors->has('password') ? 'border-red-400 focus:ring-red-400' : 'border-gray-300 focus:ring-blue-500 focus:border-blue-500' }}"
+                    class="w-full py-2.5 border rounded-lg text-base focus:outline-none focus:ring-2 transition {{ $errors->has('password') ? 'border-red-400 focus:ring-red-400' : 'border-gray-300 focus:ring-blue-500 focus:border-blue-500' }}"
                     style="padding-left: 2.25rem; padding-right: 2.25rem;"
                     placeholder="••••••••"
                 >
@@ -77,12 +77,12 @@
                     name="remember"
                     class="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
                 >
-                <span class="text-sm text-gray-600">{{ __('messages.remember_me') }}</span>
+                <span class="text-base text-gray-700">{{ __('messages.remember_me') }}</span>
             </label>
 
             @if (Route::has('password.request'))
                 <a href="{{ route('password.request') }}"
-                   class="text-sm text-blue-600 hover:text-blue-800 transition-colors">
+                   class="text-base text-navy hover:text-orange-500 transition-colors">
                     {{ __('messages.forgot_password') }}
                 </a>
             @endif
@@ -91,7 +91,7 @@
         {{-- Submit --}}
         <button
             type="submit"
-            class="w-full py-2.5 px-4 bg-[#173052] hover:bg-orange-600 active:bg-orange-700 text-white font-semibold text-sm rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-orange-500 focus:ring-offset-2 mt-2"
+            class="w-full py-3 px-4 bg-[#173052] hover:bg-orange-600 active:bg-orange-700 text-white font-semibold text-base rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-orange-500 focus:ring-offset-2 mt-2"
         >
             <i class="fas fa-sign-in-alt mr-2"></i>
             {{ __('messages.login') }}

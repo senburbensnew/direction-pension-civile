@@ -22,7 +22,7 @@
         @endif
 
         @if ($demande)
-            <div class="mb-6 p-3 bg-yellow-50 border border-yellow-200 text-yellow-800 rounded text-sm">
+            <div class="mb-6 p-3 bg-yellow-50 border border-yellow-200 text-yellow-800 rounded text-base">
                 Brouillon en cours — dernière sauvegarde {{ $demande->updated_at->diffForHumans() }}
             </div>
         @endif
@@ -34,7 +34,7 @@
 
             {{-- Titre personnalisé --}}
             <div>
-                <label for="title" class="block text-sm font-medium text-gray-700">
+                <label for="title" class="block text-base font-medium text-gray-700">
                     Titre personnalisé <span class="text-gray-400 font-normal">(optionnel)</span>
                 </label>
                 <input
@@ -57,7 +57,7 @@
                         <input type="text" name="exercice" placeholder="20.. / 20.."
                                value="{{ old('exercice', $demande?->data['exercice'] ?? '') }}"
                                class="input mt-1 w-full rounded-md border @error('exercice') border-red-500 @enderror">
-                        @error('exercice') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
+                        @error('exercice') <p class="mt-1 text-base text-red-600">{{ $message }}</p> @enderror
                     </div>
 
                     <div>
@@ -65,7 +65,7 @@
                         <input type="month" name="mois_debut"
                                value="{{ old('mois_debut', $demande?->data['mois_debut'] ?? '') }}"
                                class="input mt-1 w-full rounded-md border @error('mois_debut') border-red-500 @enderror">
-                        @error('mois_debut') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
+                        @error('mois_debut') <p class="mt-1 text-base text-red-600">{{ $message }}</p> @enderror
                     </div>
 
                     <div>
@@ -73,7 +73,7 @@
                         <input type="date" name="date_demande"
                                value="{{ old('date_demande', $demande?->data['date_demande'] ?? '') }}"
                                class="input mt-1 w-full rounded-md border @error('date_demande') border-red-500 @enderror">
-                        @error('date_demande') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
+                        @error('date_demande') <p class="mt-1 text-base text-red-600">{{ $message }}</p> @enderror
                     </div>
                 </div>
             </fieldset>
@@ -97,7 +97,7 @@
                 </div>
 
                 @error('regime_pension')
-                    <p class="mt-1 text-sm text-red-600 mt-2">{{ $message }}</p>
+                    <p class="mt-1 text-base text-red-600 mt-2">{{ $message }}</p>
                 @enderror
             </fieldset>
 
@@ -111,7 +111,7 @@
                         <input type="text" name="code_pension"
                                value="{{ old('code_pension', $demande?->data['code_pension'] ?? '') }}"
                                class="input mt-1 w-full rounded-md border @error('code_pension') border-red-500 @enderror">
-                        @error('code_pension') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
+                        @error('code_pension') <p class="mt-1 text-base text-red-600">{{ $message }}</p> @enderror
                     </div>
 
                     <div>
@@ -119,7 +119,7 @@
                         <input type="number" name="montant"
                                value="{{ old('montant', $demande?->data['montant'] ?? '') }}"
                                class="input mt-1 w-full rounded-md border @error('montant') border-red-500 @enderror">
-                        @error('montant') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
+                        @error('montant') <p class="mt-1 text-base text-red-600">{{ $message }}</p> @enderror
                     </div>
                 </div>
 
@@ -129,7 +129,7 @@
                         <input type="text" name="nom"
                                value="{{ old('nom', $demande?->data['nom'] ?? '') }}"
                                class="input mt-1 w-full rounded-md border  @error('nom') border-red-500 @enderror">
-                        @error('nom') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
+                        @error('nom') <p class="mt-1 text-base text-red-600">{{ $message }}</p> @enderror
                     </div>
 
                     <div>
@@ -137,7 +137,7 @@
                         <input type="text" name="prenom"
                                value="{{ old('prenom', $demande?->data['prenom'] ?? '') }}"
                                class="input mt-1 w-full rounded-md border  @error('prenom') border-red-500 @enderror">
-                        @error('prenom') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
+                        @error('prenom') <p class="mt-1 text-base text-red-600">{{ $message }}</p> @enderror
                     </div>
 
                     <div>
@@ -145,7 +145,7 @@
                         <input type="text" name="nom_jeune_fille"
                                value="{{ old('nom_jeune_fille', $demande?->data['nom_jeune_fille'] ?? '') }}"
                                class="input mt-1 w-full rounded-md border  @error('nom_jeune_fille') border-red-500 @enderror">
-                        @error('nom_jeune_fille') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
+                        @error('nom_jeune_fille') <p class="mt-1 text-base text-red-600">{{ $message }}</p> @enderror
                     </div>
                 </div>
 
@@ -156,7 +156,7 @@
                         placeholder="345-667-222-5"
                                value="{{ old('nif', $demande?->data['nif'] ?? '') }}"
                                class="input mt-1 w-full rounded-md border  @error('nif') border-red-500 @enderror">
-                        @error('nif') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
+                        @error('nif') <p class="mt-1 text-base text-red-600">{{ $message }}</p> @enderror
                     </div>
 
                     <div>
@@ -164,7 +164,7 @@
                         <input type="text" name="ninu"
                                value="{{ old('ninu', $demande?->data['ninu'] ?? '') }}"
                                class="input mt-1 w-full rounded-md border  @error('ninu') border-red-500 @enderror">
-                        @error('ninu') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
+                        @error('ninu') <p class="mt-1 text-base text-red-600">{{ $message }}</p> @enderror
                     </div>
 
                     <div>
@@ -173,7 +173,7 @@
                         placeholder="+509XXXXXXXX"
                                value="{{ old('telephone', $demande?->data['telephone'] ?? '') }}"
                                class="input mt-1 w-full rounded-md border  @error('telephone') border-red-500 @enderror">
-                        @error('telephone') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
+                        @error('telephone') <p class="mt-1 text-base text-red-600">{{ $message }}</p> @enderror
                     </div>
                 </div>
 
@@ -183,7 +183,7 @@
                         <input type="text" name="adresse"
                                value="{{ old('adresse', $demande?->data['adresse'] ?? '') }}"
                                class="input mt-1 w-full rounded-md border  @error('adresse') border-red-500 @enderror">
-                        @error('adresse') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
+                        @error('adresse') <p class="mt-1 text-base text-red-600">{{ $message }}</p> @enderror
                     </div>
 
                     <div>
@@ -191,7 +191,7 @@
                         <input type="email" name="email"
                                value="{{ old('email', $demande?->data['email'] ?? '') }}"
                                class="input mt-1 w-full rounded-md border  @error('email') border-red-500 @enderror">
-                         @error('email') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
+                         @error('email') <p class="mt-1 text-base text-red-600">{{ $message }}</p> @enderror
                     </div>
                 </div>
             </fieldset>
@@ -206,7 +206,7 @@
                         <input type="date" name="periode_debut"
                                value="{{ old('periode_debut', $demande?->data['periode_debut'] ?? '') }}"
                                class="input mt-1 w-full rounded-md border  @error('periode_debut') border-red-500 @enderror">
-                        @error('periode_debut') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
+                        @error('periode_debut') <p class="mt-1 text-base text-red-600">{{ $message }}</p> @enderror
                     </div>
 
                     <div>
@@ -214,7 +214,7 @@
                         <input type="date" name="periode_fin"
                                value="{{ old('periode_fin', $demande?->data['periode_fin'] ?? '') }}"
                                class="input mt-1 w-full rounded-md border  @error('periode_fin') border-red-500 @enderror">
-                        @error('periode_fin') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
+                        @error('periode_fin') <p class="mt-1 text-base text-red-600">{{ $message }}</p> @enderror
                     </div>
                 </div>
             </fieldset>
@@ -234,17 +234,17 @@
                         hint="Formats acceptés : PDF, JPG, PNG — plusieurs fichiers autorisés." />
 
                     @if (!empty($demande?->data['pieces']))
-                        <p class="text-sm text-green-700 mt-2">
+                        <p class="text-base text-green-700 mt-2">
                             {{ count($demande->data['pieces']) }} fichier(s) déjà uploadé(s). Uploader de nouveaux fichiers les remplacera.
                         </p>
                     @endif
 
                     @error('pieces')
-                        <p class="text-red-600 text-sm mt-2">{{ $message }}</p>
+                        <p class="text-red-600 text-base mt-2">{{ $message }}</p>
                     @enderror
 
                     @error('pieces.*')
-                        <p class="text-red-600 text-sm mt-2">{{ $message }}</p>
+                        <p class="text-red-600 text-base mt-2">{{ $message }}</p>
                     @enderror
                 </div>
             </fieldset>
@@ -252,7 +252,7 @@
             {{-- Boutons --}}
             <div class="mt-6 flex items-center gap-2">
                 <input type="checkbox" name="is_urgent" id="is_urgent" value="1" class="w-4 h-4 accent-red-600">
-                <label for="is_urgent" class="text-sm font-medium text-red-600 cursor-pointer">Marquer comme urgent</label>
+                <label for="is_urgent" class="text-base font-medium text-red-600 cursor-pointer">Marquer comme urgent</label>
             </div>
             <div class="mt-4 flex justify-end gap-3">
                 <button type="button"
@@ -268,7 +268,7 @@
             </div>
 
             {{-- NB --}}
-            <p class="text-sm text-gray-600 mt-4">
+            <p class="text-base text-gray-600 mt-4">
                 <strong>NB :</strong> Prière de joindre à ce formulaire toutes les pièces justifiant votre requête.
             </p>
 

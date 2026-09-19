@@ -40,8 +40,8 @@
 
                 <div class="p-4 flex flex-col flex-1">
                     <h3 class="text-lg font-bold mb-2 text-gray-800">{{ $nouveaute['title'] }}</h3>
-                    <span class="text-sm text-gray-400 mb-3">{{ $nouveaute['date'] }}</span>
-                    <p class="text-gray-600 flex-1">{{ $nouveaute['content'] }}</p>
+                    <span class="text-base text-gray-600 mb-3">{{ $nouveaute['date'] }}</span>
+                    <p class="text-gray-700 flex-1 leading-relaxed">{{ $nouveaute['content'] }}</p>
                     <a href="#" class="mt-4 text-blue-600 font-semibold hover:text-blue-800 transition-colors self-start">
                         Lire plus →
                     </a>

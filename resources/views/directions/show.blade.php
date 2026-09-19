@@ -25,7 +25,7 @@
                 </div>
             </div>
 
-            <p class="text-gray-700 leading-relaxed text-[15px]">
+            <p class="text-gray-700 leading-relaxed text-base">
                 {{ $direction->description ?: "Représentation régionale de la Direction de la Pension Civile. Elle accueille les usagers, reçoit les dossiers et oriente vers les services compétents du siège." }}
             </p>
 

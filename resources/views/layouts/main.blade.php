@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="{{ App::getLocale() }}" data-theme="light">
+<html lang="{{ App::getLocale() }}" class="site-public-root" data-theme="light">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -11,7 +11,7 @@
     @stack('styles')
 </head>
 
-<body class="w-full min-h-dvh flex flex-col bg-[#e6ebf1] text-gray-800 overflow-x-hidden font-sans antialiased">
+<body class="site-public w-full min-h-dvh flex flex-col bg-[#e6ebf1] text-gray-800 overflow-x-hidden font-sans antialiased">
     <noscript>
         <div class="fixed inset-0 z-[10001] flex items-center justify-center bg-black bg-opacity-80">
             <div class="bg-white max-w-md w-full mx-4 p-6 rounded-xl shadow-xl text-center">

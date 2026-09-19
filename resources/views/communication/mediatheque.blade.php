@@ -156,13 +156,13 @@
                     @endif
 
                     <div class="p-5 flex flex-col flex-1">
-                        <p class="text-[11px] font-bold text-orange-500 uppercase tracking-widest mb-2">
+                        <p class="text-xs font-bold text-orange-500 uppercase tracking-widest mb-2">
                             {{ $meta['label'] }}
                         </p>
                         <h3 class="font-bold text-navy text-base leading-snug mb-2">{{ $item->title }}</h3>
 
                         @if($item->description)
-                            <p class="text-gray-700 text-sm leading-relaxed mb-3">{{ Str::limit($item->description, 100) }}</p>
+                            <p class="text-gray-700 text-base leading-relaxed mb-3">{{ Str::limit($item->description, 100) }}</p>
                         @endif
 
                         <div class="mt-auto">
@@ -178,11 +178,11 @@
                                 <div class="flex flex-wrap gap-2">
                                     @if($item->fileUrl())
                                         <a href="{{ $item->fileUrl() }}" target="_blank"
-                                           class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-navy text-white text-xs font-medium hover:opacity-90">
+                                           class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-navy text-white text-sm font-medium hover:opacity-90">
                                             <i class="fa-solid fa-eye"></i> Voir
                                         </a>
                                         <a href="{{ $item->fileUrl() }}" download
-                                           class="inline-flex items-center gap-1.5 px-3 py-1.5 border border-gray-200 text-navy text-xs font-medium hover:bg-gray-50">
+                                           class="inline-flex items-center gap-1.5 px-3 py-1.5 border border-gray-200 text-navy text-sm font-medium hover:bg-gray-50">
                                             <i class="fa-solid fa-download"></i> Télécharger
                                         </a>
                                     @elseif($item->url)

@@ -1,4 +1,4 @@
-<nav aria-label="Breadcrumb" class="mb-4 text-sm text-gray-600">
+<nav aria-label="Breadcrumb" class="mb-4 text-base text-gray-700">
     <ol class="flex items-center space-x-2">
         @foreach ($items as $item)
             <li class="font-medium">

@@ -40,6 +40,9 @@ return [
     'comm_docs_2' => 'Matrikil fiskal',
     'comm_docs_3' => 'Prèv peman',
 
+    'essentials_kicker' => 'Nan kèk klik',
+    'essentials_title' => 'Demach esansyèl',
+
     'quick_guide_title' => 'Gid pansyone a',
     'quick_guide_desc' => 'Fòmalite, avi ak kontak itil',
     'quick_sim_title' => 'Similatè',
@@ -64,6 +67,15 @@ return [
     'accueil_title' => 'Òganizasyon akeyi pansyone yo',
     'accueil_body' => 'Pou fasilite peman prestasyon yo epi evite ankonbreman, akeyi ak trete pansyone yo òganize selon lòd alfabetik, dapre yon kalandriye ki etabli pou sa.',
     'accueil_note' => 'Nou envite pansyone yo respekte peryòd ki endike pou yo, pou sèvis la ka rete likid e efikas.',
+    'accueil_calendar_intro' => 'Akeyi a òganize selon kalandriye alfabetik sa a:',
+    'accueil_calendar_caption' => 'Kalandriye akeyi pansyone yo pa jou ak pa lèt',
+    'accueil_calendar_days' => 'Jou',
+    'accueil_calendar_letters' => 'Lèt',
+    'accueil_day_lundi' => 'Lendi',
+    'accueil_day_mardi' => 'Madi',
+    'accueil_day_mercredi' => 'Mèkredi',
+    'accueil_day_jeudi' => 'Jedi',
+    'accueil_day_vendredi' => 'Vandredi',
 
     'rappel_title' => 'Rapèl enpòtan pou pansyone ak mandaté yo',
     'rappel_payment' => 'Nou raple peman rante a disponib nan fen chak mwa.',

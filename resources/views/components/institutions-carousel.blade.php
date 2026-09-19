@@ -119,7 +119,7 @@
     .institution-name {
         text-align: center;
         color: #4b5563;
-        font-size: 0.72rem;
+        font-size: 0.875rem;
         font-weight: 500;
         line-height: 1.35;
         white-space: normal;
@@ -130,7 +130,7 @@
 
     @media (min-width: 768px) {
         .institution-name {
-            font-size: 0.75rem;
+            font-size: 0.9375rem;
             max-width: 160px;
         }
     }

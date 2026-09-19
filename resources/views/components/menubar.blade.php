@@ -77,7 +77,7 @@
             <li class="relative w-full md:w-auto border-b md:border-none group">
                 <button
                     class="dropdown-toggle flex w-full items-center justify-between px-4 md:px-3 py-3
-                           text-slate-600 hover:text-blue-600 text-base md:text-sm lg:text-base font-medium
+                           text-slate-700 hover:text-orange-500 text-base font-medium
                            focus:outline-none focus:ring-2 ">
                     <span class="truncate-text">{{ __('messages.who_are_we') }}</span>
                     <svg class="dropdown-icon ml-2 w-4 h-4 transform transition-transform duration-300" fill="none"
@@ -121,7 +121,7 @@
                 <li class="relative w-full md:w-auto border-b md:border-none group">
                     <button
                         class="dropdown-toggle flex w-full items-center justify-between px-4 md:px-3 py-3
-                           text-slate-600 hover:text-blue-600 text-base md:text-sm lg:text-base font-medium
+                           text-slate-700 hover:text-orange-500 text-base font-medium
                            focus:outline-none focus:ring-2 ">
                         <span class="truncate-text">{{ __('messages.pensioner') }}</span>
                         <svg class="dropdown-icon ml-2 w-4 h-4 transform transition-transform duration-300"
@@ -198,7 +198,7 @@
                 <li class="relative w-full md:w-auto border-b md:border-none group">
                     <button
                         class="dropdown-toggle flex w-full items-center justify-between px-4 md:px-3 py-3
-                                       text-slate-600 hover:text-blue-600 text-base md:text-sm lg:text-base font-medium
+                                       text-slate-700 hover:text-orange-500 text-base font-medium
                                        focus:outline-none focus:ring-2 ">
                         <span class="truncate-text">{{ __('messages.civil_servant') }}</span>
                         <svg class="dropdown-icon ml-2 w-4 h-4 transform transition-transform duration-300"
@@ -243,7 +243,7 @@
                 <li class="relative w-full md:w-auto border-b md:border-none group">
                     <button
                         class="dropdown-toggle flex w-full items-center justify-between px-4 md:px-3 py-3
-                           text-slate-600 hover:text-blue-600 text-base md:text-sm lg:text-base font-medium
+                           text-slate-700 hover:text-orange-500 text-base font-medium
                            focus:outline-none focus:ring-2 ">
                         <span class="truncate-text">{{ __('messages.institutions') }}</span>
                         <svg class="dropdown-icon ml-2 w-4 h-4 transform transition-transform duration-300"
@@ -286,7 +286,7 @@
             <li class="relative w-full md:w-auto border-b md:border-none group">
                 <button
                     class="dropdown-toggle flex w-full items-center justify-between px-4 md:px-3 py-3
-                                       text-slate-600 hover:text-blue-600 text-base md:text-sm lg:text-base font-medium
+                                       text-slate-700 hover:text-orange-500 text-base font-medium
                                        focus:outline-none focus:ring-2 ">
                     <span class="truncate-text">{{ __('messages.communications') }}</span>
                     <svg class="dropdown-icon ml-2 w-4 h-4 transform transition-transform duration-300" fill="none"

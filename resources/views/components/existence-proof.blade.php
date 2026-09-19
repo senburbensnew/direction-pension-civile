@@ -13,7 +13,7 @@
 
         {{-- Titre personnalisé --}}
         <div class="mb-4">
-            <label for="title" class="block text-sm font-medium text-gray-700">
+            <label for="title" class="block text-base font-medium text-gray-700">
                 Titre personnalisé <span class="text-gray-400 font-normal">(optionnel)</span>
             </label>
             <input
@@ -66,7 +66,7 @@
                     </label>
 
                     @error('numero_identite')
-                        <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                        <p class="mt-1 text-base text-red-600">{{ $message }}</p>
                     @enderror
                 </div>
             </div>
@@ -75,7 +75,7 @@
             <div class="order-3 md:order-3 flex-shrink-0">
                 <x-profile-picture class="w-16 h-16 md:w-24 md:h-24" />
                 @error('profile_photo')
-                    <p class="mt-1 text-sm text-red-600 text-center">{{ $message }}</p>
+                    <p class="mt-1 text-base text-red-600 text-center">{{ $message }}</p>
                 @enderror
             </div>
 
@@ -92,12 +92,12 @@
         <div class="space-y-6 mt-5">
             <!-- Fiscal Year -->
             <div class="w-full md:w-1/2">
-                <label for="annee_fiscale" class="block text-sm font-medium text-gray-700">ANNEE FISCALE *</label>
+                <label for="annee_fiscale" class="block text-base font-medium text-gray-700">ANNEE FISCALE *</label>
                 <input value="{{ old('annee_fiscale') }}" placeholder="20../20.." type="text" name="annee_fiscale"
                     id="annee_fiscale" min="1900" max="2100"
                     class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
                 @error('annee_fiscale')
-                    <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                    <p class="mt-1 text-base text-red-600">{{ $message }}</p>
                 @enderror
             </div>
             <!-- Personal Information -->
@@ -105,71 +105,71 @@
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <!-- NIF -->
                     <div>
-                        <label for="nif" class="block text-sm font-medium text-gray-700">NIF *</label>
+                        <label for="nif" class="block text-base font-medium text-gray-700">NIF *</label>
                         <input type="text" name="nif" id="nif" value="{{ auth()->user()->nif }}"
                         placeholder="000-000-000-0"
                             class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 "
                             >
                         @error('nif')
-                            <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                            <p class="mt-1 text-base text-red-600">{{ $message }}</p>
                         @enderror
                     </div>
 
                     <!-- Name Fields -->
                     <div>
-                        <label for="nom" class="block text-sm font-medium text-gray-700">NOM *</label>
+                        <label for="nom" class="block text-base font-medium text-gray-700">NOM *</label>
 
                         <input value="{{ old('nom') }}" type="text" name="nom"
                             id="nom"
                             class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 ">
                         @error('nom')
-                            <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                            <p class="mt-1 text-base text-red-600">{{ $message }}</p>
                         @enderror
                     </div>
 
                     <div>
-                        <label for="prenom" class="block text-sm font-medium text-gray-700">PRENOM *</label>
+                        <label for="prenom" class="block text-base font-medium text-gray-700">PRENOM *</label>
                         <input value="{{ old('prenom') }}" type="text" name="prenom"
                             id="prenom"
                             class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 ">
                         @error('prenom')
-                            <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                            <p class="mt-1 text-base text-red-600">{{ $message }}</p>
                         @enderror
                     </div>
 
                     <!-- Address Fields -->
                     <div class="md:col-span-2">
-                        <label for="adresse" class="block text-sm font-medium text-gray-700">ADRESSE *</label>
+                        <label for="adresse" class="block text-base font-medium text-gray-700">ADRESSE *</label>
                         <input value="{{ old('adresse') }}" type="text" name="adresse" id="adresse"
                             class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
                         @error('adresse')
-                            <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                            <p class="mt-1 text-base text-red-600">{{ $message }}</p>
                         @enderror
                     </div>
 
                     <div>
-                        <label for="localisation" class="block text-sm font-medium text-gray-700">LOCALISATION *</label>
+                        <label for="localisation" class="block text-base font-medium text-gray-700">LOCALISATION *</label>
                         <input value="{{ old('localisation') }}" type="text" name="localisation" id="localisation"
                             class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
                         @error('localisation')
-                            <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                            <p class="mt-1 text-base text-red-600">{{ $message }}</p>
                         @enderror
                     </div>
 
                     <!-- Birth Date -->
                     <div>
-                        <label for="date_naissance" class="block text-sm font-medium text-gray-700">DATE DE NAISSANCE
+                        <label for="date_naissance" class="block text-base font-medium text-gray-700">DATE DE NAISSANCE
                             *</label>
                         <input value="{{ old('date_naissance') }}" type="date" name="date_naissance" id="date_naissance"
                             class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
                         @error('date_naissance')
-                            <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                            <p class="mt-1 text-base text-red-600">{{ $message }}</p>
                         @enderror
                     </div>
 
                     <!-- Civil Status -->
                     <div>
-                        <label for="etat_civil_id" class="block text-sm font-medium text-gray-700">ETAT CIVIL *</label>
+                        <label for="etat_civil_id" class="block text-base font-medium text-gray-700">ETAT CIVIL *</label>
                         <select name="etat_civil_id" id="etat_civil_id"
                             class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
                             <option value="">Sélectionner</option>
@@ -180,13 +180,13 @@
                             @endforeach
                         </select>
                         @error('etat_civil_id')
-                            <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                            <p class="mt-1 text-base text-red-600">{{ $message }}</p>
                         @enderror
                     </div>
 
                     <!-- Gender -->
                     <div>
-                        <label for="sexe_id" class="block text-sm font-medium text-gray-700">SEXE *</label>
+                        <label for="sexe_id" class="block text-base font-medium text-gray-700">SEXE *</label>
                         <select name="sexe_id" id="sexe_id"
                             class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
                             <option value="">Sélectionner</option>
@@ -197,91 +197,91 @@
                             @endforeach
                         </select>
                         @error('sexe_id')
-                            <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                            <p class="mt-1 text-base text-red-600">{{ $message }}</p>
                         @enderror
                     </div>
 
                     <!-- Contact Info -->
                     <div>
-                        <label for="adresse_postale" class="block text-sm font-medium text-gray-700">BOITE POSTALE
+                        <label for="adresse_postale" class="block text-base font-medium text-gray-700">BOITE POSTALE
                             *</label>
                         <input value="{{ old('adresse_postale') }}" type="text" name="adresse_postale"
                             id="adresse_postale"
                             class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
                         @error('adresse_postale')
-                            <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                            <p class="mt-1 text-base text-red-600">{{ $message }}</p>
                         @enderror
                     </div>
 
                     <div>
-                        <label for="telephone" class="block text-sm font-medium text-gray-700">TELEPHONE *</label>
+                        <label for="telephone" class="block text-base font-medium text-gray-700">TELEPHONE *</label>
                         <input value="{{ old('telephone') }}" type="tel" name="telephone" id="telephone"
                         placeholder="+509XXXXXXXX"
                             class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
                         @error('telephone')
-                            <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                            <p class="mt-1 text-base text-red-600">{{ $message }}</p>
                         @enderror
                     </div>
 
                     <!-- Pension Info -->
                     <div>
-                        <label for="montant_pension" class="block text-sm font-medium text-gray-700">MONTANT PENSION
+                        <label for="montant_pension" class="block text-base font-medium text-gray-700">MONTANT PENSION
                             *</label>
                         <input value="{{ old('montant_pension') }}" type="number" name="montant_pension"
                             id="montant_pension"
                             class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
                             min="0">
                         @error('montant_pension')
-                            <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                            <p class="mt-1 text-base text-red-600">{{ $message }}</p>
                         @enderror
                     </div>
 
                     <div>
-                        <label for="no_moniteur" class="block text-sm font-medium text-gray-700">NO MONITEUR *</label>
+                        <label for="no_moniteur" class="block text-base font-medium text-gray-700">NO MONITEUR *</label>
                         <input value="{{ old('no_moniteur') }}" type="text" name="no_moniteur"
                             id="no_moniteur"
                             class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
                         @error('no_moniteur')
-                            <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                            <p class="mt-1 text-base text-red-600">{{ $message }}</p>
                         @enderror
                     </div>
 
                     <!-- Dates -->
                     <div>
-                        <label for="date_moniteur" class="block text-sm font-medium text-gray-700">DATE MONITEUR
+                        <label for="date_moniteur" class="block text-base font-medium text-gray-700">DATE MONITEUR
                             *</label>
                         <input value="{{ old('date_moniteur') }}" type="date" name="date_moniteur"
                             id="date_moniteur"
                             class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
                         @error('date_moniteur')
-                            <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                            <p class="mt-1 text-base text-red-600">{{ $message }}</p>
                         @enderror
                     </div>
 
                     <div>
-                        <label for="debut_pension" class="block text-sm font-medium text-gray-700">DEBUT PENSION
+                        <label for="debut_pension" class="block text-base font-medium text-gray-700">DEBUT PENSION
                             *</label>
                         <input value="{{ old('debut_pension') }}" type="date" name="debut_pension"
                             id="debut_pension"
                             class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
                         @error('debut_pension')
-                            <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                            <p class="mt-1 text-base text-red-600">{{ $message }}</p>
                         @enderror
                     </div>
 
                     <div>
-                        <label for="fin_pension" class="block text-sm font-medium text-gray-700">FIN PENSION *</label>
+                        <label for="fin_pension" class="block text-base font-medium text-gray-700">FIN PENSION *</label>
                         <input value="{{ old('fin_pension') }}" type="date" name="fin_pension"
                             id="fin_pension"
                             class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
                         @error('fin_pension')
-                            <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                            <p class="mt-1 text-base text-red-600">{{ $message }}</p>
                         @enderror
                     </div>
 
                     <!-- Pension Type -->
                     <div class="md:col-span-2 border rounded-lg p-3">
-                        <label class="block text-sm font-medium text-gray-700 mb-2">NATURE PENSION *</label>
+                        <label class="block text-base font-medium text-gray-700 mb-2">NATURE PENSION *</label>
                         <div class="grid grid-cols-1 md:grid-cols-3 gap-2">
                             @foreach ($pensionCategories as $category)
                                 <div class="flex items-center">

@@ -36,13 +36,13 @@
                     <i class="fa-solid fa-magnifying-glass text-sm"></i>
                 </span>
                 <input type="text" id="search-terms" placeholder="Rechercher un terme…"
-                       class="w-full pl-9 pr-4 py-2.5 border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-navy/20 focus:border-navy">
+                       class="w-full pl-9 pr-4 py-2.5 border border-gray-200 text-base focus:outline-none focus:ring-2 focus:ring-navy/20 focus:border-navy">
             </div>
             @if($categories->isNotEmpty())
                 <div class="flex flex-wrap gap-2" id="gloss-tabs">
-                    <button type="button" class="tab-btn active px-4 py-2 text-sm font-medium bg-gray-100 text-gray-700 transition" data-cat="all">Tous</button>
+                    <button type="button" class="tab-btn active px-4 py-2 text-base font-medium bg-gray-100 text-gray-700 transition" data-cat="all">Tous</button>
                     @foreach($categories as $cat)
-                        <button type="button" class="tab-btn px-4 py-2 text-sm font-medium bg-gray-100 text-gray-700 hover:bg-gray-200 transition" data-cat="{{ $cat }}">{{ $cat }}</button>
+                        <button type="button" class="tab-btn px-4 py-2 text-base font-medium bg-gray-100 text-gray-700 hover:bg-gray-200 transition" data-cat="{{ $cat }}">{{ $cat }}</button>
                     @endforeach
                 </div>
             @endif
@@ -59,14 +59,14 @@
                     <article class="term-card bg-white border border-gray-200 card-shadow p-6"
                              data-category="{{ $term->category }}"
                              data-search="{{ strtolower($term->term . ' ' . $term->definition) }}">
-                        <p class="text-[11px] font-bold text-orange-500 uppercase tracking-widest mb-3">{{ $term->category }}</p>
+                        <p class="text-xs font-bold text-orange-500 uppercase tracking-widest mb-3">{{ $term->category }}</p>
                         <div class="flex items-start gap-3 mb-3">
                             <span class="text-xl text-navy mt-0.5 shrink-0">
                                 <i class="fa-solid {{ $term->icon ?: 'fa-book' }}" aria-hidden="true"></i>
                             </span>
                             <h3 class="text-lg font-bold text-navy">{{ $term->term }}</h3>
                         </div>
-                        <p class="text-gray-700 text-sm leading-relaxed">{{ $term->definition }}</p>
+                        <p class="text-gray-700 text-base leading-relaxed">{{ $term->definition }}</p>
                     </article>
                 @endforeach
             </div>

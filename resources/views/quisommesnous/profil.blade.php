@@ -39,7 +39,7 @@
                      onerror="this.onerror=null; this.src='{{ $avatar }}';">
                 <p class="font-semibold text-navy">{{ $official->nom }}</p>
                 <a href="{{ route('quisommesnous.mots', ['role' => $official->slug]) }}"
-                   class="inline-flex items-center gap-1.5 mt-3 text-sm font-medium text-navy hover:text-orange-500">
+                   class="inline-flex items-center gap-1.5 mt-3 text-base font-medium text-navy hover:text-orange-500">
                     {{ __('messages.speech') }}
                     <i class="fa-solid fa-arrow-right text-xs" aria-hidden="true"></i>
                 </a>
@@ -57,15 +57,15 @@
                     <div class="prose max-w-none text-gray-700 leading-relaxed">
                         {!! $official->biographieHtml() !!}
                     </div>
-                    <p class="mt-8 text-sm font-semibold text-navy">
+                    <p class="mt-8 text-base font-semibold text-navy">
                         {{ $official->sexe === 'F' ? 'Mme' : 'M.' }} {{ $official->nom }}
                     </p>
-                    <p class="text-gray-500 text-sm mt-0.5">{{ $official->role }}</p>
+                    <p class="text-gray-600 text-base mt-0.5">{{ $official->role }}</p>
                 @else
                     <div class="py-10 text-center text-gray-500">
                         <i class="fa-solid fa-file-lines text-navy mb-3" aria-hidden="true"></i>
                         <p class="font-medium text-navy">Notice biographique à venir.</p>
-                        <p class="text-sm mt-1">Ce contenu sera disponible prochainement.</p>
+                        <p class="text-base mt-1">Ce contenu sera disponible prochainement.</p>
                     </div>
                 @endif
             </section>

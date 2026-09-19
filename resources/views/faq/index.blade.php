@@ -33,17 +33,17 @@
                     <i class="fa-solid fa-magnifying-glass text-sm"></i>
                 </span>
                 <input type="text" x-model="q" placeholder="Rechercher une question…"
-                       class="w-full pl-9 pr-4 py-2.5 border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-navy/20 focus:border-navy">
+                       class="w-full pl-9 pr-4 py-2.5 border border-gray-200 text-base focus:outline-none focus:ring-2 focus:ring-navy/20 focus:border-navy">
             </div>
             @if($items->isNotEmpty())
                 <div class="flex flex-wrap gap-2">
                     <button type="button" @click="cat = 'all'"
                         :class="{ 'is-active': cat === 'all' }"
-                        class="tab-btn px-4 py-2 text-sm font-medium bg-gray-100 text-gray-700 hover:bg-gray-200 transition">Tous</button>
+                        class="tab-btn px-4 py-2 text-base font-medium bg-gray-100 text-gray-700 hover:bg-gray-200 transition">Tous</button>
                     @foreach($items->keys() as $category)
                         <button type="button" @click="cat = @js($category)"
                             :class="{ 'is-active': cat === @js($category) }"
-                            class="tab-btn px-4 py-2 text-sm font-medium bg-gray-100 text-gray-700 hover:bg-gray-200 transition">{{ $category }}</button>
+                            class="tab-btn px-4 py-2 text-base font-medium bg-gray-100 text-gray-700 hover:bg-gray-200 transition">{{ $category }}</button>
                     @endforeach
                 </div>
             @endif
@@ -72,7 +72,7 @@
                                 <button type="button"
                                     class="w-full flex justify-between items-center gap-4 text-left px-5 py-4"
                                     @click="openId = openId === {{ $faq->id }} ? null : {{ $faq->id }}">
-                                    <span class="font-semibold text-navy text-sm sm:text-base">{{ $faq->question }}</span>
+                                    <span class="font-semibold text-navy text-base">{{ $faq->question }}</span>
                                     <i class="fa-solid flex-shrink-0 text-navy text-xs transition-transform"
                                        :class="openId === {{ $faq->id }} ? 'fa-minus' : 'fa-plus'"></i>
                                 </button>
@@ -80,7 +80,7 @@
                                      x-transition:enter="transition ease-out duration-200"
                                      x-transition:enter-start="opacity-0 -translate-y-1"
                                      x-transition:enter-end="opacity-100 translate-y-0"
-                                     class="px-5 pb-5 text-gray-700 text-sm leading-relaxed border-t border-gray-100 pt-4">
+                                     class="px-5 pb-5 text-gray-700 text-base leading-relaxed border-t border-gray-100 pt-4">
                                     {!! nl2br(e($faq->answer)) !!}
                                 </div>
                             </article>

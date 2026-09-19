@@ -18,7 +18,7 @@
             </svg>
 
             <span
-                class="text-sm text-gray-500 group-hover:text-blue-600 text-center @error('profile_photo') text-red-500 @enderror">Cliquez
+                class="text-base text-gray-500 group-hover:text-blue-600 text-center @error('profile_photo') text-red-500 @enderror">Cliquez
                 ou glissez-déposez</span>
         </label>
 
@@ -35,7 +35,7 @@
     </div>
 
     {{-- <p class="text-xs text-gray-500 text-center">JPEG, PNG (Max 5MB)</p> --}}
-    <p id="uploadError" class="text-red-500 text-sm hidden"></p>
+    <p id="uploadError" class="text-red-500 text-base hidden"></p>
     {{--     @error('profile_photo')
         <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
     @enderror --}}

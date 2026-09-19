@@ -10,9 +10,9 @@
 </style>
 
 @php
-    $inputClass = fn (string $field) => 'w-full px-4 py-2.5 border text-sm focus:outline-none focus:ring-2 focus:ring-navy/20 focus:border-navy '
+    $inputClass = fn (string $field) => 'w-full px-4 py-2.5 border text-base focus:outline-none focus:ring-2 focus:ring-navy/20 focus:border-navy '
         . ($errors->has($field) ? 'border-red-400 bg-red-50' : 'border-gray-200');
-    $iconInputClass = fn (string $field) => 'w-full pl-10 pr-4 py-2.5 border text-sm focus:outline-none focus:ring-2 focus:ring-navy/20 focus:border-navy '
+    $iconInputClass = fn (string $field) => 'w-full pl-10 pr-4 py-2.5 border text-base focus:outline-none focus:ring-2 focus:ring-navy/20 focus:border-navy '
         . ($errors->has($field) ? 'border-red-400 bg-red-50' : 'border-gray-200');
     $isSocialUrl = static fn (?string $url) => filled($url) && $url !== '#' && str_starts_with($url, 'http');
     $socials = [
@@ -29,7 +29,7 @@
         <div class="text-center">
             <span class="text-xs font-bold text-orange-500 uppercase tracking-widest">Nous joindre</span>
             <h1 class="text-4xl font-bold text-navy mt-2 mb-3">Contact</h1>
-            <p class="text-gray-600 max-w-2xl mx-auto">
+            <p class="text-gray-700 max-w-2xl mx-auto">
                 Notre équipe est à votre disposition pour vous accompagner.
             </p>
         </div>
@@ -42,29 +42,29 @@
                     </span>
                     <h2 class="text-xl font-bold text-navy">Nos coordonnées</h2>
                 </div>
-                <p class="text-gray-600 text-sm mb-6">Retrouvez-nous facilement et restez en contact</p>
+                <p class="text-gray-700 text-base mb-6">Retrouvez-nous facilement et restez en contact</p>
 
                 <div class="space-y-6">
                     <div class="flex items-start gap-3">
                         <span class="text-navy mt-0.5 shrink-0"><i class="fa-solid fa-location-dot" aria-hidden="true"></i></span>
                         <div>
                             <h3 class="text-base font-semibold text-navy mb-0.5">Notre siège social</h3>
-                            <p class="text-gray-700 text-sm leading-relaxed">{{ $contact['contact_address'] ?? '' }}</p>
+                            <p class="text-gray-700 text-base leading-relaxed">{{ $contact['contact_address'] ?? '' }}</p>
                         </div>
                     </div>
                     <div class="flex items-start gap-3">
                         <span class="text-navy mt-0.5 shrink-0"><i class="fa-solid fa-phone" aria-hidden="true"></i></span>
                         <div>
                             <h3 class="text-base font-semibold text-navy mb-0.5">Numéro de contact</h3>
-                            <p class="text-gray-700 text-sm">{{ $contact['contact_phone'] ?? '' }}</p>
-                            <p class="text-gray-500 text-sm mt-0.5">{{ $contact['contact_hours'] ?? '' }}</p>
+                            <p class="text-gray-700 text-base">{{ $contact['contact_phone'] ?? '' }}</p>
+                            <p class="text-gray-700 text-base mt-0.5">{{ $contact['contact_hours'] ?? '' }}</p>
                         </div>
                     </div>
                     <div class="flex items-start gap-3">
                         <span class="text-navy mt-0.5 shrink-0"><i class="fa-solid fa-envelope" aria-hidden="true"></i></span>
                         <div>
                             <h3 class="text-base font-semibold text-navy mb-0.5">Adresse e-mail</h3>
-                            <a href="mailto:{{ $contact['contact_email'] ?? '' }}" class="text-sm text-navy hover:text-orange-500 font-medium">
+                            <a href="mailto:{{ $contact['contact_email'] ?? '' }}" class="text-base text-navy hover:text-orange-500 font-medium">
                                 {{ $contact['contact_email'] ?? '' }}
                             </a>
                         </div>
@@ -94,7 +94,7 @@
                     </span>
                     <h2 class="text-xl font-bold text-navy">Envoyer un message</h2>
                 </div>
-                <p class="text-gray-600 text-sm mb-6">Remplissez le formulaire ci-dessous et nous vous répondrons dans les plus brefs délais.</p>
+                <p class="text-gray-700 text-base mb-6">Remplissez le formulaire ci-dessous et nous vous répondrons dans les plus brefs délais.</p>
 
                 @if(session('success'))
                     <div class="mb-6 flex items-start gap-3 bg-green-50 border border-green-300 text-green-800 p-4">
@@ -124,7 +124,7 @@
                     @csrf
                     <div class="grid grid-cols-1 gap-5 md:grid-cols-2">
                         <div>
-                            <label for="first_name" class="block text-sm font-medium text-gray-700 mb-2">Prénom <span class="text-red-500">*</span></label>
+                            <label for="first_name" class="block text-base font-medium text-gray-700 mb-2">Prénom <span class="text-red-500">*</span></label>
                             <div class="relative">
                                 <input type="text" id="first_name" name="first_name"
                                     value="{{ old('first_name') }}" required
@@ -135,7 +135,7 @@
                             </div>
                         </div>
                         <div>
-                            <label for="last_name" class="block text-sm font-medium text-gray-700 mb-2">Nom <span class="text-red-500">*</span></label>
+                            <label for="last_name" class="block text-base font-medium text-gray-700 mb-2">Nom <span class="text-red-500">*</span></label>
                             <div class="relative">
                                 <input type="text" id="last_name" name="last_name"
                                     value="{{ old('last_name') }}" required
@@ -149,7 +149,7 @@
 
                     <div class="grid grid-cols-1 gap-5 md:grid-cols-2">
                         <div>
-                            <label for="email" class="block text-sm font-medium text-gray-700 mb-2">Adresse e-mail <span class="text-red-500">*</span></label>
+                            <label for="email" class="block text-base font-medium text-gray-700 mb-2">Adresse e-mail <span class="text-red-500">*</span></label>
                             <div class="relative">
                                 <input type="email" id="email" name="email"
                                     value="{{ old('email') }}" required
@@ -160,7 +160,7 @@
                             </div>
                         </div>
                         <div>
-                            <label for="telephone" class="block text-sm font-medium text-gray-700 mb-2">Téléphone <span class="text-red-500">*</span></label>
+                            <label for="telephone" class="block text-base font-medium text-gray-700 mb-2">Téléphone <span class="text-red-500">*</span></label>
                             <div class="relative">
                                 <input type="tel" id="telephone" name="telephone"
                                     value="{{ old('telephone') }}" required
@@ -175,7 +175,7 @@
 
                     <div class="grid grid-cols-1 gap-5 md:grid-cols-2">
                         <div>
-                            <label for="destinataire" class="block text-sm font-medium text-gray-700 mb-2">Destinataire <span class="text-red-500">*</span></label>
+                            <label for="destinataire" class="block text-base font-medium text-gray-700 mb-2">Destinataire <span class="text-red-500">*</span></label>
                             <div class="relative">
                                 <select id="destinataire" name="destinataire" required
                                     class="{{ $inputClass('destinataire') }} pr-10 appearance-none">
@@ -203,7 +203,7 @@
                             </div>
                         </div>
                         <div>
-                            <label for="subject" class="block text-sm font-medium text-gray-700 mb-2">Sujet <span class="text-red-500">*</span></label>
+                            <label for="subject" class="block text-base font-medium text-gray-700 mb-2">Sujet <span class="text-red-500">*</span></label>
                             <div class="relative">
                                 <select id="subject" name="subject" required x-model="subject"
                                     class="{{ $inputClass('subject') }} pr-10 appearance-none">
@@ -217,7 +217,7 @@
                                 </div>
                             </div>
                             <div class="mt-4" x-show="customSlugs.includes(subject)" x-cloak>
-                                <label for="custom_subject" class="block text-sm font-medium text-gray-700 mb-2">Précisez votre sujet <span class="text-red-500">*</span></label>
+                                <label for="custom_subject" class="block text-base font-medium text-gray-700 mb-2">Précisez votre sujet <span class="text-red-500">*</span></label>
                                 <input type="text" id="custom_subject" name="custom_subject"
                                     value="{{ old('custom_subject') }}"
                                     maxlength="150"
@@ -230,7 +230,7 @@
 
                     <div>
                         <div class="flex items-center justify-between mb-2">
-                            <label for="message" class="block text-sm font-medium text-gray-700">Votre message <span class="text-red-500">*</span></label>
+                            <label for="message" class="block text-base font-medium text-gray-700">Votre message <span class="text-red-500">*</span></label>
                             <span class="text-xs text-gray-500" x-text="`${message.length} / ${maxMessage}`"></span>
                         </div>
                         <textarea id="message" name="message" rows="5" required
@@ -256,7 +256,7 @@
                 </span>
                 <h2 class="text-xl font-bold text-navy">Notre localisation</h2>
             </div>
-            <p class="text-gray-600 text-sm mb-6">Retrouvez-nous facilement à notre siège social situé au cœur de Port-au-Prince.</p>
+            <p class="text-gray-700 text-base mb-6">Retrouvez-nous facilement à notre siège social situé au cœur de Port-au-Prince.</p>
             <div class="border border-gray-200 overflow-hidden">
                 <iframe
                     src="{{ $contact['contact_map_url'] ?? '' }}"
@@ -272,7 +272,7 @@
                 </span>
                 <h2 class="text-xl font-bold text-navy">Nos Directions Départementales</h2>
             </div>
-            <p class="text-gray-600 text-sm mb-5">Retrouvez nos représentations régionales de la Direction de la Pension Civile.</p>
+            <p class="text-gray-700 text-base mb-5">Retrouvez nos représentations régionales de la Direction de la Pension Civile.</p>
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
                 @foreach($directions as $dir)
                     <a href="{{ route('directions.show', $dir) }}"
@@ -281,7 +281,7 @@
                             <span class="text-xl text-navy mt-0.5 shrink-0"><i class="fa-solid fa-map-pin" aria-hidden="true"></i></span>
                             <div>
                                 <h3 class="text-lg font-bold text-navy mb-1">{{ $dir->nom }} ({{ $dir->abbr }})</h3>
-                                <p class="text-gray-700 text-sm">{{ $dir->ville }}</p>
+                                <p class="text-gray-700 text-base">{{ $dir->ville }}</p>
                             </div>
                         </div>
                     </a>
@@ -296,7 +296,7 @@
                 </span>
                 <h2 class="text-xl font-bold text-navy">Nos Services</h2>
             </div>
-            <p class="text-gray-600 text-sm mb-5">Les différents services opérationnels de la DPC / MEF.</p>
+            <p class="text-gray-700 text-base mb-5">Les différents services opérationnels de la DPC / MEF.</p>
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
                 @foreach($services as $service)
                     <a href="{{ route('services.show', $service) }}"
@@ -305,7 +305,7 @@
                             <span class="text-xl text-navy mt-0.5 shrink-0"><i class="fa-solid {{ $service->icon ?? 'fa-building' }}" aria-hidden="true"></i></span>
                             <div>
                                 <h3 class="text-lg font-bold text-navy mb-1">{{ $service->nom }}</h3>
-                                <p class="text-gray-700 text-sm">Port-au-Prince</p>
+                                <p class="text-gray-700 text-base">Port-au-Prince</p>
                             </div>
                         </div>
                     </a>

@@ -17,7 +17,7 @@
 ])>
     <span @class([
         'font-bold text-navy block',
-        'text-sm uppercase tracking-wide mb-3' => $isCard,
+        'text-base uppercase tracking-wide mb-3' => $isCard,
         'text-lg mb-2 text-[#033159]' => ! $isCard,
     ])>
         {{ $role }}
@@ -38,7 +38,7 @@
 
     <p @class([
         'font-bold text-navy',
-        'text-sm' => $isCard,
+        'text-base' => $isCard,
         'text-base text-[#033159]' => ! $isCard,
     ])>
         {{ $nom }}
@@ -46,8 +46,8 @@
 
     <div @class([
         'text-[#657786] space-y-0',
-        'mt-3 text-[13px]' => $isCard,
-        'mt-3 text-sm space-y-1' => ! $isCard,
+        'mt-3 text-base' => $isCard,
+        'mt-3 text-base space-y-1' => ! $isCard,
     ])>
         @if($showProfileLink && $lienProfil)
             <a href="{{ $lienProfil }}"

@@ -1,5 +1,5 @@
 <div class="pt-4">
-    <span class="relative top-2.5 text-sm pr-1 bg-white text-gray-500 pb-2 mb-6 font-bold">
+    <span class="relative top-2.5 text-base pr-1 bg-white text-gray-700 pb-2 mb-6 font-bold">
         {{ $title }}
     </span>
 
