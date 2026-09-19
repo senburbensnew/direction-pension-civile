@@ -160,9 +160,9 @@
                                 <span class="absolute inset-y-0 left-3 flex items-center text-gray-300 pointer-events-none text-xs">
                                     <i class="fas fa-link"></i>
                                 </span>
-                                <input type="url" name="link" x-model="link"
+                                <input type="text" name="link" x-model="link"
                                        value="{{ old('link') }}"
-                                       placeholder="https://exemple.com"
+                                       placeholder="https://… ou /quisommesnous/missions"
                                        class="w-full pl-8 pr-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
                             </div>
                         </div>

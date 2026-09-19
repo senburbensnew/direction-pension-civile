@@ -49,6 +49,7 @@ return [
     'acces_title' => 'Aksè rapid',
     'acces_intro' => 'Zouti ak resous pansyone, fonksyonè ak enstitisyon yo konsilte pi souvan.',
     'acces_cta' => 'Antre',
+    'carousel_cta' => 'Aprann plis',
     'acces_simulateur_title' => 'Similatè pansyon',
     'acces_simulateur_desc' => 'Estime dwa retrèt ou selon karyè ou.',
     'acces_textes_title' => 'Tèks legal',

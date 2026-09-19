@@ -16,7 +16,7 @@
      @vite(['resources/css/app.css', 'resources/js/app.js'])
 </head>
 
-<body class="font-sans antialiased bg-gray-100">
+<body class="font-sans antialiased bg-gray-100 min-h-screen flex flex-col">
     <noscript>
         <div class="fixed inset-0 z-[10001] flex items-center justify-center bg-black bg-opacity-80">
             <div class="bg-white max-w-md w-full mx-4 p-6 rounded-xl shadow-xl text-center">
@@ -40,12 +40,11 @@
         </div>
     </noscript>
 
-    <div class="container mx-auto bg-white border border-gray-200 min-h-screen my-4 rounded-lg shadow-sm">
-        <x-header />
-        <main >
-            {{ $slot }}
-        </main>
-    </div>
+    <x-header />
+    <main class="container mx-auto flex-1 w-full bg-white min-h-[calc(100dvh-13rem)]">
+        {{ $slot }}
+    </main>
+    <x-footer />
     {{-- <script src="{{ asset('build/assets/app-CbEvcXly.js') }}"></script> --}}
 </body>
 </html>

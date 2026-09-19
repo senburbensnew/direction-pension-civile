@@ -15,9 +15,11 @@
 
         <div class="bg-white rounded-none border border-gray-200 shadow-sm p-8 md:p-10">
             <div class="flex items-start gap-4 mb-6">
-                <i class="fa-solid fa-fw fa-map-pin text-navy text-xl mt-1" aria-hidden="true"></i>
+                <i class="fa-solid fa-fw fa-map-pin text-navy text-3xl mt-1" aria-hidden="true"></i>
                 <div>
-                    <p class="text-xs font-semibold uppercase tracking-widest text-gray-500 mb-1">Direction départementale</p>
+                    <p class="text-xs font-semibold uppercase tracking-widest text-gray-500 mb-1">
+                        {{ str_starts_with($direction->nom, 'Bureau') ? 'Bureau' : 'Direction départementale' }}
+                    </p>
                     <h1 class="text-3xl font-bold text-navy">{{ $direction->nom }}</h1>
                     <p class="text-gray-600 mt-2">{{ $direction->abbr }} · {{ $direction->ville }}</p>
                 </div>
@@ -41,7 +43,7 @@
 
         @if($others->isNotEmpty())
         <section class="mt-12">
-            <h2 class="text-xl font-bold text-navy mb-5">Autres directions départementales</h2>
+            <h2 class="text-xl font-bold text-navy mb-5">Autres implantations</h2>
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                 @foreach($others as $other)
                 <a href="{{ route('directions.show', $other) }}"

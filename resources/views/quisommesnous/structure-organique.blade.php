@@ -19,39 +19,9 @@
             <h1 class="text-4xl font-bold text-navy mt-2 mb-3">Structure organisationnelle</h1>
         </div>
 
-        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
-            <div class="bg-white border border-gray-200 card-shadow p-5 flex items-start gap-3">
-                <span class="w-10 h-10 bg-navy text-white flex items-center justify-center shrink-0">
-                    <i class="fa-solid fa-user-tie" aria-hidden="true"></i>
-                </span>
-                <div>
-                    <p class="text-sm font-semibold text-navy">Directeur</p>
-                    <p class="text-xs text-gray-500 mt-1">Coordonne l’ensemble des activités de la DPC</p>
-                </div>
-            </div>
-            <div class="bg-white border border-gray-200 card-shadow p-5 flex items-start gap-3">
-                <span class="w-10 h-10 bg-navy text-white flex items-center justify-center shrink-0">
-                    <i class="fa-solid fa-user" aria-hidden="true"></i>
-                </span>
-                <div>
-                    <p class="text-sm font-semibold text-navy">Assistant directeur</p>
-                    <p class="text-xs text-gray-500 mt-1">Appuie la Direction dans le suivi opérationnel</p>
-                </div>
-            </div>
-            <div class="bg-white border border-gray-200 card-shadow p-5 flex items-start gap-3">
-                <span class="w-10 h-10 bg-navy text-white flex items-center justify-center shrink-0">
-                    <i class="fa-solid fa-layer-group" aria-hidden="true"></i>
-                </span>
-                <div>
-                    <p class="text-sm font-semibold text-navy">Sept services</p>
-                    <p class="text-xs text-gray-500 mt-1">Organisation opérationnelle de la DPC</p>
-                </div>
-            </div>
-        </div>
-
         <section class="bg-white border border-gray-200 card-shadow p-6 sm:p-8 space-y-4">
             <div class="flex items-center gap-3">
-                <span class="w-10 h-10 bg-navy text-white flex items-center justify-center shrink-0">
+                <span class="text-3xl text-navy flex items-center justify-center shrink-0">
                     <i class="fa-solid fa-sitemap" aria-hidden="true"></i>
                 </span>
                 <h2 class="text-xl font-bold text-navy">Direction et coordination</h2>
@@ -67,7 +37,7 @@
         <section class="bg-white border border-gray-200 card-shadow overflow-hidden">
             <div class="px-6 py-4 border-b border-gray-100 flex items-center justify-between gap-3">
                 <div class="flex items-center gap-3">
-                    <span class="w-9 h-9 bg-navy text-white flex items-center justify-center shrink-0">
+                    <span class="text-3xl text-navy flex items-center justify-center shrink-0">
                         <i class="fa-solid fa-diagram-project" aria-hidden="true"></i>
                     </span>
                     <div>
@@ -93,11 +63,11 @@
             @foreach($servicesDpc as $service)
                 <section class="bg-white border border-gray-200 card-shadow p-6 sm:p-8">
                     <div class="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 mb-4">
-                        <div class="flex items-start gap-3">
-                            <span class="w-10 h-10 bg-navy text-white flex items-center justify-center shrink-0">
+                        <div class="flex items-center gap-3">
+                            <span class="text-3xl text-navy flex items-center justify-center shrink-0">
                                 <i class="fa-solid {{ $service['icon'] ?? 'fa-building' }}" aria-hidden="true"></i>
                             </span>
-                            <h2 class="text-lg font-bold text-navy pt-1.5">
+                            <h2 class="text-lg font-bold text-navy">
                                 {{ $service['nom'] }}
                             </h2>
                         </div>

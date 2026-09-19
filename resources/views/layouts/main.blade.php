@@ -11,7 +11,7 @@
     @stack('styles')
 </head>
 
-<body class="w-full bg-gray-100 text-gray-800 overflow-x-hidden font-sans antialiased">
+<body class="w-full min-h-dvh flex flex-col bg-gray-100 text-gray-800 overflow-x-hidden font-sans antialiased">
     <noscript>
         <div class="fixed inset-0 z-[10001] flex items-center justify-center bg-black bg-opacity-80">
             <div class="bg-white max-w-md w-full mx-4 p-6 rounded-xl shadow-xl text-center">
@@ -36,7 +36,7 @@
     </noscript>
 
     <x-header />
-    <main class="container mx-auto min-h-screen">
+    <main class="container mx-auto flex-1 w-full min-h-[calc(100dvh-13rem)]">
         @yield('content')
     </main>
     <x-footer />

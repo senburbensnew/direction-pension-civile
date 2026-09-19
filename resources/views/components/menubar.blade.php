@@ -48,7 +48,7 @@
     </style>
 
     @php
-        $internalRoles = ['admin','direction','secretariat','service_liquidation','service_formalite','service_controle_placement','service_comptabilite','service_assurance'];
+        $internalRoles = ['admin','direction','directeur','assistant_directeur','secretariat','service_liquidation','service_accueil_formalites','service_controle_placement','service_comptabilite','service_assurance'];
         $isInternalUser = auth()->check() && auth()->user()->hasAnyRole($internalRoles);
     @endphp
 

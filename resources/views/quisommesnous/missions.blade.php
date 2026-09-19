@@ -15,39 +15,9 @@
             <h1 class="text-4xl font-bold text-navy mt-2 mb-3">Présentation, mission et attributions, historique</h1>
         </div>
 
-        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
-            <div class="bg-white border border-gray-200 card-shadow p-5 flex items-start gap-3">
-                <span class="w-10 h-10 bg-navy text-white flex items-center justify-center shrink-0">
-                    <i class="fa-solid fa-landmark" aria-hidden="true"></i>
-                </span>
-                <div>
-                    <p class="text-sm font-semibold text-navy">Direction du MEF</p>
-                    <p class="text-xs text-gray-500 mt-1">Compétence exclusive sur la pension civile de retraite</p>
-                </div>
-            </div>
-            <div class="bg-white border border-gray-200 card-shadow p-5 flex items-start gap-3">
-                <span class="w-10 h-10 bg-navy text-white flex items-center justify-center shrink-0">
-                    <i class="fa-solid fa-scale-balanced" aria-hidden="true"></i>
-                </span>
-                <div>
-                    <p class="text-sm font-semibold text-navy">Décret du 9 octobre 2015</p>
-                    <p class="text-xs text-gray-500 mt-1">Cadre légal actuel de la pension civile</p>
-                </div>
-            </div>
-            <div class="bg-white border border-gray-200 card-shadow p-5 flex items-start gap-3">
-                <span class="w-10 h-10 bg-navy text-white flex items-center justify-center shrink-0">
-                    <i class="fa-solid fa-users" aria-hidden="true"></i>
-                </span>
-                <div>
-                    <p class="text-sm font-semibold text-navy">Public cible</p>
-                    <p class="text-xs text-gray-500 mt-1">Fonctionnaires et agents de l’État affiliés</p>
-                </div>
-            </div>
-        </div>
-
         <section class="bg-white border border-gray-200 card-shadow p-6 sm:p-8">
             <div class="flex items-center gap-3 mb-4">
-                <span class="w-10 h-10 bg-navy text-white flex items-center justify-center shrink-0">
+                <span class="text-3xl text-navy flex items-center justify-center shrink-0">
                     <i class="fa-solid fa-building-columns" aria-hidden="true"></i>
                 </span>
                 <h2 class="text-xl font-bold text-navy">Présentation de la Direction de la Pension Civile</h2>
@@ -59,7 +29,7 @@
 
         <section class="bg-white border border-gray-200 card-shadow p-6 sm:p-8">
             <div class="flex items-center gap-3 mb-4">
-                <span class="w-10 h-10 bg-navy text-white flex items-center justify-center shrink-0">
+                <span class="text-3xl text-navy flex items-center justify-center shrink-0">
                     <i class="fa-solid fa-gavel" aria-hidden="true"></i>
                 </span>
                 <h2 class="text-xl font-bold text-navy">Cadre légal des activités de la DPC</h2>
@@ -71,7 +41,7 @@
 
         <section class="bg-white border border-gray-200 card-shadow p-6 sm:p-8 space-y-5">
             <div class="flex items-center gap-3">
-                <span class="w-10 h-10 bg-navy text-white flex items-center justify-center shrink-0">
+                <span class="text-3xl text-navy flex items-center justify-center shrink-0">
                     <i class="fa-solid fa-bullseye" aria-hidden="true"></i>
                 </span>
                 <h2 class="text-xl font-bold text-navy">Missions et attributions</h2>
@@ -99,7 +69,7 @@
             </ul>
 
             <div class="flex items-center gap-3 pt-2">
-                <span class="w-10 h-10 bg-navy text-white flex items-center justify-center shrink-0">
+                <span class="text-3xl text-navy flex items-center justify-center shrink-0">
                     <i class="fa-solid fa-user-group" aria-hidden="true"></i>
                 </span>
                 <h3 class="text-lg font-bold text-navy">Public cible du plan de retraite de l’administration publique</h3>
@@ -118,9 +88,14 @@
 
         @php
             $datesImportantes = [
-                ['annee' => '1843', 'texte' => 'Liquidation d’une pension viagère à Claire Heureuse.', 'image' => 'images/historique/decret-1843-pension-viagere.jpg', 'alt' => 'Décret de 1843 accordant une pension viagère'],
-                ['annee' => '1864', 'texte' => 'Adoption d’un mode uniforme de liquidation des pensions.', 'image' => 'images/historique/loi-1864-pensions-civiles.png', 'alt' => 'Loi du 19 novembre 1864 sur les pensions civiles'],
-                ['annee' => '1884', 'texte' => 'Condition d’éligibilité à la retraite : 60 ans d’âge et 30 années de carrière minimum.', 'image' => 'images/historique/loi-pension-civile-militaire.png', 'alt' => 'Loi sur la pension civile et militaire'],
+                ['annee' => '1843', 'texte' => 'Liquidation d’une pension viagère à Claire Heureuse.', 'images' => [
+                    ['src' => 'images/historique/decret-1843-pension-viagere.jpg', 'alt' => 'Décret de 1843 accordant une pension viagère'],
+                ]],
+                ['annee' => '1864', 'texte' => 'Adoption d’un mode uniforme de liquidation des pensions.', 'images' => [
+                    ['src' => 'images/historique/loi-1864-pensions-civiles.png', 'alt' => 'Loi du 19 novembre 1864 sur les pensions civiles'],
+                    ['src' => 'images/historique/loi-pension-civile-militaire.png', 'alt' => 'Loi de 1864 sur la pension civile et militaire'],
+                ]],
+                ['annee' => '1884', 'texte' => 'Condition d’éligibilité à la retraite : 60 ans d’âge et 30 années de carrière minimum.'],
                 ['annee' => '1997', 'texte' => 'La DPC fournit un service de guichet (et non de liquidation) aux pensionnaires militaires et à ceux de la minoterie et du BNDAI.'],
                 ['annee' => '1998', 'texte' => 'Programme de départ à la retraite.'],
                 ['annee' => '2004', 'texte' => 'Le principe de remboursement des cotisations au fonds de pension est ouvert à des conditions spécifiques.'],
@@ -136,7 +111,7 @@
 
         <section class="bg-white border border-gray-200 card-shadow p-6 sm:p-8">
             <div class="flex items-center gap-3 mb-2">
-                <span class="w-10 h-10 bg-navy text-white flex items-center justify-center shrink-0">
+                <span class="text-3xl text-navy flex items-center justify-center shrink-0">
                     <i class="fa-solid fa-clock-rotate-left" aria-hidden="true"></i>
                 </span>
                 <h2 class="text-xl font-bold text-navy">Dates importantes</h2>
@@ -145,10 +120,10 @@
 
             <div id="dpc-chronogramme"
                  class="dpc-chronogramme mb-10"
-                 data-events='@json($datesImportantes)'></div>
+                 data-events="{{ json_encode($datesImportantes, JSON_HEX_APOS | JSON_HEX_QUOT | JSON_UNESCAPED_UNICODE) }}"></div>
 
             <div class="flex items-center gap-3 mb-6">
-                <span class="w-10 h-10 bg-navy text-white flex items-center justify-center shrink-0">
+                <span class="text-3xl text-navy flex items-center justify-center shrink-0">
                     <i class="fa-solid fa-list" aria-hidden="true"></i>
                 </span>
                 <h3 class="text-lg font-bold text-navy">Repères détaillés</h3>
@@ -166,13 +141,15 @@
                             </div>
                             <article class="pt-1 sm:pt-2">
                                 <p class="text-gray-800 leading-relaxed text-[15px]">{{ $event['texte'] }}</p>
-                                @if(!empty($event['image']))
-                                    <figure class="mt-5">
-                                        <img src="{{ asset($event['image']) }}"
-                                             alt="{{ $event['alt'] }}"
-                                             class="w-full max-w-2xl bg-white">
-                                        <figcaption class="mt-2 text-xs text-gray-500">{{ $event['alt'] }}</figcaption>
-                                    </figure>
+                                @if(!empty($event['images']))
+                                    @foreach($event['images'] as $image)
+                                        <figure class="mt-5">
+                                            <img src="{{ asset($image['src']) }}"
+                                                 alt="{{ $image['alt'] }}"
+                                                 class="w-full max-w-2xl bg-white">
+                                            <figcaption class="mt-2 text-xs text-gray-500">{{ $image['alt'] }}</figcaption>
+                                        </figure>
+                                    @endforeach
                                 @endif
                             </article>
                         </div>

@@ -9,22 +9,35 @@
     $displayName = $isInstitution
         ? ($user->name ?: 'Institution')
         : (trim(($user->firstname ?? '') . ' ' . ($user->lastname ?? '')) ?: ($user->name ?: 'Utilisateur'));
+    $inputClass = 'w-full rounded-none border-gray-300 shadow-sm focus:border-navy focus:ring-navy';
+    $lockedClass = 'w-full rounded-none border-gray-300 bg-gray-100 text-gray-600 cursor-not-allowed shadow-sm';
+    $btnClass = 'px-5 py-2.5 bg-navy hover:bg-orange-500 text-white text-sm font-semibold transition-colors';
 @endphp
 
+<style>
+    .card-shadow { box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1); }
+</style>
+
 <div class="py-10 px-4 sm:px-6 lg:px-8">
-    <div class="max-w-4xl mx-auto space-y-6">
-        <div>
-            <h1 class="text-2xl font-bold text-gray-900">Mon profil</h1>
-            <p class="mt-1 text-sm text-gray-600">{{ $displayName }} · {{ $user->email }}</p>
+    <div class="max-w-7xl mx-auto space-y-8">
+
+        <div class="text-center">
+            <span class="text-xs font-bold text-orange-500 uppercase tracking-widest">Compte</span>
+            <h1 class="text-4xl font-bold text-navy mt-2 mb-3">Mon profil</h1>
+            <p class="text-gray-600">{{ $displayName }} · {{ $user->email }}</p>
         </div>
 
-        {{-- Photo --}}
-        <div class="bg-white rounded-xl border border-gray-200 shadow-sm p-6">
-            <h2 class="text-lg font-semibold text-gray-900 mb-1">Photo de profil</h2>
+        <section class="bg-white border border-gray-200 card-shadow p-6 sm:p-8">
+            <div class="flex items-center gap-3 mb-2">
+                <span class="text-3xl text-navy flex items-center justify-center shrink-0">
+                    <i class="fa-solid fa-camera" aria-hidden="true"></i>
+                </span>
+                <h2 class="text-xl font-bold text-navy">Photo de profil</h2>
+            </div>
             <p class="text-sm text-gray-500 mb-4">JPEG ou PNG · max. 5 Mo</p>
 
             @if (session('status') === 'profile-photo-updated')
-                <p class="mb-4 text-sm text-green-600">Photo mise à jour avec succès.</p>
+                <p class="mb-4 text-sm text-green-700">Photo mise à jour avec succès.</p>
             @endif
 
             <form method="POST" action="{{ route('profile.profile-photo.update') }}" enctype="multipart/form-data">
@@ -32,7 +45,7 @@
                 @method('PATCH')
 
                 <div class="flex flex-col sm:flex-row sm:items-center gap-5">
-                    <div class="h-20 w-20 rounded-full bg-gray-100 border border-gray-200 overflow-hidden flex items-center justify-center shrink-0">
+                    <div class="h-24 w-24 rounded-full bg-gray-100 border border-gray-200 overflow-hidden flex items-center justify-center shrink-0">
                         @if ($user->profile_photo)
                             <img src="{{ asset('storage/' . $user->profile_photo) }}"
                                  alt="Photo actuelle"
@@ -52,9 +65,9 @@
                                id="profile_photo"
                                accept=".jpg,.jpeg,.png,image/jpeg,image/png"
                                class="block w-full text-sm text-gray-600
-                                      file:mr-3 file:py-2 file:px-4 file:rounded-lg file:border-0
-                                      file:text-sm file:font-medium file:bg-blue-50 file:text-blue-700
-                                      hover:file:bg-blue-100
+                                      file:mr-3 file:py-2 file:px-4 file:border-0
+                                      file:text-sm file:font-semibold file:bg-navy file:text-white
+                                      hover:file:bg-orange-500
                                       {{ $errors->has('profile_photo') ? 'text-red-600' : '' }}">
                         @error('profile_photo')
                             <p class="text-sm text-red-600">{{ $message }}</p>
@@ -62,14 +75,13 @@
                     </div>
                 </div>
 
-                <div class="mt-5 flex justify-end">
-                    <button type="submit"
-                            class="px-5 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg transition-colors">
+                <div class="mt-6 flex justify-end">
+                    <button type="submit" class="{{ $btnClass }}">
                         Mettre à jour
                     </button>
                 </div>
             </form>
-        </div>
+        </section>
 
         <script>
             document.getElementById('profile_photo')?.addEventListener('change', function (e) {
@@ -92,13 +104,17 @@
             });
         </script>
 
-        {{-- Informations --}}
-        <div class="bg-white rounded-xl border border-gray-200 shadow-sm p-6">
-            <h2 class="text-lg font-semibold text-gray-900 mb-1">Informations personnelles</h2>
+        <section class="bg-white border border-gray-200 card-shadow p-6 sm:p-8">
+            <div class="flex items-center gap-3 mb-2">
+                <span class="text-3xl text-navy flex items-center justify-center shrink-0">
+                    <i class="fa-solid fa-id-card" aria-hidden="true"></i>
+                </span>
+                <h2 class="text-xl font-bold text-navy">Informations personnelles</h2>
+            </div>
             <p class="text-sm text-gray-500 mb-4">Les champs verrouillés ne peuvent pas être modifiés ici.</p>
 
             @if (session('status') === 'profile-updated')
-                <p class="mb-4 text-sm text-green-600">Informations mises à jour avec succès.</p>
+                <p class="mb-4 text-sm text-green-700">Informations mises à jour avec succès.</p>
             @endif
 
             <form method="POST" action="{{ route('profile.update') }}">
@@ -117,7 +133,7 @@
                             <input type="text" id="name_display"
                                    value="{{ old('name', $user->name) }}"
                                    disabled
-                                   class="w-full rounded-lg border-gray-300 bg-gray-100 text-gray-600 cursor-not-allowed shadow-sm">
+                                   class="{{ $lockedClass }}">
                         </div>
                     @else
                         <div>
@@ -127,7 +143,7 @@
                             <input type="text" id="firstname"
                                    value="{{ old('firstname', $user->firstname) }}"
                                    disabled
-                                   class="w-full rounded-lg border-gray-300 bg-gray-100 text-gray-600 cursor-not-allowed shadow-sm">
+                                   class="{{ $lockedClass }}">
                         </div>
                         <div>
                             <label for="lastname" class="block text-sm font-medium text-gray-700 mb-1">
@@ -136,7 +152,7 @@
                             <input type="text" id="lastname"
                                    value="{{ old('lastname', $user->lastname) }}"
                                    disabled
-                                   class="w-full rounded-lg border-gray-300 bg-gray-100 text-gray-600 cursor-not-allowed shadow-sm">
+                                   class="{{ $lockedClass }}">
                         </div>
                     @endif
 
@@ -147,7 +163,7 @@
                         <input type="email" id="email_display"
                                value="{{ old('email', $user->email) }}"
                                disabled
-                               class="w-full rounded-lg border-gray-300 bg-gray-100 text-gray-600 cursor-not-allowed shadow-sm">
+                               class="{{ $lockedClass }}">
                     </div>
 
                     <div>
@@ -155,7 +171,7 @@
                         <input type="text" name="nif" id="nif"
                                value="{{ old('nif', $user->nif) }}"
                                placeholder="ex: 809-062-525-6"
-                               class="w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 @error('nif') border-red-500 @enderror">
+                               class="{{ $inputClass }} @error('nif') border-red-500 @enderror">
                         @error('nif')
                             <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
                         @enderror
@@ -166,7 +182,7 @@
                             <label for="ninu" class="block text-sm font-medium text-gray-700 mb-1">NINU</label>
                             <input type="text" name="ninu" id="ninu"
                                    value="{{ old('ninu', $user->ninu) }}"
-                                   class="w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 @error('ninu') border-red-500 @enderror">
+                                   class="{{ $inputClass }} @error('ninu') border-red-500 @enderror">
                             @error('ninu')
                                 <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
                             @enderror
@@ -178,7 +194,7 @@
                         <input type="text" name="phone" id="phone"
                                value="{{ old('phone', $user->phone) }}"
                                placeholder="+509XXXXXXXX"
-                               class="w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 @error('phone') border-red-500 @enderror">
+                               class="{{ $inputClass }} @error('phone') border-red-500 @enderror">
                         @error('phone')
                             <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
                         @enderror
@@ -191,34 +207,37 @@
                         <input type="text" id="sexe"
                                value="{{ old('sexe', optional($user->gender)->name) }}"
                                disabled
-                               class="w-full rounded-lg border-gray-300 bg-gray-100 text-gray-600 cursor-not-allowed shadow-sm">
+                               class="{{ $lockedClass }}">
                     </div>
                 </div>
 
                 <div class="mt-6 flex justify-end">
-                    <button type="submit"
-                            class="px-5 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg transition-colors">
+                    <button type="submit" class="{{ $btnClass }}">
                         Mettre à jour
                     </button>
                 </div>
             </form>
-        </div>
+        </section>
 
-        {{-- Mot de passe --}}
-        <div class="bg-white rounded-xl border border-gray-200 shadow-sm p-6">
-            <h2 class="text-lg font-semibold text-gray-900 mb-1">Mot de passe</h2>
+        <section class="bg-white border border-gray-200 card-shadow p-6 sm:p-8">
+            <div class="flex items-center gap-3 mb-2">
+                <span class="text-3xl text-navy flex items-center justify-center shrink-0">
+                    <i class="fa-solid fa-lock" aria-hidden="true"></i>
+                </span>
+                <h2 class="text-xl font-bold text-navy">Mot de passe</h2>
+            </div>
             <p class="text-sm text-gray-500 mb-4">Utilisez un mot de passe long pour sécuriser votre compte.</p>
 
             @if (session('status') === 'password-updated')
-                <p class="mb-4 text-sm text-green-600">Mot de passe mis à jour avec succès.</p>
+                <p class="mb-4 text-sm text-green-700">Mot de passe mis à jour avec succès.</p>
             @endif
 
             <form method="POST" action="{{ route('password.update') }}">
                 @csrf
                 @method('PUT')
 
-                <div class="space-y-4 max-w-xl">
-                    <div>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div class="md:col-span-2 max-w-xl">
                         <label for="update_password_current_password" class="block text-sm font-medium text-gray-700 mb-1">
                             Mot de passe actuel
                         </label>
@@ -226,7 +245,7 @@
                                name="current_password"
                                id="update_password_current_password"
                                autocomplete="current-password"
-                               class="w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 @error('current_password', 'updatePassword') border-red-500 @enderror">
+                               class="{{ $inputClass }} @error('current_password', 'updatePassword') border-red-500 @enderror">
                         @error('current_password', 'updatePassword')
                             <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
                         @enderror
@@ -240,7 +259,7 @@
                                name="password"
                                id="update_password_password"
                                autocomplete="new-password"
-                               class="w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 @error('password', 'updatePassword') border-red-500 @enderror">
+                               class="{{ $inputClass }} @error('password', 'updatePassword') border-red-500 @enderror">
                         @error('password', 'updatePassword')
                             <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
                         @enderror
@@ -254,18 +273,18 @@
                                name="password_confirmation"
                                id="update_password_password_confirmation"
                                autocomplete="new-password"
-                               class="w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                               class="{{ $inputClass }}">
                     </div>
                 </div>
 
                 <div class="mt-6 flex justify-end">
-                    <button type="submit"
-                            class="px-5 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg transition-colors">
+                    <button type="submit" class="{{ $btnClass }}">
                         Mettre à jour
                     </button>
                 </div>
             </form>
-        </div>
+        </section>
+
     </div>
 </div>
 @endsection

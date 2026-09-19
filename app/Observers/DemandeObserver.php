@@ -84,7 +84,7 @@ class DemandeObserver
     private function notifyDirectionUsers(Demande $demande): void
     {
         $directionUsers = User::whereHas('service', fn ($q) => $q->where('code', Service::DIRECTION))
-            ->orWhereHas('roles', fn ($q) => $q->where('name', 'direction'))
+            ->orWhereHas('roles', fn ($q) => $q->whereIn('name', User::DIRECTION_ROLES))
             ->get();
 
         foreach ($directionUsers as $user) {

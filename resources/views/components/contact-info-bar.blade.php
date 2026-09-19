@@ -6,13 +6,6 @@
         .' '.$now->format('d').' '
         .$months[$now->month - 1]
         .' '.$now->format('Y, H:i:s');
-    try {
-        $visitSummary = app(\App\Services\SiteVisitService::class)->summary();
-    } catch (\Throwable) {
-        $visitSummary = ['total_hits' => 0, 'today_hits' => 0, 'total_visitors' => 0, 'today_visitors' => 0];
-    }
-    $totalVisits = (int) ($visitSummary['total_visitors'] ?? 0);
-    $todayVisits = (int) ($visitSummary['today_visitors'] ?? 0);
 @endphp
 <div class="container mx-auto relative overflow-hidden bg-[#173052] bg-motif-dots text-white text-sm
     @if($borderType === 'top') border-t border-white/20 @endif
@@ -44,8 +37,7 @@
                 </a>
             </div>
 
-            <div class="flex flex-col items-center lg:items-end gap-0.5 shrink-0 text-white/90">
-                <div class="flex items-center gap-1.5 tabular-nums whitespace-nowrap"
+            <div class="flex items-center gap-1.5 shrink-0 tabular-nums whitespace-nowrap text-white/90"
                  x-data="{
                     now: {{ json_encode($initialDatetime) }},
                     weekdays: {{ json_encode($weekdays) }},
@@ -77,14 +69,6 @@
                  x-init="tick(); setInterval(() => tick(), 1000)">
                 <i class="fas fa-calendar-alt text-xs"></i>
                 <span x-text="now">{{ $initialDatetime }}</span>
-                </div>
-                <p class="flex items-center gap-1.5 whitespace-nowrap text-xs"
-                   aria-label="{{ __('messages.visit_counter') }}">
-                    <i class="fas fa-eye text-[10px] text-orange-400" aria-hidden="true"></i>
-                    <span>{{ __('messages.visits_total') }} : <span class="font-semibold text-white">{{ number_format($totalVisits, 0, ',', ' ') }}</span></span>
-                    <span class="opacity-40">·</span>
-                    <span>{{ __('messages.visits_today') }} : <span class="font-semibold text-white">{{ number_format($todayVisits, 0, ',', ' ') }}</span></span>
-                </p>
             </div>
     </div>
 </div>

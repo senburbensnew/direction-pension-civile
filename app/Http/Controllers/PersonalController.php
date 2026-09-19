@@ -43,6 +43,7 @@ class PersonalController extends Controller
             'service_liquidation'        => Service::LIQUIDATION,
             'service_controle_placement' => Service::CONTROLE_PLACEMENT,
             'service_comptabilite'       => Service::COMPTABILITE,
+            'service_accueil_formalites' => Service::FORMALITE,
             'service_formalite'          => Service::FORMALITE,
             'service_assurance'          => Service::ASSURANCE,
         ];
@@ -364,7 +365,7 @@ class PersonalController extends Controller
         try {
             $demande->loadMissing('currentStep');
             $directionUsers = User::whereHas('service', fn ($q) => $q->where('code', Service::DIRECTION))
-                ->orWhereHas('roles', fn ($q) => $q->where('name', 'direction'))
+                ->orWhereHas('roles', fn ($q) => $q->whereIn('name', User::DIRECTION_ROLES))
                 ->get();
 
             foreach ($directionUsers as $user) {
@@ -561,7 +562,7 @@ class PersonalController extends Controller
 
         // Block access once avis is submitted, unless the service now owns the dossier via workflow
         $isCurrentServiceOwner = $user?->service_id && $requestModel->current_service_id === $user->service_id;
-        if (!$isCurrentServiceOwner && !$user?->hasRole(['admin', 'direction']) && $user?->service_id) {
+        if (!$isCurrentServiceOwner && !$user?->hasRole('admin') && !$user?->isDirection() && $user?->service_id) {
             $submittedAvis = DemandeInteraction::where('demande_id', $requestModel->id)
                 ->where('type', DemandeInteraction::TYPE_AVIS)
                 ->where('to_service_id', $user->service_id)

@@ -15,6 +15,17 @@ class User extends Authenticatable
 {
     use HasApiTokens, HasFactory, Notifiable, HasRoles;
 
+    public const ROLE_DIRECTION = 'direction';
+    public const ROLE_DIRECTEUR = 'directeur';
+    public const ROLE_ASSISTANT_DIRECTEUR = 'assistant_directeur';
+
+    /** @var list<string> */
+    public const DIRECTION_ROLES = [
+        self::ROLE_DIRECTION,
+        self::ROLE_DIRECTEUR,
+        self::ROLE_ASSISTANT_DIRECTEUR,
+    ];
+
     /**
      * The attributes that are mass assignable.
      *
@@ -74,5 +85,10 @@ class User extends Authenticatable
     public function gender()
     {
         return $this->belongsTo(Gender::class);
+    }
+
+    public function isDirection(): bool
+    {
+        return $this->hasAnyRole(self::DIRECTION_ROLES);
     }
 }

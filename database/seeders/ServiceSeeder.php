@@ -60,8 +60,8 @@ class ServiceSeeder extends Seeder
                 'color'       => 'indigo',
             ],
             [
-                'code'        => 'service_formalite',
-                'nom'         => 'Service Accueil et Formalités',
+                'code'        => 'service_accueil_formalites',
+                'nom'         => 'Accueil et Formalités',
                 'description' => 'Le Service Accueil et Formalités accueille les nouveaux pensionnés, prépare les cartes de pension, valide les mandats et assure les virements ainsi que le service de proximité.',
                 'icon'        => 'fa-file-signature',
                 'color'       => 'teal',

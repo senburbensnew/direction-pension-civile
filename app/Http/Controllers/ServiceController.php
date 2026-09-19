@@ -9,6 +9,8 @@ class ServiceController extends Controller
 {
     public function publicShow(Service $service)
     {
+        $service->applyCatalogNom();
+
         $others = Service::publicOrdered()
             ->where('code', '!=', $service->code)
             ->values();

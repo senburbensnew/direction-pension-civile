@@ -43,7 +43,7 @@ trait SeedsRequiredData
             Service::LIQUIDATION        => 'Service Liquidation',
             Service::CONTROLE_PLACEMENT => 'Service Contrôle et Placement',
             Service::COMPTABILITE       => 'Service Comptabilité',
-            Service::FORMALITE          => 'Service Formalité',
+            Service::FORMALITE          => 'Accueil et Formalités',
             Service::ASSURANCE          => 'Service Assurance',
         ];
 
@@ -55,8 +55,8 @@ trait SeedsRequiredData
     protected function seedRoles(): void
     {
         $roles = [
-            'admin', 'direction', 'secretariat', 'service_liquidation',
-            'service_formalite', 'service_controle_placement',
+            'admin', 'direction', 'directeur', 'assistant_directeur', 'secretariat', 'service_liquidation',
+            'service_accueil_formalites', 'service_controle_placement',
             'service_comptabilite', 'service_assurance',
             'pensionnaire', 'fonctionnaire', 'institution',
         ];

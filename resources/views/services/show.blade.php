@@ -15,7 +15,7 @@
 
         <div class="bg-white rounded-none border border-gray-200 shadow-sm p-8 md:p-10">
             <div class="flex items-start gap-4 mb-6">
-                <i class="fa-solid fa-fw {{ $service->icon ?: 'fa-building' }} text-navy text-xl mt-1" aria-hidden="true"></i>
+                <i class="fa-solid fa-fw {{ $service->icon ?: 'fa-building' }} text-navy text-3xl mt-1" aria-hidden="true"></i>
                 <div>
                     <p class="text-xs font-semibold uppercase tracking-widest text-gray-500 mb-1">Service</p>
                     <h1 class="text-3xl font-bold text-navy">{{ $service->nom }}</h1>

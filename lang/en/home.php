@@ -49,6 +49,7 @@ return [
     'acces_title' => 'Quick access',
     'acces_intro' => 'The tools and resources most used by pensioners, civil servants and institutions.',
     'acces_cta' => 'Open',
+    'carousel_cta' => 'Learn more',
     'acces_simulateur_title' => 'Pension simulator',
     'acces_simulateur_desc' => 'Estimate your retirement rights from your career.',
     'acces_textes_title' => 'Legal texts',

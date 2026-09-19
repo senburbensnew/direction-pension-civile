@@ -78,8 +78,8 @@
                         <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-gray-400 pointer-events-none">
                             <i class="fas fa-link text-xs"></i>
                         </span>
-                        <input type="url" name="link" id="link" value="{{ old('link', $carousel->link) }}"
-                               placeholder="https://exemple.com"
+                        <input type="text" name="link" id="link" value="{{ old('link', $carousel->link) }}"
+                               placeholder="https://… ou /quisommesnous/missions"
                                class="w-full pl-8 pr-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
                     </div>
                 </div>

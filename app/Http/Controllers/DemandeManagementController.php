@@ -95,7 +95,7 @@ class DemandeManagementController extends Controller
 
     public function annotate(Request $request, Demande $demande)
     {
-        abort_unless(auth()->user()->hasRole('direction'), 403, 'Seule la Direction peut annoter un dossier.');
+        abort_unless(auth()->user()->isDirection(), 403, 'Seule la Direction peut annoter un dossier.');
         abort_if($demande->isClosed(), 403, 'Ce dossier est clôturé et ne peut plus être modifié.');
 
         abort_if(
@@ -387,7 +387,7 @@ class DemandeManagementController extends Controller
 
     public function approuver(Demande $demande)
     {
-        abort_unless(auth()->user()->hasRole('direction'), 403);
+        abort_unless(auth()->user()->isDirection(), 403);
 
         abort_if(
             $demande->created_by === auth()->id(),
@@ -442,7 +442,7 @@ class DemandeManagementController extends Controller
 
     public function cloturer(Demande $demande)
     {
-        abort_unless(auth()->user()->hasRole('direction'), 403);
+        abort_unless(auth()->user()->isDirection(), 403);
 
         abort_if(
             $demande->created_by === auth()->id(),
@@ -497,7 +497,7 @@ class DemandeManagementController extends Controller
 
     public function rejeter(Request $request, Demande $demande)
     {
-        abort_unless(auth()->user()->hasRole('direction'), 403);
+        abort_unless(auth()->user()->isDirection(), 403);
         $request->validate(['motif' => 'nullable|string|max:2000']);
 
         abort_if(
@@ -533,7 +533,7 @@ class DemandeManagementController extends Controller
 
     public function annuler(Request $request, Demande $demande)
     {
-        abort_unless(auth()->user()->hasRole('direction'), 403);
+        abort_unless(auth()->user()->isDirection(), 403);
         $request->validate(['motif' => 'nullable|string|max:2000']);
 
         abort_if(
@@ -569,7 +569,7 @@ class DemandeManagementController extends Controller
 
     public function rouvrir(Request $request, Demande $demande)
     {
-        abort_unless(auth()->user()->hasRole('direction'), 403);
+        abort_unless(auth()->user()->isDirection(), 403);
         abort_unless($demande->isClosed(), 422, 'Ce dossier n\'est pas clôturé.');
 
         $request->validate(['motif' => 'nullable|string|max:2000']);

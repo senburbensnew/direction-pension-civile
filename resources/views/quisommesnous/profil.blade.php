@@ -47,7 +47,7 @@
 
             <section class="bg-white border border-gray-200 card-shadow p-6 sm:p-8">
                 <div class="flex items-center gap-3 mb-4">
-                    <span class="w-10 h-10 bg-navy text-white flex items-center justify-center shrink-0">
+                    <span class="text-3xl text-navy flex items-center justify-center shrink-0">
                         <i class="fa-solid fa-id-card" aria-hidden="true"></i>
                     </span>
                     <h2 class="text-xl font-bold text-navy">{{ $pageTitle }}</h2>

@@ -59,7 +59,7 @@ class WorkflowStepSeeder extends Seeder
                 'code'        => 'VERIFICATION_FORMALITES',
                 'nom'         => 'Vérification des formalités',
                 'description' => 'Contrôle de la conformité et complétude des pièces justificatives',
-                'service'     => 'service_formalite',
+                'service'     => 'service_accueil_formalites',
                 'ordre'       => 30,
                 'type_noeud'  => WorkflowStepTypeEnum::INTERMEDIAIRE,
             ],

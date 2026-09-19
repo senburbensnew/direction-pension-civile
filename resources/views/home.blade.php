@@ -344,9 +344,11 @@
                     $styleExtra = $slide->textStyleClasses();
                     $titleStyle = "color: {$textColor};";
                     $descStyle  = "color: {$textColor}; opacity: 0.85;";
-                    $hasOverlay = $slide->title || $slide->description || $slide->cta_label;
+                    $hasOverlay = $slide->title || $slide->description || $slide->cta_label || $slide->link;
+                    $ctaLabel = $slide->cta_label ?: __('home.carousel_cta');
+                    $isExternalLink = $slide->link && preg_match('#^https?://#i', $slide->link);
                 @endphp
-                <div class="swiper-slide">
+                <div class="swiper-slide{{ $slide->link ? ' cursor-pointer' : '' }}">
                     <img src="{{ $slide->imageUrl() }}"
                          alt="{{ $slide->title ?? 'Direction de la Pension Civile' }}"
                          loading="lazy">
@@ -356,7 +358,7 @@
                         <div class="absolute inset-0 {{ $gradientClass }} pointer-events-none"></div>
 
                         {{-- Text overlay --}}
-                        <div class="absolute inset-0 flex p-6 sm:p-10 {{ $alignClass }}">
+                        <div class="absolute inset-0 flex p-6 sm:p-10 {{ $alignClass }} pointer-events-none">
                             <div class="max-w-xl">
                                 @if($slide->title)
                                     <h2 class="{{ $titleClass }} {{ $styleExtra }} leading-tight drop-shadow-lg mb-2"
@@ -370,19 +372,23 @@
                                         {{ $slide->description }}
                                     </p>
                                 @endif
-                                @if($slide->cta_label && $slide->link)
-                                    <a href="{{ $slide->link }}"
-                                       class="inline-flex items-center gap-2 bg-white text-gray-900 font-semibold text-sm px-5 py-2.5 rounded-full shadow-lg hover:bg-blue-50 transition-colors">
-                                        {{ $slide->cta_label }}
-                                        <i class="fas fa-arrow-right text-xs"></i>
-                                    </a>
-                                @elseif($slide->cta_label)
+                                @if($slide->link || $slide->cta_label)
                                     <span class="inline-flex items-center gap-2 bg-white text-gray-900 font-semibold text-sm px-5 py-2.5 rounded-full shadow-lg">
-                                        {{ $slide->cta_label }}
+                                        {{ $slide->link ? $ctaLabel : $slide->cta_label }}
+                                        @if($slide->link)
+                                            <i class="fas fa-arrow-right text-xs"></i>
+                                        @endif
                                     </span>
                                 @endif
                             </div>
                         </div>
+                    @endif
+
+                    @if($slide->link)
+                        <a href="{{ $slide->link }}"
+                           class="absolute inset-0 z-[5]"
+                           aria-label="{{ $ctaLabel }}"
+                           @if($isExternalLink) target="_blank" rel="noopener noreferrer" @endif></a>
                     @endif
                 </div>
             @endforeach

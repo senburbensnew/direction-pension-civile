@@ -249,7 +249,7 @@ Route::middleware('auth')->group(function () {
     });
 
     // Décision finale — Direction ou admin
-    Route::prefix('admin')->name('admin.')->middleware(['auth', 'role:admin|direction'])->group(function () {
+    Route::prefix('admin')->name('admin.')->middleware(['auth', 'role:admin|direction|directeur|assistant_directeur'])->group(function () {
         Route::post('/demandes/{demande}/approuver', [DemandeManagementController::class, 'approuver'])->name('demandes.approuver');
         Route::post('/demandes/{demande}/cloturer', [DemandeManagementController::class, 'cloturer'])->name('demandes.cloturer');
         Route::post('/demandes/{demande}/rejeter', [DemandeManagementController::class, 'rejeter'])->name('demandes.rejeter');

@@ -49,6 +49,7 @@ return [
     'acces_title' => 'Accès rapide',
     'acces_intro' => 'Les outils et ressources les plus consultés par les pensionnaires, fonctionnaires et institutions.',
     'acces_cta' => 'Accéder',
+    'carousel_cta' => 'En savoir plus',
     'acces_simulateur_title' => 'Simulateur de pension',
     'acces_simulateur_desc' => 'Estimez vos droits à la retraite à partir de votre carrière.',
     'acces_textes_title' => 'Textes légaux',

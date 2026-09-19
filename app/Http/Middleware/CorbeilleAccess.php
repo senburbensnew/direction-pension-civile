@@ -18,8 +18,10 @@ class CorbeilleAccess
         if (! auth()->user()->hasAnyRole([
             'secretariat',
             'direction',
+            'directeur',
+            'assistant_directeur',
             'service_liquidation',
-            'service_formalite',
+            'service_accueil_formalites',
             'service_controle_placement',
             'service_comptabilite',
             'service_assurance',

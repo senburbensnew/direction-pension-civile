@@ -31,8 +31,8 @@ class DemandeMessage extends Model
     public function isFromService(): bool
     {
         return $this->sender?->hasAnyRole([
-            'direction', 'secretariat', 'service_liquidation',
-            'service_formalite', 'service_controle_placement',
+            'direction', 'directeur', 'assistant_directeur', 'secretariat', 'service_liquidation',
+            'service_accueil_formalites', 'service_controle_placement',
             'service_comptabilite', 'service_assurance', 'administration', 'admin',
         ]) ?? false;
     }

@@ -59,6 +59,29 @@ class UsersSeeder extends Seeder
         );
         $directionUser->syncRoles(['fonctionnaire', 'direction']);
 
+        $directeurUser = User::updateOrCreate(
+            ['email' => 'directeur@example.com'],
+            [
+                'name' => 'Directeur',
+                'password' => $defaultPassword,
+                'nif' => fake()->unique()->numerify('###-###-###-#'),
+                'user_type_id' => $fonctionnaireType->id,
+                'service_id' => Service::where('code', 'direction')->value('id'),
+            ]
+        );
+        $directeurUser->syncRoles(['fonctionnaire', 'directeur']);
+
+        $assistantDirecteurUser = User::updateOrCreate(
+            ['email' => 'assistant.directeur@example.com'],
+            [
+                'name' => 'Assistant Directeur',
+                'password' => $defaultPassword,
+                'nif' => fake()->unique()->numerify('###-###-###-#'),
+                'user_type_id' => $fonctionnaireType->id,
+                'service_id' => Service::where('code', 'direction')->value('id'),
+            ]
+        );
+        $assistantDirecteurUser->syncRoles(['fonctionnaire', 'assistant_directeur']);
 
         // Service liquidation
         $liquidationUser = User::updateOrCreate(
@@ -102,18 +125,18 @@ class UsersSeeder extends Seeder
         $comptabiliteUser->syncRoles(['fonctionnaire', 'service_comptabilite']);
 
 
-        // Service formalité
+        // Accueil et Formalités
         $formaliteUser = User::updateOrCreate(
             ['email' => 'formalite@example.com'],
             [
-                'name' => 'Service formalité',
+                'name' => 'Accueil et Formalités',
                 'password' => $defaultPassword,
                 'nif' => fake()->unique()->numerify('###-###-###-#'),
                 'user_type_id' => $fonctionnaireType->id,
-                'service_id' => Service::where('code', 'service_formalite')->value('id'),
+                'service_id' => Service::where('code', 'service_accueil_formalites')->value('id'),
             ]
         );
-        $formaliteUser->syncRoles(['fonctionnaire', 'service_formalite']);
+        $formaliteUser->syncRoles(['fonctionnaire', 'service_accueil_formalites']);
 
 
         // Service assurance

@@ -70,7 +70,7 @@ class DemandeManagementFeatureTest extends TestCase
 
     private function makeDemandeThatHasBeenProcessed(User $owner): Demande
     {
-        // DEMANDE_ATTESTATION requires: secretariat → service_formalite
+        // DEMANDE_ATTESTATION requires: secretariat → service_accueil_formalites
         $demande     = $this->makeDemande($owner, 'EN_COURS');
         $direction   = Service::where('code', Service::DIRECTION)->first();
         $secretariat = Service::where('code', Service::SECRETARIAT)->first();

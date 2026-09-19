@@ -2,9 +2,9 @@
 
 return [
     [
-        'code' => 'service_formalite',
+        'code' => 'service_accueil_formalites',
         'numero' => 'II.3.1',
-        'nom' => 'Service Accueil et Formalités',
+        'nom' => 'Accueil et Formalités',
         'icon' => 'fa-file-signature',
         'intro' => 'Le Service Accueil et Formalités a pour attributions de :',
         'resume' => 'Accueil des pensionnés, cartes de pension, mandats, virements et visites à domicile.',
