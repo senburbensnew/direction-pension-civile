@@ -33,8 +33,14 @@ class DemandeObserver
                 ? \App\Models\WorkflowStep::find($previousStepId)?->code
                 : null;
 
+            if ($previousCode === 'SOUMISE') {
+                return;
+            }
+
             if ($previousCode !== 'COMPLEMENT_REQUIS') {
-                $this->notifyDirectionUsers($demande);
+                if (! $demande->isRencontre()) {
+                    $this->notifyDirectionUsers($demande);
+                }
                 $this->notifyOwnerOnSubmission($demande, $owner);
             }
             return;
@@ -67,7 +73,7 @@ class DemandeObserver
             $owner->notify(new DemandeStatusChangedNotification(
                 $demande,
                 'SOUMISE',
-                'Votre demande a bien été soumise et reçue par la Direction.'
+                'Votre demande a bien été soumise et reçue.'
             ));
         } catch (\Throwable $e) {
             Log::error('DemandeObserver: could not notify owner on submission', [

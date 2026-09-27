@@ -6,7 +6,7 @@ use App\Enums\CategorieDossierEnum;
 
 enum TypeDemandeEnum: string
 {
-    // PENSIONNAIRE
+    // PENSIONNE
     case DEMANDE_VIREMENT_BANCAIRE = 'DEMANDE_VIREMENT_BANCAIRE';
     case DEMANDE_ATTESTATION = 'DEMANDE_ATTESTATION';
     case DEMANDE_TRANSFERT_CHEQUE = 'DEMANDE_TRANSFERT_CHEQUE';
@@ -14,6 +14,7 @@ enum TypeDemandeEnum: string
     case DEMANDE_REINSERTION = 'DEMANDE_REINSERTION';
     case DEMANDE_ARRET_VIREMENT = 'DEMANDE_ARRET_VIREMENT';
     case DEMANDE_PREUVE_EXISTENCE = 'DEMANDE_PREUVE_EXISTENCE';
+    case DEMANDE_MISE_A_JOUR = 'DEMANDE_MISE_A_JOUR';
     case DEMANDE_PENSION_REVERSION = 'DEMANDE_PENSION_REVERSION';
 
     // FONCTIONNAIRE
@@ -25,6 +26,7 @@ enum TypeDemandeEnum: string
 
     // GENERAL
     case DEMANDE_RENCONTRE = 'DEMANDE_RENCONTRE';
+    case DEMANDE_CREATION_COMPTE = 'DEMANDE_CREATION_COMPTE';
 
     public function label(): string
     {
@@ -36,11 +38,13 @@ enum TypeDemandeEnum: string
             self::DEMANDE_REINSERTION       => 'Demande de réinsertion',
             self::DEMANDE_ARRET_VIREMENT    => "Demande d'arrêt de virement",
             self::DEMANDE_PREUVE_EXISTENCE  => "Preuve d'existence",
+            self::DEMANDE_MISE_A_JOUR       => 'Mise à jour des informations',
             self::DEMANDE_PENSION_REVERSION => 'Demande de pension de réversion',
             self::DEMANDE_ETAT_CARRIERE     => "Demande d'état de carrière",
             self::DEMANDE_PENSION           => 'Demande de pension',
             self::DEMANDE_ADHESION          => "Demande d'adhésion",
             self::DEMANDE_RENCONTRE         => 'Demande de rencontre',
+            self::DEMANDE_CREATION_COMPTE   => 'Demande de création de compte',
         };
     }
 
@@ -61,7 +65,9 @@ enum TypeDemandeEnum: string
             // Dossiers administratifs
             self::DEMANDE_ATTESTATION,
             self::DEMANDE_PREUVE_EXISTENCE,
-            self::DEMANDE_ETAT_CARRIERE     => CategorieDossierEnum::ADMINISTRATIF,
+            self::DEMANDE_MISE_A_JOUR,
+            self::DEMANDE_ETAT_CARRIERE,
+            self::DEMANDE_CREATION_COMPTE    => CategorieDossierEnum::ADMINISTRATIF,
 
             // Correspondances institutionnelles
             self::DEMANDE_ADHESION          => CategorieDossierEnum::CORRESPONDANCES,

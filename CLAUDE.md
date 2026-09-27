@@ -32,14 +32,14 @@ php artisan db:seed
 
 ## Architecture Overview
 
-This is a **Haitian civil pension management system** built with Laravel 10. The application serves three user types (defined in `app/Enums/UserTypeEnum.php`): **Pensionnaire** (retirees), **Fonctionnaire** (civil servants), and **Institution**.
+This is a **Haitian civil pension management system** built with Laravel 10. The application serves three user types (defined in `app/Enums/UserTypeEnum.php`): **Pensionne** (retirees), **Fonctionnaire** (civil servants), and **Institution**.
 
 ### Core Domain: Demandes (Requests)
 
 The central concept is a `Demande` (request/application). All request types are unified under a single `demandes` table with a `type` column (values from `app/Enums/TypeDemandeEnum.php`) and a JSON `data` column for type-specific fields.
 
 - **Request types by user role:**
-  - Pensionnaire: bank transfers, attestations, check transfers, payment stops, proof of existence, survivor pension
+  - Pensionne: bank transfers, attestations, check transfers, payment stops, proof of existence, survivor pension
   - Fonctionnaire: pension request, career statement
   - Institution: membership adhesion
 
@@ -76,7 +76,7 @@ Dossier pointers: `current_step_id` (logical state) and `current_service_id` (lo
 - **Tailwind CSS** + **DaisyUI** component library
 - **Vite** for asset bundling (entry: `resources/css/app.css`, `resources/js/app.js`)
 - **Signature Pad** for digital signatures on forms
-- Views are organized by domain under `resources/views/` (e.g., `demandes/`, `fonctionnaire/`, `institution/`, `pensionnaire/`, `personal/`, `admin/`)
+- Views are organized by domain under `resources/views/` (e.g., `demandes/`, `fonctionnaire/`, `institution/`, `pensionne/`, `personal/`, `admin/`)
 
 ### Custom Validation
 
@@ -115,9 +115,9 @@ The app supports French/English. Language files are in `lang/`. The `SetLocale` 
 - `resources/views/layouts/app.blade.php`: body uses `bg-gray-100`; main wrapper has `border border-gray-200 mx-4 my-4 rounded-lg shadow-sm` for a visible framed card appearance.
 
 **Codebase cleanup**
-- Deleted obsolete controllers: `FonctionnaireController`, `InstitutionController`, `PensionnaireController`, `DemandeApiController`.
+- Deleted obsolete controllers: `FonctionnaireController`, `InstitutionController`, `PensionneController`, `DemandeApiController`.
 - Deleted obsolete models: `RequestHistory`, `RequestType`, `Contact`, `ErrorLog`.
-- Deleted `app/Helpers/ErrorLoggerService.php`, `app/Enums/RequestEventTypeEnum.php`, `resources/views/enregistrement-pensionnaire/`.
+- Deleted `app/Helpers/ErrorLoggerService.php`, `app/Enums/RequestEventTypeEnum.php`, `resources/views/enregistrement-pensionne/`.
 
 **Architecture diagrams**
 - Generated 4 PlantUML files in `documentation/`: `use_case.puml`, `flux.puml`, `sequence.puml`, `entity_association.puml`.

@@ -27,6 +27,9 @@ class CorbeilleAccess
             'service_assurance',
             'administration',
             'admin',
+            \App\Models\User::ROLE_AGENT_RDV,
+            \App\Models\User::ROLE_VALIDATEUR_RDV,
+            \App\Models\User::ROLE_AGENT_FORMALITES,
         ])) {
             abort(403);
         }

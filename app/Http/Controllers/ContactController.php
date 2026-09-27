@@ -27,10 +27,11 @@ class ContactController extends Controller
         $services = Service::publicOrdered();
 
         return view('contact.index', [
-            'contact'    => $params,
-            'directions' => $directions,
-            'services'   => $services,
-            'subjects'   => $subjects,
+            'contact'       => $params,
+            'directions'    => $directions,
+            'services'      => $services,
+            'subjects'      => $subjects,
+            'servicePhones' => config('contact.service_phones', []),
         ]);
     }
 

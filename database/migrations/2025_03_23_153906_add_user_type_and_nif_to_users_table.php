@@ -15,7 +15,7 @@ class AddUserTypeAndNifToUsersTable extends Migration
     {
         Schema::table('users', function (Blueprint $table) {
             // Add user_type as an enum with the new values
-            $table->enum('user_type', ['institution', 'fonctionnaire', 'pensionnaire'])->default('pensionnaire');
+            $table->enum('user_type', ['institution', 'fonctionnaire', 'pensionne'])->default('pensionne');
             // Add NIF as non-nullable
             $table->string('nif')->nullable()->unique();
         });

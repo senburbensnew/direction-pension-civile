@@ -10,7 +10,7 @@ use App\Http\Requests\StoreDemandeAdhesionRequest;
 use App\Http\Requests\StoreDemandeArretVirementRequest;
 use App\Http\Requests\StoreDemandeAttestationRequest;
 use App\Http\Requests\StoreDemandePensionRequest;
-use App\Http\Requests\StoreDemandePensionPensionnaireRequest;
+use App\Http\Requests\StoreDemandePensionPensionneRequest;
 use App\Http\Requests\StoreDemandePensionReversionRequest;
 use App\Http\Requests\StoreDemandeReinsertionRequest;
 use App\Http\Requests\StoreDemandeVirementBancaireRequest;
@@ -66,7 +66,7 @@ class DemandeController extends Controller
             $isDemandeReadyForSubmission = !empty($demande->data);
         }
 
-        return view('pensionnaire.demande-virement-bancaire', compact('genders', 'civilStatuses', 'pensionTypes', 'pensionCategories', 'demande', 'isDemandeReadyForSubmission'));
+        return view('pensionne.demande-virement-bancaire', compact('genders', 'civilStatuses', 'pensionTypes', 'pensionCategories', 'demande', 'isDemandeReadyForSubmission'));
     }
 
     public function storeDemandeVirement(StoreDemandeVirementBancaireRequest $request)
@@ -197,7 +197,7 @@ class DemandeController extends Controller
             $isDemandeReadyForSubmission = !empty($demande->data);
         }
 
-        return view('pensionnaire.demande-attestation', compact('demande', 'isDemandeReadyForSubmission'));
+        return view('pensionne.demande-attestation', compact('demande', 'isDemandeReadyForSubmission'));
     }
 
     public function storeDemandeAttestation(StoreDemandeAttestationRequest $request)
@@ -315,7 +315,7 @@ class DemandeController extends Controller
             $isDemandeReadyForSubmission = !empty($demande->data);
         }
 
-        return view('pensionnaire.demande-transfert-cheque', compact('pensionCategories', 'demande', 'isDemandeReadyForSubmission'));
+        return view('pensionne.demande-transfert-cheque', compact('pensionCategories', 'demande', 'isDemandeReadyForSubmission'));
     }
 
     public function storeDemandeTransfertCheque(StoreTransfertChequeRequest $request)
@@ -433,7 +433,7 @@ class DemandeController extends Controller
             $isDemandeReadyForSubmission = !empty($demande->data);
         }
 
-        return view('pensionnaire.demande-arret-paiement', compact('pensionCategories', 'demande', 'isDemandeReadyForSubmission'));
+        return view('pensionne.demande-arret-paiement', compact('pensionCategories', 'demande', 'isDemandeReadyForSubmission'));
     }
 
     public function storeDemandeArretPaiement(StoreArretPaiementRequest $request)
@@ -571,7 +571,7 @@ class DemandeController extends Controller
             $isDemandeReadyForSubmission = !empty($demande->data);
         }
 
-        return view('pensionnaire.demande-reinsertion', compact('demande', 'isDemandeReadyForSubmission'));
+        return view('pensionne.demande-reinsertion', compact('demande', 'isDemandeReadyForSubmission'));
     }
 
     public function storeDemandeReinsertion(StoreDemandeReinsertionRequest $request)
@@ -688,7 +688,7 @@ class DemandeController extends Controller
             $isDemandeReadyForSubmission = !empty($demande->data);
         }
 
-        return view('pensionnaire.demande-arret-virement', compact('demande', 'isDemandeReadyForSubmission'));
+        return view('pensionne.demande-arret-virement', compact('demande', 'isDemandeReadyForSubmission'));
     }
 
     public function storeDemandeArretVirement(StoreDemandeArretVirementRequest $request)
@@ -808,7 +808,7 @@ class DemandeController extends Controller
             $isDemandeReadyForSubmission = !empty($demande->data);
         }
 
-        return view('pensionnaire.preuve-existence', compact('genders', 'civilStatuses', 'pensionCategories', 'demande', 'isDemandeReadyForSubmission'));
+        return view('pensionne.preuve-existence', compact('genders', 'civilStatuses', 'pensionCategories', 'demande', 'isDemandeReadyForSubmission'));
     }
 
     public function storePreuveExistence(StorePreuveExistenceRequest $request)
@@ -1720,8 +1720,8 @@ class DemandeController extends Controller
             ->with('success', 'Demande supprimée avec succès.');
     }
 
-    // DEMANDE DE PENSION (PENSIONNAIRE)
-    public function createDemandePensionPensionnaire($demandeId = null)
+    // DEMANDE DE PENSION (PENSIONNE)
+    public function createDemandePensionPensionne($demandeId = null)
     {
         $demande = null;
         $isDemandeReadyForSubmission = false;
@@ -1739,10 +1739,10 @@ class DemandeController extends Controller
             $isDemandeReadyForSubmission = !empty($demande->data);
         }
 
-        return view('pensionnaire.demande_pension', compact('demande', 'isDemandeReadyForSubmission'));
+        return view('pensionne.demande_pension', compact('demande', 'isDemandeReadyForSubmission'));
     }
 
-    public function storeDemandePensionPensionnaire(StoreDemandePensionPensionnaireRequest $request)
+    public function storeDemandePensionPensionne(StoreDemandePensionPensionneRequest $request)
     {
         $validated = $request->validated();
 
@@ -1862,7 +1862,7 @@ class DemandeController extends Controller
             });
 
             return redirect()
-                ->route('demandes.pension-pensionnaire.create', $demande->id)
+                ->route('demandes.pension-pensionne.create', $demande->id)
                 ->with('success', 'Demande sauvegardée en brouillon.');
 
         } catch (\Exception $e) {

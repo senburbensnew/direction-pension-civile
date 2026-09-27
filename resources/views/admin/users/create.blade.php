@@ -91,13 +91,20 @@
                 <span class="text-xs font-semibold text-gray-600 uppercase tracking-wider">Contact &amp; accès</span>
             </div>
             <div class="p-5 grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div class="sm:col-span-2">
+                <div>
                     <label class="block text-xs font-medium text-gray-600 mb-1">
                         Adresse e-mail <span class="text-red-500">*</span>
                     </label>
                     <input type="email" name="email" value="{{ old('email') }}" required
                         class="{{ $field('email') }}" placeholder="jean.dupont@example.com">
                     @error('email')<p class="text-red-500 text-xs mt-1">{{ $message }}</p>@enderror
+                </div>
+                <div>
+                    <label class="block text-xs font-medium text-gray-600 mb-1">Nom d’utilisateur</label>
+                    <input type="text" name="username" value="{{ old('username') }}"
+                        class="{{ $field('username') }}" placeholder="jean.dupont" autocomplete="username">
+                    <p class="text-xs text-gray-400 mt-1">Laissé vide, il sera généré à partir de l’e-mail.</p>
+                    @error('username')<p class="text-red-500 text-xs mt-1">{{ $message }}</p>@enderror
                 </div>
                 <div>
                     <label class="block text-xs font-medium text-gray-600 mb-1">Téléphone</label>
@@ -137,7 +144,7 @@
                     <select name="user_type" class="{{ $field('user_type') }}">
                         <option value="">— Sélectionner —</option>
                         <option value="fonctionnaire" {{ old('user_type') === 'fonctionnaire' ? 'selected' : '' }}>Fonctionnaire</option>
-                        <option value="pensionnaire"  {{ old('user_type') === 'pensionnaire'  ? 'selected' : '' }}>Pensionnaire</option>
+                        <option value="pensionne"  {{ old('user_type') === 'pensionne'  ? 'selected' : '' }}>Pensionné</option>
                         <option value="institution"   {{ old('user_type') === 'institution'   ? 'selected' : '' }}>Institution</option>
                     </select>
                     @error('user_type')<p class="text-red-500 text-xs mt-1">{{ $message }}</p>@enderror

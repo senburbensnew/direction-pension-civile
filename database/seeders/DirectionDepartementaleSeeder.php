@@ -48,7 +48,7 @@ class DirectionDepartementaleSeeder extends Seeder
                 'ville' => 'Jacmel',
                 'color' => 'yellow',
                 'order' => 5,
-                'description' => "Représentation régionale de la DPC dans le département du Sud-Est, basée à Jacmel. Elle constitue le point de contact local pour les pensionnaires et les agents publics.",
+                'description' => "Représentation régionale de la DPC dans le département du Sud-Est, basée à Jacmel. Elle constitue le point de contact local pour les pensionnés et les agents publics.",
             ],
             [
                 'abbr' => 'DDGA',

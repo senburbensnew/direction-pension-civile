@@ -23,6 +23,9 @@ class DemandeWorkflowService
      */
     public function submit(Demande $demande, User $user): void
     {
+        if ($demande->isRencontre()) {
+            return;
+        }
         $direction = Service::where('code', Service::DIRECTION)->first();
         abort_unless($direction, 500, 'Service Direction introuvable. Impossible de soumettre la demande.');
 
@@ -182,6 +185,7 @@ class DemandeWorkflowService
         User $user,
         ?string $commentaire = null
     ): DemandeInteraction {
+        abort_if($demande->isRencontre(), 422, 'Les rendez-vous ne suivent pas le circuit de transfert des autres demandes.');
         abort_unless(
             $this->validateTransition($demande->current_service_id, $toService->id, $demande->type, (bool) $demande->is_urgent, $demande, $user),
             403,
@@ -343,6 +347,9 @@ class DemandeWorkflowService
      */
     public function dispatchToSecretariatAfterAnnotation(Demande $demande, User $user): ?DemandeInteraction
     {
+        if ($demande->isRencontre()) {
+            return null;
+        }
         $direction = Service::where('code', Service::DIRECTION)->first();
         $secretariat = Service::where('code', Service::SECRETARIAT)->first();
 
@@ -442,6 +449,9 @@ class DemandeWorkflowService
      */
     public function availableTransferOptions(Demande $demande, ?User $user = null): Collection
     {
+        if ($demande->isRencontre()) {
+            return collect();
+        }
         $currentStep = $demande->currentStep;
         if (!$currentStep || $currentStep->codeIsTransient() || $currentStep->isTerminal()) {
             return collect();

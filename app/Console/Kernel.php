@@ -20,6 +20,9 @@ class Kernel extends ConsoleKernel
 
         // Vérifier les SLA par service, tous les jours à 8h30
         $schedule->command('dossiers:verifier-sla')->dailyAt('08:30');
+
+        // Rappels d’appel Formalités la veille des rendez-vous
+        $schedule->command('rdv:rappels-veille')->dailyAt((string) config('rdv.reminder.at', '08:00'));
     }
 
     /**

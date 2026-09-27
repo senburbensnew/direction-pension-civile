@@ -51,7 +51,7 @@ entity "**users**" as users {
     ---
         name       : VARCHAR(255)        -- nom complet de l'utilisateur
         email      : VARCHAR(255) UNIQUE -- adresse email (identifiant de connexion)
-        type       : VARCHAR(50)         -- UserTypeEnum : Pensionnaire | Fonctionnaire | Institution
+        type       : VARCHAR(50)         -- UserTypeEnum : Pensionne | Fonctionnaire | Institution
     <b>FK</b>  service_id : BIGINT UNSIGNED NULL  -- services.id — service de rattachement (agents)
         created_at : TIMESTAMP
         updated_at : TIMESTAMP

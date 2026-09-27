@@ -14,13 +14,13 @@
 
             <div class="py-6 pl-5 pr-5">
                 <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
-                    {{-- ===================== PENSIONNAIRE ===================== --}}
-                    @can('viewPensionnaireSection')
+                    {{-- ===================== PENSIONNE ===================== --}}
+                    @can('CAN_VIEW_PENSIONNE_SECTION')
                         <div class="mb-12">
-                            <h3 class="text-lg font-semibold mb-4 text-gray-700">Pensionnaire</h3>
+                            <h3 class="text-lg font-semibold mb-4 text-gray-700">Pensionné</h3>
 
                             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-                                @foreach ($stats['pensionnaire'] as $request)
+                                @foreach ($stats['pensionne'] as $request)
                                     @if ($request['count'] > 0)
                                         <a
                                             href="{{ route('personal.requests-dashboard', ['request_type' => $request['type']]) }}"
@@ -55,7 +55,7 @@
                     @endcan
 
                     {{-- ===================== FONCTIONNAIRE ===================== --}}
-                    @can('viewFonctionnaireSection')
+                    @can('CAN_VIEW_FONCTIONNAIRE_SECTION')
                         <div class="mb-12">
                             <h3 class="text-lg font-semibold mb-4 text-gray-700">Fonctionnaire</h3>
 
@@ -95,7 +95,7 @@
                     @endcan
 
                     {{-- ===================== INSTITUTION ===================== --}}
-                    @can('viewInstitutionSection')
+                    @can('CAN_VIEW_INSTITUTION_SECTION')
                         <div class="mb-12">
                             <h3 class="text-lg font-semibold mb-4 text-gray-700">Institution</h3>
 

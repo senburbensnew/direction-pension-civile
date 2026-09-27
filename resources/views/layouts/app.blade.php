@@ -12,7 +12,7 @@
     <x-fonts />
 
     <!-- Scripts -->
-    {{-- <link href="{{ asset('build/assets/app-CFGfTGFn.css') }}" rel="stylesheet"> --}}
+    <!-- <link href="{{ asset('build/assets/app-bInZ0-a9.css') }}" rel="stylesheet"> -->
      @vite(['resources/css/app.css', 'resources/js/app.js'])
 </head>
 
@@ -41,10 +41,9 @@
     </noscript>
 
     <x-header />
-    <main class="container mx-auto flex-1 w-full bg-white min-h-[calc(100dvh-13rem)]">
+    <main class="container mx-auto flex-1 w-full bg-white min-h-[calc(100dvh-13rem)]" style="padding-bottom: 2.5rem;">
         {{ $slot }}
     </main>
-    <x-footer />
-    {{-- <script src="{{ asset('build/assets/app-CbEvcXly.js') }}"></script> --}}
+    <!-- <script src="{{ asset('build/assets/app-BiTlx0PY.js') }}"></script> -->
 </body>
 </html>

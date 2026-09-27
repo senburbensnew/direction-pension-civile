@@ -18,3 +18,8 @@ yarn-error.log
 /.idea
 /.vscode
 /docs
+
+# Google Cloud service account keys
+*-sa.json
+*service-account*.json
+storage/app/ocr*.json

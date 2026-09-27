@@ -12,53 +12,52 @@ class RolesAndPermissionsSeeder extends Seeder
 {
     public function run()
     {
-        // Create permissions using firstOrCreate to avoid duplicates
         $permissions = [
-            'viewPensionnaireSection',
-            'viewFonctionnaireSection',
-            'viewInstitutionSection',
-            'viewPensionnaireMenu',
-            'viewFonctionnaireMenu',
-            'viewInstitutionMenu',
-            'viewDashboard',
+            'CAN_VIEW_PENSIONNE_SECTION' => ['viewPensionneSection', 'viewPensionnaireSection'],
+            'CAN_VIEW_FONCTIONNAIRE_SECTION' => ['viewFonctionnaireSection'],
+            'CAN_VIEW_INSTITUTION_SECTION' => ['viewInstitutionSection'],
+            'CAN_VIEW_PENSIONNE_MENU' => ['viewPensionneMenu', 'viewPensionnaireMenu'],
+            'CAN_VIEW_FONCTIONNAIRE_MENU' => ['viewFonctionnaireMenu'],
+            'CAN_VIEW_INSTITUTION_MENU' => ['viewInstitutionMenu'],
+            'CAN_VIEW_DASHBOARD' => ['viewDashboard'],
         ];
 
-/*      $permissions = [
-            'CAN_VIEW_PENSIONNAIRE_SECTION',
-            'CAN_VIEW_FONCTIONNAIRE_SECTION',
-            'CAN_VIEW_INSTITUTION_SECTION',
-            'CAN_VIEW_PENSIONNAIRE_MENU',
-            'CAN_VIEW_FONCTIONNAIRE_MENU',
-            'CAN_VIEW_INSTITUTION_MENU',
-            'CAN_VIEW_DASHBOARD',
-        ]; */
+        foreach ($permissions as $name => $legacyNames) {
+            $permission = Permission::where('name', $name)->first();
 
-        foreach ($permissions as $permission) {
-            Permission::firstOrCreate(['name' => $permission]);
+            foreach ($legacyNames as $legacyName) {
+                $legacy = Permission::where('name', $legacyName)->first();
+
+                if (! $legacy) {
+                    continue;
+                }
+
+                if ($permission) {
+                    $legacy->delete();
+                } else {
+                    $legacy->update(['name' => $name]);
+                    $permission = $legacy;
+                }
+            }
+
+            if (! $permission) {
+                Permission::create(['name' => $name, 'guard_name' => 'web']);
+            }
         }
 
-        // Fetch permissions
-        $viewPensionnaireSection = Permission::where('name', 'viewPensionnaireSection')->first();
-        $viewFonctionnaireSection = Permission::where('name', 'viewFonctionnaireSection')->first();
-        $viewInstitutionSection = Permission::where('name', 'viewInstitutionSection')->first();
-        $viewPensionnaireMenu = Permission::where('name', 'viewPensionnaireMenu')->first();
-        $viewFonctionnaireMenu = Permission::where('name', 'viewFonctionnaireMenu')->first();
-        $viewInstitutionMenu = Permission::where('name', 'viewInstitutionMenu')->first();
-        $viewDashboard = Permission::where('name', 'viewDashboard')->first();
+        app()[\Spatie\Permission\PermissionRegistrar::class]->forgetCachedPermissions();
 
-/*      $canViewPensionnaireSection   = Permission::where('name', 'CAN_VIEW_PENSIONNAIRE_SECTION')->first();
+        $canViewPensionneSection = Permission::where('name', 'CAN_VIEW_PENSIONNE_SECTION')->first();
         $canViewFonctionnaireSection = Permission::where('name', 'CAN_VIEW_FONCTIONNAIRE_SECTION')->first();
-        $canViewInstitutionSection   = Permission::where('name', 'CAN_VIEW_INSTITUTION_SECTION')->first();
-        $canViewPensionnaireMenu     = Permission::where('name', 'CAN_VIEW_PENSIONNAIRE_MENU')->first();
-        $canViewFonctionnaireMenu    = Permission::where('name', 'CAN_VIEW_FONCTIONNAIRE_MENU')->first();
-        $canViewInstitutionMenu      = Permission::where('name', 'CAN_VIEW_INSTITUTION_MENU')->first();
-        $canViewDashboard            = Permission::where('name', 'CAN_VIEW_DASHBOARD')->first(); */
+        $canViewInstitutionSection = Permission::where('name', 'CAN_VIEW_INSTITUTION_SECTION')->first();
+        $canViewPensionneMenu = Permission::where('name', 'CAN_VIEW_PENSIONNE_MENU')->first();
+        $canViewFonctionnaireMenu = Permission::where('name', 'CAN_VIEW_FONCTIONNAIRE_MENU')->first();
+        $canViewInstitutionMenu = Permission::where('name', 'CAN_VIEW_INSTITUTION_MENU')->first();
+        $canViewDashboard = Permission::where('name', 'CAN_VIEW_DASHBOARD')->first();
 
-
-        // Create roles
         $roles = [
             'admin',
-            'pensionnaire',
+            'pensionne',
             'fonctionnaire',
             'institution',
             'direction',
@@ -71,50 +70,26 @@ class RolesAndPermissionsSeeder extends Seeder
             'service_comptabilite',
             'service_assurance',
             'administration',
+            'responsable_service_accueil_formalites',
+            'responsable_service_controle_placement',
+            'responsable_service_comptabilite',
+            'responsable_service_assurance',
+            'responsable_administration',
+            'responsable_direction',
+            'responsable_directeur',
+            'responsable_assistant_directeur',
+            'responsable_secretariat',
+            User::ROLE_AGENT_RDV,
+            User::ROLE_VALIDATEUR_RDV,
+            User::ROLE_AGENT_FORMALITES,
         ];
 
-/*         $roles = [
-            'ROLE_SUPERADMIN',
-            'ROLE_PENSIONNAIRE',
-            'ROLE_FONCTIONNAIRE',
-            'ROLE_INSTITUTION',
-            'ROLE_DIRECTION',
-            'ROLE_SECRETARIAT',
-
-            'ROLE_SERVICE_LIQUIDATION',
-            'ROLE_SERVICE_FORMALITE',
-            'ROLE_SERVICE_CONTROLE_PLACEMENT',
-            'ROLE_SERVICE_COMPTABILITE',
-            'ROLE_SERVICE_ASSURANCE',
-
-            'ROLE_ADMINISTRATION',
-        ]; */
-
-
         foreach ($roles as $role) {
-            Role::firstOrCreate(['name' => $role]);
+            Role::firstOrCreate(['name' => $role, 'guard_name' => 'web',]);
         }
 
-        // Assign permissions to roles
-        Role::where('name', 'pensionnaire')->first()->givePermissionTo([$viewPensionnaireSection, $viewPensionnaireMenu, $viewDashboard]);
-        Role::where('name', 'fonctionnaire')->first()->givePermissionTo([$viewFonctionnaireSection, $viewFonctionnaireMenu, $viewDashboard]);
-        Role::where('name', 'institution')->first()->givePermissionTo([$viewInstitutionSection, $viewInstitutionMenu, $viewDashboard]);
-
-        // Check if the user type exists
-        $userType = UserType::firstOrCreate(['name' => 'fonctionnaire']);
-
-        // Create or update the admin user
-        $adminUser = User::updateOrCreate(
-            ['email' => 'admin@example.com'],
-            [
-                'name' => 'Admin User',
-                'password' => bcrypt('password123'),
-                'nif' => '1234567890',
-                'user_type_id' => $userType->id,
-            ]
-        );
-
-        // Assign roles to the admin user
-        $adminUser->assignRole(['admin']);
+        Role::where('name', 'pensionne')->first()->givePermissionTo([$canViewPensionneSection, $canViewPensionneMenu, $canViewDashboard]);
+        Role::where('name', 'fonctionnaire')->first()->givePermissionTo([$canViewFonctionnaireSection, $canViewFonctionnaireMenu, $canViewDashboard]);
+        Role::where('name', 'institution')->first()->givePermissionTo([$canViewInstitutionSection, $canViewInstitutionMenu, $canViewDashboard]);
     }
 }

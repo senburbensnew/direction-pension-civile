@@ -17,8 +17,33 @@
             </div>
         @endif
 
+        @if(isset($appelsVeille) && $appelsVeille->isNotEmpty())
+            <div class="bg-white rounded-2xl border-2 border-sky-300 shadow-sm overflow-hidden mb-6">
+                <div class="bg-sky-600 px-5 py-3 flex flex-wrap items-center justify-between gap-2">
+                    <div class="flex items-center gap-2">
+                        <i class="fa-solid fa-phone text-white"></i>
+                        <span class="text-white font-bold text-sm tracking-wide">APPELS DE RAPPEL — VEILLE DES RENCONTRES</span>
+                        <span class="bg-white/30 text-white text-xs font-bold px-2 py-0.5 rounded-full">{{ $appelsVeille->count() }}</span>
+                    </div>
+                    <p class="text-sky-100 text-xs">Le service des Formalités doit appeler l’usager la veille du rendez-vous.</p>
+                </div>
+                <div class="divide-y divide-gray-100">
+                    @foreach($appelsVeille as $rdv)
+                        @php $data = $rdv->data ?? []; @endphp
+                        <div class="px-5 py-4 flex flex-wrap items-center justify-between gap-4">
+                            <div>
+                                <p class="font-bold text-gray-800 font-mono text-sm">#{{ $rdv->code }}</p>
+                                <p class="text-sm text-gray-700 mt-0.5">{{ trim(($data['prenom'] ?? '').' '.($data['nom'] ?? '')) }} · {{ $data['telephone'] ?? 'Téléphone non renseigné' }}</p>
+                                <p class="text-xs text-gray-500 mt-0.5">RDV demain {{ $data['heure_souhaitee'] ?? '' }} · {{ ($data['modalite'] ?? '') === 'physique' ? ($data['lieu_rdv'] ?? 'Présentiel') : 'Visioconférence' }}</p>
+                            </div>
+                        </div>
+                    @endforeach
+                </div>
+            </div>
+        @endif
+
         {{-- ===================== RÉCEPTIONS EN ATTENTE (circuit) ===================== --}}
-        @if(isset($pendingReceptions) && $pendingReceptions->isNotEmpty())
+        <!-- @if(isset($pendingReceptions) && $pendingReceptions->isNotEmpty())
             <div class="bg-white rounded-2xl border-2 border-amber-300 shadow-sm overflow-hidden mb-6">
                 <div class="bg-amber-500 px-5 py-3 flex flex-wrap items-center justify-between gap-2">
                     <div class="flex items-center gap-2">
@@ -64,10 +89,10 @@
                     @endforeach
                 </div>
             </div>
-        @endif
+        @endif -->
 
         {{-- ===================== AVIS EN ATTENTE ===================== --}}
-        @if(isset($pendingAffectations) && $pendingAffectations->isNotEmpty())
+        <!-- @if(isset($pendingAffectations) && $pendingAffectations->isNotEmpty())
             <div class="bg-white rounded-2xl border-2 border-orange-300 shadow-sm overflow-hidden mb-6">
                 <div class="bg-orange-400 px-5 py-3 flex flex-wrap items-center justify-between gap-2">
                     <div class="flex items-center gap-2">
@@ -115,7 +140,7 @@
                     @endforeach
                 </div>
             </div>
-        @endif
+        @endif -->
 
         {{-- ===================== RÉPERTOIRE DE DOSSIERS ===================== --}}
         <fieldset class="border-2 border-blue-200 rounded-lg mb-6 pl-3 ml-1 mr-1">
@@ -127,6 +152,57 @@
                     Dossiers actuellement dans <strong>votre service</strong>, classés par catégorie. Ouvrez un dossier pour le faire avancer selon le circuit défini.
                 </p>
                 <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-7 gap-4">
+
+                    {{-- Card dédiée : demandes de création de compte --}}
+                    @php
+                        $comptesCount = isset($demandesComptePending)
+                            ? $demandesComptePending->count()
+                            : 0;
+
+                        $comptesRoute = auth()->user()->hasRole('admin')
+                            ? route('admin.comptes-demandes.index')
+                            : route('formalites.comptes-demandes.index');
+                    @endphp
+
+                    {{-- Card dédiée : demandes de création de compte (agent_rdv uniquement) --}}
+                    @if(auth()->user()->hasRole('agent_rdv'))
+                        @php
+                            $comptesCount = isset($demandesComptePending)
+                                ? $demandesComptePending->count()
+                                : 0;
+
+                            $comptesRoute = route('formalites.comptes-demandes.index');
+                        @endphp
+
+                        @if($comptesCount > 0)
+                            <a href="{{ $comptesRoute }}"
+                            class="bg-indigo-50 border border-indigo-200 p-4 rounded-lg hover:shadow-md transition-all group block">
+                                <div class="flex items-center justify-between mb-2">
+                                    <i class="fas fa-user-plus text-indigo-700"></i>
+                                    <span class="text-white text-xs font-bold px-2 py-0.5 rounded-full bg-indigo-600">
+                                        {{ $comptesCount }}
+                                    </span>
+                                </div>
+                                <p class="text-sm font-medium text-indigo-700">
+                                    Demande de création de compte
+                                </p>
+                                <p class="text-xs text-indigo-500 mt-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                    Voir les dossiers →
+                                </p>
+                            </a>
+                        @else
+                            <div class="bg-gray-50 border border-gray-200 p-4 rounded-lg opacity-60">
+                                <div class="flex items-center justify-between mb-2">
+                                    <i class="fas fa-user-plus text-gray-400"></i>
+                                    <span class="text-gray-400 text-xs">0</span>
+                                </div>
+                                <p class="text-sm font-medium text-gray-500">
+                                    Création de compte
+                                </p>
+                            </div>
+                        @endif
+                    @endif
+
                     @foreach($folderStats as $folder)
                         @php
                             $colorMap = [

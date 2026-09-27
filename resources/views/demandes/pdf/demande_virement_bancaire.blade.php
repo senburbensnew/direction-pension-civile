@@ -84,7 +84,7 @@
     </div>
 
     <div class="section">
-        <div class="section-header">Informations du pensionnaire</div>
+        <div class="section-header">Informations du pensionné</div>
         <div class="section-body">
             <table class="info info-2col">
                 <tr>

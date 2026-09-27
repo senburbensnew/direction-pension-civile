@@ -103,7 +103,7 @@ class DemandeWorkflowServiceTest extends TestCase
 
         WorkflowStep::forCode('SOUMISE')?->update(['service_id' => $this->direction()->id]);
 
-        $owner = $this->makeUser('pensionnaire');
+        $owner = $this->makeUser('pensionne');
         $dirUser = User::factory()->create(['service_id' => $this->direction()->id]);
         $dirUser->assignRole('direction');
 

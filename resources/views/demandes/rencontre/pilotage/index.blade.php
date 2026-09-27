@@ -1,14 +1,18 @@
-﻿@extends('layouts.admin')
+<x-app-layout>
+<div class="max-w-6xl mx-auto px-4 py-8 space-y-6">
 
-@section('title', 'Demandes de rencontre')
-
-@section('content')
-<div class="space-y-6 max-w-5xl">
-
-    <div class="flex items-center justify-between">
+    <div class="flex items-center justify-between gap-4">
         <div>
-            <h1 class="text-xl font-bold text-gray-800">Demandes de rencontre</h1>
-            <p class="text-sm text-gray-500 mt-0.5">Visioconférences et rendez-vous demandés par des tiers.</p>
+            <h1 class="text-xl font-bold text-gray-800">Pilotage des rendez-vous</h1>
+            <p class="text-sm text-gray-500 mt-0.5">Consultation, acceptation, réorientation et historique — responsable de service.</p>
+            <div class="mt-3 flex flex-wrap gap-2 text-xs">
+                <a href="{{ route('rencontres.pilotage.index', ['filtre' => 'programmes']) }}"
+                   class="px-3 py-1 rounded-full {{ ($filtre ?? 'programmes') === 'programmes' ? 'bg-navy text-white' : 'bg-gray-100 text-gray-600' }}">Programmés</a>
+                <a href="{{ route('rencontres.pilotage.index', ['filtre' => 'historique']) }}"
+                   class="px-3 py-1 rounded-full {{ ($filtre ?? '') === 'historique' ? 'bg-navy text-white' : 'bg-gray-100 text-gray-600' }}">Historique</a>
+                <a href="{{ route('rencontres.pilotage.index', ['filtre' => 'tous']) }}"
+                   class="px-3 py-1 rounded-full {{ ($filtre ?? '') === 'tous' ? 'bg-navy text-white' : 'bg-gray-100 text-gray-600' }}">Tous</a>
+            </div>
         </div>
         <span class="text-xs bg-indigo-100 text-indigo-700 font-semibold px-3 py-1 rounded-full">
             {{ $demandes->total() }} demande(s)
@@ -26,7 +30,26 @@
         </div>
     @endif
 
-    <div class="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
+    @if(isset($appelsVeille) && $appelsVeille->isNotEmpty())
+        <div class="bg-sky-50 border border-sky-200 rounded-xl p-4">
+            <p class="text-sm font-semibold text-sky-800 mb-2">
+                Appels de rappel — service des Formalités ({{ $appelsVeille->count() }})
+            </p>
+            <ul class="space-y-2 text-sm text-sky-900">
+                @foreach($appelsVeille as $rdv)
+                    @php $data = $rdv->data ?? []; @endphp
+                    <li>
+                        <span class="font-mono">{{ $rdv->code }}</span>
+                        — {{ trim(($data['prenom'] ?? '').' '.($data['nom'] ?? '')) }}
+                        · {{ $data['telephone'] ?? 'n° manquant' }}
+                        · demain {{ $data['heure_souhaitee'] ?? '' }}
+                    </li>
+                @endforeach
+            </ul>
+        </div>
+    @endif
+
+    <div class="bg-white rounded-xl border border-gray-200 shadow-sm overflow-x-auto">
         <table class="w-full text-sm">
             <thead class="bg-gray-50 border-b border-gray-100">
                 <tr>
@@ -34,7 +57,9 @@
                     <th class="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">Demandeur</th>
                     <th class="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">Objet</th>
                     <th class="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">Date souhaitée</th>
-                    <th class="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">Plateforme</th>
+                    <th class="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">Service</th>
+                    <th class="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">Agent Formalités</th>
+                    <th class="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">Modalité</th>
                     <th class="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">Statut</th>
                     <th class="px-4 py-3"></th>
                 </tr>
@@ -43,8 +68,9 @@
                 @forelse($demandes as $d)
                     @php
                         $data   = $d->data ?? [];
-                        $code   = $d->status?->code;
-                        $isPending = in_array($code, ['SOUMISE', 'EN_ATTENTE', 'EN_COURS']);
+                        $code   = $d->currentStep?->code;
+                        $rdvStatut = $d->rencontreStatut();
+                        $isPending = ! $rdvStatut->isTerminal();
                     @endphp
                     <tr class="hover:bg-gray-50 transition-colors" x-data="{ open: false }">
                         <td class="px-4 py-3 font-mono text-xs text-gray-600">{{ $d->code }}</td>
@@ -62,37 +88,49 @@
                                 <span class="text-gray-400">à {{ $data['heure_souhaitee'] }}</span>
                             @endif
                         </td>
-                        <td class="px-4 py-3">
-                            <span class="text-xs px-2 py-0.5 rounded-full font-medium
-                                {{ match($data['plateforme'] ?? '') {
-                                    'zoom'  => 'bg-blue-100 text-blue-700',
-                                    'teams' => 'bg-purple-100 text-purple-700',
-                                    'meet'  => 'bg-green-100 text-green-700',
-                                    default => 'bg-gray-100 text-gray-600',
-                                } }}">
-                                {{ ucfirst($data['plateforme'] ?? '—') }}
-                            </span>
+                        <td class="px-4 py-3 text-xs text-gray-600">
+                            {{ $data['service_responsable'] ?? $d->service?->nom ?? '—' }}
+                        </td>
+                        <td class="px-4 py-3 text-xs text-gray-600">
+                            {{ $data['agent_nom'] ?? $d->assignments->first()?->agent?->displayName() ?? '—' }}
                         </td>
                         <td class="px-4 py-3">
-                            @if($d->status)
-                                <span class="text-xs px-2 py-0.5 rounded-full font-medium {{ \App\Models\WorkflowStep::getStatusStyle($code) }}">
-                                    {{ $d->currentStep?->nom }}
+                            @if(($data['modalite'] ?? 'visio') === 'physique')
+                                <span class="text-xs px-2 py-0.5 rounded-full font-medium bg-orange-100 text-orange-700">Présentiel</span>
+                            @else
+                                <span class="text-xs px-2 py-0.5 rounded-full font-medium
+                                    {{ match($data['plateforme'] ?? '') {
+                                        'zoom'  => 'bg-blue-100 text-blue-700',
+                                        'teams' => 'bg-purple-100 text-purple-700',
+                                        'meet'  => 'bg-green-100 text-green-700',
+                                        default => 'bg-gray-100 text-gray-600',
+                                    } }}">
+                                    {{ ucfirst($data['plateforme'] ?? 'Visio') }}
                                 </span>
                             @endif
                         </td>
+                        <td class="px-4 py-3">
+                            <span class="text-xs px-2 py-0.5 rounded-full font-medium {{ $rdvStatut->badgeClass() }}">
+                                {{ $rdvStatut->label() }}
+                            </span>
+                        </td>
                         <td class="px-4 py-3 text-right">
                             <div class="flex items-center justify-end gap-2">
+                                <a href="{{ route('rencontres.pilotage.show', $d) }}"
+                                   class="text-xs text-indigo-600 hover:underline font-medium">
+                                    Consulter
+                                </a>
                                 <button @click="open = !open"
-                                        class="text-xs text-indigo-600 hover:underline font-medium">
-                                    Détails
+                                        class="text-xs text-gray-500 hover:underline font-medium">
+                                    Aperçu
                                 </button>
-                                @if($isPending)
-                                    <form method="POST" action="{{ route('admin.rencontres.accepter', $d) }}"
+                                @if($isPending && ($canValidate ?? false))
+                                    <form method="POST" action="{{ route('rencontres.pilotage.accepter', $d) }}"
                                           onsubmit="return confirm('Confirmer l\'acceptation ?')">
                                         @csrf
                                         <button type="submit"
                                                 class="text-xs px-2 py-1 bg-green-600 hover:bg-green-700 text-white rounded font-medium transition">
-                                            Accepter
+                                            Valider
                                         </button>
                                     </form>
                                     <button @click="open = true"
@@ -102,7 +140,6 @@
                                 @endif
                             </div>
 
-                            {{-- Panneau détails + refus --}}
                             <div x-show="open" x-cloak x-transition
                                  class="mt-3 text-left bg-gray-50 border border-gray-200 rounded-lg p-4 space-y-3">
 
@@ -120,8 +157,8 @@
                                     </div>
                                 @endif
 
-                                @if($isPending)
-                                    <form method="POST" action="{{ route('admin.rencontres.refuser', $d) }}" class="border-t border-gray-200 pt-3">
+                                @if($isPending && ($canValidate ?? false))
+                                    <form method="POST" action="{{ route('rencontres.pilotage.refuser', $d) }}" class="border-t border-gray-200 pt-3">
                                         @csrf
                                         <p class="text-xs font-semibold text-gray-500 mb-1">Motif du refus</p>
                                         <textarea name="motif" rows="2" required maxlength="500"
@@ -144,7 +181,7 @@
                     </tr>
                 @empty
                     <tr>
-                        <td colspan="7" class="px-4 py-10 text-center text-gray-400">
+                        <td colspan="9" class="px-4 py-10 text-center text-gray-400">
                             Aucune demande de rencontre.
                         </td>
                     </tr>
@@ -160,4 +197,4 @@
     </div>
 
 </div>
-@endsection
+</x-app-layout>

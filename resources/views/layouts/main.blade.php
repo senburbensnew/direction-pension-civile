@@ -7,7 +7,7 @@
     <title>@yield('title', 'Direction de la Pension Civile')</title>
     <x-fonts />
     @vite(['resources/css/app.css', 'resources/js/app.js'])
-    {{-- <link href="{{ asset('build/assets/app-CFGfTGFn.css') }}" rel="stylesheet"> --}}
+    <!-- <link href="{{ asset('build/assets/app-bInZ0-a9.css') }}" rel="stylesheet"> -->
     @stack('styles')
 </head>
 
@@ -36,12 +36,12 @@
     </noscript>
 
     <x-header />
-    <main class="container mx-auto flex-1 w-full min-h-[calc(100dvh-13rem)] bg-white">
+    <main class="container mx-auto flex-1 w-full min-h-[calc(100dvh-13rem)] bg-white pb-10">
         @yield('content')
     </main>
     <x-footer />
     <x-contact-info-bar borderType="top"  />
     @stack('scripts')
-    {{-- <script src="{{ asset('build/assets/app-CbEvcXly.js') }}"></script> --}}
+    <!-- <script src="{{ asset('build/assets/app-BiTlx0PY.js') }}"></script> -->
 </body>
 </html>

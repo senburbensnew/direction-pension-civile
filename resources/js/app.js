@@ -40,6 +40,9 @@ document.addEventListener('DOMContentLoaded', () => {
     if (document.getElementById('dpc-chronogramme')) {
         import('./chronogramme.js').then(({ initDpcChronogramme }) => initDpcChronogramme());
     }
+    if (document.getElementById('dpc-rdv-scheduler')) {
+        import('./rdv-scheduler.js').then(({ initRdvScheduler }) => initRdvScheduler());
+    }
 });
 
 

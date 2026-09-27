@@ -14,7 +14,8 @@ use Illuminate\Database\Seeder;
  *   Brouillon → Soumission initiale (Direction) → Instruction Secrétariat
  *   → En Décision (Direction) → Approuvée | Rejetée | Annulée
  *
- * DEMANDE_RENCONTRE uses a minimal public-form variant (no draft step).
+ * DEMANDE_RENCONTRE uses the Formalités appointment circuit (no Direction/Secrétariat dispatch).
+ * DEMANDE_CREATION_COMPTE uses a minimal public-form variant (no draft step).
  * Any type's circuit can be customised further via the admin UI.
  */
 class WorkflowTypeCircuitsSeeder extends Seeder
@@ -26,10 +27,11 @@ class WorkflowTypeCircuitsSeeder extends Seeder
         Service::all()->each(fn($s) => $this->svc[$s->code] = $s->id);
 
         // All types start from the default circuit and can be customised via the admin UI.
-        // DEMANDE_RENCONTRE is a public form with no draft phase → minimal flow.
+        // DEMANDE_RENCONTRE stays at Formalités (Demandé → Examen → Attribué → Validé → Clôturé).
         $circuits = [
             'DEMANDE_ATTESTATION'       => 'simple',
             'DEMANDE_PREUVE_EXISTENCE'  => 'simple',
+            'DEMANDE_MISE_A_JOUR'       => 'simple',
             'DEMANDE_ETAT_CARRIERE'     => 'simple',
             'DEMANDE_VIREMENT_BANCAIRE' => 'simple',
             'DEMANDE_TRANSFERT_CHEQUE'  => 'simple',
@@ -39,7 +41,8 @@ class WorkflowTypeCircuitsSeeder extends Seeder
             'DEMANDE_PENSION'           => 'simple',
             'DEMANDE_PENSION_REVERSION' => 'simple',
             'DEMANDE_ADHESION'          => 'simple',
-            'DEMANDE_RENCONTRE'         => 'rencontre',
+            'DEMANDE_RENCONTRE'         => 'rdv_formalites',
+            'DEMANDE_CREATION_COMPTE'   => 'rencontre',
         ];
 
         foreach ($circuits as $type => $group) {
@@ -121,6 +124,16 @@ class WorkflowTypeCircuitsSeeder extends Seeder
                 ['REJETEE',                    'direction',   30],
                 ['ANNULEE',                    'direction',   40],
             ],
+
+            'rdv_formalites' => [
+                ['SOUMISE',     'service_accueil_formalites', 1],
+                ['EN_COURS',    'service_accueil_formalites', 10],
+                ['EN_ATTENTE',  'service_accueil_formalites', 20],
+                ['APPROUVEE',   'service_accueil_formalites', 30],
+                ['FINALISEE',   'service_accueil_formalites', 40],
+                ['ANNULEE',     'service_accueil_formalites', 50],
+                ['REJETEE',     'service_accueil_formalites', 60],
+            ],
         };
     }
 
@@ -151,6 +164,18 @@ class WorkflowTypeCircuitsSeeder extends Seeder
                 ['EN_DECISION',                'APPROUVEE',                  'Accepter',  false],
                 ['EN_DECISION', 'REJETEE',     'Refuser',   false],
                 ['EN_DECISION', 'ANNULEE',     'Annuler',   false],
+            ],
+
+            'rdv_formalites' => [
+                [null,        'SOUMISE',    'Enregistrer le rendez-vous', false],
+                ['SOUMISE',   'EN_COURS',   'Examiner', false],
+                ['EN_COURS',  'EN_ATTENTE', 'Attribuer le créneau', false],
+                ['EN_ATTENTE','APPROUVEE',  'Valider', false],
+                ['APPROUVEE', 'FINALISEE',  'Clôturer', false],
+                ['SOUMISE',   'ANNULEE',    'Annuler', false],
+                ['EN_COURS',  'ANNULEE',    'Annuler', false],
+                ['EN_ATTENTE','ANNULEE',    'Annuler', false],
+                ['SOUMISE',   'REJETEE',    'Refuser', false],
             ],
         };
     }

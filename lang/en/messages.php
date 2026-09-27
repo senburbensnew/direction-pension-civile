@@ -4,10 +4,12 @@ return [
     'login' => 'Login',
     'logout' => 'Logout',
     'email' => 'Email address',
+    'login_identifier' => 'Email, NIF or pension code',
     'password' => 'Password',
     'remember_me' => 'Remember me',
     'forgot_password' => 'Forgot password?',
     'register' => 'Register',
+    'request_account' => 'Request an account',
 
     // Navbar
     'direction' => 'Civil Pension Directorate',
@@ -40,6 +42,7 @@ return [
     'reinstatement_request' => 'Reinstatement Request',
     'transfer_stop_request' => 'Transfer Stop Request',
     'proof_of_existence' => 'Proof of existence',
+    'information_update' => 'Information update',
 
     'civil_servant' => 'Civil Servant',
     'career_status_request' => 'Career Status Request',
@@ -53,6 +56,9 @@ return [
     'communications' => 'Communications',
     'texts_and_publications' => 'Texts And Publications',
     'media_libraries' => 'Media Library',
+    'appointment_request' => 'Appointment request',
+    'physical_appointment' => 'In person',
+    'video_appointment' => 'Videoconference',
     'success_stories' => 'Success Stories',
 
     'simulateur-calcul' => 'Simulator',
@@ -164,6 +170,8 @@ return [
     // Contact info bar
     'opening_hours'          => 'Opening hours: Mon – Fri 8.00 am – 4.00 pm',
     'call_on'                => 'Call: :phone',
+    'service_phones'         => 'Service numbers',
+    'service_phones_intro'   => 'Phone numbers for the different DPC services.',
     'weekdays_short'         => ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'],
     'months_short'           => ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'],
 

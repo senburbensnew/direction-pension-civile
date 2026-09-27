@@ -33,9 +33,9 @@
             <form action="{{ route('demandes.arret-paiement.store') }}" method="POST" class="space-y-6">
                 @csrf
 
-                <!-- Informations du Pensionnaire -->
+                <!-- Informations du Pensionne -->
                 <fieldset class="shadow-md rounded-lg p-5 border">
-                    <legend class="text-base font-medium text-gray-700 mb-2">Informations du Pensionnaire</legend>
+                    <legend class="text-base font-medium text-gray-700 mb-2">Informations du pensionné</legend>
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div>
                             <label for="pensioner_code" class="block text-base font-medium text-gray-700 mb-1">Code Pension

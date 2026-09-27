@@ -44,6 +44,7 @@ trait SeedsRequiredData
             Service::CONTROLE_PLACEMENT => 'Service Contrôle et Placement',
             Service::COMPTABILITE       => 'Service Comptabilité',
             Service::FORMALITE          => 'Accueil et Formalités',
+            Service::ADMINISTRATIF      => 'Service Administratif',
             Service::ASSURANCE          => 'Service Assurance',
         ];
 
@@ -58,7 +59,10 @@ trait SeedsRequiredData
             'admin', 'direction', 'directeur', 'assistant_directeur', 'secretariat', 'service_liquidation',
             'service_accueil_formalites', 'service_controle_placement',
             'service_comptabilite', 'service_assurance',
-            'pensionnaire', 'fonctionnaire', 'institution',
+            'pensionne', 'fonctionnaire', 'institution',
+            \App\Models\User::ROLE_AGENT_RDV,
+            \App\Models\User::ROLE_VALIDATEUR_RDV,
+            \App\Models\User::ROLE_AGENT_FORMALITES,
         ];
 
         foreach ($roles as $role) {

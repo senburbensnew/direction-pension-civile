@@ -19,11 +19,13 @@ class TypeDemandeEnumTest extends TestCase
             [TypeDemandeEnum::DEMANDE_REINSERTION,       'Demande de réinsertion'],
             [TypeDemandeEnum::DEMANDE_ARRET_VIREMENT,    "Demande d'arrêt de virement"],
             [TypeDemandeEnum::DEMANDE_PREUVE_EXISTENCE,  "Preuve d'existence"],
+            [TypeDemandeEnum::DEMANDE_MISE_A_JOUR,       'Mise à jour des informations'],
             [TypeDemandeEnum::DEMANDE_PENSION_REVERSION, 'Demande de pension de réversion'],
             [TypeDemandeEnum::DEMANDE_ETAT_CARRIERE,     "Demande d'état de carrière"],
             [TypeDemandeEnum::DEMANDE_PENSION,           'Demande de pension'],
             [TypeDemandeEnum::DEMANDE_ADHESION,          "Demande d'adhésion"],
             [TypeDemandeEnum::DEMANDE_RENCONTRE,         'Demande de rencontre'],
+            [TypeDemandeEnum::DEMANDE_CREATION_COMPTE,   'Demande de création de compte'],
         ];
 
         foreach ($cases as [$enum, $expected]) {
@@ -64,7 +66,9 @@ class TypeDemandeEnumTest extends TestCase
         $adminTypes = [
             TypeDemandeEnum::DEMANDE_ATTESTATION,
             TypeDemandeEnum::DEMANDE_PREUVE_EXISTENCE,
+            TypeDemandeEnum::DEMANDE_MISE_A_JOUR,
             TypeDemandeEnum::DEMANDE_ETAT_CARRIERE,
+            TypeDemandeEnum::DEMANDE_CREATION_COMPTE,
         ];
 
         foreach ($adminTypes as $type) {

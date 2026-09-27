@@ -167,6 +167,16 @@
                     </div>
 
                     <div>
+                        <label for="username_display" class="block text-sm font-medium text-gray-700 mb-1">
+                            Nom d’utilisateur <span class="text-gray-400 text-xs">(non modifiable)</span>
+                        </label>
+                        <input type="text" id="username_display"
+                               value="{{ old('username', $user->username) }}"
+                               disabled
+                               class="{{ $lockedClass }}">
+                    </div>
+
+                    <div>
                         <label for="nif" class="block text-sm font-medium text-gray-700 mb-1">NIF</label>
                         <input type="text" name="nif" id="nif"
                                value="{{ old('nif', $user->nif) }}"

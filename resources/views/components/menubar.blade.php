@@ -48,8 +48,9 @@
     </style>
 
     @php
-        $internalRoles = ['admin','direction','directeur','assistant_directeur','secretariat','service_liquidation','service_accueil_formalites','service_controle_placement','service_comptabilite','service_assurance'];
+        $internalRoles = ['admin','direction','directeur','assistant_directeur','secretariat','service_liquidation','service_accueil_formalites','service_controle_placement','service_comptabilite','service_assurance','agent_formalites'];
         $isInternalUser = auth()->check() && auth()->user()->hasAnyRole($internalRoles);
+        $isProvisionnel = auth()->user()?->isProvisionnel();
     @endphp
 
     <nav id="menu" class="container mx-auto bg-white relative z-[1000] shadow-sm border-b nav-container"
@@ -117,7 +118,7 @@
             </li>
 
             <!-- Pensionaire Dropdown -->
-            @if (!$isInternalUser && (auth()->guest() || auth()->user()?->can('viewPensionnaireMenu')))
+            @if (!$isInternalUser && (auth()->guest() || (auth()->user()?->can('CAN_VIEW_PENSIONNE_MENU') && ! $isProvisionnel)))
                 <li class="relative w-full md:w-auto border-b md:border-none group">
                     <button
                         class="dropdown-toggle flex w-full items-center justify-between px-4 md:px-3 py-3
@@ -189,12 +190,20 @@
                                 {{ __('messages.proof_of_existence') }}
                             </a>
                         </li>
+                        <li>
+                            <a href="{{ route('demandes.mise-a-jour.create') }}"
+                                class="text-slate-600 block px-4 py-3 hover:bg-gray-100
+                                   transition-colors text-base truncate-text
+                                   focus:outline-none focus:ring-2 ">
+                                {{ __('messages.information_update') }}
+                            </a>
+                        </li>
                     </ul>
                 </li>
             @endif
 
             <!-- Fonctionnaire Dropdown -->
-            @if (!$isInternalUser && (auth()->guest() || auth()->user()?->can('viewFonctionnaireMenu')))
+            @if (!$isInternalUser && (auth()->guest() || auth()->user()?->can('CAN_VIEW_FONCTIONNAIRE_MENU')))
                 <li class="relative w-full md:w-auto border-b md:border-none group">
                     <button
                         class="dropdown-toggle flex w-full items-center justify-between px-4 md:px-3 py-3
@@ -239,7 +248,7 @@
             @endif
 
             <!-- Institution Dropdown -->
-            @if (!$isInternalUser && (auth()->guest() || auth()->user()?->can('viewInstitutionMenu')))
+            @if (!$isInternalUser && (auth()->guest() || auth()->user()?->can('CAN_VIEW_INSTITUTION_MENU')))
                 <li class="relative w-full md:w-auto border-b md:border-none group">
                     <button
                         class="dropdown-toggle flex w-full items-center justify-between px-4 md:px-3 py-3
@@ -314,20 +323,34 @@
                             {{ __('messages.media_libraries') }}
                         </a>
                     </li>
+                    @role('pensionne')
                     <li>
                         <a href="{{ route('demandes.rencontre.create') }}"
                             class="text-slate-600 block px-4 py-3 hover:bg-gray-100
                                                transition-colors text-base truncate-text
                                                focus:outline-none focus:ring-2 ">
-                            Demande de visioconférence
+                            {{ __('messages.appointment_request') }}
                         </a>
                     </li>
+                    @endrole
                 </ul>
             </li>
 
+            @auth
+                @role(['validateur_rdv', 'responsable_service_accueil_formalites', 'directeur', 'assistant_directeur'])
+                    <li class="w-full md:w-auto border-b md:border-none">
+                        <a href="{{ route('rencontres.pilotage.index') }}"
+                           class="block px-4 py-3 text-slate-700 hover:text-orange-500 text-base font-medium truncate-text focus:outline-none focus:ring-2">
+                            Pilotage des rendez-vous
+                        </a>
+                    </li>
+                @endrole
+            @endauth
+
             <!-- Simulateur de calcul -->
             @auth
-                @hasanyrole('pensionnaire|institution')
+                @if(! $isProvisionnel)
+                @canany(['CAN_VIEW_PENSIONNE_MENU', 'CAN_VIEW_INSTITUTION_MENU'])
                     <li class="w-full md:w-auto border-b md:border-none">
                         <a href="{{ route('simulateur-calcul') }}"
                         class="block px-4 py-3 text-slate-600 hover:text-blue-600
@@ -336,18 +359,9 @@
                             {{ __('messages.simulateur-calcul') }}
                         </a>
                     </li>
-                @endhasanyrole
+                @endcanany
+                @endif
             @endauth
-
-            <!-- rapports -->
-{{--             <li class="w-full md:w-auto border-b md:border-none">
-                <a href="{{  route('reports.index') }}"
-                    class="block px-4 py-3 text-slate-600 hover:text-blue-600
-                           text-base md:text-sm truncate-text
-                           focus:outline-none focus:ring-2 ">
-                    Rapports
-                </a>
-            </li> --}}
         </ul>
     </nav>
 

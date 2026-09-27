@@ -56,10 +56,10 @@
                         <div>
                             <div class="flex flex-wrap items-center gap-2 mb-1">
                                 <h1 class="text-lg font-bold text-gray-900 font-mono tracking-tight">#{{ $request->code }}</h1>
-                                @if($request->currentStep)
-                                    <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold ring-1 {{ \App\Models\WorkflowStep::getStatusStyle($request->currentStep->code) }}">
+                                @if($request->isRencontre() || $request->currentStep)
+                                    <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold ring-1 {{ $request->statutBadgeClass() }}">
                                         <span class="w-1.5 h-1.5 rounded-full bg-current opacity-70"></span>
-                                        {{ $request->currentStep->nom }}
+                                        {{ $request->statutAffiche() }}
                                     </span>
                                 @endif
                                 @if($request->is_urgent ?? false)
@@ -69,7 +69,7 @@
                                     </span>
                                 @endif
                             </div>
-                            <p class="text-sm text-gray-500">{{ str_replace('_', ' ', $request->type ?? '—') }}</p>
+                            <p class="text-sm text-gray-500">{{ \App\Enums\TypeDemandeEnum::tryFrom((string) $request->type)?->label() ?? $request->type }}</p>
                             <p class="text-xs text-gray-400 mt-0.5">Déposé le {{ $request->created_at->format('d/m/Y') }} à {{ $request->created_at->format('H:i') }}</p>
                         </div>
                     </div>
@@ -78,10 +78,9 @@
                     <div class="flex flex-wrap items-center gap-2">
 
                         @if($from === 'cart')
-                            @hasanyrole('secretariat|direction|service_liquidation|service_accueil_formalites|service_controle_placement|service_comptabilite|service_assurance|administration|admin')
+                            @hasanyrole('secretariat|direction|service_liquidation|service_accueil_formalites|service_controle_placement|service_comptabilite|service_assurance|administration|admin|agent_rdv|validateur_rdv')
 
                                 @if(isset($isClosed) && $isClosed)
-                                    {{-- Dossier clôturé — aucune action possible --}}
                                     <div class="flex items-center gap-2 bg-gray-50 border border-gray-300 rounded-xl px-3 py-2">
                                         <svg class="w-4 h-4 text-gray-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
@@ -91,7 +90,6 @@
                                             <p class="text-xs text-gray-500 mt-0.5">Aucune action disponible</p>
                                         </div>
                                     </div>
-                                    {{-- Imprimer / PDF toujours disponibles --}}
                                     @if($request->isAnnotated())
                                         <a href="{{ route('demande.print', $request->id) }}" target="_blank" title="Imprimer"
                                            class="inline-flex items-center justify-center w-9 h-9 bg-gray-700 hover:bg-gray-800 text-white rounded-xl transition-all shadow-sm">
@@ -104,7 +102,6 @@
                                     @endif
 
                                 @elseif(isset($pendingAffectation) && $pendingAffectation)
-                                    {{-- Mode consultation — seul l'avis est autorisé --}}
                                     <div class="flex items-center gap-2 bg-indigo-50 border border-indigo-300 rounded-xl px-3 py-2">
                                         <svg class="w-4 h-4 text-indigo-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/>
@@ -116,7 +113,6 @@
                                     </div>
 
                                 @elseif(isset($pendingWorkflow) && $pendingWorkflow)
-                                    {{-- Verrou — réception en attente --}}
                                     <div class="flex items-center gap-2 bg-amber-50 border border-amber-300 rounded-xl px-3 py-2">
                                         <svg class="w-4 h-4 text-amber-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
@@ -128,83 +124,70 @@
                                     </div>
 
                                 @else
-                                    {{-- Transférer — uniquement si le circuit définit une suite --}}
-                                    @php $transferOptions = $transferOptions ?? collect(); @endphp
-                                    @if($request->isAnnotated() && $transferOptions->isNotEmpty())
-                                        <button onclick="document.getElementById('transferModal').classList.remove('hidden')"
-                                                class="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-xl transition-all shadow-sm hover:shadow">
-                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"/>
-                                            </svg>
-                                            Transférer
-                                        </button>
-                                    @elseif($request->isAnnotated())
-                                        <button disabled title="Aucune suite définie dans le circuit pour cette étape"
-                                                class="inline-flex items-center gap-2 px-4 py-2 bg-gray-100 text-gray-400 text-sm font-medium rounded-xl cursor-not-allowed">
-                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"/>
-                                            </svg>
-                                            Transférer
-                                        </button>
-                                    @else
-                                        <button disabled title="Annoter le dossier d'abord"
-                                                class="inline-flex items-center gap-2 px-4 py-2 bg-gray-100 text-gray-400 text-sm font-medium rounded-xl cursor-not-allowed">
-                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"/>
-                                            </svg>
-                                            Transférer
-                                        </button>
-                                    @endif
+                                    @unless($rdvAgentMode ?? false)
+                                        @unless($request->isRencontre())
+                                        @php $transferOptions = $transferOptions ?? collect(); @endphp
+                                        @if($request->isAnnotated() && $transferOptions->isNotEmpty())
+                                            <button onclick="document.getElementById('transferModal').classList.remove('hidden')"
+                                                    class="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-xl transition-all shadow-sm hover:shadow">
+                                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"/>
+                                                </svg>
+                                                Transférer
+                                            </button>
+                                        @elseif($request->isAnnotated())
+                                            <button disabled title="Aucune suite définie dans le circuit pour cette étape"
+                                                    class="inline-flex items-center gap-2 px-4 py-2 bg-gray-100 text-gray-400 text-sm font-medium rounded-xl cursor-not-allowed">
+                                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"/>
+                                                </svg>
+                                                Transférer
+                                            </button>
+                                        @else
+                                            <button disabled title="Annoter le dossier d'abord"
+                                                    class="inline-flex items-center gap-2 px-4 py-2 bg-gray-100 text-gray-400 text-sm font-medium rounded-xl cursor-not-allowed">
+                                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"/>
+                                                </svg>
+                                                Transférer
+                                            </button>
+                                        @endif
+                                        @endunless
 
-                                    {{-- Complément --}}
-                                    @if($request->currentStep?->code !== 'COMPLEMENT_REQUIS')
-                                        <button onclick="document.getElementById('complementModal').classList.remove('hidden'); document.getElementById('complementModal').closest('.bg-white').classList.remove('hidden')"
-                                                class="inline-flex items-center gap-2 px-4 py-2 bg-orange-500 hover:bg-orange-600 text-white text-sm font-medium rounded-xl transition-all shadow-sm hover:shadow">
-                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                                            </svg>
-                                            Complément
-                                        </button>
-                                    @else
-                                        <span class="inline-flex items-center gap-1.5 px-3 py-2 bg-orange-50 text-orange-700 text-xs font-semibold rounded-xl ring-1 ring-orange-200">
-                                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-                                            En attente complément
-                                        </span>
-                                    @endif
+                                        @unless($isAgentRdvOnly ?? false)
+                                            @if($request->currentStep?->code !== 'COMPLEMENT_REQUIS')
+                                                <button onclick="document.getElementById('complementModal').classList.remove('hidden'); document.getElementById('complementModal').closest('.bg-white').classList.remove('hidden')"
+                                                        class="inline-flex items-center gap-2 px-4 py-2 bg-orange-500 hover:bg-orange-600 text-white text-sm font-medium rounded-xl transition-all shadow-sm hover:shadow">
+                                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                                                    </svg>
+                                                    Complément
+                                                </button>
+                                            @else
+                                                <span class="inline-flex items-center gap-1.5 px-3 py-2 bg-orange-50 text-orange-700 text-xs font-semibold rounded-xl ring-1 ring-orange-200">
+                                                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                                                    En attente complément
+                                                </span>
+                                            @endif
+                                        @endunless
 
-                                    {{-- Séparateur --}}
-                                    <div class="w-px h-6 bg-gray-200"></div>
+                                        <div class="w-px h-6 bg-gray-200"></div>
 
-                                    {{-- Imprimer --}}
-                                    @if($request->isAnnotated())
-                                        <a href="{{ route('demande.print', $request->id) }}" target="_blank"
-                                           title="Imprimer"
-                                           class="inline-flex items-center justify-center w-9 h-9 bg-gray-700 hover:bg-gray-800 text-white rounded-xl transition-all shadow-sm hover:shadow">
-                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/>
-                                            </svg>
-                                        </a>
-                                        <a href="{{ route('demande.pdf', $request->id) }}" target="_blank"
-                                           title="Télécharger PDF"
-                                           class="inline-flex items-center justify-center w-9 h-9 bg-red-600 hover:bg-red-700 text-white rounded-xl transition-all shadow-sm hover:shadow">
-                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
-                                            </svg>
-                                        </a>
-                                    @else
-                                        <button disabled title="Annoter d'abord pour imprimer"
-                                                class="inline-flex items-center justify-center w-9 h-9 bg-gray-100 text-gray-300 rounded-xl cursor-not-allowed">
-                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/>
-                                            </svg>
-                                        </button>
-                                        <button disabled title="Annoter d'abord pour télécharger"
-                                                class="inline-flex items-center justify-center w-9 h-9 bg-gray-100 text-gray-300 rounded-xl cursor-not-allowed">
-                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
-                                            </svg>
-                                        </button>
-                                    @endif
+                                        @if($request->isAnnotated())
+                                            <a href="{{ route('demande.print', $request->id) }}" target="_blank" title="Imprimer"
+                                               class="inline-flex items-center justify-center w-9 h-9 bg-gray-700 hover:bg-gray-800 text-white rounded-xl transition-all shadow-sm hover:shadow">
+                                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/>
+                                                </svg>
+                                            </a>
+                                            <a href="{{ route('demande.pdf', $request->id) }}" target="_blank" title="Télécharger PDF"
+                                               class="inline-flex items-center justify-center w-9 h-9 bg-red-600 hover:bg-red-700 text-white rounded-xl transition-all shadow-sm hover:shadow">
+                                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                                                </svg>
+                                            </a>
+                                        @endif
+                                    @endunless
                                 @endif
 
                             @endhasanyrole
@@ -229,9 +212,19 @@
                                     Supprimer
                                 </button>
                             @endif
+                            @if($request->canBeCancelledByUser())
+                                <form method="POST" action="{{ route('demandes.rencontre.annuler', $request) }}"
+                                      onsubmit="return confirm('Annuler ce rendez-vous ? Le créneau redeviendra disponible.')">
+                                    @csrf
+                                    <button type="submit"
+                                            class="inline-flex items-center gap-2 px-4 py-2 bg-red-600 hover:bg-red-700 text-white text-sm font-medium rounded-xl transition-all shadow-sm hover:shadow">
+                                        <i class="fa-solid fa-calendar-xmark"></i>
+                                        Annuler le rendez-vous
+                                    </button>
+                                </form>
+                            @endif
                         @endif
 
-                        {{-- Bouton retour --}}
                         @if($from === 'dashboard')
                             <a href="{{ route('personal.dashboard') }}"
                                title="{{ __('messages.back_to_dashboard') }}"
@@ -256,8 +249,184 @@
         </div>
     </div>
 
+    {{-- ══════════════ SECTION DÉDIÉE — TRAITEMENT RDV ══════════════ --}}
+    @if($rdvAgentMode ?? false)
+        <div class="max-w-7xl mx-auto mt-5 sm:px-6 lg:px-8">
+            <div class="bg-white rounded-2xl border-2 border-gray-200 shadow-sm overflow-hidden">
+                <div class="bg-gray-500 px-6 py-3 flex items-center gap-3">
+                    <svg class="w-5 h-5 text-white flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                              d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                    </svg>
+                    <div>
+                        <h2 class="text-white font-bold text-sm tracking-wide">TRAITEMENT DU RENDEZ-VOUS</h2>
+                        <p class="text-white/80 text-xs mt-0.5">Validez ou refusez la demande de rendez-vous</p>
+                    </div>
+                </div>
+
+                @php
+                    $rdv           = $request->data ?? [];
+                    $rdvStatut     = $request->rencontreStatut();
+                    $isPhysique    = ($rdv['modalite'] ?? '') === 'physique';
+                    $rdvPending    = ! in_array($request->currentStep?->code, ['APPROUVEE', 'REJETEE', 'ANNULEE', 'FINALISEE'], true);
+                    $rdvAssignment = $request->assignments()->whereNull('ended_at')->with('agent')->first();
+
+                    $rdvDateRaw  = $rdv['date_souhaitee']  ?? null;
+                    $rdvHeureRaw = $rdv['heure_souhaitee'] ?? '00:00';
+                    $rdvDateTime = null;
+                    if (!empty($rdvDateRaw)) {
+                        try {
+                            $rdvDateTime = \Carbon\Carbon::parse($rdvDateRaw . ' ' . $rdvHeureRaw);
+                        } catch (\Throwable $e) {
+                            $rdvDateTime = null;
+                        }
+                    }
+                    $rdvPassed = $rdvDateTime && $rdvDateTime->isPast();
+                @endphp
+
+                <div class="p-6">
+                    <dl class="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm mb-6">
+                        <div>
+                            <dt class="text-gray-500">Statut</dt>
+                            <dd class="mt-0.5">
+                                <span class="inline-flex px-2 py-0.5 rounded-full text-xs font-semibold {{ $rdvStatut->badgeClass() }}">
+                                    {{ $rdvStatut->label() }}
+                                </span>
+                            </dd>
+                        </div>
+                        <div>
+                            <dt class="text-gray-500">Mode</dt>
+                            <dd class="font-medium text-gray-800">{{ $isPhysique ? 'Présentiel' : 'Visioconférence' }}</dd>
+                        </div>
+                        <div>
+                            <dt class="text-gray-500">Date et heure</dt>
+                            <dd class="font-medium text-gray-800">
+                                {{ !empty($rdv['date_souhaitee']) ? \Carbon\Carbon::parse($rdv['date_souhaitee'])->format('d/m/Y') : '—' }}
+                                @if(!empty($rdv['heure_souhaitee'])) à {{ $rdv['heure_souhaitee'] }}@endif
+                            </dd>
+                        </div>
+                        <div>
+                            <dt class="text-gray-500">{{ $isPhysique ? 'Lieu' : 'Lien' }}</dt>
+                            <dd class="font-medium text-gray-800 break-all">
+                                @if($isPhysique)
+                                    {{ $rdv['lieu_rdv'] ?? '—' }}
+                                @else
+                                    Lien sécurisé — actif 15 minutes avant le rendez-vous
+                                @endif
+                            </dd>
+                        </div>
+                        <!-- <div>
+                            <dt class="text-gray-500">Agent demandé</dt>
+                            <dd class="font-medium text-gray-800">{{ $rdv['agent_nom'] ?? '—' }}</dd>
+                        </div> -->
+                        <div>
+                            <dt class="text-gray-500">Motif</dt>
+                            <dd class="font-medium text-gray-800">{{ $rdv['objet'] ?? $rdv['motif'] ?? '—' }}</dd>
+                        </div>
+                        @if($rdvAssignment?->agent)
+                            <div class="sm:col-span-2">
+                                <dt class="text-gray-500">Attribué à</dt>
+                                <dd class="font-medium text-gray-800">{{ $rdvAssignment->agent->displayName() }}</dd>
+                            </div>
+                        @endif
+                    </dl>
+
+                    @if(! ($isClosed ?? false) && $rdvPending)
+
+                        @if($rdvPassed)
+                            {{-- ══════ RDV PASSÉ : uniquement bouton Annuler ══════ --}}
+                            <div class="border-t border-gray-100 pt-5 space-y-3">
+                                <div class="flex items-start gap-2 bg-amber-50 border border-amber-300 rounded-xl px-3 py-2">
+                                    <svg class="w-4 h-4 text-amber-500 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                              d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                                    </svg>
+                                    <div>
+                                        <p class="text-xs font-bold text-amber-800 leading-none">Rendez-vous passé</p>
+                                        <p class="text-xs text-amber-700 mt-0.5">
+                                            Ce rendez-vous était prévu le
+                                            <strong>{{ $rdvDateTime->format('d/m/Y') }} à {{ $rdvDateTime->format('H:i') }}</strong>.
+                                            La validation et le refus ne sont plus possibles — vous pouvez uniquement annuler.
+                                        </p>
+                                    </div>
+                                </div>
+
+                                @if(!empty($canValidateRencontre))
+                                    <form method="POST" action="{{ route('demandes.rencontre.annuler', $request) }}"
+                                          onsubmit="return confirm('Annuler ce rendez-vous ? Le créneau redeviendra disponible.')">
+                                        @csrf
+                                        <input type="hidden" name="return" value="{{ url()->current() }}">
+                                        <button type="submit"
+                                                class="inline-flex items-center gap-2 px-4 py-2 bg-red-600 hover:bg-red-700 text-white text-sm font-semibold rounded-lg">
+                                            <i class="fa-solid fa-calendar-xmark"></i>
+                                            Annuler le rendez-vous
+                                        </button>
+                                    </form>
+                                @else
+                                    <p class="text-sm text-gray-500">Consultation uniquement.</p>
+                                @endif
+                            </div>
+
+                        @else
+                            {{-- ══════ RDV À VENIR : Valider / Refuser normaux ══════ --}}
+                            <div class="border-t border-gray-100 pt-5 flex flex-wrap items-center gap-3">
+                                @if(!empty($canValidateRencontre))
+
+                                    {{-- Valider --}}
+                                    <form method="POST" action="{{ route('demandes.rencontre.accepter', $request) }}"
+                                          onsubmit="return confirm('Valider définitivement ce rendez-vous ?');">
+                                        @csrf
+                                        <input type="hidden" name="return" value="{{ url()->current() }}">
+                                        <button type="submit"
+                                                class="inline-flex items-center gap-2 px-4 py-2 bg-green-600 hover:bg-green-700 text-white text-sm font-semibold rounded-lg">
+                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                                            </svg>
+                                            Valider le rendez-vous
+                                        </button>
+                                    </form>
+
+                                    {{-- Refuser --}}
+                                    <form method="POST" action="{{ route('demandes.rencontre.refuser', $request) }}"
+                                          onsubmit="return confirm('Confirmer le refus de cette demande ? Cette action est définitive.');"
+                                          class="flex flex-wrap items-center gap-2">
+                                        @csrf
+                                        <input type="hidden" name="return" value="{{ url()->current() }}">
+                                        <input type="text" name="commentaire" required maxlength="2000"
+                                               placeholder="Motif du refus (obligatoire)"
+                                               class="border border-red-200 rounded-lg px-3 py-2 text-sm">
+                                        <button type="submit"
+                                                class="inline-flex items-center gap-2 px-4 py-2 bg-red-600 hover:bg-red-700 text-white text-sm font-semibold rounded-lg">
+                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                                            </svg>
+                                            Refuser
+                                        </button>
+                                    </form>
+
+                                    @error('commentaire')
+                                        <p class="text-red-600 text-xs w-full">{{ $message }}</p>
+                                    @enderror
+
+                                @else
+                                    <p class="text-sm text-gray-500">Consultation uniquement.</p>
+                                @endif
+                            </div>
+                        @endif
+
+                    @elseif($isClosed ?? false)
+                        <div class="border-t border-gray-100 pt-5">
+                            <p class="text-sm text-gray-500">Ce dossier est clôturé. Aucune action disponible.</p>
+                        </div>
+                    @endif
+                </div>
+            </div>
+        </div>
+    @endif
+    {{-- ═══════════════════════════════════════════════════════════════════════════════ --}}
+
     {{-- ══════════════ LAYOUT DEUX COLONNES ══════════════ --}}
-    <div class="max-w-7xl mx-auto mt-5 sm:px-6 lg:px-8">
+    <div class="max-w-7xl mx-auto mt-5 pb-5 mb-5 sm:px-6 lg:px-8">
         <div class="grid grid-cols-1 lg:grid-cols-6 gap-5 items-start">
 
             {{-- ─── COLONNE DROITE (visuellement) : réception, annotation, messages ─── --}}
@@ -333,11 +502,115 @@
     @endif
     {{-- ================================================================ --}}
 
-    {{-- ====================== CIRCUIT DU DOSSIER (usager + agent) ====================== --}}
+    {{-- Ancien panneau "Attribution de rendez-vous" — masqué en mode rdvAgent --}}
+    @unless($rdvAgentMode ?? false)
+        @if($from === 'cart' && $request->isRencontre() && empty($isClosed))
+            @php
+                $rdvAssignment = $request->assignments()->whereNull('ended_at')->with('agent')->first();
+                $rdvPending = ! in_array($request->currentStep?->code, ['APPROUVEE', 'REJETEE', 'ANNULEE', 'FINALISEE'], true);
+            @endphp
+            <div class="max-w-7xl mx-auto sm:px-6 lg:px-8 mb-5">
+                <div class="bg-white rounded-2xl border border-green-200 shadow-sm p-5 space-y-4">
+                    <div>
+                        <h3 class="text-sm font-bold text-gray-800">Attribution de rendez-vous — Formalités</h3>
+                        <p class="text-xs text-gray-500 mt-1">
+                            Agent demandé : {{ $request->data['agent_nom'] ?? '—' }}
+                            @if(!empty($request->data['lieu_rdv']))
+                                · Lieu : {{ $request->data['lieu_rdv'] }}
+                            @endif
+                            @if($rdvAssignment?->agent)
+                                · Attribué à : {{ $rdvAssignment->agent->displayName() }}
+                            @endif
+                        </p>
+                        @if(($request->data['modalite'] ?? '') === 'visio')
+                            @php
+                                $visio = app(\App\Services\RencontreVisioService::class);
+                                $visio->attachTo($request);
+                                $request->refresh();
+                                $visioStatus = $request->visio_token ? $visio->status($request) : null;
+                            @endphp
+                            @if($request->visio_token)
+                                <div class="mt-3">
+                                    @if($visioStatus === 'actif')
+                                        <a href="{{ route('demandes.rencontre.visio', $request->visio_token) }}"
+                                           class="inline-flex items-center gap-2 px-3 py-1.5 bg-navy text-white text-xs font-semibold rounded-lg">
+                                            Rejoindre la visioconférence
+                                        </a>
+                                    @elseif($visioStatus === 'en_attente')
+                                        <a href="{{ route('demandes.rencontre.visio', $request->visio_token) }}"
+                                           class="inline-flex items-center gap-2 text-xs font-semibold text-navy hover:underline">
+                                            Lien sécurisé — actif 15 min avant le RDV
+                                        </a>
+                                    @else
+                                        <span class="text-xs text-gray-400">Lien de visioconférence expiré.</span>
+                                    @endif
+                                </div>
+                            @endif
+                        @endif
+                    </div>
+
+                    @if(($rdvAgents ?? collect())->isNotEmpty())
+                        <form method="POST" action="{{ route('admin.demandes.assigner-agent', $request) }}" class="flex flex-wrap items-end gap-3">
+                            @csrf
+                            <div class="min-w-[16rem] flex-1">
+                                <label class="block text-xs font-medium text-gray-600 mb-1">Attribuer à un agent Formalités</label>
+                                <select name="user_id" required class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm">
+                                    @foreach($rdvAgents as $agent)
+                                        <option value="{{ $agent->id }}" @selected((int) ($rdvAssignment?->user_id) === (int) $agent->id)>
+                                            {{ $agent->displayName() }}
+                                        </option>
+                                    @endforeach
+                                </select>
+                            </div>
+                            <button type="submit" class="px-4 py-2 bg-navy text-white text-sm font-semibold rounded-lg">
+                                Attribuer
+                            </button>
+                        </form>
+                    @endif
+
+                    @if(!empty($canValidateRencontre) && $rdvPending)
+                        <div class="flex flex-wrap items-center gap-3 border-t border-gray-100 pt-4">
+
+                            {{-- Valider --}}
+                            <form method="POST" action="{{ route('demandes.rencontre.accepter', $request) }}"
+                                  onsubmit="return confirm('Valider définitivement ce rendez-vous ?');">
+                                @csrf
+                                <input type="hidden" name="return" value="{{ url()->current() }}">
+                                <button type="submit" class="px-4 py-2 bg-green-600 hover:bg-green-700 text-white text-sm font-semibold rounded-lg">
+                                    Valider le rendez-vous
+                                </button>
+                            </form>
+
+                            {{-- Refuser --}}
+                            <form method="POST" action="{{ route('demandes.rencontre.refuser', $request) }}"
+                                  onsubmit="return confirm('Confirmer le refus de cette demande ? Cette action est définitive.');"
+                                  class="flex flex-wrap items-center gap-2">
+                                @csrf
+                                <input type="hidden" name="return" value="{{ url()->current() }}">
+                                <input type="text" name="commentaire" required maxlength="2000"
+                                       placeholder="Motif du refus (obligatoire)"
+                                       class="border border-red-200 rounded-lg px-3 py-2 text-sm">
+                                <button type="submit" class="px-4 py-2 bg-red-600 hover:bg-red-700 text-white text-sm font-semibold rounded-lg">
+                                    Refuser
+                                </button>
+                            </form>
+
+                            @error('commentaire')
+                                <p class="text-red-600 text-xs w-full">{{ $message }}</p>
+                            @enderror
+
+                        </div>
+                    @endif
+                </div>
+            </div>
+        @endif
+    @endunless
+
+    {{-- ====================== CIRCUIT DU DOSSIER ====================== --}}
     @php
         $transferOptions = $transferOptions ?? collect();
         $circuitLocked = $circuitLocked ?? false;
-        $showCircuitPanel = !$request->isDraft() && ($from === 'dashboard' || $from === 'cart');
+        $showCircuitPanel = !$request->isRencontre() && !$request->isDraft() && ($from === 'dashboard' || $from === 'cart') && !($rdvAgentMode ?? false);
     @endphp
     @if($showCircuitPanel)
         <div class="bg-blue-50 border border-blue-200 rounded-2xl p-4">
@@ -369,12 +642,11 @@
                         <span class="font-semibold">{{ $request->service?->nom ?? $request->currentStep?->service?->nom ?? '—' }}</span>
                         @if($request->currentStep)
                             <span class="text-blue-500">·</span>
-                            <span class="font-medium">{{ $request->currentStep->nom }}</span>
+                            <span class="font-medium">{{ $request->statutAffiche() }}</span>
                             <span class="text-[10px] font-mono text-blue-400">({{ $request->currentStep->code }})</span>
                         @endif
                     </p>
 
-                    {{-- Historique des services traversés --}}
                     @if($request->workflows->isNotEmpty())
                         <div class="mt-3">
                             <p class="text-xs text-blue-600 font-medium mb-2 uppercase tracking-wide">Parcours effectué</p>
@@ -399,12 +671,11 @@
                         </div>
                     @endif
 
-                    {{-- Suites autorisées par le circuit (agent) --}}
                     @if($from === 'cart' && !($isClosed ?? false) && !($pendingWorkflow ?? null))
                         <div class="mt-3 pt-3 border-t border-blue-200/70">
                             <p class="text-xs text-blue-600 font-medium mb-2 uppercase tracking-wide">Suites possibles (circuit)</p>
                             @if($transferOptions->isEmpty())
-                                <p class="text-xs text-blue-500 italic">Aucune transition sortante depuis l’étape actuelle selon le circuit défini.</p>
+                                <p class="text-xs text-blue-500 italic">Aucune transition sortante depuis l'étape actuelle selon le circuit défini.</p>
                             @else
                                 <div class="flex flex-wrap gap-1.5">
                                     @foreach($transferOptions as $opt)
@@ -423,10 +694,63 @@
             </div>
         </div>
     @endif
-    {{-- ================================================================ --}}
+
+    @if($request->isRencontre() && !($rdvAgentMode ?? false))
+        @php
+            $rdv = $request->data ?? [];
+            $rdvStatut = $request->rencontreStatut();
+            $isPhysique = ($rdv['modalite'] ?? '') === 'physique';
+        @endphp
+        <div class="bg-white rounded-2xl border border-gray-200 shadow-sm p-5 space-y-4">
+                <div>
+                    <h3 class="text-sm font-bold text-gray-800">Suivi du rendez-vous — Formalités</h3>
+                    <p class="text-xs text-gray-500 mt-1">Ce rendez-vous est traité par le service des Formalités.</p>
+                </div>
+                <dl class="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
+                    <div>
+                        <dt class="text-gray-500">Statut</dt>
+                        <dd><span class="inline-flex px-2 py-0.5 rounded-full text-xs font-semibold {{ $rdvStatut->badgeClass() }}">{{ $rdvStatut->label() }}</span></dd>
+                    </div>
+                    <div>
+                        <dt class="text-gray-500">Mode</dt>
+                        <dd class="font-medium text-gray-800">{{ $isPhysique ? 'Présentiel' : 'Visioconférence' }}</dd>
+                    </div>
+                    <div>
+                        <dt class="text-gray-500">Date et heure</dt>
+                        <dd class="font-medium text-gray-800">
+                            {{ !empty($rdv['date_souhaitee']) ? \Carbon\Carbon::parse($rdv['date_souhaitee'])->format('d/m/Y') : '—' }}
+                            @if(!empty($rdv['heure_souhaitee'])) à {{ $rdv['heure_souhaitee'] }}@endif
+                        </dd>
+                    </div>
+                    <div>
+                        <dt class="text-gray-500">{{ $isPhysique ? 'Lieu' : 'Lien' }}</dt>
+                        <dd class="font-medium text-gray-800 break-all">
+                            @if($isPhysique)
+                                {{ $rdv['lieu_rdv'] ?? '—' }}
+                            @else
+                                Lien sécurisé — actif 15 minutes avant le rendez-vous
+                            @endif
+                        </dd>
+                    </div>
+                    <div>
+                        <dt class="text-gray-500">Agent Formalités</dt>
+                        <dd class="font-medium text-gray-800">{{ $rdv['agent_nom'] ?? '—' }}</dd>
+                    </div>
+                    <div>
+                        <dt class="text-gray-500">Motif</dt>
+                        <dd class="font-medium text-gray-800">{{ $rdv['objet'] ?? $rdv['motif'] ?? '—' }}</dd>
+                    </div>
+                </dl>
+                @if(!empty($rdv['confirmation']))
+                    <div class="pt-2 border-t border-gray-100">
+                        @include('demandes.rencontre._confirmation', ['confirmation' => $rdv['confirmation'], 'cardClass' => 'rounded-xl border-0 shadow-none p-0'])
+                    </div>
+                @endif
+            </div>
+        @endif
 
     {{-- ====================== PROVENANCE (Direction) ====================== --}}
-    @if($from === 'cart')
+    @if($from === 'cart' && !($rdvAgentMode ?? false))
         @role('direction|directeur|assistant_directeur')
         @php
             $lastIncoming = $request->interactions()
@@ -460,8 +784,8 @@
         @endrole
     @endif
 
-    {{-- ====================== PANNEAU AVIS (mode consultation) ====================== --}}
-    @if($from === 'cart' && isset($pendingAffectation) && $pendingAffectation)
+    {{-- ====================== PANNEAU AVIS ====================== --}}
+    @if($from === 'cart' && isset($pendingAffectation) && $pendingAffectation && !($rdvAgentMode ?? false))
         <div class="bg-white border-2 border-indigo-300 rounded-2xl shadow-sm overflow-hidden">
             <div class="bg-indigo-500 px-4 py-2.5 flex items-center gap-2">
                 <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -504,10 +828,9 @@
             </div>
         </div>
     @endif
-    {{-- ================================================================ --}}
 
     {{-- ====================== PANNEAU ANNOTATION ====================== --}}
-    @if($from === 'cart' && (!isset($pendingWorkflow) || !$pendingWorkflow) && (!isset($pendingAffectation) || !$pendingAffectation))
+    @if($from === 'cart' && !$request->isRencontre() && (!isset($pendingWorkflow) || !$pendingWorkflow) && (!isset($pendingAffectation) || !$pendingAffectation) && !($rdvAgentMode ?? false))
         <div class="bg-white border border-gray-200 rounded-2xl shadow-sm overflow-hidden">
             <div class="px-4 py-3 border-b border-gray-100 flex items-center gap-2">
                 <svg class="w-4 h-4 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -517,7 +840,6 @@
             </div>
             <div class="p-4">
 
-            {{-- Annotation existante --}}
             @if($request->isAnnotated())
                 <div class="bg-amber-50 border border-amber-200 rounded-xl p-4 mb-4">
                     <div class="flex items-start gap-3">
@@ -561,7 +883,6 @@
                 </div>
             @endif
 
-            {{-- Formulaire annotation (Direction uniquement, dossier non clôturé) --}}
             @if(!isset($isClosed) || !$isClosed)
             @role('direction|directeur|assistant_directeur')
                 <div id="annotationModal"
@@ -579,7 +900,6 @@
                                       required>{{ old('annotation', $request->annotation) }}</textarea>
                             @error('annotation')<p class="text-red-500 text-xs mt-1">{{ $message }}</p>@enderror
                         </div>
-                        {{-- Catégorie auto-classifiée (lecture seule) --}}
                         <div class="mb-4 p-3 bg-gray-50 rounded border border-gray-200">
                             <p class="text-xs text-gray-500 mb-1">Catégorie (classifiée automatiquement)</p>
                             <span class="badge {{ $request->categorieEnum()?->badgeClass() ?? 'badge-ghost' }}">
@@ -606,63 +926,63 @@
                 </div>
             @endrole
             @endif
-            </div>{{-- end p-4 --}}
-        </div>{{-- end card --}}
+            </div>
+        </div>
     @endif
-    {{-- ================================================================ --}}
 
     {{-- ====================== COMMUNICATION / COMPLÉMENTS ====================== --}}
     @php
         $messages = $messages ?? collect();
     @endphp
 
-
-    {{-- Service panel: Demander un complément (cart view, non COMPLEMENT_REQUIS, hors mode consultation) --}}
-    @if($from === 'cart' && (!isset($isClosed) || !$isClosed) && (!isset($pendingWorkflow) || !$pendingWorkflow) && (!isset($pendingAffectation) || !$pendingAffectation) && $request->currentStep?->code !== 'COMPLEMENT_REQUIS')
-        @hasanyrole('secretariat|direction|service_liquidation|service_accueil_formalites|service_controle_placement|service_comptabilite|service_assurance|administration|admin')
-            <div class="bg-white border border-gray-200 rounded-2xl shadow-sm overflow-hidden">
-                <div class="px-4 py-3 border-b border-gray-100 flex items-center justify-between">
-                    <div class="flex items-center gap-2">
-                        <svg class="w-4 h-4 text-orange-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                        </svg>
-                        <span class="text-sm font-semibold text-gray-700">Demander un complément</span>
+    {{-- Panneau "Demander un complément" — masqué pour rdvAgentMode / isAgentRdvOnly --}}
+    @unless(($rdvAgentMode ?? false) || ($isAgentRdvOnly ?? false))
+        @if($from === 'cart' && !$request->isRencontre() && (!isset($isClosed) || !$isClosed) && (!isset($pendingWorkflow) || !$pendingWorkflow) && (!isset($pendingAffectation) || !$pendingAffectation) && $request->currentStep?->code !== 'COMPLEMENT_REQUIS')
+            @hasanyrole('secretariat|direction|service_liquidation|service_accueil_formalites|service_controle_placement|service_comptabilite|service_assurance|administration|admin')
+                <div class="bg-white border border-gray-200 rounded-2xl shadow-sm overflow-hidden">
+                    <div class="px-4 py-3 border-b border-gray-100 flex items-center justify-between">
+                        <div class="flex items-center gap-2">
+                            <svg class="w-4 h-4 text-orange-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                            </svg>
+                            <span class="text-sm font-semibold text-gray-700">Demander un complément</span>
+                        </div>
+                        <button onclick="document.getElementById('complementModal').classList.toggle('hidden')"
+                                class="text-xs text-blue-600 hover:text-blue-800 font-medium">
+                            Ouvrir
+                        </button>
                     </div>
-                    <button onclick="document.getElementById('complementModal').classList.toggle('hidden')"
-                            class="text-xs text-blue-600 hover:text-blue-800 font-medium">
-                        Ouvrir
-                    </button>
-                </div>
-                <div class="p-4">
-                    <div id="complementModal" class="hidden">
-                        <form method="POST" action="{{ route('demande.complement', $request->id) }}">
-                            @csrf
-                            <div class="mb-3">
-                                <label class="block text-sm font-medium text-gray-700 mb-1">
-                                    Message à l'usager <span class="text-red-500">*</span>
-                                </label>
-                                <textarea name="message" rows="4" required maxlength="3000"
-                                          class="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:ring-orange-500 focus:border-orange-500"
-                                          placeholder="Décrivez précisément les informations ou documents manquants...">{{ old('message') }}</textarea>
-                                @error('message')<p class="text-red-500 text-xs mt-1">{{ $message }}</p>@enderror
-                            </div>
-                            <div class="flex gap-2">
-                                <button type="submit"
-                                        class="px-4 py-2 bg-orange-500 hover:bg-orange-600 text-white text-sm rounded">
-                                    {{ __('messages.send_complement') }}
-                                </button>
-                                <button type="button"
-                                        onclick="document.getElementById('complementModal').classList.add('hidden')"
-                                        class="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 text-sm rounded">
-                                    {{ __('Cancel') }}
-                                </button>
-                            </div>
-                        </form>
+                    <div class="p-4">
+                        <div id="complementModal" class="hidden">
+                            <form method="POST" action="{{ route('demande.complement', $request->id) }}">
+                                @csrf
+                                <div class="mb-3">
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">
+                                        Message à l'usager <span class="text-red-500">*</span>
+                                    </label>
+                                    <textarea name="message" rows="4" required maxlength="3000"
+                                              class="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:ring-orange-500 focus:border-orange-500"
+                                              placeholder="Décrivez précisément les informations ou documents manquants...">{{ old('message') }}</textarea>
+                                    @error('message')<p class="text-red-500 text-xs mt-1">{{ $message }}</p>@enderror
+                                </div>
+                                <div class="flex gap-2">
+                                    <button type="submit"
+                                            class="px-4 py-2 bg-orange-500 hover:bg-orange-600 text-white text-sm rounded">
+                                        {{ __('messages.send_complement') }}
+                                    </button>
+                                    <button type="button"
+                                            onclick="document.getElementById('complementModal').classList.add('hidden')"
+                                            class="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 text-sm rounded">
+                                        {{ __('Cancel') }}
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
                     </div>
                 </div>
-            </div>
-        @endhasanyrole
-    @endif
+            @endhasanyrole
+        @endif
+    @endunless
 
     {{-- User alert + response form (dashboard view, COMPLEMENT_REQUIS) --}}
     @if($from === 'dashboard' && $request->needsComplement())
@@ -676,7 +996,6 @@
             <div class="p-4">
                 <p class="text-sm text-orange-800 mb-4">{{ __('messages.complement_info') }}</p>
 
-                {{-- Action buttons --}}
                 <div class="flex flex-wrap gap-3 mb-4">
                     @if($editRoute)
                         <a href="{{ route($editRoute, $request->id) }}"
@@ -698,7 +1017,6 @@
                     </button>
                 </div>
 
-                {{-- Response form --}}
                 <div id="responseForm" class="hidden bg-white rounded-lg border border-orange-200 p-4">
                     <form method="POST" action="{{ route('demande.repondre-complement', $request->id) }}"
                           enctype="multipart/form-data">
@@ -736,8 +1054,8 @@
         </div>
     @endif
 
-    {{-- Message thread (visible in both views when there are messages) --}}
-    @if($messages->isNotEmpty())
+    {{-- Message thread --}}
+    @if($messages->isNotEmpty() && !($rdvAgentMode ?? false))
         <div class="bg-white border border-gray-200 rounded-2xl shadow-sm overflow-hidden" x-data="{ open: false }">
             <button type="button" @click="open = !open"
                     class="w-full px-4 py-3 flex items-center justify-between border-b border-gray-100">
@@ -775,9 +1093,8 @@
                             </div>
                         </div>
                     @endforeach
-                </div>{{-- end space-y-4 --}}
+                </div>
 
-                {{-- Service can also reply when in COMPLEMENT_REQUIS state (follow-up) --}}
                 @if($from === 'cart')
                     <div class="mt-4 pt-4 border-t border-gray-100">
                         <button onclick="document.getElementById('serviceReplyForm').classList.toggle('hidden')"
@@ -800,148 +1117,149 @@
                 @endif
         </div>
     @endif
-    {{-- ================================================================ --}}
 
-    {{-- ── Affectations pour avis (sidebar) ──────────────────────── --}}
-    @if($from === 'cart')
-        <div class="bg-white border border-indigo-200 rounded-2xl overflow-hidden">
-            <div class="bg-indigo-50 px-4 py-3 flex items-center justify-between border-b border-indigo-100">
-                <div class="flex items-center gap-2">
-                    <svg class="w-4 h-4 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
-                    </svg>
-                    <h3 class="font-semibold text-indigo-800 text-sm">Affectations pour avis</h3>
-                    @if(isset($affectations) && $affectations->isNotEmpty())
-                        <span class="text-xs bg-indigo-200 text-indigo-800 font-semibold px-2 py-0.5 rounded-full">{{ $affectations->count() }}</span>
-                    @endif
-                </div>
-                @role('direction|directeur|assistant_directeur')
-                    @if(!isset($isClosed) || !$isClosed)
-                        <button type="button"
-                                onclick="document.getElementById('affectationPanel').classList.toggle('hidden')"
-                                class="text-xs font-medium text-indigo-600 hover:text-indigo-800 flex items-center gap-1">
-                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
-                            </svg>
-                            Affecter
-                        </button>
-                    @endif
-                @endrole
-            </div>
-
-            @if(!isset($isClosed) || !$isClosed)
-            @role('direction|directeur|assistant_directeur')
-                <div id="affectationPanel" class="hidden border-b border-indigo-100 px-4 py-4 bg-indigo-50/30">
-                    <form method="POST" action="{{ route('admin.demandes.affecter', $request->id) }}">
-                        @csrf
-                        <p class="text-xs text-gray-500 mb-3">Sélectionnez les services à consulter simultanément :</p>
-                        <div class="grid grid-cols-2 gap-2 mb-4">
-                            @foreach(\App\Models\Service::all() as $svc)
-                                <label class="flex items-center gap-2 text-sm cursor-pointer">
-                                    <input type="checkbox" name="service_ids[]" value="{{ $svc->id }}"
-                                           class="rounded border-gray-300 text-indigo-600 focus:ring-indigo-400">
-                                    {{ $svc->nom }}
-                                </label>
-                            @endforeach
-                        </div>
-                        <div class="flex justify-end">
-                            <button type="submit"
-                                    class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium rounded-xl transition-colors">
+    {{-- ── Affectations pour avis (sidebar) — masqué en mode rdvAgent ── --}}
+    @unless(($isAgentRdvOnly ?? false) || ($rdvAgentMode ?? false))
+        @if($from === 'cart')
+            <div class="bg-white border border-indigo-200 rounded-2xl overflow-hidden">
+                <div class="bg-indigo-50 px-4 py-3 flex items-center justify-between border-b border-indigo-100">
+                    <div class="flex items-center gap-2">
+                        <svg class="w-4 h-4 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
+                        </svg>
+                        <h3 class="font-semibold text-indigo-800 text-sm">Affectations pour avis</h3>
+                        @if(isset($affectations) && $affectations->isNotEmpty())
+                            <span class="text-xs bg-indigo-200 text-indigo-800 font-semibold px-2 py-0.5 rounded-full">{{ $affectations->count() }}</span>
+                        @endif
+                    </div>
+                    @role('direction|directeur|assistant_directeur')
+                        @if(!isset($isClosed) || !$isClosed)
+                            <button type="button"
+                                    onclick="document.getElementById('affectationPanel').classList.toggle('hidden')"
+                                    class="text-xs font-medium text-indigo-600 hover:text-indigo-800 flex items-center gap-1">
+                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+                                </svg>
                                 Affecter
                             </button>
-                        </div>
-                    </form>
+                        @endif
+                    @endrole
                 </div>
-            @endrole
-            @endif
 
-            @if(isset($affectations) && $affectations->isNotEmpty())
-                <div class="divide-y divide-gray-100">
-                    @foreach($affectations as $aff)
-                        @php
-                            $statusMap = [
-                                'EN_ATTENTE' => ['label' => 'En attente',   'class' => 'bg-yellow-100 text-yellow-800'],
-                                'EN_COURS'   => ['label' => 'En cours',     'class' => 'bg-blue-100 text-blue-800'],
-                                'TERMINE'    => ['label' => 'Favorable',    'class' => 'bg-green-100 text-green-800'],
-                                'REJETE'     => ['label' => 'Défavorable',  'class' => 'bg-red-100 text-red-800'],
-                            ];
-                            $st = $statusMap[$aff->statut] ?? ['label' => $aff->statut, 'class' => 'bg-gray-100 text-gray-700'];
-                            $isMyService = auth()->user()->service_id === $aff->service_id;
-                            $canRespond  = $isMyService && !in_array($aff->statut, ['TERMINE', 'REJETE']);
-                        @endphp
-                        <div class="px-4 py-3 flex items-start justify-between gap-4">
-                            <div class="flex-1 min-w-0">
-                                <div class="flex items-center gap-2 flex-wrap">
-                                    <p class="font-medium text-sm text-gray-800">{{ $aff->service->nom }}</p>
-                                    @if($isMyService)
-                                        <span class="text-xs bg-indigo-100 text-indigo-600 px-1.5 py-0.5 rounded font-medium">Votre service</span>
+                @if(!isset($isClosed) || !$isClosed)
+                @role('direction|directeur|assistant_directeur')
+                    <div id="affectationPanel" class="hidden border-b border-indigo-100 px-4 py-4 bg-indigo-50/30">
+                        <form method="POST" action="{{ route('admin.demandes.affecter', $request->id) }}">
+                            @csrf
+                            <p class="text-xs text-gray-500 mb-3">Sélectionnez les services à consulter simultanément :</p>
+                            <div class="grid grid-cols-2 gap-2 mb-4">
+                                @foreach(\App\Models\Service::all() as $svc)
+                                    <label class="flex items-center gap-2 text-sm cursor-pointer">
+                                        <input type="checkbox" name="service_ids[]" value="{{ $svc->id }}"
+                                               class="rounded border-gray-300 text-indigo-600 focus:ring-indigo-400">
+                                        {{ $svc->nom }}
+                                    </label>
+                                @endforeach
+                            </div>
+                            <div class="flex justify-end">
+                                <button type="submit"
+                                        class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium rounded-xl transition-colors">
+                                    Affecter
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                @endrole
+                @endif
+
+                @if(isset($affectations) && $affectations->isNotEmpty())
+                    <div class="divide-y divide-gray-100">
+                        @foreach($affectations as $aff)
+                            @php
+                                $statusMap = [
+                                    'EN_ATTENTE' => ['label' => 'En attente',   'class' => 'bg-yellow-100 text-yellow-800'],
+                                    'EN_COURS'   => ['label' => 'En cours',     'class' => 'bg-blue-100 text-blue-800'],
+                                    'TERMINE'    => ['label' => 'Favorable',    'class' => 'bg-green-100 text-green-800'],
+                                    'REJETE'     => ['label' => 'Défavorable',  'class' => 'bg-red-100 text-red-800'],
+                                ];
+                                $st = $statusMap[$aff->statut] ?? ['label' => $aff->statut, 'class' => 'bg-gray-100 text-gray-700'];
+                                $isMyService = auth()->user()->service_id === $aff->service_id;
+                                $canRespond  = $isMyService && !in_array($aff->statut, ['TERMINE', 'REJETE']);
+                            @endphp
+                            <div class="px-4 py-3 flex items-start justify-between gap-4">
+                                <div class="flex-1 min-w-0">
+                                    <div class="flex items-center gap-2 flex-wrap">
+                                        <p class="font-medium text-sm text-gray-800">{{ $aff->service->nom }}</p>
+                                        @if($isMyService)
+                                            <span class="text-xs bg-indigo-100 text-indigo-600 px-1.5 py-0.5 rounded font-medium">Votre service</span>
+                                        @endif
+                                    </div>
+                                    @if($aff->avis)
+                                        <p class="text-xs text-gray-500 mt-1 italic">"{{ $aff->avis }}"</p>
+                                    @endif
+                                    <p class="text-xs text-gray-400 mt-0.5">
+                                        {{ $aff->created_at->format('d/m/Y') }}
+                                        @if($aff->date_reponse)
+                                            · répondu {{ $aff->date_reponse->format('d/m/Y') }}
+                                        @endif
+                                    </p>
+                                </div>
+                                <div class="flex-shrink-0 flex flex-col items-end gap-1.5">
+                                    <span class="text-xs px-2 py-0.5 rounded-full font-medium {{ $st['class'] }}">{{ $st['label'] }}</span>
+                                    @if($canRespond && !auth()->user()->isDirection())
+                                        <button type="button"
+                                                onclick="document.getElementById('avisModal{{ $aff->id }}').classList.remove('hidden')"
+                                                class="text-xs text-indigo-600 hover:text-indigo-800 font-medium hover:underline">
+                                            Mettre à jour
+                                        </button>
+                                        <div id="avisModal{{ $aff->id }}"
+                                             class="hidden fixed inset-0 z-[99999] flex items-center justify-center bg-black/50">
+                                            <div class="bg-white w-full max-w-md rounded-2xl shadow-xl p-6">
+                                                <h3 class="font-semibold text-gray-800 mb-4">Avis — {{ $aff->service->nom }}</h3>
+                                                <form method="POST" action="{{ route('admin.interactions.repondre', $aff->id) }}">
+                                                    @csrf
+                                                    <div class="mb-3">
+                                                        <label class="block text-sm font-medium text-gray-700 mb-1">Décision <span class="text-red-500">*</span></label>
+                                                        <select name="statut" required class="w-full border border-gray-300 rounded-xl px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-300">
+                                                            <option value="EN_COURS" {{ $aff->statut === 'EN_COURS' ? 'selected' : '' }}>En cours d'examen</option>
+                                                            <option value="TERMINE">Favorable</option>
+                                                            <option value="REJETE">Défavorable</option>
+                                                        </select>
+                                                    </div>
+                                                    <div class="mb-5">
+                                                        <label class="block text-sm font-medium text-gray-700 mb-1">Commentaire</label>
+                                                        <textarea name="avis" rows="3"
+                                                                  class="w-full border border-gray-300 rounded-xl px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-300 resize-none"
+                                                                  placeholder="Observations, recommandations...">{{ $aff->avis }}</textarea>
+                                                    </div>
+                                                    <div class="flex justify-end gap-2">
+                                                        <button type="button"
+                                                                onclick="document.getElementById('avisModal{{ $aff->id }}').classList.add('hidden')"
+                                                                class="px-4 py-2 border border-gray-200 rounded-xl text-sm text-gray-600 hover:bg-gray-50">
+                                                            Annuler
+                                                        </button>
+                                                        <button type="submit"
+                                                                class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium rounded-xl">
+                                                            Enregistrer
+                                                        </button>
+                                                    </div>
+                                                </form>
+                                            </div>
+                                        </div>
                                     @endif
                                 </div>
-                                @if($aff->avis)
-                                    <p class="text-xs text-gray-500 mt-1 italic">"{{ $aff->avis }}"</p>
-                                @endif
-                                <p class="text-xs text-gray-400 mt-0.5">
-                                    {{ $aff->created_at->format('d/m/Y') }}
-                                    @if($aff->date_reponse)
-                                        · répondu {{ $aff->date_reponse->format('d/m/Y') }}
-                                    @endif
-                                </p>
                             </div>
-                            <div class="flex-shrink-0 flex flex-col items-end gap-1.5">
-                                <span class="text-xs px-2 py-0.5 rounded-full font-medium {{ $st['class'] }}">{{ $st['label'] }}</span>
-                                @if($canRespond && !auth()->user()->isDirection())
-                                    <button type="button"
-                                            onclick="document.getElementById('avisModal{{ $aff->id }}').classList.remove('hidden')"
-                                            class="text-xs text-indigo-600 hover:text-indigo-800 font-medium hover:underline">
-                                        Mettre à jour
-                                    </button>
-                                    <div id="avisModal{{ $aff->id }}"
-                                         class="hidden fixed inset-0 z-[99999] flex items-center justify-center bg-black/50">
-                                        <div class="bg-white w-full max-w-md rounded-2xl shadow-xl p-6">
-                                            <h3 class="font-semibold text-gray-800 mb-4">Avis — {{ $aff->service->nom }}</h3>
-                                            <form method="POST" action="{{ route('admin.interactions.repondre', $aff->id) }}">
-                                                @csrf
-                                                <div class="mb-3">
-                                                    <label class="block text-sm font-medium text-gray-700 mb-1">Décision <span class="text-red-500">*</span></label>
-                                                    <select name="statut" required class="w-full border border-gray-300 rounded-xl px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-300">
-                                                        <option value="EN_COURS" {{ $aff->statut === 'EN_COURS' ? 'selected' : '' }}>En cours d'examen</option>
-                                                        <option value="TERMINE">Favorable</option>
-                                                        <option value="REJETE">Défavorable</option>
-                                                    </select>
-                                                </div>
-                                                <div class="mb-5">
-                                                    <label class="block text-sm font-medium text-gray-700 mb-1">Commentaire</label>
-                                                    <textarea name="avis" rows="3"
-                                                              class="w-full border border-gray-300 rounded-xl px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-300 resize-none"
-                                                              placeholder="Observations, recommandations...">{{ $aff->avis }}</textarea>
-                                                </div>
-                                                <div class="flex justify-end gap-2">
-                                                    <button type="button"
-                                                            onclick="document.getElementById('avisModal{{ $aff->id }}').classList.add('hidden')"
-                                                            class="px-4 py-2 border border-gray-200 rounded-xl text-sm text-gray-600 hover:bg-gray-50">
-                                                        Annuler
-                                                    </button>
-                                                    <button type="submit"
-                                                            class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium rounded-xl">
-                                                        Enregistrer
-                                                    </button>
-                                                </div>
-                                            </form>
-                                        </div>
-                                    </div>
-                                @endif
-                            </div>
-                        </div>
-                    @endforeach
-                </div>
-            @else
-                <p class="px-4 py-4 text-sm text-gray-400 italic text-center">Aucune affectation pour ce dossier.</p>
-            @endif
-        </div>
-    @endif
+                        @endforeach
+                    </div>
+                @else
+                    <p class="px-4 py-4 text-sm text-gray-400 italic text-center">Aucune affectation pour ce dossier.</p>
+                @endif
+            </div>
+        @endif
+    @endunless
 
-    {{-- ── Rouvrir (sidebar, Direction, dossier clôturé) ─────────── --}}
-    @if($from === 'cart' && isset($isClosed) && $isClosed)
+    {{-- ── Rouvrir (sidebar, Direction, dossier clôturé) ── --}}
+    @if($from === 'cart' && isset($isClosed) && $isClosed && !($rdvAgentMode ?? false))
         @role('direction|directeur|assistant_directeur')
             <div class="bg-white rounded-2xl border-2 border-gray-300 shadow-sm overflow-hidden" x-data="{ open: false }">
                 <div class="bg-gray-100 px-4 py-2.5 flex items-center gap-2">
@@ -976,8 +1294,8 @@
         @endrole
     @endif
 
-    {{-- ── Décision finale Direction (sidebar) ────────────────────── --}}
-    @if($from === 'cart')
+    {{-- ── Décision finale Direction (sidebar) ── --}}
+    @if($from === 'cart' && !($rdvAgentMode ?? false))
         @role('direction|directeur|assistant_directeur')
             @php
                 $directionServiceId = \App\Models\Service::where('code', \App\Models\Service::DIRECTION)->value('id');
@@ -1045,210 +1363,74 @@
             <div class="lg:col-span-4 lg:order-1 min-w-0">
 
     @switch($request->type)
-        {{-- Pensionnaire --}}
         @case('DEMANDE_VIREMENT_BANCAIRE')
             <div>
                 <div>
                     <div class="bg-white rounded-2xl border border-gray-200 shadow-sm mb-4">
                         <div class="p-6">
-
-                            <!-- ========================= -->
-                            <!-- Status Banner -->
-                            <!-- ========================= -->
-                            {{-- Status shown in page header --}}
-
-                            <!-- ========================= -->
-                            <!-- Main Grid -->
-                            <!-- ========================= -->
                             <div class="space-y-5">
-
-                                <!-- ========================= -->
-                                <!-- Left Column -->
-                                <!-- ========================= -->
                                 <div class="space-y-5">
-
-                                    <!-- État civil -->
                                     <div class="p-4 bg-gray-50 rounded-lg">
                                         <h3 class="text-lg font-semibold mb-3 text-gray-700">État civil</h3>
-
                                         <dl class="space-y-3">
-
                                             <div class="flex items-center">
                                                 @if(!empty(($request->data['profile_photo'] ?? '')))
-                                                    <img
-                                                        src="{{ asset('storage/' . ($request->data['profile_photo'] ?? '')) }}"
-                                                        class="w-20 h-20 rounded-full object-cover mr-4"
-                                                        alt="Photo de profil">
+                                                    <img src="{{ asset('storage/' . ($request->data['profile_photo'] ?? '')) }}" class="w-20 h-20 rounded-full object-cover mr-4" alt="Photo de profil">
                                                 @endif
-
                                                 <div>
                                                     <dt class="text-sm text-gray-500">Nom complet</dt>
-                                                    <dd class="font-medium">
-                                                        {{ ($request->data['nom_complet'] ?? '') ?? '-' }}
-                                                    </dd>
+                                                    <dd class="font-medium">{{ ($request->data['nom_complet'] ?? '') ?? '-' }}</dd>
                                                 </div>
                                             </div>
-
-                                            <div>
-                                                <dt class="text-sm text-gray-500">NIF</dt>
-                                                <dd class="font-medium">
-                                                    {{ ($request->data['nif'] ?? '') ?? '-' }}
-                                                </dd>
-                                            </div>
-
-                                            <div>
-                                                <dt class="text-sm text-gray-500">Date de naissance</dt>
-                                                <dd class="font-medium">
-                                                    {{ \Carbon\Carbon::parse(($request->data['date_naissance'] ?? ''))->format('d/m/Y') }}
-                                                </dd>
-                                            </div>
-
-                                            <div>
-                                                <dt class="text-sm text-gray-500">État civil</dt>
-                                                <dd class="font-medium">
-                                                    {{ ucfirst($request->civilStatus('statut_civil_id')->name) }}
-                                                </dd>
-                                            </div>
-
-                                            <div>
-
-                                                <dt class="text-sm text-gray-500">Genre</dt>
-                                                <dd class="font-medium">
-                                                    {{ optional($request->gender(($request->data['sexe_id'] ?? '')))->name ?? '—' }}
-                                                </dd>
-                                            </div>
-
-                                            <div>
-                                                <dt class="text-sm text-gray-500">Nom de la mère</dt>
-                                                <dd class="font-medium">
-                                                    {{ ($request->data['nom_mere'] ?? '') ?? '-' }}
-                                                </dd>
-                                            </div>
-
+                                            <div><dt class="text-sm text-gray-500">NIF</dt><dd class="font-medium">{{ ($request->data['nif'] ?? '') ?? '-' }}</dd></div>
+                                            <div><dt class="text-sm text-gray-500">Date de naissance</dt><dd class="font-medium">{{ \Carbon\Carbon::parse(($request->data['date_naissance'] ?? ''))->format('d/m/Y') }}</dd></div>
+                                            <div><dt class="text-sm text-gray-500">État civil</dt><dd class="font-medium">{{ ucfirst($request->civilStatus('statut_civil_id')->name) }}</dd></div>
+                                            <div><dt class="text-sm text-gray-500">Genre</dt><dd class="font-medium">{{ optional($request->gender(($request->data['sexe_id'] ?? '')))->name ?? '—' }}</dd></div>
+                                            <div><dt class="text-sm text-gray-500">Nom de la mère</dt><dd class="font-medium">{{ ($request->data['nom_mere'] ?? '') ?? '-' }}</dd></div>
                                         </dl>
                                     </div>
-
-                                    <!-- Coordonnées -->
                                     <div class="p-4 bg-gray-50 rounded-lg">
                                         <h3 class="text-lg font-semibold mb-3 text-gray-700">Coordonnées</h3>
-
                                         <dl class="space-y-3">
-                                            <div>
-                                                <dt class="text-sm text-gray-500">Adresse</dt>
-                                                <dd class="font-medium">
-                                                    {{ ($request->data['adresse'] ?? '') ?? '-' }}
-                                                </dd>
-                                            </div>
-
-                                            <div>
-                                                <dt class="text-sm text-gray-500">Ville</dt>
-                                                <dd class="font-medium">
-                                                    {{ ($request->data['ville'] ?? '') ?? '-' }}
-                                                </dd>
-                                            </div>
-
-                                            <div>
-                                                <dt class="text-sm text-gray-500">Téléphone</dt>
-                                                <dd class="font-medium">
-                                                    {{ ($request->data['telephone'] ?? '') ?? '-' }}
-                                                </dd>
-                                            </div>
+                                            <div><dt class="text-sm text-gray-500">Adresse</dt><dd class="font-medium">{{ ($request->data['adresse'] ?? '') ?? '-' }}</dd></div>
+                                            <div><dt class="text-sm text-gray-500">Ville</dt><dd class="font-medium">{{ ($request->data['ville'] ?? '') ?? '-' }}</dd></div>
+                                            <div><dt class="text-sm text-gray-500">Téléphone</dt><dd class="font-medium">{{ ($request->data['telephone'] ?? '') ?? '-' }}</dd></div>
                                         </dl>
                                     </div>
                                 </div>
-
-                                <!-- ========================= -->
-                                <!-- Right Column -->
-                                <!-- ========================= -->
                                 <div class="space-y-5">
-
-                                    <!-- Allocation -->
                                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                                         <div class="p-4 bg-blue-50 rounded-lg">
                                             <dt class="text-sm text-gray-500">Montant de l'allocation</dt>
-                                            <dd class="text-2xl font-bold text-blue-600">
-                                                {{ number_format(($request->data['montant_allocation'] ?? ''), 2, ',', ' ') }} HTG
-                                            </dd>
+                                            <dd class="text-2xl font-bold text-blue-600">{{ number_format(($request->data['montant_allocation'] ?? ''), 2, ',', ' ') }} HTG</dd>
                                         </div>
-
                                         <div class="p-4 bg-indigo-50 rounded-lg">
                                             <dt class="text-sm text-gray-500">Type de pension</dt>
-                                            <dd class="font-medium">
-                                                {{ ucfirst($request->pensionType('type_pension_id')->name) }}
-                                            </dd>
+                                            <dd class="font-medium">{{ ucfirst($request->pensionType('type_pension_id')->name) }}</dd>
                                         </div>
                                     </div>
-
-                                    <!-- Détails pension -->
                                     <div class="p-4 bg-gray-50 rounded-lg">
                                         <h3 class="text-lg font-semibold mb-3 text-gray-700">Détails de pension</h3>
-
                                         <dl class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                            <div>
-                                                <dt class="text-sm text-gray-500">Catégorie de pension</dt>
-                                                <dd class="font-medium">
-                                                    {{ ucfirst($request->pensionCategory('categorie_pension_id')->name) }}
-                                                </dd>
-                                            </div>
-
-                                            <div>
-                                                <dt class="text-sm text-gray-500">Code pensionnaire</dt>
-                                                <dd class="font-medium">
-                                                    {{ ($request->data['code_pension'] ?? '') ?? '-' }}
-                                                </dd>
-                                            </div>
+                                            <div><dt class="text-sm text-gray-500">Catégorie de pension</dt><dd class="font-medium">{{ ucfirst($request->pensionCategory('categorie_pension_id')->name) }}</dd></div>
+                                            <div><dt class="text-sm text-gray-500">Code pensionné</dt><dd class="font-medium">{{ ($request->data['code_pension'] ?? '') ?? '-' }}</dd></div>
                                         </dl>
                                     </div>
-
-                                    <!-- Coordonnées bancaires -->
                                     <div class="p-4 bg-gray-50 rounded-lg">
                                         <h3 class="text-lg font-semibold mb-3 text-gray-700">Coordonnées bancaires</h3>
-
                                         <dl class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                            <div>
-                                                <dt class="text-sm text-gray-500">Nom de la banque</dt>
-                                                <dd class="font-medium">
-                                                    {{ ($request->data['nom_banque'] ?? '') ?? '-' }}
-                                                </dd>
-                                            </div>
-
-                                            <div>
-                                                <dt class="text-sm text-gray-500">Numéro de compte</dt>
-                                                <dd class="font-medium">
-                                                    {{ ($request->data['numero_compte'] ?? '') ?? '-' }}
-                                                </dd>
-                                            </div>
-
-                                            <div class="md:col-span-2">
-                                                <dt class="text-sm text-gray-500">Titulaire du compte</dt>
-                                                <dd class="font-medium">
-                                                    {{ ($request->data['nom_compte'] ?? '') ?? '-' }}
-                                                </dd>
-                                            </div>
+                                            <div><dt class="text-sm text-gray-500">Nom de la banque</dt><dd class="font-medium">{{ ($request->data['nom_banque'] ?? '') ?? '-' }}</dd></div>
+                                            <div><dt class="text-sm text-gray-500">Numéro de compte</dt><dd class="font-medium">{{ ($request->data['numero_compte'] ?? '') ?? '-' }}</dd></div>
+                                            <div class="md:col-span-2"><dt class="text-sm text-gray-500">Titulaire du compte</dt><dd class="font-medium">{{ ($request->data['nom_compte'] ?? '') ?? '-' }}</dd></div>
                                         </dl>
                                     </div>
-
-                                    <!-- Métadonnées -->
                                     <div class="p-4 bg-gray-50 rounded-lg">
                                         <h3 class="text-lg font-semibold mb-3 text-gray-700">Métadonnées</h3>
-
                                         <dl class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                            <div>
-                                                <dt class="text-sm text-gray-500">Code de la demande</dt>
-                                                <dd class="font-medium">
-                                                    #{{ $request->code }}
-                                                </dd>
-                                            </div>
-
-                                            <div>
-                                                <dt class="text-sm text-gray-500">Date de création</dt>
-                                                <dd class="font-medium">
-                                                    {{ $request->created_at->format('d/m/Y H:i') }}
-                                                </dd>
-                                            </div>
+                                            <div><dt class="text-sm text-gray-500">Code de la demande</dt><dd class="font-medium">#{{ $request->code }}</dd></div>
+                                            <div><dt class="text-sm text-gray-500">Date de création</dt><dd class="font-medium">{{ $request->created_at->format('d/m/Y H:i') }}</dd></div>
                                         </dl>
                                     </div>
-
                                 </div>
                             </div>
                         </div>
@@ -1261,98 +1443,34 @@
                 <div>
                     <div class="bg-white rounded-2xl border border-gray-200 shadow-sm mb-4">
                         <div class="p-6">
-
-                            <!-- Status Banner -->
-                            {{-- Status shown in page header --}}
-
-                            <!-- Main Content -->
                             <div class="space-y-5">
-
-                                <!-- Left Column -->
                                 <div class="space-y-5">
                                     <div class="p-4 bg-gray-50 rounded-lg">
-                                        <h3 class="text-lg font-semibold mb-3 text-gray-700">
-                                            Informations du pensionnaire
-                                        </h3>
-
+                                        <h3 class="text-lg font-semibold mb-3 text-gray-700">Informations du pensionné</h3>
                                         <dl class="space-y-3">
-                                            <div>
-                                                <dt class="text-sm text-gray-500">Nom complet</dt>
-                                                <dd class="font-medium">
-                                                    {{ ($request->data['prenom'] ?? '') }}
-                                                    {{ ($request->data['nom'] ?? '') }}
-                                                </dd>
-                                            </div>
-
-                                            <div>
-                                                <dt class="text-sm text-gray-500">NIF</dt>
-                                                <dd class="font-medium">
-                                                    {{ ($request->data['nif'] ?? '') }}
-                                                </dd>
-                                            </div>
-
-                                            <div>
-                                                <dt class="text-sm text-gray-500">Code pensionnaire</dt>
-                                                <dd class="font-medium">
-                                                    {{ ($request->data['code_pension'] ?? '') }}
-                                                </dd>
-                                            </div>
+                                            <div><dt class="text-sm text-gray-500">Nom complet</dt><dd class="font-medium">{{ ($request->data['prenom'] ?? '') }} {{ ($request->data['nom'] ?? '') }}</dd></div>
+                                            <div><dt class="text-sm text-gray-500">NIF</dt><dd class="font-medium">{{ ($request->data['nif'] ?? '') }}</dd></div>
+                                            <div><dt class="text-sm text-gray-500">Code pensionné</dt><dd class="font-medium">{{ ($request->data['code_pension'] ?? '') }}</dd></div>
                                         </dl>
                                     </div>
                                 </div>
-
-                                <!-- Right Column -->
                                 <div class="space-y-5">
-
-                                    <!-- Request Details -->
                                     <div class="p-4 bg-gray-50 rounded-lg">
-                                        <h3 class="text-lg font-semibold mb-3 text-gray-700">
-                                            Détails de la demande
-                                        </h3>
-
+                                        <h3 class="text-lg font-semibold mb-3 text-gray-700">Détails de la demande</h3>
                                         <dl class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                            <div>
-                                                <dt class="text-sm text-gray-500">Type de demande</dt>
-                                                <dd class="font-medium">
-                                                    {{ str_replace('_', ' ', $request->type) }}
-                                                </dd>
-                                            </div>
-
-                                            <div>
-                                                <dt class="text-sm text-gray-500">Code de la demande</dt>
-                                                <dd class="font-medium">
-                                                    #{{ $request->code }}
-                                                </dd>
-                                            </div>
-
-                                            <div>
-                                                <dt class="text-sm text-gray-500">Créée le</dt>
-                                                <dd class="font-medium">
-                                                    {{ $request->created_at->format('d/m/Y H:i') }}
-                                                </dd>
-                                            </div>
+                                            <div><dt class="text-sm text-gray-500">Type de demande</dt><dd class="font-medium">{{ str_replace('_', ' ', $request->type) }}</dd></div>
+                                            <div><dt class="text-sm text-gray-500">Code de la demande</dt><dd class="font-medium">#{{ $request->code }}</dd></div>
+                                            <div><dt class="text-sm text-gray-500">Créée le</dt><dd class="font-medium">{{ $request->created_at->format('d/m/Y H:i') }}</dd></div>
                                         </dl>
                                     </div>
-
-                                    <!-- Metadata -->
                                     <div class="p-4 bg-gray-50 rounded-lg">
-                                        <h3 class="text-lg font-semibold mb-3 text-gray-700">
-                                            Métadonnées
-                                        </h3>
-
+                                        <h3 class="text-lg font-semibold mb-3 text-gray-700">Métadonnées</h3>
                                         <dl class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                            <div>
-                                                <dt class="text-sm text-gray-500">Soumise par</dt>
-                                                <dd class="font-medium">
-                                                    {{ $request->user?->name ?? 'Système' }}
-                                                </dd>
-                                            </div>
+                                            <div><dt class="text-sm text-gray-500">Soumise par</dt><dd class="font-medium">{{ $request->user?->name ?? 'Système' }}</dd></div>
                                         </dl>
                                     </div>
-
                                 </div>
                             </div>
-
                         </div>
                     </div>
                 </div>
@@ -1363,182 +1481,71 @@
                 <div>
                     <div class="bg-white rounded-2xl border border-gray-200 shadow-sm mb-4">
                         <div class="p-6">
-
-                            <!-- Status Banner -->
-                            {{-- Status shown in page header --}}
-
                             <div class="space-y-5">
-
-                                <!-- COLONNE GAUCHE -->
                                 <div class="space-y-5">
-
-                                    <!-- Identité -->
                                     <div class="p-4 bg-gray-50 rounded-lg">
                                         <h3 class="text-lg font-semibold mb-3 text-gray-700">Identité</h3>
                                         <dl class="space-y-3">
-                                            <div>
-                                                <dt class="text-sm text-gray-500">Nom complet</dt>
-                                                <dd class="font-medium">
-                                                    {{ ($request->data['nom'] ?? '') }} {{ ($request->data['prenom'] ?? '') }}
-                                                </dd>
-                                            </div>
-
-                                            <div>
-                                                <dt class="text-sm text-gray-500">Nom de jeune fille</dt>
-                                                <dd class="font-medium">
-                                                    {{ ($request->data['nom_jeune_fille'] ?? '') ?? '—' }}
-                                                </dd>
-                                            </div>
+                                            <div><dt class="text-sm text-gray-500">Nom complet</dt><dd class="font-medium">{{ ($request->data['nom'] ?? '') }} {{ ($request->data['prenom'] ?? '') }}</dd></div>
+                                            <div><dt class="text-sm text-gray-500">Nom de jeune fille</dt><dd class="font-medium">{{ ($request->data['nom_jeune_fille'] ?? '') ?? '—' }}</dd></div>
                                         </dl>
                                     </div>
-
-                                    <!-- Identifiants -->
                                     <div class="p-4 bg-gray-50 rounded-lg">
-                                        <h3 class="text-lg font-semibold mb-3 text-gray-700">
-                                            Identifiants officiels
-                                        </h3>
+                                        <h3 class="text-lg font-semibold mb-3 text-gray-700">Identifiants officiels</h3>
                                         <dl class="space-y-3">
-                                            <div>
-                                                <dt class="text-sm text-gray-500">NIF</dt>
-                                                <dd class="font-medium">{{ ($request->data['nif'] ?? '') }}</dd>
-                                            </div>
-                                            <div>
-                                                <dt class="text-sm text-gray-500">NINU</dt>
-                                                <dd class="font-medium">{{ ($request->data['ninu'] ?? '') }}</dd>
-                                            </div>
-                                            <div>
-                                                <dt class="text-sm text-gray-500">Code pensionnaire</dt>
-                                                <dd class="font-medium">{{ ($request->data['code_pension'] ?? '') }}</dd>
-                                            </div>
+                                            <div><dt class="text-sm text-gray-500">NIF</dt><dd class="font-medium">{{ ($request->data['nif'] ?? '') }}</dd></div>
+                                            <div><dt class="text-sm text-gray-500">NINU</dt><dd class="font-medium">{{ ($request->data['ninu'] ?? '') }}</dd></div>
+                                            <div><dt class="text-sm text-gray-500">Code pensionné</dt><dd class="font-medium">{{ ($request->data['code_pension'] ?? '') }}</dd></div>
                                         </dl>
                                     </div>
-
-                                    <!-- Coordonnées -->
                                     <div class="p-4 bg-gray-50 rounded-lg">
-                                        <h3 class="text-lg font-semibold mb-3 text-gray-700">
-                                            Coordonnées
-                                        </h3>
+                                        <h3 class="text-lg font-semibold mb-3 text-gray-700">Coordonnées</h3>
                                         <dl class="space-y-3">
-                                            <div>
-                                                <dt class="text-sm text-gray-500">Adresse</dt>
-                                                <dd class="font-medium">{{ ($request->data['adresse'] ?? '') }}</dd>
-                                            </div>
-                                            <div>
-                                                <dt class="text-sm text-gray-500">Téléphone</dt>
-                                                <dd class="font-medium">{{ ($request->data['telephone'] ?? '') }}</dd>
-                                            </div>
-                                            <div>
-                                                <dt class="text-sm text-gray-500">Email</dt>
-                                                <dd class="font-medium">{{ ($request->data['email'] ?? '') }}</dd>
-                                            </div>
+                                            <div><dt class="text-sm text-gray-500">Adresse</dt><dd class="font-medium">{{ ($request->data['adresse'] ?? '') }}</dd></div>
+                                            <div><dt class="text-sm text-gray-500">Téléphone</dt><dd class="font-medium">{{ ($request->data['telephone'] ?? '') }}</dd></div>
+                                            <div><dt class="text-sm text-gray-500">Email</dt><dd class="font-medium">{{ ($request->data['email'] ?? '') }}</dd></div>
                                         </dl>
                                     </div>
-
                                 </div>
-
-                                <!-- COLONNE DROITE -->
                                 <div class="space-y-5">
-
-                                    <!-- Résumé -->
                                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                                         <div class="p-4 bg-blue-50 rounded-lg">
                                             <dt class="text-sm text-gray-500">Montant du transfert</dt>
-                                            <dd class="text-2xl font-bold text-blue-600">
-                                                {{ number_format(($request->data['montant'] ?? ''), 0, ',', ' ') }} HTG
-                                            </dd>
+                                            <dd class="text-2xl font-bold text-blue-600">{{ number_format(($request->data['montant'] ?? ''), 0, ',', ' ') }} HTG</dd>
                                         </div>
-
                                         <div class="p-4 bg-indigo-50 rounded-lg">
                                             <dt class="text-sm text-gray-500">Date de la demande</dt>
-                                            <dd class="font-medium">
-                                                {{ \Carbon\Carbon::parse(($request->data['date_demande'] ?? ''))->format('d/m/Y') }}
-                                            </dd>
+                                            <dd class="font-medium">{{ \Carbon\Carbon::parse(($request->data['date_demande'] ?? ''))->format('d/m/Y') }}</dd>
                                         </div>
                                     </div>
-
-                                    <!-- Calendrier fiscal -->
                                     <div class="p-4 bg-gray-50 rounded-lg">
-                                        <h3 class="text-lg font-semibold mb-3 text-gray-700">
-                                            Calendrier fiscal
-                                        </h3>
-
+                                        <h3 class="text-lg font-semibold mb-3 text-gray-700">Calendrier fiscal</h3>
                                         <dl class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                            <div>
-                                                <dt class="text-sm text-gray-500">Année fiscale</dt>
-                                                <dd class="font-medium">{{ ($request->data['annee_fiscale'] ?? '') }}</dd>
-                                            </div>
-
-                                            <div>
-                                                <dt class="text-sm text-gray-500">Mois de début</dt>
-                                                <dd class="font-medium">{{ ($request->data['mois_debut'] ?? '') }}</dd>
-                                            </div>
-
-                                            <div>
-                                                <dt class="text-sm text-gray-500">Catégorie de pension</dt>
-                                                <dd class="font-medium">
-                                                    {{ $request->pensionCategory('categorie_pension_id')->name }}
-                                                </dd>
-                                            </div>
+                                            <div><dt class="text-sm text-gray-500">Année fiscale</dt><dd class="font-medium">{{ ($request->data['annee_fiscale'] ?? '') }}</dd></div>
+                                            <div><dt class="text-sm text-gray-500">Mois de début</dt><dd class="font-medium">{{ ($request->data['mois_debut'] ?? '') }}</dd></div>
+                                            <div><dt class="text-sm text-gray-500">Catégorie de pension</dt><dd class="font-medium">{{ $request->pensionCategory('categorie_pension_id')->name }}</dd></div>
                                         </dl>
                                     </div>
-
-                                    <!-- Période -->
                                     <div class="p-4 bg-gray-50 rounded-lg">
-                                        <h3 class="text-lg font-semibold mb-3 text-gray-700">
-                                            Période du transfert
-                                        </h3>
-
+                                        <h3 class="text-lg font-semibold mb-3 text-gray-700">Période du transfert</h3>
                                         <dl class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                            <div>
-                                                <dt class="text-sm text-gray-500">Du</dt>
-                                                <dd class="font-medium">
-                                                    {{ \Carbon\Carbon::parse(($request->data['de'] ?? ''))->format('d/m/Y') }}
-                                                </dd>
-                                            </div>
-
-                                            <div>
-                                                <dt class="text-sm text-gray-500">Au</dt>
-                                                <dd class="font-medium">
-                                                    {{ \Carbon\Carbon::parse(($request->data['a'] ?? ''))->format('d/m/Y') }}
-                                                </dd>
-                                            </div>
+                                            <div><dt class="text-sm text-gray-500">Du</dt><dd class="font-medium">{{ \Carbon\Carbon::parse(($request->data['de'] ?? ''))->format('d/m/Y') }}</dd></div>
+                                            <div><dt class="text-sm text-gray-500">Au</dt><dd class="font-medium">{{ \Carbon\Carbon::parse(($request->data['a'] ?? ''))->format('d/m/Y') }}</dd></div>
                                         </dl>
                                     </div>
-
-                                    <!-- Contexte -->
                                     <div class="p-4 bg-gray-50 rounded-lg">
-                                        <h3 class="text-lg font-semibold mb-3 text-gray-700">
-                                            Contexte du transfert
-                                        </h3>
-                                        <p class="text-gray-700 leading-relaxed">
-                                            {{ ($request->data['raison_transfert'] ?? '') }}
-                                        </p>
+                                        <h3 class="text-lg font-semibold mb-3 text-gray-700">Contexte du transfert</h3>
+                                        <p class="text-gray-700 leading-relaxed">{{ ($request->data['raison_transfert'] ?? '') }}</p>
                                     </div>
-
-                                    <!-- Métadonnées -->
                                     <div class="p-4 bg-gray-50 rounded-lg">
-                                        <h3 class="text-lg font-semibold mb-3 text-gray-700">
-                                            Métadonnées
-                                        </h3>
-
+                                        <h3 class="text-lg font-semibold mb-3 text-gray-700">Métadonnées</h3>
                                         <dl class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                            <div>
-                                                <dt class="text-sm text-gray-500">Code de la demande</dt>
-                                                <dd class="font-medium">#{{ $request->code }}</dd>
-                                            </div>
-
-                                            <div>
-                                                <dt class="text-sm text-gray-500">Type de demande</dt>
-                                                <dd class="font-medium">
-                                                    {{ str_replace('_', ' ', $request->type) }}
-                                                </dd>
-                                            </div>
+                                            <div><dt class="text-sm text-gray-500">Code de la demande</dt><dd class="font-medium">#{{ $request->code }}</dd></div>
+                                            <div><dt class="text-sm text-gray-500">Type de demande</dt><dd class="font-medium">{{ str_replace('_', ' ', $request->type) }}</dd></div>
                                         </dl>
                                     </div>
-
                                 </div>
                             </div>
-
                         </div>
                     </div>
                 </div>
@@ -1547,207 +1554,59 @@
         @case('DEMANDE_ARRET_PAIEMENT')
             <div>
                 <div>
-
                     <div class="bg-white rounded-2xl border border-gray-200 shadow-sm mb-4">
                         <div class="p-6">
-
-                            {{-- ================= STATUS BANNER ================= --}}
-                            {{-- Status shown in page header --}}
-
-                            {{-- ================= MAIN GRID ================= --}}
                             <div class="space-y-5">
-
-                                {{-- ================= LEFT COLUMN ================= --}}
                                 <div class="space-y-5">
-
-                                    {{-- Pensionnaire --}}
                                     <div class="p-4 bg-gray-50 rounded-lg">
-                                        <h3 class="text-lg font-semibold mb-3 text-gray-700">
-                                            Informations du pensionnaire
-                                        </h3>
-
+                                        <h3 class="text-lg font-semibold mb-3 text-gray-700">Informations du pensionné</h3>
                                         <dl class="space-y-3">
-                                            <div>
-                                                <dt class="text-sm text-gray-500">Nom complet</dt>
-                                                <dd class="font-medium">
-                                                    {{ ($request->data['prenom'] ?? '') }} {{ ($request->data['nom'] ?? '') }}
-                                                </dd>
-                                            </div>
-
-                                            <div>
-                                                <dt class="text-sm text-gray-500">Nom de jeune fille</dt>
-                                                <dd class="font-medium">
-                                                    {{ ($request->data['nom_jeune_fille'] ?? '') ?? '—' }}
-                                                </dd>
-                                            </div>
-
-                                            <div>
-                                                <dt class="text-sm text-gray-500">Code pensionnaire</dt>
-                                                <dd class="font-medium">
-                                                    {{ ($request->data['code_pension'] ?? '') }}
-                                                </dd>
-                                            </div>
-
-                                            <div>
-                                                <dt class="text-sm text-gray-500">Régime de pension</dt>
-                                                <dd class="font-medium capitalize">
-                                                    {{ ($request->data['regime_pension'] ?? '') }}
-                                                </dd>
-                                            </div>
-
-                                            <div>
-                                                <dt class="text-sm text-gray-500">NIF</dt>
-                                                <dd class="font-medium">
-                                                    {{ ($request->data['nif'] ?? '') }}
-                                                </dd>
-                                            </div>
-
-                                            <div>
-                                                <dt class="text-sm text-gray-500">NINU</dt>
-                                                <dd class="font-medium">
-                                                    {{ ($request->data['ninu'] ?? '') }}
-                                                </dd>
-                                            </div>
-
-                                            <div>
-                                                <dt class="text-sm text-gray-500">Téléphone</dt>
-                                                <dd class="font-medium">
-                                                    {{ ($request->data['telephone'] ?? '') }}
-                                                </dd>
-                                            </div>
-
-                                            <div>
-                                                <dt class="text-sm text-gray-500">Email</dt>
-                                                <dd class="font-medium">
-                                                    {{ ($request->data['email'] ?? '') }}
-                                                </dd>
-                                            </div>
-
-                                            <div>
-                                                <dt class="text-sm text-gray-500">Adresse</dt>
-                                                <dd class="font-medium">
-                                                    {{ ($request->data['adresse'] ?? '') }}
-                                                </dd>
-                                            </div>
+                                            <div><dt class="text-sm text-gray-500">Nom complet</dt><dd class="font-medium">{{ ($request->data['prenom'] ?? '') }} {{ ($request->data['nom'] ?? '') }}</dd></div>
+                                            <div><dt class="text-sm text-gray-500">Nom de jeune fille</dt><dd class="font-medium">{{ ($request->data['nom_jeune_fille'] ?? '') ?? '—' }}</dd></div>
+                                            <div><dt class="text-sm text-gray-500">Code pensionné</dt><dd class="font-medium">{{ ($request->data['code_pension'] ?? '') }}</dd></div>
+                                            <div><dt class="text-sm text-gray-500">Régime de pension</dt><dd class="font-medium capitalize">{{ ($request->data['regime_pension'] ?? '') }}</dd></div>
+                                            <div><dt class="text-sm text-gray-500">NIF</dt><dd class="font-medium">{{ ($request->data['nif'] ?? '') }}</dd></div>
+                                            <div><dt class="text-sm text-gray-500">NINU</dt><dd class="font-medium">{{ ($request->data['ninu'] ?? '') }}</dd></div>
+                                            <div><dt class="text-sm text-gray-500">Téléphone</dt><dd class="font-medium">{{ ($request->data['telephone'] ?? '') }}</dd></div>
+                                            <div><dt class="text-sm text-gray-500">Email</dt><dd class="font-medium">{{ ($request->data['email'] ?? '') }}</dd></div>
+                                            <div><dt class="text-sm text-gray-500">Adresse</dt><dd class="font-medium">{{ ($request->data['adresse'] ?? '') }}</dd></div>
                                         </dl>
                                     </div>
-
                                 </div>
-
-                                {{-- ================= RIGHT COLUMN ================= --}}
                                 <div class="space-y-5">
-
-                                    {{-- Détails de la demande --}}
                                     <div class="p-4 bg-gray-50 rounded-lg">
-                                        <h3 class="text-lg font-semibold mb-3 text-gray-700">
-                                            Détails de la demande
-                                        </h3>
-
+                                        <h3 class="text-lg font-semibold mb-3 text-gray-700">Détails de la demande</h3>
                                         <dl class="grid grid-cols-1 md:grid-cols-2 gap-4">
-
-                                            <div>
-                                                <dt class="text-sm text-gray-500">Type de demande</dt>
-                                                <dd class="font-medium">
-                                                    {{ str_replace('_', ' ', $request->type) }}
-                                                </dd>
-                                            </div>
-
-                                            <div>
-                                                <dt class="text-sm text-gray-500">Code de la demande</dt>
-                                                <dd class="font-medium">
-                                                    #{{ $request->code }}
-                                                </dd>
-                                            </div>
-
-                                            <div>
-                                                <dt class="text-sm text-gray-500">Exercice</dt>
-                                                <dd class="font-medium">
-                                                    {{ ($request->data['exercice'] ?? '') }}
-                                                </dd>
-                                            </div>
-
-                                            <div>
-                                                <dt class="text-sm text-gray-500">Mois de début</dt>
-                                                <dd class="font-medium">
-                                                    {{ \Carbon\Carbon::parse(($request->data['mois_debut'] ?? ''))->format('m/Y') }}
-                                                </dd>
-                                            </div>
-
-                                            <div>
-                                                <dt class="text-sm text-gray-500">Période demandée</dt>
-                                                <dd class="font-medium">
-                                                    Du {{ \Carbon\Carbon::parse(($request->data['periode_debut'] ?? ''))->format('d/m/Y') }}
-                                                    au {{ \Carbon\Carbon::parse(($request->data['periode_fin'] ?? ''))->format('d/m/Y') }}
-                                                </dd>
-                                            </div>
-
-                                            <div>
-                                                <dt class="text-sm text-gray-500">Montant</dt>
-                                                <dd class="font-medium">
-                                                    {{ number_format(($request->data['montant'] ?? ''), 0, ',', ' ') }} GDES
-                                                </dd>
-                                            </div>
-
-                                            <div>
-                                                <dt class="text-sm text-gray-500">Date de la demande</dt>
-                                                <dd class="font-medium">
-                                                    {{ \Carbon\Carbon::parse($request->date_demande)->format('d/m/Y') }}
-                                                </dd>
-                                            </div>
-
+                                            <div><dt class="text-sm text-gray-500">Type de demande</dt><dd class="font-medium">{{ str_replace('_', ' ', $request->type) }}</dd></div>
+                                            <div><dt class="text-sm text-gray-500">Code de la demande</dt><dd class="font-medium">#{{ $request->code }}</dd></div>
+                                            <div><dt class="text-sm text-gray-500">Exercice</dt><dd class="font-medium">{{ ($request->data['exercice'] ?? '') }}</dd></div>
+                                            <div><dt class="text-sm text-gray-500">Mois de début</dt><dd class="font-medium">{{ \Carbon\Carbon::parse(($request->data['mois_debut'] ?? ''))->format('m/Y') }}</dd></div>
+                                            <div><dt class="text-sm text-gray-500">Période demandée</dt><dd class="font-medium">Du {{ \Carbon\Carbon::parse(($request->data['periode_debut'] ?? ''))->format('d/m/Y') }} au {{ \Carbon\Carbon::parse(($request->data['periode_fin'] ?? ''))->format('d/m/Y') }}</dd></div>
+                                            <div><dt class="text-sm text-gray-500">Montant</dt><dd class="font-medium">{{ number_format(($request->data['montant'] ?? ''), 0, ',', ' ') }} GDES</dd></div>
+                                            <div><dt class="text-sm text-gray-500">Date de la demande</dt><dd class="font-medium">{{ \Carbon\Carbon::parse($request->date_demande)->format('d/m/Y') }}</dd></div>
                                         </dl>
                                     </div>
-
-                                    {{-- Pièces jointes --}}
                                     @if(!empty(($request->data['pieces'] ?? '')))
                                     <div class="p-4 bg-gray-50 rounded-lg">
-                                        <h3 class="text-lg font-semibold mb-3 text-gray-700">
-                                            Pièces justificatives
-                                        </h3>
-
+                                        <h3 class="text-lg font-semibold mb-3 text-gray-700">Pièces justificatives</h3>
                                         <ul class="list-disc list-inside space-y-2">
                                             @foreach(($request->data['pieces'] ?? '') as $piece)
-                                                <li>
-                                                    <a href="{{ Storage::url($piece) }}"
-                                                    target="_blank"
-                                                    class="text-blue-600 hover:underline">
-                                                        {{ basename($piece) }}
-                                                    </a>
-                                                </li>
+                                                <li><a href="{{ Storage::url($piece) }}" target="_blank" class="text-blue-600 hover:underline">{{ basename($piece) }}</a></li>
                                             @endforeach
                                         </ul>
                                     </div>
                                     @endif
-
-                                    {{-- Métadonnées --}}
                                     <div class="p-4 bg-gray-50 rounded-lg">
-                                        <h3 class="text-lg font-semibold mb-3 text-gray-700">
-                                            Métadonnées
-                                        </h3>
-
+                                        <h3 class="text-lg font-semibold mb-3 text-gray-700">Métadonnées</h3>
                                         <dl class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                            <div>
-                                                <dt class="text-sm text-gray-500">Soumise par</dt>
-                                                <dd class="font-medium">
-                                                    {{ $request->user?->name ?? 'Système' }}
-                                                </dd>
-                                            </div>
-
-                                            <div>
-                                                <dt class="text-sm text-gray-500">Créée le</dt>
-                                                <dd class="font-medium">
-                                                    {{ $request->created_at->format('d/m/Y H:i') }}
-                                                </dd>
-                                            </div>
+                                            <div><dt class="text-sm text-gray-500">Soumise par</dt><dd class="font-medium">{{ $request->user?->name ?? 'Système' }}</dd></div>
+                                            <div><dt class="text-sm text-gray-500">Créée le</dt><dd class="font-medium">{{ $request->created_at->format('d/m/Y H:i') }}</dd></div>
                                         </dl>
                                     </div>
-
                                 </div>
                             </div>
-
                         </div>
                     </div>
-
                 </div>
             </div>
             @break
@@ -1756,104 +1615,37 @@
                 <div>
                     <div class="bg-white rounded-2xl border border-gray-200 shadow-sm mb-4">
                         <div class="p-6">
-
-                            <!-- Status Banner -->
-                            {{-- Status shown in page header --}}
-
-                            <!-- Main Grid -->
                             <div class="space-y-5">
-
-                                <!-- LEFT COLUMN -->
                                 <div class="space-y-5">
-
-                                    <!-- Identity -->
                                     <div class="p-4 bg-gray-50 rounded-lg">
-                                        <h3 class="text-lg font-semibold mb-3 text-gray-700">
-                                            Identité
-                                        </h3>
-
+                                        <h3 class="text-lg font-semibold mb-3 text-gray-700">Identité</h3>
                                         <dl class="space-y-3">
-                                            <div>
-                                                <dt class="text-sm text-gray-500">Prénom</dt>
-                                                <dd class="font-medium">
-                                                    {{ ($request->data['prenom'] ?? '') }}
-                                                </dd>
-                                            </div>
-
-                                            <div>
-                                                <dt class="text-sm text-gray-500">Nom</dt>
-                                                <dd class="font-medium">
-                                                    {{ ($request->data['nom'] ?? '') }}
-                                                </dd>
-                                            </div>
+                                            <div><dt class="text-sm text-gray-500">Prénom</dt><dd class="font-medium">{{ ($request->data['prenom'] ?? '') }}</dd></div>
+                                            <div><dt class="text-sm text-gray-500">Nom</dt><dd class="font-medium">{{ ($request->data['nom'] ?? '') }}</dd></div>
                                         </dl>
                                     </div>
-
                                 </div>
-
-                                <!-- RIGHT COLUMN -->
                                 <div class="space-y-5">
-
-                                    <!-- Request Info -->
                                     <div class="p-4 bg-gray-50 rounded-lg">
-                                        <h3 class="text-lg font-semibold mb-3 text-gray-700">
-                                            Informations de la demande
-                                        </h3>
-
+                                        <h3 class="text-lg font-semibold mb-3 text-gray-700">Informations de la demande</h3>
                                         <dl class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                            <div>
-                                                <dt class="text-sm text-gray-500">Type de demande</dt>
-                                                <dd class="font-medium">
-                                                    {{ str_replace('_', ' ', $request->type) }}
-                                                </dd>
-                                            </div>
-
-                                            <div>
-                                                <dt class="text-sm text-gray-500">Code de la demande</dt>
-                                                <dd class="font-medium">
-                                                    #{{ $request->code }}
-                                                </dd>
-                                            </div>
-
-                                            <div>
-                                                <dt class="text-sm text-gray-500">Créée le</dt>
-                                                <dd class="font-medium">
-                                                    {{ $request->created_at->format('d/m/Y H:i') }}
-                                                </dd>
-                                            </div>
+                                            <div><dt class="text-sm text-gray-500">Type de demande</dt><dd class="font-medium">{{ str_replace('_', ' ', $request->type) }}</dd></div>
+                                            <div><dt class="text-sm text-gray-500">Code de la demande</dt><dd class="font-medium">#{{ $request->code }}</dd></div>
+                                            <div><dt class="text-sm text-gray-500">Créée le</dt><dd class="font-medium">{{ $request->created_at->format('d/m/Y H:i') }}</dd></div>
                                         </dl>
                                     </div>
-
-                                    <!-- Reason -->
                                     <div class="p-4 bg-gray-50 rounded-lg">
-                                        <h3 class="text-lg font-semibold mb-3 text-gray-700">
-                                            Motif de la réinsertion
-                                        </h3>
-
-                                        <p class="text-gray-700 leading-relaxed">
-                                            {{ ($request->data['raison'] ?? '') }}
-                                        </p>
+                                        <h3 class="text-lg font-semibold mb-3 text-gray-700">Motif de la réinsertion</h3>
+                                        <p class="text-gray-700 leading-relaxed">{{ ($request->data['raison'] ?? '') }}</p>
                                     </div>
-
-                                    <!-- Metadata -->
                                     <div class="p-4 bg-gray-50 rounded-lg">
-                                        <h3 class="text-lg font-semibold mb-3 text-gray-700">
-                                            Métadonnées
-                                        </h3>
-
+                                        <h3 class="text-lg font-semibold mb-3 text-gray-700">Métadonnées</h3>
                                         <dl class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                            <div>
-                                                <dt class="text-sm text-gray-500">Soumise par</dt>
-                                                <dd class="font-medium">
-                                                    {{ $request->user?->name ?? 'Système' }}
-                                                </dd>
-                                            </div>
+                                            <div><dt class="text-sm text-gray-500">Soumise par</dt><dd class="font-medium">{{ $request->user?->name ?? 'Système' }}</dd></div>
                                         </dl>
                                     </div>
-
                                 </div>
                             </div>
-
                         </div>
                     </div>
                 </div>
@@ -1862,160 +1654,54 @@
         @case('DEMANDE_ARRET_VIREMENT')
             <div>
                 <div>
-
                     <div class="bg-white rounded-2xl border border-gray-200 shadow-sm mb-4">
                         <div class="p-6">
-
-                            {{-- ===================== --}}
-                            {{-- BANNIÈRE DE STATUT --}}
-                            {{-- ===================== --}}
-                            {{-- Status shown in page header --}}
-
-                            {{-- ===================== --}}
-                            {{-- GRILLE PRINCIPALE --}}
-                            {{-- ===================== --}}
                             <div class="space-y-5">
-
-                                {{-- ===================== --}}
-                                {{-- COLONNE GAUCHE --}}
-                                {{-- ===================== --}}
                                 <div class="space-y-5">
-
-                                    {{-- Type de demande --}}
                                     <div class="p-4 bg-gray-50 rounded-lg">
-                                        <h3 class="text-lg font-semibold mb-3 text-gray-700">
-                                            Type de demande
-                                        </h3>
-                                        <p class="font-medium">
-                                            {{ str_replace('_', ' ', $request->type) }}
-                                        </p>
+                                        <h3 class="text-lg font-semibold mb-3 text-gray-700">Type de demande</h3>
+                                        <p class="font-medium">{{ str_replace('_', ' ', $request->type) }}</p>
                                     </div>
-
-                                    {{-- Métadonnées --}}
                                     <div class="p-4 bg-gray-50 rounded-lg">
-                                        <h3 class="text-lg font-semibold mb-3 text-gray-700">
-                                            Métadonnées
-                                        </h3>
-
+                                        <h3 class="text-lg font-semibold mb-3 text-gray-700">Métadonnées</h3>
                                         <dl class="space-y-3">
-                                            <div>
-                                                <dt class="text-sm text-gray-500">Soumise par</dt>
-                                                <dd class="font-medium">
-                                                    {{ $request->user?->name ?? 'Système' }}
-                                                </dd>
-                                            </div>
-
-                                            <div>
-                                                <dt class="text-sm text-gray-500">Créée le</dt>
-                                                <dd class="font-medium">
-                                                    {{ $request->created_at->format('d/m/Y H:i') }}
-                                                </dd>
-                                            </div>
+                                            <div><dt class="text-sm text-gray-500">Soumise par</dt><dd class="font-medium">{{ $request->user?->name ?? 'Système' }}</dd></div>
+                                            <div><dt class="text-sm text-gray-500">Créée le</dt><dd class="font-medium">{{ $request->created_at->format('d/m/Y H:i') }}</dd></div>
                                         </dl>
                                     </div>
                                 </div>
-
-                                {{-- ===================== --}}
-                                {{-- COLONNE DROITE --}}
-                                {{-- ===================== --}}
                                 <div class="space-y-5">
-
-                                    {{-- Code --}}
                                     <div class="p-4 bg-gray-50 rounded-lg">
-                                        <h3 class="text-lg font-semibold mb-3 text-gray-700">
-                                            Détails de la demande
-                                        </h3>
-
+                                        <h3 class="text-lg font-semibold mb-3 text-gray-700">Détails de la demande</h3>
                                         <dl class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                            <div>
-                                                <dt class="text-sm text-gray-500">Code de la demande</dt>
-                                                <dd class="font-medium">#{{ $request->code }}</dd>
-                                            </div>
-
-                                            <div>
-                                                <dt class="text-sm text-gray-500">Date de la demande</dt>
-                                                <dd class="font-medium">
-                                                    {{ ($request->data['date'] ?? '') ?? '-' }}
-                                                </dd>
-                                            </div>
+                                            <div><dt class="text-sm text-gray-500">Code de la demande</dt><dd class="font-medium">#{{ $request->code }}</dd></div>
+                                            <div><dt class="text-sm text-gray-500">Date de la demande</dt><dd class="font-medium">{{ ($request->data['date'] ?? '') ?? '-' }}</dd></div>
                                         </dl>
                                     </div>
-
-                                    {{-- Informations du demandeur --}}
                                     <div class="p-4 bg-gray-50 rounded-lg">
-                                        <h3 class="text-lg font-semibold mb-3 text-gray-700">
-                                            Informations du demandeur
-                                        </h3>
-
+                                        <h3 class="text-lg font-semibold mb-3 text-gray-700">Informations du demandeur</h3>
                                         <dl class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                            <div>
-                                                <dt class="text-sm text-gray-500">Nom</dt>
-                                                <dd class="font-medium">{{ ($request->data['nom'] ?? '') ?? '-' }}</dd>
-                                            </div>
-
-                                            <div>
-                                                <dt class="text-sm text-gray-500">Prénom</dt>
-                                                <dd class="font-medium">{{ ($request->data['prenom'] ?? '') ?? '-' }}</dd>
-                                            </div>
-
-                                            <div>
-                                                <dt class="text-sm text-gray-500">Téléphone</dt>
-                                                <dd class="font-medium">{{ ($request->data['telephone'] ?? '') ?? '-' }}</dd>
-                                            </div>
-
-                                            <div>
-                                                <dt class="text-sm text-gray-500">Courriel</dt>
-                                                <dd class="font-medium">{{ ($request->data['courriel'] ?? '') ?? '-' }}</dd>
-                                            </div>
+                                            <div><dt class="text-sm text-gray-500">Nom</dt><dd class="font-medium">{{ ($request->data['nom'] ?? '') ?? '-' }}</dd></div>
+                                            <div><dt class="text-sm text-gray-500">Prénom</dt><dd class="font-medium">{{ ($request->data['prenom'] ?? '') ?? '-' }}</dd></div>
+                                            <div><dt class="text-sm text-gray-500">Téléphone</dt><dd class="font-medium">{{ ($request->data['telephone'] ?? '') ?? '-' }}</dd></div>
+                                            <div><dt class="text-sm text-gray-500">Courriel</dt><dd class="font-medium">{{ ($request->data['courriel'] ?? '') ?? '-' }}</dd></div>
                                         </dl>
                                     </div>
-
-                                    {{-- Détails arrêt de virement --}}
                                     <div class="p-4 bg-gray-50 rounded-lg">
-                                        <h3 class="text-lg font-semibold mb-3 text-gray-700">
-                                            Arrêt de virement
-                                        </h3>
-
+                                        <h3 class="text-lg font-semibold mb-3 text-gray-700">Arrêt de virement</h3>
                                         <dl class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                            <div>
-                                                <dt class="text-sm text-gray-500">Mois non reçu</dt>
-                                                <dd class="font-medium">{{ ($request->data['mois_non_recu'] ?? '') ?? '-' }}</dd>
-                                            </div>
-
-                                            <div>
-                                                <dt class="text-sm text-gray-500">Nouveau numéro</dt>
-                                                <dd class="font-medium">{{ ($request->data['nouveau_numero'] ?? '') ?? '-' }}</dd>
-                                            </div>
-
-                                            <div>
-                                                <dt class="text-sm text-gray-500">Nom du compte</dt>
-                                                <dd class="font-medium">{{ ($request->data['nom_du_compte'] ?? '') ?? '-' }}</dd>
-                                            </div>
-
-                                            <div>
-                                                <dt class="text-sm text-gray-500">Chèques</dt>
-                                                <dd class="font-medium">{{ ($request->data['cheques'] ?? '') ?? '-' }}</dd>
-                                            </div>
+                                            <div><dt class="text-sm text-gray-500">Mois non reçu</dt><dd class="font-medium">{{ ($request->data['mois_non_recu'] ?? '') ?? '-' }}</dd></div>
+                                            <div><dt class="text-sm text-gray-500">Nouveau numéro</dt><dd class="font-medium">{{ ($request->data['nouveau_numero'] ?? '') ?? '-' }}</dd></div>
+                                            <div><dt class="text-sm text-gray-500">Nom du compte</dt><dd class="font-medium">{{ ($request->data['nom_du_compte'] ?? '') ?? '-' }}</dd></div>
+                                            <div><dt class="text-sm text-gray-500">Chèques</dt><dd class="font-medium">{{ ($request->data['cheques'] ?? '') ?? '-' }}</dd></div>
                                         </dl>
                                     </div>
-
-                                    {{-- Informations complémentaires --}}
                                     <div class="p-4 bg-gray-50 rounded-lg">
-                                        <h3 class="text-lg font-semibold mb-3 text-gray-700">
-                                            Informations complémentaires
-                                        </h3>
-
-                                        <p class="text-gray-700">
-                                            {{ ($request->data['informations'] ?? '') ?? 'Aucune information fournie' }}
-                                        </p>
+                                        <h3 class="text-lg font-semibold mb-3 text-gray-700">Informations complémentaires</h3>
+                                        <p class="text-gray-700">{{ ($request->data['informations'] ?? '') ?? 'Aucune information fournie' }}</p>
                                     </div>
-
-                                    {{-- Motifs --}}
                                     <div class="p-4 bg-gray-50 rounded-lg">
-                                        <h3 class="text-lg font-semibold mb-3 text-gray-700">
-                                            Motifs
-                                        </h3>
-
+                                        <h3 class="text-lg font-semibold mb-3 text-gray-700">Motifs</h3>
                                         @if(!empty(($request->data['motifs'] ?? '')))
                                             <ul class="list-disc list-inside space-y-1">
                                                 @foreach(($request->data['motifs'] ?? '') as $motif)
@@ -2025,250 +1711,142 @@
                                         @else
                                             <p class="text-gray-500">Aucun motif renseigné</p>
                                         @endif
-                                        </div>
+                                    </div>
                                 </div>
                             </div>
-
                         </div>
                     </div>
-
                 </div>
             </div>
             @break
         @case('DEMANDE_PREUVE_EXISTENCE')
-            <div class="py-6">
-                <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
-                    <div class="bg-white shadow rounded-lg p-6 space-y-8">
-
-                        {{-- ================= STATUT ================= --}}
-                        <div class="p-4 rounded-lg {{ App\Models\WorkflowStep::getStatusStyle($request->currentStep?->code) }}">
-                            <div class="flex justify-between items-center">
-                                <div>
-                                    <strong>Statut :</strong> {{ $request->currentStep?->code }}
-                                </div>
-                                <div class="text-sm">
-                                    Mis à jour le {{ $request->updated_at->format('d/m/Y H:i') }}
-                                </div>
-                            </div>
+            <div class="bg-white rounded-2xl border border-gray-200 shadow-sm mb-4">
+                <div class="p-6 space-y-8">
+                    <div class="p-4 rounded-lg {{ App\Models\WorkflowStep::getStatusStyle($request->currentStep?->code) }}">
+                        <div class="flex justify-between items-center">
+                            <div><strong>Statut :</strong> {{ $request->currentStep?->code }}</div>
+                            <div class="text-sm">Mis à jour le {{ $request->updated_at->format('d/m/Y H:i') }}</div>
                         </div>
-
-                        {{-- ================= MÉTADONNÉES RACINE ================= --}}
-                        <div class="bg-gray-50 rounded-lg p-4">
-                            <h3 class="text-lg font-semibold mb-4 text-gray-700">Informations système</h3>
-
-                            <dl class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                                <div>
-                                    <dt class="text-sm text-gray-500">Code</dt>
-                                    <dd class="font-medium">{{ $request->code }}</dd>
-                                </div>
-
-                                <div>
-                                    <dt class="text-sm text-gray-500">Type</dt>
-                                    <dd class="font-medium">{{ $request->type }}</dd>
-                                </div>
-
-                                <div>
-                                    <dt class="text-sm text-gray-500">Créée le</dt>
-                                    <dd class="font-medium">{{ $request->created_at->format('d/m/Y H:i') }}</dd>
-                                </div>
-
-                                <div>
-                                    <dt class="text-sm text-gray-500">Créée par (ID)</dt>
-                                    <dd class="font-medium">{{ $request->user->name }}</dd>
-                                </div>
-                            </dl>
-                        </div>
-
-                        {{-- ================= IDENTITÉ ================= --}}
-                        <div class="bg-gray-50 rounded-lg p-4">
-                            <h3 class="text-lg font-semibold mb-4 text-gray-700">Identité du pensionné</h3>
-
-                            <dl class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                                <div><dt class="text-sm text-gray-500">Numéro d’identité</dt><dd class="font-medium">{{ ($request->data['numero_identite'] ?? '') }}</dd></div>
-                                <div><dt class="text-sm text-gray-500">Nom</dt><dd class="font-medium">{{ ($request->data['nom'] ?? '') }}</dd></div>
-                                <div><dt class="text-sm text-gray-500">Prénom</dt><dd class="font-medium">{{ ($request->data['prenom'] ?? '') }}</dd></div>
-                                <div><dt class="text-sm text-gray-500">Date de naissance</dt><dd class="font-medium">{{ ($request->data['date_naissance'] ?? '') }}</dd></div>
-                                <div><dt class="text-sm text-gray-500">Sexe (ID)</dt><dd class="font-medium">{{ optional($request->gender(($request->data['sexe_id'] ?? '')))->name ?? '—' }}</dd></div>
-                                <div><dt class="text-sm text-gray-500">État civil (ID)</dt><dd class="font-medium">{{ $request->civilStatus('etat_civil_id')->name}}</dd></div>
-                            </dl>
-                        </div>
-
-                        {{-- ================= COORDONNÉES ================= --}}
-                        <div class="bg-gray-50 rounded-lg p-4">
-                            <h3 class="text-lg font-semibold mb-4 text-gray-700">Coordonnées</h3>
-
-                            <dl class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                <div><dt class="text-sm text-gray-500">Adresse</dt><dd class="font-medium">{{ ($request->data['adresse'] ?? '') }}</dd></div>
-                                <div><dt class="text-sm text-gray-500">Adresse postale</dt><dd class="font-medium">{{ ($request->data['adresse_postale'] ?? '') }}</dd></div>
-                                <div><dt class="text-sm text-gray-500">Localisation</dt><dd class="font-medium">{{ ($request->data['localisation'] ?? '') }}</dd></div>
-                                <div><dt class="text-sm text-gray-500">Téléphone</dt><dd class="font-medium">{{ ($request->data['telephone'] ?? '') }}</dd></div>
-                            </dl>
-                        </div>
-
-                        {{-- ================= DONNÉES FISCALES ================= --}}
-                        <div class="bg-gray-50 rounded-lg p-4">
-                            <h3 class="text-lg font-semibold mb-4 text-gray-700">Données fiscales</h3>
-
-                            <dl class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                                <div><dt class="text-sm text-gray-500">Année fiscale</dt><dd class="font-medium">{{ ($request->data['annee_fiscale'] ?? '') }}</dd></div>
-                                <div><dt class="text-sm text-gray-500">NIF</dt><dd class="font-medium">{{ ($request->data['nif'] ?? '') }}</dd></div>
-                            </dl>
-                        </div>
-
-                        {{-- ================= PENSION ================= --}}
-                        <div class="bg-gray-50 rounded-lg p-4">
-                            <h3 class="text-lg font-semibold mb-4 text-gray-700">Pension</h3>
-
-                            <dl class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                                <div><dt class="text-sm text-gray-500">Catégorie (ID)</dt><dd class="font-medium">{{ $request->pensionCategory('categorie_pension_id')->name }}</dd></div>
-                                <div><dt class="text-sm text-gray-500">Montant</dt><dd class="font-medium">{{ number_format(($request->data['montant_pension'] ?? ''), 0, ',', ' ') }} HTG</dd></div>
-                                <div><dt class="text-sm text-gray-500">Début</dt><dd class="font-medium">{{ ($request->data['debut_pension'] ?? '') }}</dd></div>
-                                <div><dt class="text-sm text-gray-500">Fin</dt><dd class="font-medium">{{ ($request->data['fin_pension'] ?? '') }}</dd></div>
-                            </dl>
-                        </div>
-
-                        {{-- ================= MONITEUR ================= --}}
-                        <div class="bg-gray-50 rounded-lg p-4">
-                            <h3 class="text-lg font-semibold mb-4 text-gray-700">Moniteur</h3>
-
-                            <dl class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                <div><dt class="text-sm text-gray-500">Numéro</dt><dd class="font-medium">{{ ($request->data['no_moniteur'] ?? '') }}</dd></div>
-                                <div><dt class="text-sm text-gray-500">Date</dt><dd class="font-medium">{{ ($request->data['date_moniteur'] ?? '') }}</dd></div>
-                            </dl>
-                        </div>
-
-                        {{-- ================= DÉPENDANTS ================= --}}
-                        <div class="bg-gray-50 rounded-lg p-4">
-                            <h3 class="text-lg font-semibold mb-4 text-gray-700">Dépendants</h3>
-
-                            <table class="w-full border text-sm">
-                                <thead class="bg-gray-100">
+                    </div>
+                    <div class="bg-gray-50 rounded-lg p-4">
+                        <h3 class="text-lg font-semibold mb-4 text-gray-700">Informations système</h3>
+                        <dl class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                            <div><dt class="text-sm text-gray-500">Code</dt><dd class="font-medium">{{ $request->code }}</dd></div>
+                            <div><dt class="text-sm text-gray-500">Type</dt><dd class="font-medium">{{ $request->type }}</dd></div>
+                            <div><dt class="text-sm text-gray-500">Créée le</dt><dd class="font-medium">{{ $request->created_at->format('d/m/Y H:i') }}</dd></div>
+                            <div><dt class="text-sm text-gray-500">Créée par (ID)</dt><dd class="font-medium">{{ $request->user->name }}</dd></div>
+                        </dl>
+                    </div>
+                    <div class="bg-gray-50 rounded-lg p-4">
+                        <h3 class="text-lg font-semibold mb-4 text-gray-700">Identité du pensionné</h3>
+                        <dl class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                            <div><dt class="text-sm text-gray-500">Numéro d'identité</dt><dd class="font-medium">{{ ($request->data['numero_identite'] ?? '') }}</dd></div>
+                            <div><dt class="text-sm text-gray-500">Nom</dt><dd class="font-medium">{{ ($request->data['nom'] ?? '') }}</dd></div>
+                            <div><dt class="text-sm text-gray-500">Prénom</dt><dd class="font-medium">{{ ($request->data['prenom'] ?? '') }}</dd></div>
+                            <div><dt class="text-sm text-gray-500">Date de naissance</dt><dd class="font-medium">{{ ($request->data['date_naissance'] ?? '') }}</dd></div>
+                            <div><dt class="text-sm text-gray-500">Sexe (ID)</dt><dd class="font-medium">{{ optional($request->gender(($request->data['sexe_id'] ?? '')))->name ?? '—' }}</dd></div>
+                            <div><dt class="text-sm text-gray-500">État civil (ID)</dt><dd class="font-medium">{{ $request->civilStatus('etat_civil_id')->name}}</dd></div>
+                        </dl>
+                    </div>
+                    <div class="bg-gray-50 rounded-lg p-4">
+                        <h3 class="text-lg font-semibold mb-4 text-gray-700">Coordonnées</h3>
+                        <dl class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div><dt class="text-sm text-gray-500">Adresse</dt><dd class="font-medium">{{ ($request->data['adresse'] ?? '') }}</dd></div>
+                            <div><dt class="text-sm text-gray-500">Adresse postale</dt><dd class="font-medium">{{ ($request->data['adresse_postale'] ?? '') }}</dd></div>
+                            <div><dt class="text-sm text-gray-500">Localisation</dt><dd class="font-medium">{{ ($request->data['localisation'] ?? '') }}</dd></div>
+                            <div><dt class="text-sm text-gray-500">Téléphone</dt><dd class="font-medium">{{ ($request->data['telephone'] ?? '') }}</dd></div>
+                        </dl>
+                    </div>
+                    <div class="bg-gray-50 rounded-lg p-4">
+                        <h3 class="text-lg font-semibold mb-4 text-gray-700">Données fiscales</h3>
+                        <dl class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                            <div><dt class="text-sm text-gray-500">Année fiscale</dt><dd class="font-medium">{{ ($request->data['annee_fiscale'] ?? '') }}</dd></div>
+                            <div><dt class="text-sm text-gray-500">NIF</dt><dd class="font-medium">{{ ($request->data['nif'] ?? '') }}</dd></div>
+                        </dl>
+                    </div>
+                    <div class="bg-gray-50 rounded-lg p-4">
+                        <h3 class="text-lg font-semibold mb-4 text-gray-700">Pension</h3>
+                        <dl class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                            <div><dt class="text-sm text-gray-500">Catégorie (ID)</dt><dd class="font-medium">{{ $request->pensionCategory('categorie_pension_id')->name }}</dd></div>
+                            <div><dt class="text-sm text-gray-500">Montant</dt><dd class="font-medium">{{ number_format(($request->data['montant_pension'] ?? ''), 0, ',', ' ') }} HTG</dd></div>
+                            <div><dt class="text-sm text-gray-500">Début</dt><dd class="font-medium">{{ ($request->data['debut_pension'] ?? '') }}</dd></div>
+                            <div><dt class="text-sm text-gray-500">Fin</dt><dd class="font-medium">{{ ($request->data['fin_pension'] ?? '') }}</dd></div>
+                        </dl>
+                    </div>
+                    <div class="bg-gray-50 rounded-lg p-4">
+                        <h3 class="text-lg font-semibold mb-4 text-gray-700">Moniteur</h3>
+                        <dl class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div><dt class="text-sm text-gray-500">Numéro</dt><dd class="font-medium">{{ ($request->data['no_moniteur'] ?? '') }}</dd></div>
+                            <div><dt class="text-sm text-gray-500">Date</dt><dd class="font-medium">{{ ($request->data['date_moniteur'] ?? '') }}</dd></div>
+                        </dl>
+                    </div>
+                    <div class="bg-gray-50 rounded-lg p-4">
+                        <h3 class="text-lg font-semibold mb-4 text-gray-700">Dépendants</h3>
+                        <table class="w-full border text-sm">
+                            <thead class="bg-gray-100">
+                                <tr>
+                                    <th class="border p-2">Nom</th>
+                                    <th class="border p-2">Relation</th>
+                                    <th class="border p-2">Date de naissance</th>
+                                    <th class="border p-2">Sexe</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach(($request->data['dependants'] ?? '') as $dep)
                                     <tr>
-                                        <th class="border p-2">Nom</th>
-                                        <th class="border p-2">Relation</th>
-                                        <th class="border p-2">Date de naissance</th>
-                                        <th class="border p-2">Sexe</th>
+                                        <td class="border p-2">{{ $dep['nom'] }}</td>
+                                        <td class="border p-2">{{ $dep['relation'] }}</td>
+                                        <td class="border p-2">{{ $dep['date_naissance'] }}</td>
+                                        <td class="border p-2">{{ optional($request->gender($dep['sexe_id']))->name ?? '—' }}</td>
                                     </tr>
-                                </thead>
-                                <tbody>
-                                    @foreach(($request->data['dependants'] ?? '') as $dep)
-                                        <tr>
-                                            <td class="border p-2">{{ $dep['nom'] }}</td>
-                                            <td class="border p-2">{{ $dep['relation'] }}</td>
-                                            <td class="border p-2">{{ $dep['date_naissance'] }}</td>
-                                            <td class="border p-2">
-                                                {{ optional($request->gender($dep['sexe_id']))->name ?? '—' }}
-                                            </td>
-                                        </tr>
-                                    @endforeach
-                                </tbody>
-                            </table>
-                        </div>
-
-                        {{-- ================= DOCUMENT ================= --}}
-                        <div class="bg-gray-50 rounded-lg p-4">
-                            <h3 class="text-lg font-semibold mb-4 text-gray-700">Photo</h3>
-
-                            <img
-                                src="{{ asset('storage/' . ($request->data['documents'] ?? '')['profile_photo']) }}"
-                                class="w-48 rounded border"
-                                alt="Photo de profil"
-                            >
-                        </div>
-
-                        {{-- ================= DONNÉES TECHNIQUES DANS DATA ================= --}}
-                        <div class="bg-gray-100 rounded-lg p-4">
-                            <h3 class="text-lg font-semibold mb-4 text-gray-700">Données techniques (data)</h3>
-
-                            <dl class="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
-                                <div><dt class="text-gray-500">Code</dt><dd>{{ $request->code }}</dd></div>
-                                <div><dt class="text-gray-500">Type</dt><dd>{{ $request->type }}</dd></div>
-                                <div><dt class="text-gray-500">Created by</dt><dd>{{ $request->user->name }}</dd></div>
-                            </dl>
-                        </div>
-
+                                @endforeach
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="bg-gray-50 rounded-lg p-4">
+                        <h3 class="text-lg font-semibold mb-4 text-gray-700">Photo</h3>
+                        <img src="{{ asset('storage/' . ($request->data['documents'] ?? '')['profile_photo']) }}" class="w-48 rounded border" alt="Photo de profil">
+                    </div>
+                    <div class="bg-gray-100 rounded-lg p-4">
+                        <h3 class="text-lg font-semibold mb-4 text-gray-700">Données techniques (data)</h3>
+                        <dl class="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
+                            <div><dt class="text-gray-500">Code</dt><dd>{{ $request->code }}</dd></div>
+                            <div><dt class="text-gray-500">Type</dt><dd>{{ $request->type }}</dd></div>
+                            <div><dt class="text-gray-500">Created by</dt><dd>{{ $request->user->name }}</dd></div>
+                        </dl>
                     </div>
                 </div>
             </div>
             @break
-        {{-- Fonctionnaire --}}
         @case('DEMANDE_ETAT_CARRIERE')
             <div>
                 <div>
                     <div class="bg-white rounded-2xl border border-gray-200 shadow-sm mb-4">
                         <div class="p-6">
-
-                            {{-- ================= STATUS BANNER ================= --}}
-                            {{-- Status shown in page header --}}
-
-                            {{-- ================= MAIN GRID ================= --}}
                             <div class="space-y-5">
-
-                                {{-- ========== LEFT COLUMN ========== --}}
                                 <div class="space-y-5">
-
-                                    {{-- Type de demande --}}
                                     <div class="p-4 bg-gray-50 rounded-lg">
-                                        <h3 class="text-lg font-semibold mb-3 text-gray-700">
-                                            Type de demande
-                                        </h3>
-                                        <p class="font-medium">
-                                            {{ str_replace('_', ' ', $request->type) }}
-                                        </p>
+                                        <h3 class="text-lg font-semibold mb-3 text-gray-700">Type de demande</h3>
+                                        <p class="font-medium">{{ str_replace('_', ' ', $request->type) }}</p>
                                     </div>
-
                                 </div>
-
-                                {{-- ========== RIGHT COLUMN ========== --}}
                                 <div class="space-y-5">
-
-                                    {{-- Détails de la demande --}}
                                     <div class="p-4 bg-gray-50 rounded-lg">
-                                        <h3 class="text-lg font-semibold mb-3 text-gray-700">
-                                            Détails de la demande
-                                        </h3>
-
+                                        <h3 class="text-lg font-semibold mb-3 text-gray-700">Détails de la demande</h3>
                                         <dl class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                            <div>
-                                                <dt class="text-sm text-gray-500">Code de la demande</dt>
-                                                <dd class="font-medium">#{{ $request->code }}</dd>
-                                            </div>
-
-                                            <div>
-                                                <dt class="text-sm text-gray-500">Créée le</dt>
-                                                <dd class="font-medium">
-                                                    {{ $request->created_at->format('d/m/Y H:i') }}
-                                                </dd>
-                                            </div>
+                                            <div><dt class="text-sm text-gray-500">Code de la demande</dt><dd class="font-medium">#{{ $request->code }}</dd></div>
+                                            <div><dt class="text-sm text-gray-500">Créée le</dt><dd class="font-medium">{{ $request->created_at->format('d/m/Y H:i') }}</dd></div>
                                         </dl>
                                     </div>
-
-                                    {{-- Métadonnées --}}
                                     <div class="p-4 bg-gray-50 rounded-lg">
-                                        <h3 class="text-lg font-semibold mb-3 text-gray-700">
-                                            Métadonnées
-                                        </h3>
-
+                                        <h3 class="text-lg font-semibold mb-3 text-gray-700">Métadonnées</h3>
                                         <dl class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                            <div>
-                                                <dt class="text-sm text-gray-500">Soumise par</dt>
-                                                <dd class="font-medium">
-                                                    {{ $request->user?->name ?? 'Système' }}
-                                                </dd>
-                                            </div>
+                                            <div><dt class="text-sm text-gray-500">Soumise par</dt><dd class="font-medium">{{ $request->user?->name ?? 'Système' }}</dd></div>
                                         </dl>
                                     </div>
-
-                                    {{-- ================= INFORMATIONS PERSONNELLES ================= --}}
                                     <div class="p-4 bg-gray-50 rounded-lg">
-                                        <h3 class="text-lg font-semibold mb-3 text-gray-700">
-                                            Informations personnelles
-                                        </h3>
-
-                                        @php
-                                            $data = $request->data ?? [];
-                                        @endphp
-
+                                        <h3 class="text-lg font-semibold mb-3 text-gray-700">Informations personnelles</h3>
+                                        @php $data = $request->data ?? []; @endphp
                                         <dl class="grid grid-cols-1 md:grid-cols-2 gap-4">
                                             @foreach([
                                                 'nom' => 'Nom',
@@ -2304,270 +1882,109 @@
                                             @endforeach
                                         </dl>
                                     </div>
-
-                                    {{-- ================= DOCUMENTS ================= --}}
                                     <div class="p-4 bg-gray-50 rounded-lg">
-                                        <h3 class="text-lg font-semibold mb-3 text-gray-700">
-                                            Documents fournis
-                                        </h3>
-
-                                        @php
-                                            $documents = ($request->data['documents'] ?? '') ?? [];
-                                        @endphp
-
+                                        <h3 class="text-lg font-semibold mb-3 text-gray-700">Documents fournis</h3>
+                                        @php $documents = ($request->data['documents'] ?? '') ?? []; @endphp
                                         <div class="space-y-4">
                                             @foreach($documents as $label => $files)
                                                 <div>
-                                                    <h4 class="text-sm font-semibold text-gray-600 mb-2">
-                                                        {{ ucwords(str_replace('_', ' ', $label)) }}
-                                                    </h4>
-
+                                                    <h4 class="text-sm font-semibold text-gray-600 mb-2">{{ ucwords(str_replace('_', ' ', $label)) }}</h4>
                                                     <ul class="space-y-1">
                                                         @foreach((array) $files as $file)
-                                                            <li>
-                                                                <a href="{{ Storage::url($file) }}"
-                                                                target="_blank"
-                                                                class="text-blue-600 hover:underline text-sm">
-                                                                    📄 {{ basename($file) }}
-                                                                </a>
-                                                            </li>
+                                                            <li><a href="{{ Storage::url($file) }}" target="_blank" class="text-blue-600 hover:underline text-sm">📄 {{ basename($file) }}</a></li>
                                                         @endforeach
                                                     </ul>
                                                 </div>
                                             @endforeach
                                         </div>
                                     </div>
-
                                 </div>
                             </div>
-
                         </div>
                     </div>
                 </div>
             </div>
             @break
-
-        {{-- Institution --}}
         @case('DEMANDE_ADHESION')
             <div>
                 <div>
                     <div class="bg-white rounded-2xl border border-gray-200 shadow-sm mb-4">
                         <div class="p-6">
-
-                            <!-- ========================= -->
-                            <!-- STATUS BANNER -->
-                            <!-- ========================= -->
-                            {{-- Status shown in page header --}}
-
-                            <!-- ========================= -->
-                            <!-- MAIN GRID -->
-                            <!-- ========================= -->
                             <div class="space-y-5">
-
-                                <!-- ========================= -->
-                                <!-- LEFT COLUMN -->
-                                <!-- ========================= -->
                                 <div class="space-y-5">
-
-                                    <!-- TYPE -->
                                     <div class="p-4 bg-gray-50 rounded-lg">
-                                        <h3 class="text-lg font-semibold mb-3 text-gray-700">
-                                            Type de demande
-                                        </h3>
-                                        <p class="font-medium">
-                                            {{ str_replace('_', ' ', $request->type) }}
-                                        </p>
+                                        <h3 class="text-lg font-semibold mb-3 text-gray-700">Type de demande</h3>
+                                        <p class="font-medium">{{ str_replace('_', ' ', $request->type) }}</p>
                                     </div>
-
-                                    <!-- METADATA -->
                                     <div class="p-4 bg-gray-50 rounded-lg">
-                                        <h3 class="text-lg font-semibold mb-3 text-gray-700">
-                                            Métadonnées
-                                        </h3>
-
+                                        <h3 class="text-lg font-semibold mb-3 text-gray-700">Métadonnées</h3>
                                         <dl class="space-y-3">
-                                            <div>
-                                                <dt class="text-sm text-gray-500">Code</dt>
-                                                <dd class="font-medium">#{{ $request->code }}</dd>
-                                            </div>
-
-                                            <div>
-                                                <dt class="text-sm text-gray-500">Créée le</dt>
-                                                <dd class="font-medium">
-                                                    {{ $request->created_at->format('d/m/Y H:i') }}
-                                                </dd>
-                                            </div>
-
-                                            <div>
-                                                <dt class="text-sm text-gray-500">Soumise par</dt>
-                                                <dd class="font-medium">
-                                                    {{ $request->user?->name ?? 'Système' }}
-                                                </dd>
-                                            </div>
+                                            <div><dt class="text-sm text-gray-500">Code</dt><dd class="font-medium">#{{ $request->code }}</dd></div>
+                                            <div><dt class="text-sm text-gray-500">Créée le</dt><dd class="font-medium">{{ $request->created_at->format('d/m/Y H:i') }}</dd></div>
+                                            <div><dt class="text-sm text-gray-500">Soumise par</dt><dd class="font-medium">{{ $request->user?->name ?? 'Système' }}</dd></div>
                                         </dl>
                                     </div>
-
-                                    <!-- PHOTO -->
                                     @if(!empty(($request->data['profile_picture'] ?? '')))
                                     <div class="p-4 bg-gray-50 rounded-lg text-center">
-                                        <h3 class="text-lg font-semibold mb-3 text-gray-700">
-                                            Photo de profil
-                                        </h3>
-
-                                        <img
-                                            src="{{ Storage::url(($request->data['profile_picture'] ?? '')) }}"
-                                            class="mx-auto w-32 h-32 rounded-full object-cover border"
-                                            alt="Photo de profil"
-                                        >
+                                        <h3 class="text-lg font-semibold mb-3 text-gray-700">Photo de profil</h3>
+                                        <img src="{{ Storage::url(($request->data['profile_picture'] ?? '')) }}" class="mx-auto w-32 h-32 rounded-full object-cover border" alt="Photo de profil">
                                     </div>
                                     @endif
-
                                 </div>
-
-                                <!-- ========================= -->
-                                <!-- RIGHT COLUMN -->
-                                <!-- ========================= -->
                                 <div class="space-y-5">
-
-                                    <!-- INFORMATIONS PERSONNELLES -->
                                     <div class="p-4 bg-gray-50 rounded-lg">
-                                        <h3 class="text-lg font-semibold mb-3 text-gray-700">
-                                            Informations personnelles
-                                        </h3>
-
+                                        <h3 class="text-lg font-semibold mb-3 text-gray-700">Informations personnelles</h3>
                                         <dl class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                            <div>
-                                                <dt class="text-sm text-gray-500">Institution</dt>
-                                                <dd class="font-medium">{{ ($request->data['institution'] ?? '') ?? '-' }}</dd>
-                                            </div>
-
-                                            <div>
-                                                <dt class="text-sm text-gray-500">Nom complet</dt>
-                                                <dd class="font-medium">
-                                                    {{ ($request->data['firstname'] ?? '') ?? '' }}
-                                                    {{ ($request->data['lastname'] ?? '') ?? '' }}
-                                                </dd>
-                                            </div>
-
-                                            <div>
-                                                <dt class="text-sm text-gray-500">Lieu de naissance</dt>
-                                                <dd class="font-medium">{{ ($request->data['birth_place'] ?? '') ?? '-' }}</dd>
-                                            </div>
-
-                                            <div>
-                                                <dt class="text-sm text-gray-500">Date de naissance</dt>
-                                                <dd class="font-medium">
-                                                    {{ \Carbon\Carbon::parse(($request->data['birth_date'] ?? ''))->format('d/m/Y') }}
-                                                </dd>
-                                            </div>
-
-                                            <div>
-                                                <dt class="text-sm text-gray-500">NIF</dt>
-                                                <dd class="font-medium">{{ ($request->data['nif'] ?? '') ?? '-' }}</dd>
-                                            </div>
-
-                                            <div>
-                                                <dt class="text-sm text-gray-500">NINU</dt>
-                                                <dd class="font-medium">{{ ($request->data['ninu'] ?? '') ?? '-' }}</dd>
-                                            </div>
+                                            <div><dt class="text-sm text-gray-500">Institution</dt><dd class="font-medium">{{ ($request->data['institution'] ?? '') ?? '-' }}</dd></div>
+                                            <div><dt class="text-sm text-gray-500">Nom complet</dt><dd class="font-medium">{{ ($request->data['firstname'] ?? '') ?? '' }} {{ ($request->data['lastname'] ?? '') ?? '' }}</dd></div>
+                                            <div><dt class="text-sm text-gray-500">Lieu de naissance</dt><dd class="font-medium">{{ ($request->data['birth_place'] ?? '') ?? '-' }}</dd></div>
+                                            <div><dt class="text-sm text-gray-500">Date de naissance</dt><dd class="font-medium">{{ \Carbon\Carbon::parse(($request->data['birth_date'] ?? ''))->format('d/m/Y') }}</dd></div>
+                                            <div><dt class="text-sm text-gray-500">NIF</dt><dd class="font-medium">{{ ($request->data['nif'] ?? '') ?? '-' }}</dd></div>
+                                            <div><dt class="text-sm text-gray-500">NINU</dt><dd class="font-medium">{{ ($request->data['ninu'] ?? '') ?? '-' }}</dd></div>
                                         </dl>
                                     </div>
-
-                                    <!-- SITUATION FAMILIALE -->
                                     <div class="p-4 bg-gray-50 rounded-lg">
-                                        <h3 class="text-lg font-semibold mb-3 text-gray-700">
-                                            Situation familiale
-                                        </h3>
-
+                                        <h3 class="text-lg font-semibold mb-3 text-gray-700">Situation familiale</h3>
                                         <dl class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                            <div>
-                                                <dt class="text-sm text-gray-500">Mère</dt>
-                                                <dd class="font-medium">
-                                                    {{ ($request->data['mother_firstname'] ?? '') ?? '' }}
-                                                    {{ ($request->data['mother_lastname'] ?? '') ?? '' }}
-                                                </dd>
-                                            </div>
-
-                                            <div>
-                                                <dt class="text-sm text-gray-500">Conjoint(e)</dt>
-                                                <dd class="font-medium">
-                                                    {{ ($request->data['spouse_firstname'] ?? '') ?? '-' }}
-                                                    {{ ($request->data['spouse_lastname'] ?? '') ?? '' }}
-                                                </dd>
-                                            </div>
+                                            <div><dt class="text-sm text-gray-500">Mère</dt><dd class="font-medium">{{ ($request->data['mother_firstname'] ?? '') ?? '' }} {{ ($request->data['mother_lastname'] ?? '') ?? '' }}</dd></div>
+                                            <div><dt class="text-sm text-gray-500">Conjoint(e)</dt><dd class="font-medium">{{ ($request->data['spouse_firstname'] ?? '') ?? '-' }} {{ ($request->data['spouse_lastname'] ?? '') ?? '' }}</dd></div>
                                         </dl>
                                     </div>
-
-                                    <!-- INFOS PROFESSIONNELLES -->
                                     <div class="p-4 bg-gray-50 rounded-lg">
-                                        <h3 class="text-lg font-semibold mb-3 text-gray-700">
-                                            Informations professionnelles
-                                        </h3>
-
+                                        <h3 class="text-lg font-semibold mb-3 text-gray-700">Informations professionnelles</h3>
                                         <dl class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                            <div>
-                                                <dt class="text-sm text-gray-500">Date d’entrée</dt>
-                                                <dd class="font-medium">
-                                                    {{ \Carbon\Carbon::parse(($request->data['entry_date'] ?? ''))->format('d/m/Y') }}
-                                                </dd>
-                                            </div>
-
-                                            <div>
-                                                <dt class="text-sm text-gray-500">Salaire actuel</dt>
-                                                <dd class="font-medium">
-                                                    {{ number_format(($request->data['current_salary'] ?? ''), 0, ',', ' ') }} HTG
-                                                </dd>
-                                            </div>
+                                            <div><dt class="text-sm text-gray-500">Date d'entrée</dt><dd class="font-medium">{{ \Carbon\Carbon::parse(($request->data['entry_date'] ?? ''))->format('d/m/Y') }}</dd></div>
+                                            <div><dt class="text-sm text-gray-500">Salaire actuel</dt><dd class="font-medium">{{ number_format(($request->data['current_salary'] ?? ''), 0, ',', ' ') }} HTG</dd></div>
                                         </dl>
                                     </div>
-
-                                    <!-- PERSONNES À CHARGE -->
                                     @if(!empty(($request->data['dependents'] ?? '')))
                                     <div class="p-4 bg-gray-50 rounded-lg">
-                                        <h3 class="text-lg font-semibold mb-3 text-gray-700">
-                                            Personnes à charge
-                                        </h3>
-
+                                        <h3 class="text-lg font-semibold mb-3 text-gray-700">Personnes à charge</h3>
                                         <div class="space-y-3">
                                             @foreach(($request->data['dependents'] ?? '') as $dependent)
                                                 <div class="p-3 bg-white rounded border">
-                                                    <p class="font-medium">
-                                                        {{ $dependent['firstname'] }} {{ $dependent['lastname'] }}
-                                                    </p>
-                                                    <p class="text-sm text-gray-500">
-                                                        {{ ucfirst($dependent['relation']) }} —
-                                                        {{ \Carbon\Carbon::parse($dependent['birthdate'])->format('d/m/Y') }}
-                                                    </p>
+                                                    <p class="font-medium">{{ $dependent['firstname'] }} {{ $dependent['lastname'] }}</p>
+                                                    <p class="text-sm text-gray-500">{{ ucfirst($dependent['relation']) }} — {{ \Carbon\Carbon::parse($dependent['birthdate'])->format('d/m/Y') }}</p>
                                                 </div>
                                             @endforeach
                                         </div>
                                     </div>
                                     @endif
-
-                                    <!-- EXPÉRIENCES -->
                                     @if(!empty(($request->data['previous_jobs'] ?? '')))
                                     <div class="p-4 bg-gray-50 rounded-lg">
-                                        <h3 class="text-lg font-semibold mb-3 text-gray-700">
-                                            Expériences professionnelles
-                                        </h3>
-
+                                        <h3 class="text-lg font-semibold mb-3 text-gray-700">Expériences professionnelles</h3>
                                         <div class="space-y-3">
                                             @foreach(($request->data['previous_jobs'] ?? '') as $job)
                                                 <div class="p-3 bg-white rounded border">
                                                     <p class="font-medium">{{ $job['institution'] }}</p>
-                                                    <p class="text-sm text-gray-500">
-                                                        Du {{ \Carbon\Carbon::parse($job['start_date'])->format('d/m/Y') }}
-                                                        au {{ \Carbon\Carbon::parse($job['end_date'])->format('d/m/Y') }}
-                                                    </p>
+                                                    <p class="text-sm text-gray-500">Du {{ \Carbon\Carbon::parse($job['start_date'])->format('d/m/Y') }} au {{ \Carbon\Carbon::parse($job['end_date'])->format('d/m/Y') }}</p>
                                                 </div>
                                             @endforeach
                                         </div>
                                     </div>
                                     @endif
-
                                 </div>
                             </div>
-
                         </div>
                     </div>
                 </div>
@@ -2578,68 +1995,26 @@
                 <div>
                     <div class="bg-white rounded-2xl border border-gray-200 shadow-sm mb-4">
                         <div class="p-6">
-
-                            <!-- Status Banner -->
-                            {{-- Status shown in page header --}}
-
-                            <!-- Main Grid -->
                             <div class="space-y-5">
-
-                                <!-- LEFT COLUMN -->
                                 <div class="space-y-5">
-                                    <!-- Type -->
                                     <div class="p-4 bg-gray-50 rounded-lg">
-                                        <h3 class="text-lg font-semibold mb-3 text-gray-700">
-                                            Type de demande
-                                        </h3>
-                                        <p class="font-medium">
-                                            {{ str_replace('_', ' ', $request->type) }}
-                                        </p>
+                                        <h3 class="text-lg font-semibold mb-3 text-gray-700">Type de demande</h3>
+                                        <p class="font-medium">{{ str_replace('_', ' ', $request->type) }}</p>
                                     </div>
-
                                 </div>
-
-                                <!-- RIGHT COLUMN -->
                                 <div class="space-y-5">
-
-                                    <!-- Request Details -->
                                     <div class="p-4 bg-gray-50 rounded-lg">
-                                        <h3 class="text-lg font-semibold mb-3 text-gray-700">
-                                            Détails de la demande
-                                        </h3>
-
+                                        <h3 class="text-lg font-semibold mb-3 text-gray-700">Détails de la demande</h3>
                                         <dl class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                            <div>
-                                                <dt class="text-sm text-gray-500">Code de la demande</dt>
-                                                <dd class="font-medium">#{{ $request->code }}</dd>
-                                            </div>
-
-                                            <div>
-                                                <dt class="text-sm text-gray-500">Titre de la demande</dt>
-                                                <dd class="font-medium">{{ $request->title }}</dd>
-                                            </div>
-
-                                            <div>
-                                                <dt class="text-sm text-gray-500">Créée le</dt>
-                                                <dd class="font-medium">
-                                                    {{ $request->created_at->format('d/m/Y H:i') }}
-                                                </dd>
-                                            </div>
+                                            <div><dt class="text-sm text-gray-500">Code de la demande</dt><dd class="font-medium">#{{ $request->code }}</dd></div>
+                                            <div><dt class="text-sm text-gray-500">Titre de la demande</dt><dd class="font-medium">{{ $request->title }}</dd></div>
+                                            <div><dt class="text-sm text-gray-500">Créée le</dt><dd class="font-medium">{{ $request->created_at->format('d/m/Y H:i') }}</dd></div>
                                         </dl>
                                     </div>
-
-                                    <!-- Documents -->
                                     <div class="p-4 bg-gray-50 rounded-lg">
-                                        <h3 class="text-lg font-semibold mb-4 text-gray-700">
-                                            Pièces jointes
-                                        </h3>
-
+                                        <h3 class="text-lg font-semibold mb-4 text-gray-700">Pièces jointes</h3>
                                         <div class="space-y-4">
-
-                                            @php
-                                                $documents = ($request->data['documents'] ?? '') ?? [];
-                                            @endphp
-
+                                            @php $documents = ($request->data['documents'] ?? '') ?? []; @endphp
                                             @foreach($documents as $label => $files)
                                                 @php
                                                     $labels = [
@@ -2648,66 +2023,38 @@
                                                         'marriage_certificates' => 'Acte de mariage',
                                                         'divorce_certificate'   => 'Jugement de divorce',
                                                         'medical_certificate'   => 'Certificat médical',
-                                                        'tax_id_numbers' => 'matricule fiscal et carte d’identification nationale',
+                                                        'tax_id_numbers' => 'matricule fiscal et carte d\'identification nationale',
                                                         'check_stub' => 'Souche de chèque ou preuve de paiement',
                                                         'monitor_copy' => 'Copie du Moniteur',
                                                         'photos' => 'photos'
                                                     ];
-
-                                                    $displayLabel = $labels[$label]
-                                                        ?? ucwords(str_replace('_', ' ', $label));
+                                                    $displayLabel = $labels[$label] ?? ucwords(str_replace('_', ' ', $label));
                                                 @endphp
-
                                                 <div>
-                                                    <h4 class="text-sm font-semibold text-gray-600 mb-2">
-                                                        {{ ucwords(str_replace('_', ' ', $displayLabel)) }}
-                                                    </h4>
-
+                                                    <h4 class="text-sm font-semibold text-gray-600 mb-2">{{ ucwords(str_replace('_', ' ', $displayLabel)) }}</h4>
                                                     <div class="space-y-2">
                                                         @foreach((array) $files as $file)
-                                                            <a href="{{ asset('storage/' . $file) }}"
-                                                            target="_blank"
-                                                            class="flex items-center justify-between bg-white border border-gray-200 rounded-md px-4 py-2 text-sm hover:bg-gray-50">
-                                                                <span class="truncate">
-                                                                    {{ basename($file) }}
-                                                                </span>
-                                                                <span class="text-blue-600 font-medium">
-                                                                    Voir
-                                                                </span>
+                                                            <a href="{{ asset('storage/' . $file) }}" target="_blank" class="flex items-center justify-between bg-white border border-gray-200 rounded-md px-4 py-2 text-sm hover:bg-gray-50">
+                                                                <span class="truncate">{{ basename($file) }}</span>
+                                                                <span class="text-blue-600 font-medium">Voir</span>
                                                             </a>
                                                         @endforeach
                                                     </div>
                                                 </div>
                                             @endforeach
-
                                             @if(empty($documents))
-                                                <p class="text-gray-500 text-sm">
-                                                    Aucun document joint
-                                                </p>
+                                                <p class="text-gray-500 text-sm">Aucun document joint</p>
                                             @endif
-
                                         </div>
                                     </div>
-
-                                    <!-- Metadata -->
                                     <div class="p-4 bg-gray-50 rounded-lg">
-                                        <h3 class="text-lg font-semibold mb-3 text-gray-700">
-                                            Métadonnées
-                                        </h3>
-
+                                        <h3 class="text-lg font-semibold mb-3 text-gray-700">Métadonnées</h3>
                                         <dl class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                            <div>
-                                                <dt class="text-sm text-gray-500">Soumise par</dt>
-                                                <dd class="font-medium">
-                                                    {{ $request->user?->name ?? 'Système' }}
-                                                </dd>
-                                            </div>
+                                            <div><dt class="text-sm text-gray-500">Soumise par</dt><dd class="font-medium">{{ $request->user?->name ?? 'Système' }}</dd></div>
                                         </dl>
                                     </div>
-
                                 </div>
                             </div>
-
                         </div>
                     </div>
                 </div>
@@ -2718,126 +2065,42 @@
                 <div>
                     <div class="bg-white rounded-2xl border border-gray-200 shadow-sm mb-4">
                         <div class="p-6">
-
-                            <!-- ===================== -->
-                            <!-- STATUS BANNER -->
-                            <!-- ===================== -->
-                            {{-- Status shown in page header --}}
-
-                            <!-- ===================== -->
-                            <!-- MAIN GRID -->
-                            <!-- ===================== -->
                             <div class="space-y-5">
-
-                                <!-- ===================== -->
-                                <!-- LEFT COLUMN -->
-                                <!-- ===================== -->
                                 <div class="space-y-5">
-
-                                    <!-- TYPE -->
                                     <div class="p-4 bg-gray-50 rounded-lg">
-                                        <h3 class="text-lg font-semibold mb-3 text-gray-700">
-                                            Type de demande
-                                        </h3>
-                                        <p class="font-medium">
-                                            {{ str_replace('_', ' ', $request->type) }}
-                                        </p>
+                                        <h3 class="text-lg font-semibold mb-3 text-gray-700">Type de demande</h3>
+                                        <p class="font-medium">{{ str_replace('_', ' ', $request->type) }}</p>
                                     </div>
-
-                                    <!-- METADATA -->
                                     <div class="p-4 bg-gray-50 rounded-lg">
-                                        <h3 class="text-lg font-semibold mb-3 text-gray-700">
-                                            Métadonnées
-                                        </h3>
-
-                                        <dl class="space-y-2">                                            <div>
-                                                <dt class="text-sm text-gray-500">Soumise par</dt>
-                                                <dd class="font-medium">
-                                                    {{ $request->user?->name ?? 'Système' }}
-                                                </dd>
-                                            </div>
+                                        <h3 class="text-lg font-semibold mb-3 text-gray-700">Métadonnées</h3>
+                                        <dl class="space-y-2">
+                                            <div><dt class="text-sm text-gray-500">Soumise par</dt><dd class="font-medium">{{ $request->user?->name ?? 'Système' }}</dd></div>
                                         </dl>
                                     </div>
-
                                 </div>
-
-                                <!-- ===================== -->
-                                <!-- RIGHT COLUMN -->
-                                <!-- ===================== -->
                                 <div class="space-y-5">
-
-                                    <!-- REQUEST DETAILS -->
                                     <div class="p-4 bg-gray-50 rounded-lg">
-                                        <h3 class="text-lg font-semibold mb-3 text-gray-700">
-                                            Détails de la demande
-                                        </h3>
-
+                                        <h3 class="text-lg font-semibold mb-3 text-gray-700">Détails de la demande</h3>
                                         <dl class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                            <div>
-                                                <dt class="text-sm text-gray-500">Code de la demande</dt>
-                                                <dd class="font-medium">#{{ $request->code }}</dd>
-                                            </div>
-
-                                            <div>
-                                                <dt class="text-sm text-gray-500">Créée le</dt>
-                                                <dd class="font-medium">
-                                                    {{ $request->created_at->format('d/m/Y H:i') }}
-                                                </dd>
-                                            </div>
+                                            <div><dt class="text-sm text-gray-500">Code de la demande</dt><dd class="font-medium">#{{ $request->code }}</dd></div>
+                                            <div><dt class="text-sm text-gray-500">Créée le</dt><dd class="font-medium">{{ $request->created_at->format('d/m/Y H:i') }}</dd></div>
                                         </dl>
                                     </div>
-
-                                    <!-- ===================== -->
-                                    <!-- DOSSIER INFORMATION -->
-                                    <!-- ===================== -->
                                     <div class="p-4 bg-gray-50 rounded-lg">
-                                        <h3 class="text-lg font-semibold mb-3 text-gray-700">
-                                            Informations du dossier
-                                        </h3>
-
+                                        <h3 class="text-lg font-semibold mb-3 text-gray-700">Informations du dossier</h3>
                                         <dl class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                            <div>
-                                                <dt class="text-sm text-gray-500">Nom complet du défunt</dt>
-                                                <dd class="font-medium">
-                                                    {{ ($request->data['nom_complet_defunt'] ?? '') ?? '-' }}
-                                                </dd>
-                                            </div>
-
-                                            <div>
-                                                <dt class="text-sm text-gray-500">Numéro de pension</dt>
-                                                <dd class="font-medium">
-                                                    {{ ($request->data['numero_pension'] ?? '') ?? '-' }}
-                                                </dd>
-                                            </div>
-
-                                            <div>
-                                                <dt class="text-sm text-gray-500">Nom du bénéficiaire</dt>
-                                                <dd class="font-medium">
-                                                    {{ ($request->data['nom_beneficiaire'] ?? '') ?? '-' }}
-                                                </dd>
-                                            </div>
-
-                                            <div>
-                                                <dt class="text-sm text-gray-500">Lien avec le défunt</dt>
-                                                <dd class="font-medium capitalize">
-                                                    {{ ($request->data['relation_defunt'] ?? '') ?? '-' }}
-                                                </dd>
-                                            </div>
+                                            <div><dt class="text-sm text-gray-500">Nom complet du défunt</dt><dd class="font-medium">{{ ($request->data['nom_complet_defunt'] ?? '') ?? '-' }}</dd></div>
+                                            <div><dt class="text-sm text-gray-500">Numéro de pension</dt><dd class="font-medium">{{ ($request->data['numero_pension'] ?? '') ?? '-' }}</dd></div>
+                                            <div><dt class="text-sm text-gray-500">Nom du bénéficiaire</dt><dd class="font-medium">{{ ($request->data['nom_beneficiaire'] ?? '') ?? '-' }}</dd></div>
+                                            <div><dt class="text-sm text-gray-500">Lien avec le défunt</dt><dd class="font-medium capitalize">{{ ($request->data['relation_defunt'] ?? '') ?? '-' }}</dd></div>
                                         </dl>
                                     </div>
-
-                                    <!-- ===================== -->
-                                    <!-- DOCUMENTS -->
-                                    <!-- ===================== -->
                                     <div class="p-4 bg-gray-50 rounded-lg">
-                                        <h3 class="text-lg font-semibold mb-3 text-gray-700">
-                                            Documents fournis
-                                        </h3>
-
+                                        <h3 class="text-lg font-semibold mb-3 text-gray-700">Documents fournis</h3>
                                         @php
                                             $documentLabels = [
                                                 'acte_deces' => 'Acte de décès',
-                                                'photos_identite' => 'Photos d’identité',
+                                                'photos_identite' => 'Photos d\'identité',
                                                 'attestation_scolaires' => 'Attestations scolaires',
                                                 'certificat_carriere' => 'Certificat de carrière',
                                                 'certificat_non_dissolution' => 'Certificat de non dissolution',
@@ -2852,45 +2115,122 @@
                                                 'copie_moniteur' => 'Copie du moniteur',
                                             ];
                                         @endphp
-
                                         <div class="space-y-4">
                                             @forelse((($request->data['documents'] ?? '') ?? []) as $key => $files)
                                                 <div>
-                                                    <h4 class="text-sm font-semibold text-gray-600 mb-2">
-                                                        {{ $documentLabels[$key] ?? ucwords(str_replace('_', ' ', $key)) }}
-                                                    </h4>
-
+                                                    <h4 class="text-sm font-semibold text-gray-600 mb-2">{{ $documentLabels[$key] ?? ucwords(str_replace('_', ' ', $key)) }}</h4>
                                                     <ul class="space-y-1">
                                                         @foreach((array) $files as $file)
                                                             <li class="flex items-center justify-between text-sm">
-                                                                <span class="truncate">
-                                                                    {{ basename($file) }}
-                                                                </span>
-
-                                                                <a
-                                                                    href="{{ \Illuminate\Support\Facades\Storage::url($file) }}"
-                                                                    target="_blank"
-                                                                    class="text-blue-600 hover:underline"
-                                                                >
-                                                                    Voir
-                                                                </a>
+                                                                <span class="truncate">{{ basename($file) }}</span>
+                                                                <a href="{{ \Illuminate\Support\Facades\Storage::url($file) }}" target="_blank" class="text-blue-600 hover:underline">Voir</a>
                                                             </li>
                                                         @endforeach
                                                     </ul>
                                                 </div>
                                             @empty
-                                                <p class="text-sm text-gray-500">
-                                                    Aucun document joint.
-                                                </p>
+                                                <p class="text-sm text-gray-500">Aucun document joint.</p>
                                             @endforelse
                                         </div>
                                     </div>
-
                                 </div>
                             </div>
-
                         </div>
                     </div>
+                </div>
+            </div>
+            @break
+        @case('DEMANDE_CREATION_COMPTE')
+            @php
+                $typeLabels = [
+                    'pensionne' => __('messages.pensioner'),
+                    'fonctionnaire' => __('messages.civil_servant'),
+                    'institution' => __('messages.institutions'),
+                ];
+                $compteType = $request->data['user_type'] ?? '';
+            @endphp
+            <div class="bg-white rounded-2xl border border-gray-200 shadow-sm mb-4">
+                <div class="p-6 space-y-5">
+                    <div class="p-4 bg-gray-50 rounded-lg">
+                        <h3 class="text-lg font-semibold mb-3 text-gray-700">Demande de création de compte</h3>
+                        <dl class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div><dt class="text-sm text-gray-500">Type de compte</dt><dd class="font-medium">{{ $typeLabels[$compteType] ?? $compteType }}</dd></div>
+                            @if($compteType === 'institution')
+                                <div><dt class="text-sm text-gray-500">Institution</dt><dd class="font-medium">{{ $request->data['name'] ?? '—' }}</dd></div>
+                            @else
+                                <div><dt class="text-sm text-gray-500">Nom complet</dt><dd class="font-medium">{{ trim(($request->data['firstname'] ?? '').' '.($request->data['lastname'] ?? '')) ?: '—' }}</dd></div>
+                            @endif
+                            <div><dt class="text-sm text-gray-500">Adresse e-mail</dt><dd class="font-medium">{{ $request->data['email'] ?? '—' }}</dd></div>
+                            <div><dt class="text-sm text-gray-500">Téléphone</dt><dd class="font-medium">{{ $request->data['telephone'] ?? '—' }}</dd></div>
+                            <div><dt class="text-sm text-gray-500">NIF</dt><dd class="font-medium">{{ $request->data['nif'] ?? '—' }}</dd></div>
+                            @if($compteType === 'pensionne')
+                                <div><dt class="text-sm text-gray-500">Code pension</dt><dd class="font-medium">{{ $request->data['pension_code'] ?? '—' }}</dd></div>
+                                <div><dt class="text-sm text-gray-500">Pensionné mineur</dt><dd class="font-medium">{{ !empty($request->data['is_mineur']) ? 'Oui' : 'Non' }}</dd></div>
+                                <div class="md:col-span-2"><dt class="text-sm text-gray-500">Adresse</dt><dd class="font-medium whitespace-pre-line">{{ $request->data['adresse'] ?? '—' }}</dd></div>
+                                @php
+                                    $pieceLabels = ['cin' => 'Carte d\'identification nationale', 'passeport' => 'Passeport', 'permis' => 'Permis de conduire'];
+                                    $lienLabels = ['pere' => 'Père', 'mere' => 'Mère', 'tuteur' => 'Tuteur subrogé'];
+                                @endphp
+                                @if(!empty($request->data['is_mineur']))
+                                    <div><dt class="text-sm text-gray-500">Représentant</dt><dd class="font-medium">{{ $lienLabels[$request->data['representant_lien'] ?? ''] ?? '—' }}</dd></div>
+                                    <div><dt class="text-sm text-gray-500">Pièce du représentant</dt><dd class="font-medium">{{ $pieceLabels[$request->data['piece_identite_representant_type'] ?? ''] ?? '—' }}</dd></div>
+                                @endif
+                                @foreach([
+                                    'identite_permis' => 'Permis de conduire',
+                                    'identite_passeport' => 'Passeport',
+                                    'identite_cin' => 'Carte d\'identification nationale',
+                                    'identite_pensionne' => 'Document d\'identité du pensionné',
+                                    'acte_naissance' => 'Acte de naissance',
+                                    'identite_representant' => 'Document d\'identité du représentant',
+                                ] as $collection => $docLabel)
+                                    @if($doc = $request->getFirstMedia($collection))
+                                        <div class="md:col-span-2">
+                                            <dt class="text-sm text-gray-500">{{ $docLabel }}</dt>
+                                            <dd class="font-medium"><a href="{{ $doc->getUrl() }}" target="_blank" class="text-navy hover:underline">{{ $doc->file_name }}</a></dd>
+                                        </div>
+                                    @endif
+                                @endforeach
+                            @endif
+                        </dl>
+                        @if(!empty($request->data['message']))
+                            <div class="mt-4">
+                                <dt class="text-sm text-gray-500">Message</dt>
+                                <dd class="font-medium whitespace-pre-line">{{ $request->data['message'] }}</dd>
+                            </div>
+                        @endif
+                    </div>
+                </div>
+            </div>
+            @break
+        @case('DEMANDE_MISE_A_JOUR')
+            @php
+                $d = $request->data ?? [];
+                $sitFam = \App\Http\Controllers\DemandeMiseAJourController::SITUATIONS_MATRIMONIALES[$d['situation_matrimoniale'] ?? ''] ?? ($d['situation_matrimoniale'] ?? '—');
+                $sitPen = \App\Http\Controllers\DemandeMiseAJourController::SITUATIONS_PENSION[$d['situation_pension'] ?? ''] ?? ($d['situation_pension'] ?? '—');
+            @endphp
+            <div class="bg-white rounded-2xl border border-gray-200 shadow-sm mb-4">
+                <div class="p-6 space-y-6">
+                    <h3 class="text-lg font-semibold text-gray-800">Questionnaire de mise à jour</h3>
+                    <dl class="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                        <div><dt class="text-gray-500">Nom</dt><dd class="font-medium">{{ $d['nom'] ?? '—' }}</dd></div>
+                        <div><dt class="text-gray-500">Prénom(s)</dt><dd class="font-medium">{{ $d['prenom'] ?? '—' }}</dd></div>
+                        <div><dt class="text-gray-500">N° pension</dt><dd class="font-medium">{{ $d['numero_pension'] ?? '—' }}</dd></div>
+                        <div><dt class="text-gray-500">Matricule</dt><dd class="font-medium">{{ $d['matricule'] ?? '—' }}</dd></div>
+                        <div><dt class="text-gray-500">NIF</dt><dd class="font-medium">{{ $d['nif'] ?? '—' }}</dd></div>
+                        <div><dt class="text-gray-500">CINU</dt><dd class="font-medium">{{ $d['cinu'] ?? '—' }}</dd></div>
+                        <div><dt class="text-gray-500">Date de naissance</dt><dd class="font-medium">{{ $d['date_naissance'] ?? '—' }}</dd></div>
+                        <div><dt class="text-gray-500">Lieu de naissance</dt><dd class="font-medium">{{ $d['lieu_naissance'] ?? '—' }}</dd></div>
+                        <div class="md:col-span-2"><dt class="text-gray-500">Adresse</dt><dd class="font-medium">{{ $d['adresse'] ?? '—' }} · {{ $d['departement_commune'] ?? '' }}</dd></div>
+                        <div><dt class="text-gray-500">Téléphone</dt><dd class="font-medium">{{ $d['telephone'] ?? '—' }}</dd></div>
+                        <div><dt class="text-gray-500">Courriel</dt><dd class="font-medium">{{ $d['email'] ?? '—' }}</dd></div>
+                        <div><dt class="text-gray-500">Situation familiale</dt><dd class="font-medium">{{ $sitFam }}</dd></div>
+                        <div><dt class="text-gray-500">Conjoint</dt><dd class="font-medium">{{ $d['conjoint_nom'] ?? '—' }}</dd></div>
+                        <div><dt class="text-gray-500">Compte / paiement</dt><dd class="font-medium">{{ $d['numero_compte'] ?? '—' }} · {{ $d['institution_financiere'] ?? '—' }}</dd></div>
+                        <div><dt class="text-gray-500">Situation pension</dt><dd class="font-medium">{{ $sitPen }}</dd></div>
+                        <div class="md:col-span-2"><dt class="text-gray-500">Contact d'urgence</dt><dd class="font-medium">{{ $d['contact_nom'] ?? '—' }} ({{ $d['contact_lien'] ?? '—' }}) · {{ $d['contact_telephone'] ?? '' }}</dd></div>
+                        <div><dt class="text-gray-500">Changement déclaré</dt><dd class="font-medium">{{ ($d['changement'] ?? '') === 'oui' ? 'Oui' : 'Non' }}</dd></div>
+                        <div><dt class="text-gray-500">Nature</dt><dd class="font-medium">{{ implode(', ', $d['changements'] ?? []) ?: '—' }}</dd></div>
+                    </dl>
                 </div>
             </div>
             @break
@@ -2904,99 +2244,44 @@
     @endphp
 
     @if($supplementalDocs->isNotEmpty() || $canAddDocs)
-        <div class="max-w-7xl mx-auto pb-5 sm:px-6 lg:px-8">
-            <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg px-6 py-5">
-
+        <div class="bg-white rounded-2xl border border-gray-200 shadow-sm mb-4 overflow-hidden">
+            <div class="px-6 py-5">
                 <div class="flex items-center justify-between mb-4">
                     <h3 class="text-xl font-semibold text-gray-800">Documents supplémentaires</h3>
                     @if($canAddDocs)
-                        <button
-                            x-data
-                            @click="$dispatch('toggle-supp-upload')"
-                            class="inline-flex items-center gap-1 px-3 py-1.5 text-sm bg-blue-600 hover:bg-blue-700 text-white rounded"
-                        >
-                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
-                            </svg>
+                        <button x-data @click="$dispatch('toggle-supp-upload')"
+                                class="inline-flex items-center gap-1 px-3 py-1.5 text-sm bg-blue-600 hover:bg-blue-700 text-white rounded">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
                             Ajouter un document
                         </button>
                     @endif
                 </div>
 
-                {{-- Upload form (collapsible) --}}
                 @if($canAddDocs)
-                    <div
-                        x-data="{ open: false }"
-                        @toggle-supp-upload.window="open = !open"
-                        x-show="open"
-                        x-transition
-                        class="mb-5"
-                    >
+                    <div x-data="{ open: false }" @toggle-supp-upload.window="open = !open" x-show="open" x-transition class="mb-5">
                         @if(session('success') && str_contains(session('success'), 'ajouté'))
-                            <div class="mb-3 p-3 bg-green-50 border border-green-200 text-green-700 rounded text-sm">
-                                {{ session('success') }}
-                            </div>
+                            <div class="mb-3 p-3 bg-green-50 border border-green-200 text-green-700 rounded text-sm">{{ session('success') }}</div>
                         @endif
-
-                        <form
-                            method="POST"
-                            action="{{ route('demandedocument.store', $request->id) }}"
-                            enctype="multipart/form-data"
-                            class="bg-gray-50 border border-gray-200 rounded-lg p-4 space-y-3"
-                        >
+                        <form method="POST" action="{{ route('demandedocument.store', $request->id) }}" enctype="multipart/form-data" class="bg-gray-50 border border-gray-200 rounded-lg p-4 space-y-3">
                             @csrf
                             <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-1">
-                                    Description / label <span class="text-gray-400 font-normal">(optionnel)</span>
-                                </label>
-                                <input
-                                    type="text"
-                                    name="label"
-                                    value="{{ old('label') }}"
-                                    placeholder="ex : Pièce d'identité, Justificatif…"
-                                    class="block w-full rounded border-gray-300 text-sm focus:border-blue-500 focus:ring-blue-500"
-                                >
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Description / label <span class="text-gray-400 font-normal">(optionnel)</span></label>
+                                <input type="text" name="label" value="{{ old('label') }}" placeholder="ex : Pièce d'identité, Justificatif…" class="block w-full rounded border-gray-300 text-sm focus:border-blue-500 focus:ring-blue-500">
                             </div>
-
                             <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-1">
-                                    Fichier(s) <span class="text-gray-500 font-normal">(PDF, JPG, PNG — max 5 Mo chacun)</span>
-                                </label>
-                                <input
-                                    type="file"
-                                    name="files[]"
-                                    multiple
-                                    accept=".pdf,.jpg,.jpeg,.png,.webp"
-                                    class="block w-full text-sm text-gray-700 file:mr-3 file:py-1.5 file:px-3 file:rounded file:border-0 file:text-sm file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
-                                >
-                                @error('files')
-                                    <p class="mt-1 text-xs text-red-600">{{ $message }}</p>
-                                @enderror
-                                @error('files.*')
-                                    <p class="mt-1 text-xs text-red-600">{{ $message }}</p>
-                                @enderror
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Fichier(s) <span class="text-gray-500 font-normal">(PDF, JPG, PNG — max 5 Mo chacun)</span></label>
+                                <input type="file" name="files[]" multiple accept=".pdf,.jpg,.jpeg,.png,.webp" class="block w-full text-sm text-gray-700 file:mr-3 file:py-1.5 file:px-3 file:rounded file:border-0 file:text-sm file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100">
+                                @error('files')<p class="mt-1 text-xs text-red-600">{{ $message }}</p>@enderror
+                                @error('files.*')<p class="mt-1 text-xs text-red-600">{{ $message }}</p>@enderror
                             </div>
-
                             <div class="flex justify-end gap-2">
-                                <button
-                                    type="button"
-                                    @click="open = false"
-                                    class="px-3 py-1.5 text-sm border border-gray-300 rounded hover:bg-gray-100"
-                                >
-                                    Annuler
-                                </button>
-                                <button
-                                    type="submit"
-                                    class="px-3 py-1.5 text-sm bg-blue-600 hover:bg-blue-700 text-white rounded"
-                                >
-                                    Envoyer
-                                </button>
+                                <button type="button" @click="open = false" class="px-3 py-1.5 text-sm border border-gray-300 rounded hover:bg-gray-100">Annuler</button>
+                                <button type="submit" class="px-3 py-1.5 text-sm bg-blue-600 hover:bg-blue-700 text-white rounded">Envoyer</button>
                             </div>
                         </form>
                     </div>
                 @endif
 
-                {{-- Existing supplemental documents --}}
                 @if($supplementalDocs->isNotEmpty())
                     <div class="space-y-2">
                         @foreach($supplementalDocs->groupBy('label') as $label => $docs)
@@ -3007,17 +2292,13 @@
                                 @foreach($docs as $doc)
                                     <div class="flex items-center justify-between bg-gray-50 border border-gray-200 rounded px-3 py-2 text-sm">
                                         <a href="{{ $doc->getUrl() }}" target="_blank" class="flex items-center gap-2 text-blue-700 hover:underline truncate">
-                                            <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                                      d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"/>
-                                            </svg>
+                                            <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"/></svg>
                                             <span class="truncate">{{ $doc->file_name }}</span>
                                         </a>
                                         <div class="flex items-center gap-3 ml-3 flex-shrink-0">
                                             <span class="text-gray-400 text-xs">{{ round($doc->size / 1024, 1) }} Ko</span>
                                             @if($canAddDocs)
-                                                <form method="POST" action="{{ route('demandedocument.destroy', $doc->id) }}"
-                                                      onsubmit="return confirm('Supprimer ce document ?')">
+                                                <form method="POST" action="{{ route('demandedocument.destroy', $doc->id) }}" onsubmit="return confirm('Supprimer ce document ?')">
                                                     @csrf
                                                     @method('DELETE')
                                                     <button type="submit" class="text-red-500 hover:text-red-700 text-xs">Supprimer</button>
@@ -3032,115 +2313,67 @@
                 @else
                     <p class="text-sm text-gray-500">Aucun document supplémentaire ajouté pour le moment.</p>
                 @endif
-
             </div>
         </div>
     @endif
 
-    <!-- Request History -->
-    <div class="bg-white rounded-2xl border border-gray-200 shadow-sm mt-4 px-6" x-data="{ open: false }">
-        <button type="button" @click="open = !open"
-                class="w-full flex items-center justify-between py-4">
-            <h3 class="text-base font-semibold text-gray-800">{{ __('messages.history_label') }}</h3>
-            <svg class="w-4 h-4 text-gray-400 transition-transform duration-200" :class="open ? 'rotate-180' : ''" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
-            </svg>
-        </button>
-
-        <div x-show="open" x-transition>
-            <div class="rounded-xl border border-gray-100 mb-4">
-                @forelse ($requestHistories as $history)
-                    <div class="p-4 border-b border-gray-100 last:border-b-0">
-                        <div class="flex justify-between items-start">
-                            <div class="flex-1">
-                                <div class="flex items-center gap-3 mb-1">
-                                    <span class="text-sm font-medium text-gray-700">{{ $history->statut }}</span>
-                                    <span class="text-xs text-gray-400">{{ $history->created_at->format('d/m/Y à H:i') }}</span>
-                                </div>
-                                @if($history->commentaire)
-                                    <p class="text-sm text-gray-600 italic">{{ $history->commentaire }}</p>
-                                @endif
-                            </div>
-                            <div class="text-right flex-shrink-0">
-                                <p class="text-xs text-gray-500">
-                                    @if ($history->creator()) Par {{ $history->creator()->name }} @else Système @endif
-                                </p>
-                            </div>
-                        </div>
-                    </div>
-                @empty
-                    <div class="p-4 text-center text-gray-400 text-sm">{{ __('messages.no_history') }}</div>
-                @endforelse
-            </div>
-            <div class="pb-4">{{ $requestHistories->links() }}</div>
-        </div>
-    </div>
 
     {{-- ====================== JOURNAL D'ACTIVITÉ ====================== --}}
-    @if($from === 'cart' && isset($activityLogs) && $activityLogs->isNotEmpty())
-        <div class="bg-white rounded-2xl border border-gray-200 shadow-sm mt-4 px-6" x-data="{ open: false }">
-            <button type="button" @click="open = !open"
-                    class="w-full flex items-center justify-between py-4">
-                <h3 class="text-base font-semibold text-gray-800">{{ __('messages.activity_log') }}</h3>
-                <svg class="w-4 h-4 text-gray-400 transition-transform duration-200" :class="open ? 'rotate-180' : ''" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
-                </svg>
-            </button>
-            <div x-show="open" x-transition>
-                <div class="rounded-xl border border-gray-100 divide-y divide-gray-100 mb-4">
-                    @php
-                        $actionLabels = [
-                            'viewed'               => ['label' => 'Consulté',           'class' => 'bg-blue-100 text-blue-700'],
-                            'transferred'          => ['label' => 'Transféré',          'class' => 'bg-purple-100 text-purple-700'],
-                            'printed'              => ['label' => 'Imprimé',            'class' => 'bg-yellow-100 text-yellow-700'],
-                            'downloaded'           => ['label' => 'Téléchargé',         'class' => 'bg-green-100 text-green-700'],
-                            'reception_accepted'   => ['label' => 'Réception confirmée','class' => 'bg-teal-100 text-teal-700'],
-                            'reception_refused'    => ['label' => 'Réception refusée',  'class' => 'bg-red-100 text-red-700'],
-                            'affectation_created'  => ['label' => 'Affecté pour avis',  'class' => 'bg-indigo-100 text-indigo-700'],
-                            'affectation_responded'=> ['label' => 'Avis soumis',        'class' => 'bg-indigo-100 text-indigo-700'],
-                            'updated'              => ['label' => 'Modifié',            'class' => 'bg-gray-100 text-gray-700'],
-                            'created'              => ['label' => 'Créé',               'class' => 'bg-gray-100 text-gray-700'],
-                        ];
-                    @endphp
-                    @foreach($activityLogs as $log)
+    @if($from === 'cart' && isset($activityLogs) && $activityLogs->isNotEmpty() && !($rdvAgentMode ?? false))
+        <div class="bg-white rounded-2xl border border-gray-200 shadow-sm mb-4" x-data="{ open: false }">
+            <div class="px-6">
+                <button type="button" @click="open = !open" class="w-full flex items-center justify-between py-4">
+                    <h3 class="text-base font-semibold text-gray-800">{{ __('messages.activity_log') }}</h3>
+                    <svg class="w-4 h-4 text-gray-400 transition-transform duration-200" :class="open ? 'rotate-180' : ''" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+                    </svg>
+                </button>
+                <div x-show="open" x-transition>
+                    <div class="rounded-xl border border-gray-100 divide-y divide-gray-100 mb-4">
                         @php
-                            $al = $actionLabels[$log->description] ?? ['label' => $log->description, 'class' => 'bg-gray-100 text-gray-700'];
+                            $actionLabels = [
+                                'viewed'               => ['label' => 'Consulté',           'class' => 'bg-blue-100 text-blue-700'],
+                                'transferred'          => ['label' => 'Transféré',          'class' => 'bg-purple-100 text-purple-700'],
+                                'printed'              => ['label' => 'Imprimé',            'class' => 'bg-yellow-100 text-yellow-700'],
+                                'downloaded'           => ['label' => 'Téléchargé',         'class' => 'bg-green-100 text-green-700'],
+                                'reception_accepted'   => ['label' => 'Réception confirmée','class' => 'bg-teal-100 text-teal-700'],
+                                'reception_refused'    => ['label' => 'Réception refusée',  'class' => 'bg-red-100 text-red-700'],
+                                'affectation_created'  => ['label' => 'Affecté pour avis',  'class' => 'bg-indigo-100 text-indigo-700'],
+                                'affectation_responded'=> ['label' => 'Avis soumis',        'class' => 'bg-indigo-100 text-indigo-700'],
+                                'updated'              => ['label' => 'Modifié',            'class' => 'bg-gray-100 text-gray-700'],
+                                'created'              => ['label' => 'Créé',               'class' => 'bg-gray-100 text-gray-700'],
+                            ];
                         @endphp
-                        <div class="p-3 flex justify-between items-center">
-                            <div class="flex items-center gap-2 flex-wrap">
-                                <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium {{ $al['class'] }}">
-                                    {{ $al['label'] }}
-                                </span>
-                                @if($log->properties->isNotEmpty())
-                                    @foreach($log->properties as $key => $val)
-                                        @if($val && is_string($val) && $key !== 'attributes' && $key !== 'old')
-                                            <span class="text-xs text-gray-500">{{ $val }}</span>
-                                        @endif
-                                    @endforeach
-                                @endif
+                        @foreach($activityLogs as $log)
+                            @php $al = $actionLabels[$log->description] ?? ['label' => $log->description, 'class' => 'bg-gray-100 text-gray-700']; @endphp
+                            <div class="p-3 flex justify-between items-center">
+                                <div class="flex items-center gap-2 flex-wrap">
+                                    <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium {{ $al['class'] }}">{{ $al['label'] }}</span>
+                                    @if($log->properties->isNotEmpty())
+                                        @foreach($log->properties as $key => $val)
+                                            @if($val && is_string($val) && $key !== 'attributes' && $key !== 'old')
+                                                <span class="text-xs text-gray-500">{{ $val }}</span>
+                                            @endif
+                                        @endforeach
+                                    @endif
+                                </div>
+                                <div class="text-right text-xs text-gray-500 flex-shrink-0">
+                                    <p>{{ $log->causer?->name ?? 'Système' }}</p>
+                                    <p>{{ $log->created_at->format('d/m/Y H:i') }}</p>
+                                </div>
                             </div>
-                            <div class="text-right text-xs text-gray-500 flex-shrink-0">
-                                <p>{{ $log->causer?->name ?? 'Système' }}</p>
-                                <p>{{ $log->created_at->format('d/m/Y H:i') }}</p>
-                            </div>
-                        </div>
-                    @endforeach
+                        @endforeach
+                    </div>
                 </div>
             </div>
         </div>
     @endif
-    {{-- ================================================================ --}}
 
-    @if($from === 'cart')
-
-
-        {{-- ── Transfert modal (destinations = circuit défini) ─────────── --}}
+    @if($from === 'cart' && !($rdvAgentMode ?? false))
+        @unless($request->isRencontre())
         @php $transferOptions = $transferOptions ?? collect(); @endphp
-        <div id="transferModal" class="absolute inset-0 z-[99999] flex items-center justify-center bg-black/50
-            {{ $errors->has('service_id') || $errors->has('demande_id') ? '' : 'hidden' }}">
-
+        <div id="transferModal" class="absolute inset-0 z-[99999] flex items-center justify-center bg-black/50 {{ $errors->has('service_id') || $errors->has('demande_id') ? '' : 'hidden' }}">
             <div class="bg-white w-full max-w-md rounded-xl shadow-xl p-6">
-
                 <h2 class="text-lg font-semibold mb-1">Transférer le dossier</h2>
                 <p class="text-xs text-gray-500 mb-4">
                     Destinations imposées par le circuit
@@ -3153,85 +2386,53 @@
                         Étape actuelle : <strong>{{ $request->currentStep->nom }}</strong>.
                     @endif
                 </p>
-
                 <form method="POST" action="{{ route('demande.transfert') }}">
                     @csrf
                     <input type="hidden" name="demande_id" value="{{ $request->id }}">
-
                     <div class="mb-4">
                         <label class="block text-sm font-medium mb-1">Destination selon le circuit</label>
                         @if($transferOptions->isEmpty())
                             <p class="text-sm text-gray-500 italic">Aucun transfert possible depuis cette étape selon le circuit défini.</p>
                         @else
-                            <select name="service_id" required
-                                    class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500">
+                            <select name="service_id" required class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500">
                                 <option value="">— Choisir une destination —</option>
                                 @foreach($transferOptions as $opt)
-                                    <option value="{{ $opt->service_id }}">
-                                        {{ $opt->action }} → {{ $opt->service_nom }} ({{ $opt->step_nom }})
-                                    </option>
+                                    <option value="{{ $opt->service_id }}">{{ $opt->action }} → {{ $opt->service_nom }} ({{ $opt->step_nom }})</option>
                                 @endforeach
                             </select>
                         @endif
-                        @error('service_id')
-                            <p class="text-red-500 text-sm mt-1">{{ $message }}</p>
-                        @enderror
+                        @error('service_id')<p class="text-red-500 text-sm mt-1">{{ $message }}</p>@enderror
                     </div>
-
                     <div class="mb-4">
                         <label class="block text-sm font-medium mb-1">Commentaire (optionnel)</label>
-                        <textarea name="commentaire" rows="3"
-                                  class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm"
-                                  placeholder="Instructions, observations..."></textarea>
+                        <textarea name="commentaire" rows="3" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm" placeholder="Instructions, observations..."></textarea>
                     </div>
-
                     <div class="flex justify-end gap-2">
-                        <button type="button"
-                                onclick="document.getElementById('transferModal').classList.add('hidden')"
-                                class="px-4 py-2 border rounded-lg text-sm">
-                            Annuler
-                        </button>
-                        <button type="submit" class="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg text-sm font-medium"
-                                @if($transferOptions->isEmpty()) disabled @endif>
-                            Transférer
-                        </button>
+                        <button type="button" onclick="document.getElementById('transferModal').classList.add('hidden')" class="px-4 py-2 border rounded-lg text-sm">Annuler</button>
+                        <button type="submit" class="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg text-sm font-medium" @if($transferOptions->isEmpty()) disabled @endif>Transférer</button>
                     </div>
                 </form>
-
             </div>
         </div>
-
+        @endunless
     @endif
 
     @if($from === 'dashboard' && $request->isDraft())
-        {{-- Delete Confirmation Modal --}}
         <div id="deleteConfirmModal" class="fixed inset-0 z-[99999] flex items-center justify-center bg-black/50 hidden">
             <div class="bg-white w-full max-w-sm rounded-lg shadow-xl p-6">
                 <div class="flex items-center gap-3 mb-4">
                     <div class="flex-shrink-0 w-10 h-10 bg-red-100 rounded-full flex items-center justify-center">
-                        <svg class="w-5 h-5 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                  d="M12 9v2m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/>
-                        </svg>
+                        <svg class="w-5 h-5 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/></svg>
                     </div>
                     <h3 class="text-lg font-semibold text-gray-900">Supprimer la demande</h3>
                 </div>
-                <p class="text-sm text-gray-600 mb-6">
-                    Êtes-vous sûr de vouloir supprimer cette demande ? Cette action est <strong>irréversible</strong> et supprimera tous les fichiers associés.
-                </p>
+                <p class="text-sm text-gray-600 mb-6">Êtes-vous sûr de vouloir supprimer cette demande ? Cette action est <strong>irréversible</strong> et supprimera tous les fichiers associés.</p>
                 <div class="flex justify-end gap-3">
-                    <button type="button"
-                            onclick="document.getElementById('deleteConfirmModal').classList.add('hidden')"
-                            class="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-md text-sm transition-colors">
-                        Annuler
-                    </button>
+                    <button type="button" onclick="document.getElementById('deleteConfirmModal').classList.add('hidden')" class="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-md text-sm transition-colors">Annuler</button>
                     <form action="{{ route('demandes.destroy', $request->id) }}" method="POST">
                         @csrf
                         @method('DELETE')
-                        <button type="submit"
-                                class="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-md text-sm transition-colors">
-                            Supprimer définitivement
-                        </button>
+                        <button type="submit" class="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-md text-sm transition-colors">Supprimer définitivement</button>
                     </form>
                 </div>
             </div>
@@ -3240,5 +2441,49 @@
 
             </div>{{-- end right column --}}
         </div>{{-- end grid --}}
+            <!-- Request History -->
+    <div class="bg-white rounded-2xl border border-gray-200 shadow-sm mb-4" x-data="{ open: {{ $request->isRencontre() ? 'true' : 'false' }} }">
+        <div class="px-6">
+            <button type="button" @click="open = !open" class="w-full flex items-center justify-between py-4">
+                <h3 class="text-base font-semibold text-gray-800">{{ __('messages.history_label') }}</h3>
+                <svg class="w-4 h-4 text-gray-400 transition-transform duration-200" :class="open ? 'rotate-180' : ''" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+                </svg>
+            </button>
+            <div x-show="open" x-transition>
+                <div class="rounded-xl border border-gray-100 mb-4">
+                    @forelse ($requestHistories as $history)
+                        <div class="p-4 border-b border-gray-100 last:border-b-0">
+                            <div class="flex justify-between items-start">
+                                <div class="flex-1">
+                                    <div class="flex items-center gap-3 mb-1">
+                                        <span class="text-sm font-medium text-gray-700">
+                                            @if($request->isRencontre())
+                                                {{ \App\Enums\RencontreStatutEnum::tryFrom((string) $history->statut)?->label() ?? $history->statut }}
+                                            @else
+                                                {{ $history->statut }}
+                                            @endif
+                                        </span>
+                                        <span class="text-xs text-gray-400">{{ $history->created_at->format('d/m/Y à H:i') }}</span>
+                                    </div>
+                                    @if($history->commentaire)
+                                        <p class="text-sm text-gray-600 italic">{{ $history->commentaire }}</p>
+                                    @endif
+                                </div>
+                                <div class="text-right flex-shrink-0">
+                                    <p class="text-xs text-gray-500">
+                                        @if ($history->creator()) Par {{ $history->creator()->name }} @else Système @endif
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    @empty
+                        <div class="p-4 text-center text-gray-400 text-sm">{{ __('messages.no_history') }}</div>
+                    @endforelse
+                </div>
+                <div class="pb-4">{{ $requestHistories->links() }}</div>
+            </div>
+        </div>
+    </div>
     </div>{{-- end layout --}}
 </x-app-layout>

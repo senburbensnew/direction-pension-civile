@@ -21,7 +21,7 @@ STATUTS POSSIBLES
   SWIMLANE : USAGER
 ────────────────────────────────────────────
 
-  1. Choisir le type de demande (selon rôle : Pensionnaire / Fonctionnaire / Institution)
+  1. Choisir le type de demande (selon rôle : Pensionne / Fonctionnaire / Institution)
   2. Remplir le formulaire en ligne
   3. Joindre les documents requis (pièces justificatives)
   4a. [Option A] Enregistrer en brouillon  →  Statut : BROUILLON

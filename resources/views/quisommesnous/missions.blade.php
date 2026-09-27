@@ -47,7 +47,7 @@
                 <h2 class="text-xl font-bold text-navy">Missions et attributions</h2>
             </div>
             <p class="text-gray-700 leading-relaxed">
-                « La Direction de la Pension est chargée de l’application de la loi régissant la Pension Civile et la Pension Militaire. Elle établit et maintient à jour la liste des pensionnaires, étudie les dossiers de demande et recommande toute liquidation de pension », conformément aux dispositions de l’article 17 de la loi organique du Ministère de l’Économie et des Finances.
+                « La Direction de la Pension est chargée de l’application de la loi régissant la Pension Civile et la Pension Militaire. Elle établit et maintient à jour la liste des pensionnes, étudie les dossiers de demande et recommande toute liquidation de pension », conformément aux dispositions de l’article 17 de la loi organique du Ministère de l’Économie et des Finances.
             </p>
             <p class="text-gray-700 leading-relaxed">En outre, la DPC s’occupe de :</p>
             <ul class="space-y-2.5 text-gray-700 text-base leading-relaxed">
@@ -96,11 +96,11 @@
                     ['src' => 'images/historique/loi-pension-civile-militaire.png', 'alt' => 'Loi de 1864 sur la pension civile et militaire'],
                 ]],
                 ['annee' => '1884', 'texte' => 'Condition d’éligibilité à la retraite : 60 ans d’âge et 30 années de carrière minimum.'],
-                ['annee' => '1997', 'texte' => 'La DPC fournit un service de guichet (et non de liquidation) aux pensionnaires militaires et à ceux de la minoterie et du BNDAI.'],
+                ['annee' => '1997', 'texte' => 'La DPC fournit un service de guichet (et non de liquidation) aux pensionnés militaires et à ceux de la minoterie et du BNDAI.'],
                 ['annee' => '1998', 'texte' => 'Programme de départ à la retraite.'],
                 ['annee' => '2004', 'texte' => 'Le principe de remboursement des cotisations au fonds de pension est ouvert à des conditions spécifiques.'],
                 ['annee' => '2005', 'texte' => 'Prêt / aval aux pensionnés par la Banque Populaire Haïtienne (BPH).'],
-                ['annee' => '2007', 'texte' => 'Extension de la couverture d’assurance accordée aux agents publics pour les pensionnaires.'],
+                ['annee' => '2007', 'texte' => 'Extension de la couverture d’assurance accordée aux agents publics pour les pensionnés.'],
                 ['annee' => '2007', 'texte' => 'La DPC fournit un service de guichet aux footballeurs de la sélection nationale de 1974.'],
                 ['annee' => '2008', 'texte' => 'La Direction de la Pension Civile consent des avances aux agents en service actif pour le paiement de l’impôt sur le revenu.'],
                 ['annee' => '2009', 'texte' => 'Intégration des virements bancaires comme moyen de paiement des pensionnés par la DPC.'],

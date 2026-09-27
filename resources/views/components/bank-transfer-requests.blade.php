@@ -6,13 +6,13 @@
 
     <!-- Breadcrumb -->
     <nav class="text-base text-gray-600 mb-4">
-        <span class="text-gray-800">Pensionnaire</span>
+        <span class="text-gray-800">Pensionné</span>
         <span class="mx-2">></span>
         <span class="text-gray-800">Demande de virement</span>
     </nav>
 
     <form method="POST"
-          action="{{ route('pensionnaire.process-virement-request') }}"
+          action="{{ route('pensionne.process-virement-request') }}"
           enctype="multipart/form-data">
 
         @csrf

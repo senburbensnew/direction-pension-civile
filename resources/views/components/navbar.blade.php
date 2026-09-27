@@ -188,26 +188,24 @@
                                     </button>
                                 </x-slot>
                                 <x-slot name="content" style="">
-                                    <x-dropdown-link :href="route('profile.edit')">
-                                        <i class="fas fa-user-circle mr-2 text-gray-400"></i>
-                                        {{ __('Profile') }}
-                                    </x-dropdown-link>
+                                    @if(!auth()->user()?->isProvisionnel())
+                                        <x-dropdown-link :href="route('profile.edit')">
+                                            <i class="fas fa-user-circle mr-2 text-gray-400"></i>
+                                            {{ __('Profile') }}
+                                        </x-dropdown-link>
+                                    @endif
                                     @role('admin')
                                         <x-dropdown-link :href="route('admin.dashboard.index')">
                                             <i class="fas fa-cog mr-2 text-gray-400"></i>
                                             {{ __('messages.admin_panel') }}
                                         </x-dropdown-link>
-                                    @endrole
-
-                                    @auth
-                                        @unlessrole('admin|direction|directeur|assistant_directeur|secretariat|service_liquidation|service_accueil_formalites|service_controle_placement|service_comptabilite|service_assurance')
+                                    @endrole                                    
+                                    @hasanyrole('pensionne|fonctionnaire|institution')
                                             <x-dropdown-link :href="route('personal.index')">
                                                 <i class="fas fa-tachometer-alt mr-2 text-gray-400"></i>
                                                 {{ __('messages.my_requests') }}
                                             </x-dropdown-link>
-                                        @endunlessrole
-                                    @endauth
-
+                                    @endhasanyrole                                   
                                     @auth
                                         @role([ 'direction',
                                                 'directeur',
@@ -219,6 +217,9 @@
                                                 'service_comptabilite',
                                                 'service_assurance',
                                                 'administration',
+                                                'validateur_rdv',
+                                                'agent_rdv',
+                                                'agent_formalites',
                                         ])
                                             <x-dropdown-link :href="route('personal.cart')">
                                                 <i class="fas fa-shopping-cart mr-2 text-gray-400"></i>

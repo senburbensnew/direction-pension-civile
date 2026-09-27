@@ -46,7 +46,7 @@ PACKAGES / GROUPES D'ENTITES
       name             varchar(255)
       email            varchar(255) UNIQUE
       password         varchar(255)
-      type             enum(pensionnaire, fonctionnaire, institution)
+      type             enum(pensionne, fonctionnaire, institution)
       nif              varchar(20) nullable
       ninu             varchar(20) nullable
       telephone        varchar(20) nullable

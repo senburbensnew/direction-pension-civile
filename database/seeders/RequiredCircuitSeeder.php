@@ -26,6 +26,7 @@ class RequiredCircuitSeeder extends Seeder
             'DEMANDE_ETAT_CARRIERE',
             'DEMANDE_ATTESTATION',
             'DEMANDE_PREUVE_EXISTENCE',
+            'DEMANDE_MISE_A_JOUR',
             'DEMANDE_ADHESION',
             // DEMANDE_RENCONTRE → formulaire public, aucun service requis
         ];

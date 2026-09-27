@@ -1,0 +1,825 @@
+@startuml entity_association
+!theme plain
+skinparam linetype ortho
+skinparam roundcorner 8
+skinparam shadowing false
+skinparam backgroundColor #FAFAFA
+skinparam packageStyle rectangle
+
+skinparam entity {
+    BackgroundColor #FFFFFF
+    BorderColor #4A90D9
+    HeaderBackgroundColor #4A90D9
+    HeaderFontColor #FFFFFF
+    FontColor #333333
+    FontSize 11
+}
+
+skinparam arrow {
+    Color #666666
+    FontColor #555555
+    FontSize 10
+}
+
+title <b>Diagramme Entité-Association</b>\nSchéma actuel (SQLite locale, 58 tables)
+
+' ═══════════════════════════════════════════════════════════════
+'  IDENTITÉ, RÉFÉRENTIELS UTILISATEUR, HABILITATIONS
+' ═══════════════════════════════════════════════════════════════
+package "Identité et habilitations" {
+    entity "**users**" as users {
+        <b>PK</b>  id
+        ---
+            name
+            email
+            email_verified_at
+            password
+            remember_token
+            nif
+            pension_code
+            ninu
+            firstname
+            lastname
+            birth_date
+            phone
+            address
+            profile_photo
+            signature
+            is_active
+        <b>FK</b>  user_type_id
+        <b>FK</b>  service_id
+        <b>FK</b>  gender_id
+        <b>FK</b>  civil_status_id
+            created_at
+            updated_at
+    }
+
+    entity "**user_types**" as user_types {
+        <b>PK</b>  id
+        ---
+            name
+            created_at
+            updated_at
+    }
+
+    entity "**genders**" as genders {
+        <b>PK</b>  id
+        ---
+            name
+            created_at
+            updated_at
+    }
+
+    entity "**civil_statuses**" as civil_statuses {
+        <b>PK</b>  id
+        ---
+            name
+            description
+            created_at
+            updated_at
+    }
+
+    entity "**roles**" as roles {
+        <b>PK</b>  id
+        ---
+            name
+            guard_name
+            created_at
+            updated_at
+    }
+
+    entity "**permissions**" as permissions {
+        <b>PK</b>  id
+        ---
+            name
+            guard_name
+            created_at
+            updated_at
+    }
+
+    entity "**model_has_roles**" as model_has_roles {
+        <b>PK</b>  id
+        ---
+            model_type
+            model_id
+        <b>FK</b>  role_id
+            created_at
+            updated_at
+    }
+
+    entity "**model_has_permissions**" as model_has_permissions {
+        <b>PK</b>  id
+        ---
+            model_type
+            model_id
+        <b>FK</b>  permission_id
+            created_at
+            updated_at
+    }
+
+    entity "**role_has_permissions**" as role_has_permissions {
+        <b>PK</b>  id
+        ---
+        <b>FK</b>  role_id
+        <b>FK</b>  permission_id
+            created_at
+            updated_at
+    }
+
+    entity "**password_reset_tokens**" as password_reset_tokens {
+        <b>PK</b>  email
+        ---
+            token
+            created_at
+    }
+
+    entity "**personal_access_tokens**" as personal_access_tokens {
+        <b>PK</b>  id
+        ---
+            tokenable_type
+            tokenable_id
+            name
+            token
+            abilities
+            last_used_at
+            expires_at
+            created_at
+            updated_at
+    }
+
+    entity "**notifications**" as notifications {
+        <b>PK</b>  id
+        ---
+            type
+            notifiable_type
+            notifiable_id
+            data
+            read_at
+            created_at
+    }
+
+    entity "**pension_types**" as pension_types {
+        <b>PK</b>  id
+        ---
+            name
+            description
+            created_at
+            updated_at
+    }
+
+    entity "**pension_categories**" as pension_categories {
+        <b>PK</b>  id
+        ---
+            name
+            description
+            created_at
+            updated_at
+    }
+}
+
+' ═══════════════════════════════════════════════════════════════
+'  DOSSIERS, CIRCUIT, SERVICES
+' ═══════════════════════════════════════════════════════════════
+package "Dossiers et circuit de traitement" {
+    entity "**services**" as services {
+        <b>PK</b>  id
+        ---
+            code
+            nom
+            description
+            icon
+            color
+            created_at
+            updated_at
+    }
+
+    entity "**types_demandes**" as types_demandes {
+        <b>PK</b>  id
+        ---
+            code
+            label
+            description
+            active
+            created_at
+            updated_at
+    }
+
+    entity "**demandes**" as demandes {
+        <b>PK</b>  id
+        ---
+            code
+            title
+            type
+            data
+            submitted_at
+            expires_at
+            annotation
+            annotated_at
+            folder
+            categorie
+            is_urgent
+        <b>FK</b>  created_by
+        <b>FK</b>  current_service_id
+        <b>FK</b>  current_step_id
+        <b>FK</b>  annotated_by
+            created_at
+            updated_at
+    }
+
+    entity "**workflow_steps**" as workflow_steps {
+        <b>PK</b>  id
+        ---
+            code
+            nom
+            description
+            ordre
+            type_demande
+            type_noeud
+        <b>FK</b>  service_id
+            created_at
+            updated_at
+    }
+
+    entity "**workflow_step_transitions**" as workflow_step_transitions {
+        <b>PK</b>  id
+        ---
+        <b>FK</b>  from_step_id
+        <b>FK</b>  to_step_id
+            action
+            is_urgent_only
+            ordre
+            required_permission
+            guard_conditions
+            created_at
+            updated_at
+    }
+
+    entity "**demande_circuit_snapshots**" as demande_circuit_snapshots {
+        <b>PK</b>  id
+        ---
+        <b>FK</b>  demande_id
+            snapshot
+            created_at
+            updated_at
+    }
+
+    entity "**demande_interactions**" as demande_interactions {
+        <b>PK</b>  id
+        ---
+        <b>FK</b>  demande_id
+            type
+        <b>FK</b>  from_service_id
+        <b>FK</b>  to_service_id
+        <b>FK</b>  to_step_id
+        <b>FK</b>  initiated_by
+            commentaire
+            statut
+            reponse
+            repondu_at
+        <b>FK</b>  repondu_by
+            created_at
+            updated_at
+    }
+
+    entity "**demande_histories**" as demande_histories {
+        <b>PK</b>  id
+        ---
+        <b>FK</b>  demande_id
+            statut
+            commentaire
+            event
+            champs
+        <b>FK</b>  changed_by
+            created_at
+            updated_at
+    }
+
+    entity "**demande_messages**" as demande_messages {
+        <b>PK</b>  id
+        ---
+        <b>FK</b>  demande_id
+        <b>FK</b>  sender_id
+            body
+            read_at
+            created_at
+            updated_at
+    }
+
+    entity "**demande_activity_logs**" as demande_activity_logs {
+        <b>PK</b>  id
+        ---
+        <b>FK</b>  demande_id
+        <b>FK</b>  user_id
+            action
+            metadata
+            created_at
+            updated_at
+    }
+
+    entity "**assignments**" as assignments {
+        <b>PK</b>  id
+        ---
+        <b>FK</b>  demande_id
+        <b>FK</b>  user_id
+        <b>FK</b>  assigned_by
+            note
+            ended_at
+            created_at
+            updated_at
+    }
+
+    entity "**media**" as media {
+        <b>PK</b>  id
+        ---
+            model_type
+            model_id
+            uuid
+            collection_name
+            name
+            file_name
+            mime_type
+            disk
+            conversions_disk
+            size
+            manipulations
+            custom_properties
+            generated_conversions
+            responsive_images
+            order_column
+            created_at
+            updated_at
+    }
+
+    entity "**required_circuit_services**" as required_circuit_services {
+        <b>PK</b>  id
+        ---
+        <b>FK</b>  service_id
+            type_demande
+            created_at
+            updated_at
+    }
+
+    entity "**step_required_documents**" as step_required_documents {
+        <b>PK</b>  id
+        ---
+        <b>FK</b>  service_id
+        <b>FK</b>  workflow_step_id
+            type_demande
+            label
+            document_type
+            created_at
+            updated_at
+    }
+
+    entity "**service_sla**" as service_sla {
+        <b>PK</b>  id
+        ---
+        <b>FK</b>  service_id
+            type_demande
+            delai_jours
+            created_at
+            updated_at
+    }
+
+    entity "**agent_delegations**" as agent_delegations {
+        <b>PK</b>  id
+        ---
+        <b>FK</b>  delegating_user_id
+        <b>FK</b>  delegate_user_id
+        <b>FK</b>  service_id
+            start_date
+            end_date
+            active
+            created_at
+            updated_at
+    }
+
+    entity "**flux_transition_logs**" as flux_transition_logs {
+        <b>PK</b>  id
+        ---
+        <b>FK</b>  user_id
+            action
+            flux_transition_id
+            before
+            after
+            created_at
+            updated_at
+    }
+}
+
+' ═══════════════════════════════════════════════════════════════
+'  CONTENU DU SITE
+' ═══════════════════════════════════════════════════════════════
+package "Contenu du site" {
+    entity "**actualites**" as actualites {
+        <b>PK</b>  id
+        ---
+            title
+            description
+            content_text
+            category
+            posted_in
+            published
+            created_at
+            updated_at
+    }
+
+    entity "**actualite_images**" as actualite_images {
+        <b>PK</b>  id
+        ---
+        <b>FK</b>  actualite_id
+            image_path
+            created_at
+            updated_at
+    }
+
+    entity "**carousels**" as carousels {
+        <b>PK</b>  id
+        ---
+            title
+            description
+            image
+            status
+            order
+            link
+            overlay_position
+            cta_label
+            text_size
+            text_color
+            text_styles
+            font_family
+            created_at
+            updated_at
+    }
+
+    entity "**publication_types**" as publication_types {
+        <b>PK</b>  id
+        ---
+            code
+            label
+            icon
+            badge_class
+            order_column
+            created_at
+            updated_at
+    }
+
+    entity "**publications**" as publications {
+        <b>PK</b>  id
+        ---
+            title
+            description
+            type
+            file_path
+            url
+            order_column
+            published
+            created_at
+            updated_at
+    }
+
+    entity "**mediatheque_items**" as mediatheque_items {
+        <b>PK</b>  id
+        ---
+            title
+            description
+            type
+            file_path
+            url
+            order_column
+            published
+            is_featured
+            created_at
+            updated_at
+    }
+
+    entity "**reports**" as reports {
+        <b>PK</b>  id
+        ---
+            title
+            year
+            description
+            file_name
+            file_path
+            mime_type
+            file_size
+            status
+            published_at
+            cover_path
+        <b>FK</b>  created_by
+            created_at
+            updated_at
+    }
+
+    entity "**faq_items**" as faq_items {
+        <b>PK</b>  id
+        ---
+            question
+            answer
+            category
+            order_column
+            published
+            created_at
+            updated_at
+    }
+
+    entity "**glossaire_terms**" as glossaire_terms {
+        <b>PK</b>  id
+        ---
+            term
+            definition
+            category
+            icon
+            order_column
+            published
+            created_at
+            updated_at
+    }
+
+    entity "**partenaires**" as partenaires {
+        <b>PK</b>  id
+        ---
+            name
+            logo
+            website_url
+            order
+            active
+            created_at
+            updated_at
+    }
+
+    entity "**officials**" as officials {
+        <b>PK</b>  id
+        ---
+            slug
+            role
+            nom
+            sexe
+            photo
+            biographie
+            discours
+            citation
+            order
+            active
+            created_at
+            updated_at
+    }
+
+    entity "**institution_images**" as institution_images {
+        <b>PK</b>  id
+        ---
+            title
+            image
+            order
+            active
+            created_at
+            updated_at
+    }
+
+    entity "**liens_utiles**" as liens_utiles {
+        <b>PK</b>  id
+        ---
+            name
+            abbr
+            url
+            category
+            order_column
+            published
+            created_at
+            updated_at
+    }
+
+    entity "**direction_departementales**" as direction_departementales {
+        <b>PK</b>  id
+        ---
+            abbr
+            nom
+            ville
+            color
+            order
+            description
+            created_at
+            updated_at
+    }
+
+    entity "**newsletters**" as newsletters {
+        <b>PK</b>  id
+        ---
+            email
+            unsubscribe_token
+            created_at
+            updated_at
+    }
+
+    entity "**newsletter_campaigns**" as newsletter_campaigns {
+        <b>PK</b>  id
+        ---
+            subject
+            body
+            recipients_count
+            sent_at
+        <b>FK</b>  sent_by
+            created_at
+            updated_at
+    }
+}
+
+' ═══════════════════════════════════════════════════════════════
+'  CONTACT, STATS, TECHNIQUE, LEGACY
+' ═══════════════════════════════════════════════════════════════
+package "Contact, stats et technique" {
+    entity "**contact_subjects**" as contact_subjects {
+        <b>PK</b>  id
+        ---
+            slug
+            label
+            position
+            is_active
+            allows_custom
+            created_at
+            updated_at
+    }
+
+    entity "**contacts**" as contacts {
+        <b>PK</b>  id
+        ---
+            first_name
+            last_name
+            email
+            telephone
+            subject
+            destinataire
+            message
+            read
+            created_at
+            updated_at
+    }
+
+    entity "**site_visits**" as site_visits {
+        <b>PK</b>  id
+        ---
+            visited_on
+            hits
+            visitors
+            created_at
+            updated_at
+    }
+
+    entity "**site_visit_ips**" as site_visit_ips {
+        <b>PK</b>  id
+        ---
+            visited_on
+            ip_hash
+            created_at
+            updated_at
+    }
+
+    entity "**parameters**" as parameters {
+        <b>PK</b>  id
+        ---
+            name
+            description
+            value
+            created_at
+            updated_at
+    }
+
+    entity "**activity_log**" as activity_log {
+        <b>PK</b>  id
+        ---
+            log_name
+            description
+            subject_type
+            subject_id
+            causer_type
+            causer_id
+            properties
+            event
+            batch_uuid
+            created_at
+            updated_at
+    }
+
+    entity "**error_logs**" as error_logs {
+        <b>PK</b>  id
+        ---
+            message
+            code
+            file
+            line
+            trace
+            request_data
+        <b>FK</b>  user_id
+            created_at
+            updated_at
+    }
+
+    entity "**request_types**" as request_types {
+        <b>PK</b>  id
+        ---
+            code
+            name
+            description
+            created_at
+            updated_at
+    }
+
+    entity "**request_histories**" as request_histories {
+        <b>PK</b>  id
+        ---
+            request_id
+            request_type
+            request_data
+            event_type
+            event_date
+        <b>FK</b>  created_by
+            created_at
+            updated_at
+    }
+
+    entity "**failed_jobs**" as failed_jobs {
+        <b>PK</b>  id
+        ---
+            uuid
+            connection
+            queue
+            payload
+            exception
+            failed_at
+    }
+
+    entity "**migrations**" as migrations {
+        <b>PK</b>  id
+        ---
+            migration
+            batch
+    }
+}
+
+' ═══════════════════════════════════════════════════════════════
+'  RELATIONS
+' ═══════════════════════════════════════════════════════════════
+user_types ||--o{ users : "user_type_id"
+services ||--o{ users : "service_id"
+genders ||--o{ users : "gender_id"
+civil_statuses ||--o{ users : "civil_status_id"
+
+roles ||--o{ model_has_roles : "role_id"
+permissions ||--o{ model_has_permissions : "permission_id"
+roles ||--o{ role_has_permissions : "role_id"
+permissions ||--o{ role_has_permissions : "permission_id"
+users ||--o{ model_has_roles : "model polymorphe"
+users ||--o{ model_has_permissions : "model polymorphe"
+users ||--o{ personal_access_tokens : "tokenable"
+users ||--o{ notifications : "notifiable"
+
+users ||--o{ demandes : "created_by"
+users ||--o{ demandes : "annotated_by"
+services ||--o{ demandes : "current_service_id"
+workflow_steps ||--o{ demandes : "current_step_id"
+types_demandes ||--o{ demandes : "type / code"
+
+demandes ||--o| demande_circuit_snapshots : "demande_id"
+demandes ||--o{ demande_interactions : "demande_id"
+demandes ||--o{ demande_histories : "demande_id"
+demandes ||--o{ demande_messages : "demande_id"
+demandes ||--o{ demande_activity_logs : "demande_id"
+demandes ||--o{ assignments : "demande_id"
+demandes ||--o{ media : "model polymorphe"
+
+services ||--o{ workflow_steps : "service_id"
+workflow_steps ||--o{ workflow_step_transitions : "from_step_id"
+workflow_steps ||--o{ workflow_step_transitions : "to_step_id"
+workflow_steps ||--o{ step_required_documents : "workflow_step_id"
+services ||--o{ step_required_documents : "service_id"
+services ||--o{ required_circuit_services : "service_id"
+services ||--o{ service_sla : "service_id"
+
+services ||--o{ demande_interactions : "from_service_id"
+services ||--o{ demande_interactions : "to_service_id"
+workflow_steps ||--o{ demande_interactions : "to_step_id"
+users ||--o{ demande_interactions : "initiated_by"
+users ||--o{ demande_interactions : "repondu_by"
+
+users ||--o{ assignments : "user_id"
+users ||--o{ assignments : "assigned_by"
+users ||--o{ demande_messages : "sender_id"
+users ||--o{ demande_histories : "changed_by"
+users ||--o{ demande_activity_logs : "user_id"
+
+users ||--o{ agent_delegations : "delegating_user_id"
+users ||--o{ agent_delegations : "delegate_user_id"
+services ||--o{ agent_delegations : "service_id"
+users ||--o{ flux_transition_logs : "user_id"
+
+actualites ||--o{ actualite_images : "actualite_id"
+publication_types ||--o{ publications : "type / code"
+users ||--o{ reports : "created_by"
+users ||--o{ newsletter_campaigns : "sent_by"
+contact_subjects ||--o{ contacts : "subject / slug"
+site_visits ||--o{ site_visit_ips : "visited_on"
+users ||--o{ error_logs : "user_id"
+users ||--o{ request_histories : "created_by"
+users ||--o{ activity_log : "causer polymorphe"
+
+@enduml

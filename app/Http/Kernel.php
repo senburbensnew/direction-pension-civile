@@ -89,5 +89,6 @@ class Kernel extends HttpKernel
         'role_or_permission' => RoleOrPermissionMiddleware::class,
         'corbeille.access' => CorbeilleAccess::class,
         'not.admin' => \App\Http\Middleware\EnsureNotAdmin::class,
+        'account.full' => \App\Http\Middleware\EnsureAccountFullyActive::class,
     ];
 }

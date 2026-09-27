@@ -14,6 +14,7 @@ return new class extends Migration
         // ── Ajouter service_id à etats ──────────────────────────────────
         Schema::table('etats', function (Blueprint $table) {
             $table->unsignedBigInteger('service_id')->nullable()->after('code');
+            $table->foreign('service_id')->references('id')->on('services')->nullOnDelete();
         });
 
         // ── Peupler service_id pour les états existants ─────────────────
@@ -73,6 +74,7 @@ return new class extends Migration
         \DB::table('etats')->whereIn('code', $nouveauxCodes)->delete();
 
         Schema::table('etats', function (Blueprint $table) {
+            $table->dropForeign(['service_id']);
             $table->dropColumn('service_id');
         });
     }

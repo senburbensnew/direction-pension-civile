@@ -252,6 +252,26 @@
         <section class="bg-white border border-gray-200 card-shadow p-6 sm:p-8">
             <div class="flex items-center gap-3 mb-2">
                 <span class="text-3xl text-navy flex items-center justify-center shrink-0">
+                    <i class="fa-solid fa-phone-volume" aria-hidden="true"></i>
+                </span>
+                <h2 class="text-xl font-bold text-navy">Numéros des services</h2>
+            </div>
+            <p class="text-gray-700 text-base mb-6">Voici les numéros de téléphone des différents services de la DPC.</p>
+            <ul class="divide-y divide-gray-200 border border-gray-200">
+                @foreach($servicePhones as $line)
+                    <li class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1 sm:gap-6 px-4 py-3">
+                        <span class="text-gray-700">{{ $line['label'] }}</span>
+                        <a href="tel:{{ $line['phone'] }}" class="text-navy font-semibold whitespace-nowrap hover:text-orange-500">
+                            {{ $line['display'] }}
+                        </a>
+                    </li>
+                @endforeach
+            </ul>
+        </section>
+
+        <section class="bg-white border border-gray-200 card-shadow p-6 sm:p-8">
+            <div class="flex items-center gap-3 mb-2">
+                <span class="text-3xl text-navy flex items-center justify-center shrink-0">
                     <i class="fa-solid fa-map-location-dot" aria-hidden="true"></i>
                 </span>
                 <h2 class="text-xl font-bold text-navy">Notre localisation</h2>

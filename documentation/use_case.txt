@@ -7,7 +7,7 @@
 
 ACTEURS
 -------
-  - Pensionnaire (Retraité)
+  - Pensionne (Retraité)
   - Fonctionnaire (Agent actif)
   - Institution
   - Agent / Secrétariat
@@ -19,7 +19,7 @@ ACTEURS
   PORTAIL USAGER
 ────────────────────────────────────────────
 
-  [Demandes Pensionnaire]
+  [Demandes Pensionne]
     UC_VB   Demander un virement bancaire
     UC_ATT  Demander une attestation de pension
     UC_TC   Demander un transfert de chèque
@@ -84,7 +84,7 @@ ACTEURS
   RELATIONS ACTEUR → CAS D'UTILISATION
 ────────────────────────────────────────────
 
-  Pensionnaire  →  UC_AUTH, UC_PROFIL, UC_MDP, UC_BROUILLON,
+  Pensionne  →  UC_AUTH, UC_PROFIL, UC_MDP, UC_BROUILLON,
                    UC_SOUMETTRE, UC_DOCS, UC_COMPL, UC_SUIVI,
                    UC_ANNULER, UC_MSG_USR,
                    UC_VB, UC_ATT, UC_TC, UC_AP, UC_RI, UC_AV, UC_PE, UC_PR

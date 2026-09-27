@@ -67,7 +67,7 @@
         @endif
 
         <!-- ✅ Form -->
-        <form action="{{ route('demandes.pension-pensionnaire.store') }}" method="POST" class="space-y-8">
+        <form action="{{ route('demandes.pension-pensionne.store') }}" method="POST" class="space-y-8">
             @csrf
 
             {{-- Title + hidden demande_id --}}

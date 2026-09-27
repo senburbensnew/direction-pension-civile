@@ -77,7 +77,7 @@ class FaqItemSeeder extends Seeder
             ],
             [
                 'question'     => 'Qu\'est-ce que la preuve d\'existence et quand dois-je la fournir ?',
-                'answer'       => 'La preuve d\'existence est un certificat annuel confirmant que le pensionnaire est toujours en vie. Elle est exigée une fois par an pour maintenir le versement de la pension. Un rappel vous sera envoyé par notification avant l\'échéance.',
+                'answer'       => 'La preuve d\'existence est un certificat annuel confirmant que le pensionné est toujours en vie. Elle est exigée une fois par an pour maintenir le versement de la pension. Un rappel vous sera envoyé par notification avant l\'échéance.',
                 'category'     => 'paiement',
                 'order_column' => 10,
                 'published'    => true,
@@ -98,7 +98,7 @@ class FaqItemSeeder extends Seeder
             ],
             [
                 'question'     => 'Un fonctionnaire décédé — comment ses ayants droit peuvent-ils demander la pension de réversion ?',
-                'answer'       => 'Les ayants droit (conjoint ou enfants) doivent créer un compte de type « Pensionnaire » et soumettre une demande de pension de réversion en joignant l\'acte de décès, l\'acte de mariage ou de naissance, et les pièces d\'identité du demandeur. Le dossier sera traité par les services compétents.',
+                'answer'       => 'Les ayants droit (conjoint ou enfants) doivent créer un compte de type « Pensionné » et soumettre une demande de pension de réversion en joignant l\'acte de décès, l\'acte de mariage ou de naissance, et les pièces d\'identité du demandeur. Le dossier sera traité par les services compétents.',
                 'category'     => 'dossier',
                 'order_column' => 13,
                 'published'    => true,

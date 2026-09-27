@@ -14,20 +14,29 @@ class DatabaseSeeder extends Seeder
     {
         $this->call(GendersSeeder::class);
         $this->call(UserTypesSeeder::class);
-        $this->call(DefaultUserSeeder::class);
+
+        // Référentiel des rôles et permissions
         $this->call(RolesAndPermissionsSeeder::class);
+
+        // Référentiel des services
         $this->call(ServiceSeeder::class);
+
+        // Utilisateurs
+        $this->call(DefaultUserSeeder::class);
+        $this->call(UsersSeeder::class);
+
         $this->call(WorkflowStepSeeder::class);
         $this->call(WorkflowStepTransitionSeeder::class);
         $this->call(WorkflowTypeCircuitsSeeder::class);
         $this->call(RequiredCircuitSeeder::class);
-        $this->call(UsersSeeder::class);
+
         $this->call(StatusesSeeder::class);
         $this->call(CivilStatusesSeeder::class);
         $this->call(PensionTypesSeeder::class);
         $this->call(PensionCategoriesSeeder::class);
         $this->call(ParametersSeeder::class);
         $this->call(TypeDemandeSeeder::class);
+
         $this->call(CarouselSeeder::class);
         $this->call(NewsletterSeeder::class);
         $this->call(InstitutionImageSeeder::class);

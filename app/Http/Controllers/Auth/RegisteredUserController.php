@@ -32,6 +32,7 @@ class RegisteredUserController extends Controller
             'firstname' => 'prénom',
             'lastname' => 'nom de famille',
             'email' => 'adresse e-mail',
+            'username' => 'nom d\'utilisateur',
             'password' => 'mot de passe',
             'nif' => 'NIF',
             'pension_code' => 'code pension',
@@ -51,6 +52,7 @@ class RegisteredUserController extends Controller
             'profile_photo' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:2048',
             'name' => ['required', 'string', 'max:255'],
             'email' => ['required', 'email', 'max:255', 'unique:' . User::class],
+            'username' => ['nullable', 'string', 'min:3', 'max:50', 'regex:/^[A-Za-z0-9._-]+$/', 'unique:' . User::class],
             'password' => ['required', 'confirmed', Rules\Password::defaults()],
             'nif' => [
                 'required',
@@ -70,7 +72,7 @@ class RegisteredUserController extends Controller
         // Fetch user type using validated user_type_id
         $userType = UserType::find($request->user_type_id)?->name;
     
-        if ($userType === UserTypeEnum::PENSIONNAIRE->value) {
+        if ($userType === UserTypeEnum::PENSIONNE->value) {
             $rules['pension_code'] = [
                 'required',
                 'string',
@@ -113,6 +115,7 @@ class RegisteredUserController extends Controller
             "lastname" => $validated['lastname'] ?? null,
             "firstname" => $validated['firstname'] ?? null,
             'email' => $validated['email'],
+            'username' => $validated['username'] ?? null,
             'password' => Hash::make($validated['password']),
             'nif' => $validated['nif'],
             'user_type_id' => $validated['user_type_id'],

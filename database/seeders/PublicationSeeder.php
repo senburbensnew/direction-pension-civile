@@ -118,7 +118,7 @@ class PublicationSeeder extends Seeder
             // Documents d'information
             [
                 'title'        => 'Conseils pour les Retraités et Futurs Retraités',
-                'description'  => 'Guide pratique à l\'attention des pensionnaires et des fonctionnaires en fin de carrière.',
+                'description'  => 'Guide pratique à l\'attention des pensionnés et des fonctionnaires en fin de carrière.',
                 'type'         => 'document',
                 'file_path'    => 'documents/conseils-pour-les-retraites-et-futurs-retraites.docx',
                 'url'          => null,

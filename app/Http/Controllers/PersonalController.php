@@ -6,6 +6,7 @@ namespace App\Http\Controllers;
 use App\Enums\TypeDemandeEnum;
 use App\Models\CheckTransferRequests;
 use App\Models\Demande;
+use App\Models\DemandeCreationCompte;
 use App\Models\DemandeHistory;
 use App\Models\DemandeMessage;
 use App\Models\ExistenceProofRequest;
@@ -89,7 +90,6 @@ class PersonalController extends Controller
     }
 
     public function requestsDashboard(Request $request){
-        // dd($request->all());
         $requestType = $request['request_type'];
         $requests = [];
         $stats = [
@@ -214,6 +214,22 @@ class PersonalController extends Controller
                     'completed'   => (clone $baseQuery)->completed()->count(),
                 ];
                 $type = 'Preuve d\'existence';
+                break;
+            case 'informationUpdateRequest' :
+                $baseQuery = Demande::forUser()
+                    ->ofType(TypeDemandeEnum::DEMANDE_MISE_A_JOUR->value);
+
+                $requests = $baseQuery->latest()->paginate(10);
+
+                $stats = [
+                    'pending'     => (clone $baseQuery)->pending()->count(),
+                    'approved'    => (clone $baseQuery)->approved()->count(),
+                    'in_progress' => (clone $baseQuery)->inProgress()->count(),
+                    'rejected'    => (clone $baseQuery)->rejected()->count(),
+                    'canceled'    => (clone $baseQuery)->canceled()->count(),
+                    'completed'   => (clone $baseQuery)->completed()->count(),
+                ];
+                $type = 'Mise à jour des informations';
                 break;
             case 'reversionaryPensionRequest' :
                 $baseQuery = Demande::forUser()
@@ -388,11 +404,15 @@ class PersonalController extends Controller
             ['key' => 'prestations',     'label' => 'Demandes de prestations',    'icon' => 'fa-money-bill-wave',      'color' => 'yellow'],
             ['key' => 'administratif',   'label' => 'Dossiers administratifs',    'icon' => 'fa-folder',               'color' => 'indigo'],
             ['key' => 'correspondances', 'label' => 'Correspondances',            'icon' => 'fa-envelope',             'color' => 'purple'],
-            ['key' => 'rencontre',       'label' => 'Demandes de rencontre',      'icon' => 'fa-video',                'color' => 'green'],
+            ['key' => 'rencontre',       'label' => 'Attribution de rendez-vous', 'icon' => 'fa-calendar-check',       'color' => 'green'],
             ['key' => 'autres',          'label' => 'Autres',                     'icon' => 'fa-ellipsis-h',           'color' => 'gray'],
             ['key' => 'clotures',        'label' => 'Dossiers clôturés',          'icon' => 'fa-archive',              'color' => 'teal'],
         ];
 
+        $currentUser = auth()->user();
+        $isAgentRdvOnly = $currentUser?->hasRole('agent_rdv')
+            && ! $currentUser->hasAnyRole(['admin', 'direction']);
+        
         foreach ($folderStats as &$folder) {
             $query = Demande::where('current_service_id', $serviceId);
             if ($folder['key'] === 'clotures') {
@@ -404,6 +424,11 @@ class PersonalController extends Controller
                 );
             } else {
                 $query->active()->where('categorie', $folder['key']);
+        
+                // Agent RDV : ne compter que ses propres RDV
+                if ($folder['key'] === 'rencontre' && $isAgentRdvOnly) {
+                    $query->where('data->agent_id', $currentUser->id);
+                }
             }
             $folder['count'] = $query->count();
         }
@@ -427,7 +452,22 @@ class PersonalController extends Controller
             ->latest()
             ->get();
 
-        return view('personal.corbeille', compact('folderStats', 'pendingAffectations', 'pendingReceptions'));
+        $appelsVeille = collect();
+        $demandesComptePending = collect();
+        $user = auth()->user();
+        if ($user?->hasAnyRole([User::ROLE_AGENT_RDV, 'service_accueil_formalites', 'direction', 'admin'])) {
+            $reminders = app(\App\Services\RencontreReminderService::class);
+            $appelsVeille = $reminders->appointmentsOn($reminders->reminderDate());
+        }
+        if ($user?->hasAnyRole(['admin', User::ROLE_AGENT_FORMALITES])) {
+            $demandesComptePending = DemandeCreationCompte::query()
+                ->where('status', DemandeCreationCompte::STATUS_EN_ATTENTE)
+                ->latest()
+                ->limit(15)
+                ->get();
+        }
+
+        return view('personal.corbeille', compact('folderStats', 'pendingAffectations', 'pendingReceptions', 'appelsVeille', 'demandesComptePending'));
     }
 
     public function requestsDashboardCorbeille(Request $request)
@@ -464,6 +504,10 @@ class PersonalController extends Controller
                 'enum' => TypeDemandeEnum::DEMANDE_PREUVE_EXISTENCE,
                 'label' => 'Preuve d\'existence',
             ],
+            'informationUpdateRequest' => [
+                'enum' => TypeDemandeEnum::DEMANDE_MISE_A_JOUR,
+                'label' => 'Mise à jour des informations',
+            ],
             'reversionaryPensionRequest' => [
                 'enum' => TypeDemandeEnum::DEMANDE_PENSION_REVERSION,
                 'label' => 'Demande de pension de réversion',
@@ -482,7 +526,11 @@ class PersonalController extends Controller
             ],
             'rencontreRequest' => [
                 'enum' => TypeDemandeEnum::DEMANDE_RENCONTRE,
-                'label' => 'Demande de visioconférence',
+                'label' => 'Attribution de rendez-vous',
+            ],
+            'accountCreationRequest' => [
+                'enum' => TypeDemandeEnum::DEMANDE_CREATION_COMPTE,
+                'label' => 'Demande de création de compte',
             ],
         ];
 
@@ -594,6 +642,29 @@ class PersonalController extends Controller
 
         $isClosed = $requestModel->isClosed();
 
+        $availability = app(\App\Services\RencontreAvailabilityService::class);
+
+        // Service responsable du motif : priorité au service de l'étape courante,
+        // sinon service porté par la demande.
+        $responsableService = $requestModel->currentStep?->service ?? $requestModel->service;
+
+        // Vérification défensive : la méthode canValidate() peut ne pas exister
+        // selon la version du service. Repli sur le rôle agent_rdv.
+        $canValidateRencontre = method_exists($availability, 'canValidate')
+            ? $availability->canValidate($user)
+            : (bool) $user?->hasRole(User::ROLE_AGENT_RDV);
+
+        // Flag : agent RDV **ou** agent Formalités (hors admin/direction).
+        $isAgentRdvOnly = $user?->hasAnyRole([
+                User::ROLE_AGENT_RDV,
+                User::ROLE_AGENT_FORMALITES,
+                'service_accueil_formalites',
+            ])
+            && ! $user->hasAnyRole(['admin', 'direction']);
+
+        // 👇 Mode "traitement RDV seul" : agent_rdv OU agent_formalites, sur un dossier rencontre.
+        $rdvAgentMode = $isAgentRdvOnly && $requestModel->isRencontre();
+
         return view('personal.request-details', [
             'from'                  => 'cart',
             'request'               => $requestModel,
@@ -607,6 +678,12 @@ class PersonalController extends Controller
             'pendingWorkflow'       => $pendingWorkflow,
             'pendingAffectation'    => $pendingAffectation,
             'isClosed'              => $isClosed,
+            'rdvAgents'             => $responsableService
+                                        ? $availability->bookingAgents($responsableService)
+                                        : collect(),
+            'canValidateRencontre'  => $canValidateRencontre,
+            'isAgentRdvOnly'        => $isAgentRdvOnly,
+            'rdvAgentMode'          => $rdvAgentMode,
         ]);
     }
 
@@ -614,22 +691,25 @@ class PersonalController extends Controller
     {
         $serviceId = $this->resolveServiceId();
         $folder    = $request->input('folder');
-
+    
         $folders = [
             'urgent'          => 'Dossiers urgents',
             'pension'         => 'Demandes de pension',
             'prestations'     => 'Demandes de prestations',
             'administratif'   => 'Dossiers administratifs',
             'correspondances' => 'Correspondances',
-            'rencontre'       => 'Demandes de rencontre',
+            'rencontre'       => 'Attribution de rendez-vous',
             'autres'          => 'Autres',
             'clotures'        => 'Dossiers clôturés',
         ];
-
+    
         abort_unless(isset($folders[$folder]), 404);
-
-        $folderScope = function ($q) use ($folder, $serviceId) {
+    
+        $userId = auth()->id();
+    
+        $folderScope = function ($q) use ($folder, $serviceId, $userId) {
             $q->where('current_service_id', $serviceId);
+    
             if ($folder === 'clotures') {
                 $q->closed();
             } elseif ($folder === 'urgent') {
@@ -637,17 +717,23 @@ class PersonalController extends Controller
                     ->where('is_urgent', true)
                     ->orWhere('submitted_at', '<=', now()->subDays(30))
                 );
+            } elseif ($folder === 'rencontre') {
+                // 👇 L'agent ne voit que les rencontres qui lui sont attribuées
+                $q->active()
+                  ->where('categorie', 'rencontre')
+                  ->where('data->agent_id', $userId);
             } else {
                 $q->active()->where('categorie', $folder);
             }
         };
-
+    
         $requests = Demande::with('currentStep')
             ->where(fn ($q) => $folderScope($q))
             ->latest()
             ->paginate(10);
-        $type     = $folders[$folder];
-
+    
+        $type = $folders[$folder];
+    
         $statusCodes = [
             'pending'     => 'EN_ATTENTE',
             'in_progress' => 'EN_COURS',
@@ -656,7 +742,7 @@ class PersonalController extends Controller
             'approved'    => 'APPROUVEE',
             'completed'   => 'FINALISEE',
         ];
-
+    
         $stats = [];
         foreach ($statusCodes as $key => $code) {
             $stats[$key] = Demande::where(fn($q) => $folderScope($q))
@@ -664,6 +750,7 @@ class PersonalController extends Controller
                 ->count();
         }
 
+    
         return view('personal.dashboard-corbeille', compact('requests', 'type', 'folder', 'stats'));
     }
 }

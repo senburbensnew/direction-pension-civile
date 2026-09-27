@@ -7,7 +7,7 @@
     <title>@yield('title', 'Administration') — Direction de la Pension Civile</title>
     <x-fonts />
     @vite(['resources/css/app.css', 'resources/js/app.js'])
-    {{-- <link href="{{ asset('build/assets/app-CFGfTGFn.css') }}" rel="stylesheet"> --}}
+    <!-- <link href="{{ asset('build/assets/app-bInZ0-a9.css') }}" rel="stylesheet"> -->
     <style>
         :root { --sidebar-w: 15rem; }
 
@@ -85,7 +85,7 @@
             </div>
 
             {{-- Traitement des dossiers --}}
-            <div x-data="{ open: {{ request()->routeIs('admin.demandes.*', 'admin.rencontres.*') ? 'true' : 'false' }} }">
+            <div x-data="{ open: {{ request()->routeIs('admin.demandes.*') ? 'true' : 'false' }} }">
                 <button @click="open = !open"
                     class="nav-section mt-2 w-full flex items-center justify-between cursor-pointer hover:text-slate-300 transition-colors">
                     <span>Traitement des dossiers</span>
@@ -97,15 +97,11 @@
                        class="nav-link {{ request()->routeIs('admin.demandes.*') ? 'active' : '' }}">
                        <i class="fas fa-folder-open"></i> Dossiers
                     </a>
-                    <a href="{{ route('admin.rencontres.index') }}"
-                       class="nav-link {{ request()->routeIs('admin.rencontres.*') ? 'active' : '' }}">
-                       <i class="fas fa-video"></i> Demandes de rencontre
-                    </a>
                 </div>
             </div>
 
             {{-- Utilisateurs & Accès --}}
-            <div x-data="{ open: {{ request()->routeIs('admin.users.*', 'admin.roles.*', 'admin.permissions.*') ? 'true' : 'false' }} }">
+            <div x-data="{ open: {{ request()->routeIs('admin.users.*', 'admin.roles.*', 'admin.permissions.*', 'admin.comptes-demandes.*') ? 'true' : 'false' }} }">
                 <button @click="open = !open"
                     class="nav-section mt-2 w-full flex items-center justify-between cursor-pointer hover:text-slate-300 transition-colors">
                     <span>Utilisateurs &amp; Accès</span>
@@ -116,6 +112,10 @@
                     <a href="{{ route('admin.users.index') }}"
                        class="nav-link {{ request()->routeIs('admin.users.*') ? 'active' : '' }}">
                        <i class="fas fa-users"></i> Utilisateurs
+                    </a>
+                    <a href="{{ route('admin.comptes-demandes.index') }}"
+                       class="nav-link {{ request()->routeIs('admin.comptes-demandes.*') ? 'active' : '' }}">
+                       <i class="fas fa-user-plus"></i> Demandes de compte
                     </a>
                     <a href="{{ route('admin.roles.index') }}"
                        class="nav-link {{ request()->routeIs('admin.roles.*') ? 'active' : '' }}">
@@ -269,7 +269,7 @@
             </div>
 
             {{-- Paramètres --}}
-            <div x-data="{ open: {{ request()->routeIs('admin.settings', 'admin.contact-parameters.*') ? 'true' : 'false' }} }">
+            <div x-data="{ open: {{ request()->routeIs('admin.settings', 'admin.contact-parameters.*', 'admin.ocr.test*') ? 'true' : 'false' }} }">
                 <button @click="open = !open"
                     class="nav-section mt-2 w-full flex items-center justify-between cursor-pointer hover:text-slate-300 transition-colors">
                     <span>Paramètres</span>
@@ -280,6 +280,10 @@
                     <a href="{{ route('admin.settings') }}"
                        class="nav-link {{ request()->routeIs('admin.settings') ? 'active' : '' }}">
                        <i class="fas fa-cog"></i> Paramètres
+                    </a>
+                    <a href="{{ route('admin.ocr.test') }}"
+                       class="nav-link {{ request()->routeIs('admin.ocr.test*') ? 'active' : '' }}">
+                       <i class="fas fa-eye"></i> Test OCR
                     </a>
                     <a href="{{ route('admin.contact-parameters.index') }}"
                        class="nav-link {{ request()->routeIs('admin.contact-parameters.*') ? 'active' : '' }}">
@@ -413,8 +417,6 @@
         <main class="flex-1 p-4 sm:p-6">
             @yield('content')
         </main>
-
-        <x-footer />
     </div>
 
     <script>
@@ -428,7 +430,7 @@
             if (window.innerWidth >= 1024) closeSidebar();
         });
     </script>
-    {{-- <script src="{{ asset('build/assets/app-CbEvcXly.js') }}"></script> --}}
+    <!-- <script src="{{ asset('build/assets/app-BiTlx0PY.js') }}"></script> -->
     @stack('scripts')
 </body>
 </html>

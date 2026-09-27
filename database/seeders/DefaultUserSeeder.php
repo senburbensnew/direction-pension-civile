@@ -13,15 +13,16 @@ class DefaultUserSeeder extends Seeder
     public function run(): void
     {
         $userType = UserType::firstOrCreate([
-            'name' => UserTypeEnum::FONCTIONNAIRE->value,
+            'name' => UserTypeEnum::EXTERNE->value,
         ]);
 
         $gender = Gender::firstOrCreate(['name' => 'Masculin']);
 
-        User::updateOrCreate(
+        $adminUser = User::updateOrCreate(
             ['email' => 'admin@example.com'],
             [
                 'name' => 'Pierre Rubens MILORME',
+                'username' => 'admin',
                 'lastname' => 'MILORME',
                 'firstname' => 'Pierre Rubens',
                 'email' => 'admin@example.com',
@@ -31,5 +32,7 @@ class DefaultUserSeeder extends Seeder
                 'gender_id' => $gender->id,
             ]
         );
+
+        $adminUser->assignRole('admin');
     }
 }

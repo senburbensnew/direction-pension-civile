@@ -20,7 +20,7 @@ skinparam DefaultFontName Arial
 title Diagramme de Cas d'Utilisation\nSystème de Gestion des Pensions Civiles
 
 ' ──────────────── ACTEURS ────────────────
-actor "Pensionnaire\n(Retraité)" as Pensionnaire
+actor "Pensionne\n(Retraité)" as Pensionne
 actor "Fonctionnaire\n(Agent actif)" as Fonctionnaire
 actor "Institution" as Institution
 actor "Agent /\nSecrétariat" as Agent
@@ -31,7 +31,7 @@ actor "Administrateur\n(Admin)" as Admin
 ' ──────────────── PORTAIL USAGER ────────────────
 package "Portail Usager" {
 
-    package "Demandes Pensionnaire" {
+    package "Demandes Pensionne" {
         usecase "Demander un virement\nbancaire" as UC_VB
         usecase "Demander une attestation\nde pension" as UC_ATT
         usecase "Demander un transfert\nde chèque" as UC_TC
@@ -100,25 +100,25 @@ package "Administration Système" {
     usecase "Gérer le contenu\ndu site (actualités, carousel)" as UC_CONTENU
 }
 
-' ──────────────── RELATIONS PENSIONNAIRE ────────────────
-Pensionnaire --> UC_AUTH
-Pensionnaire --> UC_PROFIL
-Pensionnaire --> UC_MDP
-Pensionnaire --> UC_BROUILLON
-Pensionnaire --> UC_SOUMETTRE
-Pensionnaire --> UC_DOCS
-Pensionnaire --> UC_COMPL
-Pensionnaire --> UC_SUIVI
-Pensionnaire --> UC_ANNULER
-Pensionnaire --> UC_MSG_USR
-Pensionnaire --> UC_VB
-Pensionnaire --> UC_ATT
-Pensionnaire --> UC_TC
-Pensionnaire --> UC_AP
-Pensionnaire --> UC_RI
-Pensionnaire --> UC_AV
-Pensionnaire --> UC_PE
-Pensionnaire --> UC_PR
+' ──────────────── RELATIONS PENSIONNE ────────────────
+Pensionne --> UC_AUTH
+Pensionne --> UC_PROFIL
+Pensionne --> UC_MDP
+Pensionne --> UC_BROUILLON
+Pensionne --> UC_SOUMETTRE
+Pensionne --> UC_DOCS
+Pensionne --> UC_COMPL
+Pensionne --> UC_SUIVI
+Pensionne --> UC_ANNULER
+Pensionne --> UC_MSG_USR
+Pensionne --> UC_VB
+Pensionne --> UC_ATT
+Pensionne --> UC_TC
+Pensionne --> UC_AP
+Pensionne --> UC_RI
+Pensionne --> UC_AV
+Pensionne --> UC_PE
+Pensionne --> UC_PR
 
 ' ──────────────── RELATIONS FONCTIONNAIRE ────────────────
 Fonctionnaire --> UC_AUTH

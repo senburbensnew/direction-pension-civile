@@ -18,7 +18,7 @@ class DemandeTypesSeeder extends Seeder
             [
                 'user_id' => 1,
                 'numero_dossier' => 'PEN-'.Str::upper(Str::random(8)),
-                'categorie' => 'pensionnaire',
+                'categorie' => 'pensionne',
                 'type' => 'preuve_existence',
                 'etat' => 'reçue',
                 'data' => json_encode(['nom'=>'Jean Dupont','cin'=>'12345678']),
@@ -28,7 +28,7 @@ class DemandeTypesSeeder extends Seeder
             [
                 'user_id' => 1,
                 'numero_dossier' => 'PEN-'.Str::upper(Str::random(8)),
-                'categorie' => 'pensionnaire',
+                'categorie' => 'pensionne',
                 'type' => 'virement',
                 'etat' => 'en attente de documents',
                 'data' => json_encode(['banque'=>'BNC','rib'=>'HT123456']),

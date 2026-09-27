@@ -8,7 +8,7 @@
 
 PARTICIPANTS
 ------------
-  USR   Usager (Pensionnaire / Fonctionnaire / Institution)
+  USR   Usager (Pensionne / Fonctionnaire / Institution)
   NAV   Navigateur (Blade/Alpine.js)
   DC    DemandeController
   DS    DemandeService

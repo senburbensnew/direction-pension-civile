@@ -102,7 +102,7 @@ class GlossaireTermSeeder extends Seeder
             ],
             [
                 'term'         => 'Preuve d\'existence',
-                'definition'   => 'Certificat annuel que le pensionnaire doit fournir pour confirmer qu\'il est toujours en vie et continuer à percevoir sa pension.',
+                'definition'   => 'Certificat annuel que le pensionné doit fournir pour confirmer qu\'il est toujours en vie et continuer à percevoir sa pension.',
                 'category'     => 'document',
                 'icon'         => 'fa-book',
                 'order_column' => 12,
@@ -134,7 +134,7 @@ class GlossaireTermSeeder extends Seeder
             ],
             [
                 'term'         => 'Code pension',
-                'definition'   => 'Identifiant propre à chaque pensionnaire dans le système de la Direction des Pensions, utilisé pour le suivi des dossiers et des paiements.',
+                'definition'   => 'Identifiant propre à chaque pensionné dans le système de la Direction des Pensions, utilisé pour le suivi des dossiers et des paiements.',
                 'category'     => 'identification',
                 'icon'         => 'fa-book',
                 'order_column' => 16,

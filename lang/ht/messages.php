@@ -4,10 +4,12 @@ return [
     'login' => 'Koneksyon',
     'logout' => 'Dekoneksyon',
     'email' => 'Adrès imel',
+    'login_identifier' => 'Imel, NIF oswa kòd pansyon',
     'password' => 'Modpas',
     'remember_me' => 'Sonje mwen',
     'forgot_password' => 'Bliye modpas ou ?',
     'register' => "Enskri",
+    'request_account' => 'Mande yon kont',
 
     // Navbar
     'direction' => 'Direksyon Pansyon Sivil',
@@ -40,6 +42,7 @@ return [
     'reinstatement_request' => 'Demann pou reentegre',
     'transfer_stop_request' => 'Demann pou sispann transfè',
     'proof_of_existence' => 'Prèv egzistans',
+    'information_update' => 'Mizajou enfòmasyon',
 
     'civil_servant' => 'Fonksyonè',
     'career_status_request' => 'Demann eta karyè',
@@ -53,6 +56,9 @@ return [
     'communications' => 'Kominikasyon',
     'texts_and_publications' => 'Tèks ak piblikasyon',
     'media_libraries' => 'Mediatèks',
+    'appointment_request' => 'Demann randevou',
+    'physical_appointment' => 'An pèsòn',
+    'video_appointment' => 'Vizyokonferans',
     'success_stories' => 'Istwa siksè',
 
     'simulateur-calcul' => 'Similatè Retrèt',
@@ -164,6 +170,8 @@ return [
     // Contact info bar
     'opening_hours'          => 'Orè ouvèti : Lin - Vandredi 8.00 am - 4.00 pm',
     'call_on'                => 'Rele sou : :phone',
+    'service_phones'         => 'Nimewo sèvis yo',
+    'service_phones_intro'   => 'Men nimewo telefòn diferan sèvis DPC yo.',
     'weekdays_short'         => ['dim.', 'len.', 'mad.', 'mèk.', 'jed.', 'van.', 'sam.'],
     'months_short'           => ['janv.', 'fev.', 'mas', 'avr.', 'me', 'jen', 'jiy.', 'out', 'sep.', 'oktòb', 'nov.', 'des.'],
 

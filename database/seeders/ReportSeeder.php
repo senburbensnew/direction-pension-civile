@@ -30,7 +30,7 @@ class ReportSeeder extends Seeder
             [
                 'title'       => 'Rapport d’activités de la Direction de la Pension Civile — 2025',
                 'year'        => 2025,
-                'description' => 'Bilan annuel des activités, des liquidations traitées et des services rendus aux pensionnaires et fonctionnaires.',
+                'description' => 'Bilan annuel des activités, des liquidations traitées et des services rendus aux pensionnés et fonctionnaires.',
                 'source'      => 'decret-su-09-octobre-2015-sur-la-pension-civile-de-retraite.pdf',
                 'cover_path'  => 'images/carousel/KEV_6750.jpg',
                 'published_at'=> now()->subDays(40),

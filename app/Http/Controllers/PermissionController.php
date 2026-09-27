@@ -36,7 +36,7 @@ class PermissionController extends Controller
         ]);
 
         Permission::create([
-            'name' => strtolower(trim($request->name)),
+            'name' => strtoupper(trim($request->name)),
             'guard_name' => 'web',
         ]);
 
@@ -63,7 +63,7 @@ class PermissionController extends Controller
         ]);
 
         $permission->update([
-            'name' => strtolower(trim($request->name)),
+            'name' => strtoupper(trim($request->name)),
         ]);
 
         return redirect()

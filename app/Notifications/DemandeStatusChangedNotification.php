@@ -61,7 +61,7 @@ class DemandeStatusChangedNotification extends Notification
     private function statusLabel(): string
     {
         return match ($this->newStatusCode) {
-            'SOUMISE'           => 'Demande soumise et reçue par la Direction',
+            'SOUMISE'           => 'Demande soumise et reçue',
             'EN_TRAITEMENT'     => 'En cours de traitement',
             'EN_COURS'          => 'En cours de traitement',
             'COMPLEMENT_REQUIS' => 'Complément d\'information requis',

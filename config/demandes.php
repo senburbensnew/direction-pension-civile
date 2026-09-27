@@ -223,6 +223,44 @@ return [
         ],
     ],
 
+    'demande_mise_a_jour' => [
+        'documents' => [
+            'multiple' => [],
+            'single' => [
+                'piece_identite' => [
+                    'label' => 'Copie d’une pièce d’identité',
+                    'multiple' => false,
+                    'min_files' => 0,
+                    'max_files' => 1,
+                ],
+                'acte_etat_civil' => [
+                    'label' => 'Acte ou extrait d’acte d’état civil',
+                    'multiple' => false,
+                    'min_files' => 0,
+                    'max_files' => 1,
+                ],
+                'justificatif_domicile' => [
+                    'label' => 'Justificatif de domicile',
+                    'multiple' => false,
+                    'min_files' => 0,
+                    'max_files' => 1,
+                ],
+                'document_bancaire' => [
+                    'label' => 'Document bancaire',
+                    'multiple' => false,
+                    'min_files' => 0,
+                    'max_files' => 1,
+                ],
+                'autre_justificatif' => [
+                    'label' => 'Autre document justificatif',
+                    'multiple' => false,
+                    'min_files' => 0,
+                    'max_files' => 1,
+                ],
+            ],
+        ],
+    ],
+
     // Disk to use for file storage
     'disk' => 'public',
 ];

@@ -12,7 +12,7 @@ use Tests\TestCase;
 /**
  * Registration is admin-only in this application.
  * The /register route requires auth + role:admin.
- * Admins create accounts on behalf of employees / pensionnaires.
+ * Admins create accounts on behalf of employees / pensionnes.
  */
 class RegistrationTest extends TestCase
 {
@@ -23,7 +23,7 @@ class RegistrationTest extends TestCase
         parent::setUp();
         // Seed roles
         app()[\Spatie\Permission\PermissionRegistrar::class]->forgetCachedPermissions();
-        foreach (['admin', 'direction', 'pensionnaire', 'fonctionnaire', 'institution', 'secretariat', 'liquidation'] as $role) {
+        foreach (['admin', 'direction', 'pensionne', 'fonctionnaire', 'institution', 'secretariat', 'liquidation'] as $role) {
             \Spatie\Permission\Models\Role::firstOrCreate(['name' => $role]);
         }
     }
@@ -31,7 +31,7 @@ class RegistrationTest extends TestCase
     private function seedUserTypes(): array
     {
         return array_map(fn($name) => UserType::create(['name' => $name]), [
-            UserTypeEnum::PENSIONNAIRE->value,
+            UserTypeEnum::PENSIONNE->value,
             UserTypeEnum::FONCTIONNAIRE->value,
             UserTypeEnum::INSTITUTION->value,
         ]);

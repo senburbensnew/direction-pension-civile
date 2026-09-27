@@ -17,7 +17,8 @@ class UserController extends Controller
         if ($request->filled('q')) {
             $query->where(function ($q) use ($request) {
                 $q->where('name', 'like', '%' . $request->q . '%')
-                  ->orWhere('email', 'like', '%' . $request->q . '%');
+                  ->orWhere('email', 'like', '%' . $request->q . '%')
+                  ->orWhere('username', 'like', '%' . $request->q . '%');
             });
         }
 
@@ -47,12 +48,13 @@ class UserController extends Controller
             'firstname'             => 'nullable|string|max:255',
             'lastname'              => 'nullable|string|max:255',
             'email'                 => 'required|string|email|max:255|unique:users',
+            'username'              => 'nullable|string|min:3|max:50|regex:/^[A-Za-z0-9._-]+$/|unique:users,username',
             'phone'                 => 'nullable|string|max:30',
             'password'              => 'required|string|min:8|confirmed',
             'role'                  => 'nullable|string|exists:roles,name',
             'service_id'            => 'nullable|integer|exists:services,id',
             'gender_id'             => 'nullable|integer|exists:genders,id',
-            'user_type'             => 'nullable|string|in:fonctionnaire,pensionnaire,institution',
+            'user_type'             => 'nullable|string|in:fonctionnaire,pensionne,institution',
             'pension_code'          => 'nullable|string|max:50',
             'nif'                   => 'nullable|string|max:20',
             'ninu'                  => 'nullable|string|max:20',
@@ -60,6 +62,10 @@ class UserController extends Controller
 
         $role = $validated['role'] ?? null;
         unset($validated['role']);
+
+        if (empty($validated['username'])) {
+            unset($validated['username']);
+        }
 
         if (empty($validated['gender_id'])) {
             $validated['gender_id'] = null;
@@ -91,12 +97,13 @@ class UserController extends Controller
             'firstname'    => 'nullable|string|max:255',
             'lastname'     => 'nullable|string|max:255',
             'email'        => 'required|string|email|max:255|unique:users,email,' . $user->id,
+            'username'     => 'nullable|string|min:3|max:50|regex:/^[A-Za-z0-9._-]+$/|unique:users,username,' . $user->id,
             'phone'        => 'nullable|string|max:30',
             'password'     => 'nullable|string|min:8|confirmed',
             'role'         => 'nullable|string|exists:roles,name',
             'service_id'   => 'nullable|integer|exists:services,id',
             'gender_id'    => 'nullable|integer|exists:genders,id',
-            'user_type'    => 'nullable|string|in:fonctionnaire,pensionnaire,institution',
+            'user_type'    => 'nullable|string|in:fonctionnaire,pensionne,institution',
             'pension_code' => 'nullable|string|max:50',
             'nif'          => 'nullable|string|max:20',
             'ninu'         => 'nullable|string|max:20',
@@ -107,6 +114,10 @@ class UserController extends Controller
 
         if (empty($validated['password'])) {
             unset($validated['password']);
+        }
+
+        if (empty($validated['username'])) {
+            unset($validated['username']);
         }
 
         if (empty($validated['gender_id'])) {

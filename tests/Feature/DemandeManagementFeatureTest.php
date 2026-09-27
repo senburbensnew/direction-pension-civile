@@ -39,7 +39,7 @@ class DemandeManagementFeatureTest extends TestCase
     }
 
     /**
-     * A regular pensionnaire/fonctionnaire user — no admin role, no service.
+     * A regular pensionne/fonctionnaire user — no admin role, no service.
      */
     private function makeRegularUser(): User
     {
@@ -204,9 +204,9 @@ class DemandeManagementFeatureTest extends TestCase
     }
 
     /** @test */
-    public function pensionnaire_user_cannot_annotate_demande(): void
+    public function pensionne_user_cannot_annotate_demande(): void
     {
-        // Regular user (pensionnaire) — no direction role → controller aborts 403
+        // Regular user (pensionne) — no direction role → controller aborts 403
         $user    = $this->makeRegularUser();
         $owner   = $this->makeRegularUser();
         $demande = $this->makeDemande($owner);
@@ -552,10 +552,27 @@ class DemandeManagementFeatureTest extends TestCase
     }
 
     /** @test */
-    public function admin_can_accept_rencontre(): void
+    public function user_without_validateur_rdv_role_cannot_accept_rencontre(): void
     {
         $admin   = User::factory()->create();
         $admin->assignRole('admin');
+        $demande = Demande::create([
+            'type'           => \App\Enums\TypeDemandeEnum::DEMANDE_RENCONTRE->value,
+            'created_by'     => null,
+            'current_step_id' => WorkflowStep::idForCode('SOUMISE'),
+            'data'           => ['objet' => 'Test'],
+        ]);
+
+        $this->actingAs($admin)
+            ->post(route('rencontres.pilotage.accepter', $demande))
+            ->assertForbidden();
+    }
+
+    /** @test */
+    public function admin_can_accept_rencontre(): void
+    {
+        $admin   = User::factory()->create();
+        $admin->assignRole(['admin', User::ROLE_VALIDATEUR_RDV]);
         $statusId = WorkflowStep::idForCode('SOUMISE');
         $demande  = Demande::create([
             'type'           => \App\Enums\TypeDemandeEnum::DEMANDE_RENCONTRE->value,
@@ -567,8 +584,8 @@ class DemandeManagementFeatureTest extends TestCase
         ]);
 
         $this->actingAs($admin)
-            ->post(route('admin.rencontres.accepter', $demande))
-            ->assertRedirect(route('admin.rencontres.index'));
+            ->post(route('rencontres.pilotage.accepter', $demande))
+            ->assertRedirect(route('rencontres.pilotage.show', $demande));
 
         $this->assertDatabaseHas('demandes', [
             'id'              => $demande->id,
@@ -577,10 +594,53 @@ class DemandeManagementFeatureTest extends TestCase
     }
 
     /** @test */
+    public function validateur_can_reorient_and_record_follow_up(): void
+    {
+        $manager = User::factory()->create();
+        $manager->assignRole(User::ROLE_VALIDATEUR_RDV);
+        $formaliteId = Service::where('code', Service::FORMALITE)->value('id');
+        $liqId = Service::where('code', Service::LIQUIDATION)->value('id');
+        $demande = Demande::create([
+            'type' => \App\Enums\TypeDemandeEnum::DEMANDE_RENCONTRE->value,
+            'created_by' => User::factory()->create()->id,
+            'current_service_id' => $formaliteId,
+            'current_step_id' => WorkflowStep::idForCode('SOUMISE'),
+            'data' => ['objet' => 'Formalités', 'modalite' => 'visio'],
+        ]);
+
+        $this->actingAs($manager)
+            ->get(route('rencontres.pilotage.show', $demande))
+            ->assertOk()
+            ->assertSee('Informations transmises par l’usager')
+            ->assertSee('Historique du rendez-vous');
+
+        $this->actingAs($manager)
+            ->post(route('rencontres.pilotage.reorienter', $demande), [
+                'service_id' => $liqId,
+                'commentaire' => 'Dossier de liquidation.',
+            ])
+            ->assertRedirect(route('rencontres.pilotage.show', $demande));
+
+        $this->assertSame($liqId, $demande->fresh()->current_service_id);
+
+        $this->actingAs($manager)
+            ->post(route('rencontres.pilotage.suite', $demande), [
+                'suite' => 'Usager informé du transfert.',
+            ])
+            ->assertRedirect(route('rencontres.pilotage.show', $demande));
+
+        $this->assertDatabaseHas('demande_histories', [
+            'demande_id' => $demande->id,
+            'event' => 'SUITE',
+            'commentaire' => 'Usager informé du transfert.',
+        ]);
+    }
+
+    /** @test */
     public function admin_can_refuse_rencontre_with_motif(): void
     {
         $admin    = User::factory()->create();
-        $admin->assignRole('admin');
+        $admin->assignRole(['admin', User::ROLE_VALIDATEUR_RDV]);
         $statusId = WorkflowStep::idForCode('SOUMISE');
         $demande  = Demande::create([
             'type'           => \App\Enums\TypeDemandeEnum::DEMANDE_RENCONTRE->value,
@@ -592,13 +652,13 @@ class DemandeManagementFeatureTest extends TestCase
         ]);
 
         $this->actingAs($admin)
-            ->post(route('admin.rencontres.refuser', $demande), ['motif' => 'Agenda complet.'])
-            ->assertRedirect(route('admin.rencontres.index'));
+            ->post(route('rencontres.pilotage.refuser', $demande), ['motif' => 'Agenda complet.'])
+            ->assertRedirect(route('rencontres.pilotage.show', $demande));
 
         $this->assertDatabaseHas('demandes', [
             'id'         => $demande->id,
-            'current_step_id' => WorkflowStep::idForCode('REJETEE'),
-            'annotation' => 'Agenda complet.',
+            'current_step_id' => WorkflowStep::idForCode('ANNULEE'),
         ]);
+        $this->assertSame(\App\Enums\RencontreStatutEnum::ANNULE, $demande->fresh()->rencontreStatut());
     }
 }

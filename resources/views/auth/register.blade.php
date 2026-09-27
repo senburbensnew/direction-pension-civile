@@ -1,7 +1,7 @@
 <x-guest-layout>
     @php
-        $pensionnaireType = $userTypes->firstWhere('name', 'pensionnaire');
-        $pensionnaireId   = $pensionnaireType ? $pensionnaireType->id : null;
+        $pensionneType = $userTypes->firstWhere('name', 'pensionne');
+        $pensionneId   = $pensionneType ? $pensionneType->id : null;
     @endphp
 
     <div class="mb-5 text-center">
@@ -22,9 +22,10 @@
                 <div class="flex flex-col gap-2">
                     @foreach ($userTypes as $type)
                         @php
-                            $icons   = ['pensionnaire' => 'fa-user-clock', 'fonctionnaire' => 'fa-briefcase', 'institution' => 'fa-building'];
+                            $icons   = ['pensionne' => 'fa-user-clock', 'fonctionnaire' => 'fa-briefcase', 'institution' => 'fa-building'];
+                            $labels  = ['pensionne' => __('messages.pensioner'), 'fonctionnaire' => __('messages.civil_servant'), 'institution' => __('messages.institutions')];
                             $icon    = $icons[$type->name] ?? 'fa-user';
-                            $checked = old('user_type_id', request()->isMethod('get') ? $pensionnaireId : null) == $type->id;
+                            $checked = old('user_type_id', request()->isMethod('get') ? $pensionneId : null) == $type->id;
                         @endphp
                         <label for="user_type_{{ $type->name }}"
                                class="user-type-card flex items-center gap-2 cursor-pointer border-2 rounded-lg px-3 py-2 transition-all select-none {{ $checked ? 'border-blue-500 bg-blue-50 text-blue-700' : 'border-gray-200 text-gray-600 hover:border-gray-300' }}"
@@ -33,7 +34,7 @@
                                    value="{{ $type->id }}" data-type-name="{{ $type->name }}"
                                    {{ $checked ? 'checked' : '' }} class="sr-only">
                             <i class="fas {{ $icon }} text-sm w-4 text-center"></i>
-                            <span class="text-xs font-medium">{{ ucfirst($type->name) }}</span>
+                            <span class="text-xs font-medium">{{ $labels[$type->name] ?? ucfirst($type->name) }}</span>
                         </label>
                     @endforeach
                 </div>
@@ -87,6 +88,21 @@
                        style="padding-left:2.25rem;padding-right:1rem;">
             </div>
             <x-input-error :messages="$errors->get('email')" class="mt-1" />
+        </div>
+
+        <div>
+            <label for="username" class="block text-sm font-medium text-gray-700 mb-1">Nom d’utilisateur</label>
+            <div class="relative">
+                <span class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-400">
+                    <i class="fas fa-user text-sm"></i>
+                </span>
+                <input id="username" type="text" name="username" value="{{ old('username') }}" autocomplete="username"
+                       placeholder="jean.dupont"
+                       class="w-full py-2.5 border {{ $errors->has('username') ? 'border-red-400 focus:ring-red-400' : 'border-gray-300 focus:ring-blue-500' }} rounded-lg text-sm focus:outline-none focus:ring-2 transition"
+                       style="padding-left:2.25rem;padding-right:1rem;">
+            </div>
+            <p class="text-xs text-gray-400 mt-1">Optionnel. Sera généré à partir de l’e-mail s’il est laissé vide.</p>
+            <x-input-error :messages="$errors->get('username')" class="mt-1" />
         </div>
 
         {{-- Password + Confirm side by side --}}
@@ -183,9 +199,9 @@
                 }
 
                 const isInstitution  = this.dataset.typeName === 'institution';
-                const isPensionnaire = this.dataset.typeName === 'pensionnaire';
+                const isPensionne = this.dataset.typeName === 'pensionne';
 
-                document.getElementById('pension_code_container').classList.toggle('hidden', !isPensionnaire);
+                document.getElementById('pension_code_container').classList.toggle('hidden', !isPensionne);
                 document.getElementById('name_container').style.display     = isInstitution ? 'block' : 'none';
                 document.getElementById('lastname_container').style.display = isInstitution ? 'none'  : 'grid';
 

@@ -109,13 +109,19 @@
                 <span class="text-xs font-semibold text-gray-600 uppercase tracking-wider">Contact &amp; accès</span>
             </div>
             <div class="p-5 grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div class="sm:col-span-2">
+                <div>
                     <label class="block text-xs font-medium text-gray-600 mb-1">
                         Adresse e-mail <span class="text-red-500">*</span>
                     </label>
                     <input type="email" name="email" value="{{ old('email', $user->email) }}" required
                         class="{{ $field('email') }}">
                     @error('email')<p class="text-red-500 text-xs mt-1">{{ $message }}</p>@enderror
+                </div>
+                <div>
+                    <label class="block text-xs font-medium text-gray-600 mb-1">Nom d’utilisateur</label>
+                    <input type="text" name="username" value="{{ old('username', $user->username) }}"
+                        class="{{ $field('username') }}" placeholder="jean.dupont" autocomplete="username">
+                    @error('username')<p class="text-red-500 text-xs mt-1">{{ $message }}</p>@enderror
                 </div>
                 <div>
                     <label class="block text-xs font-medium text-gray-600 mb-1">Téléphone</label>
@@ -153,7 +159,7 @@
                     <label class="block text-xs font-medium text-gray-600 mb-1">Type d'utilisateur</label>
                     <select name="user_type" class="{{ $field('user_type') }}">
                         <option value="">— Sélectionner —</option>
-                        @foreach(['fonctionnaire' => 'Fonctionnaire', 'pensionnaire' => 'Pensionnaire', 'institution' => 'Institution'] as $val => $label)
+                        @foreach(['fonctionnaire' => 'Fonctionnaire', 'pensionne' => 'Pensionné', 'institution' => 'Institution'] as $val => $label)
                             <option value="{{ $val }}" {{ old('user_type', $user->userType?->name) === $val ? 'selected' : '' }}>
                                 {{ $label }}
                             </option>

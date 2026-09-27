@@ -19,45 +19,6 @@
 
             <div class="py-6 px-2">
                 <div class="mx-auto sm:px-6 lg:px-8">
-                    <form method="GET" action="{{ route('personal.dashboard') }}" class="flex flex-wrap gap-4 mb-6 items-end">
-                        {{-- Status filter --}}
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-1">État</label>
-                            <select name="status_id" class="mt-1 inline-block w-auto min-w-[12rem] rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
-                                <option value="">Tous les états</option>
-                                @foreach ($statuses as $status)
-                                    <option value="{{ $status->id }}"
-                                        {{ request('status_id') == $status->id ? 'selected' : '' }}>
-                                        {{ $status->nom }}
-                                    </option>
-                                @endforeach
-                            </select>
-                        </div>
-
-                        {{-- Type demande filter --}}
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-1">Type de demande</label>
-                            <select name="type" class="mt-1 inline-block w-auto min-w-[12rem] rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
-                                <option value="">Tous les types</option>
-                                @foreach ($typesDemandes as $type)
-                                    <option value="{{ $type->code }}"
-                                        {{ request('type') == $type->code ? 'selected' : '' }}>
-                                        {{ $type->label }}
-                                    </option>
-                                @endforeach
-                            </select>
-                        </div>
-
-                        {{-- Submit --}}
-                        <div class="flex items-end">
-                            <button type="submit"
-                                class="w-full bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700">
-                                Filtrer
-                            </button>
-                        </div>
-
-                    </form>
-
                     <table class="w-full text-sm text-left text-body">
                         <thead class="bg-gray-100 border-b border-t border-default-medium">
                             <tr>
@@ -76,58 +37,13 @@
                                 <tr class="bg-neutral-primary-soft border-default hover:bg-neutral-secondary-medium">
                                     <td class="px-6 py-4 text-blue-900 font-bold">{{ $demande->title ?? '--' }}</td>
                                     {{-- <td class="px-6 py-4">{{ $demande->code }}</td> --}}
-                                    <td class="px-6 py-4">{{ $demande->type }}</td>
+                                    <td class="px-6 py-4">{{ \App\Enums\TypeDemandeEnum::tryFrom((string) $demande->type)?->label() ?? $demande->type }}</td>
                                     <td class="px-6 py-4">{{ $demande->updated_at }}</td>
                                     <td class="px-6 py-4">{{ $demande->submitted_at ?? '--' }}</td>
                                     <td class="px-6 py-4">{{ $demande->expires_at ?? '--' }}</td>
                                     <td class="px-6 py-4">
-                                        @php $stepCode = $demande->currentStep?->code; @endphp
-                                        <span class="px-2 py-1 text-sm rounded-full
-                                            @switch($stepCode)
-
-                                                @case('BROUILLON')
-                                                    bg-gray-100 text-gray-800
-                                                    @break
-
-                                                @case('SOUMISE')
-                                                    bg-blue-100 text-blue-800
-                                                    @break
-
-                                                @case('EN_ATTENTE')
-                                                    bg-yellow-100 text-yellow-800
-                                                    @break
-
-                                                @case('EN_COURS')
-                                                @case('EN_INSTRUCTION_SECRETARIAT')
-                                                @case('TRANSFERT_EN_ATTENTE')
-                                                    bg-indigo-100 text-indigo-800
-                                                    @break
-
-                                                @case('APPROUVEE')
-                                                    bg-green-100 text-green-800
-                                                    @break
-
-                                                @case('FINALISEE')
-                                                    bg-green-200 text-green-900
-                                                    @break
-
-                                                @case('REJETEE')
-                                                    bg-red-100 text-red-800
-                                                    @break
-
-                                                @case('ANNULEE')
-                                                    bg-gray-200 text-gray-600
-                                                    @break
-
-                                                @case('COMPLEMENT_REQUIS')
-                                                    bg-orange-100 text-orange-800
-                                                    @break
-
-                                                @default
-                                                    bg-gray-100 text-gray-800
-                                            @endswitch
-                                        ">
-                                            {{ $demande->currentStep?->nom ?? '—' }}
+                                        <span class="px-2 py-1 text-sm rounded-full {{ $demande->statutBadgeClass() }}">
+                                            {{ $demande->statutAffiche() }}
                                         </span>
                                     </td>
                                     <td class="px-6 py-4">
@@ -167,6 +83,16 @@
                                                     class="bg-red-500 text-white px-2 py-1 rounded text-sm hover:bg-red-600">
                                                     supprimer
                                                 </button>
+                                            @endif
+
+                                            @if ($demande->canBeCancelledByUser())
+                                                <form method="POST" action="{{ route('demandes.rencontre.annuler', $demande) }}"
+                                                      onsubmit="return confirm('Annuler ce rendez-vous ? Le créneau redeviendra disponible.')">
+                                                    @csrf
+                                                    <button type="submit" class="bg-red-500 text-white px-2 py-1 rounded text-sm hover:bg-red-600">
+                                                        annuler
+                                                    </button>
+                                                </form>
                                             @endif
                                         </div>
                                     </td>

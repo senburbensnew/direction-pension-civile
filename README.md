@@ -4,13 +4,13 @@ Application web de gestion des demandes de pension civile en Haïti, développé
 
 ## Présentation
 
-Cette application permet aux pensionnaires, fonctionnaires et institutions de soumettre et suivre leurs demandes administratives liées aux pensions civiles. Elle offre également aux agents et administrateurs un tableau de bord complet pour gérer les dossiers, les transferts entre services et les workflows de validation.
+Cette application permet aux pensionnes, fonctionnaires et institutions de soumettre et suivre leurs demandes administratives liées aux pensions civiles. Elle offre également aux agents et administrateurs un tableau de bord complet pour gérer les dossiers, les transferts entre services et les workflows de validation.
 
 ### Types d'utilisateurs
 
 | Rôle | Description |
 |------|-------------|
-| **Pensionnaire** | Retraités soumettant des demandes de virement, attestations, preuves d'existence, etc. |
+| **Pensionne** | Retraités soumettant des demandes de virement, attestations, preuves d'existence, etc. |
 | **Fonctionnaire** | Agents civils en activité demandant leur mise à la retraite ou un relevé de carrière |
 | **Institution** | Organismes soumettant des demandes d'adhésion |
 | **Agent / Admin** | Personnel interne gérant les dossiers et les workflows |

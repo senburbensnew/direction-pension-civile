@@ -14,9 +14,10 @@ class UserTypesSeeder extends Seeder
     public function run()
     {
         DB::table('user_types')->insertOrIgnore([
-            ['name' => 'pensionnaire'],
+            ['name' => 'pensionne'],
             ['name' => 'fonctionnaire'],
             ['name' => 'institution'],
+            ['name' => 'externe'],
         ]);        
     }
 }

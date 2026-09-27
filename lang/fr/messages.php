@@ -4,10 +4,12 @@ return [
     'login' => 'Connexion',
     'logout' => 'Déconnexion',
     'email' => 'Adresse e-mail',
+    'login_identifier' => 'E-mail, NIF ou code pension',
     'password' => 'Mot de passe',
     'remember_me' => 'Se souvenir de moi',
     'forgot_password' => 'Mot de passe oublié ?',
     'register' => "S'inscrire",
+    'request_account' => 'Demander un compte',
 
     // Navbar
     'direction' => 'Direction de la Pension Civile',
@@ -32,7 +34,7 @@ return [
     'organizational_structure' => 'Structure organisationnelle',
     'funding' => 'Financement',
 
-    'pensioner' => 'Pensionnaire',
+    'pensioner' => 'Pensionné',
     'transfer_request' => 'Demande de virement',
     'certificate_request' => 'Demande d’attestation',
     'check_transfer_request' => 'Demande de transfert de chèque',
@@ -40,6 +42,7 @@ return [
     'reinstatement_request' => 'Demande de réinsertion',
     'transfer_stop_request' => 'Demande d’arrêt de virement',
     'proof_of_existence' => 'Preuve d\'existence',
+    'information_update' => 'Mise à jour des informations',
 
     'civil_servant' => 'Fonctionnaire',
     'career_status_request' => 'Demande d’état de carrière',
@@ -53,6 +56,9 @@ return [
     'communications' => 'Communications',
     'texts_and_publications' => 'Textes et publications',
     'media_libraries' => 'Médiathèque',
+    'appointment_request' => 'Demande de rendez-vous',
+    'physical_appointment' => 'Présentiel',
+    'video_appointment' => 'Visioconférence',
     'success_stories' => 'Success stories',
 
     'simulateur-calcul' => 'Simulateur Retraite',
@@ -164,6 +170,8 @@ return [
     // Contact info bar
     'opening_hours'          => "Horaires d'ouverture : Lun - Ven 8.00 am - 4.00 pm",
     'call_on'                => 'Appeler sur : :phone',
+    'service_phones'         => 'Numéros des services',
+    'service_phones_intro'   => 'Voici les numéros de téléphone des différents services de la DPC.',
     'weekdays_short'         => ['dim.', 'lun.', 'mar.', 'mer.', 'jeu.', 'ven.', 'sam.'],
     'months_short'           => ['janv.', 'févr.', 'mars', 'avr.', 'mai', 'juin', 'juil.', 'août', 'sept.', 'oct.', 'nov.', 'déc.'],
 
