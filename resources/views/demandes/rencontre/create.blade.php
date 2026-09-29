@@ -28,11 +28,6 @@
             ? 'border-red-400 bg-red-50'
             : 'border-gray-200');
 
-    /*
-     * CORRECTION #3 : plus de valeur par défaut 'physique'.
-     * Ainsi, x-show="modalite" masque bien les sections tant que l'utilisateur
-     * n'a pas explicitement choisi un mode.
-     */
     $oldModalite = old(
         'modalite',
         request('modalite', 'physique')
@@ -49,9 +44,7 @@
     $identiteHasError = $errors->hasAny([
         'prenom',
         'nom',
-        'numero_pension',
-        'telephone',
-        'email'
+        'telephone'
     ]);
 
     $recapHasError = $errors->has(
@@ -311,12 +304,11 @@
 
                 {{-- Feedback de soumission --}}
                 @submit="submitting = true"
+                x-on:pageshow.window="submitting = false"
 
                 x-data="rdvBookingForm(@js([
 
                     'modalite' => $oldModalite,
-
-                    'plateforme' => old('plateforme', ''),
 
                     'motif' => old('motif', ''),
 
@@ -325,16 +317,6 @@
                     'heureSouhaitee' => old('heure_souhaitee', ''),
 
                     'lieuRdv' => old('lieu_rdv', ''),
-
-                    'prenom' => $identite['prenom'] ?? '',
-
-                    'nom' => $identite['nom'] ?? '',
-
-                    'numeroPension' => $identite['numero_pension'] ?? '',
-
-                    'telephone' => $identite['telephone'] ?? '',
-
-                    'email' => $identite['email'] ?? '',
 
                     'accepte' => (bool) old(
                         'confirmation_lu_accepte'
@@ -709,7 +691,7 @@
                      IDENTITÉ
                 ================================================== --}}
 
-                @include('demandes.rencontre._identite')
+                {{-- @include('demandes.rencontre._identite') --}}
 
 
                 {{-- =================================================
@@ -809,21 +791,6 @@
             lieuRdv:
                 initial.lieuRdv || '',
 
-            prenom:
-                initial.prenom || '',
-
-            nom:
-                initial.nom || '',
-
-            numeroPension:
-                initial.numeroPension || '',
-
-            telephone:
-                initial.telephone || '',
-
-            email:
-                initial.email || '',
-
             accepte:
                 Boolean(initial.accepte),
 
@@ -844,37 +811,19 @@
             documents:
                 initial.documents || {},
 
-            plateformes: {
-
-                zoom: 'Zoom',
-
-                teams: 'Microsoft Teams',
-
-                meet: 'Google Meet',
-
-                autre: 'Autre'
-
-            },
-
 
             motifLabel() {
-
                 return this.motifs[this.motif] || '—';
-
             },
 
 
             serviceLabel() {
-
                 return this.motifServices[
                     this.motif
                 ] || '—';
-
             },
 
-
             recapDateHeure() {
-
                 if (
                     !this.dateSouhaitee ||
                     !this.heureSouhaitee
@@ -889,9 +838,7 @@
                     + ' à '
                     + this.heureSouhaitee
                 );
-
             },
-
 
             recapLieuOuLien() {
 
@@ -907,19 +854,13 @@
 
             },
 
-
             documentsPourModalite() {
-
                 return this.documents[
                     this.modalite
                 ] || [];
-
             },
-
         }));
-
     });
-
 </script>
 
 @endsection

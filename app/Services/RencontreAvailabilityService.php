@@ -41,7 +41,7 @@ class RencontreAvailabilityService
     public function startTime(): string
     {
         return (string) config(
-            'rdv.start',            // ← avant : 'rdv.start_time'
+            'rdv.start',
             self::DEFAULT_START_TIME
         );
     }
@@ -49,7 +49,7 @@ class RencontreAvailabilityService
     public function endTime(): string
     {
         return (string) config(
-            'rdv.end',              // ← avant : 'rdv.end_time'
+            'rdv.end',
             self::DEFAULT_END_TIME
         );
     }
@@ -59,7 +59,7 @@ class RencontreAvailabilityService
         return max(
             1,
             (int) config(
-                'rdv.slots_per_agent_per_day',   // ← avant : 'rdv.daily_capacity'
+                'rdv.slots_per_agent_per_day',
                 self::DEFAULT_DAILY_CAPACITY
             )
         );
@@ -231,7 +231,7 @@ class RencontreAvailabilityService
             RencontreStatutEnum::DEMANDE->value,
             RencontreStatutEnum::EN_COURS->value,
             RencontreStatutEnum::ATTRIBUE->value,
-            RencontreStatutEnum::VALIDE->value,
+            RencontreStatutEnum::ACTIF->value,
             RencontreStatutEnum::REPORTE->value,
         ];
     }

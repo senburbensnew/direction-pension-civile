@@ -39,7 +39,7 @@
                                     {{-- <td class="px-6 py-4">{{ $demande->code }}</td> --}}
                                     <td class="px-6 py-4">{{ \App\Enums\TypeDemandeEnum::tryFrom((string) $demande->type)?->label() ?? $demande->type }}</td>
                                     <td class="px-6 py-4">{{ $demande->updated_at }}</td>
-                                    <td class="px-6 py-4">{{ $demande->submitted_at ?? '--' }}</td>
+                                    <td class="px-6 py-4">{{ $demande->created_at ?? '--' }}</td>
                                     <td class="px-6 py-4">{{ $demande->expires_at ?? '--' }}</td>
                                     <td class="px-6 py-4">
                                         <span class="px-2 py-1 text-sm rounded-full {{ $demande->statutBadgeClass() }}">

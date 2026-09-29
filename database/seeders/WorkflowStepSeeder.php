@@ -46,7 +46,6 @@ class WorkflowStepSeeder extends Seeder
                 'ordre'       => 20,
                 'type_noeud'  => WorkflowStepTypeEnum::INTERMEDIAIRE,
             ],
-            // Étape canonique du circuit par défaut (secrétariat)
             [
                 'code'        => 'EN_INSTRUCTION_SECRETARIAT',
                 'nom'         => 'Dispatch — Secrétariat',
@@ -103,7 +102,6 @@ class WorkflowStepSeeder extends Seeder
                 'ordre'       => 90,
                 'type_noeud'  => WorkflowStepTypeEnum::INTERMEDIAIRE,
             ],
-            // Étape canonique du circuit par défaut (décision direction)
             [
                 'code'        => 'EN_DECISION',
                 'nom'         => 'Soumis à la décision',
@@ -120,6 +118,18 @@ class WorkflowStepSeeder extends Seeder
                 'ordre'       => 100,
                 'type_noeud'  => WorkflowStepTypeEnum::INTERMEDIAIRE,
             ],
+
+            // ── Étape spécifique aux demandes de rencontre ──
+            [
+                'code'         => 'ACTIF',
+                'nom'          => 'Rendez-vous actif',
+                'description'  => 'Rendez-vous confirmé et actif, en attente de réalisation',
+                'service'      => 'service_accueil_formalites',
+                'ordre'        => 105,
+                'type_noeud'   => WorkflowStepTypeEnum::INTERMEDIAIRE,
+                'type_demande' => 'DEMANDE_RENCONTRE',
+            ],
+
             // ── Nœuds terminaux (Direction) ──
             [
                 'code'        => 'APPROUVEE',
@@ -160,8 +170,13 @@ class WorkflowStepSeeder extends Seeder
                 ? Service::where('code', $step['service'])->value('id')
                 : null;
 
+            $typeDemande = $step['type_demande'] ?? null;
+
             WorkflowStep::updateOrCreate(
-                ['code' => $step['code'], 'type_demande' => null],
+                [
+                    'code'         => $step['code'],
+                    'type_demande' => $typeDemande,
+                ],
                 [
                     'nom'         => $step['nom'],
                     'description' => $step['description'],

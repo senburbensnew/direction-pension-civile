@@ -44,9 +44,21 @@
 
         {{-- Password --}}
         <div x-data="{ show: false }">
-            <label for="password" class="block text-base font-medium text-gray-700 mb-1">
-                {{ __('messages.password') }}
-            </label>
+            <div class="flex items-center justify-between mb-1">
+                <label for="password" class="block text-base font-medium text-gray-700">
+                    {{ __('messages.password') }}
+                </label>
+
+                {{-- Mot de passe oublié --}}
+                @if (Route::has('password.request'))
+                    <a
+                        href="{{ route('password.request') }}"
+                        class="text-sm text-[#173052] hover:text-orange-500 font-medium transition-colors"
+                    >
+                        Mot de passe oublié ?
+                    </a>
+                @endif
+            </div>
 
             <div class="relative">
                 <span class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-400">
@@ -70,7 +82,10 @@
                     class="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-600 transition-colors"
                     :aria-label="show ? 'Masquer le mot de passe' : 'Afficher le mot de passe'"
                 >
-                    <i :class="show ? 'fas fa-eye-slash' : 'fas fa-eye'" class="text-sm"></i>
+                    <i
+                        :class="show ? 'fas fa-eye-slash' : 'fas fa-eye'"
+                        class="text-sm"
+                    ></i>
                 </button>
             </div>
 

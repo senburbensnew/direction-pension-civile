@@ -2,7 +2,6 @@
 
 namespace App\Models;
 
-// use Illuminate\Contracts\Auth\MustVerifyEmail;
 use App\Models\Gender;
 use App\Models\Service;
 use Illuminate\Support\Str;
@@ -41,8 +40,8 @@ class User extends Authenticatable
      */
     protected $fillable = [
         'name',
-        "firstname",
-        "lastname",
+        'firstname',
+        'lastname',
         'email',
         'username',
         'phone',
@@ -55,9 +54,9 @@ class User extends Authenticatable
         'is_active',
         'account_status',
         'gender_id',
-        "created_at",
-        "updated_at",
-        "profile_photo",
+        'created_at',
+        'updated_at',
+        'profile_photo',
     ];
 
     /**
@@ -169,7 +168,9 @@ class User extends Authenticatable
             return null;
         }
 
-        return static::query()->whereRaw(self::digitsSql('nif').' = ?', [$digits])->first();
+        return static::query()
+            ->whereRaw(self::digitsSql('nif').' = ?', [$digits])
+            ->first();
     }
 
     public static function findByPensionCode(string $code): ?self
@@ -191,14 +192,50 @@ class User extends Authenticatable
             ->first();
     }
 
+    public static function findByNinu(string $ninu): ?self
+    {
+        $digits = self::normalizeDigits($ninu);
+
+        if ($digits === '') {
+            return null;
+        }
+
+        return static::query()
+            ->whereRaw(self::digitsSql('ninu').' = ?', [$digits])
+            ->first();
+    }
+
+    public static function findByTelephone(string $phone): ?self
+    {
+        $digits = self::normalizeDigits($phone);
+
+        if ($digits === '') {
+            return null;
+        }
+
+        return static::query()
+            ->whereRaw(self::digitsSql('phone').' = ?', [$digits])
+            ->first();
+    }
+
     public static function nifExists(string $nif): bool
     {
         return self::findByNif($nif) !== null;
     }
 
+    public static function ninuExists(string $ninu): bool
+    {
+        return self::findByNinu($ninu) !== null;
+    }
+
     public static function pensionCodeExists(string $code): bool
     {
         return self::findByPensionCode($code) !== null;
+    }
+
+    public static function telephoneExists(string $phone): bool
+    {
+        return self::findByTelephone($phone) !== null;
     }
 
     private static function digitsSql(string $column): string
@@ -230,7 +267,6 @@ class User extends Authenticatable
         return $this->belongsTo(Service::class);
     }
 
-    // Gender
     public function gender()
     {
         return $this->belongsTo(Gender::class);

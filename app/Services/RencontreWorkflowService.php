@@ -21,7 +21,14 @@ class RencontreWorkflowService
         private RencontreAvailabilityService $availability,
         private RencontreVisioService $visio,
         private RencontreMotifService $motifsService,
-    ) {
+    ) {}
+
+    /**
+     * Indique si le rendez-vous est actif.
+     */
+    public function estActif(Demande $demande): bool
+    {
+        return $this->statut($demande) === RencontreStatutEnum::ACTIF;
     }
 
     /**
@@ -109,6 +116,9 @@ class RencontreWorkflowService
      * Le service responsable est déterminé à partir du motif.
      * L'agent est automatiquement sélectionné parmi les agents
      * du service responsable.
+     *
+     * Le lien de visioconférence est généré immédiatement si la
+     * modalité est « visio » (Option A).
      */
     public function enregistrerSoumission(
         Demande $demande,
@@ -136,12 +146,32 @@ class RencontreWorkflowService
             'data' => $data,
         ]);
 
+        /*
+        |--------------------------------------------------------------------------
+        | OPTION A — Génération du token visio dès la création
+        |--------------------------------------------------------------------------
+        |
+        | Le token est créé immédiatement pour que :
+        |   - le lien soit disponible dès la soumission,
+        |   - le bloc « Suivi du rendez-vous » affiche un vrai lien cliquable,
+        |   - la méthode confirmation() retourne l'URL réelle et non le repli.
+        |
+        | attachTo() est idempotent : il ne régénère pas un token existant.
+        |
+        */
+
+        $demande = $demande->fresh();
+
+        if (($data['modalite'] ?? '') === 'visio') {
+            $demande = $this->visio->attachTo($demande);
+        }
+
         $demande = $this->apply(
             $demande,
-            RencontreStatutEnum::DEMANDE,
+            RencontreStatutEnum::ACTIF,
             $user,
             'CREATED',
-            'Demande de rendez-vous enregistrée (réf. '
+            'Rendez-vous enregistré et activé automatiquement (réf. '
                 . $demande->code
                 . '). Service responsable : '
                 . $service->nom
@@ -181,26 +211,9 @@ class RencontreWorkflowService
     ): Demande {
         $this->assertOpen($demande);
 
-        $service = $this->resolveResponsibleService(
-            $demande
-        );
-
-        return $this->apply(
-            $demande,
-            RencontreStatutEnum::EN_COURS,
-            $user,
-            'EXAMINED',
-            'Examen de la demande : motif, informations et pièces jointes vérifiés par le service responsable.',
-            [
-                'examine_par' => $user->id,
-                'examine_at' => now()->toIso8601String(),
-                'service_examen' => $service->nom,
-            ],
-            [
-                'action' => 'examen',
-                'service_id' => $service->id,
-            ]
-        );
+        return $this->estActif($demande)
+            ? $demande->fresh()
+            : $this->valider($demande, $user);
     }
 
     /**
@@ -213,37 +226,9 @@ class RencontreWorkflowService
     ): Demande {
         $this->assertOpen($demande);
 
-        $data = $demande->data ?? [];
-
-        if (
-            empty($data['date_souhaitee'])
-            || empty($data['heure_souhaitee'])
-        ) {
-            throw ValidationException::withMessages([
-                'date_souhaitee' =>
-                    'Aucun créneau à attribuer. Proposez une date et une heure.',
-            ]);
-        }
-
-        return $this->apply(
-            $demande,
-            RencontreStatutEnum::ATTRIBUE,
-            $user,
-            'ATTRIBUTED',
-            $commentaire
-                ?: 'Créneau attribué automatiquement par le portail : '
-                . $data['date_souhaitee']
-                . ' à '
-                . $data['heure_souhaitee']
-                . '.',
-            [
-                'attribue_par' => $user->id,
-                'attribue_at' => now()->toIso8601String(),
-            ],
-            [
-                'action' => 'attribution',
-            ]
-        );
+        return $this->estActif($demande)
+            ? $demande->fresh()
+            : $this->valider($demande, $user);
     }
 
     /**
@@ -408,13 +393,6 @@ class RencontreWorkflowService
         */
 
         if (!$memeCreneau) {
-            /*
-             * Lorsque l'agent a été explicitement sélectionné,
-             * les vérifications ci-dessus suffisent.
-             *
-             * Sinon, le service doit posséder au moins un agent
-             * disponible.
-             */
             if (
                 !$this->availability->isBookableSlot(
                     $date,
@@ -465,26 +443,20 @@ class RencontreWorkflowService
 
         /*
         |--------------------------------------------------------------------------
-        | Statut
+        | Statut et événement
         |--------------------------------------------------------------------------
         */
 
-        $statut =
-            $report
-            || $this->statut($demande)
-                === RencontreStatutEnum::VALIDE
-                ? RencontreStatutEnum::REPORTE
-                : RencontreStatutEnum::ATTRIBUE;
+        $statut = $report
+            ? RencontreStatutEnum::REPORTE
+            : RencontreStatutEnum::ACTIF;
 
-        return $this->apply(
-            $demande,
-            $statut,
-            $user,
-            $report
-                || $statut === RencontreStatutEnum::REPORTE
-                ? 'REPORTED'
-                : 'MODIFIED',
-            'Nouveau créneau proposé : '
+        $event = $report
+            ? 'REPORTED'
+            : 'MODIFIED';
+
+        $commentaire = $report
+            ? 'Rendez-vous reporté au '
                 . $date
                 . ' à '
                 . $payload['heure_souhaitee']
@@ -492,13 +464,28 @@ class RencontreWorkflowService
                 . $agent->displayName()
                 . ' ('
                 . $service->nom
-                . ').',
+                . ').'
+            : 'Nouveau créneau proposé : '
+                . $date
+                . ' à '
+                . $payload['heure_souhaitee']
+                . ' avec '
+                . $agent->displayName()
+                . ' ('
+                . $service->nom
+                . ').';
+
+        $updated = $this->apply(
+            $demande,
+            $statut,
+            $user,
+            $event,
+            $commentaire,
             $payload,
             [
-                'action' =>
-                    $statut === RencontreStatutEnum::REPORTE
-                        ? 'report'
-                        : 'modification',
+                'action' => $report
+                    ? 'report'
+                    : 'modification',
 
                 'creneau' => $payload,
 
@@ -507,10 +494,17 @@ class RencontreWorkflowService
                 'agent_id' => $agent->id,
             ]
         );
+
+        // Garantir la présence du token visio après changement de créneau
+        if (($updated->data['modalite'] ?? '') === 'visio') {
+            $updated = $this->visio->attachTo($updated);
+        }
+
+        return $updated;
     }
 
     /**
-     * Validation définitive.
+     * Activation automatique du rendez-vous.
      */
     public function valider(
         Demande $demande,
@@ -518,72 +512,38 @@ class RencontreWorkflowService
     ): Demande {
         $this->assertOpen($demande);
 
-        $service = $this->resolveResponsibleService(
-            $demande
-        );
-
-        $statut = $this->statut($demande);
-
-        if (
-            in_array(
-                $statut,
-                [
-                    RencontreStatutEnum::DEMANDE,
-                    RencontreStatutEnum::EN_COURS,
-                ],
-                true
-            )
-        ) {
-            if (
-                $statut === RencontreStatutEnum::DEMANDE
+        if ($this->estActif($demande)) {
+            // S'assurer que le token visio existe même si le RDV
+            // a été activé par un autre chemin (ex : création directe).
+            if (($demande->data['modalite'] ?? '') === 'visio'
+                && blank($demande->visio_token)
             ) {
-                $demande = $this->examiner(
-                    $demande,
-                    $user
-                );
+                $demande = $this->visio->attachTo($demande->fresh());
             }
 
-            $demande = $this->attribuer(
-                $demande,
-                $user
-            );
+            return $demande->fresh();
         }
 
-        $demande = $this->visio->attachTo(
-            $demande->fresh()
-        );
-
-        $confirmation = $this->confirmation(
-            $demande
-        );
+        $service = $this->resolveResponsibleService($demande);
+        $demande = $this->visio->attachTo($demande->fresh());
+        $confirmation = $this->confirmation($demande);
 
         return $this->apply(
             $demande,
-            RencontreStatutEnum::VALIDE,
+            RencontreStatutEnum::ACTIF,
             $user,
-            'VALIDATED',
-            'Rendez-vous validé définitivement par le service responsable : '
-                . $service->nom
-                . '.',
+            'ACTIVATED',
+            'Rendez-vous activé automatiquement.',
             [
-                'valide_par' => $user->id,
-
-                'valide_at' =>
-                    now()->toIso8601String(),
-
+                'active_par' => $user->id,
+                'active_at' => now()->toIso8601String(),
                 'confirmation' => $confirmation,
-
-                'service_responsable' =>
-                    $service->nom,
-
-                'service_id' =>
-                    $service->id,
+                'service_responsable' => $service->nom,
+                'service_id' => $service->id,
             ],
             [
-                'action' => 'validation',
-
-                'service_id' =>
-                    $service->id,
+                'action' => 'activation',
+                'service_id' => $service->id,
             ]
         );
     }
@@ -597,6 +557,8 @@ class RencontreWorkflowService
         RencontreStatutEnum $statut,
         ?string $commentaire = null
     ): Demande {
+        $this->assertOpen($demande);
+
         if (
             !in_array(
                 $statut,
@@ -710,26 +672,58 @@ class RencontreWorkflowService
         User $user,
         ?string $motif = null
     ): Demande {
+        $this->assertOpen($demande);
+
+        $data = $demande->data ?? [];
+        $demandeurId = (int) $demande->created_by;
+        $agentId = (int) ($data['agent_id'] ?? 0);
+
+        $isDemandeur = (int) $user->id === $demandeurId;
+        $isAgentRdv = $agentId > 0 && (int) $user->id === $agentId;
+        $isAdmin = $user->hasAnyRole(['admin', 'direction']);
+
+        abort_unless(
+            $isDemandeur || $isAgentRdv || $isAdmin,
+            403,
+            'Seul le demandeur, l’agent RDV affecté ou un administrateur peut annuler ce rendez-vous.'
+        );
+
+        // Motif obligatoire pour un agent RDV ou un administrateur
+        if (($isAgentRdv || $isAdmin) && blank($motif)) {
+            throw ValidationException::withMessages([
+                'motif' => 'Le motif d’annulation est obligatoire.',
+            ]);
+        }
+
+        $acteur = match (true) {
+            $isAgentRdv => 'agent_rdv',
+            $isAdmin => 'administrateur',
+            default => 'demandeur',
+        };
+
+        $motif = filled($motif) ? trim((string) $motif) : null;
+
         return $this->apply(
             $demande,
             RencontreStatutEnum::ANNULE,
             $user,
             'CANCELED',
-            'Rendez-vous annulé.'
-                . (
-                    $motif
-                        ? ' Motif : ' . $motif
-                        : ''
-                ),
+            match ($acteur) {
+                'agent_rdv' => 'Rendez-vous annulé par l’agent RDV. Motif : ' . $motif,
+                'administrateur' => 'Rendez-vous annulé par un administrateur. Motif : ' . $motif,
+                default => 'Rendez-vous annulé par le demandeur.'
+                    . ($motif ? ' Motif : ' . $motif : ''),
+            },
             [
-                'annule_par' =>
-                    $user->id,
-
-                'annule_at' =>
-                    now()->toIso8601String(),
+                'annule_par' => $user->id,
+                'annule_par_type' => $acteur,
+                'annule_at' => now()->toIso8601String(),
+                'motif_annulation' => $motif,
             ],
             [
                 'action' => 'annulation',
+                'acteur' => $acteur,
+                'motif_obligatoire' => $isAgentRdv || $isAdmin,
             ]
         );
     }
@@ -826,15 +820,16 @@ class RencontreWorkflowService
 
             'ATTRIBUTED' => 'Attribution',
 
-            'VALIDATED',
+            'ACTIVATED',
             'APPROVED' => 'Validation',
 
             'MODIFIED' => 'Modification',
 
             'REPORTED' => 'Report',
 
-            'CANCELED',
-            'REJECTED' => 'Annulation',
+            'CANCELED' => 'Annulation',
+
+            'REJECTED' => 'Refus',
 
             'CLOSED' => 'Clôture',
 
@@ -873,7 +868,7 @@ class RencontreWorkflowService
      * Priorité :
      *
      * 1. current_service_id
-     * 2. motif
+     * 2. motif (clé technique motif_key, puis libellé motif)
      *
      * Aucun service n'est imposé en dur.
      */
@@ -889,9 +884,6 @@ class RencontreWorkflowService
         |--------------------------------------------------------------------------
         | Service déjà affecté
         |--------------------------------------------------------------------------
-        |
-        | Une réorientation administrative explicite doit être conservée.
-        |
         */
 
         if ($demande->service) {
@@ -904,7 +896,10 @@ class RencontreWorkflowService
         |--------------------------------------------------------------------------
         */
 
-        $motif = $demande->data['motif'] ?? null;
+        $motif =
+            $demande->data['motif_key']
+            ?? $demande->data['motif']
+            ?? null;
 
         if (!$motif) {
             throw ValidationException::withMessages([

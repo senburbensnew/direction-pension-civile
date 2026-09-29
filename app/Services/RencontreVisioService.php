@@ -131,7 +131,7 @@ class RencontreVisioService
 
         return $start?->copy()->subMinutes(
             (int) config(
-                'rencontre.visio.activate_minutes_before',
+                'rdv.visio.activate_minutes_before',
                 15
             )
         );
@@ -147,12 +147,12 @@ class RencontreVisioService
         }
 
         $slot = (int) config(
-            'rencontre.slot_minutes',
+            'rdv.slot_minutes',
             15
         );
 
         $after = (int) config(
-            'rencontre.visio.keep_open_minutes_after',
+            'rdv.visio.keep_open_minutes_after',
             15
         );
 
@@ -213,7 +213,7 @@ class RencontreVisioService
 
         $domain = rtrim(
             (string) config(
-                'rencontre.visio.jitsi_domain',
+                'rdv.visio.jitsi_domain',
                 'meet.jit.si'
             ),
             '/'

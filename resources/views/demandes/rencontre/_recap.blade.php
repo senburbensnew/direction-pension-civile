@@ -34,14 +34,6 @@
             <dt class="text-sm font-medium text-gray-500">Service responsable</dt>
             <dd class="sm:col-span-2 text-base text-gray-800" x-text="serviceLabel()"></dd>
         </div>
-        <div class="grid grid-cols-1 sm:grid-cols-3 gap-1 px-4 py-3 bg-gray-50">
-            <dt class="text-sm font-medium text-gray-500">Identité</dt>
-            <dd class="sm:col-span-2 text-base text-gray-800">
-                <span x-text="(prenom + ' ' + nom).trim()"></span>
-                <span class="block text-sm text-gray-500" x-text="'Pension / matricule : ' + numeroPension"></span>
-                <span class="block text-sm text-gray-500" x-text="telephone + ' · ' + email"></span>
-            </dd>
-        </div>
         <div class="grid grid-cols-1 sm:grid-cols-3 gap-1 px-4 py-3">
             <dt class="text-sm font-medium text-gray-500">Documents à préparer</dt>
             <dd class="sm:col-span-2">

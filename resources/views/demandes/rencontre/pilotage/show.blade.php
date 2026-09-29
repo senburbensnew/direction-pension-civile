@@ -65,7 +65,7 @@
             @endif
         </section>
 
-        @if($rdvStatut === \App\Enums\RencontreStatutEnum::VALIDE && !empty($confirmation))
+        @if($rdvStatut === \App\Enums\RencontreStatutEnum::ACTIF && !empty($confirmation))
             @include('demandes.rencontre._confirmation', ['confirmation' => $confirmation])
         @endif
 
@@ -113,7 +113,7 @@
                             @endforeach
                         </select>
                         <label class="inline-flex items-center gap-2 text-sm text-gray-600">
-                            <input type="checkbox" name="report" value="1" @checked($rdvStatut === \App\Enums\RencontreStatutEnum::VALIDE)>
+                            <input type="checkbox" name="report" value="1" @checked($rdvStatut === \App\Enums\RencontreStatutEnum::ACTIF)>
                             Marquer comme reporté
                         </label>
                     </div>
@@ -138,7 +138,7 @@
             </section>
         @endif
 
-        @if($canAct && $rdvStatut === \App\Enums\RencontreStatutEnum::VALIDE)
+        @if($canAct && $rdvStatut === \App\Enums\RencontreStatutEnum::ACTIF)
             <section class="bg-white border border-gray-200 rounded-2xl p-6">
                 <h3 class="text-base font-bold text-gray-800 mb-3">Clôturer le rendez-vous</h3>
                 <form method="POST" action="{{ route('rencontres.pilotage.clore', $demande) }}" class="flex flex-wrap items-end gap-3">

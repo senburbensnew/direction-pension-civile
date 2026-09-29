@@ -40,13 +40,11 @@
         {{-- Carte header principale --}}
         <div class="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden">
 
-            {{-- Bande colorée supérieure --}}
             <div class="h-1 w-full bg-gradient-to-r from-blue-600 via-indigo-500 to-purple-500"></div>
 
             <div class="px-6 py-5">
                 <div class="flex flex-wrap justify-between items-start gap-4">
 
-                    {{-- Identité du dossier --}}
                     <div class="flex items-start gap-4">
                         <div class="w-12 h-12 rounded-xl bg-blue-50 border border-blue-100 flex items-center justify-center flex-shrink-0">
                             <svg class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -74,7 +72,6 @@
                         </div>
                     </div>
 
-                    {{-- Toolbar d'actions --}}
                     <div class="flex flex-wrap items-center gap-2">
 
                         @if($from === 'cart')
@@ -249,7 +246,7 @@
         </div>
     </div>
 
-    {{-- ══════════════ SECTION DÉDIÉE — TRAITEMENT RDV ══════════════ --}}
+    {{-- ══════════════ SECTION DÉDIÉE — TRAITEMENT RDV (agent) ══════════════ --}}
     @if($rdvAgentMode ?? false)
         <div class="max-w-7xl mx-auto mt-5 sm:px-6 lg:px-8">
             <div class="bg-white rounded-2xl border-2 border-gray-200 shadow-sm overflow-hidden">
@@ -315,10 +312,6 @@
                                 @endif
                             </dd>
                         </div>
-                        <!-- <div>
-                            <dt class="text-gray-500">Agent demandé</dt>
-                            <dd class="font-medium text-gray-800">{{ $rdv['agent_nom'] ?? '—' }}</dd>
-                        </div> -->
                         <div>
                             <dt class="text-gray-500">Motif</dt>
                             <dd class="font-medium text-gray-800">{{ $rdv['objet'] ?? $rdv['motif'] ?? '—' }}</dd>
@@ -334,7 +327,6 @@
                     @if(! ($isClosed ?? false) && $rdvPending)
 
                         @if($rdvPassed)
-                            {{-- ══════ RDV PASSÉ : uniquement bouton Annuler ══════ --}}
                             <div class="border-t border-gray-100 pt-5 space-y-3">
                                 <div class="flex items-start gap-2 bg-amber-50 border border-amber-300 rounded-xl px-3 py-2">
                                     <svg class="w-4 h-4 text-amber-500 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -368,11 +360,9 @@
                             </div>
 
                         @else
-                            {{-- ══════ RDV À VENIR : Valider / Refuser normaux ══════ --}}
                             <div class="border-t border-gray-100 pt-5 flex flex-wrap items-center gap-3">
                                 @if(!empty($canValidateRencontre))
 
-                                    {{-- Valider --}}
                                     <form method="POST" action="{{ route('demandes.rencontre.accepter', $request) }}"
                                           onsubmit="return confirm('Valider définitivement ce rendez-vous ?');">
                                         @csrf
@@ -386,7 +376,6 @@
                                         </button>
                                     </form>
 
-                                    {{-- Refuser --}}
                                     <form method="POST" action="{{ route('demandes.rencontre.refuser', $request) }}"
                                           onsubmit="return confirm('Confirmer le refus de cette demande ? Cette action est définitive.');"
                                           class="flex flex-wrap items-center gap-2">
@@ -424,6 +413,172 @@
         </div>
     @endif
     {{-- ═══════════════════════════════════════════════════════════════════════════════ --}}
+
+    {{-- ═══════════════════════════════════════════════════════════════════════════════
+         SUIVI DU RENDEZ-VOUS — PLEINE LARGEUR (comme le bloc History)
+    ════════════════════════════════════════════════════════════════════════════════ --}}
+    @if($request->isRencontre() && !($rdvAgentMode ?? false))
+        @php
+            $rdv        = $request->data ?? [];
+            $rdvStatut  = $request->rencontreStatut();
+            $isPhysique = ($rdv['modalite'] ?? '') === 'physique';
+
+            $rdvDateRaw  = $rdv['date_souhaitee']  ?? null;
+            $rdvHeureRaw = $rdv['heure_souhaitee'] ?? null;
+
+            $rdvDateDisplay = null;
+            if (!empty($rdvDateRaw)) {
+                try {
+                    $rdvDateDisplay = \Carbon\Carbon::parse($rdvDateRaw)
+                        ->locale('fr')
+                        ->translatedFormat('l d F Y');
+                } catch (\Throwable $e) {
+                    $rdvDateDisplay = null;
+                }
+            }
+
+            $rdvHeureDisplay = !empty($rdvHeureRaw)
+                ? \App\Models\Demande::normalizeRencontreTime($rdvHeureRaw)
+                : null;
+
+            $rdvMotif = $rdv['objet'] ?? $rdv['motif'] ?? '—';
+        @endphp
+
+        <div class="max-w-7xl mx-auto mt-5 sm:px-6 lg:px-8">
+            <div class="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
+
+                {{-- En-tête --}}
+                <div class="px-6 py-4 border-b border-gray-100 flex items-start gap-4">
+                    <div class="w-11 h-11 rounded-xl bg-gradient-to-br from-blue-50 to-indigo-50 border border-blue-100 flex items-center justify-center flex-shrink-0">
+                        <svg class="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8"
+                                  d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                        </svg>
+                    </div>
+                    <div class="flex-1 min-w-0">
+                        <h3 class="text-base font-bold text-gray-900">Suivi du rendez-vous</h3>
+                        <p class="text-xs text-gray-500 mt-0.5">Ce rendez-vous est traité par le service des Formalités</p>
+                    </div>
+                    <span class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold {{ $rdvStatut->badgeClass() }} self-center">
+                        <span class="w-1.5 h-1.5 rounded-full bg-current opacity-70"></span>
+                        {{ $rdvStatut->label() }}
+                    </span>
+                </div>
+
+                {{-- Bandeau date / heure mis en avant --}}
+                @if($rdvDateDisplay)
+                    <div class="px-6 py-5 bg-gradient-to-r from-blue-50/80 via-indigo-50/60 to-blue-50/40 border-b border-blue-100/60">
+                        <div class="flex items-center gap-4">
+                            <div class="w-12 h-12 rounded-xl bg-white border border-blue-100 flex items-center justify-center flex-shrink-0 shadow-sm">
+                                <svg class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8"
+                                          d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                                </svg>
+                            </div>
+                            <div class="min-w-0">
+                                <p class="text-[10px] font-bold text-blue-700 uppercase tracking-widest">Date et heure</p>
+                                <p class="text-base font-bold text-gray-900 mt-0.5 capitalize leading-tight">
+                                    {{ $rdvDateDisplay }}
+                                </p>
+                                @if($rdvHeureDisplay)
+                                    <p class="text-sm font-semibold text-blue-700 mt-0.5">
+                                        à {{ $rdvHeureDisplay }}
+                                    </p>
+                                @endif
+                            </div>
+                        </div>
+                    </div>
+                @endif
+
+                {{-- Détails en grille 3 colonnes (pleine largeur) --}}
+                <dl class="px-6 py-5 grid grid-cols-1 md:grid-cols-3 gap-5">
+
+                    {{-- Mode --}}
+                    <div class="flex items-start gap-3">
+                        <div class="w-9 h-9 rounded-lg bg-gray-50 border border-gray-100 flex items-center justify-center flex-shrink-0 mt-0.5">
+                            @if($isPhysique)
+                                <svg class="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8"
+                                          d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/>
+                                </svg>
+                            @else
+                                <svg class="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8"
+                                          d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"/>
+                                </svg>
+                            @endif
+                        </div>
+                        <div class="min-w-0 flex-1">
+                            <dt class="text-xs text-gray-500">Mode</dt>
+                            <dd class="text-sm font-medium text-gray-800 mt-0.5">
+                                {{ $isPhysique ? 'Présentiel' : 'Visioconférence' }}
+                            </dd>
+                        </div>
+                    </div>
+
+                    {{-- Lieu / Lien --}}
+                    <div class="flex items-start gap-3">
+                        <div class="w-9 h-9 rounded-lg bg-gray-50 border border-gray-100 flex items-center justify-center flex-shrink-0 mt-0.5">
+                            <svg class="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8"
+                                      d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/>
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8"
+                                      d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/>
+                            </svg>
+                        </div>
+                        <div class="min-w-0 flex-1">
+                            <dt class="text-xs text-gray-500">{{ $isPhysique ? 'Lieu' : 'Lien de connexion' }}</dt>
+                            <dd class="text-sm font-medium text-gray-800 mt-0.5 break-words">
+                                @if($isPhysique)
+                                    {{ $rdv['lieu_rdv'] ?? '—' }}
+                                @else
+                                    @if(!empty($request->visio_token))
+                                        <a href="{{ route('demandes.rencontre.visio', $request->visio_token) }}"
+                                           class="inline-flex items-center gap-1 text-blue-600 hover:text-blue-700 hover:underline">
+                                            Rejoindre la visioconférence
+                                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                      d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/>
+                                            </svg>
+                                        </a>
+                                        <p class="text-xs text-gray-400 mt-0.5">Lien actif 15 min avant le RDV</p>
+                                    @else
+                                        <span class="text-xs text-gray-400 italic">Lien sécurisé généré à la validation</span>
+                                    @endif
+                                @endif
+                            </dd>
+                        </div>
+                    </div>
+
+                    {{-- Motif --}}
+                    <div class="flex items-start gap-3">
+                        <div class="w-9 h-9 rounded-lg bg-gray-50 border border-gray-100 flex items-center justify-center flex-shrink-0 mt-0.5">
+                            <svg class="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8"
+                                      d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                            </svg>
+                        </div>
+                        <div class="min-w-0 flex-1">
+                            <dt class="text-xs text-gray-500">Motif</dt>
+                            <dd class="text-sm font-medium text-gray-800 mt-0.5">
+                                {{ $rdvMotif }}
+                            </dd>
+                        </div>
+                    </div>
+                </dl>
+
+                {{-- Confirmation --}}
+                @if(!empty($rdv['confirmation']))
+                    <div class="px-6 pb-6 pt-2 border-t border-gray-100">
+                        @include('demandes.rencontre._confirmation', [
+                            'confirmation' => $rdv['confirmation'],
+                            'cardClass'    => 'rounded-xl border-0 shadow-none p-0',
+                        ])
+                    </div>
+                @endif
+            </div>
+        </div>
+    @endif
 
     {{-- ══════════════ LAYOUT DEUX COLONNES ══════════════ --}}
     <div class="max-w-7xl mx-auto mt-5 pb-5 mb-5 sm:px-6 lg:px-8">
@@ -570,8 +725,6 @@
 
                     @if(!empty($canValidateRencontre) && $rdvPending)
                         <div class="flex flex-wrap items-center gap-3 border-t border-gray-100 pt-4">
-
-                            {{-- Valider --}}
                             <form method="POST" action="{{ route('demandes.rencontre.accepter', $request) }}"
                                   onsubmit="return confirm('Valider définitivement ce rendez-vous ?');">
                                 @csrf
@@ -580,8 +733,6 @@
                                     Valider le rendez-vous
                                 </button>
                             </form>
-
-                            {{-- Refuser --}}
                             <form method="POST" action="{{ route('demandes.rencontre.refuser', $request) }}"
                                   onsubmit="return confirm('Confirmer le refus de cette demande ? Cette action est définitive.');"
                                   class="flex flex-wrap items-center gap-2">
@@ -594,11 +745,9 @@
                                     Refuser
                                 </button>
                             </form>
-
                             @error('commentaire')
                                 <p class="text-red-600 text-xs w-full">{{ $message }}</p>
                             @enderror
-
                         </div>
                     @endif
                 </div>
@@ -636,7 +785,6 @@
                             @endif
                         @endif
                     </div>
-
                     <p class="text-sm text-blue-700">
                         {{ __('messages.file_currently_at') }}
                         <span class="font-semibold">{{ $request->service?->nom ?? $request->currentStep?->service?->nom ?? '—' }}</span>
@@ -646,7 +794,6 @@
                             <span class="text-[10px] font-mono text-blue-400">({{ $request->currentStep->code }})</span>
                         @endif
                     </p>
-
                     @if($request->workflows->isNotEmpty())
                         <div class="mt-3">
                             <p class="text-xs text-blue-600 font-medium mb-2 uppercase tracking-wide">Parcours effectué</p>
@@ -670,7 +817,6 @@
                             </div>
                         </div>
                     @endif
-
                     @if($from === 'cart' && !($isClosed ?? false) && !($pendingWorkflow ?? null))
                         <div class="mt-3 pt-3 border-t border-blue-200/70">
                             <p class="text-xs text-blue-600 font-medium mb-2 uppercase tracking-wide">Suites possibles (circuit)</p>
@@ -694,60 +840,6 @@
             </div>
         </div>
     @endif
-
-    @if($request->isRencontre() && !($rdvAgentMode ?? false))
-        @php
-            $rdv = $request->data ?? [];
-            $rdvStatut = $request->rencontreStatut();
-            $isPhysique = ($rdv['modalite'] ?? '') === 'physique';
-        @endphp
-        <div class="bg-white rounded-2xl border border-gray-200 shadow-sm p-5 space-y-4">
-                <div>
-                    <h3 class="text-sm font-bold text-gray-800">Suivi du rendez-vous — Formalités</h3>
-                    <p class="text-xs text-gray-500 mt-1">Ce rendez-vous est traité par le service des Formalités.</p>
-                </div>
-                <dl class="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
-                    <div>
-                        <dt class="text-gray-500">Statut</dt>
-                        <dd><span class="inline-flex px-2 py-0.5 rounded-full text-xs font-semibold {{ $rdvStatut->badgeClass() }}">{{ $rdvStatut->label() }}</span></dd>
-                    </div>
-                    <div>
-                        <dt class="text-gray-500">Mode</dt>
-                        <dd class="font-medium text-gray-800">{{ $isPhysique ? 'Présentiel' : 'Visioconférence' }}</dd>
-                    </div>
-                    <div>
-                        <dt class="text-gray-500">Date et heure</dt>
-                        <dd class="font-medium text-gray-800">
-                            {{ !empty($rdv['date_souhaitee']) ? \Carbon\Carbon::parse($rdv['date_souhaitee'])->format('d/m/Y') : '—' }}
-                            @if(!empty($rdv['heure_souhaitee'])) à {{ $rdv['heure_souhaitee'] }}@endif
-                        </dd>
-                    </div>
-                    <div>
-                        <dt class="text-gray-500">{{ $isPhysique ? 'Lieu' : 'Lien' }}</dt>
-                        <dd class="font-medium text-gray-800 break-all">
-                            @if($isPhysique)
-                                {{ $rdv['lieu_rdv'] ?? '—' }}
-                            @else
-                                Lien sécurisé — actif 15 minutes avant le rendez-vous
-                            @endif
-                        </dd>
-                    </div>
-                    <div>
-                        <dt class="text-gray-500">Agent Formalités</dt>
-                        <dd class="font-medium text-gray-800">{{ $rdv['agent_nom'] ?? '—' }}</dd>
-                    </div>
-                    <div>
-                        <dt class="text-gray-500">Motif</dt>
-                        <dd class="font-medium text-gray-800">{{ $rdv['objet'] ?? $rdv['motif'] ?? '—' }}</dd>
-                    </div>
-                </dl>
-                @if(!empty($rdv['confirmation']))
-                    <div class="pt-2 border-t border-gray-100">
-                        @include('demandes.rencontre._confirmation', ['confirmation' => $rdv['confirmation'], 'cardClass' => 'rounded-xl border-0 shadow-none p-0'])
-                    </div>
-                @endif
-            </div>
-        @endif
 
     {{-- ====================== PROVENANCE (Direction) ====================== --}}
     @if($from === 'cart' && !($rdvAgentMode ?? false))
@@ -935,7 +1027,6 @@
         $messages = $messages ?? collect();
     @endphp
 
-    {{-- Panneau "Demander un complément" — masqué pour rdvAgentMode / isAgentRdvOnly --}}
     @unless(($rdvAgentMode ?? false) || ($isAgentRdvOnly ?? false))
         @if($from === 'cart' && !$request->isRencontre() && (!isset($isClosed) || !$isClosed) && (!isset($pendingWorkflow) || !$pendingWorkflow) && (!isset($pendingAffectation) || !$pendingAffectation) && $request->currentStep?->code !== 'COMPLEMENT_REQUIS')
             @hasanyrole('secretariat|direction|service_liquidation|service_accueil_formalites|service_controle_placement|service_comptabilite|service_assurance|administration|admin')
@@ -984,7 +1075,6 @@
         @endif
     @endunless
 
-    {{-- User alert + response form (dashboard view, COMPLEMENT_REQUIS) --}}
     @if($from === 'dashboard' && $request->needsComplement())
         <div class="bg-orange-50 border-2 border-orange-300 rounded-2xl overflow-hidden">
             <div class="bg-orange-400 px-4 py-2.5 flex items-center gap-2">
@@ -1054,7 +1144,6 @@
         </div>
     @endif
 
-    {{-- Message thread --}}
     @if($messages->isNotEmpty() && !($rdvAgentMode ?? false))
         <div class="bg-white border border-gray-200 rounded-2xl shadow-sm overflow-hidden" x-data="{ open: false }">
             <button type="button" @click="open = !open"
@@ -1118,7 +1207,7 @@
         </div>
     @endif
 
-    {{-- ── Affectations pour avis (sidebar) — masqué en mode rdvAgent ── --}}
+    {{-- ── Affectations pour avis (sidebar) ── --}}
     @unless(($isAgentRdvOnly ?? false) || ($rdvAgentMode ?? false))
         @if($from === 'cart')
             <div class="bg-white border border-indigo-200 rounded-2xl overflow-hidden">
@@ -1360,13 +1449,13 @@
             </div>{{-- end sidebar --}}
 
             {{-- ─── COLONNE GAUCHE (visuellement) : données du dossier ─── --}}
-            <div class="lg:col-span-4 lg:order-1 min-w-0">
+            <div class="lg:col-span-4 lg:order-1 min-w-0 space-y-5">
 
     @switch($request->type)
         @case('DEMANDE_VIREMENT_BANCAIRE')
             <div>
                 <div>
-                    <div class="bg-white rounded-2xl border border-gray-200 shadow-sm mb-4">
+                    <div class="bg-white rounded-2xl border border-gray-200 shadow-sm">
                         <div class="p-6">
                             <div class="space-y-5">
                                 <div class="space-y-5">
@@ -1441,7 +1530,7 @@
         @case('DEMANDE_ATTESTATION')
             <div>
                 <div>
-                    <div class="bg-white rounded-2xl border border-gray-200 shadow-sm mb-4">
+                    <div class="bg-white rounded-2xl border border-gray-200 shadow-sm">
                         <div class="p-6">
                             <div class="space-y-5">
                                 <div class="space-y-5">
@@ -1479,7 +1568,7 @@
         @case('DEMANDE_TRANSFERT_CHEQUE')
             <div>
                 <div>
-                    <div class="bg-white rounded-2xl border border-gray-200 shadow-sm mb-4">
+                    <div class="bg-white rounded-2xl border border-gray-200 shadow-sm">
                         <div class="p-6">
                             <div class="space-y-5">
                                 <div class="space-y-5">
@@ -1554,7 +1643,7 @@
         @case('DEMANDE_ARRET_PAIEMENT')
             <div>
                 <div>
-                    <div class="bg-white rounded-2xl border border-gray-200 shadow-sm mb-4">
+                    <div class="bg-white rounded-2xl border border-gray-200 shadow-sm">
                         <div class="p-6">
                             <div class="space-y-5">
                                 <div class="space-y-5">
@@ -1613,7 +1702,7 @@
         @case('DEMANDE_REINSERTION')
             <div>
                 <div>
-                    <div class="bg-white rounded-2xl border border-gray-200 shadow-sm mb-4">
+                    <div class="bg-white rounded-2xl border border-gray-200 shadow-sm">
                         <div class="p-6">
                             <div class="space-y-5">
                                 <div class="space-y-5">
@@ -1654,7 +1743,7 @@
         @case('DEMANDE_ARRET_VIREMENT')
             <div>
                 <div>
-                    <div class="bg-white rounded-2xl border border-gray-200 shadow-sm mb-4">
+                    <div class="bg-white rounded-2xl border border-gray-200 shadow-sm">
                         <div class="p-6">
                             <div class="space-y-5">
                                 <div class="space-y-5">
@@ -1720,7 +1809,7 @@
             </div>
             @break
         @case('DEMANDE_PREUVE_EXISTENCE')
-            <div class="bg-white rounded-2xl border border-gray-200 shadow-sm mb-4">
+            <div class="bg-white rounded-2xl border border-gray-200 shadow-sm">
                 <div class="p-6 space-y-8">
                     <div class="p-4 rounded-lg {{ App\Models\WorkflowStep::getStatusStyle($request->currentStep?->code) }}">
                         <div class="flex justify-between items-center">
@@ -1821,7 +1910,7 @@
         @case('DEMANDE_ETAT_CARRIERE')
             <div>
                 <div>
-                    <div class="bg-white rounded-2xl border border-gray-200 shadow-sm mb-4">
+                    <div class="bg-white rounded-2xl border border-gray-200 shadow-sm">
                         <div class="p-6">
                             <div class="space-y-5">
                                 <div class="space-y-5">
@@ -1908,7 +1997,7 @@
         @case('DEMANDE_ADHESION')
             <div>
                 <div>
-                    <div class="bg-white rounded-2xl border border-gray-200 shadow-sm mb-4">
+                    <div class="bg-white rounded-2xl border border-gray-200 shadow-sm">
                         <div class="p-6">
                             <div class="space-y-5">
                                 <div class="space-y-5">
@@ -1993,7 +2082,7 @@
         @case('DEMANDE_PENSION')
             <div>
                 <div>
-                    <div class="bg-white rounded-2xl border border-gray-200 shadow-sm mb-4">
+                    <div class="bg-white rounded-2xl border border-gray-200 shadow-sm">
                         <div class="p-6">
                             <div class="space-y-5">
                                 <div class="space-y-5">
@@ -2063,7 +2152,7 @@
         @case('DEMANDE_PENSION_REVERSION')
             <div>
                 <div>
-                    <div class="bg-white rounded-2xl border border-gray-200 shadow-sm mb-4">
+                    <div class="bg-white rounded-2xl border border-gray-200 shadow-sm">
                         <div class="p-6">
                             <div class="space-y-5">
                                 <div class="space-y-5">
@@ -2149,7 +2238,7 @@
                 ];
                 $compteType = $request->data['user_type'] ?? '';
             @endphp
-            <div class="bg-white rounded-2xl border border-gray-200 shadow-sm mb-4">
+            <div class="bg-white rounded-2xl border border-gray-200 shadow-sm">
                 <div class="p-6 space-y-5">
                     <div class="p-4 bg-gray-50 rounded-lg">
                         <h3 class="text-lg font-semibold mb-3 text-gray-700">Demande de création de compte</h3>
@@ -2208,7 +2297,7 @@
                 $sitFam = \App\Http\Controllers\DemandeMiseAJourController::SITUATIONS_MATRIMONIALES[$d['situation_matrimoniale'] ?? ''] ?? ($d['situation_matrimoniale'] ?? '—');
                 $sitPen = \App\Http\Controllers\DemandeMiseAJourController::SITUATIONS_PENSION[$d['situation_pension'] ?? ''] ?? ($d['situation_pension'] ?? '—');
             @endphp
-            <div class="bg-white rounded-2xl border border-gray-200 shadow-sm mb-4">
+            <div class="bg-white rounded-2xl border border-gray-200 shadow-sm">
                 <div class="p-6 space-y-6">
                     <h3 class="text-lg font-semibold text-gray-800">Questionnaire de mise à jour</h3>
                     <dl class="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
@@ -2244,7 +2333,7 @@
     @endphp
 
     @if($supplementalDocs->isNotEmpty() || $canAddDocs)
-        <div class="bg-white rounded-2xl border border-gray-200 shadow-sm mb-4 overflow-hidden">
+        <div class="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
             <div class="px-6 py-5">
                 <div class="flex items-center justify-between mb-4">
                     <h3 class="text-xl font-semibold text-gray-800">Documents supplémentaires</h3>
@@ -2320,7 +2409,7 @@
 
     {{-- ====================== JOURNAL D'ACTIVITÉ ====================== --}}
     @if($from === 'cart' && isset($activityLogs) && $activityLogs->isNotEmpty() && !($rdvAgentMode ?? false))
-        <div class="bg-white rounded-2xl border border-gray-200 shadow-sm mb-4" x-data="{ open: false }">
+        <div class="bg-white rounded-2xl border border-gray-200 shadow-sm" x-data="{ open: false }">
             <div class="px-6">
                 <button type="button" @click="open = !open" class="w-full flex items-center justify-between py-4">
                     <h3 class="text-base font-semibold text-gray-800">{{ __('messages.activity_log') }}</h3>
@@ -2441,49 +2530,54 @@
 
             </div>{{-- end right column --}}
         </div>{{-- end grid --}}
-            <!-- Request History -->
-    <div class="bg-white rounded-2xl border border-gray-200 shadow-sm mb-4" x-data="{ open: {{ $request->isRencontre() ? 'true' : 'false' }} }">
-        <div class="px-6">
-            <button type="button" @click="open = !open" class="w-full flex items-center justify-between py-4">
-                <h3 class="text-base font-semibold text-gray-800">{{ __('messages.history_label') }}</h3>
-                <svg class="w-4 h-4 text-gray-400 transition-transform duration-200" :class="open ? 'rotate-180' : ''" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
-                </svg>
-            </button>
-            <div x-show="open" x-transition>
-                <div class="rounded-xl border border-gray-100 mb-4">
-                    @forelse ($requestHistories as $history)
-                        <div class="p-4 border-b border-gray-100 last:border-b-0">
-                            <div class="flex justify-between items-start">
-                                <div class="flex-1">
-                                    <div class="flex items-center gap-3 mb-1">
-                                        <span class="text-sm font-medium text-gray-700">
-                                            @if($request->isRencontre())
-                                                {{ \App\Enums\RencontreStatutEnum::tryFrom((string) $history->statut)?->label() ?? $history->statut }}
-                                            @else
-                                                {{ $history->statut }}
-                                            @endif
-                                        </span>
-                                        <span class="text-xs text-gray-400">{{ $history->created_at->format('d/m/Y à H:i') }}</span>
+    </div>{{-- end layout --}}
+
+    {{-- ══════════════════════════════════════════════════════════════════════════════
+         HISTORIQUE DE LA DEMANDE — PLEINE LARGEUR
+    ═══════════════════════════════════════════════════════════════════════════════ --}}
+    <div class="max-w-7xl mx-auto pb-5 sm:px-6 lg:px-8">
+        <div class="bg-white rounded-2xl border border-gray-200 shadow-sm" x-data="{ open: {{ $request->isRencontre() ? 'true' : 'false' }} }">
+            <div class="px-6">
+                <button type="button" @click="open = !open" class="w-full flex items-center justify-between py-4">
+                    <h3 class="text-base font-semibold text-gray-800">{{ __('messages.history_label') }}</h3>
+                    <svg class="w-4 h-4 text-gray-400 transition-transform duration-200" :class="open ? 'rotate-180' : ''" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+                    </svg>
+                </button>
+                <div x-show="open" x-transition>
+                    <div class="rounded-xl border border-gray-100 mb-4">
+                        @forelse ($requestHistories as $history)
+                            <div class="p-4 border-b border-gray-100 last:border-b-0">
+                                <div class="flex justify-between items-start">
+                                    <div class="flex-1">
+                                        <div class="flex items-center gap-3 mb-1">
+                                            <span class="text-sm font-medium text-gray-700">
+                                                @if($request->isRencontre())
+                                                    {{ \App\Enums\RencontreStatutEnum::tryFrom((string) $history->statut)?->label() ?? $history->statut }}
+                                                @else
+                                                    {{ $history->statut }}
+                                                @endif
+                                            </span>
+                                            <span class="text-xs text-gray-400">{{ $history->created_at->format('d/m/Y à H:i') }}</span>
+                                        </div>
+                                        @if($history->commentaire)
+                                            <p class="text-sm text-gray-600 italic">{{ $history->commentaire }}</p>
+                                        @endif
                                     </div>
-                                    @if($history->commentaire)
-                                        <p class="text-sm text-gray-600 italic">{{ $history->commentaire }}</p>
-                                    @endif
-                                </div>
-                                <div class="text-right flex-shrink-0">
-                                    <p class="text-xs text-gray-500">
-                                        @if ($history->creator()) Par {{ $history->creator()->name }} @else Système @endif
-                                    </p>
+                                    <div class="text-right flex-shrink-0">
+                                        <p class="text-xs text-gray-500">
+                                            @if ($history->creator()) Par {{ $history->creator()->name }} @else Système @endif
+                                        </p>
+                                    </div>
                                 </div>
                             </div>
-                        </div>
-                    @empty
-                        <div class="p-4 text-center text-gray-400 text-sm">{{ __('messages.no_history') }}</div>
-                    @endforelse
+                        @empty
+                            <div class="p-4 text-center text-gray-400 text-sm">{{ __('messages.no_history') }}</div>
+                        @endforelse
+                    </div>
+                    <div class="pb-4">{{ $requestHistories->links() }}</div>
                 </div>
-                <div class="pb-4">{{ $requestHistories->links() }}</div>
             </div>
         </div>
     </div>
-    </div>{{-- end layout --}}
 </x-app-layout>

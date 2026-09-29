@@ -30,25 +30,12 @@
                    class="{{ $fieldClass('nom') }}" autocomplete="family-name">
             @error('nom')<p class="mt-1 text-base text-red-600">{{ $message }}</p>@enderror
         </div>
-        <div>
-            <label for="numero_pension" class="block text-base font-medium text-gray-700">Numéro de pension / matricule <span class="text-red-500">*</span></label>
-            <input type="text" id="numero_pension" name="numero_pension" x-model="numeroPension"
-                   value="{{ $identite['numero_pension'] ?? '' }}"
-                   class="{{ $fieldClass('numero_pension') }}">
-            @error('numero_pension')<p class="mt-1 text-base text-red-600">{{ $message }}</p>@enderror
-        </div>
-        <div>
+        <div class="md:col-span-2">
             <label for="telephone" class="block text-base font-medium text-gray-700">Téléphone <span class="text-red-500">*</span></label>
             <input type="tel" id="telephone" name="telephone" x-model="telephone"
                    value="{{ $identite['telephone'] ?? '' }}" placeholder="+509XXXXXXXX"
                    class="{{ $fieldClass('telephone') }}" autocomplete="tel">
             @error('telephone')<p class="mt-1 text-base text-red-600">{{ $message }}</p>@enderror
-        </div>
-        <div class="md:col-span-2">
-            <label for="email" class="block text-base font-medium text-gray-700">Courriel <span class="text-red-500">*</span></label>
-            <input type="email" id="email" name="email" x-model="email" value="{{ $identite['email'] ?? '' }}"
-                   class="{{ $fieldClass('email') }}" autocomplete="email">
-            @error('email')<p class="mt-1 text-base text-red-600">{{ $message }}</p>@enderror
         </div>
     </div>
 

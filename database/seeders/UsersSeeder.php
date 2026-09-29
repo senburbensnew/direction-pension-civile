@@ -19,7 +19,7 @@ class UsersSeeder extends Seeder
                 'email' => 'pensionne@example.com',
                 'username' => 'pensionne',
                 'phone' => '+50938123456',
-                'pension_code' => 'PEN-100001',
+                'pension_code' => '8-10000',
             ],
             'fonctionnaire' => [
                 'name' => 'Fonctionnaire Test',

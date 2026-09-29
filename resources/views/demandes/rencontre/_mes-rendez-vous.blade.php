@@ -49,7 +49,7 @@
                         <p class="text-xs mt-1">
                             <span class="px-2 py-0.5 rounded-full font-medium {{ $rdvStatut->badgeClass() }}">{{ $status }}</span>
                         </p>
-                        @if($rdvStatut === \App\Enums\RencontreStatutEnum::VALIDE && !empty($data['confirmation']))
+                        @if($rdvStatut === \App\Enums\RencontreStatutEnum::ACTIF && !empty($data['confirmation']))
                             <p class="text-xs text-gray-500 mt-2">
                                 Confirmé — {{ $data['confirmation']['service'] ?? 'Formalités' }}
                                 @if(!empty($data['confirmation']['lieu']))

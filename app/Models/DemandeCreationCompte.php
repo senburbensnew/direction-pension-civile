@@ -158,9 +158,18 @@ class DemandeCreationCompte extends Model implements HasMedia
         return $full !== '' ? $full : ($this->name ?: $this->nif ?: 'Demandeur');
     }
 
+    /**
+     * Vérifie qu'une valeur en attente n'est pas déjà utilisée par une
+     * autre demande dont le statut est « en_attente ».
+     *
+     * On compare sur les chiffres uniquement, pour ignorer les tirets,
+     * espaces, points et indicatifs éventuels.
+     */
     public static function pendingDigitsMatch(string $column, string $digits): bool
     {
-        if ($digits === '' || ! in_array($column, ['nif', 'pension_code'], true)) {
+        $allowed = ['nif', 'ninu', 'pension_code', 'telephone'];
+
+        if ($digits === '' || ! in_array($column, $allowed, true)) {
             return false;
         }
 
@@ -171,6 +180,17 @@ class DemandeCreationCompte extends Model implements HasMedia
                 [$digits]
             )
             ->exists();
+    }
+
+    public static function pendingTelephoneExists(string $telephone): bool
+    {
+        $digits = User::normalizeDigits($telephone);
+
+        if ($digits === '') {
+            return false;
+        }
+
+        return static::pendingDigitsMatch('telephone', $digits);
     }
 
     public function statusLabel(): string

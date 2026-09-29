@@ -144,7 +144,7 @@ class DemandeRencontreController extends Controller
                     RencontreStatutEnum::DEMANDE->value,
                     RencontreStatutEnum::EN_COURS->value,
                     RencontreStatutEnum::ATTRIBUE->value,
-                    RencontreStatutEnum::VALIDE->value,
+                    RencontreStatutEnum::ACTIF->value,
                     RencontreStatutEnum::REPORTE->value,
                 ]
             )
@@ -154,17 +154,17 @@ class DemandeRencontreController extends Controller
 
     private function identityDefaults(?User $user): array
     {
-        if (!$user) {
+        if (! $user) {
             return [];
         }
 
         $nom = $user->lastname ?? '';
 
-        if (!$nom) {
+        if (! $nom) {
             $nom = $user->name ?? '';
         }
 
-        if (!$nom) {
+        if (! $nom) {
             $nom = trim(
                 ($user->firstname ?? '')
                 . ' '
@@ -179,16 +179,8 @@ class DemandeRencontreController extends Controller
 
             'nom' => $nom,
 
-            'numero_pension' => $user->numero_pension
-                ?? $user->numero_pensionne
-                ?? $user->pension_code
-                ?? '',
-
             'telephone' => $user->telephone
                 ?? $user->phone
-                ?? '',
-
-            'email' => $user->email
                 ?? '',
         ];
     }
@@ -238,17 +230,20 @@ class DemandeRencontreController extends Controller
                 'nullable',
                 new Telephone(),
             ],
+
             'message' => [
                 'nullable',
                 'string',
                 'max:5000',
             ],
+
             'carte_pension' => [
                 'required',
                 'file',
                 'mimes:pdf,jpg,jpeg,png',
                 'max:5120',
             ],
+
             'confirmation_lu_accepte' => [
                 'required',
                 'accepted',
@@ -295,12 +290,17 @@ class DemandeRencontreController extends Controller
             ]);
         }
 
+        $cartePensionPath = $request
+            ->file('carte_pension')
+            ->store('rencontres/carte_pension', 'public');
+
         $demande = DB::transaction(
             function () use (
                 $validated,
                 $user,
                 $service,
-                $agent
+                $agent,
+                $cartePensionPath
             ) {
                 if (
                     !$this->availability->isBookingAgent(
@@ -362,13 +362,19 @@ class DemandeRencontreController extends Controller
                         ),
 
                     'telephone' =>
-                        $validated['telephone'] ?? null,
+                        $validated['telephone']
+                        ?? $user->telephone
+                        ?? $user->phone
+                        ?? null,
 
                     'message' =>
                         $validated['message'] ?? null,
 
                     'lieu_rdv' =>
                         $validated['lieu_rdv'] ?? null,
+
+                    'carte_pension_path' =>
+                        $cartePensionPath,
 
                     'service_id' =>
                         $service->id,
@@ -521,11 +527,7 @@ class DemandeRencontreController extends Controller
         $user = $request->user();
 
         abort_unless(
-            $user
-            && (
-                (int) $demande->created_by === (int) $user->id
-                || $this->canValidate($user)
-            ),
+            $this->visio->canAccess($user, $demande),
             403
         );
 
@@ -534,21 +536,23 @@ class DemandeRencontreController extends Controller
         return view(
             'demandes.rencontre.visio',
             [
-                'demande' => $demande,
+                'demande'  => $demande,
 
-                'status' =>
-                    $this->rdvWorkflow->statut($demande),
+                'status'   => $this->visio->status($demande),
 
-                'date' =>
-                    $data['date_souhaitee'] ?? null,
+                'date'     => $data['date_souhaitee']  ?? null,
 
-                'heure' =>
-                    Demande::normalizeRencontreTime(
-                        $data['heure_souhaitee'] ?? null
-                    ),
+                'heure'    => Demande::normalizeRencontreTime(
+                    $data['heure_souhaitee'] ?? null
+                ),
 
-                'embedUrl' =>
-                    $this->visio->embedUrl($demande),
+                'startsAt' => $this->visio->startsAt($demande),
+
+                'opensAt'  => $this->visio->opensAt($demande),
+
+                'closesAt' => $this->visio->closesAt($demande),
+
+                'embedUrl' => $this->visio->embedUrl($demande),
             ]
         );
     }
@@ -709,11 +713,42 @@ class DemandeRencontreController extends Controller
             return true;
         }
 
-        return $this->canValidate($user)
-            || $user->hasAnyRole([
+        if (
+            $user->hasAnyRole([
                 'admin',
                 'direction',
-            ]);
+            ])
+        ) {
+            return true;
+        }
+
+        if (
+            $user->hasRole(
+                $this->availability->agentRole()
+            )
+        ) {
+            if (
+                (int) ($demande->data['agent_id'] ?? 0)
+                === (int) $user->id
+            ) {
+                return true;
+            }
+
+            try {
+                $service = $this->responsibleServiceForDemande(
+                    $demande
+                );
+
+                return $this->availability->isBookingAgent(
+                    $user,
+                    $service
+                );
+            } catch (\Exception $e) {
+                return false;
+            }
+        }
+
+        return false;
     }
 
     private function canValidate(?User $user): bool
@@ -744,6 +779,8 @@ class DemandeRencontreController extends Controller
             $request->user()
         );
 
+        $this->assertNotTerminal($demande);
+
         $this->rdvWorkflow->examiner(
             $demande,
             $request->user()
@@ -769,6 +806,8 @@ class DemandeRencontreController extends Controller
             $demande,
             $request->user()
         );
+
+        $this->assertNotTerminal($demande);
 
         $validated = $request->validate([
             'commentaire' => [
@@ -804,6 +843,8 @@ class DemandeRencontreController extends Controller
             $demande,
             $request->user()
         );
+
+        $this->assertNotTerminal($demande);
 
         $validated = $request->validate([
             'date_souhaitee' => [
@@ -872,7 +913,12 @@ class DemandeRencontreController extends Controller
         $this->rdvWorkflow->proposerCreneau(
             $demande,
             $request->user(),
-            $validated,
+            [
+                'date_souhaitee' => $validated['date_souhaitee'],
+                'heure_souhaitee' => $validated['heure_souhaitee'],
+                'agent_id' => $validated['agent_id'] ?? null,
+                'lieu_rdv' => $validated['lieu_rdv'] ?? null,
+            ],
             (bool) ($validated['report'] ?? false)
         );
 
@@ -896,6 +942,8 @@ class DemandeRencontreController extends Controller
             $demande,
             $request->user()
         );
+
+        $this->assertNotTerminal($demande);
 
         $this->rdvWorkflow->valider(
             $demande,
@@ -922,6 +970,8 @@ class DemandeRencontreController extends Controller
             $demande,
             $request->user()
         );
+
+        $this->assertNotTerminal($demande);
 
         $validated = $request->validate([
             'commentaire' => [
@@ -950,7 +1000,6 @@ class DemandeRencontreController extends Controller
             ]
         );
 
-        // Garde-fou : vérifier que le statut a bien été appliqué
         $demande->refresh();
 
         if ($this->rdvWorkflow->statut($demande) !== RencontreStatutEnum::REFUSE) {
@@ -981,6 +1030,8 @@ class DemandeRencontreController extends Controller
             $demande,
             $request->user()
         );
+
+        $this->assertNotTerminal($demande);
 
         $validated = $request->validate([
             'statut' => [
@@ -1026,6 +1077,8 @@ class DemandeRencontreController extends Controller
             $demande,
             $request->user()
         );
+
+        $this->assertNotTerminal($demande);
 
         $validated = $request->validate([
             'service_id' => [
@@ -1175,6 +1228,8 @@ class DemandeRencontreController extends Controller
             $request->user()
         );
 
+        $this->assertNotTerminal($demande);
+
         $this->rdvWorkflow->apply(
             $demande,
             $this->rdvWorkflow->statut($demande),
@@ -1240,7 +1295,8 @@ class DemandeRencontreController extends Controller
         }
 
         $motif =
-            $demande->data['motif']
+            $demande->data['motif_key']
+            ?? $demande->data['motif']
             ?? null;
 
         if (!$motif) {
@@ -1306,6 +1362,18 @@ class DemandeRencontreController extends Controller
                 403
             );
         }
+    }
+
+    /**
+     * Vérifie que le rendez-vous n'est pas déjà terminal.
+     */
+    private function assertNotTerminal(Demande $demande): void
+    {
+        abort_if(
+            $this->rdvWorkflow->statut($demande)->isTerminal(),
+            422,
+            'Ce rendez-vous est déjà clos.'
+        );
     }
 
     private function reminderData(): array
