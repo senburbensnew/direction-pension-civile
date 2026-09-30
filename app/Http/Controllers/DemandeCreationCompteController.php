@@ -21,6 +21,9 @@ use Illuminate\Validation\Rules\Password;
 use Illuminate\Validation\ValidationException;
 use Spatie\Permission\Models\Role;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Response;
 
 class DemandeCreationCompteController extends Controller
 {
@@ -230,160 +233,196 @@ class DemandeCreationCompteController extends Controller
 
     public function store(Request $request)
     {
-
         Log::info('Demande store payload', [
-            'request' => $request->all(),
+            'request' => $request->except(['password']),
             'files'   => $request->allFiles(),
-        ]);        
-
-        /* ── Validation : si erreur, on renvoie du JSON en AJAX ── */
+        ]);
+    
+        /* ── Validation ── */
         try {
             $validated = $this->validateDemande($request, requireTerms: true);
         } catch (ValidationException $e) {
             if ($request->expectsJson()) {
                 return response()->json([
                     'message' => 'Certains champs sont invalides.',
-                    'errors' => $e->errors(),
+                    'errors'  => $e->errors(),
                 ], 422);
             }
             throw $e;
         }
-
-        $isMineur = $request->boolean('is_mineur');
-
+    
+        /* ============================================================
+         * LAYER 1 — Idempotency key (refresh / retry / double-submit)
+         * ============================================================ */
+        $idempotencyKey = $request->input('idempotency_key');
+    
+        if (filled($idempotencyKey)) {
+            $existing = DemandeCreationCompte::where('idempotency_key', $idempotencyKey)->first();
+    
+            if ($existing) {
+                return $this->redirectToRdv($request, $existing, 'idempotency_hit');
+            }
+        }
+    
+        /* ============================================================
+         * LAYER 2 — Field dedup (same person, new session, same data)
+         * ============================================================ */
+        $existing = $this->findExistingDemande($validated);
+    
+        if ($existing) {
+            if (filled($idempotencyKey) && blank($existing->idempotency_key)) {
+                $existing->update(['idempotency_key' => $idempotencyKey]);
+            }
+    
+            return $this->redirectToRdv($request, $existing, 'field_duplicate');
+        }
+    
+        $isMineur     = $request->boolean('is_mineur');
         $ocrDocuments = $this->resolveOcrDocuments($request, $isMineur, $validated);
-
-        $ocrFields = $this->flattenOcrFields($ocrDocuments);
-
-        $mismatches = $this->hasOcrError($ocrDocuments) ? ['ocr'] : [];
-
+        $ocrFields    = $this->flattenOcrFields($ocrDocuments);
+        $mismatches   = $this->hasOcrError($ocrDocuments) ? ['ocr'] : [];
+    
         $declaredType = $isMineur
             ? ($validated['piece_identite_representant_type'] ?? null)
             : ($validated['piece_identite_type'] ?? null);
-
-        $demande = DB::transaction(function () use (
-            $request,
-            $validated,
-            $isMineur,
-            $declaredType,
-            $ocrFields,
-            $ocrDocuments,
-            $mismatches
-        ) {
-            $user = $this->createProvisionalUser($validated, $ocrFields);
-
-            $firstname = $ocrFields['prenom'] ?? null;
-            $lastname = $ocrFields['nom'] ?? null;
-
-            $name = trim(implode(' ', array_filter([$firstname, $lastname])));
-
-            $payload = collect($validated)
-                ->except([
-                    'password',
-                    'accept_terms',
-                    'piece_identite',
-                    'acte_naissance',
-                    'piece_identite_representant',
-                    'ocr_documents_json',
-                ])
-                ->all();
-
-            $payload['ocr_fields'] = $ocrFields;
-            $payload['ocr_documents'] = $ocrDocuments;
-            $payload['username'] = $user->username;
-            $payload['name'] = $name !== '' ? $name : $user->name;
-
-            $payload['files'] = [
-                'piece_identite' => $request->file('piece_identite')?->getClientOriginalName(),
-                'acte_naissance' => $request->file('acte_naissance')?->getClientOriginalName(),
-                'piece_identite_representant' => $request->file('piece_identite_representant')?->getClientOriginalName(),
-            ];
-
-            $pensionCode = filled($validated['pension_code'] ?? null)
-                ? trim((string) $validated['pension_code'])
-                : null;
-
-            $demande = DemandeCreationCompte::create([
-                'code' => CodeGeneratorService::generateUniqueRequestCode(
-                    'DEMANDE_CREATION_COMPTE',
-                    (new DemandeCreationCompte())->getTable()
-                ),
-
-                'user_type' => $validated['user_type'] ?? UserTypeEnum::PENSIONNE->value,
-
-                'email' => filled($validated['email'] ?? null)
-                    ? mb_strtolower(trim($validated['email']))
-                    : null,
-
-                'username' => $user->username,
-
-                'name' => $name !== '' ? $name : $user->name,
-
-                'nif' => filled($validated['nif'] ?? null) ? $validated['nif'] : null,
-
-                'ninu' => filled($validated['ninu'] ?? null) ? trim($validated['ninu']) : null,
-
-                'pension_code' => $pensionCode,
-
-                'firstname' => $firstname,
-                'lastname' => $lastname,
-
-                'telephone' => $validated['telephone'],
-                'adresse' => $validated['adresse'],
-
-                'is_mineur' => $isMineur,
-
-                'representant_lien' => $isMineur
-                    ? ($validated['representant_lien'] ?? null)
-                    : null,
-
-                'piece_identite_representant_type' => $isMineur
-                    ? ($validated['piece_identite_representant_type'] ?? null)
-                    : null,
-
-                'pieces_identite' => $declaredType ? [$declaredType] : [],
-
-                'ocr_fields' => $ocrFields,
-                'ocr_documents' => $ocrDocuments,
-                'verification_mismatches' => $mismatches,
-                'submitted_payload' => $payload,
-
-                'accepted_terms_at' => now(),
-
-                'status' => DemandeCreationCompte::STATUS_EN_ATTENTE,
-
-                'user_id' => $user->id,
-            ]);
-
-            $this->attachIdentityDocuments($request, $demande, $isMineur, $declaredType);
-
-            $demande = $demande->fresh();
-
-            $demande->recordHistory(
-                DemandeCreationCompteHistory::EVENT_SOUMISE,
-                "Demande de création de compte soumise ({$demande->code}).",
-                $user,
-                DemandeCreationCompte::STATUS_EN_ATTENTE,
-                [
+    
+        /* ============================================================
+         * LAYER 3 — Create + race recovery
+         * ============================================================ */
+        try {
+            $demande = DB::transaction(function () use (
+                $request, $validated, $isMineur, $declaredType,
+                $ocrFields, $ocrDocuments, $mismatches, $idempotencyKey
+            ) {
+                $user = $this->createProvisionalUser($validated, $ocrFields);
+    
+                $firstname = $ocrFields['prenom'] ?? null;
+                $lastname  = $ocrFields['nom'] ?? null;
+                $name      = trim(implode(' ', array_filter([$firstname, $lastname])));
+    
+                $payload = collect($validated)
+                    ->except([
+                        'password',
+                        'accept_terms',
+                        'piece_identite',
+                        'acte_naissance',
+                        'piece_identite_representant',
+                        'ocr_documents_json',
+                        'idempotency_key',
+                    ])
+                    ->all();
+    
+                $payload['ocr_fields']    = $ocrFields;
+                $payload['ocr_documents'] = $ocrDocuments;
+                $payload['username']      = $user->username;
+                $payload['name']          = $name !== '' ? $name : $user->name;
+    
+                $payload['files'] = [
+                    'piece_identite'              => $request->file('piece_identite')?->getClientOriginalName(),
+                    'acte_naissance'              => $request->file('acte_naissance')?->getClientOriginalName(),
+                    'piece_identite_representant' => $request->file('piece_identite_representant')?->getClientOriginalName(),
+                ];
+    
+                $pensionCode = filled($validated['pension_code'] ?? null)
+                    ? trim((string) $validated['pension_code'])
+                    : null;
+    
+                $demande = DemandeCreationCompte::create([
+                    'code' => CodeGeneratorService::generateUniqueRequestCode(
+                        'DEMANDE_CREATION_COMPTE',
+                        (new DemandeCreationCompte())->getTable()
+                    ),
+    
+                    'idempotency_key' => $idempotencyKey,
+    
+                    'user_type' => $validated['user_type'] ?? UserTypeEnum::PENSIONNE->value,
+    
+                    'email' => filled($validated['email'] ?? null)
+                        ? mb_strtolower(trim($validated['email']))
+                        : null,
+    
                     'username' => $user->username,
-                    'email' => $user->email,
-                ]
-            );
-
-            $demande->recordHistory(
-                DemandeCreationCompteHistory::EVENT_COMPTE_CREE,
-                'Compte provisoire créé : accès limité à la prise de rendez-vous.',
-                $user,
-                DemandeCreationCompte::STATUS_EN_ATTENTE,
-                [
-                    'user_id' => $user->id,
-                    'account_status' => User::STATUS_EN_ATTENTE_VALIDATION,
-                ]
-            );
-
-            return $demande;
-        });
-
+                    'name'     => $name !== '' ? $name : $user->name,
+    
+                    'nif'  => filled($validated['nif'] ?? null)  ? $validated['nif'] : null,
+                    'ninu' => filled($validated['ninu'] ?? null) ? trim($validated['ninu']) : null,
+    
+                    'pension_code' => $pensionCode,
+    
+                    'firstname' => $firstname,
+                    'lastname'  => $lastname,
+    
+                    'telephone' => $validated['telephone'],
+                    'adresse'   => $validated['adresse'],
+    
+                    'is_mineur' => $isMineur,
+    
+                    'representant_lien' => $isMineur
+                        ? ($validated['representant_lien'] ?? null)
+                        : null,
+    
+                    'piece_identite_representant_type' => $isMineur
+                        ? ($validated['piece_identite_representant_type'] ?? null)
+                        : null,
+    
+                    'pieces_identite' => $declaredType ? [$declaredType] : [],
+    
+                    'ocr_fields'              => $ocrFields,
+                    'ocr_documents'           => $ocrDocuments,
+                    'verification_mismatches' => $mismatches,
+                    'submitted_payload'       => $payload,
+    
+                    'accepted_terms_at' => now(),
+                    'status'            => DemandeCreationCompte::STATUS_EN_ATTENTE,
+                    'user_id'           => $user->id,
+                ]);
+    
+                $this->attachIdentityDocuments($request, $demande, $isMineur, $declaredType);
+    
+                $demande = $demande->fresh();
+    
+                $demande->recordHistory(
+                    DemandeCreationCompteHistory::EVENT_SOUMISE,
+                    "Demande de création de compte soumise ({$demande->code}).",
+                    $user,
+                    DemandeCreationCompte::STATUS_EN_ATTENTE,
+                    [
+                        'username' => $user->username,
+                        'email'    => $user->email,
+                    ]
+                );
+    
+                $demande->recordHistory(
+                    DemandeCreationCompteHistory::EVENT_COMPTE_CREE,
+                    'Compte provisoire créé : accès limité à la prise de rendez-vous.',
+                    $user,
+                    DemandeCreationCompte::STATUS_EN_ATTENTE,
+                    [
+                        'user_id'        => $user->id,
+                        'account_status' => User::STATUS_EN_ATTENTE_VALIDATION,
+                    ]
+                );
+    
+                return $demande;
+            });
+        } catch (\Illuminate\Database\UniqueConstraintViolationException $e) {
+            /* Race: another request won. Find its row. */
+            $demande = null;
+    
+            if (filled($idempotencyKey)) {
+                $demande = DemandeCreationCompte::where('idempotency_key', $idempotencyKey)->first();
+            }
+    
+            $demande ??= $this->findExistingDemande($validated);
+    
+            if (! $demande) {
+                throw $e;
+            }
+    
+            return $this->redirectToRdv($request, $demande, 'race_recovered');
+        }
+    
+        /* ── Notify ONLY on genuine first creation ── */
         if (
             filled($demande->email) &&
             filter_var($demande->email, FILTER_VALIDATE_EMAIL) &&
@@ -391,20 +430,68 @@ class DemandeCreationCompteController extends Controller
         ) {
             $demande->user->notify(new DemandeCreationCompteSoumise($demande));
         }
+    
+        return $this->redirectToRdv($request, $demande, 'created');
+    }
 
-        Auth::login($demande->user);
+    /**
+     * Look for an existing "live" demande matching identifying fields.
+     * Strongest identifiers first.
+     */
+    private function findExistingDemande(array $validated): ?DemandeCreationCompte
+    {
+        $candidates = array_filter([
+            'nif'          => $validated['nif']          ?? null,
+            'ninu'         => $validated['ninu']         ?? null,
+            'pension_code' => $validated['pension_code'] ?? null,
+            'telephone'    => $validated['telephone']    ?? null,
+            'email'        => $validated['email']        ?? null,
+        ], fn ($v) => filled($v));
 
-        $redirectUrl = route('demandes.rencontre.create');
-
-        /* ── Succès en AJAX : on renvoie l'URL de redirection ── */
-        if ($request->expectsJson()) {
-            return response()->json([
-                'ok' => true,
-                'redirect_url' => $redirectUrl,
-            ], 201);
+        if ($candidates === []) {
+            return null;
         }
 
-        return redirect()->to($redirectUrl);
+        return DemandeCreationCompte::query()
+            ->where(function ($q) use ($candidates) {
+                foreach ($candidates as $field => $value) {
+                    $q->orWhere($field, $value);
+                }
+            })
+            ->whereNotIn('status', [
+                // DemandeCreationCompte::STATUS_REJETEE,
+                // DemandeCreationCompte::STATUS_ANNULEE,
+            ])
+            ->latest('id')
+            ->first();
+    }
+
+    /**
+     * Single exit point for the RDV redirect — used for both first create
+     * and every duplicate path. Always 200 for AJAX.
+     */    
+    private function redirectToRdv(
+        Request $request,
+        DemandeCreationCompte $demande,
+        string $reason
+    ): Response|RedirectResponse|JsonResponse {
+        if (! Auth::check() && $demande->user) {
+            Auth::login($demande->user);
+        }
+    
+        $url = route('demandes.rencontre.create');
+    
+        if ($request->expectsJson()) {
+            return response()->json([
+                'ok'             => true,
+                'already_exists' => $reason !== 'created',
+                'reason'         => $reason,
+                'demande_id'     => $demande->id,
+                'redirect_url'   => $url,
+            ], 200);
+        }
+    
+        return redirect()->to($url);
     }
 
     private function resolveOcrDocuments(
@@ -562,6 +649,7 @@ class DemandeCreationCompteController extends Controller
         $fileRule = 'required|file|mimes:jpg,jpeg,png,webp,pdf|max:5120';
 
         $rules = [
+            'idempotency_key' => ['nullable', 'string', 'max:64'], 
             'user_type' => 'required|in:pensionne',
 
             'nif' => [

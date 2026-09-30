@@ -31,9 +31,6 @@ class DemandeRencontreController extends Controller
     ) {
     }
 
-    /**
-     * Documents à préparer.
-     */
     public const DOCUMENTS_A_PREPARER = [
         'physique' => [
             'Carte de pension (photo jointe au dossier)',
@@ -519,6 +516,7 @@ class DemandeRencontreController extends Controller
         string $token
     ) {
         $demande = Demande::query()
+            ->with('currentStep')                    // 👈 AJOUT
             ->where('visio_token', $token)
             ->where(
                 'type',
@@ -554,19 +552,15 @@ class DemandeRencontreController extends Controller
 
                 'closesAt' => $this->visio->closesAt($demande),
 
-                'embedUrl' => $this->visio->embedUrl($demande),
+                'embedUrl' => $this->visio->embedUrl($demande, $user), // 👈 $user
             ]
         );
     }
 
     /*
     |--------------------------------------------------------------------------
-    | FORMALITÉ — page dédiée
+    | FORMALITÉ
     |--------------------------------------------------------------------------
-    |
-    | Enregistre la formalité dans la table `formalites` (indépendante du RDV).
-    | Le champ `demande_id` de la formalité référence le RDV qui l'a déclenchée.
-    |
     */
 
     public function formalite(
@@ -574,25 +568,25 @@ class DemandeRencontreController extends Controller
         Demande $demande
     ) {
         $this->assertFormaliteAccessible($demande, $request->user());
-    
+
         $demande->load(['user', 'service']);
-    
+
         $data  = $demande->data ?? [];
         $owner = $demande->user ?? User::find($demande->created_by);
-    
+
         $formalites = Formalite::query()
             ->where('user_id', $owner?->id)
             ->with(['agent', 'demande', 'anneeFiscale'])
             ->orderByDesc('realisee_at')
             ->get();
-    
+
         $anneesDispo = AnneeFiscale::ordered();
         $anneeActive = AnneeFiscale::active();
-    
+
         $formaliteAnneeEnCours = $anneeActive
             ? $formalites->firstWhere('annee_fiscale_id', $anneeActive->id)
             : null;
-    
+
         return view('demandes.rencontre.formalite', [
             'demande'               => $demande,
             'rdvStatut'             => $this->rdvWorkflow->statut($demande),
@@ -610,7 +604,7 @@ class DemandeRencontreController extends Controller
         Demande $demande
     ) {
         $this->assertFormaliteAccessible($demande, $request->user());
-    
+
         $validated = $request->validate([
             'annee_fiscale_id' => [
                 'required',
@@ -623,14 +617,14 @@ class DemandeRencontreController extends Controller
                 'max:2000',
             ],
         ]);
-    
+
         $owner   = $demande->user ?? User::find($demande->created_by);
         $service = $demande->service;
-    
+
         $anneeFiscale = AnneeFiscale::findOrFail($validated['annee_fiscale_id']);
-    
+
         $existante = Formalite::forYear($owner->id, $anneeFiscale->id);
-    
+
         if ($existante) {
             throw ValidationException::withMessages([
                 'annee_fiscale_id' =>
@@ -638,7 +632,7 @@ class DemandeRencontreController extends Controller
                     . $anneeFiscale->code . '.',
             ]);
         }
-    
+
         $formalite = DB::transaction(function () use (
             $demande,
             $owner,
@@ -657,7 +651,7 @@ class DemandeRencontreController extends Controller
                 'service_id'       => $service?->id,
                 'commentaire'      => $validated['commentaire'] ?? null,
             ]);
-    
+
             DemandeHistory::create([
                 'demande_id'  => $demande->id,
                 'event'       => 'FORMALITE_ENREGISTREE',
@@ -675,10 +669,10 @@ class DemandeRencontreController extends Controller
                     'annee_fiscale_code' => $anneeFiscale->code,
                 ],
             ]);
-    
+
             return $formalite;
         });
-    
+
         return redirect()
             ->route('demandes.rencontre.formalite', $demande)
             ->with(
@@ -953,6 +947,12 @@ class DemandeRencontreController extends Controller
             $validated['commentaire'] ?? null
         );
 
+        // 👇 AJOUT : générer le token visio à l'attribution
+        $demande->refresh();
+        if (($demande->data['modalite'] ?? null) === 'visio') {
+            $this->visio->attachTo($demande);
+        }
+
         return back()->with(
             'success',
             'Le créneau a été attribué.'
@@ -1079,6 +1079,12 @@ class DemandeRencontreController extends Controller
             $demande,
             $request->user()
         );
+
+        // 👇 AJOUT : générer le token visio à la validation
+        $demande->refresh();
+        if (($demande->data['modalite'] ?? null) === 'visio') {
+            $this->visio->attachTo($demande);
+        }
 
         return back()->with(
             'success',
@@ -1494,9 +1500,6 @@ class DemandeRencontreController extends Controller
         }
     }
 
-    /**
-     * Vérifie que le rendez-vous n'est pas déjà terminal.
-     */
     private function assertNotTerminal(Demande $demande): void
     {
         abort_if(
@@ -1506,14 +1509,6 @@ class DemandeRencontreController extends Controller
         );
     }
 
-    /**
-     * Vérifie que la page de formalité est accessible :
-     *  - dossier de type rencontre
-     *  - RDV réalisé
-     *  - motif cohérent (formalité)
-     *  - pensionné non provisoire
-     *  - agent autorisé (RDV / admin / direction)
-     */
     private function assertFormaliteAccessible(
         Demande $demande,
         ?User $user

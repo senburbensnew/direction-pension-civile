@@ -34,6 +34,7 @@ class DemandeCreationCompte extends Model implements HasMedia
 
     protected $fillable = [
         'code',
+        'idempotency_key', 
         'user_type',
         'firstname',
         'lastname',

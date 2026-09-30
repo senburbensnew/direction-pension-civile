@@ -68,13 +68,9 @@ class RencontreVisioService
             return false;
         }
 
-        if (
-            in_array(
-                $demande->currentStep?->code,
-                ['REJETEE', 'ANNULEE'],
-                true
-            )
-        ) {
+        // ✅ Plus robuste : s'appuie sur rencontreStatut() qui
+        // retombe sur data['rdv_statut'] puis sur le workflow.
+        if ($demande->rencontreStatut()->isTerminal()) {
             return false;
         }
 
@@ -203,7 +199,8 @@ class RencontreVisioService
     }
 
     public function embedUrl(
-        Demande $demande
+        Demande $demande,
+        ?User $user = null
     ): ?string {
         $token = $demande->visio_token;
 
@@ -213,18 +210,59 @@ class RencontreVisioService
 
         $domain = rtrim(
             (string) config(
-                'rdv.visio.jitsi_domain',
-                'meet.jit.si'
+                'rdv.visio.domain',
+                'kmeet.infomaniak.com'
             ),
             '/'
         );
 
-        $room = 'dpc-' . substr(
-            $token,
-            0,
+        $prefix = (string) config(
+            'rdv.visio.room_prefix',
+            'dpc'
+        );
+
+        $length = (int) config(
+            'rdv.visio.room_hash_length',
             32
         );
 
-        return 'https://' . $domain . '/' . $room;
+        $room = $prefix . '-' . substr($token, 0, $length);
+
+        $params = [
+            'config.prejoinPageEnabled' =>
+                config('rdv.visio.prejoin') ? 'true' : 'false',
+
+            'config.startWithAudioMuted' =>
+                config('rdv.visio.start_audio_muted') ? 'true' : 'false',
+
+            'config.startWithVideoMuted' =>
+                config('rdv.visio.start_video_muted') ? 'true' : 'false',
+
+            'config.disableDeepLinking' => 'true',
+            'config.disableProfile'     => 'true',
+
+            'interfaceConfig.SHOW_JITSI_WATERMARK'    => 'false',
+            'interfaceConfig.SHOW_BRANDING_WATERMARK' => 'false',
+        ];
+
+        if (config('rdv.visio.prefill_user_info') && $user) {
+            $displayName =
+                $user->displayName()
+                ?? $user->name
+                ?? null;
+
+            if ($displayName) {
+                $params['userInfo.displayName'] =
+                    '"' . addslashes($displayName) . '"';
+            }
+
+            if (! empty($user->email)) {
+                $params['userInfo.email'] =
+                    '"' . addslashes($user->email) . '"';
+            }
+        }
+
+        return 'https://' . $domain . '/' . $room
+            . '#' . http_build_query($params, '', '&');
     }
 }

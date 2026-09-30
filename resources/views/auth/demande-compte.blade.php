@@ -510,6 +510,12 @@
                 name="ocr_documents_json"
                 :value="JSON.stringify(ocrDocuments)"
             >
+            {{-- Idempotency key --}}
+            <input
+                type="hidden"
+                name="idempotency_key"
+                :value="idempotencyKey"
+            >
 
             {{-- ========================================================
                  ÉTAPE 1
@@ -521,10 +527,6 @@
                 class="space-y-5"
             >
                 <div class="flex items-start gap-3 border-b border-gray-200 pb-3">
-                    <span class="flex items-center justify-center w-9 h-9 rounded-full bg-[#173052] text-white text-sm font-bold shrink-0">
-                        1
-                    </span>
-
                     <div>
                         <h3 class="text-base font-bold text-gray-800">
                             Téléversement des documents
@@ -903,10 +905,6 @@
                 class="space-y-5"
             >
                 <div class="flex items-start gap-3 border-b border-gray-200 pb-3">
-                    <span class="flex items-center justify-center w-9 h-9 rounded-full bg-[#173052] text-white text-sm font-bold shrink-0">
-                        2
-                    </span>
-
                     <div>
                         <h3 class="text-base font-bold text-gray-800">
                             Lecture et vérification OCR
@@ -1052,10 +1050,6 @@
                 class="space-y-5"
             >
                 <div class="flex items-start gap-3 border-b border-gray-200 pb-3">
-                    <span class="flex items-center justify-center w-9 h-9 rounded-full bg-[#173052] text-white text-sm font-bold shrink-0">
-                        3
-                    </span>
-
                     <div>
                         <h3 class="text-base font-bold text-gray-800">
                             Informations du compte
@@ -1406,10 +1400,6 @@
                 class="space-y-5"
             >
                 <div class="flex items-start gap-3 border-b border-gray-200 pb-3">
-                    <span class="flex items-center justify-center w-9 h-9 rounded-full bg-[#173052] text-white text-sm font-bold shrink-0">
-                        4
-                    </span>
-
                     <div>
                         <h3 class="text-base font-bold text-gray-800">
                             Récapitulatif et validation
@@ -1890,6 +1880,18 @@
 
                 busy: false,
                 busyLabel: '',
+                idempotencyKey: (() => {
+                    const STORE = 'demande_compte_idem';
+                    let k = sessionStorage.getItem(STORE);
+                    if (!k) {
+                        k = (crypto.randomUUID?.())
+                            || (Date.now().toString(36) + Math.random().toString(36).slice(2));
+                        sessionStorage.setItem(STORE, k);
+                    }
+                    return k;
+                })(),
+
+                _redirecting: false,
 
                 ocrUrl: initial.ocrUrl,
                 availabilityUrl: initial.availabilityUrl,
@@ -2906,19 +2908,20 @@
 
                     this.syncOcrFields();
 
-                    /* ── Envoi AJAX : les fichiers restent dans les inputs ── */
                     const form = this.$refs.form;
                     const formData = new FormData(form);
 
-                    // S'assurer que le JSON OCR est bien présent
                     formData.set(
                         'ocr_documents_json',
                         JSON.stringify(this.ocrDocuments)
                     );
 
+                    formData.set('idempotency_key', this.idempotencyKey);
+
                     this.busy = true;
                     this.busyLabel = 'Envoi…';
                     this.stepError = '';
+                    this._redirecting = false;
 
                     try {
                         const response = await fetch(form.action, {
@@ -2931,7 +2934,7 @@
                             body: formData,
                         });
 
-                        /* ── Erreur de validation serveur (422) ── */
+                        /* ── 422 : validation ── */
                         if (response.status === 422) {
                             const data = await response.json().catch(() => ({}));
                             const errors = data.errors || {};
@@ -2942,17 +2945,26 @@
                             return;
                         }
 
-                        /* ── Succès (201) : redirection ── */
+                        /* ── 2xx : redirect, never silently ── */
                         if (response.ok) {
-                            const data = await response.json().catch(() => ({}));
+                            const raw = await response.text();
+                            let data = {};
+                            try { data = JSON.parse(raw); } catch { /* HTML or empty */ }
 
-                            if (data.redirect_url) {
-                                window.location.href = data.redirect_url;
-                                return;
+                            const url = data.redirect_url
+                                || "{{ route('demandes.rencontre.create') }}";
+
+                            if (!data.redirect_url) {
+                                console.error('Server 2xx without redirect_url', raw);
                             }
+
+                            this._redirecting = true;
+                            sessionStorage.removeItem('demande_compte_idem');
+                            window.location.assign(url);
+                            return;
                         }
 
-                        /* ── Autre erreur (500, etc.) ── */
+                        /* ── Other error ── */
                         const data = await response.json().catch(() => ({}));
                         this.stepError = data.message
                             || 'Une erreur est survenue lors de l’envoi.';
@@ -2961,8 +2973,10 @@
                         this.stepError =
                             'Impossible de contacter le serveur. Vérifiez votre connexion.';
                     } finally {
-                        this.busy = false;
-                        this.busyLabel = '';
+                        if (!this._redirecting) {
+                            this.busy = false;
+                            this.busyLabel = '';
+                        }
                     }
                 },
 

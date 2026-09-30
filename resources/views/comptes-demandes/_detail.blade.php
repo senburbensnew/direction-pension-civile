@@ -75,15 +75,6 @@
     }
 @endphp
 
-{{-- Fil d'Ariane --}}
-<nav class="text-sm text-gray-500 flex items-center gap-1.5 flex-wrap" aria-label="Fil d'Ariane">
-    <a href="{{ url('/') }}" class="hover:text-navy">Accueil</a>
-    <span class="text-gray-300">/</span>
-    <a href="{{ route($routePrefix.'.comptes-demandes.index') }}" class="hover:text-navy">Demandes de comptes</a>
-    <span class="text-gray-300">/</span>
-    <span class="text-gray-800 font-medium">{{ $demande->code }}</span>
-</nav>
-
 <div class="flex flex-wrap items-center justify-between gap-3">
     <div>
         <h1 class="text-xl font-bold text-gray-800">Demande {{ $demande->code }}</h1>
