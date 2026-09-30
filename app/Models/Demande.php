@@ -13,6 +13,7 @@ use Spatie\Activitylog\LogOptions;
 use Spatie\Activitylog\Traits\LogsActivity;
 use Spatie\MediaLibrary\HasMedia;
 use Spatie\MediaLibrary\InteractsWithMedia;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Demande extends Model implements HasMedia
 {
@@ -484,6 +485,11 @@ class Demande extends Model implements HasMedia
         return CivilStatus::find(
             $this->data[$name]
         );
+    }
+
+    public function formalites(): \Illuminate\Database\Eloquent\Relations\HasMany
+    {
+        return $this->hasMany(\App\Models\Formalite::class);
     }
 
     public function gender($sexeId)

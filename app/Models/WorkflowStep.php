@@ -89,14 +89,22 @@ class WorkflowStep extends Model
      * Find a step by its code.
      * Tries type-specific first, falls back to global.
      */
-    public static function forCode(string $code, ?string $type = null): ?self
+    public static function forCode(string $code, ?string $typeDemande = null): ?self
     {
-        if ($type) {
-            $specific = self::where('code', $code)->where('type_demande', $type)->first();
-            if ($specific) return $specific;
+        $query = static::query()->where('code', $code);
+    
+        if ($typeDemande) {
+            // Cherche d'abord une étape dédiée à ce type,
+            // puis une étape générique (type_demande = null) en repli.
+            return (clone $query)
+                ->where('type_demande', $typeDemande)
+                ->first()
+                ?? (clone $query)
+                    ->whereNull('type_demande')
+                    ->first();
         }
-
-        return self::where('code', $code)->whereNull('type_demande')->first();
+    
+        return $query->whereNull('type_demande')->first();
     }
 
     /** Return the ID of the global step matching $code, or null. */

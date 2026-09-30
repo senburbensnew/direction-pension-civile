@@ -113,7 +113,6 @@
 </style>
 <div class="home-page">
     <section class="w-full overflow-hidden">
-
         <x-carousel>
             <div class="swiper-slide">
                 <div class="hero-accueil w-full h-full grid grid-cols-1 md:grid-cols-2 items-center">
@@ -133,9 +132,15 @@
                                class="inline-flex items-center justify-center px-6 py-3 bg-orange-500 hover:bg-orange-600 text-white font-semibold text-base rounded-full shadow-lg shadow-orange-500/25 transition-colors">
                                 {{ __('home.hero_cta_calcul') }}
                             </a>
-                            <a href="#guide-pensionne"
-                               class="inline-flex items-center justify-center px-6 py-3 bg-white/80 hover:bg-white text-navy font-semibold text-base rounded-full border border-navy/10 transition-colors">
-                                {{ __('home.quick_guide_title') }}
+
+                            {{-- NOUVEAU : bouton Prendre rendez-vous --}}
+                            <a href="{{ route('demandes.rencontre.create') }}"
+                               class="inline-flex items-center gap-2 px-6 py-3 bg-navy hover:bg-navy/90 text-white font-semibold text-base rounded-full shadow-lg shadow-navy/25 transition-colors">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                          d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                                </svg>
+                                Prendre rendez-vous
                             </a>
                         </div>
                     </div>

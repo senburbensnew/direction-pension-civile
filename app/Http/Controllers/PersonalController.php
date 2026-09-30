@@ -1,24 +1,20 @@
 <?php
 
-
 namespace App\Http\Controllers;
 
+use App\Enums\RencontreStatutEnum;
 use App\Enums\TypeDemandeEnum;
-use App\Models\CheckTransferRequests;
 use App\Models\Demande;
 use App\Models\DemandeCreationCompte;
 use App\Models\DemandeHistory;
+use App\Models\DemandeInteraction;
 use App\Models\DemandeMessage;
-use App\Models\ExistenceProofRequest;
-use App\Models\PaymentStopRequests;
-use App\Models\PensionRequest;
 use App\Models\Service;
 use App\Models\TypeDemande;
-use App\Models\WorkflowStep;
 use App\Models\User;
-use App\Models\DemandeInteraction;
-use App\Services\DemandeWorkflowService;
+use App\Models\WorkflowStep;
 use App\Notifications\DemandeComplementSoumisNotification;
+use App\Services\DemandeWorkflowService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -37,7 +33,6 @@ class PersonalController extends Controller
             return $user->service_id;
         }
 
-        // Fallback : trouver le service correspondant au rôle
         $roleToService = [
             'direction'                  => Service::DIRECTION,
             'secretariat'                => Service::SECRETARIAT,
@@ -67,12 +62,10 @@ class PersonalController extends Controller
     {
         $query = Demande::where('created_by', auth()->id());
 
-        // Filter by status
         if ($request->filled('status_id')) {
             $query->where('current_step_id', $request->status_id);
         }
 
-        // Filter by type de demande
         if ($request->filled('type')) {
             $query->where('type', $request->type);
         }
@@ -89,21 +82,22 @@ class PersonalController extends Controller
         ));
     }
 
-    public function requestsDashboard(Request $request){
+    public function requestsDashboard(Request $request)
+    {
         $requestType = $request['request_type'];
         $requests = [];
         $stats = [
-            'pending' => 0,
-            'approved' => 0,
+            'pending'     => 0,
+            'approved'    => 0,
             'in_progress' => 0,
-            'rejected' => 0,
-            'completed' => 0,
-            'canceled' => 0,
+            'rejected'    => 0,
+            'completed'   => 0,
+            'canceled'    => 0,
         ];
         $type = '';
 
-        switch($requestType){
-            case 'bankTransferRequest' :
+        switch ($requestType) {
+            case 'bankTransferRequest':
                 $baseQuery = Demande::forUser()
                     ->ofType(TypeDemandeEnum::DEMANDE_VIREMENT_BANCAIRE->value);
 
@@ -119,7 +113,7 @@ class PersonalController extends Controller
                 ];
                 $type = 'Demande de virement';
                 break;
-            case 'certificateRequest' :
+            case 'certificateRequest':
                 $baseQuery = Demande::forUser()
                     ->ofType(TypeDemandeEnum::DEMANDE_ATTESTATION->value);
 
@@ -135,7 +129,7 @@ class PersonalController extends Controller
                 ];
                 $type = 'Demande d\'attestation';
                 break;
-            case 'checkTransferRequest' :
+            case 'checkTransferRequest':
                 $baseQuery = Demande::forUser()
                     ->ofType(TypeDemandeEnum::DEMANDE_TRANSFERT_CHEQUE->value);
 
@@ -151,7 +145,7 @@ class PersonalController extends Controller
                 ];
                 $type = 'Demande de transfert de chèques';
                 break;
-            case 'paymentStopRequest' :
+            case 'paymentStopRequest':
                 $baseQuery = Demande::forUser()
                     ->ofType(TypeDemandeEnum::DEMANDE_ARRET_PAIEMENT->value);
 
@@ -167,7 +161,7 @@ class PersonalController extends Controller
                 ];
                 $type = 'Demande d\'arrêt de paiement';
                 break;
-            case 'reinstateRequest' :
+            case 'reinstateRequest':
                 $baseQuery = Demande::forUser()
                     ->ofType(TypeDemandeEnum::DEMANDE_REINSERTION->value);
 
@@ -183,7 +177,7 @@ class PersonalController extends Controller
                 ];
                 $type = 'Demande de réinsertion';
                 break;
-            case 'transferStopRequest' :
+            case 'transferStopRequest':
                 $baseQuery = Demande::forUser()
                     ->ofType(TypeDemandeEnum::DEMANDE_ARRET_VIREMENT->value);
 
@@ -199,7 +193,7 @@ class PersonalController extends Controller
                 ];
                 $type = 'Demande d\'arrêt de virement';
                 break;
-            case 'existenceProofRequest' :
+            case 'existenceProofRequest':
                 $baseQuery = Demande::forUser()
                     ->ofType(TypeDemandeEnum::DEMANDE_PREUVE_EXISTENCE->value);
 
@@ -215,7 +209,7 @@ class PersonalController extends Controller
                 ];
                 $type = 'Preuve d\'existence';
                 break;
-            case 'informationUpdateRequest' :
+            case 'informationUpdateRequest':
                 $baseQuery = Demande::forUser()
                     ->ofType(TypeDemandeEnum::DEMANDE_MISE_A_JOUR->value);
 
@@ -231,7 +225,7 @@ class PersonalController extends Controller
                 ];
                 $type = 'Mise à jour des informations';
                 break;
-            case 'reversionaryPensionRequest' :
+            case 'reversionaryPensionRequest':
                 $baseQuery = Demande::forUser()
                     ->ofType(TypeDemandeEnum::DEMANDE_PENSION_REVERSION->value);
 
@@ -300,7 +294,7 @@ class PersonalController extends Controller
                 break;
         }
 
-        return view('personal.requests', compact('requests', 'stats', 'requestType','type')); 
+        return view('personal.requests', compact('requests', 'stats', 'requestType', 'type'));
     }
 
     public function showRequestForAuthenticatedUser(Request $request, int $id)
@@ -315,7 +309,6 @@ class PersonalController extends Controller
 
         $messages = $demande->messages()->with('sender')->get();
 
-        // Mark unread service messages as read
         $messages->each(function ($msg) {
             if ($msg->isFromService() && is_null($msg->read_at)) {
                 $msg->markAsRead();
@@ -363,7 +356,6 @@ class PersonalController extends Controller
                 }
             }
 
-            // Retour à la Direction après complément (même règle que la soumission initiale)
             $demande->update(array_filter([
                 'current_step_id'    => $soumiseStepId,
                 'current_service_id' => $directionId,
@@ -377,7 +369,6 @@ class PersonalController extends Controller
             ]);
         });
 
-        // Notify direction users that the complement has been submitted
         try {
             $demande->loadMissing('currentStep');
             $directionUsers = User::whereHas('service', fn ($q) => $q->where('code', Service::DIRECTION))
@@ -412,26 +403,73 @@ class PersonalController extends Controller
         $currentUser = auth()->user();
         $isAgentRdvOnly = $currentUser?->hasRole('agent_rdv')
             && ! $currentUser->hasAnyRole(['admin', 'direction']);
-        
-        foreach ($folderStats as &$folder) {
-            $query = Demande::where('current_service_id', $serviceId);
-            if ($folder['key'] === 'clotures') {
-                $query->closed();
-            } elseif ($folder['key'] === 'urgent') {
-                $query->active()->where(fn($q) => $q
-                    ->where('is_urgent', true)
-                    ->orWhere('submitted_at', '<=', now()->subDays(30))
-                );
-            } else {
-                $query->active()->where('categorie', $folder['key']);
-        
-                // Agent RDV : ne compter que ses propres RDV
-                if ($folder['key'] === 'rencontre' && $isAgentRdvOnly) {
+
+            foreach ($folderStats as &$folder) {
+                $query = Demande::where('current_service_id', $serviceId);
+            
+                /*
+                |--------------------------------------------------------------------------
+                | Filtre global agent RDV
+                |--------------------------------------------------------------------------
+                |
+                | Un agent RDV ne voit QUE les dossiers qui lui sont attribués,
+                | quel que soit le type (rencontre, pension, prestation…).
+                |
+                */
+                if ($isAgentRdvOnly) {
                     $query->where('data->agent_id', $currentUser->id);
                 }
+            
+                if ($folder['key'] === 'clotures') {
+                    $query->where(function ($q) {
+                        $q->where(function ($q2) {
+                            $q2->where('type', TypeDemandeEnum::DEMANDE_RENCONTRE->value)
+                               ->whereIn('data->rdv_statut', RencontreStatutEnum::terminalValues());
+                        })
+                        ->orWhere(function ($q2) {
+                            $q2->where('type', '!=', TypeDemandeEnum::DEMANDE_RENCONTRE->value)
+                               ->whereHas('currentStep', fn ($s) => $s->whereIn('code', [
+                                   'FINALISEE', 'REJETEE', 'ANNULEE',
+                               ]));
+                        });
+                    });
+            
+                } elseif ($folder['key'] === 'urgent') {
+                    $query->where(function ($q) {
+                        $q->where(function ($q2) {
+                            $q2->where('type', TypeDemandeEnum::DEMANDE_RENCONTRE->value)
+                               ->where(function ($q3) {
+                                   $q3->whereNotIn('data->rdv_statut', RencontreStatutEnum::terminalValues())
+                                      ->orWhereNull('data->rdv_statut');
+                               });
+                        })->orWhere(function ($q2) {
+                            $q2->where('type', '!=', TypeDemandeEnum::DEMANDE_RENCONTRE->value)
+                               ->whereHas('currentStep', fn ($s) => $s->whereNotIn('code', [
+                                   'FINALISEE', 'REJETEE', 'ANNULEE',
+                               ]));
+                        });
+                    })->where(function ($q) {
+                        $q->where('is_urgent', true)
+                          ->orWhere('submitted_at', '<=', now()->subDays(30));
+                    });
+            
+                } elseif ($folder['key'] === 'rencontre') {
+                    $query->where('type', TypeDemandeEnum::DEMANDE_RENCONTRE->value)
+                          ->where(function ($q) {
+                              $q->whereNotIn('data->rdv_statut', RencontreStatutEnum::terminalValues())
+                                ->orWhereNull('data->rdv_statut');
+                          });
+            
+                } else {
+                    $query->where('type', '!=', TypeDemandeEnum::DEMANDE_RENCONTRE->value)
+                          ->whereHas('currentStep', fn ($s) => $s->whereNotIn('code', [
+                              'FINALISEE', 'REJETEE', 'ANNULEE',
+                          ]))
+                          ->where('categorie', $folder['key']);
+                }
+            
+                $folder['count'] = $query->count();
             }
-            $folder['count'] = $query->count();
-        }
         unset($folder);
 
         $actingServiceIds = ($serviceId && auth()->user())
@@ -452,13 +490,32 @@ class PersonalController extends Controller
             ->latest()
             ->get();
 
+        /*
+        |--------------------------------------------------------------------------
+        | Appels de rappel — veille des rencontres
+        |--------------------------------------------------------------------------
+        |
+        | Un agent RDV ne voit que ses propres rendez-vous.
+        | Direction / admin voient l'ensemble.
+        |
+        */
+
         $appelsVeille = collect();
         $demandesComptePending = collect();
         $user = auth()->user();
+
         if ($user?->hasAnyRole([User::ROLE_AGENT_RDV, 'service_accueil_formalites', 'direction', 'admin'])) {
             $reminders = app(\App\Services\RencontreReminderService::class);
-            $appelsVeille = $reminders->appointmentsOn($reminders->reminderDate());
+            $date      = $reminders->reminderDate();
+
+            $isAgentRdvOnly = $user->hasRole(User::ROLE_AGENT_RDV)
+                && ! $user->hasAnyRole(['admin', 'direction', 'directeur', 'assistant_directeur']);
+
+            $appelsVeille = $isAgentRdvOnly
+                ? $reminders->appointmentsOnForAgent($date, $user->id)
+                : $reminders->appointmentsOn($date);
         }
+
         if ($user?->hasAnyRole(['admin', User::ROLE_AGENT_FORMALITES])) {
             $demandesComptePending = DemandeCreationCompte::query()
                 ->where('status', DemandeCreationCompte::STATUS_EN_ATTENTE)
@@ -466,7 +523,6 @@ class PersonalController extends Controller
                 ->limit(15)
                 ->get();
         }
-
         return view('personal.corbeille', compact('folderStats', 'pendingAffectations', 'pendingReceptions', 'appelsVeille', 'demandesComptePending'));
     }
 
@@ -582,7 +638,6 @@ class PersonalController extends Controller
         $circuitLocked = $workflowService->usesCircuitSnapshot($requestModel);
         $affectations = $requestModel->affectations()->with('toService', 'initiatedBy')->get();
 
-        // Pending reception workflow visible to the current agent (own service or delegated)
         $user = auth()->user();
         $actingServiceIds = ($user && $user->service_id)
             ? \App\Models\AgentDelegation::actingServiceIds($user->id, $user->service_id)
@@ -599,7 +654,6 @@ class PersonalController extends Controller
             ->latest()
             ->first();
 
-        // Detect if the current service is consulted for avis (not the dossier owner)
         $pendingAffectation = ($user && $user->service_id)
             ? DemandeInteraction::where('demande_id', $requestModel->id)
                 ->where('type', DemandeInteraction::TYPE_AVIS)
@@ -608,7 +662,6 @@ class PersonalController extends Controller
                 ->first()
             : null;
 
-        // Block access once avis is submitted, unless the service now owns the dossier via workflow
         $isCurrentServiceOwner = $user?->service_id && $requestModel->current_service_id === $user->service_id;
         if (!$isCurrentServiceOwner && !$user?->hasRole('admin') && !$user?->isDirection() && $user?->service_id) {
             $submittedAvis = DemandeInteraction::where('demande_id', $requestModel->id)
@@ -633,28 +686,25 @@ class PersonalController extends Controller
 
         $messages = $requestModel->messages()->with('sender')->get();
 
-        // Mark unread user messages as read
         $messages->each(function ($msg) {
             if (!$msg->isFromService() && is_null($msg->read_at)) {
                 $msg->markAsRead();
             }
         });
 
-        $isClosed = $requestModel->isClosed();
+        // 👇 FIX : distinguer les rencontres (basé sur rdv_statut) du reste (basé sur currentStep)
+        $isClosed = $requestModel->isRencontre()
+            ? $requestModel->rencontreStatut()->isTerminal()
+            : $requestModel->isClosed();
 
         $availability = app(\App\Services\RencontreAvailabilityService::class);
 
-        // Service responsable du motif : priorité au service de l'étape courante,
-        // sinon service porté par la demande.
         $responsableService = $requestModel->currentStep?->service ?? $requestModel->service;
 
-        // Vérification défensive : la méthode canValidate() peut ne pas exister
-        // selon la version du service. Repli sur le rôle agent_rdv.
         $canValidateRencontre = method_exists($availability, 'canValidate')
             ? $availability->canValidate($user)
             : (bool) $user?->hasRole(User::ROLE_AGENT_RDV);
 
-        // Flag : agent RDV **ou** agent Formalités (hors admin/direction).
         $isAgentRdvOnly = $user?->hasAnyRole([
                 User::ROLE_AGENT_RDV,
                 User::ROLE_AGENT_FORMALITES,
@@ -662,8 +712,33 @@ class PersonalController extends Controller
             ])
             && ! $user->hasAnyRole(['admin', 'direction']);
 
-        // 👇 Mode "traitement RDV seul" : agent_rdv OU agent_formalites, sur un dossier rencontre.
         $rdvAgentMode = $isAgentRdvOnly && $requestModel->isRencontre();
+
+        /*
+        |--------------------------------------------------------------------------
+        | Compte provisoire — analyse post-RDV
+        |--------------------------------------------------------------------------
+        |
+        | Si le RDV est réalisé ET que l'utilisateur est en compte provisoire,
+        | on charge la demande de création de compte pour permettre à l'agent
+        | d'en faire l'analyse et de la traiter directement depuis ce dossier.
+        |
+        */
+        $compteProvisional = null;
+
+        if (
+            $requestModel->isRencontre()
+            && $requestModel->rencontreStatut() === \App\Enums\RencontreStatutEnum::REALISE
+        ) {
+            $owner = $requestModel->user ?? User::find($requestModel->created_by);
+
+            if ($owner?->isProvisionnel()) {
+                $compteProvisional = \App\Models\DemandeCreationCompte::query()
+                    ->where('user_id', $owner->id)
+                    ->latest()
+                    ->first();
+            }
+        }
 
         return view('personal.request-details', [
             'from'                  => 'cart',
@@ -684,6 +759,7 @@ class PersonalController extends Controller
             'canValidateRencontre'  => $canValidateRencontre,
             'isAgentRdvOnly'        => $isAgentRdvOnly,
             'rdvAgentMode'          => $rdvAgentMode,
+            'compteProvisional' => $compteProvisional,
         ]);
     }
 
@@ -691,7 +767,7 @@ class PersonalController extends Controller
     {
         $serviceId = $this->resolveServiceId();
         $folder    = $request->input('folder');
-    
+
         $folders = [
             'urgent'          => 'Dossiers urgents',
             'pension'         => 'Demandes de pension',
@@ -702,55 +778,77 @@ class PersonalController extends Controller
             'autres'          => 'Autres',
             'clotures'        => 'Dossiers clôturés',
         ];
-    
+
         abort_unless(isset($folders[$folder]), 404);
-    
+
         $userId = auth()->id();
-    
+
         $folderScope = function ($q) use ($folder, $serviceId, $userId) {
             $q->where('current_service_id', $serviceId);
-    
+
             if ($folder === 'clotures') {
-                $q->closed();
+                $q->where(function ($q2) {
+                    $q2->where(function ($q3) {
+                        $q3->where('type', TypeDemandeEnum::DEMANDE_RENCONTRE->value)
+                           ->whereIn('data->rdv_statut', RencontreStatutEnum::terminalValues());
+                    })->orWhere(function ($q3) {
+                        $q3->where('type', '!=', TypeDemandeEnum::DEMANDE_RENCONTRE->value)
+                           ->whereHas('currentStep', fn ($s) => $s->whereIn('code', [
+                               'FINALISEE', 'REJETEE', 'ANNULEE',
+                           ]));
+                    });
+                });
+
             } elseif ($folder === 'urgent') {
-                $q->active()->where(fn($q2) => $q2
-                    ->where('is_urgent', true)
-                    ->orWhere('submitted_at', '<=', now()->subDays(30))
-                );
+                $q->where(function ($q2) {
+                    $q2->where(function ($q3) {
+                        $q3->where('type', TypeDemandeEnum::DEMANDE_RENCONTRE->value)
+                           ->where(function ($q4) {
+                               $q4->whereNotIn('data->rdv_statut', RencontreStatutEnum::terminalValues())
+                                  ->orWhereNull('data->rdv_statut');
+                           });
+                    })->orWhere(function ($q3) {
+                        $q3->where('type', '!=', TypeDemandeEnum::DEMANDE_RENCONTRE->value)
+                           ->whereHas('currentStep', fn ($s) => $s->whereNotIn('code', [
+                               'FINALISEE', 'REJETEE', 'ANNULEE',
+                           ]));
+                    });
+                })->where(function ($q2) {
+                    $q2->where('is_urgent', true)
+                       ->orWhere('submitted_at', '<=', now()->subDays(30));
+                });
+
             } elseif ($folder === 'rencontre') {
-                // 👇 L'agent ne voit que les rencontres qui lui sont attribuées
-                $q->active()
-                  ->where('categorie', 'rencontre')
+                $q->where('type', TypeDemandeEnum::DEMANDE_RENCONTRE->value)
+                  ->where(function ($q2) {
+                      $q2->whereNotIn('data->rdv_statut', RencontreStatutEnum::terminalValues())
+                        ->orWhereNull('data->rdv_statut');
+                  })
                   ->where('data->agent_id', $userId);
+
             } else {
-                $q->active()->where('categorie', $folder);
+                $q->where('type', '!=', TypeDemandeEnum::DEMANDE_RENCONTRE->value)
+                  ->whereHas('currentStep', fn ($s) => $s->whereNotIn('code', [
+                      'FINALISEE', 'REJETEE', 'ANNULEE',
+                  ]))
+                  ->where('categorie', $folder);
             }
         };
-    
+
         $requests = Demande::with('currentStep')
             ->where(fn ($q) => $folderScope($q))
             ->latest()
             ->paginate(10);
-    
+
         $type = $folders[$folder];
-    
-        $statusCodes = [
-            'pending'     => 'EN_ATTENTE',
-            'in_progress' => 'EN_COURS',
-            'rejected'    => 'REJETEE',
-            'canceled'    => 'ANNULEE',
-            'approved'    => 'APPROUVEE',
-            'completed'   => 'FINALISEE',
-        ];
-    
+
         $stats = [];
-        foreach ($statusCodes as $key => $code) {
-            $stats[$key] = Demande::where(fn($q) => $folderScope($q))
-                ->whereHas('currentStep', fn($q) => $q->where('code', $code))
+        foreach (['pending' => 'EN_ATTENTE', 'in_progress' => 'EN_COURS', 'rejected' => 'REJETEE', 'canceled' => 'ANNULEE', 'approved' => 'APPROUVEE', 'completed' => 'FINALISEE'] as $key => $code) {
+            $stats[$key] = Demande::where(fn ($q) => $folderScope($q))
+                ->whereHas('currentStep', fn ($q) => $q->where('code', $code))
                 ->count();
         }
 
-    
         return view('personal.dashboard-corbeille', compact('requests', 'type', 'folder', 'stats'));
     }
 }

@@ -77,14 +77,10 @@
                         @endif
                     </td>
                 @endif
-
                 <td class="px-6 py-4">
                     <a class="inline-flex items-center gap-1 text-blue-600 hover:text-blue-900 text-sm font-medium"
                         href="{{ route('personal.request.show', $req->id) }}">
-                        Traiter
-                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
-                        </svg>
+                        {{ ($folder ?? null) === 'clotures' ? 'Consulter' : 'Traiter' }}
                     </a>
                 </td>
             </tr>

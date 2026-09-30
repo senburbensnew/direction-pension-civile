@@ -352,15 +352,16 @@ Route::middleware([
 
 /*
 |--------------------------------------------------------------------------
-| Annulation — pensionné, agent_rdv, admin, direction
+| Actions sur un rendez-vous — pensionné, agent_rdv, admin, direction
 |--------------------------------------------------------------------------
 |
-| L'autorisation fine est faite dans le contrôleur via canCancelDemande().
+| L'autorisation fine est faite dans le contrôleur :
+|   - canCancelDemande() pour annuler
+|   - authorizeRdvAgent() pour refuser / accepter / clore / proposerCreneau
 |
 */
 
 Route::middleware(['auth'])->group(function () {
-
     Route::post(
         '/demande-rencontre/{demande}/annuler',
         [DemandeRencontreController::class, 'annuler']
@@ -375,6 +376,26 @@ Route::middleware(['auth'])->group(function () {
         '/demande-rencontre/{demande}/accepter',
         [DemandeRencontreController::class, 'accepter']
     )->name('demandes.rencontre.accepter');
+
+    Route::post(
+        '/demande-rencontre/{demande}/clore',
+        [DemandeRencontreController::class, 'clore']
+    )->name('demandes.rencontre.clore');
+
+    Route::post(
+        '/demande-rencontre/{demande}/proposer-creneau',
+        [DemandeRencontreController::class, 'proposerCreneau']
+    )->name('demandes.rencontre.proposerCreneau');
+
+    Route::get(
+    '/demande-rencontre/{demande}/formalite',
+    [DemandeRencontreController::class, 'formalite']
+    )->name('demandes.rencontre.formalite');
+
+    Route::post(
+        '/demande-rencontre/{demande}/formalite',
+        [DemandeRencontreController::class, 'enregistrerFormalite']
+    )->name('demandes.rencontre.formalite.store');
 });
 
 /*

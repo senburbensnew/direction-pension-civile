@@ -96,4 +96,15 @@ class RencontreReminderService
 
         return $count;
     }
+
+    public function appointmentsOnForAgent(string $date, int $agentId): \Illuminate\Support\Collection
+    {
+        return Demande::query()
+            ->where('type', \App\Enums\TypeDemandeEnum::DEMANDE_RENCONTRE->value)
+            ->where('data->date_souhaitee', $date)
+            ->where('data->agent_id', $agentId)
+            ->whereNotIn('data->rdv_statut', \App\Enums\RencontreStatutEnum::terminalValues())
+            ->orderBy('data->heure_souhaitee')
+            ->get();
+    }
 }

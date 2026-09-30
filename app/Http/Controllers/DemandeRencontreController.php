@@ -8,6 +8,7 @@ use App\Helpers\CodeGeneratorService;
 use App\Models\Demande;
 use App\Models\DemandeHistory;
 use App\Models\DirectionDepartementale;
+use App\Models\Formalite;
 use App\Models\Service;
 use App\Models\User;
 use App\Rules\Telephone;
@@ -17,6 +18,7 @@ use App\Services\RencontreVisioService;
 use App\Services\RencontreWorkflowService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use App\Models\AnneeFiscale;
 use Illuminate\Validation\ValidationException;
 
 class DemandeRencontreController extends Controller
@@ -555,6 +557,134 @@ class DemandeRencontreController extends Controller
                 'embedUrl' => $this->visio->embedUrl($demande),
             ]
         );
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | FORMALITÉ — page dédiée
+    |--------------------------------------------------------------------------
+    |
+    | Enregistre la formalité dans la table `formalites` (indépendante du RDV).
+    | Le champ `demande_id` de la formalité référence le RDV qui l'a déclenchée.
+    |
+    */
+
+    public function formalite(
+        Request $request,
+        Demande $demande
+    ) {
+        $this->assertFormaliteAccessible($demande, $request->user());
+    
+        $demande->load(['user', 'service']);
+    
+        $data  = $demande->data ?? [];
+        $owner = $demande->user ?? User::find($demande->created_by);
+    
+        $formalites = Formalite::query()
+            ->where('user_id', $owner?->id)
+            ->with(['agent', 'demande', 'anneeFiscale'])
+            ->orderByDesc('realisee_at')
+            ->get();
+    
+        $anneesDispo = AnneeFiscale::ordered();
+        $anneeActive = AnneeFiscale::active();
+    
+        $formaliteAnneeEnCours = $anneeActive
+            ? $formalites->firstWhere('annee_fiscale_id', $anneeActive->id)
+            : null;
+    
+        return view('demandes.rencontre.formalite', [
+            'demande'               => $demande,
+            'rdvStatut'             => $this->rdvWorkflow->statut($demande),
+            'formalites'            => $formalites,
+            'anneesDispo'           => $anneesDispo,
+            'anneeActive'           => $anneeActive,
+            'formaliteAnneeEnCours' => $formaliteAnneeEnCours,
+            'motif'                 => $data['motif'] ?? '—',
+            'cartePension'          => $data['carte_pension_path'] ?? null,
+        ]);
+    }
+
+    public function enregistrerFormalite(
+        Request $request,
+        Demande $demande
+    ) {
+        $this->assertFormaliteAccessible($demande, $request->user());
+    
+        $validated = $request->validate([
+            'annee_fiscale_id' => [
+                'required',
+                'integer',
+                'exists:annees_fiscales,id',
+            ],
+            'commentaire' => [
+                'nullable',
+                'string',
+                'max:2000',
+            ],
+        ]);
+    
+        $owner   = $demande->user ?? User::find($demande->created_by);
+        $service = $demande->service;
+    
+        $anneeFiscale = AnneeFiscale::findOrFail($validated['annee_fiscale_id']);
+    
+        $existante = Formalite::forYear($owner->id, $anneeFiscale->id);
+    
+        if ($existante) {
+            throw ValidationException::withMessages([
+                'annee_fiscale_id' =>
+                    'Ce pensionné a déjà une formalité enregistrée pour l’exercice '
+                    . $anneeFiscale->code . '.',
+            ]);
+        }
+    
+        $formalite = DB::transaction(function () use (
+            $demande,
+            $owner,
+            $service,
+            $validated,
+            $request,
+            $anneeFiscale
+        ) {
+            $formalite = Formalite::create([
+                'user_id'          => $owner->id,
+                'annee_fiscale_id' => $anneeFiscale->id,
+                'realisee_at'      => now(),
+                'realisee_par'     => $request->user()->id,
+                'demande_id'       => $demande->id,
+                'motif_key'        => $demande->data['motif_key'] ?? null,
+                'service_id'       => $service?->id,
+                'commentaire'      => $validated['commentaire'] ?? null,
+            ]);
+    
+            DemandeHistory::create([
+                'demande_id'  => $demande->id,
+                'event'       => 'FORMALITE_ENREGISTREE',
+                'statut'      => $this->rdvWorkflow->statut($demande)->value,
+                'commentaire' => 'Formalité enregistrée pour l’exercice '
+                    . $anneeFiscale->code . '.'
+                    . (!empty($validated['commentaire'])
+                        ? ' ' . $validated['commentaire']
+                        : ''),
+                'changed_by'  => $request->user()->id,
+                'champs'      => [
+                    'action'             => 'formalite',
+                    'formalite_id'       => $formalite->id,
+                    'annee_fiscale_id'   => $anneeFiscale->id,
+                    'annee_fiscale_code' => $anneeFiscale->code,
+                ],
+            ]);
+    
+            return $formalite;
+        });
+    
+        return redirect()
+            ->route('demandes.rencontre.formalite', $demande)
+            ->with(
+                'success',
+                'Formalité enregistrée pour l’exercice ' . $anneeFiscale->code . '.'
+            );
     }
 
     /*
@@ -1373,6 +1503,48 @@ class DemandeRencontreController extends Controller
             $this->rdvWorkflow->statut($demande)->isTerminal(),
             422,
             'Ce rendez-vous est déjà clos.'
+        );
+    }
+
+    /**
+     * Vérifie que la page de formalité est accessible :
+     *  - dossier de type rencontre
+     *  - RDV réalisé
+     *  - motif cohérent (formalité)
+     *  - pensionné non provisoire
+     *  - agent autorisé (RDV / admin / direction)
+     */
+    private function assertFormaliteAccessible(
+        Demande $demande,
+        ?User $user
+    ): void {
+        abort_unless($demande->isRencontre(), 404);
+
+        $this->authorizeRdvAgent($demande, $user);
+
+        abort_unless(
+            $this->rdvWorkflow->statut($demande)
+                === RencontreStatutEnum::REALISE,
+            422,
+            'Le rendez-vous doit d’abord être marqué comme réalisé.'
+        );
+
+        $motifKey = (string) ($demande->data['motif_key'] ?? '');
+        $isFormalite = str_starts_with($motifKey, 'demande_formalites')
+            || str_starts_with($motifKey, 'formalites');
+
+        abort_unless(
+            $isFormalite,
+            422,
+            'Ce rendez-vous n’est pas lié à une démarche de formalité.'
+        );
+
+        $owner = $demande->user ?? User::find($demande->created_by);
+
+        abort_if(
+            $owner?->isProvisionnel(),
+            403,
+            'Cette démarche est indisponible pour un compte provisoire.'
         );
     }
 

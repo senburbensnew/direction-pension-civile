@@ -28,16 +28,46 @@
                     <p class="text-sky-100 text-xs">Le service des Formalités doit appeler l’usager la veille du rendez-vous.</p>
                 </div>
                 <div class="divide-y divide-gray-100">
-                    @foreach($appelsVeille as $rdv)
-                        @php $data = $rdv->data ?? []; @endphp
-                        <div class="px-5 py-4 flex flex-wrap items-center justify-between gap-4">
-                            <div>
-                                <p class="font-bold text-gray-800 font-mono text-sm">#{{ $rdv->code }}</p>
-                                <p class="text-sm text-gray-700 mt-0.5">{{ trim(($data['prenom'] ?? '').' '.($data['nom'] ?? '')) }} · {{ $data['telephone'] ?? 'Téléphone non renseigné' }}</p>
-                                <p class="text-xs text-gray-500 mt-0.5">RDV demain {{ $data['heure_souhaitee'] ?? '' }} · {{ ($data['modalite'] ?? '') === 'physique' ? ($data['lieu_rdv'] ?? 'Présentiel') : 'Visioconférence' }}</p>
-                            </div>
+                @foreach($appelsVeille as $rdv)
+                    @php
+                        $data = $rdv->data ?? [];
+                        $usager = $rdv->user;
+
+                        $nomUsager = $usager?->displayName()
+                            ?: trim(($data['prenom'] ?? '').' '.($data['nom'] ?? ''))
+                            ?: '—';
+
+                        $telephone = $data['telephone']
+                            ?? $usager?->telephone
+                            ?? $usager?->phone
+                            ?? 'Téléphone non renseigné';
+
+                        $heure = $data['heure_souhaitee']
+                            ? \App\Models\Demande::normalizeRencontreTime($data['heure_souhaitee'])
+                            : '';
+
+                        $modalite = $data['modalite'] ?? 'physique';
+                    @endphp
+                    <div class="px-5 py-4 flex flex-wrap items-center justify-between gap-4">
+                        <div class="min-w-0">
+                            <p class="font-bold text-gray-800 font-mono text-sm">#{{ $rdv->code }}</p>
+                            <p class="text-sm text-gray-700 mt-0.5">
+                                {{ $nomUsager }} · {{ $telephone }}
+                            </p>
+                            <p class="text-xs text-gray-500 mt-0.5">
+                                RDV demain {{ $heure ? 'à '.$heure : '' }}
+                                · {{ $modalite === 'physique' ? ($data['lieu_rdv'] ?? 'Présentiel') : 'Visioconférence' }}
+                            </p>
                         </div>
-                    @endforeach
+                        <div class="flex items-center gap-2 flex-shrink-0">
+                            <a href="{{ route('personal.request.show', $rdv->id) }}"
+                            class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-navy hover:bg-navy/90 text-white text-xs font-semibold rounded-lg">
+                                Ouvrir
+                                <i class="fa-solid fa-arrow-right text-[10px]"></i>
+                            </a>
+                        </div>
+                    </div>
+                @endforeach
                 </div>
             </div>
         @endif

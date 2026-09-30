@@ -14,9 +14,6 @@ enum RencontreStatutEnum: string
     case REPORTE = 'reporte';
     case NON_HONORE = 'non_honore';
 
-    /**
-     * Libellé affiché à l'utilisateur.
-     */
     public function label(): string
     {
         return match ($this) {
@@ -32,9 +29,6 @@ enum RencontreStatutEnum: string
         };
     }
 
-    /**
-     * Classe CSS du badge.
-     */
     public function badgeClass(): string
     {
         return match ($this) {
@@ -51,62 +45,44 @@ enum RencontreStatutEnum: string
     }
 
     /**
-     * Code correspondant au workflow général du dossier.
+     * Code de l'étape workflow propre au type DEMANDE_RENCONTRE.
      */
     public function workflowCode(): string
     {
         return match ($this) {
             self::DEMANDE => 'SOUMISE',
             self::EN_COURS => 'EN_COURS',
-            self::ATTRIBUE => 'EN_ATTENTE',
+            self::ATTRIBUE => 'ATTRIBUE',
             self::ACTIF => 'ACTIF',
-            self::REFUSE => 'REJETEE',
-            self::REALISE => 'FINALISEE',
-            self::ANNULE => 'ANNULEE',
-            self::REPORTE => 'EN_ATTENTE',
-            self::NON_HONORE => 'FINALISEE',
+            self::REFUSE => 'REFUSE',
+            self::REALISE => 'REALISE',
+            self::ANNULE => 'ANNULE',
+            self::REPORTE => 'REPORTE',
+            self::NON_HONORE => 'NON_HONORE',
         };
     }
 
-    /**
-     * Indique si le statut est terminal.
-     */
     public function isTerminal(): bool
     {
-        return in_array(
-            $this,
-            [
-                self::REFUSE,
-                self::REALISE,
-                self::ANNULE,
-                self::NON_HONORE,
-            ],
-            true
-        );
+        return in_array($this, [
+            self::REFUSE,
+            self::REALISE,
+            self::ANNULE,
+            self::NON_HONORE,
+        ], true);
     }
 
-    /**
-     * Indique si le créneau de rendez-vous doit rester réservé.
-     */
     public function reservesSlot(): bool
     {
-        return ! in_array(
-            $this,
-            [
-                self::REFUSE,
-                self::ANNULE,
-                self::REALISE,
-                self::NON_HONORE,
-            ],
-            true
-        );
+        return ! in_array($this, [
+            self::REFUSE,
+            self::ANNULE,
+            self::REALISE,
+            self::NON_HONORE,
+        ], true);
     }
 
-    /**
-     * Retourne les valeurs des statuts terminaux.
-     *
-     * @return list<string>
-     */
+    /** @return list<string> */
     public static function terminalValues(): array
     {
         return [
@@ -117,20 +93,17 @@ enum RencontreStatutEnum: string
         ];
     }
 
-    /**
-     * Convertit un code du workflow général
-     * en statut spécifique à une rencontre.
-     */
     public static function fromWorkflow(?string $code): self
     {
         return match ($code) {
             'EN_COURS' => self::EN_COURS,
-            'EN_ATTENTE' => self::ATTRIBUE,
+            'ATTRIBUE', 'EN_ATTENTE' => self::ATTRIBUE,
             'ACTIF' => self::ACTIF,
-            'REJETEE' => self::REFUSE,
-            'FINALISEE' => self::REALISE,
-            'ANNULEE' => self::ANNULE,
-
+            'REFUSE', 'REJETEE' => self::REFUSE,
+            'REALISE', 'FINALISEE' => self::REALISE,
+            'ANNULE', 'ANNULEE' => self::ANNULE,
+            'REPORTE' => self::REPORTE,
+            'NON_HONORE' => self::NON_HONORE,
             default => self::DEMANDE,
         };
     }
