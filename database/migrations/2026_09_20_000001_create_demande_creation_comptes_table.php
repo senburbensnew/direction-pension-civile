@@ -20,14 +20,14 @@ return new class extends Migration
 
             // Coordonnées / identifiants de connexion
             $table->string('email')->nullable();
-            $table->string('username')->nullable();          // ← AJOUT
-            $table->string('telephone')->nullable();
+            $table->string('username')->nullable()->unique();          // ← AJOUT
+            $table->string('telephone')->nullable()->unique();
             $table->string('adresse', 500)->nullable();
 
             // Identifiants administratifs
-            $table->string('nif')->nullable();
-            $table->string('ninu')->nullable();
-            $table->string('pension_code')->nullable();
+            $table->string('nif')->nullable()->unique();
+            $table->string('ninu')->nullable()->unique();
+            $table->string('pension_code')->nullable()->unique();
 
             // Mineur / représentant
             $table->boolean('is_mineur')->default(false);

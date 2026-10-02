@@ -102,27 +102,68 @@ class User extends Authenticatable
         return strtolower(trim($username));
     }
 
-    public static function uniqueUsernameFrom(?string $source, ?int $ignoreId = null): string
+    public static function uniqueUsernameFrom(string $source): string
     {
-        $base = strtolower((string) $source);
-        if (str_contains($base, '@')) {
-            $base = Str::before($base, '@');
+        /*
+        |--------------------------------------------------------------------------
+        | Normalisation
+        |--------------------------------------------------------------------------
+        | Exemple :
+        |
+        | " Jean-Pierre " -> "jean.pierre"
+        | "Jean Pierre"   -> "jean.pierre"
+        | "JEAN PIERRE"   -> "jean.pierre"
+        */
+        $base = Str::of($source)
+            ->trim()
+            ->lower()
+            ->ascii()
+            ->replaceMatches('/[^a-z0-9]+/', '.')
+            ->trim('.')
+            ->value();
+
+        /*
+        |--------------------------------------------------------------------------
+        | Sécurité : source vide
+        |--------------------------------------------------------------------------
+        */
+        if ($base === '') {
+            $base = 'pensionne';
         }
 
-        $base = preg_replace('/[^a-z0-9._-]/', '', $base) ?: 'user';
-        $base = substr($base, 0, 40);
-        $candidate = $base;
-        $suffix = 0;
+        /*
+        |--------------------------------------------------------------------------
+        | Premier username disponible
+        |--------------------------------------------------------------------------
+        */
+        if (! self::where('username', $base)->exists()) {
+            return $base;
+        }
 
-        while (static::query()
-            ->when($ignoreId, fn ($query) => $query->where('id', '!=', $ignoreId))
-            ->whereRaw('LOWER(username) = ?', [$candidate])
-            ->exists()) {
+        /*
+        |--------------------------------------------------------------------------
+        | Username déjà utilisé
+        |--------------------------------------------------------------------------
+        |
+        | jean.pierre
+        | jean.pierre2
+        | jean.pierre3
+        | jean.pierre4
+        | ...
+        */
+        $suffix = 2;
+
+        do {
+            $username = $base . $suffix;
+
+            $exists = self::where('username', $username)->exists();
+
+            if (! $exists) {
+                return $username;
+            }
+
             $suffix++;
-            $candidate = $base.$suffix;
-        }
-
-        return $candidate;
+        } while (true);
     }
 
     public static function normalizeDigits(string $value): string

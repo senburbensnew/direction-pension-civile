@@ -895,69 +895,144 @@ class DemandeCreationCompteController extends Controller
 
     private function createProvisionalUser(array $validated, array $ocrFields): User
     {
+        /*
+        |--------------------------------------------------------------------------
+        | Email
+        |--------------------------------------------------------------------------
+        | L'email est facultatif.
+        | S'il n'est pas fourni, on enregistre NULL.
+        */
         $email = filled($validated['email'] ?? null)
             ? mb_strtolower(trim((string) $validated['email']))
-            : $this->placeholderEmail($validated);
+            : null;
 
-        $firstname = $ocrFields['prenom'] ?? null;
-        $lastname = $ocrFields['nom'] ?? null;
+        /*
+        |--------------------------------------------------------------------------
+        | Identité
+        |--------------------------------------------------------------------------
+        | Le prénom et le nom proviennent prioritairement des données OCR.
+        */
+        $firstname = trim((string) ($ocrFields['prenom'] ?? ''));
+        $lastname  = trim((string) ($ocrFields['nom'] ?? ''));
 
-        $name = trim(implode(' ', array_filter([$firstname, $lastname])));
+        /*
+        |--------------------------------------------------------------------------
+        | Nom complet
+        |--------------------------------------------------------------------------
+        */
+        $name = trim(
+            implode(
+                ' ',
+                array_filter([
+                    $firstname,
+                    $lastname,
+                ])
+            )
+        );
 
-        $usernameSource = $email
-            ?: ($validated['pension_code'] ?? null)
-            ?: ($validated['telephone'] ?? null)
-            ?: 'pensionne';
+        /*
+        |--------------------------------------------------------------------------
+        | Username
+        |--------------------------------------------------------------------------
+        | Le username est basé uniquement sur :
+        |
+        |     prénom.nom
+        |
+        | Exemple :
+        |     Jean Pierre -> jean.pierre
+        |
+        | En cas de doublon :
+        |     jean.pierre
+        |     jean.pierre2
+        |     jean.pierre3
+        |     ...
+        */
+        $usernameSource = trim(
+            $firstname . '.' . $lastname
+        );
 
-        $username = User::uniqueUsernameFrom($usernameSource);
+        /*
+        | Si le prénom et le nom sont disponibles, on utilise
+        | prénom.nom.
+        |
+        | Le fallback "pensionne" évite une chaîne vide dans
+        | le cas exceptionnel où l'OCR n'aurait fourni ni prénom
+        | ni nom.
+        */
+        if ($firstname !== '' || $lastname !== '') {
+            $username = User::uniqueUsernameFrom($usernameSource);
+        } else {
+            $username = User::uniqueUsernameFrom('pensionne');
+        }
 
+        /*
+        |--------------------------------------------------------------------------
+        | Type utilisateur
+        |--------------------------------------------------------------------------
+        */
         $userType = UserType::firstOrCreate([
             'name' => UserTypeEnum::PENSIONNE->value,
         ]);
 
+        /*
+        |--------------------------------------------------------------------------
+        | Rôle
+        |--------------------------------------------------------------------------
+        */
         Role::findOrCreate('pensionne', 'web');
 
+        /*
+        |--------------------------------------------------------------------------
+        | Code pension
+        |--------------------------------------------------------------------------
+        */
         $pensionCode = filled($validated['pension_code'] ?? null)
-        ? strtoupper(trim((string) $validated['pension_code']))
-        : null;
+            ? strtoupper(trim((string) $validated['pension_code']))
+            : null;
 
+        /*
+        |--------------------------------------------------------------------------
+        | Création du compte
+        |--------------------------------------------------------------------------
+        */
         $user = User::create([
             'name' => $name !== '' ? $name : $username,
-            'firstname' => $firstname,
-            'lastname' => $lastname,
+
+            'firstname' => $firstname !== ''
+                ? $firstname
+                : null,
+
+            'lastname' => $lastname !== ''
+                ? $lastname
+                : null,
+
             'email' => $email,
+
             'username' => $username,
+
             'phone' => $validated['telephone'],
+
             'password' => $validated['password'],
+
             'nif' => $validated['nif'] ?? null,
+
             'pension_code' => $pensionCode,
+
             'user_type_id' => $userType->id,
+
             'is_active' => true,
+
             'account_status' => User::STATUS_EN_ATTENTE_VALIDATION,
         ]);
 
+        /*
+        |--------------------------------------------------------------------------
+        | Attribution du rôle
+        |--------------------------------------------------------------------------
+        */
         $user->assignRole('pensionne');
 
         return $user;
-    }
-
-    private function placeholderEmail(array $validated): string
-    {
-        $digits = User::normalizeDigits(
-            (string) ($validated['pension_code'] ?? $validated['telephone'] ?? 'user')
-        );
-
-        $base = 'p' . ($digits !== '' ? $digits : 'user') . '@provisoire.dpc.ht';
-
-        $candidate = $base;
-        $suffix = 0;
-
-        while (User::emailExists($candidate)) {
-            $suffix++;
-            $candidate = 'p' . ($digits !== '' ? $digits : 'user') . $suffix . '@provisoire.dpc.ht';
-        }
-
-        return $candidate;
     }
 
     private function attachIdentityDocuments(
