@@ -16,7 +16,7 @@ return new class extends Migration
             $table->string('firstname')->nullable();
             $table->string('lastname')->nullable();
             $table->date('birth_date')->nullable();
-            $table->string('phone')->nullable();
+            $table->string('phone')->unique()->nullable();
             $table->string('address')->nullable();
             $table->foreignId('civil_status_id')
             ->nullable()

@@ -99,6 +99,27 @@
         }
 
         /* ============================================================
+         * SCROLL ANCHOR POUR LES ERREURS
+         * ============================================================ */
+
+        [name="nif"],
+        [name="ninu"],
+        [name="pension_code"],
+        [name="telephone"],
+        [name="email"],
+        [name="adresse"],
+        [name="password"],
+        [name="accept_terms"],
+        [name="piece_identite"],
+        [name="acte_naissance"],
+        [name="piece_identite_representant"],
+        [name="piece_identite_type"],
+        [name="piece_identite_representant_type"],
+        [name="representant_lien"] {
+            scroll-margin-top: 6rem;
+        }
+
+        /* ============================================================
          * STEPS
          * ============================================================ */
 
@@ -445,6 +466,61 @@
         @endif
 
         {{-- ============================================================
+             RÉSUMÉ GLOBAL DES ERREURS (visible à toutes les étapes)
+             ============================================================ --}}
+
+        <div
+            x-show="errorCount > 0"
+            x-cloak
+            x-transition.opacity
+            class="mb-4 rounded-xl border border-red-200 bg-red-50 p-4"
+            role="alert"
+            aria-live="polite"
+            x-ref="errorSummary"
+        >
+            <div class="flex items-start gap-3">
+                <i class="fas fa-exclamation-triangle text-red-600 mt-0.5"></i>
+
+                <div class="flex-1 min-w-0">
+                    <p class="text-sm font-semibold text-red-800">
+                        <span x-text="errorCount"></span>
+                        <span x-text="errorCount > 1 ? 'erreurs à corriger' : 'erreur à corriger'"></span>
+                        avant de soumettre la demande.
+                    </p>
+
+                    <ul class="mt-2 space-y-1 text-sm text-red-700">
+                        <template x-for="err in errorSummary" :key="err.field">
+                            <li>
+                                <button
+                                    type="button"
+                                    @click="jumpToError(err.field)"
+                                    class="text-left hover:underline focus:outline-none focus:underline"
+                                >
+                                    <i class="fas fa-arrow-right text-[10px] mr-1 opacity-60"></i>
+                                    <span class="font-medium" x-text="err.label + ' : '"></span>
+                                    <span x-text="err.message"></span>
+                                    <span
+                                        class="ml-1 text-[11px] text-red-500 italic"
+                                        x-text="'→ étape ' + err.step"
+                                    ></span>
+                                </button>
+                            </li>
+                        </template>
+                    </ul>
+                </div>
+
+                <button
+                    type="button"
+                    @click="clearAllErrors()"
+                    class="text-red-400 hover:text-red-600 shrink-0"
+                    aria-label="Masquer le récapitulatif des erreurs"
+                >
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+        </div>
+
+        {{-- ============================================================
              INDICATEUR DES ÉTAPES
              ============================================================ --}}
 
@@ -538,36 +614,6 @@
                         </p>
                     </div>
                 </div>
-
-                {{-- Type de pensionné --}}
-                <!-- <div class="rounded-xl border border-gray-200 bg-gray-50 p-4">
-                    <p class="text-sm font-semibold text-gray-800 mb-2">
-                        Situation du pensionné
-                    </p>
-
-                    <label class="flex items-start gap-2 cursor-pointer select-none">
-                        <input
-                            type="checkbox"
-                            id="is_mineur"
-                            name="is_mineur"
-                            value="1"
-                            x-model="isMineur"
-                            @change="clearDocumentErrors()"
-                            {{ $isMineur ? 'checked' : '' }}
-                            class="mt-1 w-4 h-4 rounded border-gray-300 text-navy focus:ring-navy"
-                        >
-
-                        <span>
-                            <span class="block text-sm font-medium text-gray-700">
-                                Pensionné mineur
-                            </span>
-
-                            <span class="block text-xs text-gray-500 mt-0.5">
-                                Cochez cette case si le compte doit être créé au nom d’un pensionné mineur.
-                            </span>
-                        </span>
-                    </label>
-                </div> -->
 
                 {{-- ====================================================
                      MAJEUR
@@ -1166,14 +1212,20 @@
                             type="text"
                             name="nif"
                             x-model="nif"
-                            @input="clearFieldError('nif'); scheduleAvailabilityCheck('nif')"
+                            @input="
+                                nif = nif.replace(/\D+/g, '').slice(0, 10)
+                                        .replace(/^(\d{3})(\d{0,3})(\d{0,3})(\d?)$/,
+                                                (_, a, b, c, d) => [a, b, c, d].filter(Boolean).join('-'));
+                                clearFieldError('nif');
+                                scheduleAvailabilityCheck('nif');
+                            "
                             placeholder="000-000-000-0"
                             inputmode="numeric"
                             autocomplete="off"
+                            maxlength="13"
                             class="w-full py-2.5 px-3 border rounded-lg text-sm focus:outline-none focus:ring-2"
                             :class="borderClass('nif')"
                         >
-
                         <p
                             x-show="!fieldErrors.nif"
                             class="text-xs mt-1"
@@ -1207,9 +1259,15 @@
                             type="text"
                             name="ninu"
                             x-model="ninu"
-                            @input="clearFieldError('ninu')"
-                            placeholder="7-12345 ou 8-12345"
+                            @input="
+                                ninu = ninu.replace(/\D+/g, '').slice(0, 10);
+                                clearFieldError('ninu');
+                            "
+                            placeholder="0123456789"
+                            inputmode="numeric"
                             autocomplete="off"
+                            maxlength="10"
+                            pattern="\d{10}"
                             class="w-full py-2.5 px-3 border rounded-lg text-sm focus:outline-none focus:ring-2"
                             :class="borderClass('ninu')"
                         >
@@ -1237,10 +1295,17 @@
                             type="text"
                             name="pension_code"
                             x-model="pension_code"
-                            @input="clearFieldError('pension_code'); scheduleAvailabilityCheck('pension_code')"
-                            placeholder="8-34321"
-                            inputmode="numeric"
+                            @input="
+                                pension_code = pension_code.toUpperCase();
+                                clearFieldError('pension_code');
+                                scheduleAvailabilityCheck('pension_code');
+                            "
+                            placeholder="7-XXXXX ou 8-XXXXX"
+                            inputmode="text"
                             autocomplete="off"
+                            maxlength="7"
+                            spellcheck="false"
+                            autocapitalize="characters"
                             class="w-full py-2.5 px-3 border rounded-lg text-sm focus:outline-none focus:ring-2"
                             :class="borderClass('pension_code')"
                         >
@@ -2086,6 +2151,33 @@
                 },
 
                 /* ========================================================
+                 * LIBELLÉS DES CHAMPS DU FORMULAIRE
+                 * (pour le récapitulatif global des erreurs)
+                 * ======================================================== */
+
+                formFieldLabels: {
+                    user_type: 'Type de compte',
+                    telephone: 'Numéro de téléphone',
+                    email: 'Adresse e-mail',
+                    nif: 'NIF',
+                    ninu: 'NINU',
+                    pension_code: 'Code pension',
+                    password: 'Mot de passe',
+                    adresse: 'Adresse actuelle',
+                    accept_terms: 'Conditions d’utilisation',
+
+                    is_mineur: 'Pensionné mineur',
+                    piece_identite_type: 'Type de pièce d’identité',
+                    piece_identite: 'Pièce d’identité du pensionné',
+                    acte_naissance: 'Acte de naissance',
+                    representant_lien: 'Représentant légal',
+                    piece_identite_representant_type: 'Type de pièce du représentant',
+                    piece_identite_representant: 'Pièce d’identité du représentant',
+
+                    ocr_documents_json: 'Données OCR',
+                },
+
+                /* ========================================================
                  * GETTERS
                  * ======================================================== */
 
@@ -2137,6 +2229,29 @@
 
                 get representantPieceTypeLabel() {
                     return pieceLabels[this.representantPieceType] || '—';
+                },
+
+                /* ========================================================
+                 * RÉCAPITULATIF DES ERREURS
+                 * ======================================================== */
+
+                get errorSummary() {
+                    const entries = Object.entries(this.fieldErrors || {})
+                        .filter(([, message]) => !!message);
+
+                    return entries
+                        .map(([field, message], index) => ({
+                            field,
+                            message,
+                            label: this.formFieldLabels[field] || field.replaceAll('_', ' '),
+                            step: this.stepForField(field),
+                            index,
+                        }))
+                        .sort((a, b) => (a.step - b.step) || (a.index - b.index));
+                },
+
+                get errorCount() {
+                    return this.errorSummary.length;
                 },
 
                 /* ========================================================
@@ -2208,6 +2323,11 @@
                     });
                 },
 
+                clearAllErrors() {
+                    this.fieldErrors = {};
+                    this.stepError = '';
+                },
+
                 setFieldError(field, message) {
                     this.fieldErrors = {
                         ...this.fieldErrors,
@@ -2218,6 +2338,60 @@
                 hasFieldErrors() {
                     return Object.values(this.fieldErrors)
                         .some((message) => !!message);
+                },
+
+                /* ========================================================
+                 * ROUTAGE DES ERREURS → ÉTAPES
+                 * ======================================================== */
+
+                stepForField(field) {
+                    const map = {
+                        is_mineur: 1,
+                        piece_identite_type: 1,
+                        piece_identite: 1,
+                        acte_naissance: 1,
+                        representant_lien: 1,
+                        piece_identite_representant_type: 1,
+                        piece_identite_representant: 1,
+
+                        ocr_documents_json: 2,
+
+                        user_type: 3,
+                        telephone: 3,
+                        email: 3,
+                        nif: 3,
+                        ninu: 3,
+                        pension_code: 3,
+                        password: 3,
+                        adresse: 3,
+
+                        accept_terms: 4,
+                    };
+
+                    return map[field] || this.step;
+                },
+
+                jumpToError(field) {
+                    const target = this.stepForField(field);
+
+                    if (target && target !== this.step) {
+                        this.step = target;
+                        this.stepError = '';
+                    }
+
+                    // Laisse le temps à x-show de réafficher le champ
+                    // avant de repositionner le focus.
+                    setTimeout(() => {
+                        const el = document.querySelector(`[name="${field}"]`);
+
+                        if (el && typeof el.focus === 'function') {
+                            el.focus({ preventScroll: true });
+                            el.scrollIntoView({
+                                behavior: 'smooth',
+                                block: 'center',
+                            });
+                        }
+                    }, 100);
                 },
 
                 /* ========================================================
@@ -2272,10 +2446,10 @@
                             return;
                         }
 
-                        if (!/^\d-\d{5}$/.test(value)) {
+                        if (!/^(7-[A-Z0-9]{5}|8-\d{5})$/i.test(value)) {
                             this.pension_codeStatus = 'error';
                             this.pension_codeMessage =
-                                'Le code pension doit être au format 0-00000 (ex. 8-34321).';
+                                'Le code pension doit être au format 7-XXXXX (ex. 7-JM183) ou 8-XXXXX (ex. 8-34321).';
                             return;
                         }
                     }
@@ -2909,6 +3083,23 @@
                     this.syncOcrFields();
 
                     const form = this.$refs.form;
+
+                    /* Normaliser le code pension avant envoi */
+                    const pensionInput = document.getElementById('pension_code');
+
+                    if (pensionInput && pensionInput.value) {
+                        pensionInput.value = pensionInput.value.trim().toUpperCase();
+                        this.pension_code = pensionInput.value;
+                    }
+
+                    /* Normaliser le NINU avant envoi */
+                    const ninuInput = document.getElementById('ninu');
+
+                    if (ninuInput && ninuInput.value) {
+                        ninuInput.value = ninuInput.value.replace(/\D+/g, '').slice(0, 10);
+                        this.ninu = ninuInput.value;
+                    }
+
                     const formData = new FormData(form);
 
                     formData.set(
@@ -2997,9 +3188,7 @@
                 },
 
                 stepFromServerErrors(errors) {
-                    const keys = Object.keys(errors || {});
-
-                    const step1Fields = [
+                    const known = [
                         'is_mineur',
                         'piece_identite_type',
                         'piece_identite',
@@ -3007,11 +3196,9 @@
                         'representant_lien',
                         'piece_identite_representant_type',
                         'piece_identite_representant',
-                    ];
 
-                    const step2Fields = ['ocr_documents_json'];
+                        'ocr_documents_json',
 
-                    const step3Fields = [
                         'user_type',
                         'telephone',
                         'email',
@@ -3020,16 +3207,14 @@
                         'pension_code',
                         'password',
                         'adresse',
+
+                        'accept_terms',
                     ];
 
-                    const step4Fields = ['accept_terms'];
+                    const keys = Object.keys(errors || {});
+                    const match = keys.find((k) => known.includes(k));
 
-                    if (keys.some((k) => step1Fields.includes(k))) return 1;
-                    if (keys.some((k) => step2Fields.includes(k))) return 2;
-                    if (keys.some((k) => step3Fields.includes(k))) return 3;
-                    if (keys.some((k) => step4Fields.includes(k))) return 4;
-
-                    return this.step;
+                    return match ? this.stepForField(match) : this.step;
                 },
 
                 /* ========================================================
@@ -3131,31 +3316,32 @@
                     }
 
                     /* NINU. */
+                    /* NINU : 10 chiffres sans tiret. */
                     if (
                         this.ninu &&
-                        !/^[78]-\d{5}$/.test(
-                            this.ninu
-                        )
+                        !/^\d{10}$/.test(this.ninu)
                     ) {
                         nextErrors.ninu =
-                            'Le NINU doit être au format 7-12345 ou 8-12345.';
+                            'Le NINU doit contenir exactement 10 chiffres (sans tiret).';
                     }
 
                     /*
-                     * Code pension : désormais OPTIONNEL.
-                     * On valide uniquement le format s'il est renseigné.
-                     */
+                    * Code pension : désormais OPTIONNEL.
+                    * Format accepté (casse ignorée) :
+                    *   - 7- suivi de 5 caractères alphanumériques (ex. 7-JM183, 7-l0366)
+                    *   - 8- suivi de 5 chiffres (ex. 8-18698, 8-00500)
+                    */
                     if (
                         this.userType === 'pensionne' &&
                         this.pension_code
                     ) {
                         if (
-                            !/^\d-\d{5}$/.test(
+                            !/^(7-[A-Z0-9]{5}|8-\d{5})$/i.test(
                                 this.pension_code
                             )
                         ) {
                             nextErrors.pension_code =
-                                'Le code pension doit être au format 0-00000 (ex. 8-34321).';
+                                'Le code pension doit être au format 7-XXXXX (ex. 7-JM183) ou 8-XXXXX (ex. 8-34321).';
                         } else if (
                             this.pension_codeStatus ===
                             'error'

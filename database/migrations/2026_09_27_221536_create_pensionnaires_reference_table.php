@@ -17,7 +17,7 @@ return new class extends Migration
 
             // --- Données brutes issues de l'Excel ---
             // Tous les champs sont en TEXT et nullable
-            $table->text('PENSIONNAIRE_ID')->nullable();
+            $table->text('PENSIONNAIRE_ID')->nullable(); // Code pensionnaire
             $table->text('LOCALITE_ID')->nullable();
             $table->text('LOC_DESCRIPTION')->nullable();
             $table->text('NATURE_ID')->nullable();

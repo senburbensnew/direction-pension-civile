@@ -42,8 +42,8 @@ class User extends Authenticatable
         'name',
         'firstname',
         'lastname',
-        'email',
         'username',
+        'email',
         'phone',
         'password',
         'nif',
@@ -54,9 +54,9 @@ class User extends Authenticatable
         'is_active',
         'account_status',
         'gender_id',
+        'profile_photo',
         'created_at',
         'updated_at',
-        'profile_photo',
     ];
 
     /**

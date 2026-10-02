@@ -24,6 +24,7 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Response;
+use App\Rules\PensionnaireReferenceExists;
 
 class DemandeCreationCompteController extends Controller
 {
@@ -250,6 +251,12 @@ class DemandeCreationCompteController extends Controller
             }
             throw $e;
         }
+
+        if (filled($validated['pension_code'] ?? null)) {
+            $validated['pension_code'] = strtoupper(trim((string) $validated['pension_code']));
+        } else {
+            $validated['pension_code'] = null;
+        }
     
         /* ============================================================
          * LAYER 1 — Idempotency key (refresh / retry / double-submit)
@@ -323,8 +330,9 @@ class DemandeCreationCompteController extends Controller
                     'piece_identite_representant' => $request->file('piece_identite_representant')?->getClientOriginalName(),
                 ];
     
+
                 $pensionCode = filled($validated['pension_code'] ?? null)
-                    ? trim((string) $validated['pension_code'])
+                    ? strtoupper(trim((string) $validated['pension_code']))
                     : null;
     
                 $demande = DemandeCreationCompte::create([
@@ -690,6 +698,7 @@ class DemandeCreationCompteController extends Controller
                 'nullable',
                 'string',
                 new CodePension(),
+                new PensionnaireReferenceExists(),
                 function (string $attribute, mixed $value, \Closure $fail) {
                     if (
                         User::pensionCodeExists($value) ||
@@ -853,29 +862,32 @@ class DemandeCreationCompteController extends Controller
         if ($value === '') {
             return [
                 'available' => true,
-                'empty' => true,
-                'message' => null,
+                'empty'     => true,
+                'message'   => null,
             ];
         }
-
-        if (! preg_match('/^\d-\d{5}$/', $value)) {
+    
+        // ✅ Normalisation : on travaille sur la version uppercase
+        $value = strtoupper(trim($value));
+    
+        if (! preg_match('/^(7-[A-Z0-9]{5}|8-\d{5})$/', $value)) {
             return [
                 'available' => false,
                 'format_ok' => false,
-                'message' => 'Le code pension doit être au format 0-00000 (ex. 8-34321).',
+                'message'   => 'Le code pension doit être au format 7-XXXXX (ex. 7-JM183) ou 8-XXXXX (ex. 8-34321).',
             ];
         }
-
+    
         $available = ! User::pensionCodeExists($value)
             && ! DemandeCreationCompte::pendingDigitsMatch(
                 'pension_code',
                 User::normalizeDigits($value)
             );
-
+    
         return [
             'available' => $available,
             'format_ok' => true,
-            'message' => $available
+            'message'   => $available
                 ? 'Code pension disponible.'
                 : 'Ce code pension est déjà utilisé.',
         ];
@@ -906,8 +918,8 @@ class DemandeCreationCompteController extends Controller
         Role::findOrCreate('pensionne', 'web');
 
         $pensionCode = filled($validated['pension_code'] ?? null)
-            ? trim((string) $validated['pension_code'])
-            : null;
+        ? strtoupper(trim((string) $validated['pension_code']))
+        : null;
 
         $user = User::create([
             'name' => $name !== '' ? $name : $username,
