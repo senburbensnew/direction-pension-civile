@@ -90,7 +90,7 @@
                             </div>
                         </td>
                         <td class="px-4 py-3 text-gray-600">
-                            {{ ucfirst($user->userType->name ?? '—') }}
+                            {{ $user->primaryCategoryCode() ? ucfirst(str_replace('_', ' ', $user->primaryCategoryCode())) : '—' }}
                         </td>
                         <td class="px-4 py-3 text-gray-600">
                             {{ $user->service->nom ?? '—' }}
@@ -108,15 +108,16 @@
                             </div>
                         </td>
                         <td class="px-4 py-3 text-center">
-                            @if($user->is_active)
-                                <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-700">
-                                    <span class="w-1.5 h-1.5 rounded-full bg-green-500"></span> Actif
-                                </span>
-                            @else
-                                <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-500">
-                                    <span class="w-1.5 h-1.5 rounded-full bg-gray-400"></span> Inactif
-                                </span>
-                            @endif
+                            @php($status = $user->resolvedAccountStatus())
+                            <span @class([
+                                'inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium',
+                                'bg-green-100 text-green-700' => $status->isActif(),
+                                'bg-amber-100 text-amber-800' => $status->isProvisionnel(),
+                                'bg-red-100 text-red-700' => $status === \App\Enums\AccountStatusEnum::BLOQUE,
+                                'bg-gray-100 text-gray-500' => $status === \App\Enums\AccountStatusEnum::DESACTIVE,
+                            ])>
+                                {{ $status->label() }}
+                            </span>
                         </td>
                         <td class="px-4 py-3">
                             <div class="flex items-center justify-center gap-2">
@@ -129,9 +130,9 @@
                                         @csrf
                                         @method('PATCH')
                                         <button type="submit"
-                                            class="px-2 py-1 rounded text-xs font-medium {{ $user->is_active ? 'bg-orange-100 text-orange-700 hover:bg-orange-200' : 'bg-green-100 text-green-700 hover:bg-green-200' }}"
-                                            title="{{ $user->is_active ? 'Désactiver' : 'Activer' }}">
-                                            <i class="fas {{ $user->is_active ? 'fa-ban' : 'fa-check' }}"></i>
+                                            class="px-2 py-1 rounded text-xs font-medium {{ $user->allowsLogin() ? 'bg-orange-100 text-orange-700 hover:bg-orange-200' : 'bg-green-100 text-green-700 hover:bg-green-200' }}"
+                                            title="{{ $user->allowsLogin() ? 'Désactiver' : 'Activer' }}">
+                                            <i class="fas {{ $user->allowsLogin() ? 'fa-ban' : 'fa-check' }}"></i>
                                         </button>
                                     </form>
                                     <form action="{{ route('admin.users.destroy', $user) }}" method="POST"

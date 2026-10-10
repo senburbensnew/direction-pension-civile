@@ -1,7 +1,16 @@
 import { Calendar } from '@fullcalendar/core';
+import dayGridPlugin from '@fullcalendar/daygrid';
 import interactionPlugin from '@fullcalendar/interaction';
 import timeGridPlugin from '@fullcalendar/timegrid';
 import frLocale from '@fullcalendar/core/locales/fr';
+
+const frLocaleSundayFirst = {
+    ...frLocale,
+    week: {
+        ...frLocale.week,
+        dow: 0,
+    },
+};
 
 function pad(value) {
     return String(value).padStart(2, '0');
@@ -61,6 +70,54 @@ function isWeekend(date) {
     const day = date.getDay();
 
     return day === 0 || day === 6;
+}
+
+function startOfLocalDay(date = new Date()) {
+    return new Date(
+        date.getFullYear(),
+        date.getMonth(),
+        date.getDate(),
+        0,
+        0,
+        0,
+        0
+    );
+}
+
+function readHolidayDates(el) {
+    try {
+        const raw = JSON.parse(el.dataset.holidays || '[]');
+
+        if (!Array.isArray(raw)) {
+            return new Map();
+        }
+
+        const map = new Map();
+
+        raw.forEach((item) => {
+            if (typeof item === 'string') {
+                map.set(item, 'Jour férié');
+            } else if (item?.date) {
+                map.set(item.date, item.name || 'Jour férié');
+            }
+        });
+
+        return map;
+    } catch {
+        return new Map();
+    }
+}
+
+function readReservedByService(el) {
+    try {
+        const raw = JSON.parse(
+            el.dataset.reservedByService || '{}'
+        );
+
+        return typeof raw === 'object' && raw !== null ? raw : {};
+    } catch {
+        return {};
+    }
 }
 
 function slotKey(start) {
@@ -184,17 +241,70 @@ export function initRdvScheduler() {
     const maxTime =
         el.dataset.maxTime || '16:00:00';
 
-    const allReserved =
-        readAllReserved(el);
+    const displayMinTime =
+        el.dataset.displayMinTime || '08:00:00';
 
-    /*
-     * Les créneaux réservés ne dépendent plus d'un agent.
-     */
-    let reserved =
-        reservedSlots(allReserved);
+    const displayMaxTime =
+        el.dataset.displayMaxTime || '16:00:00';
+
+    const toSlotTime = (value) =>
+        value.length === 5 ? `${value}:00` : value;
+
+    const reservedByService =
+        readReservedByService(el);
+
+    const holidays =
+        readHolidayDates(el);
+
+    let activeServiceCode =
+        el.dataset.defaultService || '';
+
+    const slotsForService = (code) => {
+        const list = reservedByService[code] || [];
+
+        if (Array.isArray(list) && list.length && typeof list[0] === 'string') {
+            return readAllReserved({
+                dataset: {
+                    reserved: JSON.stringify(list),
+                },
+            });
+        }
+
+        return list;
+    };
+
+    let allReserved = slotsForService(activeServiceCode);
+
+    let reserved = reservedSlots(allReserved);
+
+    const isHoliday = (start) => {
+        return holidays.has(formatDate(start));
+    };
 
     const isReserved = (start) => {
         return reserved.has(slotKey(start));
+    };
+
+    const timeToMinutes = (value) => {
+        const [hour, minute] = value.slice(0, 5).split(':').map(Number);
+
+        return hour * 60 + minute;
+    };
+
+    const isWithinBookingWindow = (start) => {
+        const slotStart = start.getHours() * 60 + start.getMinutes();
+        const slotEnd = slotStart + slotMinutes;
+        const windowStart = timeToMinutes(minTime);
+        const windowEnd = timeToMinutes(maxTime);
+
+        return slotStart >= windowStart && slotEnd <= windowEnd;
+    };
+
+    const rdvWindowLabel = () => {
+        const start = minTime.slice(0, 5);
+        const end = maxTime.slice(0, 5);
+
+        return `${start}–${end}`;
     };
 
     const showMessage = (text, isError = false) => {
@@ -218,10 +328,27 @@ export function initRdvScheduler() {
 
     const setSelection = (start) => {
 
+        if (isHoliday(start)) {
+            showMessage(
+                `Jour férié en Haïti (${holidays.get(formatDate(start))}). Choisissez une autre date.`,
+                true
+            );
+
+            return;
+        }
+
+        if (isWeekend(start) || !isWithinBookingWindow(start)) {
+            showMessage(
+                `Plage réservable : du lundi au vendredi, ${rdvWindowLabel()} (créneaux de ${slotMinutes} minutes).`,
+                true
+            );
+
+            return;
+        }
+
         if (
             isReserved(start) ||
-            isPastSlot(start) ||
-            isWeekend(start)
+            isPastSlot(start)
         ) {
             showMessage(
                 'Ce créneau est déjà indisponible. Veuillez en choisir un autre.',
@@ -368,30 +495,80 @@ export function initRdvScheduler() {
         }
     };
 
+    const goToToday = () => {
+        calendar.gotoDate(startOfLocalDay(new Date()));
+    };
+
+    const explainUnselectableSlot = (start) => {
+        if (isHoliday(start)) {
+            showMessage(
+                `Jour férié en Haïti (${holidays.get(formatDate(start))}). Choisissez une autre date.`,
+                true
+            );
+
+            return;
+        }
+
+        if (isWeekend(start)) {
+            showMessage(
+                'Les créneaux ne sont pas réservables le week-end.',
+                true
+            );
+
+            return;
+        }
+
+        if (!isWithinBookingWindow(start)) {
+            showMessage(
+                `Plage réservable : du lundi au vendredi, ${rdvWindowLabel()} (créneaux de ${slotMinutes} minutes).`,
+                true
+            );
+
+            return;
+        }
+
+        if (isPastSlot(start)) {
+            showMessage(
+                'Ce créneau est déjà passé. Veuillez en choisir un autre.',
+                true
+            );
+
+            return;
+        }
+
+        showMessage(
+            `Plage réservable : du lundi au vendredi, ${rdvWindowLabel()} (créneaux de ${slotMinutes} minutes).`,
+            true
+        );
+    };
+
     const calendar = new Calendar(el, {
 
         plugins: [
+            dayGridPlugin,
             timeGridPlugin,
             interactionPlugin
         ],
 
-        locale: frLocale,
+        locale: frLocaleSundayFirst,
 
         initialView: 'timeGridWeek',
 
-        firstDay: 1,
+        firstDay: 0,
 
-        height: 'auto',
+        height: 520,
 
-        contentHeight: 'auto',
-
-        expandRows: false,
+        expandRows: true,
 
         allDaySlot: false,
 
         nowIndicator: true,
 
-        weekends: false,
+        weekends: true,
+
+        scrollTime: toSlotTime(displayMinTime),
+
+        scrollTimeReset: false,
 
         selectable: true,
 
@@ -411,18 +588,11 @@ export function initRdvScheduler() {
         snapDuration:
             `00:${String(slotMinutes).padStart(2, '0')}:00`,
 
-        slotMinTime:
-            minTime.length === 5
-                ? `${minTime}:00`
-                : minTime,
+        slotMinTime: toSlotTime(displayMinTime),
 
-        slotMaxTime:
-            maxTime.length === 5
-                ? `${maxTime}:00`
-                : maxTime,
+        slotMaxTime: toSlotTime(displayMaxTime),
 
-        slotLabelInterval:
-            `00:${String(slotMinutes).padStart(2, '0')}:00`,
+        slotLabelInterval: '01:00:00',
 
         slotLabelFormat: {
             hour: '2-digit',
@@ -437,20 +607,35 @@ export function initRdvScheduler() {
         },
 
         headerToolbar: {
-            left: 'prev,next today',
+            left: 'prev,next dpcToday',
             center: 'title',
-            right: 'timeGridWeek,timeGridDay',
+            right: 'timeGridDay,timeGridWeek,dayGridMonth',
+        },
+
+        customButtons: {
+            dpcToday: {
+                text: "Aujourd'hui",
+                click: goToToday,
+            },
         },
 
         buttonText: {
             today: "Aujourd'hui",
             week: 'Semaine',
             day: 'Jour',
+            month: 'Mois',
         },
 
-        validRange: {
-            start: formatDate(new Date()),
+        views: {
+            dayGridMonth: {
+                dayMaxEvents: 3,
+                moreLinkClick: 'day',
+            },
         },
+
+        validRange: () => ({
+            start: startOfLocalDay(new Date()),
+        }),
 
         businessHours: [
             {
@@ -489,9 +674,13 @@ export function initRdvScheduler() {
 
                 !isWeekend(start) &&
 
+                !isHoliday(start) &&
+
                 !isPastSlot(start) &&
 
-                !isReserved(start)
+                !isReserved(start) &&
+
+                isWithinBookingWindow(start)
             );
         },
 
@@ -505,6 +694,12 @@ export function initRdvScheduler() {
         },
 
         dateClick: (info) => {
+
+            if (info.view.type === 'dayGridMonth') {
+                calendar.changeView('timeGridDay', info.date);
+
+                return;
+            }
 
             const start =
                 info.date;
@@ -537,6 +732,8 @@ export function initRdvScheduler() {
                     end
                 })
             ) {
+                explainUnselectableSlot(start);
+
                 return;
             }
 
@@ -575,9 +772,17 @@ export function initRdvScheduler() {
 
     el.dataset.ready = '1';
 
-    /*
-     * Plus d'écouteur agentSelect.
-     */
+    window.addEventListener('rdv-service-changed', (event) => {
+        const code = event.detail?.serviceCode || '';
+
+        if (code === activeServiceCode) {
+            return;
+        }
+
+        activeServiceCode = code;
+        allReserved = slotsForService(activeServiceCode);
+        refreshReserved();
+    });
 
     const form =
         el.closest('form');
@@ -607,15 +812,24 @@ export function initRdvScheduler() {
 
                     if (
                         selected &&
-                        isReserved(selected)
+                        (
+                            isReserved(selected) ||
+                            !isWithinBookingWindow(selected) ||
+                            isWeekend(selected) ||
+                            isHoliday(selected)
+                        )
                     ) {
 
                         event.preventDefault();
 
-                        showMessage(
-                            'Ce créneau est déjà indisponible. Veuillez en choisir un autre.',
-                            true
-                        );
+                        if (isReserved(selected)) {
+                            showMessage(
+                                'Ce créneau est déjà indisponible. Veuillez en choisir un autre.',
+                                true
+                            );
+                        } else {
+                            explainUnselectableSlot(selected);
+                        }
 
                         el.scrollIntoView({
                             behavior: 'smooth',
@@ -656,7 +870,9 @@ export function initRdvScheduler() {
         initial &&
         !isPastSlot(initial) &&
         !isWeekend(initial) &&
-        !isReserved(initial)
+        !isHoliday(initial) &&
+        !isReserved(initial) &&
+        isWithinBookingWindow(initial)
     ) {
 
         calendar.gotoDate(initial);

@@ -88,6 +88,21 @@ class Demande extends Model implements HasMedia
         $this->addMediaCollection(
             'carte_pension'
         )->singleFile();
+
+        foreach (
+            app(\App\Services\RencontreMotifService::class)
+                ->allDocumentCollections() as $name => $cfg
+        ) {
+            if (in_array($name, ['carte_pension'], true)) {
+                continue;
+            }
+
+            $collection = $this->addMediaCollection($name);
+
+            if (!($cfg['multiple'] ?? true)) {
+                $collection->singleFile();
+            }
+        }
     }
 
     protected $fillable = [
@@ -667,6 +682,24 @@ class Demande extends Model implements HasMedia
         return $this->currentStep?->nom ?? '—';
     }
 
+    /**
+     * Libellé affiché aux usagers (sans code technique interne).
+     */
+    public function libellePublic(): string
+    {
+        if (filled($this->title)) {
+            return (string) $this->title;
+        }
+
+        $enum = $this->type
+            ? TypeDemandeEnum::tryFrom((string) $this->type)
+            : null;
+
+        return $enum?->label()
+            ?? TypeDemande::labelFor((string) $this->type)
+            ?? (string) $this->type;
+    }
+
     public function statutBadgeClass(): string
     {
         if ($this->isRencontre()) {
@@ -727,6 +760,61 @@ class Demande extends Model implements HasMedia
         return true;
     }
 
+    /**
+     * Date et heure planifiées du rendez-vous (confirmation / créneau retenu).
+     */
+    public function rencontreScheduledAt(): ?Carbon
+    {
+        if (! $this->isRencontre()) {
+            return null;
+        }
+
+        $date = $this->data['date_souhaitee'] ?? null;
+        $time = self::normalizeRencontreTime(
+            $this->data['heure_souhaitee'] ?? null
+        );
+
+        if (! $date || ! $time) {
+            return null;
+        }
+
+        try {
+            return Carbon::parse($date.' '.$time);
+        } catch (\Throwable) {
+            return null;
+        }
+    }
+
+    /**
+     * True si aucun créneau n’est enregistré ou si l’heure prévue est passée.
+     */
+    public function rencontreHeureEstPassee(): bool
+    {
+        $at = $this->rencontreScheduledAt();
+
+        return $at === null || $at->isPast();
+    }
+
+    /**
+     * Formalité, décision compte, etc. : RDV clôturé « réalisé » et créneau écoulé.
+     */
+    public function peutEtreTraiteApresRendezVous(): bool
+    {
+        return $this->rencontreStatut() === RencontreStatutEnum::REALISE
+            && $this->rencontreHeureEstPassee();
+    }
+
+    /**
+     * Clôture (réalisé / non honoré) : interdite avant l’heure du créneau.
+     */
+    public function peutEtreCloture(): bool
+    {
+        if (! $this->isRencontre() || $this->rencontreStatut()->isTerminal()) {
+            return false;
+        }
+
+        return $this->rencontreHeureEstPassee();
+    }
 
     /**
      * Créneaux totalement saturés.

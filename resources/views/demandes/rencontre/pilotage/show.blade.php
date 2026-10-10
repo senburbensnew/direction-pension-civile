@@ -9,13 +9,19 @@
 
     <div class="max-w-6xl mx-auto px-4 py-8 space-y-6">
         <div class="flex flex-wrap items-center justify-between gap-3">
-            <h2 class="font-semibold text-xl text-gray-800 leading-tight">Pilotage du rendez-vous {{ $demande->code }}</h2>
+            <h2 class="font-semibold text-xl text-gray-800 leading-tight">Pilotage du rendez-vous</h2>
             <a href="{{ route('rencontres.pilotage.index') }}" class="text-sm text-navy font-semibold hover:underline">Retour à la liste</a>
         </div>
 
         @if(session('success'))
             <div class="p-4 bg-green-50 border border-green-200 text-green-800 rounded-xl">{{ session('success') }}</div>
         @endif
+
+        @include('demandes.rencontre._workflow-banner', [
+            'demande' => $demande,
+            'rdvStatut' => $rdvStatut,
+            'compteCreation' => $compteCreation ?? null,
+        ])
 
         <section class="bg-white border border-gray-200 rounded-2xl p-6">
             <div class="flex flex-wrap items-start justify-between gap-3">
@@ -54,13 +60,30 @@
                 <div><dt class="text-gray-500">N° pension / matricule</dt><dd class="font-medium">{{ $data['numero_pension'] ?? '—' }}</dd></div>
                 <div><dt class="text-gray-500">Téléphone</dt><dd class="font-medium">{{ $data['telephone'] ?? '—' }}</dd></div>
                 <div><dt class="text-gray-500">Courriel</dt><dd class="font-medium">{{ $data['email'] ?? '—' }}</dd></div>
-                <div><dt class="text-gray-500">Motif</dt><dd class="font-medium">{{ $data['objet'] ?? '—' }}</dd></div>
+                <div><dt class="text-gray-500">Motif</dt><dd class="font-medium">{{ $data['motif'] ?? $data['objet'] ?? '—' }}</dd></div>
+                @if(!empty($data['motif_key']))
+                    <div><dt class="text-gray-500">Clé motif</dt><dd class="font-medium font-mono text-xs">{{ $data['motif_key'] }}</dd></div>
+                @endif
                 <div><dt class="text-gray-500">Lieu ou visio</dt><dd class="font-medium">{{ $data['lieu_rdv'] ?? ($demande->visio_token ? 'Lien sécurisé DPC' : '—') }}</dd></div>
-                <div class="md:col-span-2"><dt class="text-gray-500">Relève de Formalités ?</dt><dd class="font-medium">{{ ($data['service_propose'] ?? 'Formalités') === 'Formalités' || ($data['service_propose_code'] ?? '') === \App\Models\Service::FORMALITE ? 'Oui — motif Formalités' : 'À confirmer : motif orienté vers '.($data['service_propose'] ?? 'un autre service') }}</dd></div>
+                <div class="md:col-span-2"><dt class="text-gray-500">Service responsable</dt><dd class="font-medium">{{ $data['service_responsable'] ?? $demande->service?->nom ?? '—' }}</dd></div>
             </dl>
             @if($carte)
                 <p class="mt-4 text-sm">
                     <a href="{{ $carte->getUrl() }}" target="_blank" class="text-navy font-semibold hover:underline">Voir la carte de pension jointe</a>
+                </p>
+            @endif
+            @php
+                $visioPilotage = app(\App\Services\RencontreVisioService::class);
+                $visioPilotageOk = ($data['modalite'] ?? '') === 'visio'
+                    && filled($demande->visio_token)
+                    && $visioPilotage->canAccess(auth()->user(), $demande);
+            @endphp
+            @if($visioPilotageOk)
+                <p class="mt-4">
+                    <a href="{{ route('demandes.rencontre.visio', $demande->visio_token) }}"
+                       class="inline-flex items-center gap-2 px-4 py-2 bg-navy text-white text-sm font-semibold rounded-lg hover:bg-orange-600">
+                        Rejoindre / ouvrir la visioconférence
+                    </a>
                 </p>
             @endif
         </section>
@@ -100,6 +123,13 @@
                         <button class="px-4 py-2 bg-red-50 text-red-700 border border-red-200 text-sm font-semibold rounded-lg">Annuler</button>
                     </form>
                 </div>
+
+                @include('demandes.rencontre._reattribuer-agent', [
+                    'demande' => $demande,
+                    'bookingAgents' => $bookingAgents ?? collect(),
+                    'canReassignAgent' => $canReassignAgent ?? false,
+                    'rdvPending' => $pending,
+                ])
 
                 <form method="POST" action="{{ route('rencontres.pilotage.proposer-creneau', $demande) }}" class="border-t border-gray-100 pt-4 space-y-3">
                     @csrf

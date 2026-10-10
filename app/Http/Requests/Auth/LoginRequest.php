@@ -3,6 +3,7 @@
 namespace App\Http\Requests\Auth;
 
 use App\Models\User;
+use App\Rules\Telephone;
 use Illuminate\Auth\Events\Lockout;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Support\Facades\Auth;
@@ -36,7 +37,16 @@ class LoginRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'login' => ['required', 'string'],
+            'login' => [
+                'required',
+                'string',
+                function (string $attribute, mixed $value, \Closure $fail): void {
+                    $value = trim((string) $value);
+                    if ($value !== '' && str_starts_with($value, '+')) {
+                        (new Telephone)->validate($attribute, $value, $fail);
+                    }
+                },
+            ],
             'password' => ['required', 'string'],
         ];
     }
@@ -60,7 +70,7 @@ class LoginRequest extends FormRequest
             ]);
         }
 
-        if (! $user->is_active) {
+        if (! $user->allowsLogin()) {
             RateLimiter::hit($this->throttleKey());
 
             throw ValidationException::withMessages([

@@ -2,6 +2,7 @@
 
 namespace Tests\Feature\Auth;
 
+use App\Enums\AccountStatusEnum;
 use App\Models\User;
 use App\Providers\RouteServiceProvider;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -62,7 +63,7 @@ class AuthenticationTest extends TestCase
 
     public function test_users_can_authenticate_using_their_pension_code(): void
     {
-        $user = User::factory()->create(['pension_code' => '8-34321']);
+        $user = $this->createPensionneUser([], '8-34321');
 
         $response = $this->post('/login', [
             'login' => '8-34321',
@@ -73,6 +74,32 @@ class AuthenticationTest extends TestCase
         $response->assertRedirect(RouteServiceProvider::HOME);
     }
 
+    public function test_users_can_authenticate_using_their_phone(): void
+    {
+        $user = User::factory()->create(['phone' => '+50938123456']);
+
+        $response = $this->post('/login', [
+            'login' => '+50938123456',
+            'password' => 'password',
+        ]);
+
+        $this->assertAuthenticatedAs($user);
+        $response->assertRedirect(RouteServiceProvider::HOME);
+    }
+
+    public function test_users_cannot_authenticate_with_phone_missing_international_prefix(): void
+    {
+        User::factory()->create(['phone' => '+50938123456']);
+
+        $this->post('/login', [
+            'login' => '50938123456',
+            'password' => 'password',
+        ]);
+
+        $this->assertGuest();
+    }
+
+    /** Username is not an accepted login identifier (phone, email, NIF, pension code only). */
     public function test_users_cannot_authenticate_using_their_username(): void
     {
         $user = User::factory()->create(['username' => 'jean.pierre']);
@@ -96,6 +123,20 @@ class AuthenticationTest extends TestCase
 
         $this->assertAuthenticatedAs($user);
         $response->assertRedirect(RouteServiceProvider::HOME);
+    }
+
+    public function test_users_with_desactive_account_cannot_authenticate(): void
+    {
+        $user = User::factory()->create([
+            'account_status' => AccountStatusEnum::DESACTIVE,
+        ]);
+
+        $this->post('/login', [
+            'login' => $user->email,
+            'password' => 'password',
+        ]);
+
+        $this->assertGuest();
     }
 
     public function test_users_can_not_authenticate_with_invalid_password(): void

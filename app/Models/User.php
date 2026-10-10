@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Enums\AccountStatusEnum;
 use App\Models\Gender;
 use App\Models\Service;
 use Illuminate\Support\Str;
@@ -9,6 +10,11 @@ use Laravel\Sanctum\HasApiTokens;
 use Spatie\Permission\Traits\HasRoles;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
+use App\Services\Account\UserCategoryResolver;
+use App\Services\Pension\ActivePensionContext;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 
 class User extends Authenticatable
@@ -22,9 +28,13 @@ class User extends Authenticatable
     public const ROLE_VALIDATEUR_RDV = 'validateur_rdv';
     public const ROLE_AGENT_FORMALITES = 'agent_formalites';
 
-    public const STATUS_ACTIF = 'actif';
+    /** @deprecated Use AccountStatusEnum::ACTIF */
+    public const STATUS_ACTIF = AccountStatusEnum::ACTIF->value;
 
-    public const STATUS_EN_ATTENTE_VALIDATION = 'en_attente_validation';
+    /** @deprecated Use AccountStatusEnum::PROVISOIRE */
+    public const STATUS_EN_ATTENTE_VALIDATION = AccountStatusEnum::PROVISOIRE->value;
+
+    public const STATUS_PROVISOIRE = AccountStatusEnum::PROVISOIRE->value;
 
     /** @var list<string> */
     public const DIRECTION_ROLES = [
@@ -48,10 +58,8 @@ class User extends Authenticatable
         'password',
         'nif',
         'ninu',
-        'user_type_id',
         'service_id',
-        'pension_code',
-        'is_active',
+        'institution_id',
         'account_status',
         'gender_id',
         'profile_photo',
@@ -77,7 +85,7 @@ class User extends Authenticatable
     protected $casts = [
         'email_verified_at' => 'datetime',
         'password' => 'hashed',
-        'is_active' => 'boolean',
+        'account_status' => AccountStatusEnum::class,
     ];
 
     protected static function booted(): void
@@ -171,6 +179,11 @@ class User extends Authenticatable
         return preg_replace('/\D+/', '', $value) ?? '';
     }
 
+    /**
+     * Resolve a user for authentication or password reset.
+     *
+     * Accepted identifiers: phone, email, pension code, NIF — not username.
+     */
     public static function findForLogin(string $identifier): ?self
     {
         $identifier = trim($identifier);
@@ -179,16 +192,56 @@ class User extends Authenticatable
             return null;
         }
 
+        /*
+        * 1. Téléphone (format international obligatoire : +indicatif…)
+        */
+        $user = self::findByTelephone($identifier);
+
+        if ($user) {
+            return $user;
+        }
+
+        /*
+        * 2. Email
+        */
         if (str_contains($identifier, '@')) {
             return static::query()
                 ->whereRaw('LOWER(email) = ?', [mb_strtolower($identifier)])
                 ->first();
         }
 
-        $compact = strtoupper(preg_replace('/\s+/', '', $identifier) ?? '');
+        /*
+        * 3. Normalisation des identifiants numériques
+        */
+        $compact = strtoupper(
+            preg_replace('/\s+/', '', $identifier) ?? ''
+        );
+
         $digits = self::normalizeDigits($identifier);
-        $looksLikePension = (bool) preg_match('/^\d-?\d{5}$/', $compact);
-        $looksLikeNif = (bool) preg_match('/^\d{3}-?\d{3}-?\d{3}-?\d$/', $compact) || strlen($digits) === 10;
+
+        /*
+        * 4. Code pension (aligné sur App\Rules\CodePension)
+        *
+        * Exemples :
+        * 8-12345, 812345
+        * 7-JM183
+        */
+        $looksLikePension = (bool) preg_match(
+            '/^(7-[A-Z0-9]{5}|8-?\d{5})$/i',
+            $compact
+        );
+
+        /*
+        * 5. NIF
+        *
+        * Exemples :
+        * 123-456-789-0
+        * 1234567890
+        */
+        $looksLikeNif = (bool) preg_match(
+            '/^\d{3}-?\d{3}-?\d{3}-?\d$/',
+            $compact
+        ) || strlen($digits) === 10;
 
         if ($looksLikePension) {
             return self::findByPensionCode($identifier);
@@ -198,7 +251,12 @@ class User extends Authenticatable
             return self::findByNif($identifier);
         }
 
-        return self::findByPensionCode($identifier) ?? self::findByNif($identifier);
+        /*
+        * 6. Format non reconnu :
+        * essayer pension puis NIF.
+        */
+        return self::findByPensionCode($identifier)
+            ?? self::findByNif($identifier);
     }
 
     public static function findByNif(string $nif): ?self
@@ -216,21 +274,26 @@ class User extends Authenticatable
 
     public static function findByPensionCode(string $code): ?self
     {
-        $compact = strtoupper(preg_replace('/\s+/', '', trim($code)) ?? '');
-        $digits = self::normalizeDigits($code);
+        $affiliation = AffiliationPension::findByCode($code);
 
-        if ($compact === '') {
-            return null;
+        if ($affiliation) {
+            $beneficiaire = $affiliation->beneficiaire;
+
+            if ($beneficiaire) {
+                $selfLink = UserBeneficiaireLink::query()
+                    ->where('beneficiaire_id', $beneficiaire->id)
+                    ->where('relation', \App\Enums\BeneficiaireRelationEnum::SELF->value)
+                    ->first();
+
+                $linkUser = $selfLink?->user ?? $beneficiaire->users()->first();
+
+                if ($linkUser) {
+                    return $linkUser;
+                }
+            }
         }
 
-        return static::query()
-            ->where(function ($query) use ($compact, $digits) {
-                $query->whereRaw("UPPER(REPLACE(COALESCE(pension_code, ''), ' ', '')) = ?", [$compact]);
-                if ($digits !== '') {
-                    $query->orWhereRaw(self::digitsSql('pension_code').' = ?', [$digits]);
-                }
-            })
-            ->first();
+        return null;
     }
 
     public static function findByNinu(string $ninu): ?self
@@ -248,6 +311,12 @@ class User extends Authenticatable
 
     public static function findByTelephone(string $phone): ?self
     {
+        $phone = preg_replace('/\s+/', '', trim($phone)) ?? '';
+
+        if ($phone === '' || ! str_starts_with($phone, '+')) {
+            return null;
+        }
+
         $digits = self::normalizeDigits($phone);
 
         if ($digits === '') {
@@ -271,7 +340,7 @@ class User extends Authenticatable
 
     public static function pensionCodeExists(string $code): bool
     {
-        return self::findByPensionCode($code) !== null;
+        return AffiliationPension::codeExists($code);
     }
 
     public static function telephoneExists(string $phone): bool
@@ -279,9 +348,25 @@ class User extends Authenticatable
         return self::findByTelephone($phone) !== null;
     }
 
+    public function routeNotificationForTwilio(): ?string
+    {
+        $phone = preg_replace('/\s+/', '', trim((string) ($this->phone ?? ''))) ?? '';
+
+        if ($phone === '') {
+            return null;
+        }
+
+        return str_starts_with($phone, '+') ? $phone : null;
+    }
+
+    public static function digitsComparisonSql(string $column): string
+    {
+        return self::digitsSql($column);
+    }
+
     private static function digitsSql(string $column): string
     {
-        return "REPLACE(REPLACE(REPLACE(COALESCE({$column}, ''), '-', ''), ' ', ''), '.', '')";
+        return "REPLACE(REPLACE(REPLACE(REPLACE(COALESCE({$column}, ''), '-', ''), ' ', ''), '.', ''), '+', '')";
     }
 
     public static function usernameExists(string $username): bool
@@ -298,9 +383,80 @@ class User extends Authenticatable
             ->exists();
     }
 
-    public function userType()
+    /** Historique des demandes de création de compte liées à cet utilisateur. */
+    public function demandesCreationCompte(): HasMany
     {
-        return $this->belongsTo(UserType::class);
+        return $this->hasMany(DemandeCreationCompte::class);
+    }
+
+    /** Dernière demande de création de compte (lien provisoire → permanent via {@see DemandeCreationCompte::$user_id}). */
+    public function demandeCreationCompte(): HasOne
+    {
+        return $this->hasOne(DemandeCreationCompte::class)->latestOfMany();
+    }
+
+    public function categoryAssignments(): HasMany
+    {
+        return $this->hasMany(UserCategoryAssignment::class);
+    }
+
+    public function institution(): \Illuminate\Database\Eloquent\Relations\BelongsTo
+    {
+        return $this->belongsTo(Institution::class);
+    }
+
+    public function categories(): BelongsToMany
+    {
+        return $this->belongsToMany(UserCategory::class, 'user_category_assignments', 'user_id', 'user_category_code')
+            ->withPivot(['is_primary', 'valid_from', 'valid_until'])
+            ->withTimestamps();
+    }
+
+    public function categoryResolver(): UserCategoryResolver
+    {
+        return UserCategoryResolver::for($this);
+    }
+
+    public function hasCategory(string $code): bool
+    {
+        return $this->categoryResolver()->hasCategory($code);
+    }
+
+    public function primaryCategoryCode(): ?string
+    {
+        return $this->categoryResolver()->primaryCategoryCode();
+    }
+
+    public function hasPensionPortalAccess(): bool
+    {
+        return $this->categoryResolver()->hasPensionPortalAccess();
+    }
+
+    public function hasAgentPortalAccess(): bool
+    {
+        return $this->categoryResolver()->hasAgentPortalAccess();
+    }
+
+    public function beneficiaireLinks(): HasMany
+    {
+        return $this->hasMany(UserBeneficiaireLink::class);
+    }
+
+    public function beneficiaires(): BelongsToMany
+    {
+        return $this->belongsToMany(Beneficiaire::class, 'user_beneficiaire_links')
+            ->withPivot(['relation', 'valid_from', 'valid_until'])
+            ->withTimestamps();
+    }
+
+    public function pensionMandats(): HasMany
+    {
+        return $this->hasMany(PensionMandat::class);
+    }
+
+    public function pensionContext(): ActivePensionContext
+    {
+        return ActivePensionContext::for($this);
     }
 
     public function service()
@@ -318,24 +474,74 @@ class User extends Authenticatable
         return $this->hasAnyRole(self::DIRECTION_ROLES);
     }
 
+    public function resolvedAccountStatus(): AccountStatusEnum
+    {
+        return AccountStatusEnum::tryFromStored($this->account_status)
+            ?? AccountStatusEnum::default();
+    }
+
     public function isProvisionnel(): bool
     {
-        return ($this->account_status ?: self::STATUS_ACTIF) === self::STATUS_EN_ATTENTE_VALIDATION;
+        return $this->resolvedAccountStatus()->isProvisionnel();
     }
 
     public function canAccessFullServices(): bool
     {
-        return $this->is_active && ! $this->isProvisionnel();
+        return $this->resolvedAccountStatus()->isActif();
+    }
+
+    /** Identifiants pension (NIF, code) visibles uniquement pour un compte actif. */
+    public function exposesPensionIdentity(): bool
+    {
+        return $this->canAccessFullServices();
+    }
+
+    public function displayNif(): ?string
+    {
+        return $this->exposesPensionIdentity() ? $this->nif : null;
+    }
+
+    public function displayPensionCode(): ?string
+    {
+        if (! $this->exposesPensionIdentity()) {
+            return null;
+        }
+
+        return $this->pensionContext()->displayPensionCode();
+    }
+
+    public function allowsLogin(): bool
+    {
+        return $this->resolvedAccountStatus()->allowsLogin();
     }
 
     public function activateAccount(): void
     {
-        $this->update(['account_status' => self::STATUS_ACTIF]);
+        $this->update(['account_status' => AccountStatusEnum::ACTIF]);
+    }
+
+    public function toggleAdministrativeAccess(): void
+    {
+        $status = $this->resolvedAccountStatus();
+
+        $this->update([
+            'account_status' => $status->allowsLogin()
+                ? AccountStatusEnum::DESACTIVE
+                : AccountStatusEnum::ACTIF,
+        ]);
     }
 
     public function accountStatusLabel(): string
     {
-        return $this->isProvisionnel() ? 'En attente de validation' : 'Actif';
+        return $this->resolvedAccountStatus()->label();
+    }
+
+    public function scopeAccountOperational($query)
+    {
+        return $query->where(
+            'account_status',
+            AccountStatusEnum::ACTIF->value
+        );
     }
 
     public function displayName(): string

@@ -10,39 +10,40 @@
         </h2>
 
         <p class="text-base text-gray-700 mt-1">
-            Saisissez votre e-mail pour recevoir un lien de réinitialisation.
+            {{ __('messages.forgot_password_instructions') }}
         </p>
     </div>
 
     <form method="POST" action="{{ route('password.email') }}" class="space-y-5">
         @csrf
 
-        {{-- Email --}}
+        {{-- Identifiant --}}
         <div>
-            <label for="email" class="block text-base font-medium text-gray-700 mb-1">
-                {{ __('messages.email') }}
+            <label for="login" class="block text-base font-medium text-gray-700 mb-1">
+                {{ __('messages.login_identifier') }}
             </label>
 
             <div class="relative">
                 <span class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-400">
-                    <i class="fas fa-envelope text-sm"></i>
+                    <i class="fas fa-user text-sm"></i>
                 </span>
 
                 <input
-                    id="email"
-                    type="email"
-                    name="email"
-                    value="{{ old('email') }}"
+                    id="login"
+                    type="text"
+                    name="login"
+                    value="{{ old('login', old('email')) }}"
                     required
                     autofocus
-                    autocomplete="email"
-                    class="w-full py-2.5 border rounded-lg text-base focus:outline-none focus:ring-2 transition {{ $errors->has('email') ? 'border-red-400 focus:ring-red-400' : 'border-gray-300 focus:ring-blue-500 focus:border-blue-500' }}"
+                    autocomplete="username"
+                    class="w-full py-2.5 border rounded-lg text-base focus:outline-none focus:ring-2 transition {{ $errors->has('login') ? 'border-red-400 focus:ring-red-400' : 'border-gray-300 focus:ring-blue-500 focus:border-blue-500' }}"
                     style="padding-left: 2.25rem; padding-right: 1rem;"
-                    placeholder="votre@email.com"
+                    placeholder="{{ __('messages.login_identifier_placeholder') }}"
                 >
             </div>
 
-            <x-input-error :messages="$errors->get('email')" class="mt-1.5" />
+            <p class="mt-1.5 text-sm text-gray-500">{{ __('messages.login_phone_format_hint') }}</p>
+            <x-input-error :messages="$errors->get('login')" class="mt-1.5" />
         </div>
 
         {{-- Submit --}}
@@ -51,7 +52,7 @@
             class="w-full py-3 px-4 bg-[#173052] hover:bg-orange-600 active:bg-orange-700 text-white font-semibold text-base rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-orange-500 focus:ring-offset-2 mt-2"
         >
             <i class="fas fa-paper-plane mr-2"></i>
-            Envoyer le lien de réinitialisation
+            {{ __('messages.send_reset_link') }}
         </button>
 
         {{-- Retour à la connexion --}}

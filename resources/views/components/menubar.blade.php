@@ -345,6 +345,14 @@
                         </a>
                     </li>
                 @endrole
+                @role(\App\Models\User::ROLE_AGENT_RDV)
+                    <li class="w-full md:w-auto border-b md:border-none">
+                        <a href="{{ route('rencontres.pilotage.disponibilites.edit') }}"
+                           class="block px-4 py-3 text-slate-700 hover:text-orange-500 text-base font-medium truncate-text focus:outline-none focus:ring-2">
+                            Mes créneaux RDV
+                        </a>
+                    </li>
+                @endrole
             @endauth
 
             <!-- Simulateur de calcul -->

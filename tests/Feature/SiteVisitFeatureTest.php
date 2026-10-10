@@ -11,6 +11,15 @@ class SiteVisitFeatureTest extends TestCase
 {
     use RefreshDatabase;
 
+    protected function setUp(): void
+    {
+        parent::setUp();
+
+        SiteVisit::query()->delete();
+        \Illuminate\Support\Facades\DB::table('site_visit_ips')->delete();
+        \Illuminate\Support\Facades\Cache::forget('site_visits.summary');
+    }
+
     /** @test */
     public function public_home_page_increments_hits_and_unique_visitor_once_per_session(): void
     {
@@ -48,7 +57,7 @@ class SiteVisitFeatureTest extends TestCase
     /** @test */
     public function admin_and_bot_requests_are_not_counted(): void
     {
-        $this->get('/admin/dashboard');
+        $this->withoutFollowingRedirects()->get('/admin/dashboard');
         $this->withHeaders(['User-Agent' => 'Googlebot'])->get('/');
 
         $this->assertSame(0, SiteVisit::query()->sum('hits'));
@@ -57,11 +66,10 @@ class SiteVisitFeatureTest extends TestCase
     /** @test */
     public function summary_aggregates_totals(): void
     {
-        SiteVisit::create([
-            'visited_on' => now()->toDateString(),
-            'hits' => 5,
-            'visitors' => 2,
-        ]);
+        SiteVisit::query()->updateOrCreate(
+            ['visited_on' => now()->toDateString()],
+            ['hits' => 5, 'visitors' => 2]
+        );
         SiteVisit::create([
             'visited_on' => now()->subDays(2)->toDateString(),
             'hits' => 3,
@@ -79,11 +87,10 @@ class SiteVisitFeatureTest extends TestCase
     /** @test */
     public function daily_series_includes_today_and_empty_days(): void
     {
-        SiteVisit::create([
-            'visited_on' => now()->toDateString(),
-            'hits' => 4,
-            'visitors' => 2,
-        ]);
+        SiteVisit::query()->updateOrCreate(
+            ['visited_on' => now()->toDateString()],
+            ['hits' => 4, 'visitors' => 2]
+        );
 
         $daily = app(SiteVisitService::class)->dailySeries(7);
 

@@ -8,8 +8,10 @@ use App\Services\OCR\GoogleDocumentAiOcrService;
 use App\Services\OCR\GoogleVisionOcrService;
 use App\Services\OCR\OcrService;
 use App\Services\OCR\TesseractOcrService;
-use Illuminate\Support\ServiceProvider;
+use App\Notifications\Channels\TwilioSmsChannel;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Facades\Notification;
+use Illuminate\Support\ServiceProvider;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -26,6 +28,8 @@ class AppServiceProvider extends ServiceProvider
 
     public function boot(): void
     {
+        Notification::extend('twilio', fn () => $this->app->make(TwilioSmsChannel::class));
+
         Demande::observe(DemandeObserver::class);
 
         Gate::after(function ($user, $ability) {

@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
-    <title>{{ $demande->code }}</title>
+    <title>{{ $demande->libellePublic() }}</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
 
@@ -281,7 +281,6 @@
                     {{ str_replace('_', ' ', ucwords(strtolower($demande->type), '_')) }}
                 </span>
                 <div class="ref-block">
-                    <strong>Référence :</strong> {{ $demande->code }}<br>
                     <strong>Émis le :</strong> {{ now()->format('d/m/Y') }}<br>
                     @if($demande->service)
                         <strong>Service :</strong> {{ $demande->service->nom }}
@@ -328,8 +327,8 @@
         <div class="section-body">
             <table class="info info-2col">
                 <tr>
-                    <td class="label">N° Dossier</td>
-                    <td class="value">{{ $demande->code }}</td>
+                    <td class="label">Dossier</td>
+                    <td class="value">{{ $demande->libellePublic() }}</td>
                     <td class="label">Type</td>
                     <td class="value">{{ str_replace('_', ' ', ucwords(strtolower($demande->type), '_')) }}</td>
                 </tr>
@@ -429,7 +428,6 @@
     </div>
     <div class="footer-right">
         Généré le {{ now()->format('d/m/Y à H:i') }}<br>
-        Réf : {{ $demande->code }}
     </div>
 </div>
 

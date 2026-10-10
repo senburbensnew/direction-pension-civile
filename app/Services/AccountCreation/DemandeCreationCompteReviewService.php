@@ -2,10 +2,15 @@
 
 namespace App\Services\AccountCreation;
 
+use App\Enums\AccountStatusEnum;
 use App\Models\DemandeCreationCompte;
 use App\Models\DemandeCreationCompteHistory;
 use App\Models\User;
+use App\Services\Pension\BeneficiaireProvisioningService;
+use App\Notifications\DemandeCreationCompteAccepteeNotification;
+use App\Notifications\DemandeCreationCompteRefuseeNotification;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Notification;
 use Illuminate\Validation\ValidationException;
 
 class DemandeCreationCompteReviewService
@@ -39,6 +44,7 @@ class DemandeCreationCompteReviewService
         $name = trim($firstname.' '.$lastname);
 
         DB::transaction(function () use ($demande, $reviewer, $user, $firstname, $lastname, $name, $email) {
+            $demande = $demande->fresh();
             $user->fill([
                 'firstname' => $firstname !== '' ? $firstname : $user->firstname,
                 'lastname' => $lastname !== '' ? $lastname : $user->lastname,
@@ -46,8 +52,9 @@ class DemandeCreationCompteReviewService
             ]);
             if ($email !== '') {
                 $user->email = $email;
+                $user->email_verified_at = now();
             }
-            $user->account_status = User::STATUS_ACTIF;
+            $user->account_status = AccountStatusEnum::ACTIF;
             $user->save();
 
             $demande->update([
@@ -56,12 +63,11 @@ class DemandeCreationCompteReviewService
                 'email' => $email !== '' ? $email : $demande->email,
                 'status' => DemandeCreationCompte::STATUS_ACCEPTEE,
                 'user_id' => $user->id,
-                'reviewed_by' => $reviewer->id,
-                'reviewed_at' => now(),
+                'traitee_par' => $reviewer->id,
+                'approuvee_at' => now(),
+                'rejetee_at' => null,
                 'refusal_reason' => null,
             ]);
-
-            $demande->purgeIdentityDocuments();
 
             $demande->recordHistory(
                 DemandeCreationCompteHistory::EVENT_ACCEPTEE,
@@ -77,16 +83,25 @@ class DemandeCreationCompteReviewService
                 DemandeCreationCompte::STATUS_ACCEPTEE,
                 ['user_id' => $user->id]
             );
-            $demande->recordHistory(
-                DemandeCreationCompteHistory::EVENT_PIECES_SUPPRIMEES,
-                'Pièces d’identité supprimées après acceptation pour libérer l’espace.',
-                $reviewer,
-                DemandeCreationCompte::STATUS_ACCEPTEE,
-                ['fichiers_effaces' => true]
-            );
+
+            $provisioning = app(BeneficiaireProvisioningService::class);
+
+            if ($demande->is_mineur) {
+                $provisioning->provisionFromDemandeCreation(
+                    $user->fresh(),
+                    $demande,
+                    is_array($demande->ocr_documents) ? $demande->ocr_documents : [],
+                    true
+                );
+            } else {
+                $provisioning->provisionAdultSelf($user->fresh(), $demande);
+            }
         });
 
-        return ['user' => $user->fresh(), 'password' => null];
+        $user = $user->fresh();
+        $user->notify(new DemandeCreationCompteAccepteeNotification($demande->fresh()));
+
+        return ['user' => $user, 'password' => null];
     }
 
     public function refuse(DemandeCreationCompte $demande, User $reviewer, string $reason): void
@@ -101,15 +116,23 @@ class DemandeCreationCompteReviewService
             ]);
         }
 
-        DB::transaction(function () use ($demande, $reviewer, $reason) {
-            $user = $demande->user;
+        $user = $demande->user;
+        $contactEmail = $demande->email ?: $user?->email;
+        $contactPhone = $demande->telephone ?: $user?->phone;
+
+        DB::transaction(function () use ($demande, $reviewer, $reason, $user) {
+            if ($user) {
+                $user->update(['account_status' => AccountStatusEnum::BLOQUE]);
+            }
 
             $demande->update([
                 'status' => DemandeCreationCompte::STATUS_REFUSEE,
                 'refusal_reason' => $reason,
-                'reviewed_by' => $reviewer->id,
-                'reviewed_at' => now(),
+                'traitee_par' => $reviewer->id,
+                'rejetee_at' => now(),
+                'approuvee_at' => null,
             ]);
+
             $demande->recordHistory(
                 DemandeCreationCompteHistory::EVENT_REFUSEE,
                 'Demande refusée. Motif : '.$reason,
@@ -118,15 +141,26 @@ class DemandeCreationCompteReviewService
                 ['user_id' => $user?->id]
             );
             $demande->recordHistory(
-                DemandeCreationCompteHistory::EVENT_COMPTE_SUPPRIME,
-                'Compte provisoire et informations personnelles supprimés.',
+                DemandeCreationCompteHistory::EVENT_COMPTE_BLOQUE,
+                'Compte provisoire bloqué après refus du dossier.',
                 $reviewer,
                 DemandeCreationCompte::STATUS_REFUSEE,
-                ['user_id' => $user?->id, 'donnees_effacees' => true]
+                [
+                    'user_id' => $user?->id,
+                    'account_status' => AccountStatusEnum::BLOQUE->value,
+                ]
             );
-            $demande->purgePersonalData();
-            $user?->delete();
         });
+
+        $notification = new DemandeCreationCompteRefuseeNotification($demande->fresh(), $reason);
+
+        if (filled($contactEmail)) {
+            $routes = Notification::route('mail', $contactEmail);
+            if (filled($contactPhone)) {
+                $routes->route('twilio', preg_replace('/\s+/', '', trim((string) $contactPhone)));
+            }
+            $routes->notify($notification);
+        }
     }
 
     private function assertPending(DemandeCreationCompte $demande): void
@@ -140,9 +174,26 @@ class DemandeCreationCompteReviewService
 
     private function assertRendezVousRealise(DemandeCreationCompte $demande): void
     {
-        if (! $demande->hasRendezVousRealise()) {
+        $rdv = $demande->rendezVousFinalisation();
+
+        if (! $rdv) {
+            throw ValidationException::withMessages([
+                'status' => 'Aucun rendez-vous de finalisation n’est enregistré pour ce dossier.',
+            ]);
+        }
+
+        if ($rdv->rencontreStatut() !== \App\Enums\RencontreStatutEnum::REALISE) {
             throw ValidationException::withMessages([
                 'status' => 'La décision n’est possible qu’après un rendez-vous réalisé.',
+            ]);
+        }
+
+        if (! $rdv->rencontreHeureEstPassee()) {
+            $at = $rdv->rencontreScheduledAt();
+            $label = $at?->format('d/m/Y à H:i') ?? 'l’heure prévue';
+
+            throw ValidationException::withMessages([
+                'status' => "La décision n’est possible qu’après l’heure du rendez-vous ({$label}).",
             ]);
         }
     }

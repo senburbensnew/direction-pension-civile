@@ -19,9 +19,13 @@ class DemandeCreationCompteHistory extends Model
 
     public const EVENT_COMPTE_SUPPRIME = 'COMPTE_SUPPRIME';
 
+    public const EVENT_COMPTE_BLOQUE = 'COMPTE_BLOQUE';
+
     public const EVENT_COMPTE_ACTIVE = 'COMPTE_ACTIVE';
 
     public const EVENT_RDV_REALISE = 'RDV_REALISE';
+
+    public const EVENT_MODIFIEE = 'MODIFIEE';
 
     protected $fillable = [
         'demande_creation_compte_id',
@@ -55,8 +59,10 @@ class DemandeCreationCompteHistory extends Model
             self::EVENT_PIECES_SUPPRIMEES => 'Pièces jointes supprimées',
             self::EVENT_REFUSEE => 'Dossier refusé',
             self::EVENT_COMPTE_SUPPRIME => 'Compte et données supprimés',
+            self::EVENT_COMPTE_BLOQUE => 'Compte bloqué après refus',
             self::EVENT_COMPTE_ACTIVE => 'Compte activé',
             self::EVENT_RDV_REALISE => 'Rendez-vous réalisé',
+            self::EVENT_MODIFIEE => 'Informations mises à jour',
             default => $this->event,
         };
     }

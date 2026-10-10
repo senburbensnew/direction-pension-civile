@@ -8,6 +8,7 @@ use App\Models\Demande;
 use App\Models\Service;
 use App\Models\User;
 use App\Models\WorkflowStep;
+use Database\Seeders\WorkflowSteps\RencontreWorkflowStepSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 use Tests\Traits\SeedsRequiredData;
@@ -22,6 +23,18 @@ class RencontreFormalitesWorkflowTest extends TestCase
         $this->seedStatuses();
         $this->seedServices();
         $this->seedRoles();
+        $this->seed(RencontreWorkflowStepSeeder::class);
+        $this->makeFormalitesAgent();
+    }
+
+    private function makeFormalitesAgent(): User
+    {
+        $agent = User::factory()->create([
+            'service_id' => Service::where('code', Service::FORMALITE)->value('id'),
+        ]);
+        $agent->assignRole(User::ROLE_AGENT_RDV);
+
+        return $agent;
     }
 
     private function manager(): User
@@ -40,8 +53,9 @@ class RencontreFormalitesWorkflowTest extends TestCase
             'type' => TypeDemandeEnum::DEMANDE_RENCONTRE->value,
             'created_by' => User::factory()->create()->id,
             'current_service_id' => Service::where('code', Service::FORMALITE)->value('id'),
-            'current_step_id' => WorkflowStep::idForCode('SOUMISE'),
+            'current_step_id' => WorkflowStep::idForCode('SOUMISE', TypeDemandeEnum::DEMANDE_RENCONTRE->value),
             'data' => array_merge([
+                'motif_key' => 'demande_formalites_mandats',
                 'objet' => 'Formalités de pension',
                 'modalite' => 'physique',
                 'date_souhaitee' => now()->next('Wednesday')->toDateString(),
@@ -57,37 +71,49 @@ class RencontreFormalitesWorkflowTest extends TestCase
     {
         $manager = $this->manager();
         $demande = $this->demande();
+        $show = route('rencontres.pilotage.show', $demande);
 
-        $this->actingAs($manager)
+        $this->from($show)->actingAs($manager)
             ->post(route('rencontres.pilotage.examiner', $demande))
-            ->assertRedirect(route('rencontres.pilotage.show', $demande));
+            ->assertRedirect($show)
+            ->assertSessionHas('success');
         $this->assertSame(RencontreStatutEnum::EN_COURS, $demande->fresh()->rencontreStatut());
 
-        $this->actingAs($manager)
+        $this->from($show)->actingAs($manager)
             ->post(route('rencontres.pilotage.attribuer', $demande))
-            ->assertRedirect(route('rencontres.pilotage.show', $demande));
+            ->assertRedirect($show)
+            ->assertSessionHas('success');
         $this->assertSame(RencontreStatutEnum::ATTRIBUE, $demande->fresh()->rencontreStatut());
 
-        $this->actingAs($manager)
+        $this->from($show)->actingAs($manager)
             ->post(route('rencontres.pilotage.accepter', $demande))
-            ->assertRedirect(route('rencontres.pilotage.show', $demande));
+            ->assertRedirect($show)
+            ->assertSessionHas('success');
 
         $demande->refresh();
-        $this->assertSame(RencontreStatutEnum::VALIDE, $demande->rencontreStatut());
+        $this->assertSame(RencontreStatutEnum::ACTIF, $demande->rencontreStatut());
         $this->assertSame($demande->code, $demande->data['confirmation']['numero'] ?? null);
         $this->assertSame('Présentiel', $demande->data['confirmation']['mode'] ?? null);
         $this->assertSame('Siège DPC', $demande->data['confirmation']['lieu'] ?? null);
         $this->assertDatabaseHas('demande_histories', [
             'demande_id' => $demande->id,
-            'event' => 'VALIDATED',
+            'event' => 'ACTIVATED',
         ]);
 
-        $this->actingAs($manager)
+        $demande->update([
+            'data' => array_merge($demande->fresh()->data ?? [], [
+                'date_souhaitee' => now()->subDay()->toDateString(),
+                'heure_souhaitee' => '09:00',
+            ]),
+        ]);
+
+        $this->from($show)->actingAs($manager)
             ->post(route('rencontres.pilotage.clore', $demande), [
                 'statut' => RencontreStatutEnum::REALISE->value,
                 'commentaire' => 'Entretien tenu.',
             ])
-            ->assertRedirect(route('rencontres.pilotage.show', $demande));
+            ->assertRedirect($show)
+            ->assertSessionHas('success');
 
         $this->assertSame(RencontreStatutEnum::REALISE, $demande->fresh()->rencontreStatut());
         $this->assertDatabaseHas('demande_histories', [
@@ -101,14 +127,16 @@ class RencontreFormalitesWorkflowTest extends TestCase
     {
         $manager = $this->manager();
         $demande = $this->demande();
+        $show = route('rencontres.pilotage.show', $demande);
         $date = now()->next('Thursday')->toDateString();
 
-        $this->actingAs($manager)
+        $this->from($show)->actingAs($manager)
             ->post(route('rencontres.pilotage.proposer-creneau', $demande), [
                 'date_souhaitee' => $date,
                 'heure_souhaitee' => '14:30',
             ])
-            ->assertRedirect(route('rencontres.pilotage.show', $demande));
+            ->assertRedirect($show)
+            ->assertSessionHas('success');
 
         $demande->refresh();
         $this->assertSame($date, $demande->data['date_souhaitee']);

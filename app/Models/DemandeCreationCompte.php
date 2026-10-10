@@ -30,6 +30,7 @@ class DemandeCreationCompte extends Model implements HasMedia
         'identite_representant_permis' => 'Permis du représentant',
         'identite_representant_passeport' => 'Passeport du représentant',
         'identite_representant_cin' => 'CIN du représentant',
+        'matricule_fiscal' => 'Matricule fiscal',
     ];
 
     protected $fillable = [
@@ -48,6 +49,7 @@ class DemandeCreationCompte extends Model implements HasMedia
         'pension_code',
         'is_mineur',
         'representant_lien',
+        'representant_est_pensionne',
         'piece_identite_representant_type',
         'pieces_identite',
         'ocr_fields',
@@ -59,13 +61,16 @@ class DemandeCreationCompte extends Model implements HasMedia
         'refusal_reason',
         'accepted_terms_at',
         'status',
-        'reviewed_at',
-        'reviewed_by',
+        'soumise_at',
+        'approuvee_at',
+        'rejetee_at',
+        'traitee_par',
         'user_id',
     ];
 
     protected $casts = [
         'is_mineur' => 'boolean',
+        'representant_est_pensionne' => 'boolean',
         'pieces_identite' => 'array',
         'ocr_fields' => 'array',
         'ocr_documents' => 'array',
@@ -73,7 +78,9 @@ class DemandeCreationCompte extends Model implements HasMedia
         'verification_mismatches' => 'array',
         'submitted_payload' => 'array',
         'accepted_terms_at' => 'datetime',
-        'reviewed_at' => 'datetime',
+        'soumise_at' => 'datetime',
+        'approuvee_at' => 'datetime',
+        'rejetee_at' => 'datetime',
     ];
 
     public function registerMediaCollections(): void
@@ -86,6 +93,7 @@ class DemandeCreationCompte extends Model implements HasMedia
         $this->addMediaCollection('identite_representant_permis')->singleFile();
         $this->addMediaCollection('identite_representant_passeport')->singleFile();
         $this->addMediaCollection('identite_representant_cin')->singleFile();
+        $this->addMediaCollection('matricule_fiscal')->singleFile();
     }
 
     public function user(): BelongsTo
@@ -93,9 +101,25 @@ class DemandeCreationCompte extends Model implements HasMedia
         return $this->belongsTo(User::class);
     }
 
+    public function traiteePar(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'traitee_par');
+    }
+
+    /** @deprecated Use traiteePar() */
     public function reviewer(): BelongsTo
     {
-        return $this->belongsTo(User::class, 'reviewed_by');
+        return $this->traiteePar();
+    }
+
+    public function traiteeLe(): ?\Illuminate\Support\Carbon
+    {
+        return $this->approuvee_at ?? $this->rejetee_at;
+    }
+
+    public function libellePublic(): string
+    {
+        return 'Demande de création de compte';
     }
 
     public function histories(): HasMany
@@ -134,22 +158,72 @@ class DemandeCreationCompte extends Model implements HasMedia
         return $this->status === self::STATUS_EN_ATTENTE;
     }
 
-    public function hasRendezVousRealise(): bool
+    /** Motif RDV pour finaliser l’ouverture de compte (Service Formalités). */
+    public const MOTIF_RDV_FINALISATION = 'demande_formalites_mandats';
+
+    /** @deprecated Ancien libellé technique — conservé pour les dossiers déjà déposés. */
+    public const LEGACY_MOTIF_RDV_FINALISATION = 'finalisation_creation_compte';
+
+    /**
+     * @return list<string>
+     */
+    public static function rdvFinalisationMotifKeys(): array
+    {
+        return array_values(array_unique([
+            self::MOTIF_RDV_FINALISATION,
+            self::LEGACY_MOTIF_RDV_FINALISATION,
+        ]));
+    }
+
+    /**
+     * Dernier rendez-vous « finalisation de compte » du demandeur (tous statuts).
+     */
+    public function rendezVousFinalisation(): ?Demande
     {
         if (! $this->user_id) {
-            return false;
+            return null;
         }
 
         return Demande::query()
             ->where('type', TypeDemandeEnum::DEMANDE_RENCONTRE->value)
             ->where('created_by', $this->user_id)
-            ->where('data->rdv_statut', RencontreStatutEnum::REALISE->value)
-            ->exists();
+            ->where(function ($q) {
+                foreach (self::rdvFinalisationMotifKeys() as $motifKey) {
+                    $q->orWhere('data->motif_key', $motifKey);
+                }
+            })
+            ->latest()
+            ->first();
+    }
+
+    /**
+     * Dernier RDV de finalisation marqué « réalisé » (sans contrôle d’horaire).
+     */
+    public function rendezVousFinalisationRealise(): ?Demande
+    {
+        $rdv = $this->rendezVousFinalisation();
+
+        if (! $rdv || $rdv->rencontreStatut() !== RencontreStatutEnum::REALISE) {
+            return null;
+        }
+
+        return $rdv;
+    }
+
+    public function hasRendezVousRealise(): bool
+    {
+        return $this->rendezVousFinalisationRealise() !== null;
     }
 
     public function canBeDecided(): bool
     {
-        return $this->isPending() && $this->hasRendezVousRealise();
+        if (! $this->isPending()) {
+            return false;
+        }
+
+        $rdv = $this->rendezVousFinalisationRealise();
+
+        return $rdv !== null && $rdv->peutEtreTraiteApresRendezVous();
     }
 
     public function displayName(): string
@@ -157,6 +231,13 @@ class DemandeCreationCompte extends Model implements HasMedia
         $full = trim(implode(' ', array_filter([$this->firstname, $this->lastname])));
 
         return $full !== '' ? $full : ($this->name ?: $this->nif ?: 'Demandeur');
+    }
+
+    public function displayPensionCode(): ?string
+    {
+        $code = trim((string) ($this->pension_code ?? ''));
+
+        return $code !== '' ? $code : null;
     }
 
     /**

@@ -48,6 +48,26 @@ enum TypeDemandeEnum: string
         };
     }
 
+    /**
+     * Types de demandes qu’un mandataire / pensionné peut déposer via le portail.
+     *
+     * @return list<self>
+     */
+    public static function mandatScopeChoices(): array
+    {
+        return [
+            self::DEMANDE_VIREMENT_BANCAIRE,
+            self::DEMANDE_ATTESTATION,
+            self::DEMANDE_TRANSFERT_CHEQUE,
+            self::DEMANDE_ARRET_PAIEMENT,
+            self::DEMANDE_REINSERTION,
+            self::DEMANDE_ARRET_VIREMENT,
+            self::DEMANDE_PREUVE_EXISTENCE,
+            self::DEMANDE_MISE_A_JOUR,
+            self::DEMANDE_PENSION_REVERSION,
+        ];
+    }
+
     public function categorie(): \App\Enums\CategorieDossierEnum
     {
         return match($this) {

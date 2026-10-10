@@ -6,8 +6,6 @@ use Illuminate\Database\Seeder;
 use Spatie\Permission\Models\Role;
 use Spatie\Permission\Models\Permission;
 use App\Models\User;
-use App\Models\UserType;
-
 class RolesAndPermissionsSeeder extends Seeder
 {
     public function run()
@@ -55,34 +53,10 @@ class RolesAndPermissionsSeeder extends Seeder
         $canViewInstitutionMenu = Permission::where('name', 'CAN_VIEW_INSTITUTION_MENU')->first();
         $canViewDashboard = Permission::where('name', 'CAN_VIEW_DASHBOARD')->first();
 
-        $roles = [
-            'admin',
-            'pensionne',
-            'fonctionnaire',
-            'institution',
-            'direction',
-            'directeur',
-            'assistant_directeur',
-            'secretariat',
-            'service_liquidation',
-            'service_accueil_formalites',
-            'service_controle_placement',
-            'service_comptabilite',
-            'service_assurance',
-            'administration',
-            'responsable_service_accueil_formalites',
-            'responsable_service_controle_placement',
-            'responsable_service_comptabilite',
-            'responsable_service_assurance',
-            'responsable_administration',
-            'responsable_direction',
-            'responsable_directeur',
-            'responsable_assistant_directeur',
-            'responsable_secretariat',
-            User::ROLE_AGENT_RDV,
-            User::ROLE_VALIDATEUR_RDV,
-            User::ROLE_AGENT_FORMALITES,
-        ];
+        $roles = array_values(array_unique(array_merge(
+            config('dpc_roles.canonical', []),
+            array_keys(config('dpc_roles.legacy_aliases', [])),
+        )));
 
         foreach ($roles as $role) {
             Role::firstOrCreate(['name' => $role, 'guard_name' => 'web',]);

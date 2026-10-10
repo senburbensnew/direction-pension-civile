@@ -53,7 +53,7 @@
                         </div>
                         <div>
                             <div class="flex flex-wrap items-center gap-2 mb-1">
-                                <h1 class="text-lg font-bold text-gray-900 font-mono tracking-tight">#{{ $request->code }}</h1>
+                                <h1 class="text-lg font-bold text-gray-900 tracking-tight">{{ $request->libellePublic() }}</h1>
                                 @if($request->isRencontre() || $request->currentStep)
                                     <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold ring-1 {{ $request->statutBadgeClass() }}">
                                         <span class="w-1.5 h-1.5 rounded-full bg-current opacity-70"></span>
@@ -284,7 +284,7 @@
                         \App\Enums\RencontreStatutEnum::ACTIF,
                         \App\Enums\RencontreStatutEnum::ATTRIBUE,
                         \App\Enums\RencontreStatutEnum::REPORTE,
-                    ], true);
+                    ], true) && $request->peutEtreCloture();
 
                     $peutRefuser = $rdvPending && in_array($rdvStatut, [
                         \App\Enums\RencontreStatutEnum::DEMANDE,
@@ -299,9 +299,23 @@
                     ], true);
 
                     $peutAnnuler = $rdvPending;
+
+                    $visioService = app(\App\Services\RencontreVisioService::class);
+                    $visioCanAccess = ($rdv['modalite'] ?? '') === 'visio'
+                        && ! empty($request->visio_token)
+                        && $visioService->canAccess(auth()->user(), $request);
+                    $visioWindowStatus = ($rdv['modalite'] ?? '') === 'visio'
+                        ? $visioService->status($request)
+                        : null;
                 @endphp
 
-                <div class="p-6">
+                <div class="p-6 space-y-5">
+                    @include('demandes.rencontre._workflow-banner', [
+                        'demande' => $request,
+                        'rdvStatut' => $rdvStatut,
+                        'compteCreation' => $compteProvisional ?? null,
+                    ])
+
                     <dl class="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm mb-6">
                         <div>
                             <dt class="text-gray-500">Statut</dt>
@@ -336,10 +350,20 @@
                                         <span class="text-xs text-gray-400 italic">
                                             Rendez-vous passé — lien expiré
                                         </span>
-                                    @elseif(!empty($request->visio_token))
+                                    @elseif($visioCanAccess && $visioWindowStatus === 'actif')
                                         <a href="{{ route('demandes.rencontre.visio', $request->visio_token) }}"
-                                           class="text-blue-600 hover:underline">
+                                           class="inline-flex items-center gap-2 text-blue-600 hover:underline font-semibold">
                                             Rejoindre la visioconférence
+                                        </a>
+                                    @elseif($visioCanAccess && $visioWindowStatus === 'en_attente')
+                                        <span class="text-xs text-amber-700">
+                                            Salle disponible à partir de
+                                            {{ $visioService->opensAt($request)?->format('d/m/Y à H:i') ?? '—' }}
+                                        </span>
+                                    @elseif($visioCanAccess)
+                                        <a href="{{ route('demandes.rencontre.visio', $request->visio_token) }}"
+                                           class="text-blue-600 hover:underline text-sm">
+                                            Ouvrir la page visio
                                         </a>
                                     @else
                                         <span class="text-xs text-gray-400 italic">Lien non encore généré</span>
@@ -359,16 +383,42 @@
                         @endif
                     </dl>
 
+                    @if($canReassignRencontre ?? false)
+                        @include('demandes.rencontre._reattribuer-agent', [
+                            'demande' => $request,
+                            'bookingAgents' => $rdvAgents ?? collect(),
+                            'canReassignAgent' => true,
+                            'rdvPending' => $rdvPending,
+                        ])
+                    @endif
+
                     {{-- Accès à la page dédiée de formalité --}}
                     @php
                         $motifKey    = (string) ($request->data['motif_key'] ?? '');
                         $isFormalite = str_starts_with($motifKey, 'demande_formalites')
                             || str_starts_with($motifKey, 'formalites');
                         $ownerFormalite = $request->user ?? \App\Models\User::find($request->created_by);
-                        $peutTraiterFormalite = $rdvStatut === \App\Enums\RencontreStatutEnum::REALISE
+                        $peutTraiterFormalite = $request->peutEtreTraiteApresRendezVous()
                             && $isFormalite
                             && ! $ownerFormalite?->isProvisionnel();
+                        $formaliteConsultation = $rdvStatut === \App\Enums\RencontreStatutEnum::REALISE
+                            && $isFormalite
+                            && ! $ownerFormalite?->isProvisionnel()
+                            && ! $peutTraiterFormalite;
                     @endphp
+
+                    @if($formaliteConsultation ?? false)
+                        <div class="mb-5 flex flex-wrap items-center gap-3 bg-amber-50 border border-amber-200 rounded-xl px-4 py-3">
+                            <p class="text-sm text-amber-900 flex-1">
+                                Rendez-vous marqué réalisé — l’enregistrement de la formalité sera possible
+                                @if($rdvDateTime)
+                                    après le <strong>{{ $rdvDateTime->format('d/m/Y à H:i') }}</strong>.
+                                @else
+                                    après l’heure prévue du créneau.
+                                @endif
+                            </p>
+                        </div>
+                    @endif
 
                     @if($peutTraiterFormalite)
                         <div class="mb-5 flex flex-wrap items-center gap-3 bg-emerald-50 border border-emerald-200 rounded-xl px-4 py-3">
@@ -408,6 +458,17 @@
                                         Clôturez-le (réalisé ou non honoré) ou annulez-le.
                                     </p>
                                 </div>
+                            </div>
+                        @endif
+
+                        @if($rdvPending && ! $peutClore && $rdvDateTime && $rdvDateTime->isFuture() && in_array($rdvStatut, [
+                            \App\Enums\RencontreStatutEnum::ACTIF,
+                            \App\Enums\RencontreStatutEnum::ATTRIBUE,
+                            \App\Enums\RencontreStatutEnum::REPORTE,
+                        ], true))
+                            <div class="mb-5 flex items-start gap-2 bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-sm text-slate-700">
+                                Clôture (réalisé / non honoré) possible à partir du
+                                <strong class="mx-1">{{ $rdvDateTime->format('d/m/Y à H:i') }}</strong>.
                             </div>
                         @endif
 
@@ -738,6 +799,17 @@
                     </div>
                 </dl>
 
+                @if(!empty($rdv['documents_a_preparer']) && is_array($rdv['documents_a_preparer']))
+                    <div class="px-6 pb-5 border-t border-gray-100 pt-4">
+                        <h4 class="text-sm font-bold text-gray-800 mb-2">Documents à préparer</h4>
+                        <ul class="text-sm text-gray-700 list-disc list-inside space-y-1">
+                            @foreach($rdv['documents_a_preparer'] as $docLine)
+                                <li>{{ $docLine }}</li>
+                            @endforeach
+                        </ul>
+                    </div>
+                @endif
+
                 @if(!empty($rdv['confirmation']))
                     <div class="px-6 pb-6 pt-2 border-t border-gray-100">
                         @include('demandes.rencontre._confirmation', [
@@ -746,6 +818,14 @@
                         ])
                     </div>
                 @endif
+
+                @include('demandes.rencontre._gestion-responsable-rdv', [
+                    'demande' => $request,
+                    'bookingAgents' => $rdvAgents ?? collect(),
+                    'rdvStatut' => $rdvStatut,
+                    'rdvPending' => ! $rdvStatut->isTerminal(),
+                    'rdvTimes' => $rdvTimes ?? [],
+                ])
             </div>
         </div>
     @endif
@@ -753,10 +833,14 @@
     {{-- ═══════════════════════════════════════════════════════════════════════════════
      ANALYSE — DEMANDE DE CRÉATION DE COMPTE (compte provisoire)
     ═══════════════════════════════════════════════════════════════════════════════ --}}
-    @if($request->isRencontre() && !empty($compteProvisional) && ($rdvAgentMode ?? false))
+    @if($request->isRencontre() && !empty($compteProvisional) && auth()->user()?->hasAnyRole(['admin', \App\Models\User::ROLE_AGENT_FORMALITES]))
         @php
             $cp = $compteProvisional;
             $estTraitable = $cp->canBeDecided();
+            $canDecideCompte = auth()->user()->hasRole(\App\Models\User::ROLE_AGENT_FORMALITES);
+            $compteShowRoute = auth()->user()->hasRole('admin')
+                ? route('admin.comptes-demandes.show', $cp)
+                : route('formalites.comptes-demandes.show', $cp);
             $pieces = $cp->identityPieces();
 
             // Contexte selon le statut du RDV et de la demande
@@ -779,9 +863,11 @@
                         </h2>
                         <p class="text-white/80 text-xs mt-0.5">
                             @if($estTraitable)
-                                Ce demandeur possède un compte provisoire. Après le RDV réalisé, traitez sa demande de création de compte.
+                                Ce demandeur possède un compte provisoire. Le RDV est réalisé — vous pouvez accepter ou refuser la création de compte.
+                            @elseif($cpPending && $rdvRealise && ! $cp->canBeDecided())
+                                Compte provisoire — décision disponible après l’heure prévue du rendez-vous.
                             @elseif($cpPending)
-                                Le rendez-vous n'a pas encore été marqué comme réalisé.
+                                Compte provisoire en attente — marquez d’abord ce rendez-vous comme réalisé pour décider du dossier.
                             @else
                                 Cette demande de création de compte a déjà été traitée.
                             @endif
@@ -810,10 +896,10 @@
                                 Vous pourrez traiter cette demande une fois le RDV clôturé.
                             @else
                                 Cette demande de création de compte a été <strong>{{ strtolower($cp->statusLabel()) }}</strong>
-                                @if($cp->reviewed_at)
-                                    le {{ $cp->reviewed_at->format('d/m/Y à H:i') }}
-                                    @if($cp->reviewer)
-                                        par {{ $cp->reviewer->displayName() }}
+                                @if($cp->traiteeLe())
+                                    le {{ $cp->traiteeLe()->format('d/m/Y à H:i') }}
+                                    @if($cp->traiteePar)
+                                        par {{ $cp->traiteePar->displayName() }}
                                     @endif
                                 @endif.
                                 Aucune action disponible.
@@ -855,10 +941,10 @@
                             </div>
                         @endif
 
-                        @if($cp->pension_code)
+                        @if($cp->displayPensionCode())
                             <div>
                                 <dt class="text-gray-500">Code pension</dt>
-                                <dd class="font-medium text-gray-900">{{ $cp->pension_code }}</dd>
+                                <dd class="font-medium text-gray-900">{{ $cp->displayPensionCode() }}</dd>
                             </div>
                         @endif
 
@@ -916,7 +1002,7 @@
                     {{-- Actions --}}
                     <div class="border-t border-gray-100 pt-5 flex flex-wrap items-center gap-3">
 
-                        <a href="{{ route('formalites.comptes-demandes.show', $cp) }}"
+                        <a href="{{ $compteShowRoute }}"
                         class="inline-flex items-center gap-2 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-semibold rounded-lg">
                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -927,7 +1013,7 @@
                             Ouvrir le dossier complet
                         </a>
 
-                        @if($estTraitable)
+                        @if($estTraitable && $canDecideCompte)
                             <form method="POST"
                                 action="{{ route('formalites.comptes-demandes.accepter', $cp) }}"
                                 onsubmit="return confirm('Accepter la création de compte pour ce demandeur ?');">
@@ -953,7 +1039,7 @@
                     </div>
 
                     {{-- Formulaire de refus --}}
-                    @if($estTraitable)
+                    @if($estTraitable && $canDecideCompte)
                         <div id="refusComptePanel" class="hidden bg-red-50 border border-red-200 rounded-xl p-4">
                             <form method="POST"
                                 action="{{ route('formalites.comptes-demandes.refuser', $cp) }}"
@@ -962,9 +1048,9 @@
                                 <label class="block text-xs font-semibold text-red-800 mb-1">
                                     Motif du refus <span class="text-red-500">*</span>
                                 </label>
-                                <textarea name="motif" rows="3" required maxlength="2000"
+                                <textarea name="refusal_reason" rows="3" required minlength="5" maxlength="1000"
                                         class="w-full border border-red-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-red-300 mb-3"
-                                        placeholder="Expliquez la raison du refus...">{{ old('motif') }}</textarea>
+                                        placeholder="Expliquez la raison du refus...">{{ old('refusal_reason') }}</textarea>
                                 <div class="flex gap-2">
                                     <button type="submit"
                                             class="inline-flex items-center gap-2 px-4 py-2 bg-red-600 hover:bg-red-700 text-white text-sm font-semibold rounded-lg">
@@ -1932,7 +2018,6 @@
                                                 <div class="p-4 bg-gray-50 rounded-lg">
                                                     <h3 class="text-lg font-semibold mb-3 text-gray-700">Métadonnées</h3>
                                                     <dl class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                                        <div><dt class="text-sm text-gray-500">Code de la demande</dt><dd class="font-medium">#{{ $request->code }}</dd></div>
                                                         <div><dt class="text-sm text-gray-500">Date de création</dt><dd class="font-medium">{{ $request->created_at->format('d/m/Y H:i') }}</dd></div>
                                                     </dl>
                                                 </div>
@@ -1964,7 +2049,6 @@
                                                     <h3 class="text-lg font-semibold mb-3 text-gray-700">Détails de la demande</h3>
                                                     <dl class="grid grid-cols-1 md:grid-cols-2 gap-4">
                                                         <div><dt class="text-sm text-gray-500">Type de demande</dt><dd class="font-medium">{{ str_replace('_', ' ', $request->type) }}</dd></div>
-                                                        <div><dt class="text-sm text-gray-500">Code de la demande</dt><dd class="font-medium">#{{ $request->code }}</dd></div>
                                                         <div><dt class="text-sm text-gray-500">Créée le</dt><dd class="font-medium">{{ $request->created_at->format('d/m/Y H:i') }}</dd></div>
                                                     </dl>
                                                 </div>
@@ -2045,7 +2129,6 @@
                                                 <div class="p-4 bg-gray-50 rounded-lg">
                                                     <h3 class="text-lg font-semibold mb-3 text-gray-700">Métadonnées</h3>
                                                     <dl class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                                        <div><dt class="text-sm text-gray-500">Code de la demande</dt><dd class="font-medium">#{{ $request->code }}</dd></div>
                                                         <div><dt class="text-sm text-gray-500">Type de demande</dt><dd class="font-medium">{{ str_replace('_', ' ', $request->type) }}</dd></div>
                                                     </dl>
                                                 </div>
@@ -2083,7 +2166,6 @@
                                                     <h3 class="text-lg font-semibold mb-3 text-gray-700">Détails de la demande</h3>
                                                     <dl class="grid grid-cols-1 md:grid-cols-2 gap-4">
                                                         <div><dt class="text-sm text-gray-500">Type de demande</dt><dd class="font-medium">{{ str_replace('_', ' ', $request->type) }}</dd></div>
-                                                        <div><dt class="text-sm text-gray-500">Code de la demande</dt><dd class="font-medium">#{{ $request->code }}</dd></div>
                                                         <div><dt class="text-sm text-gray-500">Exercice</dt><dd class="font-medium">{{ ($request->data['exercice'] ?? '') }}</dd></div>
                                                         <div><dt class="text-sm text-gray-500">Mois de début</dt><dd class="font-medium">{{ \Carbon\Carbon::parse(($request->data['mois_debut'] ?? ''))->format('m/Y') }}</dd></div>
                                                         <div><dt class="text-sm text-gray-500">Période demandée</dt><dd class="font-medium">Du {{ \Carbon\Carbon::parse(($request->data['periode_debut'] ?? ''))->format('d/m/Y') }} au {{ \Carbon\Carbon::parse(($request->data['periode_fin'] ?? ''))->format('d/m/Y') }}</dd></div>
@@ -2135,7 +2217,6 @@
                                                     <h3 class="text-lg font-semibold mb-3 text-gray-700">Informations de la demande</h3>
                                                     <dl class="grid grid-cols-1 md:grid-cols-2 gap-4">
                                                         <div><dt class="text-sm text-gray-500">Type de demande</dt><dd class="font-medium">{{ str_replace('_', ' ', $request->type) }}</dd></div>
-                                                        <div><dt class="text-sm text-gray-500">Code de la demande</dt><dd class="font-medium">#{{ $request->code }}</dd></div>
                                                         <div><dt class="text-sm text-gray-500">Créée le</dt><dd class="font-medium">{{ $request->created_at->format('d/m/Y H:i') }}</dd></div>
                                                     </dl>
                                                 </div>
@@ -2179,7 +2260,6 @@
                                                 <div class="p-4 bg-gray-50 rounded-lg">
                                                     <h3 class="text-lg font-semibold mb-3 text-gray-700">Détails de la demande</h3>
                                                     <dl class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                                        <div><dt class="text-sm text-gray-500">Code de la demande</dt><dd class="font-medium">#{{ $request->code }}</dd></div>
                                                         <div><dt class="text-sm text-gray-500">Date de la demande</dt><dd class="font-medium">{{ ($request->data['date'] ?? '') ?? '-' }}</dd></div>
                                                     </dl>
                                                 </div>
@@ -2236,7 +2316,6 @@
                                 <div class="bg-gray-50 rounded-lg p-4">
                                     <h3 class="text-lg font-semibold mb-4 text-gray-700">Informations système</h3>
                                     <dl class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                                        <div><dt class="text-sm text-gray-500">Code</dt><dd class="font-medium">{{ $request->code }}</dd></div>
                                         <div><dt class="text-sm text-gray-500">Type</dt><dd class="font-medium">{{ $request->type }}</dd></div>
                                         <div><dt class="text-sm text-gray-500">Créée le</dt><dd class="font-medium">{{ $request->created_at->format('d/m/Y H:i') }}</dd></div>
                                         <div><dt class="text-sm text-gray-500">Créée par (ID)</dt><dd class="font-medium">{{ $request->user->name }}</dd></div>
@@ -2315,7 +2394,6 @@
                                 <div class="bg-gray-100 rounded-lg p-4">
                                     <h3 class="text-lg font-semibold mb-4 text-gray-700">Données techniques (data)</h3>
                                     <dl class="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
-                                        <div><dt class="text-gray-500">Code</dt><dd>{{ $request->code }}</dd></div>
                                         <div><dt class="text-gray-500">Type</dt><dd>{{ $request->type }}</dd></div>
                                         <div><dt class="text-gray-500">Created by</dt><dd>{{ $request->user->name }}</dd></div>
                                     </dl>
@@ -2339,7 +2417,6 @@
                                                 <div class="p-4 bg-gray-50 rounded-lg">
                                                     <h3 class="text-lg font-semibold mb-3 text-gray-700">Détails de la demande</h3>
                                                     <dl class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                                        <div><dt class="text-sm text-gray-500">Code de la demande</dt><dd class="font-medium">#{{ $request->code }}</dd></div>
                                                         <div><dt class="text-sm text-gray-500">Créée le</dt><dd class="font-medium">{{ $request->created_at->format('d/m/Y H:i') }}</dd></div>
                                                     </dl>
                                                 </div>
@@ -2424,7 +2501,6 @@
                                                 <div class="p-4 bg-gray-50 rounded-lg">
                                                     <h3 class="text-lg font-semibold mb-3 text-gray-700">Métadonnées</h3>
                                                     <dl class="space-y-3">
-                                                        <div><dt class="text-sm text-gray-500">Code</dt><dd class="font-medium">#{{ $request->code }}</dd></div>
                                                         <div><dt class="text-sm text-gray-500">Créée le</dt><dd class="font-medium">{{ $request->created_at->format('d/m/Y H:i') }}</dd></div>
                                                         <div><dt class="text-sm text-gray-500">Soumise par</dt><dd class="font-medium">{{ $request->user?->name ?? 'Système' }}</dd></div>
                                                     </dl>
@@ -2511,7 +2587,6 @@
                                                 <div class="p-4 bg-gray-50 rounded-lg">
                                                     <h3 class="text-lg font-semibold mb-3 text-gray-700">Détails de la demande</h3>
                                                     <dl class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                                        <div><dt class="text-sm text-gray-500">Code de la demande</dt><dd class="font-medium">#{{ $request->code }}</dd></div>
                                                         <div><dt class="text-sm text-gray-500">Titre de la demande</dt><dd class="font-medium">{{ $request->title }}</dd></div>
                                                         <div><dt class="text-sm text-gray-500">Créée le</dt><dd class="font-medium">{{ $request->created_at->format('d/m/Y H:i') }}</dd></div>
                                                     </dl>
@@ -2587,7 +2662,6 @@
                                                 <div class="p-4 bg-gray-50 rounded-lg">
                                                     <h3 class="text-lg font-semibold mb-3 text-gray-700">Détails de la demande</h3>
                                                     <dl class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                                        <div><dt class="text-sm text-gray-500">Code de la demande</dt><dd class="font-medium">#{{ $request->code }}</dd></div>
                                                         <div><dt class="text-sm text-gray-500">Créée le</dt><dd class="font-medium">{{ $request->created_at->format('d/m/Y H:i') }}</dd></div>
                                                     </dl>
                                                 </div>

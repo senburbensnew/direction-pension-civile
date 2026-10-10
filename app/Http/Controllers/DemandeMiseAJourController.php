@@ -49,7 +49,7 @@ class DemandeMiseAJourController extends Controller
             'identite' => [
                 'nom' => old('nom', $user?->lastname ?: ''),
                 'prenom' => old('prenom', $user?->firstname ?: ''),
-                'numero_pension' => old('numero_pension', $user?->pension_code ?: ''),
+                'numero_pension' => old('numero_pension', $user?->displayPensionCode() ?: ''),
                 'nif' => old('nif', $user?->nif ?: ''),
                 'cinu' => old('cinu', $user?->ninu ?: ''),
                 'telephone' => old('telephone', $user?->phone ?: ''),

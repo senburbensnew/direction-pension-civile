@@ -46,18 +46,10 @@ package "Identité et habilitations" {
             profile_photo
             signature
             is_active
-        <b>FK</b>  user_type_id
         <b>FK</b>  service_id
+        <b>FK</b>  institution_id
         <b>FK</b>  gender_id
         <b>FK</b>  civil_status_id
-            created_at
-            updated_at
-    }
-
-    entity "**user_types**" as user_types {
-        <b>PK</b>  id
-        ---
-            name
             created_at
             updated_at
     }
@@ -759,7 +751,6 @@ package "Contact, stats et technique" {
 ' ═══════════════════════════════════════════════════════════════
 '  RELATIONS
 ' ═══════════════════════════════════════════════════════════════
-user_types ||--o{ users : "user_type_id"
 services ||--o{ users : "service_id"
 genders ||--o{ users : "gender_id"
 civil_statuses ||--o{ users : "civil_status_id"
@@ -821,5 +812,108 @@ site_visits ||--o{ site_visit_ips : "visited_on"
 users ||--o{ error_logs : "user_id"
 users ||--o{ request_histories : "created_by"
 users ||--o{ activity_log : "causer polymorphe"
+
+' ═══════════════════════════════════════════════════════════════
+'  CATÉGORIES CUMULABLES, INSTITUTIONS, DOMAINE PENSION (2026-10)
+' ═══════════════════════════════════════════════════════════════
+package "Catégories et institutions" {
+    entity "**user_categories**" as user_categories {
+        <b>PK</b>  code
+        ---
+            label
+            description
+            is_system
+            capabilities
+            created_at
+            updated_at
+    }
+
+    entity "**user_category_assignments**" as user_category_assignments {
+        <b>PK</b>  id
+        ---
+        <b>FK</b>  user_id
+        <b>FK</b>  user_category_code
+            is_primary
+            valid_from
+            valid_until
+            created_at
+            updated_at
+    }
+
+    entity "**institutions**" as institutions {
+        <b>PK</b>  id
+        ---
+            raison_sociale
+            sigle
+            nif
+            code
+            statut
+            metadata
+            created_at
+            updated_at
+    }
+}
+
+package "Domaine pension" {
+    entity "**beneficiaires**" as beneficiaires {
+        <b>PK</b>  id
+        ---
+            firstname
+            lastname
+            nif
+            date_naissance
+            is_mineur
+            galipec_pensionnaire_id
+            created_at
+            updated_at
+    }
+
+    entity "**affiliation_pensions**" as affiliation_pensions {
+        <b>PK</b>  id
+        ---
+        <b>FK</b>  beneficiaire_id
+            code_pension
+            is_primary
+            loc_description
+            created_at
+            updated_at
+    }
+
+    entity "**user_beneficiaire_links**" as user_beneficiaire_links {
+        <b>PK</b>  id
+        ---
+        <b>FK</b>  user_id
+        <b>FK</b>  beneficiaire_id
+            relation
+            valid_from
+            valid_until
+            created_at
+            updated_at
+    }
+
+    entity "**pension_mandats**" as pension_mandats {
+        <b>PK</b>  id
+        ---
+        <b>FK</b>  user_id
+        <b>FK</b>  beneficiaire_id
+            type
+            status
+            date_debut
+            date_fin
+            allowed_demande_types
+            allowed_pension_codes
+            created_at
+            updated_at
+    }
+}
+
+users ||--o{ user_category_assignments : "catégories"
+user_categories ||--o{ user_category_assignments : "code"
+users |o--o| institutions : "institution_id unique"
+beneficiaires ||--o{ affiliation_pensions : "codes pension"
+users ||--o{ user_beneficiaire_links : "représentation"
+beneficiaires ||--o{ user_beneficiaire_links : "sujet"
+users ||--o{ pension_mandats : "mandataire"
+beneficiaires ||--o{ pension_mandats : "couvert"
 
 @enduml

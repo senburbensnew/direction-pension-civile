@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
-    <title>{{ $demande->code }}</title>
+    <title>{{ $demande->libellePublic() }}</title>
     @include('demandes.pdf._styles')
 </head>
 <body>
@@ -22,7 +22,6 @@
             <div class="header-right">
                 <span class="doc-type-badge">Demande de pension de réversion</span>
                 <div class="ref-block">
-                    <strong>Référence :</strong> {{ $demande->code }}<br>
                     <strong>Émis le :</strong> {{ now()->format('d/m/Y') }}<br>
                     @if($demande->service)
                         <strong>Service :</strong> {{ $demande->service->nom }}
@@ -68,8 +67,8 @@
         <div class="section-body">
             <table class="info info-2col">
                 <tr>
-                    <td class="label">N° Dossier</td>
-                    <td class="value">{{ $demande->code }}</td>
+                    <td class="label">Dossier</td>
+                    <td class="value">{{ $demande->libellePublic() }}</td>
                     <td class="label">Statut</td>
                     <td class="value">{{ $demande->status->label ?? $demande->status->code }}</td>
                 </tr>
@@ -157,7 +156,7 @@
 <div class="footer">
     <div class="footer-left">Direction des Pensions Civiles — République d'Haïti</div>
     <div class="footer-center">Document officiel généré automatiquement — Ne pas modifier</div>
-    <div class="footer-right">Généré le {{ now()->format('d/m/Y à H:i') }}<br>Réf : {{ $demande->code }}</div>
+    <div class="footer-right">Généré le {{ now()->format('d/m/Y à H:i') }}</div>
 </div>
 
 </body>

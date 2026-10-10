@@ -7,7 +7,12 @@ use Illuminate\View\View;
 
 class GuestLayout extends Component
 {
-    public function __construct(public bool $showPhoto = true, public bool $wide = false)
+    public function __construct(
+        public bool $showPhoto = true,
+        public bool $wide = false,
+        public bool $noScroll = false,
+        public bool $showCopyright = true,
+    )
     {
     }
 

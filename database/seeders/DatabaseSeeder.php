@@ -15,7 +15,7 @@ class DatabaseSeeder extends Seeder
     {
         $this->call(AnneeFiscaleSeeder::class);
         $this->call(GendersSeeder::class);
-        $this->call(UserTypesSeeder::class);
+        $this->call(UserCategoriesSeeder::class);
 
         // Référentiel des rôles et permissions
         $this->call(RolesAndPermissionsSeeder::class);

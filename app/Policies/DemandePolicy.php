@@ -21,6 +21,34 @@ class DemandePolicy
             return true;
         }
 
-        return $demande->user_id === $user->id;
+        if ($demande->user_id === $user->id) {
+            return true;
+        }
+
+        if ((int) $demande->created_by === (int) $user->id) {
+            return true;
+        }
+
+        $type = $demande->type?->value ?? (string) $demande->type;
+
+        return $user->pensionContext()->userCanActOnDemandeType($type);
+    }
+
+    public function create(User $user): bool
+    {
+        if ($user->hasRole('admin')) {
+            return true;
+        }
+
+        return $user->canAccessFullServices();
+    }
+
+    public function createType(User $user, string $typeDemande): bool
+    {
+        if ($user->hasRole('admin')) {
+            return true;
+        }
+
+        return $user->pensionContext()->userCanActOnDemandeType($typeDemande);
     }
 }

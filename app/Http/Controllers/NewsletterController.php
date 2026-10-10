@@ -2,12 +2,12 @@
 
 namespace App\Http\Controllers;
 
-use App\Mail\NewsletterMail;
+use App\Notifications\NewsletterCampaignNotification;
 use App\Models\Newsletter;
 use App\Models\NewsletterCampaign;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\Notification;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class NewsletterController extends Controller
@@ -88,7 +88,8 @@ class NewsletterController extends Controller
         $sent = 0;
         foreach ($subscribers as $subscriber) {
             try {
-                Mail::to($subscriber->email)->send(new NewsletterMail($campaign, $subscriber));
+                Notification::route('mail', $subscriber->email)
+                    ->notify(new NewsletterCampaignNotification($campaign, $subscriber));
                 $sent++;
             } catch (\Throwable $e) {
                 Log::error('NewsletterMail failed', [

@@ -39,8 +39,7 @@
                 @foreach($appelsVeille as $rdv)
                     @php $data = $rdv->data ?? []; @endphp
                     <li>
-                        <span class="font-mono">{{ $rdv->code }}</span>
-                        — {{ trim(($data['prenom'] ?? '').' '.($data['nom'] ?? '')) }}
+                        {{ trim(($data['prenom'] ?? '').' '.($data['nom'] ?? '')) }}
                         · {{ $data['telephone'] ?? 'n° manquant' }}
                         · demain {{ $data['heure_souhaitee'] ?? '' }}
                     </li>
@@ -53,7 +52,7 @@
         <table class="w-full text-sm">
             <thead class="bg-gray-50 border-b border-gray-100">
                 <tr>
-                    <th class="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">Référence</th>
+                    <th class="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">Déposé le</th>
                     <th class="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">Demandeur</th>
                     <th class="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">Objet</th>
                     <th class="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">Date souhaitée</th>
@@ -73,7 +72,7 @@
                         $isPending = ! $rdvStatut->isTerminal();
                     @endphp
                     <tr class="hover:bg-gray-50 transition-colors" x-data="{ open: false }">
-                        <td class="px-4 py-3 font-mono text-xs text-gray-600">{{ $d->code }}</td>
+                        <td class="px-4 py-3 text-xs text-gray-600 whitespace-nowrap">{{ $d->created_at?->format('d/m/Y H:i') ?? '—' }}</td>
                         <td class="px-4 py-3">
                             <p class="font-medium text-gray-800">{{ ($data['prenom'] ?? '') . ' ' . ($data['nom'] ?? '') }}</p>
                             <p class="text-xs text-gray-400">{{ $data['email'] ?? '—' }}</p>

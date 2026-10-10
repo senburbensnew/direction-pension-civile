@@ -6,32 +6,28 @@ use Twilio\Rest\Client;
 
 class SmsService
 {
-    protected Client $client;
-
-    public function __construct()
+    public function send(string $to, string $message): void
     {
-        $this->client = new Client(
-            config('services.twilio.sid'),
-            config('services.twilio.token')
-        );
-    }
+        $to = preg_replace('/\s+/', '', trim($to)) ?? '';
 
-    /* 
-        Exemple d'utilisation :
-        use App\Services\SmsService;
+        if ($to === '' || $message === '') {
+            return;
+        }
 
-        $sms = app(SmsService::class);
-        $sms->send('+509xxxxxxxx', 'Votre demande a été enregistrée avec succès.'); 
-    */
+        $sid = config('services.twilio.account_sid');
+        $token = config('services.twilio.auth_token');
+        $from = config('services.twilio.from');
 
-    public function send(
-        string $to,
-        string $message
-    ): void {
-        $this->client->messages->create(
+        if (! filled($sid) || ! filled($token) || ! filled($from)) {
+            return;
+        }
+
+        $client = new Client($sid, $token);
+
+        $client->messages->create(
             $to,
             [
-                'from' => config('services.twilio.from'),
+                'from' => $from,
                 'body' => $message,
             ]
         );

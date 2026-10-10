@@ -1,6 +1,6 @@
 @extends('layouts.main')
 
-@section('title', 'Visioconférence — '.$demande->code)
+@section('title', 'Visioconférence')
 
 @section('content')
 @php
@@ -22,7 +22,7 @@
             <svg class="w-3 h-3 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
             </svg>
-            <span class="text-gray-500 font-medium">Dossier #{{ $demande->code }}</span>
+            <span class="text-gray-500 font-medium">{{ $demande->libellePublic() }}</span>
             <svg class="w-3 h-3 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
             </svg>
@@ -31,7 +31,7 @@
 
         <div>
             <p class="text-xs font-bold text-orange-500 uppercase tracking-widest">Rendez-vous sécurisé</p>
-            <h1 class="text-3xl font-bold text-navy mt-1">Visioconférence {{ $demande->code }}</h1>
+            <h1 class="text-3xl font-bold text-navy mt-1">Visioconférence</h1>
             <p class="text-gray-600 mt-1">
                 {{ $data['objet'] ?? 'Rendez-vous' }}
                 @if($startsAt)

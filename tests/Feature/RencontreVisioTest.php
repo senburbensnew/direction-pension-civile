@@ -91,7 +91,7 @@ class RencontreVisioTest extends TestCase
         $this->actingAs($owner)
             ->get(route('demandes.rencontre.visio', $demande->visio_token))
             ->assertOk()
-            ->assertSee('Salle réservée');
+            ->assertSee('Ouvrir la salle dans un nouvel onglet');
     }
 
     public function test_unknown_token_is_not_found(): void

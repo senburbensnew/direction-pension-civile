@@ -3,6 +3,7 @@
 namespace App\Notifications;
 
 use App\Models\Demande;
+use App\Notifications\Concerns\UsesStandardChannels;
 use Illuminate\Bus\Queueable;
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
@@ -10,6 +11,7 @@ use Illuminate\Notifications\Notification;
 class DemandeStatusChangedNotification extends Notification
 {
     use Queueable;
+    use UsesStandardChannels;
 
     public function __construct(
         public readonly Demande $demande,
@@ -20,7 +22,7 @@ class DemandeStatusChangedNotification extends Notification
 
     public function via(object $notifiable): array
     {
-        return ['database', 'mail'];
+        return $this->standardVia($notifiable);
     }
 
     public function toMail(object $notifiable): MailMessage
@@ -42,6 +44,13 @@ class DemandeStatusChangedNotification extends Notification
         return $mail
             ->action('Voir ma demande', $url)
             ->salutation('Direction de la Pension Civile');
+    }
+
+    public function toTwilio(object $notifiable): array
+    {
+        return [
+            'message' => 'DPC : '.$this->demande->code.' — '.$this->statusLabel(),
+        ];
     }
 
     public function toArray(object $notifiable): array

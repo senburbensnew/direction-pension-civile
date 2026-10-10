@@ -25,9 +25,42 @@ class PasswordResetTest extends TestCase
 
         $user = User::factory()->create();
 
+        $this->post('/forgot-password', ['login' => $user->email]);
+
+        Notification::assertSentTo($user, ResetPassword::class);
+    }
+
+    public function test_reset_password_link_can_be_requested_with_legacy_email_field(): void
+    {
+        Notification::fake();
+
+        $user = User::factory()->create();
+
         $this->post('/forgot-password', ['email' => $user->email]);
 
         Notification::assertSentTo($user, ResetPassword::class);
+    }
+
+    public function test_reset_password_link_can_be_requested_with_phone(): void
+    {
+        Notification::fake();
+
+        $user = User::factory()->create(['phone' => '+50938123456']);
+
+        $this->post('/forgot-password', ['login' => '+50938123456']);
+
+        Notification::assertSentTo($user, ResetPassword::class);
+    }
+
+    public function test_reset_password_link_cannot_be_requested_with_username(): void
+    {
+        Notification::fake();
+
+        User::factory()->create(['username' => 'jean.pierre']);
+
+        $this->post('/forgot-password', ['login' => 'jean.pierre']);
+
+        Notification::assertNothingSent();
     }
 
     public function test_reset_password_screen_can_be_rendered(): void
@@ -36,7 +69,7 @@ class PasswordResetTest extends TestCase
 
         $user = User::factory()->create();
 
-        $this->post('/forgot-password', ['email' => $user->email]);
+        $this->post('/forgot-password', ['login' => $user->email]);
 
         Notification::assertSentTo($user, ResetPassword::class, function ($notification) {
             $response = $this->get('/reset-password/'.$notification->token);
@@ -53,7 +86,7 @@ class PasswordResetTest extends TestCase
 
         $user = User::factory()->create();
 
-        $this->post('/forgot-password', ['email' => $user->email]);
+        $this->post('/forgot-password', ['login' => $user->email]);
 
         Notification::assertSentTo($user, ResetPassword::class, function ($notification) use ($user) {
             $response = $this->post('/reset-password', [

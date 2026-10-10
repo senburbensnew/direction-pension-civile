@@ -4,9 +4,8 @@ namespace Tests\Feature\Auth;
 
 use App\Enums\UserTypeEnum;
 use App\Models\User;
-use App\Models\UserType;
+use Database\Seeders\UserCategoriesSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Support\Facades\DB;
 use Tests\TestCase;
 
 /**
@@ -21,20 +20,11 @@ class RegistrationTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
-        // Seed roles
         app()[\Spatie\Permission\PermissionRegistrar::class]->forgetCachedPermissions();
         foreach (['admin', 'direction', 'pensionne', 'fonctionnaire', 'institution', 'secretariat', 'liquidation'] as $role) {
             \Spatie\Permission\Models\Role::firstOrCreate(['name' => $role]);
         }
-    }
-
-    private function seedUserTypes(): array
-    {
-        return array_map(fn($name) => UserType::create(['name' => $name]), [
-            UserTypeEnum::PENSIONNE->value,
-            UserTypeEnum::FONCTIONNAIRE->value,
-            UserTypeEnum::INSTITUTION->value,
-        ]);
+        $this->seed(UserCategoriesSeeder::class);
     }
 
     /** @test */
@@ -61,8 +51,6 @@ class RegistrationTest extends TestCase
         $admin = User::factory()->create();
         $admin->assignRole('admin');
 
-        $this->seedUserTypes();
-
         $response = $this->actingAs($admin)->get('/register');
 
         $response->assertOk();
@@ -74,26 +62,26 @@ class RegistrationTest extends TestCase
         $admin = User::factory()->create();
         $admin->assignRole('admin');
 
-        $types      = $this->seedUserTypes();
-        $typeId     = UserType::where('name', UserTypeEnum::FONCTIONNAIRE->value)->value('id');
-
         $response = $this->actingAs($admin)->post('/register', [
-            'name'                  => 'Dupont Jean',
-            'firstname'             => 'Jean',
-            'lastname'              => 'Dupont',
-            'email'                 => 'jean.dupont@example.com',
-            'password'              => 'Password1!',
+            'name' => 'Dupont Jean',
+            'firstname' => 'Jean',
+            'lastname' => 'Dupont',
+            'email' => 'jean.dupont@example.com',
+            'password' => 'Password1!',
             'password_confirmation' => 'Password1!',
-            'nif'                   => '123-456-789-0',
-            'user_type_id'          => $typeId,
+            'nif' => '123-456-789-0',
+            'primary_category' => UserTypeEnum::FONCTIONNAIRE->value,
         ]);
 
         $response->assertRedirect(route('admin.dashboard.index'));
 
         $this->assertDatabaseHas('users', [
             'email' => 'jean.dupont@example.com',
-            'name'  => 'Dupont Jean',
+            'name' => 'Dupont Jean',
         ]);
+
+        $user = User::where('email', 'jean.dupont@example.com')->first();
+        $this->assertTrue($user->hasCategory('fonctionnaire'));
     }
 
     /** @test */
@@ -102,20 +90,17 @@ class RegistrationTest extends TestCase
         $admin = User::factory()->create();
         $admin->assignRole('admin');
 
-        $types  = $this->seedUserTypes();
-        $typeId = UserType::where('name', UserTypeEnum::FONCTIONNAIRE->value)->value('id');
-
         User::factory()->create(['email' => 'existing@example.com']);
 
         $response = $this->actingAs($admin)->post('/register', [
-            'name'                  => 'Autre Nom',
-            'firstname'             => 'Autre',
-            'lastname'              => 'Nom',
-            'email'                 => 'existing@example.com',
-            'password'              => 'Password1!',
+            'name' => 'Autre Nom',
+            'firstname' => 'Autre',
+            'lastname' => 'Nom',
+            'email' => 'existing@example.com',
+            'password' => 'Password1!',
             'password_confirmation' => 'Password1!',
-            'nif'                   => '111-111-111-1',
-            'user_type_id'          => $typeId,
+            'nif' => '111-111-111-1',
+            'primary_category' => UserTypeEnum::FONCTIONNAIRE->value,
         ]);
 
         $response->assertSessionHasErrors('email');
@@ -129,7 +114,7 @@ class RegistrationTest extends TestCase
 
         $response = $this->actingAs($admin)->post('/register', []);
 
-        $response->assertSessionHasErrors(['name', 'firstname', 'lastname', 'email', 'password', 'nif', 'user_type_id']);
+        $response->assertSessionHasErrors(['name', 'firstname', 'lastname', 'email', 'password', 'nif', 'primary_category']);
     }
 
     /** @test */
@@ -138,21 +123,17 @@ class RegistrationTest extends TestCase
         $admin = User::factory()->create();
         $admin->assignRole('admin');
 
-        $types  = $this->seedUserTypes();
-        $typeId = UserType::where('name', UserTypeEnum::FONCTIONNAIRE->value)->value('id');
-
         $this->actingAs($admin)->post('/register', [
-            'name'                  => 'Nouveau Fonctionnaire',
-            'firstname'             => 'Nouveau',
-            'lastname'              => 'Fonctionnaire',
-            'email'                 => 'nouveau@example.com',
-            'password'              => 'Password1!',
+            'name' => 'Nouveau Fonctionnaire',
+            'firstname' => 'Nouveau',
+            'lastname' => 'Fonctionnaire',
+            'email' => 'nouveau@example.com',
+            'password' => 'Password1!',
             'password_confirmation' => 'Password1!',
-            'nif'                   => '222-222-222-2',
-            'user_type_id'          => $typeId,
+            'nif' => '222-222-222-2',
+            'primary_category' => UserTypeEnum::FONCTIONNAIRE->value,
         ]);
 
-        // Admin is still the one authenticated, not the newly created user
         $this->assertAuthenticatedAs($admin);
     }
 }

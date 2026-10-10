@@ -43,6 +43,11 @@ document.addEventListener('DOMContentLoaded', () => {
     if (document.getElementById('dpc-rdv-scheduler')) {
         import('./rdv-scheduler.js').then(({ initRdvScheduler }) => initRdvScheduler());
     }
+    if (document.getElementById('dpc-agent-availability-calendar')) {
+        import('./rdv-agent-availability.js').then(({ initAgentAvailabilityCalendar }) =>
+            initAgentAvailabilityCalendar()
+        );
+    }
 });
 
 

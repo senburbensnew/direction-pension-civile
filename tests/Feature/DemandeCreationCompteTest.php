@@ -2,9 +2,11 @@
 
 namespace Tests\Feature;
 
+use App\Enums\AccountStatusEnum;
 use App\Enums\TypeDemandeEnum;
 use App\Models\Demande;
 use App\Models\DemandeCreationCompte;
+use App\Models\PensionnaireReference;
 use App\Models\User;
 use App\Services\OCR\OcrService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -24,6 +26,19 @@ class DemandeCreationCompteTest extends TestCase
         $this->mock(OcrService::class, function ($mock) {
             $mock->shouldReceive('extract')->andReturn("NOM : PIERRE\nPRENOM : Jean");
         });
+
+        $this->seedPensionReference();
+    }
+
+    private function seedPensionReference(
+        string $code = '8-34321',
+        string $nom = 'PIERRE',
+        string $prenom = 'JEAN'
+    ): void {
+        PensionnaireReference::query()->updateOrCreate(
+            ['PENSIONNAIRE_ID' => strtoupper(trim($code))],
+            ['NOM' => $nom, 'PRENOM' => $prenom]
+        );
     }
 
     private function acteNaissanceOcrText(): string
@@ -81,9 +96,8 @@ class DemandeCreationCompteTest extends TestCase
         $this->get(route('demandes.compte.create'))
             ->assertOk()
             ->assertSee('Demande de création de compte')
-            ->assertSee('Formulaire')
             ->assertSee('OCR')
-            ->assertSee('Résumé')
+            ->assertSee('Étape')
             ->assertSee('Soumettre')
             ->assertSee('Type de compte')
             ->assertSee('Pensionné')
@@ -103,8 +117,8 @@ class DemandeCreationCompteTest extends TestCase
             ->assertSee('Carte d’identification nationale')
             ->assertSee('conditions d’utilisation')
             ->assertSee('politique de confidentialité')
-            ->assertSee('Document fourni et données extraites')
-            ->assertSee('Données lues')
+            ->assertSee('Lecture et vérification OCR')
+            ->assertSee('Informations extraites')
             ->assertDontSee('GALIPEC')
             ->assertDontSee('Fonctionnaire', false);
     }
@@ -147,6 +161,7 @@ class DemandeCreationCompteTest extends TestCase
         $demande = DemandeCreationCompte::first();
         $this->assertFalse($demande->is_mineur);
         $this->assertNotNull($demande->accepted_terms_at);
+        $this->assertNotNull($demande->soumise_at);
         $this->assertNotNull($demande->user_id);
         $this->assertTrue($demande->hasMedia('identite_cin'));
         $this->assertFalse($demande->hasMedia('identite_passeport'));
@@ -155,6 +170,8 @@ class DemandeCreationCompteTest extends TestCase
         $this->assertSame(1, User::count());
         $user = User::first();
         $this->assertTrue($user->isProvisionnel());
+        $this->assertSame(AccountStatusEnum::PROVISOIRE, $user->account_status);
+        $this->assertNull($user->email_verified_at);
         $this->assertTrue($user->hasRole('pensionne'));
         $this->assertTrue(Hash::check('password123', $user->password));
         $this->assertIsArray($demande->submitted_payload);
@@ -189,25 +206,49 @@ class DemandeCreationCompteTest extends TestCase
     }
 
     /** @test */
-    public function pension_code_is_required_for_a_pensionne(): void
+    public function pension_code_is_optional_for_a_pensionne(): void
     {
         Storage::fake('public');
 
-        $this->from(route('demandes.compte.create'))
-            ->post(route('demandes.compte.store'), [
-                'user_type' => 'pensionne',
-                'telephone' => '+509 22 00 0000',
-                'adresse' => '12, rue Capois, Port-au-Prince',
-                'piece_identite_type' => 'cin',
-                'piece_identite' => UploadedFile::fake()->image('cin.jpg', 800, 600),
-                'password' => 'password123',
+        $this->post(route('demandes.compte.store'), [
+            'user_type' => 'pensionne',
+            'telephone' => '+509 22 00 0000',
+            'nif' => '123-456-789-0',
+            'adresse' => '12, rue Capois, Port-au-Prince',
+            'piece_identite_type' => 'cin',
+            'piece_identite' => UploadedFile::fake()->image('cin.jpg', 800, 600),
+            'password' => 'password123',
             'accept_terms' => '1',
-            ])
-            ->assertRedirect(route('demandes.compte.create'))
-            ->assertSessionHasErrors('pension_code')
-            ->assertSessionDoesntHaveErrors('nif');
+        ])
+            ->assertRedirect(route('demandes.rencontre.create'));
 
-        $this->assertDatabaseCount('demande_creation_comptes', 0);
+        $demande = DemandeCreationCompte::first();
+        $this->assertNull($demande->pension_code);
+    }
+
+    /** @test */
+    public function ajax_store_returns_json_redirect_url_after_success(): void
+    {
+        Storage::fake('public');
+
+        $this->post(route('demandes.compte.store'), [
+            'user_type' => 'pensionne',
+            'telephone' => '+509 22 00 0000',
+            'nif' => '123-456-789-0',
+            'adresse' => '12, rue Capois, Port-au-Prince',
+            'piece_identite_type' => 'cin',
+            'piece_identite' => UploadedFile::fake()->image('cin.jpg', 800, 600),
+            'password' => 'password123',
+            'accept_terms' => '1',
+        ], [
+            'Accept' => 'application/json',
+            'X-Requested-With' => 'XMLHttpRequest',
+        ])
+            ->assertOk()
+            ->assertJsonPath('ok', true)
+            ->assertJsonPath('redirect_url', route('demandes.rencontre.create'));
+
+        $this->assertAuthenticated();
     }
 
     /** @test */
@@ -240,6 +281,57 @@ class DemandeCreationCompteTest extends TestCase
         $this->assertTrue($demande->hasMedia('identite_representant_passeport'));
         $this->assertDatabaseCount('users', 1);
         $this->assertTrue($demande->user->isProvisionnel());
+
+        $beneficiaire = \App\Models\Beneficiaire::query()->where('is_mineur', true)->first();
+        $this->assertNotNull($beneficiaire);
+        $this->assertSame('123-456-789-0', $beneficiaire->nif);
+        $this->assertTrue(
+            \App\Models\UserBeneficiaireLink::query()
+                ->where('user_id', $demande->user_id)
+                ->where('beneficiaire_id', $beneficiaire->id)
+                ->where('relation', 'mere')
+                ->exists()
+        );
+
+        $user = $demande->user->fresh(['roles', 'categoryAssignments']);
+        $resolver = \App\Services\Account\UserCategoryResolver::for($user);
+        $this->assertFalse($user->hasRole('pensionne'));
+        $this->assertTrue($resolver->hasCategory('externe'));
+        $this->assertTrue($resolver->hasPensionPortalAccess());
+        $this->assertFalse($demande->representant_est_pensionne);
+    }
+
+    /** @test */
+    public function minor_representative_can_also_be_pensionne_titulaire_when_declared(): void
+    {
+        Storage::fake('public');
+
+        $this->seedPensionReference('8-34322', 'DUPONT', 'MARIE');
+
+        $this->post(route('demandes.compte.store'), [
+            'user_type' => 'pensionne',
+            'telephone' => '+509 38123457',
+            'nif' => '123-456-789-1',
+            'pension_code' => '8-34322',
+            'adresse' => 'Delmas 32',
+            'is_mineur' => '1',
+            'acte_naissance' => UploadedFile::fake()->image('naissance.jpg', 800, 600),
+            'representant_lien' => 'pere',
+            'representant_est_pensionne' => '1',
+            'piece_identite_representant_type' => 'passeport',
+            'piece_identite_representant' => UploadedFile::fake()->image('passeport.jpg', 800, 600),
+            'password' => 'password123',
+            'accept_terms' => '1',
+        ])->assertRedirect(route('demandes.rencontre.create'));
+
+        $demande = DemandeCreationCompte::query()->latest('id')->first();
+        $this->assertTrue($demande->representant_est_pensionne);
+
+        $user = $demande->user->fresh(['roles', 'categoryAssignments']);
+        $this->assertTrue($user->hasRole('pensionne'));
+        $resolver = \App\Services\Account\UserCategoryResolver::for($user);
+        $this->assertTrue($resolver->hasCategory('externe'));
+        $this->assertTrue($resolver->hasCategory('pensionne'));
     }
 
     /** @test */
@@ -277,10 +369,9 @@ class DemandeCreationCompteTest extends TestCase
     public function guest_cannot_use_an_existing_nif_or_pension_code(): void
     {
         Storage::fake('public');
-        User::factory()->create([
+        $this->createPensionneUser([
             'nif' => '123-456-789-0',
-            'pension_code' => '8-34321',
-        ]);
+        ], '8-34321');
 
         $this->from(route('demandes.compte.create'))
             ->post(route('demandes.compte.store'), [
@@ -343,10 +434,9 @@ class DemandeCreationCompteTest extends TestCase
     /** @test */
     public function guest_can_check_nif_and_pension_code_availability_while_typing(): void
     {
-        User::factory()->create([
+        $this->createPensionneUser([
             'nif' => '123-456-789-0',
-            'pension_code' => '8-34321',
-        ]);
+        ], '8-34321');
 
         $this->getJson(route('demandes.compte.disponibilite', [
             'field' => 'nif',

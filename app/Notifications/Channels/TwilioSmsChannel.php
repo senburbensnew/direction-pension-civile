@@ -2,37 +2,59 @@
 
 namespace App\Notifications\Channels;
 
+use App\Services\SmsService;
 use Illuminate\Notifications\Notification;
-use Twilio\Rest\Client;
 
 class TwilioSmsChannel
 {
-    /**
-     * Envoie la notification via Twilio SMS.
-     */
+    public function __construct(private SmsService $sms)
+    {
+    }
+
     public function send(object $notifiable, Notification $notification): void
     {
         if (! method_exists($notification, 'toTwilio')) {
             return;
         }
 
-        $message = $notification->toTwilio($notifiable);
+        /** @var array{to?: string, message?: string} $payload */
+        $payload = $notification->toTwilio($notifiable);
 
-        if (empty($message['to']) || empty($message['message'])) {
+        $to = $payload['to'] ?? $this->resolvePhone($notifiable);
+        $message = $payload['message'] ?? '';
+
+        if ($to === null || $message === '') {
             return;
         }
 
-        $client = new Client(
-            config('services.twilio.account_sid'),
-            config('services.twilio.auth_token')
-        );
+        $this->sms->send($to, $message);
+    }
 
-        $client->messages->create(
-            $message['to'],
-            [
-                'from' => config('services.twilio.from'),
-                'body' => $message['message'],
-            ]
-        );
+    private function resolvePhone(object $notifiable): ?string
+    {
+        if (method_exists($notifiable, 'routeNotificationFor')) {
+            $phone = $notifiable->routeNotificationFor('twilio');
+
+            if (filled($phone)) {
+                return (string) $phone;
+            }
+
+            $channel = config('notifications.sms_channel', self::class);
+            $phone = $notifiable->routeNotificationFor($channel);
+
+            if (filled($phone)) {
+                return (string) $phone;
+            }
+        }
+
+        if (method_exists($notifiable, 'routeNotificationForTwilio')) {
+            $phone = $notifiable->routeNotificationForTwilio();
+
+            return filled($phone) ? (string) $phone : null;
+        }
+
+        $phone = $notifiable->phone ?? null;
+
+        return filled($phone) ? (string) $phone : null;
     }
 }

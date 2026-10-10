@@ -8,11 +8,15 @@ return new class extends Migration
 {
     public function up(): void
     {
-        Schema::table('users', function (Blueprint $table) {
-            if (! Schema::hasColumn('users', 'account_status')) {
-                $table->string('account_status')->default('actif')->after('is_active');
-                $table->index('account_status');
-            }
+        if (Schema::hasColumn('users', 'account_status')) {
+            return;
+        }
+
+        $after = Schema::hasColumn('users', 'is_active') ? 'is_active' : 'password';
+
+        Schema::table('users', function (Blueprint $table) use ($after) {
+            $table->string('account_status')->default('actif')->after($after);
+            $table->index('account_status');
         });
     }
 

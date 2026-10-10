@@ -2,6 +2,12 @@
     $oldDate = old('date_souhaitee');
     $oldTime = old('heure_souhaitee');
 
+    $defaultServiceCode = \App\Models\Service::FORMALITE;
+    if (old('motif')) {
+        $codes = $motifServiceCodes ?? [];
+        $defaultServiceCode = $codes[old('motif')] ?? $defaultServiceCode;
+    }
+
     $schedulerInvalid =
         $errors->has('date_souhaitee') ||
         $errors->has('heure_souhaitee');
@@ -34,7 +40,7 @@
         Les rendez-vous sont organisés par créneaux de
         {{ $slotMinutes }} minutes,
         de {{ $rdvStart }} à {{ $rdvEnd }},
-        du lundi au vendredi.
+        du lundi au vendredi (hors jours fériés en Haïti).
     </p>
 
     {{-- Valeur de la date sélectionnée --}}
@@ -65,7 +71,11 @@
         data-slot-minutes="{{ $slotMinutes }}"
         data-min-time="{{ $rdvStart }}"
         data-max-time="{{ $rdvEnd }}"
-        data-reserved='@json($reservedSlots ?? [])'
+        data-display-min-time="08:00"
+        data-display-max-time="16:00"
+        data-reserved-by-service='@json($reservedSlotsByService ?? [])'
+        data-holidays='@json($holidayEvents ?? [])'
+        data-default-service="{{ $defaultServiceCode }}"
     ></div>
 
     {{-- Information sur l'attribution automatique --}}
@@ -80,9 +90,9 @@
                 </p>
 
                 <p class="text-sm text-gray-600 mt-1">
-                    Vous choisissez uniquement la date et l’heure.
+                    Vous choisissez la date et l’heure selon le motif (service responsable).
                     Le système attribue automatiquement votre rendez-vous
-                    à un agent disponible du service Formalités.
+                    à un agent disponible sur ce créneau.
                 </p>
 
                 <p class="text-sm text-gray-600 mt-1">

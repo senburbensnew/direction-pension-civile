@@ -3,6 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="csrf-token" content="{{ csrf_token() }}">
     @stack('meta')
     <title>@yield('title', 'Direction de la Pension Civile')</title>
     <x-fonts />
@@ -36,6 +37,7 @@
     </noscript>
 
     <x-header />
+    <x-pension-context-banner />
     <main class="container mx-auto flex-1 w-full min-h-[calc(100dvh-13rem)] bg-white pb-10">
         @yield('content')
     </main>

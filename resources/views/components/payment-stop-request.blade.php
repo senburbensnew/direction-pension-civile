@@ -108,8 +108,8 @@
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
                     <div>
                         <label>Code Pension *</label>
-                        <input type="text" name="code_pension"
-                               value="{{ old('code_pension', $demande?->data['code_pension'] ?? '') }}"
+                        <input type="text" name="code_pension" data-active-pension-code
+                               value="{{ old('code_pension', $demande?->data['code_pension'] ?? auth()->user()?->displayPensionCode()) }}"
                                class="input mt-1 w-full rounded-md border @error('code_pension') border-red-500 @enderror">
                         @error('code_pension') <p class="mt-1 text-base text-red-600">{{ $message }}</p> @enderror
                     </div>

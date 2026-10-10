@@ -2,8 +2,12 @@
 
 namespace Tests\Feature;
 
+use App\Enums\RencontreStatutEnum;
+use App\Enums\TypeDemandeEnum;
+use App\Models\Demande;
 use App\Models\Service;
 use App\Models\User;
+use App\Models\WorkflowStep;
 use App\Notifications\DemandeStatusChangedNotification;
 use App\Notifications\RencontreAgentAssigneNotification;
 use App\Services\RencontreAvailabilityService;
@@ -33,20 +37,40 @@ class DemandeRencontreSchedulerTest extends TestCase
     private function validStorePayload(User $agent, array $overrides = []): array
     {
         return array_merge([
-            'motif' => 'suivi_dossier',
+            'motif' => 'demande_formalites_mandats',
             'date_souhaitee' => now()->next('Wednesday')->toDateString(),
             'heure_souhaitee' => '14:30',
-            'modalite' => 'physique',
+            'modalite' => 'visio',
             'lieu_rdv' => 'Siège de la DPC — Port-au-Prince',
-            'agent_id' => $agent->id,
-            'carte_pension' => UploadedFile::fake()->image('carte.jpg'),
-            'prenom' => 'Jean',
-            'nom' => 'Pierre',
-            'numero_pension' => 'P-100',
+            'doc_carte_pension' => UploadedFile::fake()->image('carte.jpg'),
+            'doc_piece_identite' => UploadedFile::fake()->image('id.jpg'),
             'telephone' => '+50938123456',
-            'email' => 'jean.pierre@example.com',
             'confirmation_lu_accepte' => '1',
         ], $overrides);
+    }
+
+    /**
+     * @param  array<string, mixed>  $dataOverrides
+     */
+    private function createRencontreDemande(
+        User $owner,
+        array $dataOverrides = [],
+        ?string $stepCode = 'SOUMISE'
+    ): Demande {
+        return Demande::create([
+            'type' => TypeDemandeEnum::DEMANDE_RENCONTRE->value,
+            'created_by' => $owner->id,
+            'current_step_id' => $stepCode
+                ? WorkflowStep::idForCode($stepCode)
+                : null,
+            'data' => array_merge([
+                'motif_key' => 'demande_formalites_mandats',
+                'rdv_statut' => RencontreStatutEnum::ACTIF->value,
+                'date_souhaitee' => now()->next('Wednesday')->toDateString(),
+                'heure_souhaitee' => '14:00',
+                'modalite' => 'visio',
+            ], $dataOverrides),
+        ]);
     }
 
     private function makePensionne(array $overrides = []): User
@@ -65,6 +89,11 @@ class DemandeRencontreSchedulerTest extends TestCase
         $agent->assignRole(User::ROLE_AGENT_RDV);
 
         return $agent;
+    }
+
+    private function formalitesService(): Service
+    {
+        return Service::where('code', Service::FORMALITE)->firstOrFail();
     }
 
     public function test_guest_is_asked_to_log_in_to_open_the_appointment_page(): void
@@ -86,7 +115,7 @@ class DemandeRencontreSchedulerTest extends TestCase
     public function test_appointment_page_lets_the_user_choose_the_mode(): void
     {
         $user = $this->makePensionne();
-        $agent = $this->makeFormalitesAgent();
+        $this->makeFormalitesAgent();
 
         $this->actingAs($user)
             ->get(route('demandes.rencontre.create'))
@@ -95,42 +124,16 @@ class DemandeRencontreSchedulerTest extends TestCase
             ->assertSee('Présentiel')
             ->assertSee('Visioconférence')
             ->assertSee('Préciser le motif')
-            ->assertSee('Demande de pension / liquidation')
-            ->assertSee('Suivi d’un dossier de pension')
-            ->assertSee('Désignation de mandataire')
-            ->assertSee('Autre demande')
+            ->assertSee('Demande de formalités de pension et mandats')
+            ->assertDontSee('Finalisation de la création de compte')
             ->assertSee('Service responsable')
-            ->assertSee('Rendez-vous auprès de la Direction')
             ->assertSee('Formalités')
-            ->assertSee($agent->displayName())
-            ->assertSee('Carte de pension')
-            ->assertSee('14h00')
-            ->assertSee('15 minutes')
+            ->assertSee('Recommandé')
+            ->assertSee('jours fériés')
             ->assertSee('id="dpc-rdv-scheduler"', false)
             ->assertSee('name="date_souhaitee"', false)
             ->assertSee('name="heure_souhaitee"', false)
-            ->assertSee('name="agent_id"', false)
-            ->assertSee('name="carte_pension"', false);
-    }
-
-    public function test_identity_fields_are_prefilled_from_the_logged_in_user(): void
-    {
-        $user = $this->makePensionne([
-            'firstname' => 'Marie',
-            'lastname' => 'Joseph',
-            'pension_code' => 'PEN-123456',
-            'phone' => '+50938123456',
-            'email' => 'marie.joseph@example.com',
-        ]);
-
-        $this->actingAs($user)
-            ->get(route('demandes.rencontre.create'))
-            ->assertOk()
-            ->assertSee('value="Marie"', false)
-            ->assertSee('value="Joseph"', false)
-            ->assertSee('value="PEN-123456"', false)
-            ->assertSee('value="+50938123456"', false)
-            ->assertSee('value="marie.joseph@example.com"', false);
+            ->assertSee('name="doc_carte_pension"', false);
     }
 
     public function test_legacy_physical_url_redirects_to_the_unified_page(): void
@@ -151,37 +154,33 @@ class DemandeRencontreSchedulerTest extends TestCase
         $takenDate = now()->next('Wednesday')->toDateString();
         $freeDate = now()->next('Thursday')->toDateString();
 
-        \App\Models\Demande::create([
-            'type' => \App\Enums\TypeDemandeEnum::DEMANDE_RENCONTRE->value,
-            'created_by' => $other->id,
-            'current_step_id' => \App\Models\WorkflowStep::idForCode('SOUMISE'),
-            'data' => [
-                'date_souhaitee' => $takenDate,
-                'heure_souhaitee' => '14:00',
-                'modalite' => 'visio',
-                'agent_id' => $agent->id,
-            ],
+        $this->createRencontreDemande($other, [
+            'date_souhaitee' => $takenDate,
+            'heure_souhaitee' => '14:00',
+            'agent_id' => $agent->id,
         ]);
 
-        \App\Models\Demande::create([
-            'type' => \App\Enums\TypeDemandeEnum::DEMANDE_RENCONTRE->value,
-            'created_by' => $user->id,
-            'current_step_id' => \App\Models\WorkflowStep::idForCode('REJETEE'),
-            'data' => [
-                'date_souhaitee' => $freeDate,
-                'heure_souhaitee' => '14:15',
-                'modalite' => 'physique',
-                'agent_id' => $agent->id,
-            ],
-        ]);
+        $this->createRencontreDemande($user, [
+            'date_souhaitee' => $freeDate,
+            'heure_souhaitee' => '14:15',
+            'modalite' => 'physique',
+            'agent_id' => $agent->id,
+            'rdv_statut' => RencontreStatutEnum::REFUSE->value,
+        ], 'REJETEE');
+
+        $availability = app(RencontreAvailabilityService::class);
+        $unavailable = $availability->unavailableSlotsForService(
+            $this->formalitesService()
+        );
+
+        $this->assertContains("{$takenDate} 14:00", $unavailable);
+        $this->assertNotContains("{$freeDate} 14:15", $unavailable);
 
         $this->actingAs($user)
             ->get(route('demandes.rencontre.create'))
             ->assertOk()
-            ->assertSee('data-reserved', false)
-            ->assertSee($takenDate, false)
-            ->assertSee('14:00', false)
-            ->assertDontSee($freeDate);
+            ->assertSee('data-reserved-by-service', false)
+            ->assertSee($takenDate, false);
     }
 
     public function test_store_rejects_an_already_reserved_slot_for_the_same_agent(): void
@@ -192,16 +191,11 @@ class DemandeRencontreSchedulerTest extends TestCase
         $agent = $this->makeFormalitesAgent();
         $date = now()->next('Wednesday')->toDateString();
 
-        \App\Models\Demande::create([
-            'type' => \App\Enums\TypeDemandeEnum::DEMANDE_RENCONTRE->value,
-            'created_by' => $other->id,
-            'current_step_id' => \App\Models\WorkflowStep::idForCode('SOUMISE'),
-            'data' => [
-                'date_souhaitee' => $date,
-                'heure_souhaitee' => '14:30',
-                'modalite' => 'physique',
-                'agent_id' => $agent->id,
-            ],
+        $this->createRencontreDemande($other, [
+            'date_souhaitee' => $date,
+            'heure_souhaitee' => '14:30',
+            'modalite' => 'physique',
+            'agent_id' => $agent->id,
         ]);
 
         $this->actingAs($user)
@@ -223,16 +217,11 @@ class DemandeRencontreSchedulerTest extends TestCase
         $agentB = $this->makeFormalitesAgent();
         $date = now()->next('Wednesday')->toDateString();
 
-        \App\Models\Demande::create([
-            'type' => \App\Enums\TypeDemandeEnum::DEMANDE_RENCONTRE->value,
-            'created_by' => $userA->id,
-            'current_step_id' => \App\Models\WorkflowStep::idForCode('SOUMISE'),
-            'data' => [
-                'date_souhaitee' => $date,
-                'heure_souhaitee' => '14:30',
-                'modalite' => 'physique',
-                'agent_id' => $agentA->id,
-            ],
+        $this->createRencontreDemande($userA, [
+            'date_souhaitee' => $date,
+            'heure_souhaitee' => '14:30',
+            'modalite' => 'physique',
+            'agent_id' => $agentA->id,
         ]);
 
         $this->actingAs($userB)
@@ -244,15 +233,13 @@ class DemandeRencontreSchedulerTest extends TestCase
             ->assertRedirect(route('demandes.rencontre.create'))
             ->assertSessionHas('success');
 
-        $this->assertDatabaseHas('demandes', [
-            'type' => \App\Enums\TypeDemandeEnum::DEMANDE_RENCONTRE->value,
-            'created_by' => $userB->id,
-        ]);
-        $this->assertTrue(\App\Models\Demande::query()
-            ->where('type', \App\Enums\TypeDemandeEnum::DEMANDE_RENCONTRE->value)
+        $this->assertTrue(Demande::query()
+            ->where('type', TypeDemandeEnum::DEMANDE_RENCONTRE->value)
             ->where('created_by', $userB->id)
             ->get()
-            ->contains(fn ($demande) => (int) ($demande->data['agent_id'] ?? 0) === $agentB->id));
+            ->contains(
+                fn ($demande) => (int) ($demande->data['agent_id'] ?? 0) === $agentB->id
+            ));
     }
 
     public function test_store_sends_a_single_submission_notification_to_the_owner(): void
@@ -267,9 +254,9 @@ class DemandeRencontreSchedulerTest extends TestCase
             ->post(route('demandes.rencontre.store'), $this->validStorePayload($agent))
             ->assertRedirect(route('demandes.rencontre.create'));
 
-        Notification::assertSentToTimes($user, DemandeStatusChangedNotification::class, 1);
         Notification::assertSentToTimes($agent, RencontreAgentAssigneNotification::class, 1);
         Notification::assertNotSentTo($user, RencontreAgentAssigneNotification::class);
+        Notification::assertNotSentTo($user, DemandeStatusChangedNotification::class);
     }
 
     public function test_appointment_does_not_enter_the_direction_circuit(): void
@@ -288,21 +275,27 @@ class DemandeRencontreSchedulerTest extends TestCase
             ->post(route('demandes.rencontre.store'), $this->validStorePayload($agent))
             ->assertRedirect(route('demandes.rencontre.create'));
 
-        $demande = \App\Models\Demande::query()
-            ->where('type', \App\Enums\TypeDemandeEnum::DEMANDE_RENCONTRE->value)
+        $demande = Demande::query()
+            ->where('type', TypeDemandeEnum::DEMANDE_RENCONTRE->value)
             ->where('created_by', $user->id)
             ->latest('id')
             ->first();
 
         $this->assertNotNull($demande);
-        $this->assertSame(Service::where('code', Service::FORMALITE)->value('id'), $demande->current_service_id);
+        $this->assertSame(
+            Service::where('code', Service::FORMALITE)->value('id'),
+            $demande->current_service_id
+        );
         $this->assertNull($demande->circuitSnapshot);
-        $this->assertDatabaseMissing('demande_interactions', [
-            'demande_id' => $demande->id,
-            'commentaire' => 'Soumission initiale — réception Direction',
-        ]);
-        Notification::assertNotSentTo($directionUser, \App\Notifications\DemandeSubmittedNotification::class);
-        $this->assertTrue(app(\App\Services\DemandeWorkflowService::class)->availableTransferOptions($demande)->isEmpty());
+        Notification::assertNotSentTo(
+            $directionUser,
+            \App\Notifications\DemandeSubmittedNotification::class
+        );
+        $this->assertTrue(
+            app(\App\Services\DemandeWorkflowService::class)
+                ->availableTransferOptions($demande)
+                ->isEmpty()
+        );
     }
 
     public function test_store_rejects_a_slot_outside_the_afternoon_window(): void
@@ -322,18 +315,21 @@ class DemandeRencontreSchedulerTest extends TestCase
 
     public function test_only_users_with_the_agent_rdv_role_are_bookable(): void
     {
-        $user = $this->makePensionne();
         $listed = $this->makeFormalitesAgent(['name' => 'Agent RDV visible']);
         User::factory()->create([
             'service_id' => Service::where('code', Service::FORMALITE)->value('id'),
             'name' => 'Agent sans rôle RDV',
         ]);
 
-        $this->actingAs($user)
-            ->get(route('demandes.rencontre.create'))
-            ->assertOk()
-            ->assertSee($listed->displayName())
-            ->assertDontSee('Agent sans rôle RDV');
+        $agents = app(RencontreAvailabilityService::class)
+            ->bookingAgents($this->formalitesService());
+
+        $this->assertTrue(
+            $agents->contains(fn (User $user) => $user->id === $listed->id)
+        );
+        $this->assertFalse(
+            $agents->contains(fn (User $user) => $user->name === 'Agent sans rôle RDV')
+        );
     }
 
     public function test_formalites_offers_eight_fifteen_minute_slots(): void
@@ -352,19 +348,19 @@ class DemandeRencontreSchedulerTest extends TestCase
         $user = $this->makePensionne();
         $agent = $this->makeFormalitesAgent();
         $date = now()->next('Wednesday')->toDateString();
+        $availability = app(RencontreAvailabilityService::class);
 
-        $demande = \App\Models\Demande::create([
-            'type' => \App\Enums\TypeDemandeEnum::DEMANDE_RENCONTRE->value,
-            'created_by' => $user->id,
-            'current_step_id' => \App\Models\WorkflowStep::idForCode('SOUMISE'),
-            'data' => [
-                'objet' => 'Suivi de dossier',
-                'date_souhaitee' => $date,
-                'heure_souhaitee' => '14:00',
-                'modalite' => 'visio',
-                'agent_id' => $agent->id,
-            ],
+        $demande = $this->createRencontreDemande($user, [
+            'objet' => 'Suivi de dossier',
+            'date_souhaitee' => $date,
+            'heure_souhaitee' => '14:00',
+            'modalite' => 'visio',
+            'agent_id' => $agent->id,
         ]);
+
+        $this->assertTrue(
+            $availability->agentHasAppointmentAt($agent, $date, '14:00')
+        );
 
         $this->actingAs($user)
             ->from(route('demandes.rencontre.create'))
@@ -373,8 +369,13 @@ class DemandeRencontreSchedulerTest extends TestCase
             ->assertSessionHas('success');
 
         $demande->refresh();
-        $this->assertSame('ANNULEE', $demande->currentStep?->code);
-        $this->assertFalse(\App\Models\Demande::isRencontreSlotTaken($date, '14:00', $agent->id));
+        $this->assertSame(
+            RencontreStatutEnum::ANNULE,
+            $demande->rencontreStatut()
+        );
+        $this->assertFalse(
+            $availability->agentHasAppointmentAt($agent, $date, '14:00')
+        );
     }
 
     public function test_user_can_cancel_a_physical_appointment(): void
@@ -383,17 +384,12 @@ class DemandeRencontreSchedulerTest extends TestCase
         $user = $this->makePensionne();
         $date = now()->next('Thursday')->toDateString();
 
-        $demande = \App\Models\Demande::create([
-            'type' => \App\Enums\TypeDemandeEnum::DEMANDE_RENCONTRE->value,
-            'created_by' => $user->id,
-            'current_step_id' => \App\Models\WorkflowStep::idForCode('APPROUVEE'),
-            'data' => [
-                'objet' => 'Dépôt de pièces',
-                'date_souhaitee' => $date,
-                'heure_souhaitee' => '14:15',
-                'modalite' => 'physique',
-            ],
-        ]);
+        $demande = $this->createRencontreDemande($user, [
+            'objet' => 'Dépôt de pièces',
+            'date_souhaitee' => $date,
+            'heure_souhaitee' => '14:15',
+            'modalite' => 'physique',
+        ], 'ACTIF');
 
         $this->actingAs($user)
             ->from(route('demandes.rencontre.create'))
@@ -401,7 +397,10 @@ class DemandeRencontreSchedulerTest extends TestCase
             ->assertRedirect(route('demandes.rencontre.create'))
             ->assertSessionHas('success');
 
-        $this->assertSame('ANNULEE', $demande->fresh()->currentStep?->code);
+        $this->assertSame(
+            RencontreStatutEnum::ANNULE,
+            $demande->fresh()->rencontreStatut()
+        );
     }
 
     public function test_pensionne_cannot_book_a_second_active_appointment(): void
@@ -409,19 +408,13 @@ class DemandeRencontreSchedulerTest extends TestCase
         $this->seedStatuses();
         $user = $this->makePensionne();
         $agent = $this->makeFormalitesAgent();
-        $date = now()->next('Wednesday')->toDateString();
 
-        \App\Models\Demande::create([
-            'type' => \App\Enums\TypeDemandeEnum::DEMANDE_RENCONTRE->value,
-            'created_by' => $user->id,
-            'current_step_id' => \App\Models\WorkflowStep::idForCode('SOUMISE'),
-            'data' => [
-                'date_souhaitee' => $date,
-                'heure_souhaitee' => '14:00',
-                'modalite' => 'physique',
-                'agent_id' => $agent->id,
-                'rdv_statut' => \App\Enums\RencontreStatutEnum::DEMANDE->value,
-            ],
+        $this->createRencontreDemande($user, [
+            'date_souhaitee' => now()->next('Wednesday')->toDateString(),
+            'heure_souhaitee' => '14:00',
+            'modalite' => 'physique',
+            'agent_id' => $agent->id,
+            'rdv_statut' => RencontreStatutEnum::DEMANDE->value,
         ]);
 
         $this->actingAs($user)
@@ -447,20 +440,16 @@ class DemandeRencontreSchedulerTest extends TestCase
         $agent = $this->makeFormalitesAgent();
         $date = now()->next('Wednesday')->toDateString();
 
-        $demande = \App\Models\Demande::create([
-            'type' => \App\Enums\TypeDemandeEnum::DEMANDE_RENCONTRE->value,
-            'created_by' => $user->id,
-            'current_step_id' => \App\Models\WorkflowStep::idForCode('SOUMISE'),
-            'data' => [
-                'date_souhaitee' => $date,
-                'heure_souhaitee' => '14:00',
-                'modalite' => 'visio',
-                'agent_id' => $agent->id,
-                'rdv_statut' => \App\Enums\RencontreStatutEnum::DEMANDE->value,
-            ],
+        $demande = $this->createRencontreDemande($user, [
+            'date_souhaitee' => $date,
+            'heure_souhaitee' => '14:00',
+            'modalite' => 'visio',
+            'agent_id' => $agent->id,
+            'rdv_statut' => RencontreStatutEnum::DEMANDE->value,
         ]);
 
         $this->actingAs($user)
+            ->from(route('demandes.rencontre.create'))
             ->post(route('demandes.rencontre.annuler', $demande))
             ->assertRedirect(route('demandes.rencontre.create'));
 
@@ -480,19 +469,40 @@ class DemandeRencontreSchedulerTest extends TestCase
         $owner = $this->makePensionne();
         $other = $this->makePensionne();
 
-        $demande = \App\Models\Demande::create([
-            'type' => \App\Enums\TypeDemandeEnum::DEMANDE_RENCONTRE->value,
-            'created_by' => $owner->id,
-            'current_step_id' => \App\Models\WorkflowStep::idForCode('SOUMISE'),
-            'data' => [
-                'date_souhaitee' => now()->next('Wednesday')->toDateString(),
-                'heure_souhaitee' => '15:00',
-                'modalite' => 'visio',
-            ],
+        $demande = $this->createRencontreDemande($owner, [
+            'date_souhaitee' => now()->next('Wednesday')->toDateString(),
+            'heure_souhaitee' => '15:00',
+            'modalite' => 'visio',
         ]);
 
         $this->actingAs($other)
             ->post(route('demandes.rencontre.annuler', $demande))
             ->assertForbidden();
+    }
+
+    public function test_provisionnel_pensionne_books_formalites_motif_only(): void
+    {
+        $this->seedStatuses();
+        $agent = $this->makeFormalitesAgent();
+        $user = $this->makePensionne([
+            'account_status' => \App\Enums\AccountStatusEnum::PROVISOIRE,
+        ]);
+        app(\App\Services\Pension\BeneficiaireProvisioningService::class)
+            ->provisionAdultSelf($user, null, '8-34321');
+
+        $this->actingAs($user)
+            ->get(route('demandes.rencontre.create'))
+            ->assertOk()
+            ->assertSee('Demande de formalités de pension et mandats')
+            ->assertDontSee('Finalisation de la création de compte')
+            ->assertDontSee('Documents à préparer pour le rendez-vous');
+
+        $this->actingAs($user)
+            ->from(route('demandes.rencontre.create'))
+            ->post(route('demandes.rencontre.store'), $this->validStorePayload($agent, [
+                'motif' => 'demande_formalites_mandats',
+            ]))
+            ->assertRedirect(route('demandes.rencontre.create'))
+            ->assertSessionHas('success');
     }
 }

@@ -40,7 +40,7 @@
                         <div class="text-sm">
                             <a href="{{ route('admin.demandes.show', $workflow->demande) }}"
                                class="font-semibold text-gray-800 hover:underline">
-                                #{{ $workflow->demande->code ?? $workflow->demande->id }}
+                                {{ $workflow->demande->libellePublic() }}
                             </a>
                             <span class="text-gray-500 mx-1">·</span>
                             <span class="text-gray-600">
@@ -80,7 +80,7 @@
                 @forelse($demandes as $demande)
                     <tr class="hover:bg-gray-50 transition-colors">
                         <td class="px-4 py-3 font-mono text-xs text-gray-700">
-                            {{ $demande->code ?? '#' . $demande->id }}
+                            {{ $demande->libellePublic() }}
                         </td>
                         <td class="px-4 py-3 text-gray-700">
                             <div class="flex flex-wrap items-center gap-1">

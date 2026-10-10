@@ -193,6 +193,16 @@
                                             <i class="fas fa-user-circle mr-2 text-gray-400"></i>
                                             {{ __('Profile') }}
                                         </x-dropdown-link>
+                                        @role('pensionne')
+                                            <x-dropdown-link :href="route('compte.affiliations.index')">
+                                                <i class="fas fa-id-card mr-2 text-gray-400"></i>
+                                                Mes codes pension
+                                            </x-dropdown-link>
+                                            <x-dropdown-link :href="route('compte.mandats.index')">
+                                                <i class="fas fa-file-signature mr-2 text-gray-400"></i>
+                                                Mes mandats
+                                            </x-dropdown-link>
+                                        @endrole
                                     @endif
                                     @role('admin')
                                         <x-dropdown-link :href="route('admin.dashboard.index')">

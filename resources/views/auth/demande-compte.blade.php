@@ -1,4 +1,4 @@
-<x-guest-layout :wide="true">
+<x-guest-layout :wide="true" :show-copyright="false">
     @php
         $isMineur = (bool) old('is_mineur');
         $userType = old('user_type', 'pensionne');
@@ -14,6 +14,7 @@
             'cin' => 'Carte d’identification nationale',
             'passeport' => 'Passeport',
             'permis' => 'Permis de conduire',
+            'matricule_fiscal' => 'Matricule fiscal',
         ];
 
         $serverErrors = collect($errors->messages())
@@ -70,10 +71,14 @@
             default         => 1,
         };
 
+        $stashedFiles = app(\App\Services\Form\FormUploadStashService::class)
+            ->displayNamesForRequest(request());
+
         $formState = [
             'step' => $initialStep,
             'isMineur' => $isMineur,
             'userType' => $userType,
+            'stashedFiles' => $stashedFiles,
 
             'telephone' => old('telephone', ''),
             'email' => old('email', ''),
@@ -246,60 +251,6 @@
                 font-size: 0.62rem;
                 letter-spacing: 0.03em;
             }
-        }
-
-        /* ============================================================
-         * FILE INPUT
-         * ============================================================ */
-
-        .compte-file {
-            display: flex;
-            align-items: center;
-            gap: 0.75rem;
-            width: 100%;
-            max-width: 100%;
-            min-width: 0;
-            position: relative;
-        }
-
-        .compte-file input[type="file"] {
-            position: absolute;
-            width: 0;
-            height: 0;
-            padding: 0;
-            margin: 0;
-            overflow: hidden;
-            opacity: 0;
-            pointer-events: none;
-            border: 0;
-        }
-
-        .compte-file-btn {
-            display: inline-flex;
-            align-items: center;
-            flex-shrink: 0;
-            padding: 0.55rem 0.95rem;
-            border-radius: 0.5rem;
-            background: #173052;
-            color: #fff;
-            font-size: 0.875rem;
-            font-weight: 600;
-            cursor: pointer;
-            transition: background-color .15s ease;
-        }
-
-        .compte-file-btn:hover {
-            background: #ea580c;
-        }
-
-        .compte-file-name {
-            flex: 1 1 0;
-            min-width: 0;
-            font-size: 0.875rem;
-            color: #6b7280;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            white-space: nowrap;
         }
 
         /* ============================================================
@@ -602,7 +553,7 @@
                 x-show="step === 1"
                 class="space-y-5"
             >
-                <div class="flex items-start gap-3 border-b border-gray-200 pb-3">
+                <!-- <div class="flex items-start gap-3 border-b border-gray-200 pb-3">
                     <div>
                         <h3 class="text-base font-bold text-gray-800">
                             Téléversement des documents
@@ -613,7 +564,7 @@
                             Les informations seront ensuite lues automatiquement par OCR.
                         </p>
                     </div>
-                </div>
+                </div> -->
 
                 {{-- ====================================================
                      MAJEUR
@@ -626,11 +577,11 @@
                 >
                     <div>
                         <h4 class="text-sm font-semibold text-gray-800">
-                            Pièce d’identité du pensionné
+                            Document du pensionné
                         </h4>
 
                         <p class="text-xs text-gray-500 mt-1">
-                            Le document doit appartenir au pensionné concerné.
+                            Choisissez le type de document, puis téléversez le fichier correspondant.
                         </p>
                     </div>
 
@@ -639,7 +590,7 @@
                             for="piece_identite_type"
                             class="block text-sm font-medium text-gray-700 mb-1"
                         >
-                            Pièce d’identité
+                            Type de document
                             <span class="text-red-500">*</span>
                         </label>
 
@@ -677,7 +628,14 @@
                             <span class="text-red-500">*</span>
                         </span>
 
-                        <div class="compte-file">
+                        <label
+                            for="piece_identite"
+                            class="dpc-file-field"
+                            :class="{
+                                'is-error': fieldErrors.piece_identite,
+                                'is-filled': files.piece_identite
+                            }"
+                        >
                             <input
                                 type="file"
                                 id="piece_identite"
@@ -689,19 +647,20 @@
                                 "
                             >
 
-                            <label
-                                for="piece_identite"
-                                class="compte-file-btn"
-                            >
-                                <i class="fas fa-upload mr-2"></i>
-                                Choisir un fichier
-                            </label>
+                            <span class="dpc-file-field-icon" aria-hidden="true">
+                                <i class="far fa-file"></i>
+                            </span>
 
                             <span
-                                class="compte-file-name"
+                                class="dpc-file-field-name"
                                 x-text="files.piece_identite || 'Aucun fichier choisi'"
                             ></span>
-                        </div>
+
+                            <span
+                                class="dpc-file-field-action"
+                                x-text="files.piece_identite ? 'Changer' : 'Parcourir'"
+                            ></span>
+                        </label>
 
                         <p class="text-xs text-gray-500 mt-1">
                             JPG, PNG, WEBP ou PDF — 5 Mo max.
@@ -714,6 +673,7 @@
                             x-text="fieldErrors.piece_identite"
                         ></p>
                     </div>
+
                 </div>
 
                 {{-- ====================================================
@@ -743,7 +703,14 @@
                                 <span class="text-red-500">*</span>
                             </span>
 
-                            <div class="compte-file">
+                            <label
+                                for="acte_naissance"
+                                class="dpc-file-field"
+                                :class="{
+                                    'is-error': fieldErrors.acte_naissance,
+                                    'is-filled': files.acte_naissance
+                                }"
+                            >
                                 <input
                                     type="file"
                                     id="acte_naissance"
@@ -755,19 +722,20 @@
                                     "
                                 >
 
-                                <label
-                                    for="acte_naissance"
-                                    class="compte-file-btn"
-                                >
-                                    <i class="fas fa-upload mr-2"></i>
-                                    Choisir un fichier
-                                </label>
+                                <span class="dpc-file-field-icon" aria-hidden="true">
+                                    <i class="far fa-file"></i>
+                                </span>
 
                                 <span
-                                    class="compte-file-name"
+                                    class="dpc-file-field-name"
                                     x-text="files.acte_naissance || 'Aucun fichier choisi'"
                                 ></span>
-                            </div>
+
+                                <span
+                                    class="dpc-file-field-action"
+                                    x-text="files.acte_naissance ? 'Changer' : 'Parcourir'"
+                                ></span>
+                            </label>
 
                             <p class="text-xs text-gray-500 mt-1">
                                 JPG, PNG, WEBP ou PDF — 5 Mo max.
@@ -790,8 +758,8 @@
                             </h4>
 
                             <p class="text-xs text-gray-500 mt-1">
-                                Le représentant agit pour le compte du pensionné mineur.
-                                Le compte reste créé au nom du mineur.
+                                Le compte de connexion est créé au nom du représentant, qui agit pour le pensionné mineur
+                                (titulaire du code pension saisi ci-dessus). Le représentant n’a pas besoin d’être pensionné.
                             </p>
                         </div>
 
@@ -845,6 +813,21 @@
                         </div>
 
                         <div>
+                            <label class="inline-flex items-start gap-2 cursor-pointer">
+                                <input
+                                    type="checkbox"
+                                    name="representant_est_pensionne"
+                                    value="1"
+                                    class="mt-1 rounded border-gray-300 text-indigo-600 focus:ring-indigo-400"
+                                    @checked(old('representant_est_pensionne'))
+                                >
+                                <span class="text-sm text-gray-700">
+                                    Je suis moi-même pensionné titulaire (en plus d’être représentant de ce mineur)
+                                </span>
+                            </label>
+                        </div>
+
+                        <div>
                             <label
                                 for="piece_identite_representant_type"
                                 class="block text-sm font-medium text-gray-700 mb-1"
@@ -887,7 +870,14 @@
                                 <span class="text-red-500">*</span>
                             </span>
 
-                            <div class="compte-file">
+                            <label
+                                for="piece_identite_representant"
+                                class="dpc-file-field"
+                                :class="{
+                                    'is-error': fieldErrors.piece_identite_representant,
+                                    'is-filled': files.piece_identite_representant
+                                }"
+                            >
                                 <input
                                     type="file"
                                     id="piece_identite_representant"
@@ -899,19 +889,20 @@
                                     "
                                 >
 
-                                <label
-                                    for="piece_identite_representant"
-                                    class="compte-file-btn"
-                                >
-                                    <i class="fas fa-upload mr-2"></i>
-                                    Choisir un fichier
-                                </label>
+                                <span class="dpc-file-field-icon" aria-hidden="true">
+                                    <i class="far fa-file"></i>
+                                </span>
 
                                 <span
-                                    class="compte-file-name"
+                                    class="dpc-file-field-name"
                                     x-text="files.piece_identite_representant || 'Aucun fichier choisi'"
                                 ></span>
-                            </div>
+
+                                <span
+                                    class="dpc-file-field-action"
+                                    x-text="files.piece_identite_representant ? 'Changer' : 'Parcourir'"
+                                ></span>
+                            </label>
 
                             <p class="text-xs text-gray-500 mt-1">
                                 JPG, PNG, WEBP ou PDF — 5 Mo max.
@@ -927,7 +918,7 @@
                     </div>
                 </div>
 
-                <div class="rounded-lg bg-blue-50 border border-blue-100 p-3">
+                <!-- <div class="rounded-lg bg-blue-50 border border-blue-100 p-3">
                     <div class="flex items-start gap-2">
                         <i class="fas fa-info-circle text-[#173052] mt-0.5"></i>
 
@@ -937,7 +928,7 @@
                             Le portail procédera automatiquement à leur lecture OCR.
                         </p>
                     </div>
-                </div>
+                </div> -->
             </div>
 
             {{-- ============================================================
@@ -1158,13 +1149,19 @@
 
                     {{-- Téléphone --}}
                     <div>
-                        <label
-                            for="telephone"
-                            class="block text-sm font-medium text-gray-700 mb-1"
-                        >
-                            Numéro de téléphone
-                            <span class="text-red-500">*</span>
-                        </label>
+                        <div class="flex items-center gap-1.5 mb-1">
+                            <label
+                                for="telephone"
+                                class="block text-sm font-medium text-gray-700"
+                            >
+                                Numéro de téléphone
+                                <span class="text-red-500">*</span>
+                            </label>
+                            <x-format-hint-icon
+                                :text="__('messages.format_hint_telephone')"
+                                hint-id="telephone-format-hint"
+                            />
+                        </div>
 
                         <input
                             id="telephone"
@@ -1178,16 +1175,8 @@
                             maxlength="16"
                             class="w-full py-2.5 px-3 border rounded-lg text-sm focus:outline-none focus:ring-2"
                             :class="borderClass('telephone')"
-                            aria-describedby="telephone-help telephone-error"
+                            aria-describedby="telephone-error"
                         >
-
-                        <p
-                            id="telephone-help"
-                            class="text-xs text-gray-500 mt-1"
-                        >
-                            Format international obligatoire avec l’indicatif pays.
-                            Ex. : +50938123456, +33612345678, +14161234567
-                        </p>
 
                         <p
                             id="telephone-error"
@@ -1200,12 +1189,18 @@
 
                     {{-- NIF --}}
                     <div>
-                        <label
-                            for="nif"
-                            class="block text-sm font-medium text-gray-700 mb-1"
-                        >
-                            NIF
-                        </label>
+                        <div class="flex items-center gap-1.5 mb-1">
+                            <label
+                                for="nif"
+                                class="block text-sm font-medium text-gray-700"
+                            >
+                                Matricule fiscal (NIF)
+                            </label>
+                            <x-format-hint-icon
+                                :text="__('messages.format_hint_nif')"
+                                hint-id="nif-format-hint"
+                            />
+                        </div>
 
                         <input
                             id="nif"
@@ -1282,13 +1277,19 @@
 
                     {{-- Code pension (optionnel) --}}
                     <div x-show="userType === 'pensionne'">
-                        <label
-                            for="pension_code"
-                            class="block text-sm font-medium text-gray-700 mb-1"
-                        >
-                            Code pension
-                            <span class="text-xs font-normal text-gray-400">(si code pension)</span>
-                        </label>
+                        <div class="flex items-center gap-1.5 mb-1">
+                            <label
+                                for="pension_code"
+                                class="block text-sm font-medium text-gray-700"
+                            >
+                                Code pension
+                                <span class="text-xs font-normal text-gray-400">(si code pension)</span>
+                            </label>
+                            <x-format-hint-icon
+                                :text="__('messages.format_hint_pension_code')"
+                                hint-id="pension-code-format-hint"
+                            />
+                        </div>
 
                         <input
                             id="pension_code"
@@ -1524,7 +1525,7 @@
                             </p>
 
                             <p>
-                                <span class="text-gray-500">NIF :</span>
+                                <span class="text-gray-500">Matricule fiscal (NIF) :</span>
                                 <span x-text="nif || '—'"></span>
                             </p>
 
@@ -1602,7 +1603,7 @@
                                 <div class="space-y-1">
                                     <p>
                                         <span class="text-gray-500">
-                                            Pièce d’identité :
+                                            Document :
                                         </span>
 
                                         <span x-text="pieceTypeLabel"></span>
@@ -1891,6 +1892,7 @@
                 cin: 'Carte d’identification nationale',
                 passeport: 'Passeport',
                 permis: 'Permis de conduire',
+                matricule_fiscal: 'Matricule fiscal',
                 acte_naissance: 'Acte de naissance',
             };
 
@@ -1903,7 +1905,13 @@
             const fieldValue = (id) =>
                 document.getElementById(id)?.value?.trim() || '';
 
+            const stashedFiles = initial.stashedFiles || {};
+
             const hasFile = (id) => {
+                if (stashedFiles[id]) {
+                    return true;
+                }
+
                 const field = document.getElementById(id);
 
                 return !!(
@@ -2006,9 +2014,10 @@
                 previews: {},
 
                 files: {
-                    piece_identite: '',
-                    acte_naissance: '',
-                    piece_identite_representant: '',
+                    piece_identite: stashedFiles.piece_identite || '',
+                    acte_naissance: stashedFiles.acte_naissance || '',
+                    piece_identite_representant:
+                        stashedFiles.piece_identite_representant || '',
                 },
 
                 schemas: {
@@ -3087,9 +3096,15 @@
                     /* Normaliser le code pension avant envoi */
                     const pensionInput = document.getElementById('pension_code');
 
-                    if (pensionInput && pensionInput.value) {
-                        pensionInput.value = pensionInput.value.trim().toUpperCase();
-                        this.pension_code = pensionInput.value;
+                    if (pensionInput) {
+                        const trimmed = pensionInput.value.trim();
+                        if (trimmed === '') {
+                            pensionInput.value = '';
+                            this.pension_code = '';
+                        } else {
+                            pensionInput.value = trimmed.toUpperCase();
+                            this.pension_code = pensionInput.value;
+                        }
                     }
 
                     /* Normaliser le NINU avant envoi */
@@ -3109,6 +3124,10 @@
 
                     formData.set('idempotency_key', this.idempotencyKey);
 
+                    if (! (formData.get('pension_code') || '').toString().trim()) {
+                        formData.delete('pension_code');
+                    }
+
                     this.busy = true;
                     this.busyLabel = 'Envoi…';
                     this.stepError = '';
@@ -3122,8 +3141,25 @@
                                 'X-Requested-With': 'XMLHttpRequest',
                                 'Accept': 'application/json',
                             },
+                            credentials: 'same-origin',
+                            redirect: 'manual',
                             body: formData,
                         });
+
+                        const rdvFallback = "{{ route('demandes.rencontre.create') }}";
+
+                        const goToRdv = (url) => {
+                            const target = (url || '').trim() || rdvFallback;
+                            this._redirecting = true;
+                            sessionStorage.removeItem('demande_compte_idem');
+                            window.location.assign(target);
+                        };
+
+                        /* ── Redirection HTTP (soumission classique) ── */
+                        if (response.status >= 300 && response.status < 400) {
+                            goToRdv(response.headers.get('Location') || rdvFallback);
+                            return;
+                        }
 
                         /* ── 422 : validation ── */
                         if (response.status === 422) {
@@ -3136,22 +3172,19 @@
                             return;
                         }
 
-                        /* ── 2xx : redirect, never silently ── */
+                        /* ── 2xx : JSON avec redirect_url ── */
                         if (response.ok) {
                             const raw = await response.text();
                             let data = {};
                             try { data = JSON.parse(raw); } catch { /* HTML or empty */ }
 
-                            const url = data.redirect_url
-                                || "{{ route('demandes.rencontre.create') }}";
-
-                            if (!data.redirect_url) {
-                                console.error('Server 2xx without redirect_url', raw);
+                            if (data.ok === false) {
+                                this.stepError = data.message
+                                    || 'Une erreur est survenue lors de l’envoi.';
+                                return;
                             }
 
-                            this._redirecting = true;
-                            sessionStorage.removeItem('demande_compte_idem');
-                            window.location.assign(url);
+                            goToRdv(data.redirect_url);
                             return;
                         }
 
@@ -3230,12 +3263,12 @@
 
                         if (!this.pieceType) {
                             nextErrors.piece_identite_type =
-                                'Veuillez choisir un type de pièce d’identité.';
+                                'Veuillez choisir un type de document.';
                         }
 
                         if (!hasFile('piece_identite')) {
                             nextErrors.piece_identite =
-                                'Veuillez télécharger la pièce d’identité.';
+                                'Veuillez télécharger le document.';
                         }
 
                     } else {

@@ -26,13 +26,12 @@
                 <li class="py-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
                     <div class="min-w-0">
                         <p class="font-semibold text-gray-800">
-                            {{ $data['objet'] ?? $rdv->code }}
+                            {{ $data['objet'] ?? $rdv->libellePublic() }}
                             <span class="ml-1 text-xs font-semibold px-2 py-0.5 rounded-full {{ $isPhysique ? 'bg-orange-100 text-orange-700' : 'bg-indigo-100 text-indigo-700' }}">
                                 {{ $isPhysique ? 'Présentiel' : 'Visioconférence' }}
                             </span>
                         </p>
                         <p class="text-sm text-gray-500 mt-0.5">
-                            Réf. {{ $rdv->code }}
                             @if($date)
                                 · {{ \Carbon\Carbon::parse($date)->format('d/m/Y') }}
                             @endif

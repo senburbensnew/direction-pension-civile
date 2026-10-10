@@ -1,30 +1,46 @@
-<x-guest-layout>
+<x-guest-layout :no-scroll="true" :show-copyright="false">
 
     {{-- Session status --}}
-    <x-auth-session-status class="mb-5" :status="session('status')" />
+    <x-auth-session-status class="mb-3" :status="session('status')" />
 
     {{-- Heading --}}
-    <div class="mb-6 text-center">
+    <div class="mb-3 text-center">
         <h2 class="text-xl font-bold text-gray-800">Connexion</h2>
-        <p class="text-base text-gray-700 mt-1">
+        <p class="text-sm text-gray-700 mt-1">
             Bienvenue. Veuillez vous identifier pour continuer.
         </p>
     </div>
 
-    <form method="POST" action="{{ route('login') }}" class="space-y-5">
+    <form method="POST" action="{{ route('login') }}" class="space-y-3.5">
         @csrf
-
         {{-- Identifiant --}}
         <div>
-            <label for="login" class="block text-base font-medium text-gray-700 mb-1">
-                {{ __('messages.login_identifier') }}
-            </label>
-
+            <div class="flex items-center gap-1.5 mb-1">
+                <label for="login" class="block text-base font-medium text-gray-700">
+                    {{ __('messages.login_identifier') }}
+                </label>
+                <span class="relative inline-flex group">
+                    <button
+                        type="button"
+                        class="inline-flex items-center justify-center text-[#173052]/70 hover:text-[#173052] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#173052]/40 rounded-full"
+                        aria-describedby="login-phone-hint"
+                    >
+                        <i class="fas fa-info-circle text-sm" aria-hidden="true"></i>
+                        <span class="sr-only">{{ __('messages.login_phone_format_hint') }}</span>
+                    </button>
+                    <span
+                        id="login-phone-hint"
+                        role="tooltip"
+                        class="pointer-events-none invisible absolute left-1/2 bottom-full z-50 mb-2 w-72 max-w-[min(18rem,calc(100vw-2rem))] -translate-x-1/2 rounded-lg bg-[#173052] px-3 py-2 text-left text-xs font-normal leading-relaxed text-white whitespace-pre-line opacity-0 shadow-lg transition-opacity duration-150 group-hover:visible group-hover:opacity-100 group-focus-within:visible group-focus-within:opacity-100"
+                    >
+                        {{ __('messages.login_phone_format_hint') }}
+                    </span>
+                </span>
+            </div>
             <div class="relative">
                 <span class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-400">
                     <i class="fas fa-user text-sm"></i>
                 </span>
-
                 <input
                     id="login"
                     type="text"
@@ -35,10 +51,9 @@
                     autocomplete="username"
                     class="w-full py-2.5 border rounded-lg text-base focus:outline-none focus:ring-2 transition {{ $errors->has('login') ? 'border-red-400 focus:ring-red-400' : 'border-gray-300 focus:ring-blue-500 focus:border-blue-500' }}"
                     style="padding-left: 2.25rem; padding-right: 1rem;"
-                    placeholder="e-mail, NIF ou code pension"
+                    placeholder="{{ __('messages.login_identifier_placeholder') }}"
                 >
             </div>
-
             <x-input-error :messages="$errors->get('login')" class="mt-1.5" />
         </div>
 
@@ -95,14 +110,14 @@
         {{-- Submit --}}
         <button
             type="submit"
-            class="w-full py-3 px-4 bg-[#173052] hover:bg-orange-600 active:bg-orange-700 text-white font-semibold text-base rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-orange-500 focus:ring-offset-2 mt-2"
+            class="w-full py-2.5 px-4 bg-[#173052] hover:bg-orange-600 active:bg-orange-700 text-white font-semibold text-base rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-orange-500 focus:ring-offset-2 mt-1"
         >
             <i class="fas fa-sign-in-alt mr-2"></i>
             {{ __('messages.login') }}
         </button>
 
         {{-- Création de compte --}}
-        <p class="text-center text-sm text-gray-500 pt-1">
+        <p class="text-center text-sm text-gray-500">
             Pas encore de compte ?
             <a
                 href="{{ route('demandes.compte.create') }}"
@@ -113,7 +128,7 @@
         </p>
 
         {{-- Retour à l'accueil --}}
-        <div class="pt-2 text-center">
+        <div class="pt-1 text-center">
             <a
                 href="{{ url('/') }}"
                 class="inline-flex items-center gap-2 text-sm text-gray-600 hover:text-[#173052] font-medium transition-colors"
@@ -122,6 +137,5 @@
                 <span>Retour à l’accueil</span>
             </a>
         </div>
-
     </form>
 </x-guest-layout>

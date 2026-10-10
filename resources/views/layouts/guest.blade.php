@@ -106,6 +106,21 @@
             padding: 0.75rem 0 0.15rem;
             flex-shrink: 0;
         }
+        .guest-auth-form--no-scroll {
+            overflow-y: hidden;
+            justify-content: center;
+        }
+        .guest-auth-form--no-scroll::before,
+        .guest-auth-form--no-scroll::after {
+            display: none;
+        }
+        .guest-auth-form--no-scroll .guest-auth-form-inner {
+            padding-top: 0.75rem;
+            padding-bottom: 0.25rem;
+        }
+        .guest-auth-form--no-scroll .guest-auth-copy {
+            padding-top: 0.5rem;
+        }
         @media (min-width: 1024px) {
             .guest-auth-photo { display: flex; }
         }
@@ -116,14 +131,14 @@
 
     <div class="guest-auth-shell">
 
-        <div class="guest-auth-form">
+        <div @class(['guest-auth-form', 'guest-auth-form--no-scroll' => $noScroll])>
             <div class="guest-auth-form-inner {{ $wide ? 'is-wide' : '' }}">
-                <div class="w-full min-w-0 overflow-x-hidden {{ $wide ? 'max-w-3xl' : 'max-w-md' }} bg-white rounded-2xl shadow-sm border border-gray-100 px-8 {{ $wide ? 'py-6' : 'py-10' }}"
+                <div class="w-full min-w-0 overflow-x-hidden {{ $wide ? 'max-w-3xl' : 'max-w-md' }} bg-white rounded-2xl shadow-sm border border-gray-100 px-8 {{ $wide ? 'py-6' : ($noScroll ? 'py-5' : 'py-10') }}"
                      @if ($wide) style="max-width: 48rem;" @endif>
-                    <div class="flex flex-col items-center {{ $wide ? 'mb-4' : 'mb-8' }}">
+                    <div class="flex flex-col items-center {{ $wide ? 'mb-4' : ($noScroll ? 'mb-4' : 'mb-8') }}">
                         <a href="{{ url('/') }}" title="Retour à l'accueil">
                             <img src="{{ asset('images/setting-logo-1-M13oPLiYoM.png') }}"
-                                 class="{{ $wide ? 'w-14 h-14' : 'w-20 h-20' }} object-contain mb-3 hover:opacity-80 transition-opacity"
+                                 class="{{ $wide || $noScroll ? 'w-14 h-14' : 'w-20 h-20' }} object-contain {{ $noScroll ? 'mb-2' : 'mb-3' }} hover:opacity-80 transition-opacity"
                                  alt="Logo DPC">
                         </a>
                         <p class="text-gray-700 text-sm font-medium tracking-wide uppercase text-center">
@@ -133,9 +148,11 @@
                     {{ $slot }}
                 </div>
 
-                <p class="guest-auth-copy text-sm text-gray-600 text-center">
-                    &copy; {{ date('Y') }} Direction de la Pension Civile — République d'Haïti
-                </p>
+                @if ($showCopyright)
+                    <p class="guest-auth-copy text-sm text-gray-600 text-center">
+                        &copy; {{ date('Y') }} Direction de la Pension Civile — République d'Haïti
+                    </p>
+                @endif
             </div>
         </div>
     </div>

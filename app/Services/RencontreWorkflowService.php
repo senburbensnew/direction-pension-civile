@@ -256,6 +256,13 @@ class RencontreWorkflowService
             $demande
         );
 
+        if (!$this->availability->isBookableDate($date)) {
+            throw ValidationException::withMessages([
+                'date_souhaitee' =>
+                    'Cette date n’est pas ouvrée (week-end ou jour férié en Haïti).',
+            ]);
+        }
+
         if (!$this->availability->isAllowedTime($heure)) {
             throw ValidationException::withMessages([
                 'heure_souhaitee' =>
@@ -263,11 +270,7 @@ class RencontreWorkflowService
             ]);
         }
 
-        /*
-        |--------------------------------------------------------------------------
-        | Agent
-        |--------------------------------------------------------------------------
-        */
+        $nouvelleHeure = Demande::normalizeRencontreTime($heure);
 
         $agentId = (int) (
             $creneau['agent_id']
@@ -275,9 +278,7 @@ class RencontreWorkflowService
             ?? 0
         );
 
-        $agent = $agentId
-            ? User::find($agentId)
-            : null;
+        $agent = $agentId ? User::find($agentId) : null;
 
         if ($agentId && !$agent) {
             throw ValidationException::withMessages([
@@ -286,125 +287,34 @@ class RencontreWorkflowService
             ]);
         }
 
-        if (
-            $agent
-            && !$this->availability->isBookingAgent(
-                $agent,
-                $service
-            )
-        ) {
-            throw ValidationException::withMessages([
-                'agent_id' =>
-                    'L’agent sélectionné n’appartient pas au service responsable de cette demande.',
-            ]);
-        }
-
-        /*
-        |--------------------------------------------------------------------------
-        | Si aucun agent n'est imposé, sélection automatique
-        |--------------------------------------------------------------------------
-        */
-
         if (!$agent) {
             $agent = $this->availability->findAvailableAgent(
                 $date,
                 $heure,
-                $service
+                $service,
+                $demande
             );
 
             if (!$agent) {
                 throw ValidationException::withMessages([
                     'heure_souhaitee' =>
-                        'Aucun agent disponible dans le service responsable pour ce créneau.',
+                        'Aucun agent disponible dans le service responsable pour ce créneau (rotation, disponibilités ou charge).',
                 ]);
             }
-
-            $agentId = $agent->id;
         }
 
-        /*
-        |--------------------------------------------------------------------------
-        | Vérification de disponibilité de l'agent
-        |--------------------------------------------------------------------------
-        */
-
-        $ancienneDate = $demande->data['date_souhaitee'] ?? null;
-
-        $ancienneHeure = !empty(
-            $demande->data['heure_souhaitee'] ?? null
-        )
-            ? Demande::normalizeRencontreTime(
-                $demande->data['heure_souhaitee']
-            )
-            : null;
-
-        $nouvelleHeure = Demande::normalizeRencontreTime(
-            $heure
+        $blockReason = $this->availability->agentAssignmentBlockReason(
+            $agent,
+            $service,
+            $date,
+            $heure,
+            $demande
         );
 
-        $memeCreneau = (
-            $ancienneDate === $date
-            && $ancienneHeure === $nouvelleHeure
-            && (int) ($demande->data['agent_id'] ?? 0)
-                === (int) $agent->id
-        );
-
-        if (
-            !$memeCreneau
-            && $this->availability->agentHasAppointmentAt(
-                $agent,
-                $date,
-                $heure
-            )
-        ) {
+        if ($blockReason !== null) {
             throw ValidationException::withMessages([
-                'heure_souhaitee' =>
-                    'Cet agent est déjà occupé sur ce créneau.',
+                'agent_id' => $blockReason,
             ]);
-        }
-
-        /*
-        |--------------------------------------------------------------------------
-        | Capacité journalière de l'agent
-        |--------------------------------------------------------------------------
-        */
-
-        if (!$memeCreneau) {
-            $dailyCount = $this->availability->dailyAppointmentCount(
-                $agent,
-                $date
-            );
-
-            if (
-                $dailyCount
-                >= $this->availability->dailyCapacity()
-            ) {
-                throw ValidationException::withMessages([
-                    'date_souhaitee' =>
-                        'La capacité journalière de cet agent est atteinte.',
-                ]);
-            }
-        }
-
-        /*
-        |--------------------------------------------------------------------------
-        | Disponibilité générale du service
-        |--------------------------------------------------------------------------
-        */
-
-        if (!$memeCreneau) {
-            if (
-                !$this->availability->isBookableSlot(
-                    $date,
-                    $heure,
-                    $service
-                )
-            ) {
-                throw ValidationException::withMessages([
-                    'heure_souhaitee' =>
-                        'Ce créneau n’est plus disponible pour le service responsable de cette demande.',
-                ]);
-            }
         }
 
         /*
@@ -574,6 +484,16 @@ class RencontreWorkflowService
                 'Clôture invalide.'
             );
         }
+
+        abort_unless(
+            $demande->peutEtreCloture(),
+            422,
+            $demande->rencontreScheduledAt()
+                ? 'La clôture n’est possible qu’après l’heure prévue du rendez-vous ('
+                .$demande->rencontreScheduledAt()->format('d/m/Y à H:i')
+                .').'
+                : 'La clôture n’est pas possible pour ce rendez-vous.'
+        );
 
         $updated = $this->apply(
             $demande,

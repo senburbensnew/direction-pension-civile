@@ -51,7 +51,8 @@
                 <input
                     type="text"
                     name="code_pension"
-                    value="{{ old('code_pension', $demande?->data['code_pension'] ?? auth()->user()->pension_code) }}"
+                    data-active-pension-code
+                    value="{{ old('code_pension', $demande?->data['code_pension'] ?? auth()->user()->displayPensionCode()) }}"
                     class="mt-1 block w-full rounded-md border
                         @error('code_pension') border-red-500 @else border-gray-300 @enderror"
                 >

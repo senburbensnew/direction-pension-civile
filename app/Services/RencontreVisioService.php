@@ -88,11 +88,21 @@ class RencontreVisioService
             return true;
         }
 
-        return $demande
+        if (
+            $demande
             ->assignments()
             ->whereNull('ended_at')
             ->where('user_id', $user->id)
-            ->exists();
+            ->exists()
+        ) {
+            return true;
+        }
+
+        return $user->hasAnyRole([
+            User::ROLE_VALIDATEUR_RDV,
+            'admin',
+            'direction',
+        ]);
     }
 
     public function startsAt(

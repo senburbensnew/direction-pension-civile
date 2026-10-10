@@ -137,14 +137,19 @@ class AdminFeatureTest extends TestCase
     public function admin_can_toggle_user_active_status(): void
     {
         $admin = $this->makeAdmin();
-        $target = User::factory()->create(['is_active' => true]);
+        $target = User::factory()->create([
+            'account_status' => \App\Enums\AccountStatusEnum::ACTIF,
+        ]);
 
         $response = $this->actingAs($admin)
             ->patch(route('admin.users.toggle-active', $target));
 
         $response->assertRedirect();
         $target->refresh();
-        $this->assertFalse($target->is_active);
+        $this->assertSame(
+            \App\Enums\AccountStatusEnum::DESACTIVE,
+            $target->account_status
+        );
     }
 
     /** @test */
@@ -159,7 +164,7 @@ class AdminFeatureTest extends TestCase
         $response->assertSessionHas('error');
 
         $admin->refresh();
-        $this->assertTrue($admin->is_active);
+        $this->assertTrue($admin->allowsLogin());
     }
 
     /** @test */

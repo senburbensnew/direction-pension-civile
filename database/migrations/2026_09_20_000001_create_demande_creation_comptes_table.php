@@ -47,8 +47,10 @@ return new class extends Migration
             $table->text('refusal_reason')->nullable();      // ← AJOUT
             $table->timestamp('accepted_terms_at')->nullable();
             $table->string('status')->default('en_attente');
-            $table->timestamp('reviewed_at')->nullable();    // ← AJOUT
-            $table->foreignId('reviewed_by')                 // ← AJOUT
+            $table->timestamp('soumise_at')->nullable();
+            $table->timestamp('approuvee_at')->nullable();
+            $table->timestamp('rejetee_at')->nullable();
+            $table->foreignId('traitee_par')
                 ->nullable()
                 ->constrained('users')
                 ->nullOnDelete();

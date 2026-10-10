@@ -1,6 +1,6 @@
 ﻿@extends('layouts.admin')
 
-@section('title', 'Dossier #' . ($demande->code ?? $demande->id))
+@section('title', $demande->libellePublic())
 
 @section('content')
 <div class="space-y-6 max-w-4xl">
@@ -9,7 +9,7 @@
     <nav class="text-sm text-gray-500 flex items-center gap-1">
         <a href="{{ route('admin.demandes.index') }}" class="hover:underline">Dossiers</a>
         <span>/</span>
-        <span class="text-gray-700 font-medium">{{ $demande->code ?? '#' . $demande->id }}</span>
+        <span class="text-gray-700 font-medium">{{ $demande->libellePublic() }}</span>
     </nav>
 
     @if(session('success'))
@@ -99,7 +99,7 @@
                 <h1 class="text-lg font-bold text-gray-800">
                     {{ str_replace('_', ' ', $demande->type ?? '—') }}
                 </h1>
-                <p class="text-sm text-gray-500 mt-0.5 font-mono">{{ $demande->code ?? '#' . $demande->id }}</p>
+                <p class="text-sm text-gray-500 mt-0.5">Déposé le {{ $demande->submitted_at?->format('d/m/Y') ?? $demande->created_at?->format('d/m/Y') ?? '—' }}</p>
             </div>
             <div class="flex flex-wrap gap-2 items-center">
                 @if($demande->is_urgent)
@@ -153,7 +153,7 @@
         $currentAssignment = $demande->currentAssignment()->with(['agent', 'assignePar'])->first();
         $agentsDisponibles = \App\Models\User::when($demande->current_service_id,
                 fn($q) => $q->where('service_id', $demande->current_service_id)
-            )->where('is_active', true)->orderBy('name')->get();
+            )->accountOperational()->orderBy('name')->get();
         $isClosed = $demande->isClosed();
     @endphp
     @if(!$isClosed)

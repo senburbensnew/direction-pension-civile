@@ -2,8 +2,8 @@
 
 namespace App\Http\Controllers;
 
-use App\Mail\ContactMail;
 use App\Models\Contact;
+use App\Notifications\ContactFormReceivedNotification;
 use App\Models\ContactSubject;
 use App\Models\DirectionDepartementale;
 use App\Models\Service;
@@ -11,7 +11,7 @@ use App\Rules\Telephone;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\Notification;
 use Illuminate\Validation\Rule;
 
 class ContactController extends Controller
@@ -64,7 +64,8 @@ class ContactController extends Controller
         $contact = Contact::create($validated);
 
         try {
-            Mail::to(config('mail.from.address'))->send(new ContactMail($contact));
+            Notification::route('mail', config('mail.from.address'))
+                ->notify(new ContactFormReceivedNotification($contact));
         } catch (\Throwable $e) {
             Log::error('ContactMail failed', ['error' => $e->getMessage()]);
         }

@@ -139,15 +139,44 @@
                 <span class="text-xs font-semibold text-gray-600 uppercase tracking-wider">Profil système</span>
             </div>
             <div class="p-5 grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div class="sm:col-span-2">
+                    <label class="block text-xs font-medium text-gray-600 mb-2">Catégories de compte</label>
+                    <div class="flex flex-wrap gap-3">
+                        @foreach($categories as $category)
+                            <label class="inline-flex items-center gap-2 text-sm text-gray-700">
+                                <input type="checkbox" name="category_codes[]" value="{{ $category->code }}"
+                                    {{ in_array($category->code, old('category_codes', []), true) ? 'checked' : '' }}
+                                    class="rounded border-gray-300 text-indigo-600 focus:ring-indigo-400">
+                                {{ $category->label }}
+                            </label>
+                        @endforeach
+                    </div>
+                    @error('category_codes')<p class="text-red-500 text-xs mt-1">{{ $message }}</p>@enderror
+                    @error('category_codes.*')<p class="text-red-500 text-xs mt-1">{{ $message }}</p>@enderror
+                </div>
                 <div>
-                    <label class="block text-xs font-medium text-gray-600 mb-1">Type d'utilisateur</label>
-                    <select name="user_type" class="{{ $field('user_type') }}">
-                        <option value="">— Sélectionner —</option>
-                        <option value="fonctionnaire" {{ old('user_type') === 'fonctionnaire' ? 'selected' : '' }}>Fonctionnaire</option>
-                        <option value="pensionne"  {{ old('user_type') === 'pensionne'  ? 'selected' : '' }}>Pensionné</option>
-                        <option value="institution"   {{ old('user_type') === 'institution'   ? 'selected' : '' }}>Institution</option>
+                    <label class="block text-xs font-medium text-gray-600 mb-1">Catégorie principale</label>
+                    <select name="primary_category" class="{{ $field('primary_category') }}">
+                        <option value="">— Automatique —</option>
+                        @foreach($categories as $category)
+                            <option value="{{ $category->code }}" {{ old('primary_category') === $category->code ? 'selected' : '' }}>
+                                {{ $category->label }}
+                            </option>
+                        @endforeach
                     </select>
-                    @error('user_type')<p class="text-red-500 text-xs mt-1">{{ $message }}</p>@enderror
+                    @error('primary_category')<p class="text-red-500 text-xs mt-1">{{ $message }}</p>@enderror
+                </div>
+                <div>
+                    <label class="block text-xs font-medium text-gray-600 mb-1">Institution (compte unique)</label>
+                    <select name="institution_id" class="{{ $field('institution_id') }}">
+                        <option value="">— Aucune —</option>
+                        @foreach($institutions as $institution)
+                            <option value="{{ $institution->id }}" {{ (string) old('institution_id') === (string) $institution->id ? 'selected' : '' }}>
+                                {{ $institution->raison_sociale }}
+                            </option>
+                        @endforeach
+                    </select>
+                    @error('institution_id')<p class="text-red-500 text-xs mt-1">{{ $message }}</p>@enderror
                 </div>
                 <div>
                     <label class="block text-xs font-medium text-gray-600 mb-1">Service</label>

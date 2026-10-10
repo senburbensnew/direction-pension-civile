@@ -40,7 +40,7 @@
     <table class="w-full text-sm">
         <thead class="bg-gray-50 border-b border-gray-100">
             <tr>
-                <th class="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Référence</th>
+                <th class="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Dossier</th>
                 <th class="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Demandeur</th>
                 <th class="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Identifiants</th>
                 <th class="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Téléphone</th>
@@ -52,7 +52,7 @@
         <tbody class="divide-y divide-gray-50">
             @forelse($demandes as $d)
                 <tr class="hover:bg-gray-50">
-                    <td class="px-4 py-3 font-mono text-xs text-gray-600">{{ $d->code }}</td>
+                    <td class="px-4 py-3 text-xs text-gray-800">{{ $d->libellePublic() }}</td>
                     <td class="px-4 py-3">
                         <p class="font-medium text-gray-800">{{ $d->displayName() }}</p>
                         @if($d->is_mineur)

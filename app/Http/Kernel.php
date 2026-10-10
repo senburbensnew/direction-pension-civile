@@ -54,6 +54,7 @@ class Kernel extends HttpKernel
             \App\Http\Middleware\SetLocale::class,
             \App\Http\Middleware\CheckMaintenanceMode::class,
             \App\Http\Middleware\RecordSiteVisit::class,
+            \App\Http\Middleware\MergeFormUploadStash::class,
         ],
 
         'api' => [
@@ -90,5 +91,10 @@ class Kernel extends HttpKernel
         'corbeille.access' => CorbeilleAccess::class,
         'not.admin' => \App\Http\Middleware\EnsureNotAdmin::class,
         'account.full' => \App\Http\Middleware\EnsureAccountFullyActive::class,
+        'account.permanent' => \App\Http\Middleware\EnsurePermanentAccount::class,
+        'permanent.account' => \App\Http\Middleware\RequireActiveAccount::class,
+        'pension.context' => \App\Http\Middleware\EnsurePensionContext::class,
+        'pension.portal' => \App\Http\Middleware\EnsurePensionPortalAccess::class,
+        'request.log' => \App\Http\Middleware\RequestLogger::class,
     ];
 }

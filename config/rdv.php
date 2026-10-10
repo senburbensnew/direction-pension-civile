@@ -34,4 +34,25 @@ return [
         'service_label' => 'Formalités',
         'channel'       => 'appel_telephonique',
     ],
+
+    /*
+    | Rotation et équilibrage entre agents (même règles à la réservation,
+    | à la proposition de créneau et à la réattribution par le responsable).
+    |
+    | weekday_agent_ids : par code service (ex. service_accueil_formalites),
+    |   jour ISO 1 (lundi) … 5 (vendredi) => liste d’ids users éligibles ce jour-là.
+    |   Clé absente, null ou [] pour un jour = tous les agents RDV du service.
+    */
+    'rotation' => [
+        'enabled' => env('RDV_ROTATION_ENABLED', true),
+
+        'use_weekly_load' => true,
+
+        'weekday_agent_ids' => [
+            // 'service_accueil_formalites' => [
+            //     1 => [12, 34],
+            //     3 => [12],
+            // ],
+        ],
+    ],
 ];

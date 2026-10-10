@@ -25,6 +25,7 @@ use App\Models\PensionCategory;
 use App\Models\PensionType;
 use App\Models\Service;
 use App\Models\WorkflowStep;
+use App\Http\Controllers\Concerns\AuthorizesPensionDemandeType;
 use App\Services\DemandeService;
 use App\Services\DemandeWorkflowService;
 use Exception;
@@ -36,6 +37,8 @@ use Log;
 
 class DemandeController extends Controller
 {
+    use AuthorizesPensionDemandeType;
+
     protected DemandeService $demandeService;
     protected DemandeWorkflowService $workflowService;
 
@@ -43,8 +46,8 @@ class DemandeController extends Controller
     {
         $this->demandeService = $demandeService;
         $this->workflowService = $workflowService;
-    }   
-    
+    }
+
     // DEMANDES DE VIREMENTS BANCAIRES
     public function createDemandeVirement($demandeId = null)
     {
@@ -72,6 +75,7 @@ class DemandeController extends Controller
     public function storeDemandeVirement(StoreDemandeVirementBancaireRequest $request)
     {
         $validated = $request->validated();
+        $this->guardPensionSubmit($request, TypeDemandeEnum::DEMANDE_VIREMENT_BANCAIRE);
 
         if ($request->action === 'submit') {
             if ($request->demande_id) {
@@ -203,6 +207,7 @@ class DemandeController extends Controller
     public function storeDemandeAttestation(StoreDemandeAttestationRequest $request)
     {
         $validated = $request->validated();
+        $this->guardPensionSubmit($request, TypeDemandeEnum::DEMANDE_ATTESTATION);
 
         if ($request->action === 'submit') {
             if ($request->demande_id) {
@@ -321,6 +326,7 @@ class DemandeController extends Controller
     public function storeDemandeTransfertCheque(StoreTransfertChequeRequest $request)
     {
         $validated = $request->validated();
+        $this->guardPensionSubmit($request, TypeDemandeEnum::DEMANDE_TRANSFERT_CHEQUE);
 
         if ($request->action === 'submit') {
             if ($request->demande_id) {
@@ -439,6 +445,7 @@ class DemandeController extends Controller
     public function storeDemandeArretPaiement(StoreArretPaiementRequest $request)
     {
         $validated = $request->validated();
+        $this->guardPensionSubmit($request, TypeDemandeEnum::DEMANDE_ARRET_PAIEMENT);
 
         if ($request->action === 'submit') {
             if ($request->demande_id) {
@@ -577,6 +584,7 @@ class DemandeController extends Controller
     public function storeDemandeReinsertion(StoreDemandeReinsertionRequest $request)
     {
         $validated = $request->validated();
+        $this->guardPensionSubmit($request, TypeDemandeEnum::DEMANDE_REINSERTION);
 
         if ($request->action === 'submit') {
             if ($request->demande_id) {
@@ -694,6 +702,7 @@ class DemandeController extends Controller
     public function storeDemandeArretVirement(StoreDemandeArretVirementRequest $request)
     {
         $validated = $request->validated();
+        $this->guardPensionSubmit($request, TypeDemandeEnum::DEMANDE_ARRET_VIREMENT);
 
         if ($request->action === 'submit') {
             if ($request->demande_id) {
@@ -814,6 +823,7 @@ class DemandeController extends Controller
     public function storePreuveExistence(StorePreuveExistenceRequest $request)
     {
         $validated = $request->validated();
+        $this->guardPensionSubmit($request, TypeDemandeEnum::DEMANDE_PREUVE_EXISTENCE);
 
         if ($request->action === 'submit') {
             $demande = Demande::with('currentStep')->findOrFail($request->demande_id);
@@ -920,6 +930,7 @@ class DemandeController extends Controller
 
     public function storeDemandeEtatCarriere(StoreEtatCarriereRequest $request){
         $validated = $request->validated();
+        $this->guardPensionSubmit($request, TypeDemandeEnum::DEMANDE_ETAT_CARRIERE);
 
         /*
         |--------------------------------------------------------------------------
@@ -1207,6 +1218,7 @@ class DemandeController extends Controller
     public function storeDemandePensionStandard(StoreDemandePensionRequest $request)
     {
         $validated = $request->validated();
+        $this->guardPensionSubmit($request, TypeDemandeEnum::DEMANDE_PENSION);
 
         /*
         |--------------------------------------------------------------------------
@@ -1369,6 +1381,7 @@ class DemandeController extends Controller
     public function storeDemandePensionReversion(StoreDemandePensionReversionRequest $request){
 
         $validated = $request->validated();
+        $this->guardPensionSubmit($request, TypeDemandeEnum::DEMANDE_PENSION_REVERSION);
 
         /*
         |--------------------------------------------------------------------------
@@ -1550,6 +1563,7 @@ class DemandeController extends Controller
 
     public function storeDemandeAdhesion(StoreDemandeAdhesionRequest $request){
         $validated = $request->validated();
+        $this->guardPensionSubmit($request, TypeDemandeEnum::DEMANDE_ADHESION);
 
         /*
         |--------------------------------------------------------------------------
@@ -1745,6 +1759,7 @@ class DemandeController extends Controller
     public function storeDemandePensionPensionne(StoreDemandePensionPensionneRequest $request)
     {
         $validated = $request->validated();
+        $this->guardPensionSubmit($request, TypeDemandeEnum::DEMANDE_PENSION_REVERSION);
 
         /*
         |--------------------------------------------------------------------------

@@ -5,6 +5,26 @@
         </h2>
     </x-slot>
     <div class="px-5 py-8">
+        @if(auth()->user()?->isProvisionnel())
+            <div class="mb-6 rounded-xl border border-indigo-200 bg-indigo-50 p-4 text-sm text-indigo-950">
+                <p class="font-semibold">Compte provisoire</p>
+                @if(auth()->user()->demandeCreationCompte)
+                    <p class="mt-1">
+                        Suivez l’état de votre demande de création de compte.
+                    </p>
+                @endif
+                <div class="mt-3 flex flex-wrap gap-4">
+                    <a href="{{ route('compte.provisoire') }}" class="text-indigo-800 font-semibold hover:underline">
+                        Espace provisoire →
+                    </a>
+                    @if(auth()->user()->demandeCreationCompte)
+                        <a href="{{ route('compte.demande.show') }}" class="text-indigo-800 font-semibold hover:underline">
+                            Ma demande de compte →
+                        </a>
+                    @endif
+                </div>
+            </div>
+        @endif
         {{-- ===================== MES DEMANDES ===================== --}}
         <fieldset class="border-2 border-gray-200 rounded-lg mt-8 pl-3 ml-1 mr-1">
             <legend class="text-lg font-semibold ml-4 px-4 text-gray-700 bg-white rounded-full border shadow-sm">

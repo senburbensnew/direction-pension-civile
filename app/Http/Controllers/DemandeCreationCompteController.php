@@ -2,12 +2,14 @@
 
 namespace App\Http\Controllers;
 
+use App\Enums\AccountStatusEnum;
 use App\Enums\UserTypeEnum;
 use App\Helpers\CodeGeneratorService;
 use App\Models\DemandeCreationCompte;
 use App\Models\DemandeCreationCompteHistory;
+use App\Models\AffiliationPension;
 use App\Models\User;
-use App\Models\UserType;
+use App\Services\Pension\BeneficiaireProvisioningService;
 use App\Notifications\DemandeCreationCompteSoumise;
 use App\Rules\CodePension;
 use App\Rules\Nif;
@@ -19,7 +21,6 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rules\Password;
 use Illuminate\Validation\ValidationException;
-use Spatie\Permission\Models\Role;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
@@ -99,7 +100,7 @@ class DemandeCreationCompteController extends Controller
                 'piece_identite_type' => [
                     $isMineur ? 'nullable' : 'required',
                     'nullable',
-                    'in:permis,passeport,cin',
+                    'in:permis,passeport,cin,matricule_fiscal',
                 ],
 
                 'piece_identite' => [
@@ -190,6 +191,20 @@ class DemandeCreationCompteController extends Controller
                 default => null,
             };
 
+            if ($declaredType === 'matricule_fiscal') {
+                $documents[] = [
+                    'key' => 'matricule_fiscal',
+                    'label' => 'Matricule fiscal',
+                    'type_document' => 'matricule_fiscal',
+                    'fields' => [
+                        'type_document' => 'matricule_fiscal',
+                    ],
+                    'error' => false,
+                ];
+
+                continue;
+            }
+
             $extracted = $this->identityVerification->extract(
                 $item['file'],
                 is_string($declaredType) ? $declaredType : null,
@@ -217,7 +232,13 @@ class DemandeCreationCompteController extends Controller
         }
 
         $ok = $documents !== []
-            && collect($documents)->every(fn (array $doc) => ! $doc['error']);
+            && collect($documents)->every(function (array $doc): bool {
+                if (($doc['key'] ?? '') === 'matricule_fiscal') {
+                    return true;
+                }
+
+                return ! ($doc['error'] ?? false);
+            });
 
         return response()->json(
             [
@@ -243,7 +264,7 @@ class DemandeCreationCompteController extends Controller
         try {
             $validated = $this->validateDemande($request, requireTerms: true);
         } catch (ValidationException $e) {
-            if ($request->expectsJson()) {
+            if ($this->requestsJsonResponse($request)) {
                 return response()->json([
                     'message' => 'Certains champs sont invalides.',
                     'errors'  => $e->errors(),
@@ -295,13 +316,28 @@ class DemandeCreationCompteController extends Controller
     
         /* ============================================================
          * LAYER 3 — Create + race recovery
+         *
+         * À la soumission : compte provisoire (users.account_status = provisoire)
+         * + demande en_attente liée par user_id, dans une seule transaction.
+         * Mot de passe : choisi par l'usager sur le formulaire (jamais généré
+         * aléatoirement puis communiqué). Connexion automatique → prise de RDV.
          * ============================================================ */
         try {
             $demande = DB::transaction(function () use (
                 $request, $validated, $isMineur, $declaredType,
                 $ocrFields, $ocrDocuments, $mismatches, $idempotencyKey
             ) {
-                $user = $this->createProvisionalUser($validated, $ocrFields);
+                $provisioning = app(BeneficiaireProvisioningService::class);
+                $accountIdentity = $isMineur
+                    ? $provisioning->fieldsFromDocument($ocrDocuments, 'piece_identite_representant')
+                    : $ocrFields;
+
+                $user = $this->createProvisionalUser(
+                    $validated,
+                    $accountIdentity,
+                    $isMineur,
+                    $isMineur && $request->boolean('representant_est_pensionne')
+                );
     
                 $firstname = $ocrFields['prenom'] ?? null;
                 $lastname  = $ocrFields['nom'] ?? null;
@@ -326,6 +362,9 @@ class DemandeCreationCompteController extends Controller
     
                 $payload['files'] = [
                     'piece_identite'              => $request->file('piece_identite')?->getClientOriginalName(),
+                    'matricule_fiscal'            => ($declaredType ?? null) === 'matricule_fiscal'
+                        ? $request->file('piece_identite')?->getClientOriginalName()
+                        : null,
                     'acte_naissance'              => $request->file('acte_naissance')?->getClientOriginalName(),
                     'piece_identite_representant' => $request->file('piece_identite_representant')?->getClientOriginalName(),
                 ];
@@ -368,6 +407,9 @@ class DemandeCreationCompteController extends Controller
                     'representant_lien' => $isMineur
                         ? ($validated['representant_lien'] ?? null)
                         : null,
+
+                    'representant_est_pensionne' => $isMineur
+                        && $request->boolean('representant_est_pensionne'),
     
                     'piece_identite_representant_type' => $isMineur
                         ? ($validated['piece_identite_representant_type'] ?? null)
@@ -382,6 +424,7 @@ class DemandeCreationCompteController extends Controller
     
                     'accepted_terms_at' => now(),
                     'status'            => DemandeCreationCompte::STATUS_EN_ATTENTE,
+                    'soumise_at'        => now(),
                     'user_id'           => $user->id,
                 ]);
     
@@ -407,10 +450,17 @@ class DemandeCreationCompteController extends Controller
                     DemandeCreationCompte::STATUS_EN_ATTENTE,
                     [
                         'user_id'        => $user->id,
-                        'account_status' => User::STATUS_EN_ATTENTE_VALIDATION,
+                        'account_status' => AccountStatusEnum::PROVISOIRE,
                     ]
                 );
-    
+
+                $provisioning->provisionFromDemandeCreation(
+                    $user,
+                    $demande,
+                    $ocrDocuments,
+                    $isMineur
+                );
+
                 return $demande;
             });
         } catch (\Illuminate\Database\UniqueConstraintViolationException $e) {
@@ -436,10 +486,24 @@ class DemandeCreationCompteController extends Controller
             filter_var($demande->email, FILTER_VALIDATE_EMAIL) &&
             ! str_ends_with($demande->email, '@provisoire.dpc.ht')
         ) {
-            $demande->user->notify(new DemandeCreationCompteSoumise($demande));
+            try {
+                $demande->user->notify(new DemandeCreationCompteSoumise($demande));
+            } catch (\Throwable $e) {
+                Log::warning('Notification DemandeCreationCompteSoumise non envoyée', [
+                    'demande_id' => $demande->id,
+                    'error' => $e->getMessage(),
+                ]);
+            }
         }
-    
+
         return $this->redirectToRdv($request, $demande, 'created');
+    }
+
+    private function requestsJsonResponse(Request $request): bool
+    {
+        return $request->expectsJson()
+            || $request->ajax()
+            || $request->wantsJson();
     }
 
     /**
@@ -485,11 +549,12 @@ class DemandeCreationCompteController extends Controller
     ): Response|RedirectResponse|JsonResponse {
         if (! Auth::check() && $demande->user) {
             Auth::login($demande->user);
+            $request->session()->regenerate();
         }
-    
+
         $url = route('demandes.rencontre.create');
-    
-        if ($request->expectsJson()) {
+
+        if ($this->requestsJsonResponse($request)) {
             return response()->json([
                 'ok'             => true,
                 'already_exists' => $reason !== 'created',
@@ -498,7 +563,7 @@ class DemandeCreationCompteController extends Controller
                 'redirect_url'   => $url,
             ], 200);
         }
-    
+
         return redirect()->to($url);
     }
 
@@ -556,6 +621,20 @@ class DemandeCreationCompteController extends Controller
 
         foreach ($sources as $source) {
             if (! $request->hasFile($source['input'])) {
+                continue;
+            }
+
+            if (($source['declared'] ?? null) === 'matricule_fiscal') {
+                $documents[] = [
+                    'key' => 'matricule_fiscal',
+                    'label' => 'Matricule fiscal',
+                    'type_document' => 'matricule_fiscal',
+                    'error' => false,
+                    'fields' => [
+                        'type_document' => 'matricule_fiscal',
+                    ],
+                ];
+
                 continue;
             }
 
@@ -637,6 +716,10 @@ class DemandeCreationCompteController extends Controller
     private function hasOcrError(array $documents): bool
     {
         foreach ($documents as $doc) {
+            if (($doc['key'] ?? '') === 'matricule_fiscal') {
+                continue;
+            }
+
             if (! empty($doc['error'])) {
                 return true;
             }
@@ -700,8 +783,12 @@ class DemandeCreationCompteController extends Controller
                 new CodePension(),
                 new PensionnaireReferenceExists(),
                 function (string $attribute, mixed $value, \Closure $fail) {
+                    if (blank($value)) {
+                        return;
+                    }
+
                     if (
-                        User::pensionCodeExists($value) ||
+                        AffiliationPension::codeExists($value) ||
                         DemandeCreationCompte::pendingDigitsMatch(
                             'pension_code',
                             User::normalizeDigits($value)
@@ -755,7 +842,7 @@ class DemandeCreationCompteController extends Controller
 
             'piece_identite_type' => $isMineur
                 ? 'nullable'
-                : 'required|in:permis,passeport,cin',
+                : 'required|in:permis,passeport,cin,matricule_fiscal',
 
             'piece_identite' => $isMineur
                 ? 'nullable'
@@ -767,6 +854,10 @@ class DemandeCreationCompteController extends Controller
 
             'representant_lien' => $isMineur
                 ? 'required|in:pere,mere,tuteur'
+                : 'nullable',
+
+            'representant_est_pensionne' => $isMineur
+                ? 'sometimes|boolean'
                 : 'nullable',
 
             'piece_identite_representant_type' => $isMineur
@@ -807,7 +898,7 @@ class DemandeCreationCompteController extends Controller
             ],
             [
                 'user_type' => 'type de compte',
-                'nif' => 'NIF',
+                'nif' => 'matricule fiscal (NIF)',
                 'ninu' => 'NINU',
                 'pension_code' => 'code pension',
                 'telephone' => 'numéro de téléphone',
@@ -872,13 +963,13 @@ class DemandeCreationCompteController extends Controller
     
         if (! preg_match('/^(7-[A-Z0-9]{5}|8-\d{5})$/', $value)) {
             return [
-                'available' => false,
+                'available' => true,
                 'format_ok' => false,
                 'message'   => 'Le code pension doit être au format 7-XXXXX (ex. 7-JM183) ou 8-XXXXX (ex. 8-34321).',
             ];
         }
     
-        $available = ! User::pensionCodeExists($value)
+        $available = ! AffiliationPension::codeExists($value)
             && ! DemandeCreationCompte::pendingDigitsMatch(
                 'pension_code',
                 User::normalizeDigits($value)
@@ -893,8 +984,12 @@ class DemandeCreationCompteController extends Controller
         ];
     }
 
-    private function createProvisionalUser(array $validated, array $ocrFields): User
-    {
+    private function createProvisionalUser(
+        array $validated,
+        array $identityFields,
+        bool $isMineur = false,
+        bool $representantEstPensionne = false,
+    ): User {
         /*
         |--------------------------------------------------------------------------
         | Email
@@ -912,8 +1007,8 @@ class DemandeCreationCompteController extends Controller
         |--------------------------------------------------------------------------
         | Le prénom et le nom proviennent prioritairement des données OCR.
         */
-        $firstname = trim((string) ($ocrFields['prenom'] ?? ''));
-        $lastname  = trim((string) ($ocrFields['nom'] ?? ''));
+        $firstname = trim((string) ($identityFields['prenom'] ?? ''));
+        $lastname  = trim((string) ($identityFields['nom'] ?? ''));
 
         /*
         |--------------------------------------------------------------------------
@@ -967,33 +1062,11 @@ class DemandeCreationCompteController extends Controller
 
         /*
         |--------------------------------------------------------------------------
-        | Type utilisateur
+        | Création du compte provisoire
         |--------------------------------------------------------------------------
-        */
-        $userType = UserType::firstOrCreate([
-            'name' => UserTypeEnum::PENSIONNE->value,
-        ]);
-
-        /*
-        |--------------------------------------------------------------------------
-        | Rôle
-        |--------------------------------------------------------------------------
-        */
-        Role::findOrCreate('pensionne', 'web');
-
-        /*
-        |--------------------------------------------------------------------------
-        | Code pension
-        |--------------------------------------------------------------------------
-        */
-        $pensionCode = filled($validated['pension_code'] ?? null)
-            ? strtoupper(trim((string) $validated['pension_code']))
-            : null;
-
-        /*
-        |--------------------------------------------------------------------------
-        | Création du compte
-        |--------------------------------------------------------------------------
+        | Le mot de passe vient du formulaire ($validated['password']), hashé
+        | via le cast User. Alternative possible : Hash::make(Str::random(64))
+        | + lien « définir mon mot de passe » — non utilisée ici.
         */
         $user = User::create([
             'name' => $name !== '' ? $name : $username,
@@ -1014,23 +1087,13 @@ class DemandeCreationCompteController extends Controller
 
             'password' => $validated['password'],
 
-            'nif' => $validated['nif'] ?? null,
+            'nif' => $isMineur ? null : ($validated['nif'] ?? null),
 
-            'pension_code' => $pensionCode,
-
-            'user_type_id' => $userType->id,
-
-            'is_active' => true,
-
-            'account_status' => User::STATUS_EN_ATTENTE_VALIDATION,
+            'account_status' => AccountStatusEnum::PROVISOIRE,
         ]);
 
-        /*
-        |--------------------------------------------------------------------------
-        | Attribution du rôle
-        |--------------------------------------------------------------------------
-        */
-        $user->assignRole('pensionne');
+        app(\App\Services\Account\ProvisionalAccountProfileService::class)
+            ->configure($user, $isMineur, $representantEstPensionne);
 
         return $user;
     }
@@ -1047,14 +1110,20 @@ class DemandeCreationCompteController extends Controller
             'cin' => $isMineur ? 'identite_representant_cin' : 'identite_cin',
         ];
 
-        if ($type && isset($collections[$type])) {
-            $input = $isMineur ? 'piece_identite_representant' : 'piece_identite';
+        $input = $isMineur ? 'piece_identite_representant' : 'piece_identite';
 
-            if ($request->hasFile($input)) {
-                $demande
-                    ->addMediaFromRequest($input)
-                    ->toMediaCollection($collections[$type], 'public');
-            }
+        if (! $isMineur && $type === 'matricule_fiscal' && $request->hasFile($input)) {
+            $demande
+                ->addMediaFromRequest($input)
+                ->toMediaCollection('matricule_fiscal', 'public');
+
+            return;
+        }
+
+        if ($type && isset($collections[$type]) && $request->hasFile($input)) {
+            $demande
+                ->addMediaFromRequest($input)
+                ->toMediaCollection($collections[$type], 'public');
         }
 
         if ($isMineur && $request->hasFile('acte_naissance')) {

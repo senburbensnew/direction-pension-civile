@@ -138,6 +138,103 @@ select option {
 
 [x-cloak] { display: none !important; }
 
+/* Subtle file upload field (x-file-input, demande-compte, etc.) */
+.dpc-file-field {
+    display: flex;
+    align-items: center;
+    gap: 0.65rem;
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+    min-height: 2.75rem;
+    position: relative;
+    padding: 0.5rem 0.85rem;
+    border: 1px solid #d1d5db;
+    border-radius: 0.5rem;
+    background: #fff;
+    cursor: pointer;
+    transition:
+        border-color .15s ease,
+        background-color .15s ease,
+        box-shadow .15s ease;
+}
+
+.dpc-file-field:hover {
+    border-color: #9ca3af;
+    background: #fafafa;
+}
+
+.dpc-file-field:focus-within {
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.35);
+}
+
+.dpc-file-field.is-error {
+    border-color: #f87171;
+}
+
+.dpc-file-field.is-error:focus-within {
+    border-color: #f87171;
+    box-shadow: 0 0 0 2px rgba(248, 113, 113, 0.35);
+}
+
+.dpc-file-field.is-dragging {
+    border-color: #93c5fd;
+    background: #f8fafc;
+}
+
+.dpc-file-field.is-filled .dpc-file-field-icon {
+    color: #64748b;
+}
+
+.dpc-file-field input[type="file"] {
+    position: absolute;
+    width: 0;
+    height: 0;
+    padding: 0;
+    margin: 0;
+    overflow: hidden;
+    opacity: 0;
+    pointer-events: none;
+    border: 0;
+}
+
+.dpc-file-field-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    width: 1rem;
+    color: #9ca3af;
+    font-size: 0.8rem;
+}
+
+.dpc-file-field-name {
+    flex: 1 1 0;
+    min-width: 0;
+    font-size: 0.875rem;
+    color: #9ca3af;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.dpc-file-field.is-filled .dpc-file-field-name {
+    color: #374151;
+}
+
+.dpc-file-field-action {
+    flex-shrink: 0;
+    font-size: 0.75rem;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+    color: #64748b;
+}
+
+.dpc-file-field:hover .dpc-file-field-action {
+    color: #173052;
+}
+
 [cursor-help] {
     position: relative;
 }
@@ -299,6 +396,8 @@ select option {
 .dpc-rdv-scheduler .fc-scrollgrid,
 .dpc-rdv-scheduler .fc-scrollgrid-sync-table,
 .dpc-rdv-scheduler .fc-col-header,
+.dpc-rdv-scheduler .fc-daygrid-body,
+.dpc-rdv-scheduler .fc-daygrid-body table,
 .dpc-rdv-scheduler .fc-timegrid-body,
 .dpc-rdv-scheduler .fc-timegrid-slots table,
 .dpc-rdv-scheduler .fc-timegrid-cols table {
@@ -318,10 +417,14 @@ select option {
 }
 
 .dpc-rdv-scheduler .fc-timegrid-slot {
-    height: 2.35rem;
+    height: 1.35rem;
 }
 
-.dpc-rdv-scheduler .fc-non-business {
+.dpc-rdv-scheduler .fc-non-business,
+.dpc-rdv-scheduler .fc-timegrid-col.fc-day-sat,
+.dpc-rdv-scheduler .fc-timegrid-col.fc-day-sun,
+.dpc-rdv-scheduler .fc-daygrid-day.fc-day-sat .fc-daygrid-day-frame,
+.dpc-rdv-scheduler .fc-daygrid-day.fc-day-sun .fc-daygrid-day-frame {
     background: repeating-linear-gradient(
         -45deg,
         #f3f4f6,
@@ -329,6 +432,12 @@ select option {
         #e5e7eb 6px,
         #e5e7eb 7px
     );
+}
+
+.dpc-rdv-scheduler .fc-non-business,
+.dpc-rdv-scheduler .fc-timegrid-col.fc-day-sat,
+.dpc-rdv-scheduler .fc-timegrid-col.fc-day-sun {
+    cursor: not-allowed;
 }
 
 .dpc-rdv-scheduler .fc-event {
@@ -347,6 +456,154 @@ select option {
 .dpc-rdv-scheduler .fc-event.dpc-rdv-selection {
     background-color: #173052 !important;
     border-color: #173052 !important;
+}
+
+.dpc-rdv-scheduler .fc-event.dpc-avail-recurring {
+    background-color: #173052 !important;
+    border-color: #173052 !important;
+    color: #fff !important;
+    cursor: pointer;
+}
+
+.dpc-rdv-scheduler .fc-event.dpc-avail-date {
+    background-color: #059669 !important;
+    border-color: #047857 !important;
+    color: #fff !important;
+    cursor: pointer;
+}
+
+.dpc-rdv-scheduler .fc-event.dpc-avail-block-date {
+    background-color: #dc2626 !important;
+    border-color: #b91c1c !important;
+    color: #fff !important;
+    cursor: pointer;
+}
+
+.dpc-rdv-scheduler .fc-event.dpc-avail-block-weekday {
+    background-color: #6d28d9 !important;
+    border-color: #5b21b6 !important;
+    color: #fff !important;
+    cursor: pointer;
+}
+
+/* Agent availability — bordure + surbrillance de sélection selon le mode actif */
+.dpc-agent-availability-scheduler[data-paint-mode="date"] {
+    --fc-highlight-color: rgba(5, 150, 105, 0.32);
+    border-color: #059669;
+}
+
+.dpc-agent-availability-scheduler[data-paint-mode="recurring"] {
+    --fc-highlight-color: rgba(23, 48, 82, 0.28);
+    border-color: #173052;
+}
+
+.dpc-agent-availability-scheduler[data-paint-mode="block_date"] {
+    --fc-highlight-color: rgba(220, 38, 38, 0.28);
+    border-color: #dc2626;
+}
+
+.dpc-agent-availability-scheduler[data-paint-mode="block_weekday"] {
+    --fc-highlight-color: rgba(109, 40, 217, 0.28);
+    border-color: #6d28d9;
+}
+
+.dpc-agent-availability-scheduler[data-paint-mode="date"] .fc .fc-highlight {
+    background: rgba(5, 150, 105, 0.35) !important;
+}
+
+.dpc-agent-availability-scheduler[data-paint-mode="recurring"] .fc .fc-highlight {
+    background: rgba(23, 48, 82, 0.3) !important;
+}
+
+.dpc-agent-availability-scheduler[data-paint-mode="block_date"] .fc .fc-highlight {
+    background: rgba(220, 38, 38, 0.3) !important;
+}
+
+.dpc-agent-availability-scheduler[data-paint-mode="block_weekday"] .fc .fc-highlight {
+    background: rgba(109, 40, 217, 0.3) !important;
+}
+
+.dpc-agent-availability-scheduler[data-paint-mode="date"] .fc-event-mirror {
+    background-color: #059669 !important;
+    border-color: #047857 !important;
+}
+
+.dpc-agent-availability-scheduler[data-paint-mode="recurring"] .fc-event-mirror {
+    background-color: #173052 !important;
+    border-color: #173052 !important;
+}
+
+.dpc-agent-availability-scheduler[data-paint-mode="block_date"] .fc-event-mirror {
+    background-color: #dc2626 !important;
+    border-color: #b91c1c !important;
+}
+
+.dpc-agent-availability-scheduler[data-paint-mode="block_weekday"] .fc-event-mirror {
+    background-color: #6d28d9 !important;
+    border-color: #5b21b6 !important;
+}
+
+.dpc-agent-availability-scheduler .fc-timegrid-slot,
+.dpc-agent-availability-scheduler .fc-daygrid-day {
+    cursor: pointer;
+}
+
+.dpc-agent-avail-context-menu {
+    position: fixed;
+    z-index: 10050;
+    min-width: 15rem;
+    max-width: 20rem;
+    padding: 0.35rem 0;
+    background: #fff;
+    border: 1px solid #e5e7eb;
+    border-radius: 0.5rem;
+    box-shadow: 0 10px 40px rgba(15, 23, 42, 0.15);
+}
+
+.dpc-agent-avail-context-menu[hidden] {
+    display: none;
+}
+
+.dpc-agent-avail-context-menu__sep {
+    height: 1px;
+    margin: 0.35rem 0;
+    background: #e5e7eb;
+}
+
+.dpc-agent-avail-context-menu__item {
+    display: block;
+    width: 100%;
+    text-align: left;
+    padding: 0.5rem 0.85rem;
+    font-size: 0.8125rem;
+    color: #1f2937;
+    background: transparent;
+    border: 0;
+    cursor: pointer;
+}
+
+.dpc-agent-avail-context-menu__item:hover {
+    background: #f3f4f6;
+}
+
+.dpc-agent-avail-context-menu__item--date:hover {
+    background: rgba(5, 150, 105, 0.12);
+    color: #047857;
+}
+
+.dpc-agent-avail-context-menu__item--recurring:hover {
+    background: rgba(23, 48, 82, 0.1);
+    color: #173052;
+}
+
+.dpc-agent-avail-context-menu__item--block_date:hover {
+    background: rgba(220, 38, 38, 0.1);
+    color: #b91c1c;
+}
+
+.dpc-agent-avail-context-menu__item--block_weekday:hover {
+    background: rgba(109, 40, 217, 0.12);
+    color: #5b21b6;
 }
 
 .site-public .dpc-rdv-scheduler .fc,

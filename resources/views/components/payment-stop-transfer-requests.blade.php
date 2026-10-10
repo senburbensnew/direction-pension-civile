@@ -40,7 +40,8 @@
                         <div>
                             <label for="pensioner_code" class="block text-base font-medium text-gray-700 mb-1">Code Pension
                                 *</label>
-                            <input type="text" id="code_pension" name="pensioner_code" placeholder="Code Pension"
+                            <input type="text" id="code_pension" name="pensioner_code" data-active-pension-code placeholder="Code Pension"
+                                value="{{ old('pensioner_code', auth()->user()?->displayPensionCode()) }}"
                                 class="w-full rounded-md border-gray-300 focus:border-blue-500 focus:ring-blue-500 @error('pensioner_code') border-red-500 @enderror">
                             @error('pensioner_code')
                                 <p class="mt-1 text-base text-red-600">{{ $message }}</p>

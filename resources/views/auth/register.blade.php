@@ -1,7 +1,6 @@
 <x-guest-layout>
     @php
-        $pensionneType = $userTypes->firstWhere('name', 'pensionne');
-        $pensionneId   = $pensionneType ? $pensionneType->id : null;
+        $defaultCategory = old('primary_category', 'pensionne');
     @endphp
 
     <div class="mb-5 text-center">
@@ -20,25 +19,25 @@
             <div class="flex-1">
                 <p class="text-sm font-medium text-gray-700 mb-2">Qui êtes-vous ?</p>
                 <div class="flex flex-col gap-2">
-                    @foreach ($userTypes as $type)
+                    @foreach ($accountCategories as $category)
                         @php
                             $icons   = ['pensionne' => 'fa-user-clock', 'fonctionnaire' => 'fa-briefcase', 'institution' => 'fa-building'];
                             $labels  = ['pensionne' => __('messages.pensioner'), 'fonctionnaire' => __('messages.civil_servant'), 'institution' => __('messages.institutions')];
-                            $icon    = $icons[$type->name] ?? 'fa-user';
-                            $checked = old('user_type_id', request()->isMethod('get') ? $pensionneId : null) == $type->id;
+                            $icon    = $icons[$category->code] ?? 'fa-user';
+                            $checked = $defaultCategory === $category->code;
                         @endphp
-                        <label for="user_type_{{ $type->name }}"
+                        <label for="user_type_{{ $category->code }}"
                                class="user-type-card flex items-center gap-2 cursor-pointer border-2 rounded-lg px-3 py-2 transition-all select-none {{ $checked ? 'border-blue-500 bg-blue-50 text-blue-700' : 'border-gray-200 text-gray-600 hover:border-gray-300' }}"
-                               data-type="{{ $type->name }}">
-                            <input type="radio" id="user_type_{{ $type->name }}" name="user_type_id"
-                                   value="{{ $type->id }}" data-type-name="{{ $type->name }}"
+                               data-type="{{ $category->code }}">
+                            <input type="radio" id="user_type_{{ $category->code }}" name="primary_category"
+                                   value="{{ $category->code }}" data-type-name="{{ $category->code }}"
                                    {{ $checked ? 'checked' : '' }} class="sr-only">
                             <i class="fas {{ $icon }} text-sm w-4 text-center"></i>
-                            <span class="text-xs font-medium">{{ $labels[$type->name] ?? ucfirst($type->name) }}</span>
+                            <span class="text-xs font-medium">{{ $labels[$category->code] ?? $category->label }}</span>
                         </label>
                     @endforeach
                 </div>
-                <x-input-error :messages="$errors->get('user_type_id')" class="mt-1" />
+                <x-input-error :messages="$errors->get('primary_category')" class="mt-1" />
             </div>
         </div>
 
@@ -186,7 +185,7 @@
     </form>
 
     <script>
-        document.querySelectorAll('input[name="user_type_id"]').forEach(radio => {
+        document.querySelectorAll('input[name="primary_category"]').forEach(radio => {
             radio.addEventListener('change', function () {
                 document.querySelectorAll('.user-type-card').forEach(card => {
                     card.classList.remove('border-blue-500', 'bg-blue-50', 'text-blue-700');
@@ -213,7 +212,7 @@
         });
 
         function updateNameField() {
-            const selected = document.querySelector('input[name="user_type_id"]:checked');
+            const selected = document.querySelector('input[name="primary_category"]:checked');
             if (selected?.dataset.typeName === 'institution') return;
             const last  = document.getElementById('lastname')?.value.trim()  ?? '';
             const first = document.getElementById('firstname')?.value.trim() ?? '';
@@ -223,6 +222,6 @@
 
         document.getElementById('lastname')?.addEventListener('input', updateNameField);
         document.getElementById('firstname')?.addEventListener('input', updateNameField);
-        document.querySelector('input[name="user_type_id"]:checked')?.dispatchEvent(new Event('change'));
+        document.querySelector('input[name="primary_category"]:checked')?.dispatchEvent(new Event('change'));
     </script>
 </x-guest-layout>

@@ -18,9 +18,7 @@
                     <table class="min-w-full divide-y divide-gray-200">
                         <thead class="bg-gray-50">
                             <tr>
-                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">N° Demande
-                                </th>
-                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Type</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Dossier</th>
                                 <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Date</th>
                                 <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Statut</th>
                                 <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Actions</th>
@@ -29,8 +27,7 @@
                         <tbody class="bg-white divide-y divide-gray-200">
                             @forelse ($requests as $request)
                                 <tr>
-                                    <td class="px-6 py-4">{{ $request->code }}</td>
-                                    <td class="px-6 py-4">{{ $type }}</td>
+                                    <td class="px-6 py-4">{{ $request->libellePublic() }}</td>
                                     <td class="px-6 py-4">{{ $request->created_at->format('d/m/Y H:i') }}</td>
                                     <td class="px-6 py-4">
                                         <span

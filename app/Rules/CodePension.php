@@ -12,6 +12,10 @@ class CodePension implements ValidationRule
      */
     public function validate(string $attribute, mixed $value, Closure $fail): void
     {
+        if (blank($value)) {
+            return;
+        }
+
         /*
          * Deux formats acceptés (casse ignorée) :
          *  - 7- suivi de 5 caractères alphanumériques (ex. 7-JM183, 7-l0366, 7-Ll080)

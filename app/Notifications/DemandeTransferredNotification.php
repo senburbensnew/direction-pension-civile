@@ -4,6 +4,7 @@ namespace App\Notifications;
 
 use App\Models\Demande;
 use App\Models\Service;
+use App\Notifications\Concerns\UsesStandardChannels;
 use Illuminate\Bus\Queueable;
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
@@ -11,6 +12,7 @@ use Illuminate\Notifications\Notification;
 class DemandeTransferredNotification extends Notification
 {
     use Queueable;
+    use UsesStandardChannels;
 
     public function __construct(
         public readonly Demande $demande,
@@ -21,7 +23,7 @@ class DemandeTransferredNotification extends Notification
 
     public function via(object $notifiable): array
     {
-        return ['database', 'mail'];
+        return $this->standardVia($notifiable);
     }
 
     public function toMail(object $notifiable): MailMessage

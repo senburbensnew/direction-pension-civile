@@ -4,7 +4,10 @@
     $pieces = $demande->identityPieces();
     $ocrFields = $demande->ocr_fields ?? [];
     $ocrDocuments = $demande->ocr_documents ?? [];
+    $rdvFinalisation = $rendezVousFinalisation ?? $demande->rendezVousFinalisation();
     $rdvRealise = $demande->hasRendezVousRealise();
+    $rdvHeurePassee = $rdvFinalisation?->rencontreHeureEstPassee() ?? true;
+    $peutDeciderDossier = ($canDecide ?? false) && $demande->canBeDecided();
 
     // Libellé « Compte » : Prénom Nom > Code pension > NIF/NINU > Email
     $fullName = trim(($demande->firstname ?? '') . ' ' . ($demande->lastname ?? ''));
@@ -77,11 +80,47 @@
 
 <div class="flex flex-wrap items-center justify-between gap-3">
     <div>
-        <h1 class="text-xl font-bold text-gray-800">Demande {{ $demande->code }}</h1>
+        <h1 class="text-xl font-bold text-gray-800">{{ $demande->libellePublic() }}</h1>
         <p class="text-sm text-gray-500 mt-0.5">{{ $demande->displayName() }}@if($demande->nif) · {{ $demande->nif }}@endif</p>
     </div>
     <a href="{{ route($routePrefix.'.comptes-demandes.index') }}" class="text-sm text-navy font-semibold hover:underline">Retour à la liste</a>
 </div>
+
+@php
+    $rendezVousFinalisation = $rendezVousFinalisation ?? null;
+@endphp
+
+@if($rendezVousFinalisation)
+    @php
+        $rdvData = $rendezVousFinalisation->data ?? [];
+        $rdvStatutCompte = $rendezVousFinalisation->rencontreStatut();
+    @endphp
+    <section class="bg-white border border-indigo-200 rounded-2xl p-5 space-y-3">
+        <h2 class="text-sm font-bold text-indigo-900">Rendez-vous de finalisation</h2>
+        @include('demandes.rencontre._workflow-banner', [
+            'demande' => $rendezVousFinalisation,
+            'rdvStatut' => $rdvStatutCompte,
+            'compteCreation' => $demande,
+        ])
+        <p class="text-sm text-gray-600">
+            {{ $rendezVousFinalisation->libellePublic() }}
+            · {{ $rdvStatutCompte->label() }}
+            @if(!empty($rdvData['date_souhaitee']))
+                · {{ \Carbon\Carbon::parse($rdvData['date_souhaitee'])->format('d/m/Y') }}
+                @if(!empty($rdvData['heure_souhaitee'])) à {{ $rdvData['heure_souhaitee'] }}@endif
+            @endif
+        </p>
+        <a href="{{ route('personal.request.show', $rendezVousFinalisation->id) }}"
+           class="inline-flex text-sm font-semibold text-navy hover:underline">
+            Ouvrir le dossier rendez-vous →
+        </a>
+    </section>
+@elseif($demande->isPending())
+    <div class="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
+        Aucun rendez-vous « finalisation de compte » n’est encore enregistré pour ce demandeur.
+        La décision ne sera possible qu’après un rendez-vous réalisé.
+    </div>
+@endif
 
 @if(session('success'))
     <div class="bg-green-50 border border-green-200 text-green-800 rounded-lg px-4 py-3 text-sm space-y-1">
@@ -118,17 +157,23 @@
                 @endif
             </div>
             <div class="text-sm text-gray-600">
-                <p>Déposée le {{ $demande->created_at?->format('d/m/Y à H:i') }}</p>
-                @if($demande->reviewed_at)
-                    <p>Traitée le {{ $demande->reviewed_at->format('d/m/Y à H:i') }}
-                        @if($demande->reviewer)
-                            par {{ $demande->reviewer->displayName() }}
+                <p>Déposée le {{ ($demande->soumise_at ?? $demande->created_at)?->format('d/m/Y à H:i') }}</p>
+                @if($demande->traiteeLe())
+                    <p>Traitée le {{ $demande->traiteeLe()->format('d/m/Y à H:i') }}
+                        @if($demande->traiteePar)
+                            par {{ $demande->traiteePar->displayName() }}
                         @endif
                     </p>
                 @endif
                 @if($demande->user)
-                    <p>Compte : <strong>{{ $compteLabel }}</strong>@if($demande->user->nif) · NIF {{ $demande->user->nif }}@endif</p>
-                    <p>Statut du compte : <strong>{{ $demande->user->accountStatusLabel() }}</strong>@unless($demande->user->is_active) · désactivé@endunless</p>
+                    <div class="mt-3 rounded-lg border border-gray-200 bg-gray-50 p-3 text-sm">
+                        <p class="text-xs uppercase tracking-wide text-gray-500 font-semibold">Compte associé</p>
+                        <p class="mt-1">Utilisateur #{{ $demande->user_id }} · {{ $compteLabel }}</p>
+                        <p>Statut du compte : <strong>{{ $demande->user->accountStatusLabel() }}</strong></p>
+                        @if($demande->user->nif)
+                            <p class="text-gray-600">NIF {{ $demande->user->nif }}</p>
+                        @endif
+                    </div>
                 @endif
             </div>
         </div>
@@ -310,9 +355,18 @@
                 <p class="text-sm text-amber-800 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2">
                     La décision (accepter ou refuser) n’est possible qu’après un rendez-vous réalisé.
                 </p>
+            @elseif(! $rdvHeurePassee)
+                <p class="text-sm text-amber-800 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2">
+                    @if($rdvFinalisation?->rencontreScheduledAt())
+                        La décision sera possible après l’heure prévue du rendez-vous
+                        ({{ $rdvFinalisation->rencontreScheduledAt()->format('d/m/Y à H:i') }}).
+                    @else
+                        La décision n’est pas encore disponible pour ce rendez-vous.
+                    @endif
+                </p>
             @elseif(! $canDecide)
                 <p class="text-sm text-gray-600">Consultation uniquement. Seuls les agents Formalités peuvent accepter ou refuser après le rendez-vous.</p>
-            @else
+            @elseif($peutDeciderDossier)
                 <form method="POST" action="{{ route($routePrefix.'.comptes-demandes.accepter', $demande) }}" class="space-y-4">
                     @csrf
                     <p class="text-sm text-gray-600">Le rendez-vous a été réalisé. L’acceptation active le compte.</p>

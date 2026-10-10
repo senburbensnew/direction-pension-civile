@@ -11,6 +11,12 @@ class DemandePdfController extends Controller
     public function download(Demande $demande)
     {
         abort_if(
+            auth()->user()?->isProvisionnel(),
+            403,
+            'Le téléchargement de documents officiels est réservé aux comptes actifs.'
+        );
+
+        abort_if(
             !$demande->isAnnotated(),
             403,
             'Le dossier doit être annoté par la Direction avant d\'être téléchargé.'
@@ -36,6 +42,12 @@ class DemandePdfController extends Controller
 
     public function print(Demande $demande)
     {
+        abort_if(
+            auth()->user()?->isProvisionnel(),
+            403,
+            'L\'impression de documents officiels est réservée aux comptes actifs.'
+        );
+
         abort_if(
             !$demande->isAnnotated(),
             403,

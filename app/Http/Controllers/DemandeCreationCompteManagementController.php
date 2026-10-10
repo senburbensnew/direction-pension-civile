@@ -52,10 +52,11 @@ class DemandeCreationCompteManagementController extends Controller
 
     public function show(DemandeCreationCompte $demandeCreationCompte)
     {
-        $demandeCreationCompte->load(['user', 'reviewer', 'histories.actor']);
+        $demandeCreationCompte->load(['user', 'traiteePar', 'histories.actor']);
 
         return view($this->viewName('show'), [
             'demande' => $demandeCreationCompte,
+            'rendezVousFinalisation' => $demandeCreationCompte->rendezVousFinalisation(),
             'routePrefix' => $this->routePrefix(),
             'canDecide' => $this->canDecide(),
         ]);
@@ -101,7 +102,7 @@ class DemandeCreationCompteManagementController extends Controller
 
         return redirect()
             ->route($this->named('show'), $demandeCreationCompte)
-            ->with('success', 'Demande refusée. Le compte et les informations fournies ont été supprimés.');
+            ->with('success', 'Demande refusée. Le compte provisoire a été bloqué.');
     }
 
     private function routePrefix(): string

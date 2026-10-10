@@ -2,8 +2,10 @@
 
 namespace App\Exceptions;
 
+use App\Services\Form\FormUploadStashService;
 use Illuminate\Foundation\Exceptions\Handler as ExceptionHandler;
 use Illuminate\Http\Exceptions\PostTooLargeException;
+use Illuminate\Validation\ValidationException;
 use Throwable;
 use Illuminate\Support\Facades\App;
 use Illuminate\Support\Facades\Session;
@@ -36,6 +38,14 @@ class Handler extends ExceptionHandler
                 ->withErrors([
                     'system_error' => 'La taille totale des fichiers dépasse la limite autorisée de 20 Mo'
                 ]);
+        });
+
+        $this->renderable(function (ValidationException $e, $request) {
+            if ($request->hasSession() && $request->isMethod('POST')) {
+                app(FormUploadStashService::class)->stashFromRequest($request);
+            }
+
+            return null;
         });
     }
 

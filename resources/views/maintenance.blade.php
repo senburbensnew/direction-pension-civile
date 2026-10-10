@@ -1,157 +1,136 @@
 <!DOCTYPE html>
-<html lang="fr" data-theme="light">
+<html
+    lang="{{ str_replace('_', '-', app()->getLocale()) }}"
+    class="maintenance-page"
+    data-theme="light"
+>
 <head>
     <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Site en maintenance — Direction de la Pension Civile</title>
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1"
+    >
+
+    <meta
+        name="csrf-token"
+        content="{{ csrf_token() }}"
+    >
+
+    <title>Maintenance — Direction de la Pension Civile</title>
+
     <x-fonts />
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css" />
-    <style>
-        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
-        body {
-            font-family: "Source Sans 3", system-ui, sans-serif;
-            background: #0f2340;
-            min-height: 100vh;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            padding: 2rem;
-            color: #e2e8f0;
-        }
+    @vite(['resources/css/app.css', 'resources/js/app.js'])
 
-        .card {
-            background: #1a3258;
-            border: 1px solid rgba(255,255,255,.1);
-            border-radius: 1.25rem;
-            padding: 3rem 3.5rem;
-            max-width: 520px;
-            width: 100%;
-            text-align: center;
-            box-shadow: 0 25px 50px rgba(0,0,0,.4);
-        }
-
-        .icon-wrap {
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            width: 80px;
-            height: 80px;
-            border-radius: 50%;
-            background: rgba(251,191,36,.12);
-            border: 2px solid rgba(251,191,36,.3);
-            margin-bottom: 1.75rem;
-        }
-
-        .icon-wrap i {
-            font-size: 2rem;
-            color: #fbbf24;
-        }
-
-        h1 {
-            font-size: 1.5rem;
-            font-weight: 700;
-            color: #fff;
-            margin-bottom: .75rem;
-        }
-
-        .subtitle {
-            font-size: .95rem;
-            color: #94a3b8;
-            line-height: 1.6;
-            margin-bottom: 2rem;
-        }
-
-        .divider {
-            height: 1px;
-            background: rgba(255,255,255,.08);
-            margin: 1.75rem 0;
-        }
-
-        .contact-row {
-            display: flex;
-            align-items: center;
-            gap: .75rem;
-            font-size: .85rem;
-            color: #94a3b8;
-            margin-bottom: .6rem;
-        }
-
-        .contact-row i {
-            width: 1.1rem;
-            text-align: center;
-            color: #60a5fa;
-            flex-shrink: 0;
-        }
-
-        .badge {
-            display: inline-flex;
-            align-items: center;
-            gap: .4rem;
-            font-size: .75rem;
-            font-weight: 600;
-            color: #fbbf24;
-            background: rgba(251,191,36,.1);
-            border: 1px solid rgba(251,191,36,.25);
-            border-radius: 2rem;
-            padding: .35rem .9rem;
-            margin-bottom: 1.5rem;
-        }
-
-        .badge i { font-size: .7rem; }
-
-        footer-note {
-            display: block;
-            margin-top: 2.5rem;
-            font-size: .75rem;
-            color: #475569;
-        }
-
-        @media (max-width: 480px) {
-            .card { padding: 2rem 1.5rem; }
-        }
-    </style>
+    <link
+        rel="stylesheet"
+        href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css"
+    >
 </head>
-<body>
 
-    <div class="card">
-        <div class="icon-wrap">
-            <i class="fas fa-tools"></i>
+<body class="site-public min-h-screen bg-gray-50 font-sans antialiased">
+    <main class="flex min-h-screen items-center justify-center px-4 py-6">
+
+        <div class="w-full max-w-md">
+
+            {{-- Carte principale --}}
+            <div class="overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-lg shadow-gray-900/5">
+
+                {{-- Barre institutionnelle --}}
+                <div class="h-1 bg-[#0a4f86]"></div>
+
+                <div class="px-6 py-7 sm:px-8">
+
+                    {{-- Logo + institution --}}
+                    <div class="mb-5 flex flex-col items-center">
+
+                        <a
+                            href="{{ url('/') }}"
+                            title="Retour à l'accueil"
+                            class="group"
+                        >
+                            <img
+                                src="{{ asset('images/setting-logo-1-M13oPLiYoM.png') }}"
+                                class="h-14 w-14 object-contain transition-opacity duration-200 group-hover:opacity-80"
+                                alt="Logo DPC"
+                            >
+                        </a>
+
+                        <p class="mt-2 text-center text-xs font-semibold uppercase tracking-wide text-gray-600">
+                            Direction de la Pension Civile
+                        </p>
+
+                    </div>
+
+
+                    {{-- Badge maintenance --}}
+                    <div class="mb-4 flex justify-center">
+
+                        <span class="inline-flex items-center gap-2 rounded-full border border-amber-200 bg-amber-50 px-3 py-1.5 text-xs font-semibold text-amber-700">
+
+                            <span class="h-1.5 w-1.5 rounded-full bg-amber-500"></span>
+
+                            Maintenance en cours
+
+                        </span>
+
+                    </div>
+
+
+                    {{-- Message principal --}}
+                    <div class="text-center">
+
+                        <h1 class="text-xl font-bold tracking-tight text-gray-900 sm:text-2xl">
+                            Site temporairement indisponible
+                        </h1>
+
+                        <p class="mt-3 text-sm leading-6 text-gray-500">
+                            Nous effectuons actuellement des travaux de maintenance.
+                            Le portail sera bientôt de nouveau disponible.
+                        </p>
+
+                    </div>
+
+
+                    {{-- Contact --}}
+                    <div class="mt-6 rounded-xl bg-gray-50 px-4 py-3.5">
+
+                        <div class="flex flex-wrap items-center justify-center gap-x-5 gap-y-2">
+
+                            <a
+                                href="mailto:dpc.info@mef.gouv.ht"
+                                class="inline-flex items-center gap-2 text-xs text-gray-500 transition-colors hover:text-[#0a4f86]"
+                            >
+                                <i class="fa-solid fa-envelope text-[#0a4f86]"></i>
+                                dpc.info@mef.gouv.ht
+                            </a>
+
+                            <a
+                                href="tel:+50929921007"
+                                class="inline-flex items-center gap-2 text-xs text-gray-500 transition-colors hover:text-[#0a4f86]"
+                            >
+                                <i class="fa-solid fa-phone text-[#0a4f86]"></i>
+                                +509 29 92 1007
+                            </a>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+
+            {{-- Copyright --}}
+            <p class="mt-4 text-center text-[11px] text-gray-400">
+                &copy; {{ date('Y') }}
+                Direction de la Pension Civile — République d'Haïti
+            </p>
+
         </div>
 
-        <div class="badge">
-            <i class="fas fa-circle" style="font-size:.5rem;color:#fbbf24;"></i>
-            Maintenance en cours
-        </div>
-
-        <h1>Site temporairement indisponible</h1>
-
-        <p class="subtitle">
-            Nous effectuons des travaux de maintenance afin d'améliorer votre expérience.
-            Le service sera de nouveau disponible très prochainement.
-        </p>
-
-        <div class="divider"></div>
-
-        <div style="text-align:left">
-            <p style="font-size:.8rem;font-weight:600;color:#64748b;text-transform:uppercase;letter-spacing:.06em;margin-bottom:.85rem;">Contact</p>
-            <div class="contact-row">
-                <i class="fas fa-envelope"></i>
-                <span>dpc.info@mef.gouv.ht</span>
-            </div>
-            <div class="contact-row">
-                <i class="fas fa-phone"></i>
-                <span>+(509) 29 92 1007</span>
-            </div>
-            <div class="contact-row">
-                <i class="fas fa-clock"></i>
-                <span>Lun–Ven : 8h00 – 16h00</span>
-            </div>
-        </div>
-    </div>
-
-    <footer-note>Direction de la Pension Civile &mdash; République d'Haïti</footer-note>
-
+    </main>
 </body>
 </html>

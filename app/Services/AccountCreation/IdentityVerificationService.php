@@ -60,7 +60,7 @@ class IdentityVerificationService
         }
 
         if ($declaredDocumentType && ! isset($fields['type_document'])
-            && in_array($declaredDocumentType, ['cin', 'passeport', 'permis', 'acte_naissance'], true)) {
+            && in_array($declaredDocumentType, ['cin', 'passeport', 'permis', 'acte_naissance', 'matricule_fiscal'], true)) {
             $fields['type_document'] = $declaredDocumentType;
         }
 

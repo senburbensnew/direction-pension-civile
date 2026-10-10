@@ -315,12 +315,19 @@ class PersonalController extends Controller
             }
         });
 
+        $isClosed = $demande->isRencontre()
+            ? $demande->rencontreStatut()->isTerminal()
+            : $demande->isClosed();
+
         return view('personal.request-details', [
             'from'             => 'dashboard',
             'request'          => $demande,
             'requestHistories' => $requestHistories,
             'activityLogs'     => collect(),
             'messages'         => $messages,
+            'isClosed'         => $isClosed,
+            'rdvAgentMode'     => false,
+            'compteProvisional' => null,
         ]);
     }
 
@@ -620,7 +627,7 @@ class PersonalController extends Controller
 
     public function showRequest($id)
     {
-        $workflowService = app(DemandeWorkflowService::class);
+        $user = auth()->user();
 
         $requestModel = Demande::with([
             'affectations.toService',
@@ -631,6 +638,31 @@ class PersonalController extends Controller
             'service',
         ])->findOrFail($id);
 
+        if ($user && (int) $requestModel->created_by === (int) $user->id) {
+            $viewAsAgent = $user->service_id
+                && (int) $requestModel->current_service_id === (int) $user->service_id
+                && $user->hasAnyRole([
+                    'secretariat',
+                    'direction',
+                    'service_liquidation',
+                    'service_accueil_formalites',
+                    'service_formalite',
+                    'service_controle_placement',
+                    'service_comptabilite',
+                    'service_assurance',
+                    'admin',
+                    User::ROLE_AGENT_RDV,
+                    User::ROLE_AGENT_FORMALITES,
+                    User::ROLE_VALIDATEUR_RDV,
+                ]);
+
+            if (! $viewAsAgent) {
+                return $this->showRequestForAuthenticatedUser(request(), (int) $id);
+            }
+        }
+
+        $workflowService = app(DemandeWorkflowService::class);
+
         $transferOptions = $workflowService->availableTransferOptions($requestModel, auth()->user());
         $allowedServices = $transferOptions
             ->map(fn ($opt) => (object) ['id' => $opt->service_id, 'nom' => $opt->service_nom])
@@ -638,7 +670,6 @@ class PersonalController extends Controller
         $circuitLocked = $workflowService->usesCircuitSnapshot($requestModel);
         $affectations = $requestModel->affectations()->with('toService', 'initiatedBy')->get();
 
-        $user = auth()->user();
         $actingServiceIds = ($user && $user->service_id)
             ? \App\Models\AgentDelegation::actingServiceIds($user->id, $user->service_id)
             : [];
@@ -714,6 +745,27 @@ class PersonalController extends Controller
 
         $rdvAgentMode = $isAgentRdvOnly && $requestModel->isRencontre();
 
+        $canReassignRencontre = false;
+        $canManageRencontreRdv = false;
+
+        if ($requestModel->isRencontre() && $user) {
+            $reassignRoles = config(
+                'rencontre.reassign_roles',
+                ['admin', 'direction', 'validateur_rdv']
+            );
+
+            if ($user->hasAnyRole($reassignRoles)) {
+                if ($user->hasAnyRole(['admin', 'direction'])) {
+                    $canReassignRencontre = true;
+                } elseif ($responsableService) {
+                    $canReassignRencontre = !$user->service_id
+                        || (int) $user->service_id === (int) $responsableService->id;
+                }
+            }
+
+            $canManageRencontreRdv = $canReassignRencontre;
+        }
+
         /*
         |--------------------------------------------------------------------------
         | Compte provisoire — analyse post-RDV
@@ -726,15 +778,17 @@ class PersonalController extends Controller
         */
         $compteProvisional = null;
 
-        if (
-            $requestModel->isRencontre()
-            && $requestModel->rencontreStatut() === \App\Enums\RencontreStatutEnum::REALISE
-        ) {
+        if ($requestModel->isRencontre()) {
             $owner = $requestModel->user ?? User::find($requestModel->created_by);
+            $motifKey = (string) ($requestModel->data['motif_key'] ?? '');
 
-            if ($owner?->isProvisionnel()) {
+            if (
+                $owner?->isProvisionnel()
+                && in_array($motifKey, DemandeCreationCompte::rdvFinalisationMotifKeys(), true)
+            ) {
                 $compteProvisional = \App\Models\DemandeCreationCompte::query()
                     ->where('user_id', $owner->id)
+                    ->where('status', \App\Models\DemandeCreationCompte::STATUS_EN_ATTENTE)
                     ->latest()
                     ->first();
             }
@@ -754,11 +808,19 @@ class PersonalController extends Controller
             'pendingAffectation'    => $pendingAffectation,
             'isClosed'              => $isClosed,
             'rdvAgents'             => $responsableService
-                                        ? $availability->bookingAgents($responsableService)
+                                        ? $availability->agentsAssignableForDemande(
+                                            $requestModel,
+                                            $responsableService
+                                        )
                                         : collect(),
             'canValidateRencontre'  => $canValidateRencontre,
             'isAgentRdvOnly'        => $isAgentRdvOnly,
             'rdvAgentMode'          => $rdvAgentMode,
+            'canReassignRencontre'  => $canReassignRencontre,
+            'canManageRencontreRdv' => $canManageRencontreRdv,
+            'rdvTimes'              => $requestModel->isRencontre()
+                ? $availability->allowedTimes()
+                : [],
             'compteProvisional' => $compteProvisional,
         ]);
     }

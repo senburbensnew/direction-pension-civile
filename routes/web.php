@@ -22,6 +22,8 @@ use App\Http\Controllers\FluxTransitionController;
 use App\Http\Controllers\GlossaireController;
 use App\Http\Controllers\InstitutionImageController;
 use App\Http\Controllers\LocaleController;
+use App\Http\Controllers\CompteProvisoireController;
+use App\Http\Controllers\MonDemandeCreationCompteController;
 use App\Http\Controllers\MediathequeController;
 use App\Http\Controllers\NewsletterController;
 use App\Http\Controllers\NotificationController;
@@ -30,6 +32,10 @@ use App\Http\Controllers\OcrTestController;
 use App\Http\Controllers\PartenaireController;
 use App\Http\Controllers\PermissionController;
 use App\Http\Controllers\PersonalController;
+use App\Http\Controllers\PensionAffiliationController;
+use App\Http\Controllers\PensionContextController;
+use App\Http\Controllers\PensionMandatController;
+use App\Http\Controllers\Admin\PensionMandatManagementController;
 use App\Http\Controllers\PostController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\PublicationController;
@@ -325,7 +331,8 @@ Route::get(
 
 Route::middleware([
     'auth',
-    'role:pensionne',
+    'account.permanent',
+    'pension.portal',
 ])->group(function () {
 
     Route::get(
@@ -361,7 +368,7 @@ Route::middleware([
 |
 */
 
-Route::middleware(['auth'])->group(function () {
+Route::middleware(['auth', 'account.permanent'])->group(function () {
     Route::post(
         '/demande-rencontre/{demande}/annuler',
         [DemandeRencontreController::class, 'annuler']
@@ -387,6 +394,11 @@ Route::middleware(['auth'])->group(function () {
         [DemandeRencontreController::class, 'proposerCreneau']
     )->name('demandes.rencontre.proposerCreneau');
 
+    Route::post(
+        '/demande-rencontre/{demande}/reattribuer-agent',
+        [DemandeRencontreController::class, 'reattribuerAgent']
+    )->name('demandes.rencontre.reattribuer');
+
     Route::get(
     '/demande-rencontre/{demande}/formalite',
     [DemandeRencontreController::class, 'formalite']
@@ -404,7 +416,7 @@ Route::middleware(['auth'])->group(function () {
 |--------------------------------------------------------------------------
 */
 
-Route::middleware('auth')->group(function () {
+Route::middleware(['auth', 'account.permanent'])->group(function () {
     Route::get(
         '/rendez-vous/visio/{token}',
         [DemandeRencontreController::class, 'visio']
@@ -487,14 +499,31 @@ Route::get(
 |--------------------------------------------------------------------------
 */
 
-Route::middleware('auth')->group(function () {
+Route::middleware(['auth', 'account.permanent'])->group(function () {
+
+    Route::get(
+        '/compte/provisoire',
+        CompteProvisoireController::class
+    )->name('compte.provisoire');
+
+    Route::get(
+        '/mon-compte/demande-creation',
+        [MonDemandeCreationCompteController::class, 'show']
+    )->name('compte.demande.show');
+
+    Route::match(
+        ['put', 'patch'],
+        '/mon-compte/demande-creation',
+        [MonDemandeCreationCompteController::class, 'update']
+    )->name('compte.demande.update');
 
     /*
     |--------------------------------------------------------------------------
-    | Profile
+    | Profile (compte actif uniquement)
     |--------------------------------------------------------------------------
     */
 
+    Route::middleware(['permanent.account', 'pension.context'])->group(function () {
     Route::get(
         '/profile',
         [ProfileController::class, 'edit']
@@ -514,6 +543,37 @@ Route::middleware('auth')->group(function () {
         '/profile',
         [ProfileController::class, 'destroy']
     )->name('profile.destroy');
+
+    Route::patch(
+        '/compte/contexte-pension',
+        [PensionContextController::class, 'update']
+    )->name('compte.pension-context.update');
+
+    Route::get(
+        '/compte/codes-pension',
+        [PensionAffiliationController::class, 'index']
+    )->name('compte.affiliations.index');
+
+    Route::post(
+        '/compte/codes-pension',
+        [PensionAffiliationController::class, 'store']
+    )->name('compte.affiliations.store');
+
+    Route::delete(
+        '/compte/codes-pension/{affiliation}',
+        [PensionAffiliationController::class, 'destroy']
+    )->name('compte.affiliations.destroy');
+
+    Route::get(
+        '/compte/mandats',
+        [PensionMandatController::class, 'index']
+    )->name('compte.mandats.index');
+
+    Route::post(
+        '/compte/mandats',
+        [PensionMandatController::class, 'store']
+    )->name('compte.mandats.store');
+    });
 
     /*
     |--------------------------------------------------------------------------
@@ -584,10 +644,7 @@ Route::middleware('auth')->group(function () {
 
     Route::prefix('demandes')
         ->name('demandes.')
-        ->middleware([
-            'not.admin',
-            'account.full',
-        ])
+        ->middleware(['not.admin', 'permanent.account', 'pension.context'])
         ->group(function () {
 
             /*
@@ -961,7 +1018,7 @@ Route::middleware('auth')->group(function () {
 
     Route::prefix('formalites/comptes-demandes')
         ->name('formalites.comptes-demandes.')
-        ->middleware('role:agent_rdv')
+        ->middleware('role:'. \App\Models\User::ROLE_AGENT_FORMALITES)
         ->group(function () {
 
             Route::get(
@@ -1020,6 +1077,22 @@ Route::middleware('auth')->group(function () {
                     'index',
                 ]
             )->name('index');
+
+            Route::get(
+                '/disponibilites',
+                [
+                    \App\Http\Controllers\RdvAgentAvailabilityController::class,
+                    'edit',
+                ]
+            )->name('disponibilites.edit');
+
+            Route::post(
+                '/disponibilites',
+                [
+                    \App\Http\Controllers\RdvAgentAvailabilityController::class,
+                    'update',
+                ]
+            )->name('disponibilites.update');
 
             Route::get(
                 '/{demande}',
@@ -1111,6 +1184,14 @@ Route::middleware('auth')->group(function () {
                     'confirmerIdentite',
                 ]
             )->name('confirmer-identite');
+
+            Route::post(
+                '/{demande}/reattribuer-agent',
+                [
+                    DemandeRencontreController::class,
+                    'reattribuerAgent',
+                ]
+            )->name('reattribuer');
         });
 
     /*
@@ -1222,6 +1303,26 @@ Route::prefix('admin')
             '/dashboard',
             [AdminDashboardController::class, 'index']
         )->name('dashboard.index');
+
+        Route::get(
+            '/pension-mandats',
+            [PensionMandatManagementController::class, 'index']
+        )->name('pension-mandats.index');
+
+        Route::post(
+            '/pension-mandats/{mandat}/approve',
+            [PensionMandatManagementController::class, 'approve']
+        )->name('pension-mandats.approve');
+
+        Route::post(
+            '/pension-mandats/{mandat}/refuse',
+            [PensionMandatManagementController::class, 'refuse']
+        )->name('pension-mandats.refuse');
+
+        Route::post(
+            '/pension-mandats/{mandat}/revoke',
+            [PensionMandatManagementController::class, 'revoke']
+        )->name('pension-mandats.revoke');
 
         /*
         |--------------------------------------------------------------------------
@@ -1335,6 +1436,16 @@ Route::prefix('admin')
                 'toggleActive',
             ]
         )->name('users.toggle-active');
+
+        Route::post(
+            'users/{user}/beneficiaire-links',
+            [UserController::class, 'storeBeneficiaireLink']
+        )->name('users.beneficiaire-links.store');
+
+        Route::delete(
+            'users/{user}/beneficiaire-links/{beneficiaireLink}',
+            [UserController::class, 'destroyBeneficiaireLink']
+        )->name('users.beneficiaire-links.destroy');
 
         /*
         |--------------------------------------------------------------------------

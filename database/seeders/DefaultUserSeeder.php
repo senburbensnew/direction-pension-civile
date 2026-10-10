@@ -2,20 +2,15 @@
 
 namespace Database\Seeders;
 
-use App\Enums\UserTypeEnum;
+use App\Enums\AccountStatusEnum;
 use Illuminate\Database\Seeder;
 use App\Models\Gender;
 use App\Models\User;
-use App\Models\UserType;
 
 class DefaultUserSeeder extends Seeder
 {
     public function run(): void
     {
-        $userType = UserType::firstOrCreate([
-            'name' => UserTypeEnum::EXTERNE->value,
-        ]);
-
         $gender = Gender::firstOrCreate(['name' => 'Masculin']);
 
         $adminUser = User::updateOrCreate(
@@ -28,11 +23,14 @@ class DefaultUserSeeder extends Seeder
                 'email' => 'admin@example.com',
                 'password' => bcrypt(config('app.default_admin_password', 'password123')),
                 'nif' => '123-456-789-0',
-                'user_type_id' => $userType->id,
                 'gender_id' => $gender->id,
+                'account_status' => AccountStatusEnum::ACTIF,
             ]
         );
 
         $adminUser->assignRole('admin');
+
+        app(\App\Services\Account\UserCategoryRoleSyncService::class)
+            ->assignCategory($adminUser, 'externe', primary: true);
     }
 }

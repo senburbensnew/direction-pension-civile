@@ -124,8 +124,8 @@
                         <label for="code_pension" class="block text-base font-medium text-gray-700 mb-1">
                             Code pension *
                         </label>
-                        <input type="text" name="code_pension" id="code_pension"
-                            value="{{ old('code_pension', $demande?->data['code_pension'] ?? auth()->user()->pension_code) }}"
+                        <input type="text" name="code_pension" id="code_pension" data-active-pension-code
+                            value="{{ old('code_pension', $demande?->data['code_pension'] ?? auth()->user()->displayPensionCode()) }}"
 
                             class="w-full rounded-md @error('code_pension') border-red-500 @else border-gray-300 @enderror focus:border-blue-500 focus:ring-blue-500"
                             >

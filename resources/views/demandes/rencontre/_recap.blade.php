@@ -34,12 +34,15 @@
             <dt class="text-sm font-medium text-gray-500">Service responsable</dt>
             <dd class="sm:col-span-2 text-base text-gray-800" x-text="serviceLabel()"></dd>
         </div>
-        <div class="grid grid-cols-1 sm:grid-cols-3 gap-1 px-4 py-3">
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-1 px-4 py-3" x-show="motif" x-cloak>
             <dt class="text-sm font-medium text-gray-500">Documents à préparer</dt>
             <dd class="sm:col-span-2">
                 <ul class="list-disc list-inside text-base text-gray-800 space-y-1">
-                    <template x-for="doc in documentsPourModalite()" :key="doc">
+                    <template x-for="(doc, idx) in documentsPourModalite()" :key="idx">
                         <li x-text="doc"></li>
+                    </template>
+                    <template x-if="!documentsPourModalite().length">
+                        <li class="text-gray-500">Consultez les pièces à joindre ci-dessus.</li>
                     </template>
                 </ul>
             </dd>
