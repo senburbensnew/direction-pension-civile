@@ -86,7 +86,9 @@ class DemandeCreationCompteReviewService
 
             $provisioning = app(BeneficiaireProvisioningService::class);
 
-            if ($demande->is_mineur) {
+            if ($demande->is_mandataire) {
+                // Le mandat reste en attente d’approbation admin ; pas de lien mandataire avant approbation.
+            } elseif ($demande->is_mineur) {
                 $provisioning->provisionFromDemandeCreation(
                     $user->fresh(),
                     $demande,
@@ -174,11 +176,11 @@ class DemandeCreationCompteReviewService
 
     private function assertRendezVousRealise(DemandeCreationCompte $demande): void
     {
-        $rdv = $demande->rendezVousFinalisation();
+        $rdv = $demande->rendezVousPourDecisionCompteRealise();
 
         if (! $rdv) {
             throw ValidationException::withMessages([
-                'status' => 'Aucun rendez-vous de finalisation n’est enregistré pour ce dossier.',
+                'status' => 'Aucun rendez-vous Formalités n’est enregistré pour ce dossier.',
             ]);
         }
 

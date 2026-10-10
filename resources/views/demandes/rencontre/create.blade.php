@@ -415,9 +415,9 @@
 
                                             Visioconférence
 
-                                            <span class="text-xs font-bold uppercase tracking-wide text-green-700 bg-green-50 px-2 py-0.5 rounded-full">
+                                            <!-- <span class="text-xs font-bold uppercase tracking-wide text-green-700 bg-green-50 px-2 py-0.5 rounded-full">
                                                 Recommandé
-                                            </span>
+                                            </span> -->
 
                                         </span>
 
@@ -898,4 +898,13 @@
             }));
         });
     </script>
+
+    @if(isset($rdvActif) && ($rdvActif->data['modalite'] ?? '') === 'visio' && filled($rdvActif->visio_token))
+        @php
+            $visioActifPollStatus = app(\App\Services\RencontreVisioService::class)->status($rdvActif);
+        @endphp
+        @if($visioActifPollStatus === 'en_attente')
+            <x-rencontre-visio-auto-refresh :token="$rdvActif->visio_token" />
+        @endif
+    @endif
 @endsection

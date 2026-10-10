@@ -2,6 +2,7 @@
 
 namespace App\Http\Middleware;
 
+use App\Services\RencontreMotifService;
 use Closure;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -15,7 +16,10 @@ class EnsurePensionPortalAccess
     {
         $user = $request->user();
 
-        if (! $user?->hasPensionPortalAccess()) {
+        $motifs = app(RencontreMotifService::class);
+
+        if (! $user?->hasPensionPortalAccess()
+            && ! $motifs->userHasPendingDemandeCreationCompte($user)) {
             abort(403, 'Accès réservé aux usagers du portail pension.');
         }
 

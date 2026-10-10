@@ -16,6 +16,7 @@ use App\Services\RencontreAvailabilityService;
 use App\Services\RencontreMotifService;
 use App\Services\RencontreVisioService;
 use App\Services\RencontreWorkflowService;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use App\Models\AnneeFiscale;
@@ -265,7 +266,7 @@ class DemandeRencontreController extends Controller
                 'required',
                 'accepted',
             ],
-        ], $this->motifsService->documentValidationRules($motifKey)));
+        ], $this->motifsService->documentValidationRules($motifKey, $user)));
 
         if (!$this->availability->isBookableDate(
             $validated['date_souhaitee']
@@ -584,11 +585,13 @@ class DemandeRencontreController extends Controller
         );
 
         $data = $demande->data ?? [];
+        $backUrl = $this->resolveVisioReturnUrl($request, $demande);
 
         return view(
             'demandes.rencontre.visio',
             [
                 'demande'  => $demande,
+                'backUrl'  => $backUrl,
 
                 'status'   => $this->visio->status($demande),
 
@@ -607,6 +610,30 @@ class DemandeRencontreController extends Controller
                 'embedUrl' => $this->visio->embedUrl($demande, $user), // 👈 $user
             ]
         );
+    }
+
+    public function visioStatus(
+        Request $request,
+        string $token
+    ): JsonResponse {
+        $demande = Demande::query()
+            ->where('visio_token', $token)
+            ->where(
+                'type',
+                TypeDemandeEnum::DEMANDE_RENCONTRE->value
+            )
+            ->firstOrFail();
+
+        abort_unless(
+            $this->visio->canAccess($request->user(), $demande),
+            403
+        );
+
+        return response()->json([
+            'status' => $this->visio->status($demande),
+            'opens_at' => $this->visio->opensAt($demande)?->toIso8601String(),
+            'closes_at' => $this->visio->closesAt($demande)?->toIso8601String(),
+        ]);
     }
 
     /*
@@ -776,9 +803,7 @@ class DemandeRencontreController extends Controller
             );
         }
 
-        if (!$user->hasAnyRole(['admin', 'direction'])) {
-            $query->where('data->agent_id', $user->id);
-        }
+        $this->scopePilotageListForUser($query, $user);
 
         $demandes = $query
             ->paginate(20)
@@ -845,7 +870,7 @@ class DemandeRencontreController extends Controller
         $motifKey = (string) ($demande->data['motif_key'] ?? '');
 
         if (
-            in_array($motifKey, \App\Models\DemandeCreationCompte::rdvFinalisationMotifKeys(), true)
+            $this->motifsService->countsTowardAccountDecision($motifKey)
             && $owner?->isProvisionnel()
         ) {
             $compteCreation = \App\Models\DemandeCreationCompte::query()
@@ -885,6 +910,37 @@ class DemandeRencontreController extends Controller
                     $this->rdvWorkflow->eventLabel($event),
             ]
         );
+    }
+
+    /**
+     * @param  \Illuminate\Database\Eloquent\Builder<Demande>  $query
+     */
+    private function scopePilotageListForUser($query, User $user): void
+    {
+        if ($user->hasAnyRole(['admin', 'direction', 'directeur', 'assistant_directeur'])) {
+            return;
+        }
+
+        $managerRoles = array_values(array_unique(array_merge(
+            [(string) config('rdv.validator_role', 'validateur_rdv')],
+            config('rencontre.reassign_roles', [])
+        )));
+
+        if ($user->hasAnyRole($managerRoles)) {
+            if (! $user->service_id) {
+                return;
+            }
+
+            $serviceId = (int) $user->service_id;
+            $query->where(function ($q) use ($serviceId) {
+                $q->where('current_service_id', $serviceId)
+                    ->orWhere('data->service_id', $serviceId);
+            });
+
+            return;
+        }
+
+        $query->where('data->agent_id', $user->id);
     }
 
     private function canAccessDemande(
@@ -1862,5 +1918,81 @@ class DemandeRencontreController extends Controller
         return [
             'enabled' => true,
         ];
+    }
+
+    private function resolveVisioReturnUrl(
+        Request $request,
+        Demande $demande
+    ): string {
+        $sessionKey = 'visio_return.'.$demande->visio_token;
+
+        $candidate = $this->safeSameHostUrl(
+            $request->query('return')
+        );
+
+        if ($candidate !== null && ! $this->isVisioPageUrl($candidate)) {
+            session([$sessionKey => $candidate]);
+
+            return $candidate;
+        }
+
+        $referer = $this->safeSameHostUrl(
+            $request->headers->get('referer')
+        );
+
+        if ($referer !== null && ! $this->isVisioPageUrl($referer)) {
+            session([$sessionKey => $referer]);
+
+            return $referer;
+        }
+
+        $cached = session($sessionKey);
+
+        if (is_string($cached) && $cached !== '') {
+            return $cached;
+        }
+
+        $user = $request->user();
+
+        if ($user && (int) $demande->created_by === (int) $user->id) {
+            return route('demandes.rencontre.create');
+        }
+
+        if ($user?->hasAnyRole([
+            User::ROLE_AGENT_RDV,
+            User::ROLE_AGENT_FORMALITES,
+            User::ROLE_VALIDATEUR_RDV,
+            'admin',
+            'direction',
+        ])) {
+            return route('rencontres.pilotage.show', $demande);
+        }
+
+        return route('personal.request.show', $demande->id);
+    }
+
+    private function safeSameHostUrl(?string $url): ?string
+    {
+        if (! is_string($url) || $url === '') {
+            return null;
+        }
+
+        if (str_starts_with($url, '/')) {
+            return url($url);
+        }
+
+        $host = parse_url($url, PHP_URL_HOST);
+        $appHost = parse_url((string) config('app.url'), PHP_URL_HOST);
+
+        if ($host === null || $appHost === null || $host !== $appHost) {
+            return null;
+        }
+
+        return $url;
+    }
+
+    private function isVisioPageUrl(string $url): bool
+    {
+        return str_contains($url, '/rendez-vous/visio/');
     }
 }

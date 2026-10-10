@@ -4,9 +4,11 @@
     $pieces = $demande->identityPieces();
     $ocrFields = $demande->ocr_fields ?? [];
     $ocrDocuments = $demande->ocr_documents ?? [];
-    $rdvFinalisation = $rendezVousFinalisation ?? $demande->rendezVousFinalisation();
+    $rdvDecisionCompte = $rendezVousPourDecisionCompte
+        ?? $rendezVousFinalisation
+        ?? $demande->rendezVousPourDecisionCompte();
     $rdvRealise = $demande->hasRendezVousRealise();
-    $rdvHeurePassee = $rdvFinalisation?->rencontreHeureEstPassee() ?? true;
+    $rdvHeurePassee = $rdvDecisionCompte?->rencontreHeureEstPassee() ?? true;
     $peutDeciderDossier = ($canDecide ?? false) && $demande->canBeDecided();
 
     // Libellé « Compte » : Prénom Nom > Code pension > NIF/NINU > Email
@@ -76,54 +78,82 @@
             $remainingOcr[$k] = $v;
         }
     }
+
+    $identityOpenDefault = $demande->isPending();
+    $piecesOpenDefault = count($pieces) > 0;
+    $decisionOpenDefault = $peutDeciderDossier
+        || filled(old('refusal_reason'))
+        || filled(old('firstname'))
+        || filled(old('email'));
+    $stepRdv = $rdvRealise ? 'done' : ($demande->isPending() ? 'current' : 'done');
+    $stepPieces = count($pieces) > 0 ? 'done' : ($demande->isPending() ? 'current' : 'muted');
+    $stepDecision = $peutDeciderDossier ? 'current' : (! $demande->isPending() ? 'done' : 'muted');
 @endphp
 
-<div class="flex flex-wrap items-center justify-between gap-3">
-    <div>
-        <h1 class="text-xl font-bold text-gray-800">{{ $demande->libellePublic() }}</h1>
-        <p class="text-sm text-gray-500 mt-0.5">{{ $demande->displayName() }}@if($demande->nif) · {{ $demande->nif }}@endif</p>
-    </div>
-    <a href="{{ route($routePrefix.'.comptes-demandes.index') }}" class="text-sm text-navy font-semibold hover:underline">Retour à la liste</a>
-</div>
-
-@php
-    $rendezVousFinalisation = $rendezVousFinalisation ?? null;
-@endphp
-
-@if($rendezVousFinalisation)
-    @php
-        $rdvData = $rendezVousFinalisation->data ?? [];
-        $rdvStatutCompte = $rendezVousFinalisation->rencontreStatut();
-    @endphp
-    <section class="bg-white border border-indigo-200 rounded-2xl p-5 space-y-3">
-        <h2 class="text-sm font-bold text-indigo-900">Rendez-vous de finalisation</h2>
-        @include('demandes.rencontre._workflow-banner', [
-            'demande' => $rendezVousFinalisation,
-            'rdvStatut' => $rdvStatutCompte,
-            'compteCreation' => $demande,
-        ])
-        <p class="text-sm text-gray-600">
-            {{ $rendezVousFinalisation->libellePublic() }}
-            · {{ $rdvStatutCompte->label() }}
-            @if(!empty($rdvData['date_souhaitee']))
-                · {{ \Carbon\Carbon::parse($rdvData['date_souhaitee'])->format('d/m/Y') }}
-                @if(!empty($rdvData['heure_souhaitee'])) à {{ $rdvData['heure_souhaitee'] }}@endif
-            @endif
-        </p>
-        <a href="{{ route('personal.request.show', $rendezVousFinalisation->id) }}"
-           class="inline-flex text-sm font-semibold text-navy hover:underline">
-            Ouvrir le dossier rendez-vous →
+<header class="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden mb-6">
+    <div class="h-1 w-full bg-gradient-to-r from-indigo-600 via-violet-500 to-purple-500"></div>
+    <div class="px-5 py-5 sm:px-6 flex flex-wrap items-start justify-between gap-4">
+        <div class="flex items-start gap-4 min-w-0">
+            <div class="w-12 h-12 rounded-xl bg-indigo-50 border border-indigo-100 flex items-center justify-center shrink-0">
+                <svg class="w-6 h-6 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
+                          d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"/>
+                </svg>
+            </div>
+            <div class="min-w-0">
+                <div class="flex flex-wrap items-center gap-2 mb-1">
+                    <h1 class="text-lg font-bold text-gray-900 tracking-tight">{{ $demande->libellePublic() }}</h1>
+                    <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold {{ $demande->statusBadgeClass() }}">
+                        {{ $demande->statusLabel() }}
+                    </span>
+                </div>
+                <p class="text-sm text-gray-600">{{ $demande->displayName() }}</p>
+                <div class="flex flex-wrap gap-2 mt-2 text-xs">
+                    @if($demande->code)
+                        <span class="px-2 py-0.5 rounded-md bg-gray-100 text-gray-700 font-mono">{{ $demande->code }}</span>
+                    @endif
+                    @if($demande->nif)
+                        <span class="px-2 py-0.5 rounded-md bg-gray-100 text-gray-600">NIF {{ $demande->nif }}</span>
+                    @endif
+                    @if($demande->telephone)
+                        <span class="px-2 py-0.5 rounded-md bg-gray-100 text-gray-600">{{ $demande->telephone }}</span>
+                    @endif
+                </div>
+            </div>
+        </div>
+        <a href="{{ route($routePrefix.'.comptes-demandes.index') }}"
+           class="inline-flex items-center gap-2 px-3 py-2 text-sm font-semibold text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-xl transition-colors">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/></svg>
+            Retour à la liste
         </a>
-    </section>
-@elseif($demande->isPending())
-    <div class="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
-        Aucun rendez-vous « finalisation de compte » n’est encore enregistré pour ce demandeur.
-        La décision ne sera possible qu’après un rendez-vous réalisé.
     </div>
-@endif
+    @if($demande->isPending())
+        <div class="px-5 sm:px-6 pb-4">
+            <ol class="flex flex-wrap items-center gap-2 text-xs font-medium">
+                @foreach([
+                    ['label' => 'Rendez-vous réalisé', 'state' => $stepRdv],
+                    ['label' => 'Pièces vérifiées', 'state' => $stepPieces],
+                    ['label' => 'Décision agent', 'state' => $stepDecision],
+                ] as $step)
+                    <li @class([
+                        'inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full ring-1',
+                        'bg-green-50 text-green-800 ring-green-200' => $step['state'] === 'done',
+                        'bg-indigo-50 text-indigo-800 ring-indigo-200' => $step['state'] === 'current',
+                        'bg-white text-gray-400 ring-gray-200' => $step['state'] === 'muted',
+                    ])>
+                        @if($step['state'] === 'done')
+                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+                        @endif
+                        {{ $step['label'] }}
+                    </li>
+                @endforeach
+            </ol>
+        </div>
+    @endif
+</header>
 
 @if(session('success'))
-    <div class="bg-green-50 border border-green-200 text-green-800 rounded-lg px-4 py-3 text-sm space-y-1">
+    <div class="mb-4 bg-green-50 border border-green-200 text-green-800 rounded-xl px-4 py-3 text-sm space-y-1">
         <p>{{ session('success') }}</p>
         @if(session('created_password'))
             <p class="font-mono text-sm">Mot de passe provisoire : <strong>{{ session('created_password') }}</strong></p>
@@ -132,16 +162,63 @@
     </div>
 @endif
 @if($errors->any())
-    <div class="bg-red-50 border border-red-200 text-red-800 rounded-lg px-4 py-3 text-sm">
+    <div class="mb-4 bg-red-50 border border-red-200 text-red-800 rounded-xl px-4 py-3 text-sm">
         {{ $errors->first() }}
     </div>
 @endif
 
-{{-- Statut — OUVERT PAR DÉFAUT --}}
-<section class="bg-white border border-gray-200 rounded-2xl" x-data="{ open: true }">
+<nav class="lg:hidden flex flex-wrap gap-2 mb-4 text-xs font-semibold" aria-label="Sections du dossier">
+    <a href="#dcc-identite" class="px-2.5 py-1 rounded-lg bg-white border border-gray-200 text-gray-700">Identité</a>
+    <a href="#dcc-pieces" class="px-2.5 py-1 rounded-lg bg-white border border-gray-200 text-gray-700">Pièces</a>
+    @if($demande->isPending())
+        <a href="#dcc-decision" class="px-2.5 py-1 rounded-lg bg-indigo-50 border border-indigo-200 text-indigo-800">Décision</a>
+    @endif
+    <a href="#dcc-journal" class="px-2.5 py-1 rounded-lg bg-white border border-gray-200 text-gray-700">Journal</a>
+</nav>
+
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
+<div class="lg:col-span-2 space-y-4 order-2 lg:order-1">
+
+@if($rdvDecisionCompte)
+    @php
+        $rdvData = $rdvDecisionCompte->data ?? [];
+        $rdvStatutCompte = $rdvDecisionCompte->rencontreStatut();
+    @endphp
+    <section class="bg-white border border-indigo-200 rounded-2xl p-5 space-y-3 shadow-sm">
+        <h2 class="text-sm font-bold text-indigo-900">Rendez-vous Formalités lié</h2>
+        @include('demandes.rencontre._workflow-banner', [
+            'demande' => $rdvDecisionCompte,
+            'rdvStatut' => $rdvStatutCompte,
+            'compteCreation' => $demande,
+        ])
+        <p class="text-sm text-gray-600">
+            {{ $rdvDecisionCompte->libellePublic() }}
+            · {{ $rdvStatutCompte->label() }}
+            @if(!empty($rdvData['date_souhaitee']))
+                · {{ \Carbon\Carbon::parse($rdvData['date_souhaitee'])->format('d/m/Y') }}
+                @if(!empty($rdvData['heure_souhaitee'])) à {{ $rdvData['heure_souhaitee'] }}@endif
+            @endif
+        </p>
+        <a href="{{ route('personal.request.show', $rdvDecisionCompte->id) }}"
+           class="inline-flex text-sm font-semibold text-navy hover:underline">
+            Ouvrir le dossier rendez-vous →
+        </a>
+    </section>
+@elseif($demande->isPending())
+    <div class="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
+        Aucun rendez-vous Formalités n’est encore enregistré pour ce demandeur.
+        La décision sur le compte ne sera possible qu’après un rendez-vous réalisé (formalités, mandats, etc.).
+    </div>
+@endif
+
+{{-- Statut — résumé compact --}}
+<section class="bg-white border border-gray-200 rounded-2xl shadow-sm" x-data="{ open: true }">
     <button type="button" @click="open = !open"
-            class="w-full flex items-center justify-between gap-3 px-6 py-4 text-left">
-        <h2 class="text-base font-bold text-gray-800">Statut</h2>
+            class="w-full flex items-center justify-between gap-3 px-6 py-4 text-left hover:bg-gray-50/50 rounded-2xl transition-colors">
+        <div>
+            <h2 class="text-base font-bold text-gray-800">Statut du dossier</h2>
+            <p class="text-xs text-gray-500 mt-0.5" x-show="!open">Déposée le {{ ($demande->soumise_at ?? $demande->created_at)?->format('d/m/Y') }}</p>
+        </div>
         <svg class="w-5 h-5 text-gray-400 transition-transform" :class="open ? 'rotate-180' : ''"
              fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
@@ -154,6 +231,9 @@
                 <p class="inline-flex mt-1 text-sm font-semibold px-2.5 py-1 rounded-full {{ $demande->statusBadgeClass() }}">{{ $demande->statusLabel() }}</p>
                 @if($demande->is_mineur)
                     <p class="text-xs text-amber-700 mt-2">Dossier pensionné mineur — lien : {{ $demande->representant_lien ?: '—' }}</p>
+                @endif
+                @if($demande->is_mandataire ?? false)
+                    <p class="text-xs text-indigo-700 mt-2">Ouverture de compte mandataire — code pension : {{ $demande->pension_code ?: '—' }}</p>
                 @endif
             </div>
             <div class="text-sm text-gray-600">
@@ -180,11 +260,14 @@
     </div>
 </section>
 
-{{-- Identité et coordonnées — REPLIÉ --}}
-<section class="bg-white border border-gray-200 rounded-2xl" x-data="{ open: false }">
+{{-- Identité et coordonnées --}}
+<section id="dcc-identite" class="bg-white border border-gray-200 rounded-2xl shadow-sm scroll-mt-24" x-data="{ open: @js($identityOpenDefault) }">
     <button type="button" @click="open = !open"
-            class="w-full flex items-center justify-between gap-3 px-6 py-4 text-left">
-        <h2 class="text-base font-bold text-gray-800">Identité et coordonnées</h2>
+            class="w-full flex items-center justify-between gap-3 px-6 py-4 text-left hover:bg-gray-50/50 rounded-2xl transition-colors">
+        <div>
+            <h2 class="text-base font-bold text-gray-800">Identité et coordonnées</h2>
+            <p class="text-xs text-gray-500 mt-0.5" x-show="!open">{{ $demande->firstname }} {{ $demande->lastname }} · {{ $demande->email ?: 'sans e-mail' }}</p>
+        </div>
         <svg class="w-5 h-5 text-gray-400 transition-transform" :class="open ? 'rotate-180' : ''"
              fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
@@ -203,11 +286,14 @@
     </div>
 </section>
 
-{{-- Pièces jointes + Données OCR — REPLIÉ --}}
-<section class="bg-white border border-gray-200 rounded-2xl" x-data="{ open: false }">
+{{-- Pièces jointes + Données OCR --}}
+<section id="dcc-pieces" class="bg-white border border-gray-200 rounded-2xl shadow-sm scroll-mt-24" x-data="{ open: @js($piecesOpenDefault) }">
     <button type="button" @click="open = !open"
-            class="w-full flex items-center justify-between gap-3 px-6 py-4 text-left">
-        <h2 class="text-base font-bold text-gray-800">Pièces jointes et données lues (OCR)</h2>
+            class="w-full flex items-center justify-between gap-3 px-6 py-4 text-left hover:bg-gray-50/50 rounded-2xl transition-colors">
+        <div>
+            <h2 class="text-base font-bold text-gray-800">Pièces jointes et OCR</h2>
+            <p class="text-xs text-gray-500 mt-0.5" x-show="!open">{{ count($pieces) }} pièce(s) · ouvrir pour prévisualiser et télécharger</p>
+        </div>
         <svg class="w-5 h-5 text-gray-400 transition-transform" :class="open ? 'rotate-180' : ''"
              fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
@@ -231,18 +317,23 @@
                         $isImage = str_starts_with((string) $media->mime_type, 'image/');
                         $isPdf   = $media->mime_type === 'application/pdf';
                         $pieceOcr = $ocrForPiece($piece['collection']);
+                        $viewUrl = $demande->agentPieceUrl($media, auth()->user(), true) ?? $media->getUrl();
+                        $downloadUrl = $demande->agentPieceUrl($media, auth()->user(), false) ?? $media->getUrl();
                     @endphp
                     <article class="border border-gray-200 rounded-xl overflow-hidden">
                         {{-- En-tête : libellé + bouton ouvrir --}}
-                        <div class="px-3 py-2 bg-gray-50 text-sm font-semibold text-gray-700 flex items-center justify-between">
+                        <div class="px-3 py-2 bg-gray-50 text-sm font-semibold text-gray-700 flex items-center justify-between gap-2">
                             <span>{{ $piece['label'] }}</span>
-                            <a href="{{ $media->getUrl() }}" target="_blank" class="text-navy text-xs font-semibold hover:underline">Ouvrir</a>
+                            <span class="flex items-center gap-2 shrink-0">
+                                <a href="{{ $viewUrl }}" target="_blank" rel="noopener" class="text-navy text-xs font-semibold hover:underline">Ouvrir</a>
+                                <a href="{{ $downloadUrl }}" class="text-navy text-xs font-semibold hover:underline">Télécharger</a>
+                            </span>
                         </div>
 
                         {{-- Aperçu du média --}}
                         @if($isImage)
-                            <a href="{{ $media->getUrl() }}" target="_blank">
-                                <img src="{{ $media->getUrl() }}" alt="{{ $piece['label'] }}" class="w-full max-h-72 object-contain bg-gray-100">
+                            <a href="{{ $viewUrl }}" target="_blank" rel="noopener">
+                                <img src="{{ $viewUrl }}" alt="{{ $piece['label'] }}" class="w-full max-h-72 object-contain bg-gray-100">
                             </a>
                         @elseif($isPdf)
                             <div x-data="{ preview: false }">
@@ -263,20 +354,20 @@
                                     </button>
                                 </div>
                                 <div x-show="preview" x-collapse>
-                                    <iframe src="{{ $media->getUrl() }}#toolbar=1&view=FitH"
+                                    <iframe src="{{ $viewUrl }}#toolbar=1&view=FitH"
                                             class="w-full h-96 bg-gray-100"
                                             title="Aperçu {{ $piece['label'] }}"></iframe>
                                     <p class="text-xs text-gray-400 px-3 py-2">
                                         Si l’aperçu ne s’affiche pas,
-                                        <a href="{{ $media->getUrl() }}" target="_blank" class="text-navy hover:underline">ouvrez le PDF dans un nouvel onglet</a>.
+                                        <a href="{{ $viewUrl }}" target="_blank" rel="noopener" class="text-navy hover:underline">ouvrez le PDF dans un nouvel onglet</a>.
                                     </p>
                                 </div>
                             </div>
                         @else
                             <div class="p-4 bg-gray-50 flex items-center justify-between gap-3">
                                 <p class="text-sm text-gray-600 truncate">{{ $media->file_name }}</p>
-                                <a href="{{ $media->getUrl() }}" target="_blank"
-                                   class="text-xs text-navy font-semibold hover:underline shrink-0">Ouvrir</a>
+                                <a href="{{ $downloadUrl }}"
+                                   class="text-xs text-navy font-semibold hover:underline shrink-0">Télécharger</a>
                             </div>
                         @endif
 
@@ -324,7 +415,7 @@
 
 {{-- Motif du refus — REPLIÉ --}}
 @if($demande->status === \App\Models\DemandeCreationCompte::STATUS_REFUSEE && $demande->refusal_reason)
-    <section class="bg-red-50 border border-red-200 rounded-2xl text-red-800" x-data="{ open: false }">
+    <section class="bg-red-50 border border-red-200 rounded-2xl text-red-800 shadow-sm" x-data="{ open: true }">
         <button type="button" @click="open = !open"
                 class="w-full flex items-center justify-between gap-3 px-6 py-4 text-left">
             <h2 class="font-bold">Motif du refus</h2>
@@ -339,73 +430,8 @@
     </section>
 @endif
 
-{{-- Décision — REPLIÉ --}}
-@if($demande->isPending())
-    <section class="bg-white border border-gray-200 rounded-2xl" x-data="{ open: false }">
-        <button type="button" @click="open = !open"
-                class="w-full flex items-center justify-between gap-3 px-6 py-4 text-left">
-            <h2 class="text-base font-bold text-gray-800">Décision</h2>
-            <svg class="w-5 h-5 text-gray-400 transition-transform" :class="open ? 'rotate-180' : ''"
-                 fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
-            </svg>
-        </button>
-        <div x-show="open" x-collapse class="px-6 pb-6 space-y-6">
-            @if(! $rdvRealise)
-                <p class="text-sm text-amber-800 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2">
-                    La décision (accepter ou refuser) n’est possible qu’après un rendez-vous réalisé.
-                </p>
-            @elseif(! $rdvHeurePassee)
-                <p class="text-sm text-amber-800 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2">
-                    @if($rdvFinalisation?->rencontreScheduledAt())
-                        La décision sera possible après l’heure prévue du rendez-vous
-                        ({{ $rdvFinalisation->rencontreScheduledAt()->format('d/m/Y à H:i') }}).
-                    @else
-                        La décision n’est pas encore disponible pour ce rendez-vous.
-                    @endif
-                </p>
-            @elseif(! $canDecide)
-                <p class="text-sm text-gray-600">Consultation uniquement. Seuls les agents Formalités peuvent accepter ou refuser après le rendez-vous.</p>
-            @elseif($peutDeciderDossier)
-                <form method="POST" action="{{ route($routePrefix.'.comptes-demandes.accepter', $demande) }}" class="space-y-4">
-                    @csrf
-                    <p class="text-sm text-gray-600">Le rendez-vous a été réalisé. L’acceptation active le compte.</p>
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <label class="text-sm">
-                            <span class="text-gray-600">Prénom</span>
-                            <input name="firstname" value="{{ old('firstname', $demande->firstname) }}" class="mt-1 w-full border border-gray-300 rounded-lg px-3 py-2">
-                        </label>
-                        <label class="text-sm">
-                            <span class="text-gray-600">Nom</span>
-                            <input name="lastname" value="{{ old('lastname', $demande->lastname) }}" class="mt-1 w-full border border-gray-300 rounded-lg px-3 py-2">
-                        </label>
-                        <label class="text-sm md:col-span-2">
-                            <span class="text-gray-600">E-mail</span>
-                            <input type="email" name="email" value="{{ old('email', $demande->email ?? $demande->user?->email) }}" class="mt-1 w-full border border-gray-300 rounded-lg px-3 py-2">
-                        </label>
-                    </div>
-                    <button type="submit" class="px-4 py-2 bg-green-600 hover:bg-green-700 text-white text-sm font-semibold rounded-lg">
-                        Accepter le dossier
-                    </button>
-                </form>
-
-                <form method="POST" action="{{ route($routePrefix.'.comptes-demandes.refuser', $demande) }}" class="space-y-3 border-t border-gray-100 pt-5">
-                    @csrf
-                    <label class="text-sm block">
-                        <span class="text-gray-600">Motif du refus</span>
-                        <textarea name="refusal_reason" rows="3" required minlength="5" class="mt-1 w-full border border-gray-300 rounded-lg px-3 py-2">{{ old('refusal_reason') }}</textarea>
-                    </label>
-                    <button type="submit" class="px-4 py-2 bg-red-600 hover:bg-red-700 text-white text-sm font-semibold rounded-lg">
-                        Refuser
-                    </button>
-                </form>
-            @endif
-        </div>
-    </section>
-@endif
-
-{{-- Journal d'activité — REPLIÉ --}}
-<section class="bg-white border border-gray-200 rounded-2xl" x-data="{ open: false }">
+{{-- Journal d'activité --}}
+<section id="dcc-journal" class="bg-white border border-gray-200 rounded-2xl shadow-sm scroll-mt-24" x-data="{ open: false }">
     <button type="button" @click="open = !open"
             class="w-full flex items-center justify-between gap-3 px-6 py-4 text-left">
         <h2 class="text-base font-bold text-gray-800">Journal d’activité</h2>
@@ -434,3 +460,114 @@
         @endforelse
     </div>
 </section>
+
+</div>{{-- /col principale --}}
+
+<aside class="lg:col-span-1 space-y-4 lg:sticky lg:top-4 order-1 lg:order-2">
+
+    <div class="hidden lg:block bg-white border border-gray-200 rounded-2xl p-4 shadow-sm">
+        <p class="text-xs font-bold uppercase tracking-wide text-gray-500 mb-2">Aller à</p>
+        <ul class="space-y-1 text-sm font-medium">
+            <li><a href="#dcc-identite" class="text-indigo-700 hover:underline">Identité</a></li>
+            <li><a href="#dcc-pieces" class="text-indigo-700 hover:underline">Pièces & OCR</a></li>
+            @if($demande->isPending())
+                <li><a href="#dcc-decision" class="text-indigo-700 hover:underline">Décision</a></li>
+            @endif
+            <li><a href="#dcc-journal" class="text-indigo-700 hover:underline">Journal</a></li>
+        </ul>
+    </div>
+
+    @if($demande->isPending())
+        <section id="dcc-decision" class="bg-white border-2 rounded-2xl shadow-sm scroll-mt-24 @if($peutDeciderDossier) border-green-200 @else border-gray-200 @endif" x-data="{ open: @js($decisionOpenDefault) }">
+            <button type="button" @click="open = !open"
+                    class="w-full flex items-center justify-between gap-3 px-5 py-4 text-left lg:hidden">
+                <div>
+                    <h2 class="text-base font-bold text-gray-800">Décision</h2>
+                    <p class="text-xs text-gray-500 mt-0.5">
+                        @if($peutDeciderDossier)
+                            Prêt à valider ou refuser
+                        @elseif(! $rdvRealise)
+                            En attente du RDV réalisé
+                        @else
+                            Consultation
+                        @endif
+                    </p>
+                </div>
+                <svg class="w-5 h-5 text-gray-400 transition-transform" :class="open ? 'rotate-180' : ''"
+                     fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+                </svg>
+            </button>
+            <div class="hidden lg:block px-5 pt-4 pb-1">
+                <h2 class="text-base font-bold text-gray-800">Décision</h2>
+                <p class="text-xs text-gray-500 mt-0.5">
+                    @if($peutDeciderDossier)
+                        Prêt à valider ou refuser
+                    @elseif(! $rdvRealise)
+                        En attente du RDV réalisé
+                    @else
+                        Consultation
+                    @endif
+                </p>
+            </div>
+            <div x-show="open" x-collapse class="px-5 pb-5 space-y-5 lg:!block">
+                @if(! $rdvRealise)
+                    <p class="text-sm text-amber-800 bg-amber-50 border border-amber-200 rounded-xl px-3 py-2">
+                        Accepter ou refuser n’est possible qu’après un rendez-vous <strong>réalisé</strong>.
+                    </p>
+                @elseif(! $rdvHeurePassee)
+                    <p class="text-sm text-amber-800 bg-amber-50 border border-amber-200 rounded-xl px-3 py-2">
+                        @if($rdvDecisionCompte?->rencontreScheduledAt())
+                            Décision après {{ $rdvDecisionCompte->rencontreScheduledAt()->format('d/m/Y à H:i') }}.
+                        @else
+                            Décision pas encore disponible.
+                        @endif
+                    </p>
+                @elseif(! $canDecide)
+                    <p class="text-sm text-gray-600">Consultation seule (réservé aux agents Formalités).</p>
+                @elseif($peutDeciderDossier)
+                    <form method="POST" action="{{ route($routePrefix.'.comptes-demandes.accepter', $demande) }}" class="space-y-3">
+                        @csrf
+                        <p class="text-sm text-gray-600">Corrigez si besoin, puis acceptez pour activer le compte.</p>
+                        <label class="text-sm block">
+                            <span class="text-gray-600">Prénom</span>
+                            <input name="firstname" value="{{ old('firstname', $demande->firstname) }}" class="mt-1 w-full border border-gray-300 rounded-lg px-3 py-2 text-sm">
+                        </label>
+                        <label class="text-sm block">
+                            <span class="text-gray-600">Nom</span>
+                            <input name="lastname" value="{{ old('lastname', $demande->lastname) }}" class="mt-1 w-full border border-gray-300 rounded-lg px-3 py-2 text-sm">
+                        </label>
+                        <label class="text-sm block">
+                            <span class="text-gray-600">E-mail</span>
+                            <input type="email" name="email" value="{{ old('email', $demande->email ?? $demande->user?->email) }}" class="mt-1 w-full border border-gray-300 rounded-lg px-3 py-2 text-sm">
+                        </label>
+                        <button type="submit" class="w-full px-4 py-2.5 bg-green-600 hover:bg-green-700 text-white text-sm font-semibold rounded-xl shadow-sm">
+                            Accepter le dossier
+                        </button>
+                    </form>
+
+                    <form method="POST" action="{{ route($routePrefix.'.comptes-demandes.refuser', $demande) }}" class="space-y-3 pt-4 border-t border-gray-100">
+                        @csrf
+                        <label class="text-sm block">
+                            <span class="text-gray-600">Motif du refus</span>
+                            <textarea name="refusal_reason" rows="3" required minlength="5" class="mt-1 w-full border border-gray-300 rounded-lg px-3 py-2 text-sm">{{ old('refusal_reason') }}</textarea>
+                        </label>
+                        <button type="submit" class="w-full px-4 py-2.5 bg-white border border-red-200 text-red-700 hover:bg-red-50 text-sm font-semibold rounded-xl">
+                            Refuser le dossier
+                        </button>
+                    </form>
+                @endif
+            </div>
+        </section>
+    @endif
+
+    @if($demande->user)
+        <div class="bg-gray-50 border border-gray-200 rounded-2xl p-4 text-sm">
+            <p class="text-xs font-bold uppercase tracking-wide text-gray-500">Compte lié</p>
+            <p class="font-medium text-gray-900 mt-1">{{ $compteLabel }}</p>
+            <p class="text-gray-600 mt-1">Statut : <strong>{{ $demande->user->accountStatusLabel() }}</strong></p>
+        </div>
+    @endif
+</aside>
+
+</div>{{-- /grid --}}

@@ -7,6 +7,7 @@ use App\Enums\RencontreStatutEnum;
 use App\Enums\TypeDemandeEnum;
 use App\Models\Demande;
 use App\Models\DemandeCreationCompte;
+use App\Services\RencontreMotifService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 
@@ -18,7 +19,7 @@ class CompteProvisoireController extends Controller
         abort_unless($user, 401);
 
         $demande = $user->demandeCreationCompte;
-        $rdv = $demande?->rendezVousFinalisation();
+        $rdv = $demande?->rendezVousPourDecisionCompte();
         $rdvData = is_array($rdv?->data) ? $rdv->data : [];
 
         $rdvStatut = RencontreStatutEnum::tryFrom((string) ($rdvData['rdv_statut'] ?? ''));
@@ -30,8 +31,10 @@ class CompteProvisoireController extends Controller
 
         $rdvRealise = (bool) $demande?->hasRendezVousRealise();
         $hasRdvActif = $rdv !== null && ! $rdvAnnule;
+        $canBookRdv = app(RencontreMotifService::class)->motifsForUser($user) !== [];
+
         $needsRdv = $demande?->isPending()
-            && $user->hasPensionPortalAccess()
+            && $canBookRdv
             && ! $rdvRealise
             && ! $hasRdvActif;
 
@@ -50,7 +53,7 @@ class CompteProvisoireController extends Controller
             'rdvRealise' => $rdvRealise,
             'awaitingDecision' => (bool) ($demande?->canBeDecided()),
             'isRefused' => $isRefused,
-            'canBookRdv' => $user->hasPensionPortalAccess() && ! $isRefused,
+            'canBookRdv' => $canBookRdv && ! $isRefused,
             'rendezVousDemandes' => Demande::query()
                 ->where('created_by', $user->id)
                 ->where('type', TypeDemandeEnum::DEMANDE_RENCONTRE->value)

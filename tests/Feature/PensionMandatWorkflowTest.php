@@ -65,6 +65,32 @@ class PensionMandatWorkflowTest extends TestCase
     }
 
     /** @test */
+    public function mandat_submission_does_not_create_beneficiaire_link_until_approval(): void
+    {
+        $mandataire = $this->createPensionneUser(['account_status' => AccountStatusEnum::ACTIF], '8-10001');
+
+        $this->actingAs($mandataire)->post(route('compte.mandats.store'), [
+            'beneficiaire_firstname' => 'Jean',
+            'beneficiaire_lastname' => 'Dupont',
+            'code_pension' => '8-10002',
+            'type' => 'procuration_consulaire',
+            'mandat_document' => \Illuminate\Http\UploadedFile::fake()->create('mandat.pdf', 100, 'application/pdf'),
+        ])->assertRedirect(route('compte.mandats.index'));
+
+        $this->assertDatabaseHas('pension_mandats', [
+            'user_id' => $mandataire->id,
+            'status' => PensionMandatStatusEnum::EN_ATTENTE->value,
+        ]);
+
+        $this->assertFalse(
+            UserBeneficiaireLink::query()
+                ->where('user_id', $mandataire->id)
+                ->where('relation', BeneficiaireRelationEnum::MANDATAIRE->value)
+                ->exists()
+        );
+    }
+
+    /** @test */
     public function admin_approval_sends_notification_and_persists_scopes(): void
     {
         Notification::fake();

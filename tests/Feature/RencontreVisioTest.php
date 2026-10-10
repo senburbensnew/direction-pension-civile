@@ -102,4 +102,22 @@ class RencontreVisioTest extends TestCase
             ->get(route('demandes.rencontre.visio', str_repeat('ab', 32)))
             ->assertNotFound();
     }
+
+    public function test_visio_status_json_reflects_opening_window(): void
+    {
+        $owner = User::factory()->create();
+        $agent = User::factory()->create();
+        $demande = $this->makeVisioDemande($owner, $agent, [
+            'date_souhaitee' => now()->addDay()->toDateString(),
+            'heure_souhaitee' => '14:00',
+        ]);
+
+        $this->actingAs($agent)
+            ->getJson(route('demandes.rencontre.visio.status', $demande->visio_token))
+            ->assertOk()
+            ->assertJson([
+                'status' => 'en_attente',
+            ])
+            ->assertJsonStructure(['status', 'opens_at', 'closes_at']);
+    }
 }

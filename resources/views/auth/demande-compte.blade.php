@@ -1,7 +1,10 @@
 <x-guest-layout :wide="true" :show-copyright="false">
     @php
-        $isMineur = (bool) old('is_mineur');
+        // Profils mineur / mandataire temporairement indisponibles à l’inscription en ligne.
+        $isMandataire = false;
+        $isMineur = false;
         $userType = old('user_type', 'pensionne');
+        $accountProfile = 'titulaire';
 
         $types = [
             'pensionne' => [
@@ -26,6 +29,8 @@
          */
         $step1Fields = [
             'is_mineur',
+            'is_mandataire',
+            'mandat_designation',
             'piece_identite_type',
             'piece_identite',
             'acte_naissance',
@@ -74,11 +79,22 @@
         $stashedFiles = app(\App\Services\Form\FormUploadStashService::class)
             ->displayNamesForRequest(request());
 
+        $ocrDocumentsInitial = [];
+        if ($rawOcr = old('ocr_documents_json')) {
+            $decodedOcr = json_decode($rawOcr, true);
+            if (is_array($decodedOcr)) {
+                $ocrDocumentsInitial = $decodedOcr;
+            }
+        }
+
         $formState = [
             'step' => $initialStep,
             'isMineur' => $isMineur,
+            'isMandataire' => $isMandataire,
+            'accountProfile' => $accountProfile,
             'userType' => $userType,
             'stashedFiles' => $stashedFiles,
+            'ocrDocuments' => $ocrDocumentsInitial,
 
             'telephone' => old('telephone', ''),
             'email' => old('email', ''),
@@ -566,8 +582,54 @@
                     </div>
                 </div> -->
 
+                {{-- Profil du demandeur --}}
+                <fieldset class="space-y-2">
+                    <legend class="text-sm font-medium text-gray-700 mb-1">
+                        Profil du demandeur
+                    </legend>
+                    <div class="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:gap-x-6 sm:gap-y-2">
+                        <label class="inline-flex items-center gap-2 cursor-pointer text-sm text-gray-700">
+                            <input
+                                type="radio"
+                                class="rounded-full border-gray-300 text-indigo-600 focus:ring-indigo-400"
+                                value="titulaire"
+                                x-model="accountProfile"
+                                @change="applyAccountProfile()"
+                            >
+                            <span>Pensionné titulaire</span>
+                        </label>
+                        <!-- <label class="inline-flex items-center gap-2 cursor-not-allowed text-sm text-gray-400" title="Bientôt disponible">
+                            <input
+                                type="radio"
+                                class="rounded-full border-gray-200 text-gray-300"
+                                value="mineur"
+                                disabled
+                                aria-disabled="true"
+                            >
+                            <span>Représentant d’un mineur <span class="text-xs">(bientôt)</span></span>
+                        </label>
+                        <label class="inline-flex items-center gap-2 cursor-not-allowed text-sm text-gray-400" title="Bientôt disponible">
+                            <input
+                                type="radio"
+                                class="rounded-full border-gray-200 text-gray-300"
+                                value="mandataire"
+                                disabled
+                                aria-disabled="true"
+                            >
+                            <span>Mandataire <span class="text-xs">(bientôt)</span></span>
+                        </label> -->
+                    </div>
+                    <p class="text-xs text-gray-500">
+                        <span x-show="accountProfile === 'titulaire'">Majeur — compte ouvert à votre nom.</span>
+                        <span x-show="accountProfile === 'mineur'" x-cloak>Compte au nom du représentant légal.</span>
+                        <span x-show="accountProfile === 'mandataire'" x-cloak>Procuration pour agir au nom d’un pensionné.</span>
+                    </p>
+                    <input type="hidden" name="is_mineur" id="is_mineur" :value="isMineur ? '1' : '0'">
+                    <input type="hidden" name="is_mandataire" id="is_mandataire" :value="isMandataire ? '1' : '0'">
+                </fieldset>
+
                 {{-- ====================================================
-                     MAJEUR
+                     MAJEUR / MANDATAIRE
                      ==================================================== --}}
 
                 <div
@@ -576,12 +638,11 @@
                     class="compte-document-card required space-y-4"
                 >
                     <div>
-                        <h4 class="text-sm font-semibold text-gray-800">
-                            Document du pensionné
-                        </h4>
+                        <h4 class="text-sm font-semibold text-gray-800" x-text="isMandataire ? 'Pièce d’identité du mandataire' : 'Document du pensionné'"></h4>
 
                         <p class="text-xs text-gray-500 mt-1">
-                            Choisissez le type de document, puis téléversez le fichier correspondant.
+                            <span x-show="!isMandataire">Choisissez le type de document, puis téléversez le fichier correspondant.</span>
+                            <span x-show="isMandataire" x-cloak>Le compte sera créé au nom du mandataire (vous).</span>
                         </p>
                     </div>
 
@@ -672,6 +733,20 @@
                             class="text-xs text-red-600 mt-1"
                             x-text="fieldErrors.piece_identite"
                         ></p>
+                    </div>
+
+                    <div x-show="isMandataire" x-cloak class="space-y-2 border-t border-gray-100 pt-4">
+                        <div>
+                            <h4 class="text-sm font-semibold text-gray-800">Formulaire de désignation signé</h4>
+                            <p class="text-xs text-gray-500 mt-1">Procuration ou formulaire de désignation du mandataire (PDF ou image).</p>
+                        </div>
+                        <label for="mandat_designation" class="dpc-file-field" :class="{ 'is-error': fieldErrors.mandat_designation, 'is-filled': files.mandat_designation }">
+                            <input type="file" id="mandat_designation" name="mandat_designation" accept="image/jpeg,image/png,image/webp,application/pdf,.jpg,.jpeg,.png,.webp,.pdf"
+                                @change="files.mandat_designation = $event.target.files[0]?.name || ''; clearFieldError('mandat_designation')">
+                            <span class="dpc-file-field-name" x-text="files.mandat_designation || 'Aucun fichier choisi'"></span>
+                            <span class="dpc-file-field-action" x-text="files.mandat_designation ? 'Changer' : 'Parcourir'"></span>
+                        </label>
+                        <p x-cloak x-show="fieldErrors.mandat_designation" class="text-xs text-red-600" x-text="fieldErrors.mandat_designation"></p>
                     </div>
 
                 </div>
@@ -1195,6 +1270,7 @@
                                 class="block text-sm font-medium text-gray-700"
                             >
                                 Matricule fiscal (NIF)
+                                <span class="text-red-500">*</span>
                             </label>
                             <x-format-hint-icon
                                 :text="__('messages.format_hint_nif')"
@@ -1929,6 +2005,8 @@
                 step: initial.step || 1,
 
                 isMineur: !!initial.isMineur,
+                isMandataire: !!initial.isMandataire,
+                accountProfile: initial.accountProfile || 'titulaire',
 
                 userType: initial.userType || 'pensionne',
 
@@ -2018,6 +2096,15 @@
                     acte_naissance: stashedFiles.acte_naissance || '',
                     piece_identite_representant:
                         stashedFiles.piece_identite_representant || '',
+                    mandat_designation: stashedFiles.mandat_designation || '',
+                },
+
+                applyAccountProfile() {
+                    this.isMineur = this.accountProfile === 'mineur';
+                    this.isMandataire = this.accountProfile === 'mandataire';
+                    if (this.isMandataire && this.pension_code) {
+                        this.scheduleAvailabilityCheck('pension_code');
+                    }
                 },
 
                 schemas: {
@@ -2063,6 +2150,12 @@
                         'lieu_emission',
                         'emis_le',
                         'expire_le',
+                    ],
+
+                    matricule_fiscal: [
+                        'nif',
+                        'nom',
+                        'prenom',
                     ],
 
                     acte_naissance: [
@@ -2157,6 +2250,8 @@
                     lieu_delivrance: 'Lieu de délivrance',
                     date_delivrance: 'Date de délivrance',
                     autorite_delivrance: 'Autorité de délivrance',
+                    profession: 'Profession / secteur d’activité',
+                    code_sae: 'Code SAE',
                 },
 
                 /* ========================================================
@@ -2268,6 +2363,15 @@
                  * ======================================================== */
 
                 init() {
+                    if ((initial.ocrDocuments || []).length) {
+                        this.ocrDocuments = initial.ocrDocuments.map(
+                            (doc) => this.hydrateDoc(doc)
+                        );
+                        this.syncOcrFields();
+                    }
+
+                    this.prefillAccountFieldsFromOcr();
+
                     if ((this.nif || '').trim()) {
                         this.scheduleAvailabilityCheck('nif');
                     }
@@ -2483,6 +2587,9 @@
                             new URLSearchParams({
                                 field,
                                 value,
+                                ...(field === 'pension_code' && this.isMandataire
+                                    ? { is_mandataire: '1' }
+                                    : {}),
                             }).toString();
 
                         const response = await fetch(url, {
@@ -2704,6 +2811,123 @@
                     this.ocrFields = merged;
                 },
 
+                /**
+                 * Relie les clés OCR (CIN, passeport, permis, matricule fiscal)
+                 * aux champs de l’étape 3 lorsqu’ils existent.
+                 */
+                prefillAccountFieldsFromOcr() {
+                    this.syncOcrFields();
+
+                    const sources = this.ocrFields || {};
+                    const mappings = [
+                        {
+                            ocrKeys: ['nif'],
+                            target: 'nif',
+                            format: (value) =>
+                                this.formatNifForInput(value),
+                        },
+                        {
+                            ocrKeys: ['ninu', 'numero_identification_unique'],
+                            target: 'ninu',
+                            format: (value) =>
+                                String(value || '')
+                                    .replace(/\D+/g, '')
+                                    .slice(0, 10),
+                        },
+                        {
+                            ocrKeys: ['adresse'],
+                            target: 'adresse',
+                            format: (value) => String(value || '').trim(),
+                        },
+                        {
+                            ocrKeys: ['email'],
+                            target: 'email',
+                            format: (value) => String(value || '').trim(),
+                        },
+                        {
+                            ocrKeys: ['telephone'],
+                            target: 'telephone',
+                            format: (value) =>
+                                String(value || '').replace(/\s+/g, ''),
+                        },
+                        {
+                            ocrKeys: ['code_pension', 'pension_code'],
+                            target: 'pension_code',
+                            format: (value) =>
+                                String(value || '').trim().toUpperCase(),
+                        },
+                    ];
+
+                    mappings.forEach(({ ocrKeys, target, format }) => {
+                        const current = String(this[target] ?? '').trim();
+                        if (current !== '') {
+                            return;
+                        }
+
+                        let raw = '';
+                        for (const key of ocrKeys) {
+                            const candidate = String(
+                                sources[key] ?? ''
+                            ).trim();
+                            if (candidate !== '') {
+                                raw = candidate;
+                                break;
+                            }
+                        }
+
+                        if (raw === '') {
+                            return;
+                        }
+
+                        const formatted = format(raw);
+                        if (formatted === '') {
+                            return;
+                        }
+
+                        this[target] = formatted;
+
+                        const inputId =
+                            target === 'pension_code'
+                                ? 'pension_code'
+                                : target;
+                        const input =
+                            document.getElementById(inputId);
+                        if (input && input.value !== formatted) {
+                            input.value = formatted;
+                        }
+                    });
+
+                    if ((this.nif || '').trim()) {
+                        this.scheduleAvailabilityCheck('nif');
+                    }
+
+                    if (
+                        this.userType === 'pensionne' &&
+                        (this.pension_code || '').trim()
+                    ) {
+                        this.scheduleAvailabilityCheck('pension_code');
+                    }
+
+                    if ((this.email || '').trim()) {
+                        this.scheduleAvailabilityCheck('email');
+                    }
+                },
+
+                formatNifForInput(value) {
+                    const digits = String(value || '')
+                        .replace(/\D+/g, '')
+                        .slice(0, 10);
+
+                    if (digits.length !== 10) {
+                        return digits;
+                    }
+
+                    return digits.replace(
+                        /^(\d{3})(\d{3})(\d{3})(\d)$/,
+                        '$1-$2-$3-$4'
+                    );
+                },
+
                 applyOcr(payload) {
                     this.ocrDocuments =
                         (payload?.documents || [])
@@ -2712,6 +2936,7 @@
                             );
 
                     this.syncOcrFields();
+                    this.prefillAccountFieldsFromOcr();
 
                     this.buildPreviews();
                 },
@@ -2799,6 +3024,10 @@
                         formData.append(
                             'is_mineur',
                             this.isMineur ? '1' : '0'
+                        );
+                        formData.append(
+                            'is_mandataire',
+                            this.isMandataire ? '1' : '0'
                         );
 
                         if (!this.isMineur) {
@@ -2954,10 +3183,8 @@
                     this.adresse =
                         fieldValue('adresse');
 
-                    this.isMineur =
-                        !!document.getElementById(
-                            'is_mineur'
-                        )?.checked;
+                    this.isMineur = this.accountProfile === 'mineur';
+                    this.isMandataire = this.accountProfile === 'mandataire';
 
                     this.pieceType =
                         fieldValue(
@@ -3044,6 +3271,7 @@
                     if (this.step === 2) {
                         this.syncOcrFields();
                         this.syncFromForm();
+                        this.prefillAccountFieldsFromOcr();
 
                         this.step = 3;
 
@@ -3271,6 +3499,11 @@
                                 'Veuillez télécharger le document.';
                         }
 
+                        if (this.isMandataire && !hasFile('mandat_designation')) {
+                            nextErrors.mandat_designation =
+                                'Veuillez télécharger le formulaire de désignation signé.';
+                        }
+
                     } else {
 
                         if (!hasFile('acte_naissance')) {
@@ -3330,22 +3563,23 @@
                             'Le numéro de téléphone doit être au format international avec son indicatif pays (ex. +50938123456).';
                     }
 
-                    /* NIF. */
-                    if (
-                        this.nif &&
-                        !/^\d{3}-\d{3}-\d{3}-\d$/.test(
-                            this.nif
-                        )
-                    ) {
-                        nextErrors.nif =
-                            'Le NIF doit être au format 000-000-000-0.';
-                    } else if (
-                        this.nif &&
-                        this.nifStatus === 'error'
-                    ) {
-                        nextErrors.nif =
-                            this.nifMessage ||
-                            'Ce NIF n’est pas disponible.';
+                    /* NIF (obligatoire sauf pensionné mineur). */
+                    if (!this.isMineur) {
+                        if (!this.nif) {
+                            nextErrors.nif =
+                                'Le NIF est obligatoire.';
+                        } else if (
+                            !/^\d{3}-\d{3}-\d{3}-\d$/.test(
+                                this.nif
+                            )
+                        ) {
+                            nextErrors.nif =
+                                'Le NIF doit être au format 000-000-000-0.';
+                        } else if (this.nifStatus === 'error') {
+                            nextErrors.nif =
+                                this.nifMessage ||
+                                'Ce NIF n’est pas disponible.';
+                        }
                     }
 
                     /* NINU. */
@@ -3364,7 +3598,25 @@
                     *   - 7- suivi de 5 caractères alphanumériques (ex. 7-JM183, 7-l0366)
                     *   - 8- suivi de 5 chiffres (ex. 8-18698, 8-00500)
                     */
-                    if (
+                    if (this.isMandataire) {
+                        if (!this.pension_code) {
+                            nextErrors.pension_code =
+                                'Indiquez le code pension du pensionné que vous représentez.';
+                        } else if (
+                            !/^(7-[A-Z0-9]{5}|8-\d{5})$/i.test(
+                                this.pension_code
+                            )
+                        ) {
+                            nextErrors.pension_code =
+                                'Le code pension doit être au format 7-XXXXX (ex. 7-JM183) ou 8-XXXXX (ex. 8-34321).';
+                        } else if (
+                            this.pension_codeStatus === 'error'
+                        ) {
+                            nextErrors.pension_code =
+                                this.pension_codeMessage ||
+                                'Ce code pension n’est pas reconnu.';
+                        }
+                    } else if (
                         this.userType === 'pensionne' &&
                         this.pension_code
                     ) {

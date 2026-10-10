@@ -16,8 +16,15 @@ class ProvisionalAccountProfileService
         User $user,
         bool $isMinorRepresentativeAccount,
         bool $representativeIsAlsoPensionne = false,
+        bool $isMandataireAccount = false,
     ): void {
         $sync = app(UserCategoryRoleSyncService::class);
+
+        if ($isMandataireAccount) {
+            $sync->assignCategory($user, 'externe', primary: true, syncRoles: false);
+
+            return;
+        }
 
         if (! $isMinorRepresentativeAccount) {
             Role::findOrCreate('pensionne', 'web');

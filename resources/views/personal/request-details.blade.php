@@ -240,6 +240,14 @@
                             </a>
                         @endif
 
+                        @if($request->isRencontre() && !empty($compteProvisional) && auth()->user()?->hasAnyRole(['admin', \App\Models\User::ROLE_AGENT_FORMALITES]))
+                            <a href="#compte-creation"
+                               class="inline-flex items-center gap-1.5 px-3 py-2 text-xs font-semibold text-indigo-700 bg-indigo-50 hover:bg-indigo-100 rounded-xl ring-1 ring-indigo-200 transition-colors">
+                                Compte provisoire
+                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                            </a>
+                        @endif
+
                     </div>
                 </div>
             </div>
@@ -249,15 +257,18 @@
     {{-- ══════════════ SECTION DÉDIÉE — TRAITEMENT RDV (agent) ══════════════ --}}
     @if($rdvAgentMode ?? false)
         <div class="max-w-7xl mx-auto mt-5 sm:px-6 lg:px-8">
-            <div class="bg-white rounded-2xl border-2 border-gray-200 shadow-sm overflow-hidden">
-                <div class="bg-gray-500 px-6 py-3 flex items-center gap-3">
-                    <svg class="w-5 h-5 text-white flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                            d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
-                    </svg>
+            <div class="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
+                <div class="h-1 w-full bg-gradient-to-r from-slate-600 via-blue-600 to-indigo-600"></div>
+                <div class="px-5 sm:px-6 py-4 flex items-center gap-3 border-b border-gray-100">
+                    <div class="w-10 h-10 rounded-xl bg-blue-50 border border-blue-100 flex items-center justify-center shrink-0">
+                        <svg class="w-5 h-5 text-blue-600 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                        </svg>
+                    </div>
                     <div>
-                        <h2 class="text-white font-bold text-sm tracking-wide">TRAITEMENT DU RENDEZ-VOUS</h2>
-                        <p class="text-white/80 text-xs mt-0.5">Clôturez, refusez, reportez ou annulez le rendez-vous</p>
+                        <h2 class="text-gray-900 font-bold text-sm tracking-wide">Traitement du rendez-vous</h2>
+                        <p class="text-gray-500 text-xs mt-0.5">Clôture, refus, report ou annulation</p>
                     </div>
                 </div>
 
@@ -830,245 +841,11 @@
         </div>
     @endif
 
-    {{-- ═══════════════════════════════════════════════════════════════════════════════
-     ANALYSE — DEMANDE DE CRÉATION DE COMPTE (compte provisoire)
-    ═══════════════════════════════════════════════════════════════════════════════ --}}
     @if($request->isRencontre() && !empty($compteProvisional) && auth()->user()?->hasAnyRole(['admin', \App\Models\User::ROLE_AGENT_FORMALITES]))
-        @php
-            $cp = $compteProvisional;
-            $estTraitable = $cp->canBeDecided();
-            $canDecideCompte = auth()->user()->hasRole(\App\Models\User::ROLE_AGENT_FORMALITES);
-            $compteShowRoute = auth()->user()->hasRole('admin')
-                ? route('admin.comptes-demandes.show', $cp)
-                : route('formalites.comptes-demandes.show', $cp);
-            $pieces = $cp->identityPieces();
-
-            // Contexte selon le statut du RDV et de la demande
-            $rdvRealise = $request->rencontreStatut() === \App\Enums\RencontreStatutEnum::REALISE;
-            $cpPending  = $cp->isPending();
-        @endphp
-
-        <div class="max-w-7xl mx-auto mt-5 sm:px-6 lg:px-8">
-            <div class="bg-white rounded-2xl border-2 border-indigo-200 shadow-sm overflow-hidden">
-
-                {{-- En-tête --}}
-                <div class="bg-indigo-600 px-6 py-3 flex items-center gap-3">
-                    <svg class="w-5 h-5 text-white flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                            d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"/>
-                    </svg>
-                    <div class="flex-1">
-                        <h2 class="text-white font-bold text-sm tracking-wide">
-                            ANALYSE — DEMANDE DE CRÉATION DE COMPTE
-                        </h2>
-                        <p class="text-white/80 text-xs mt-0.5">
-                            @if($estTraitable)
-                                Ce demandeur possède un compte provisoire. Le RDV est réalisé — vous pouvez accepter ou refuser la création de compte.
-                            @elseif($cpPending && $rdvRealise && ! $cp->canBeDecided())
-                                Compte provisoire — décision disponible après l’heure prévue du rendez-vous.
-                            @elseif($cpPending)
-                                Compte provisoire en attente — marquez d’abord ce rendez-vous comme réalisé pour décider du dossier.
-                            @else
-                                Cette demande de création de compte a déjà été traitée.
-                            @endif
-                        </p>
-                    </div>
-                    <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold {{ $cp->statusBadgeClass() }}">
-                        <span class="w-1.5 h-1.5 rounded-full bg-current opacity-70"></span>
-                        {{ $cp->statusLabel() }}
-                    </span>
-                </div>
-
-                <div class="p-6 space-y-5">
-
-                    {{-- Contexte --}}
-                    <div class="flex items-start gap-3 bg-indigo-50 border border-indigo-200 rounded-xl p-4">
-                        <svg class="w-5 h-5 text-indigo-600 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                        </svg>
-                        <div class="text-sm text-indigo-900 leading-relaxed">
-                            @if($estTraitable)
-                                Le rendez-vous avec ce demandeur a été <strong>réalisé</strong>. Vérifiez les informations et pièces
-                                fournies lors de la demande de création de compte, puis validez ou refusez la création du compte.
-                            @elseif($cpPending)
-                                Le rendez-vous n'a pas encore été marqué comme <strong>réalisé</strong>.
-                                Vous pourrez traiter cette demande une fois le RDV clôturé.
-                            @else
-                                Cette demande de création de compte a été <strong>{{ strtolower($cp->statusLabel()) }}</strong>
-                                @if($cp->traiteeLe())
-                                    le {{ $cp->traiteeLe()->format('d/m/Y à H:i') }}
-                                    @if($cp->traiteePar)
-                                        par {{ $cp->traiteePar->displayName() }}
-                                    @endif
-                                @endif.
-                                Aucune action disponible.
-                            @endif
-                        </div>
-                    </div>
-
-                    {{-- Récapitulatif du demandeur --}}
-                    <dl class="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
-                        <div>
-                            <dt class="text-gray-500">Nom complet</dt>
-                            <dd class="font-medium text-gray-900">
-                                {{ $cp->displayName() ?: '—' }}
-                            </dd>
-                        </div>
-                        <div>
-                            <dt class="text-gray-500">Adresse e-mail</dt>
-                            <dd class="font-medium text-gray-900 break-all">
-                                {{ $cp->email ?: '—' }}
-                            </dd>
-                        </div>
-                        <div>
-                            <dt class="text-gray-500">Téléphone</dt>
-                            <dd class="font-medium text-gray-900">
-                                {{ $cp->telephone ?: '—' }}
-                            </dd>
-                        </div>
-                        <div>
-                            <dt class="text-gray-500">NIF</dt>
-                            <dd class="font-medium text-gray-900">
-                                {{ $cp->nif ?: '—' }}
-                            </dd>
-                        </div>
-
-                        @if($cp->ninu)
-                            <div>
-                                <dt class="text-gray-500">NINU</dt>
-                                <dd class="font-medium text-gray-900">{{ $cp->ninu }}</dd>
-                            </div>
-                        @endif
-
-                        @if($cp->displayPensionCode())
-                            <div>
-                                <dt class="text-gray-500">Code pension</dt>
-                                <dd class="font-medium text-gray-900">{{ $cp->displayPensionCode() }}</dd>
-                            </div>
-                        @endif
-
-                        @if($cp->user_type)
-                            <div>
-                                <dt class="text-gray-500">Type de compte</dt>
-                                <dd class="font-medium text-gray-900 capitalize">{{ $cp->user_type }}</dd>
-                            </div>
-                        @endif
-
-                        <div>
-                            <dt class="text-gray-500">Déposée le</dt>
-                            <dd class="font-medium text-gray-900">
-                                {{ $cp->created_at->format('d/m/Y à H:i') }}
-                            </dd>
-                        </div>
-                    </dl>
-
-                    {{-- Message éventuel du demandeur --}}
-                    @if($cp->message)
-                        <div class="border-t border-gray-100 pt-4">
-                            <p class="text-xs font-bold text-gray-700 uppercase tracking-wide mb-2">Message du demandeur</p>
-                            <p class="text-sm text-gray-700 whitespace-pre-line bg-gray-50 border border-gray-200 rounded-lg px-4 py-3">
-                                {{ $cp->message }}
-                            </p>
-                        </div>
-                    @endif
-
-                    {{-- Pièces jointes --}}
-                    @if(!empty($pieces))
-                        <div class="border-t border-gray-100 pt-4">
-                            <p class="text-xs font-bold text-gray-700 uppercase tracking-wide mb-2">
-                                Pièces jointes ({{ count($pieces) }})
-                            </p>
-                            <div class="flex flex-wrap gap-2">
-                                @foreach($pieces as $piece)
-                                    <a href="{{ $piece['media']->getUrl() }}" target="_blank"
-                                    class="inline-flex items-center gap-2 text-xs bg-gray-50 border border-gray-200 text-gray-800 px-3 py-1.5 rounded-lg hover:bg-gray-100">
-                                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                                d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"/>
-                                        </svg>
-                                        {{ $piece['label'] }}
-                                    </a>
-                                @endforeach
-                            </div>
-                        </div>
-                    @else
-                        <div class="border-t border-gray-100 pt-4">
-                            <p class="text-xs font-bold text-gray-700 uppercase tracking-wide mb-2">Pièces jointes</p>
-                            <p class="text-sm text-gray-500 italic">Aucune pièce jointe disponible.</p>
-                        </div>
-                    @endif
-
-                    {{-- Actions --}}
-                    <div class="border-t border-gray-100 pt-5 flex flex-wrap items-center gap-3">
-
-                        <a href="{{ $compteShowRoute }}"
-                        class="inline-flex items-center gap-2 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-semibold rounded-lg">
-                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                    d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                    d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
-                            </svg>
-                            Ouvrir le dossier complet
-                        </a>
-
-                        @if($estTraitable && $canDecideCompte)
-                            <form method="POST"
-                                action="{{ route('formalites.comptes-demandes.accepter', $cp) }}"
-                                onsubmit="return confirm('Accepter la création de compte pour ce demandeur ?');">
-                                @csrf
-                                <button type="submit"
-                                        class="inline-flex items-center gap-2 px-4 py-2 bg-green-600 hover:bg-green-700 text-white text-sm font-semibold rounded-lg">
-                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
-                                    </svg>
-                                    Accepter la création de compte
-                                </button>
-                            </form>
-
-                            <button type="button"
-                                    onclick="document.getElementById('refusComptePanel').classList.toggle('hidden')"
-                                    class="inline-flex items-center gap-2 px-4 py-2 bg-red-600 hover:bg-red-700 text-white text-sm font-semibold rounded-lg">
-                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
-                                </svg>
-                                Refuser
-                            </button>
-                        @endif
-                    </div>
-
-                    {{-- Formulaire de refus --}}
-                    @if($estTraitable && $canDecideCompte)
-                        <div id="refusComptePanel" class="hidden bg-red-50 border border-red-200 rounded-xl p-4">
-                            <form method="POST"
-                                action="{{ route('formalites.comptes-demandes.refuser', $cp) }}"
-                                onsubmit="return confirm('Refuser la création de compte ? Cette action est définitive.');">
-                                @csrf
-                                <label class="block text-xs font-semibold text-red-800 mb-1">
-                                    Motif du refus <span class="text-red-500">*</span>
-                                </label>
-                                <textarea name="refusal_reason" rows="3" required minlength="5" maxlength="1000"
-                                        class="w-full border border-red-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-red-300 mb-3"
-                                        placeholder="Expliquez la raison du refus...">{{ old('refusal_reason') }}</textarea>
-                                <div class="flex gap-2">
-                                    <button type="submit"
-                                            class="inline-flex items-center gap-2 px-4 py-2 bg-red-600 hover:bg-red-700 text-white text-sm font-semibold rounded-lg">
-                                        Confirmer le refus
-                                    </button>
-                                    <button type="button"
-                                            onclick="document.getElementById('refusComptePanel').classList.add('hidden')"
-                                            class="px-4 py-2 text-gray-600 hover:text-gray-800 text-sm">
-                                        Annuler
-                                    </button>
-                                </div>
-                            </form>
-                        </div>
-                    @endif
-
-                </div>
-            </div>
-        </div>
+        @include('comptes-demandes._panel-rdv', [
+            'request' => $request,
+            'compte' => $compteProvisional,
+        ])
     @endif
 
     {{-- ══════════════ LAYOUT DEUX COLONNES ══════════════ --}}
@@ -3068,4 +2845,13 @@
             </div>
         </div>
     </div>
+
+    @if($request->isRencontre() && ($request->data['modalite'] ?? '') === 'visio' && filled($request->visio_token))
+        @php
+            $visioAutoRefreshStatus = app(\App\Services\RencontreVisioService::class)->status($request);
+        @endphp
+        @if($visioAutoRefreshStatus === 'en_attente')
+            <x-rencontre-visio-auto-refresh :token="$request->visio_token" />
+        @endif
+    @endif
 </x-app-layout>

@@ -10,6 +10,7 @@ use App\Models\RdvAgentAvailability;
 use App\Models\Service;
 use App\Models\User;
 use App\Models\WorkflowStep;
+use App\Services\Account\UserCategoryRoleSyncService;
 use App\Services\HaitiHolidayService;
 use App\Services\RencontreAvailabilityService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -35,6 +36,8 @@ class RencontreBookingRulesTest extends TestCase
     {
         $user = User::factory()->create();
         $user->assignRole('pensionne');
+        app(UserCategoryRoleSyncService::class)
+            ->assignCategory($user, 'pensionne', primary: true, syncRoles: false);
 
         return $user;
     }

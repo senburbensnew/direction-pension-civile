@@ -52,6 +52,8 @@ class DocumentExtractor
 
         if ($documentType === 'acte_naissance') {
             $pairs = array_merge($pairs, $this->extractActeNaissance($text));
+        } elseif ($documentType === 'matricule_fiscal') {
+            $pairs = array_merge($pairs, $this->extractMatriculeFiscal($text));
         } elseif ($documentType !== null) {
             $pairs = array_merge($pairs, $this->extractIdentityDocument($text, $documentType === 'permis'));
         }
@@ -61,6 +63,10 @@ class DocumentExtractor
         //    écraser ce que l'extracteur dédié a déjà trouvé.
         // ------------------------------------------------------------------
         foreach ($this->pairsFromLabeledLines($text) as $key => $value) {
+            if ($documentType === 'matricule_fiscal' && in_array($key, ['nom', 'prenom'], true)) {
+                continue;
+            }
+
             if (! isset($pairs[$key])) {
                 $pairs[$key] = $value;
             }
@@ -84,6 +90,10 @@ class DocumentExtractor
         // ------------------------------------------------------------------
         if ($type !== null) {
             foreach ($this->extractFields($text, $type) as $key => $value) {
+                if ($documentType === 'matricule_fiscal' && in_array($key, ['nom', 'prenom'], true)) {
+                    continue;
+                }
+
                 if (! isset($pairs[$key])) {
                     $pairs[$key] = $value;
                 }
@@ -153,6 +163,11 @@ class DocumentExtractor
                 'dossier', 'nif', 'nom', 'prenom', 'adresse', 'date_naissance',
                 'type', 'sexe', 'groupe_sanguin', 'lieu_emission', 'emis_le', 'expire_le',
             ],
+            'matricule_fiscal' => [
+                'nif',
+                'nom',
+                'prenom',
+            ],
             'acte_naissance' => [
                 // Identifiants du document
                 'numero_acte',
@@ -196,11 +211,15 @@ class DocumentExtractor
 
     private function isKnownDocumentType(?string $type): bool
     {
-        return in_array($type, ['cin', 'passeport', 'permis', 'acte_naissance'], true);
+        return in_array($type, ['cin', 'passeport', 'permis', 'acte_naissance', 'matricule_fiscal'], true);
     }
 
     private function detectDocumentType(string $text): ?string
     {
+        if (preg_match('/matricule\s+fiscal|direction\s+g[eé]n[eé]rale\s+des\s+imp[oô]ts|contribuable/i', $text)) {
+            return 'matricule_fiscal';
+        }
+
         if (preg_match('/acte\s+de\s+naissance|extrait\s+d[\'’ ]?acte|ak\s+nesans|birth\s+certificate/i', $text)) {
             return 'acte_naissance';
         }
@@ -367,6 +386,347 @@ class DocumentExtractor
     /**
      * @return array<string, string>
      */
+    /**
+     * Carte « Matricule fiscal du contribuable » (DGI Haïti).
+     *
+     * @return array<string, string>
+     */
+    private function extractMatriculeFiscal(string $text): array
+    {
+        $pairs = [];
+
+        foreach ($this->extractMatriculeContributorNames($text) as $key => $value) {
+            if ($value !== '') {
+                $pairs[$key] = $value;
+            }
+        }
+
+        if (empty($pairs['nif'])) {
+            $nif = $this->extractField($this->normalize($text), 'nif');
+            if ($nif !== null && $nif !== '') {
+                $pairs['nif'] = $nif;
+            }
+        }
+
+        return $pairs;
+    }
+
+    /**
+     * Nom / prénom du contribuable (pas l’agent DGI).
+     *
+     * @return array{nom?: string, prenom?: string}
+     */
+    private function extractMatriculeContributorNames(string $text): array
+    {
+        $lines = array_map(static fn (string $line): string => trim($line), $this->lines($text));
+        $sectionEnd = $this->matriculeContributorSectionEnd($lines);
+
+        $fromNif = $this->extractMatriculeNamesAfterNif($lines, $sectionEnd);
+        if ($fromNif !== null) {
+            return $fromNif;
+        }
+
+        $nom = null;
+        $prenom = null;
+
+        $stacked = $this->extractMatriculeStackedLabelNames($lines, $sectionEnd);
+        if ($stacked !== null) {
+            $nom = $stacked['nom'] ?? null;
+            $prenom = $stacked['prenom'] ?? null;
+        }
+
+        for ($i = 0; $i < $sectionEnd; $i++) {
+            if ($nom !== null && $prenom !== null) {
+                break;
+            }
+
+            $line = $lines[$i];
+            if ($line === '' || $this->isMatriculeAgentNameLine($line) || $this->isMatriculeContributorNameLabelLine($line)) {
+                continue;
+            }
+
+            if (preg_match(
+                '/^\s*Nom\b(?:\s*\/[^\n]*)?\s*[:\-]?\s*(.+?)\s+Pr[eé]noms?\b(?:\s*\/[^\n]*)?\s*[:\-]?\s*(.+)$/iu',
+                $line,
+                $matches
+            )) {
+                $nom = $this->assignMatriculeContributorField('nom', $nom, $this->cleanMatriculeNameValue($matches[1]));
+                $prenom = $this->assignMatriculeContributorField('prenom', $prenom, $this->cleanMatriculeNameValue($matches[2]));
+
+                continue;
+            }
+
+            if (preg_match('/^\s*Nom\b(?:\s*\/[^\n]*)?\s*[:\-]\s*(.+)$/iu', $line, $matches)) {
+                $nom = $this->assignMatriculeContributorField('nom', $nom, $this->cleanMatriculeNameValue($matches[1]));
+
+                continue;
+            }
+
+            if (preg_match('/^\s*Nom\b(?:\s*\/[^\n]*)?\s+(?!Agent\b)(.+)$/iu', $line, $matches)) {
+                $nom = $this->assignMatriculeContributorField('nom', $nom, $this->cleanMatriculeNameValue($matches[1]));
+
+                continue;
+            }
+
+            if (preg_match('/^\s*Pr[eé]noms?\b(?:\s*\/[^\n]*)?\s*[:\-]\s*(.+)$/iu', $line, $matches)) {
+                $prenom = $this->assignMatriculeContributorField('prenom', $prenom, $this->cleanMatriculeNameValue($matches[1]));
+
+                continue;
+            }
+
+            if (preg_match('/^\s*Pr[eé]noms?\b(?:\s*\/[^\n]*)?\s+(?!Agent\b)(.+)$/iu', $line, $matches)) {
+                $prenom = $this->assignMatriculeContributorField('prenom', $prenom, $this->cleanMatriculeNameValue($matches[1]));
+            }
+        }
+
+        return $this->matriculeContributorNameResult($nom, $prenom);
+    }
+
+    /**
+     * Sur la carte DGI, le nom et le prénom suivent le numéro NIF (après les en-têtes).
+     *
+     * @param  list<string>  $lines
+     * @return array{nom: string, prenom: string}|null
+     */
+    private function extractMatriculeNamesAfterNif(array $lines, int $sectionEnd): ?array
+    {
+        for ($i = 0; $i < $sectionEnd; $i++) {
+            if (! $this->isMatriculeNifNumberLine($lines[$i])) {
+                continue;
+            }
+
+            $values = [];
+            for ($j = $i + 1; $j < $sectionEnd && count($values) < 2; $j++) {
+                if (! $this->isMatriculeNameCandidate($lines[$j])) {
+                    continue;
+                }
+
+                $clean = $this->cleanMatriculeNameValue($lines[$j]);
+                if ($this->isValidMatriculePersonNameValue($clean)) {
+                    $values[] = $clean;
+                }
+            }
+
+            if (count($values) >= 2) {
+                return ['nom' => $values[0], 'prenom' => $values[1]];
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * @return array{nom?: string, prenom?: string}
+     */
+    private function matriculeContributorNameResult(?string $nom, ?string $prenom): array
+    {
+        $result = [];
+
+        if ($nom !== null && $this->isValidMatriculePersonNameValue($nom)) {
+            $result['nom'] = $nom;
+        }
+        if ($prenom !== null && $this->isValidMatriculePersonNameValue($prenom)) {
+            $result['prenom'] = $prenom;
+        }
+
+        return $result;
+    }
+
+    private function isMatriculeNifNumberLine(string $line): bool
+    {
+        $compact = preg_replace('/\s+/', '', trim($line)) ?? trim($line);
+
+        return (bool) preg_match('/^\d{3}-\d{3}-\d{3}-\d$/', $compact);
+    }
+
+    private function isMatriculeContributorNameLabelLine(string $line): bool
+    {
+        return (bool) preg_match(
+            '/^\s*(?:Nom|Pr[eé]noms?)\b(?:\s*\/[^\n]*)?\s*:?\s*$/iu',
+            trim($line)
+        );
+    }
+
+    private function isMatriculeInstitutionHeaderLine(string $line): bool
+    {
+        return (bool) preg_match(
+            '/\b(?:REPUBLIQUE|RÉPUBLIQUE|DIRECTION|GENERALE|GÉNÉRALE|IMPOTS|IMPÔTS|MATRICULE\s+FISCAL|CONTRIBUABLE|D\.?\s*G\.?\s*I\.?|PRESSES\s+NATIONAL|QUITTANCE|COLLECTEUR|PRÉPOSÉ|PREPOSE)\b/iu',
+            $line
+        );
+    }
+
+    private function isValidMatriculePersonNameValue(string $value): bool
+    {
+        $value = trim($value);
+        if ($value === '' || preg_match('/^[\s:\-_.]+$/u', $value)) {
+            return false;
+        }
+
+        if ($this->isMatriculeInstitutionHeaderLine($value)) {
+            return false;
+        }
+
+        if (preg_match('/\d{5,}/', $value)) {
+            return false;
+        }
+
+        return mb_strlen(preg_replace('/[^\p{L}]/u', '', $value) ?? '') >= 2;
+    }
+
+    /**
+     * @param  list<string>  $lines
+     */
+    private function matriculeContributorSectionEnd(array $lines): int
+    {
+        foreach ($lines as $index => $line) {
+            if (preg_match(
+                '/Profession\s*\/\s*Secteur|\bNom\s+Agent\b|\bPr[eé]nom\s+Agent\b|Adresses\s*:|Code\s+SAE\b/iu',
+                $line
+            )) {
+                return $index;
+            }
+        }
+
+        return count($lines);
+    }
+
+    /**
+     * Libellés « Nom » / « Prénom » consécutifs, valeurs sur les lignes suivantes (OCR en colonnes).
+     *
+     * @param  list<string>  $lines
+     * @return array{nom: string, prenom: string}|null
+     */
+    private function extractMatriculeStackedLabelNames(array $lines, int $sectionEnd): ?array
+    {
+        for ($i = 0; $i < $sectionEnd - 2; $i++) {
+            if (! preg_match('/^\s*Nom\b(?:\s*\/[^\n]*)?\s*:?\s*$/iu', $lines[$i])) {
+                continue;
+            }
+
+            if (! preg_match('/^\s*Pr[eé]noms?\b(?:\s*\/[^\n]*)?\s*:?\s*$/iu', $lines[$i + 1])) {
+                continue;
+            }
+
+            $values = [];
+            for ($j = $i + 2; $j < min($sectionEnd, $i + 6); $j++) {
+                if (! $this->isMatriculeNameCandidate($lines[$j])) {
+                    if ($values !== []) {
+                        break;
+                    }
+
+                    continue;
+                }
+
+                $values[] = $this->cleanMatriculeNameValue($lines[$j]);
+                if (count($values) >= 2) {
+                    break;
+                }
+            }
+
+            if (count($values) >= 2) {
+                return ['nom' => $values[0], 'prenom' => $values[1]];
+            }
+        }
+
+        return null;
+    }
+
+    private function assignMatriculeContributorField(string $field, ?string $current, string $candidate): ?string
+    {
+        $candidate = trim($candidate);
+        if (! $this->isValidMatriculePersonNameValue($candidate)) {
+            return $current;
+        }
+
+        if ($current === null || $current === '') {
+            return $candidate;
+        }
+
+        return $current;
+    }
+
+    private function isMatriculeNameCandidate(string $line): bool
+    {
+        $line = trim($line);
+        if ($line === '' || $this->isMatriculeAgentNameLine($line)) {
+            return false;
+        }
+
+        if ($this->isMatriculeInstitutionHeaderLine($line) || $this->isMatriculeContributorNameLabelLine($line)) {
+            return false;
+        }
+
+        if (preg_match('/^(NIF|Nom|Pr[eé]nom|Profession|Adresses|Code\s+SAE|Date|Lieu|No\.|Signature|Fonction|CIN)/iu', $line)) {
+            return false;
+        }
+
+        if ($this->isMatriculeNifNumberLine($line)) {
+            return false;
+        }
+
+        if (preg_match('/^\d{3}[-\s]?\d{3}[-\s]?\d{3}[-\s]?\d$/', $line)) {
+            return false;
+        }
+
+        if (preg_match('/^[\s:\-_.]+$/u', $line)) {
+            return false;
+        }
+
+        return true;
+    }
+
+    private function isMatriculeAgentNameLine(string $line): bool
+    {
+        return (bool) preg_match('/\b(?:nom|pr[eé]nom)\s+agent\b/iu', $line);
+    }
+
+    /**
+     * @param  list<string>  $lines
+     */
+    private function nextMatriculeContributorValueLine(array $lines, int $start, ?int $sectionEnd = null): ?string
+    {
+        $limit = min($start + 4, $sectionEnd ?? count($lines));
+
+        for ($j = $start; $j < $limit; $j++) {
+            $next = trim($lines[$j]);
+            if (! $this->isMatriculeNameCandidate($next)) {
+                continue;
+            }
+
+            $clean = $this->cleanMatriculeNameValue($next);
+            if ($this->isValidMatriculePersonNameValue($clean)) {
+                return $clean;
+            }
+        }
+
+        return null;
+    }
+
+    private function cleanMatriculeNameValue(string $value): string
+    {
+        $value = trim($value);
+        if ($value === '') {
+            return '';
+        }
+
+        if (preg_match(
+            '/^(.+?)(?=\s+(?:Profession|Pr[eé]nom|Nom|Adresses|Code\s+SAE|Date|NIF|Lieu|Fonction)\b)/iu',
+            $value,
+            $matches
+        )) {
+            $value = trim($matches[1]);
+        }
+
+        $value = preg_replace('/[,;]+$/', '', $value) ?? $value;
+        $value = $this->normalizePersonName($value);
+
+        if (! $this->isValidMatriculePersonNameValue($value)) {
+            return '';
+        }
+
+        return $value;
+    }
+
     private function extractIdentityDocument(string $text, bool $isLicence = false): array
     {
         $lines = $this->expandLicenceLines($this->lines($text));

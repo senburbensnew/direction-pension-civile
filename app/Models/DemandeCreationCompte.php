@@ -31,6 +31,7 @@ class DemandeCreationCompte extends Model implements HasMedia
         'identite_representant_passeport' => 'Passeport du représentant',
         'identite_representant_cin' => 'CIN du représentant',
         'matricule_fiscal' => 'Matricule fiscal',
+        'mandat_designation' => 'Formulaire de désignation du mandataire',
     ];
 
     protected $fillable = [
@@ -48,6 +49,7 @@ class DemandeCreationCompte extends Model implements HasMedia
         'ninu',
         'pension_code',
         'is_mineur',
+        'is_mandataire',
         'representant_lien',
         'representant_est_pensionne',
         'piece_identite_representant_type',
@@ -70,6 +72,7 @@ class DemandeCreationCompte extends Model implements HasMedia
 
     protected $casts = [
         'is_mineur' => 'boolean',
+        'is_mandataire' => 'boolean',
         'representant_est_pensionne' => 'boolean',
         'pieces_identite' => 'array',
         'ocr_fields' => 'array',
@@ -94,6 +97,7 @@ class DemandeCreationCompte extends Model implements HasMedia
         $this->addMediaCollection('identite_representant_passeport')->singleFile();
         $this->addMediaCollection('identite_representant_cin')->singleFile();
         $this->addMediaCollection('matricule_fiscal')->singleFile();
+        $this->addMediaCollection('mandat_designation')->singleFile();
     }
 
     public function user(): BelongsTo
@@ -158,61 +162,62 @@ class DemandeCreationCompte extends Model implements HasMedia
         return $this->status === self::STATUS_EN_ATTENTE;
     }
 
-    /** Motif RDV pour finaliser l’ouverture de compte (Service Formalités). */
-    public const MOTIF_RDV_FINALISATION = 'demande_formalites_mandats';
-
-    /** @deprecated Ancien libellé technique — conservé pour les dossiers déjà déposés. */
-    public const LEGACY_MOTIF_RDV_FINALISATION = 'finalisation_creation_compte';
-
     /**
-     * @return list<string>
+     * RDV Formalités à afficher (suivi compte) : en cours prioritaire, sinon le plus récent éligible.
      */
-    public static function rdvFinalisationMotifKeys(): array
-    {
-        return array_values(array_unique([
-            self::MOTIF_RDV_FINALISATION,
-            self::LEGACY_MOTIF_RDV_FINALISATION,
-        ]));
-    }
-
-    /**
-     * Dernier rendez-vous « finalisation de compte » du demandeur (tous statuts).
-     */
-    public function rendezVousFinalisation(): ?Demande
+    public function rendezVousPourDecisionCompte(): ?Demande
     {
         if (! $this->user_id) {
             return null;
         }
 
-        return Demande::query()
-            ->where('type', TypeDemandeEnum::DEMANDE_RENCONTRE->value)
-            ->where('created_by', $this->user_id)
-            ->where(function ($q) {
-                foreach (self::rdvFinalisationMotifKeys() as $motifKey) {
-                    $q->orWhere('data->motif_key', $motifKey);
-                }
-            })
-            ->latest()
-            ->first();
-    }
+        $rendezVous = app(\App\Services\RencontreMotifService::class)
+            ->eligibleAccountDecisionRendezVousQuery((int) $this->user_id)
+            ->get();
 
-    /**
-     * Dernier RDV de finalisation marqué « réalisé » (sans contrôle d’horaire).
-     */
-    public function rendezVousFinalisationRealise(): ?Demande
-    {
-        $rdv = $this->rendezVousFinalisation();
-
-        if (! $rdv || $rdv->rencontreStatut() !== RencontreStatutEnum::REALISE) {
+        if ($rendezVous->isEmpty()) {
             return null;
         }
 
-        return $rdv;
+        $enCours = $rendezVous->first(
+            fn (Demande $demande) => ! $demande->rencontreStatut()->isTerminal()
+        );
+
+        return $enCours ?? $rendezVous->first();
+    }
+
+    /**
+     * RDV éligible le plus récent marqué « réalisé » (sans contrôle d’horaire).
+     */
+    public function rendezVousPourDecisionCompteRealise(): ?Demande
+    {
+        if (! $this->user_id) {
+            return null;
+        }
+
+        return app(\App\Services\RencontreMotifService::class)
+            ->eligibleAccountDecisionRendezVousQuery((int) $this->user_id)
+            ->get()
+            ->first(
+                fn (Demande $demande) => $demande->rencontreStatut() === RencontreStatutEnum::REALISE
+            );
+    }
+
+    /** @deprecated Use rendezVousPourDecisionCompte() */
+    public function rendezVousFinalisation(): ?Demande
+    {
+        return $this->rendezVousPourDecisionCompte();
+    }
+
+    /** @deprecated Use rendezVousPourDecisionCompteRealise() */
+    public function rendezVousFinalisationRealise(): ?Demande
+    {
+        return $this->rendezVousPourDecisionCompteRealise();
     }
 
     public function hasRendezVousRealise(): bool
     {
-        return $this->rendezVousFinalisationRealise() !== null;
+        return $this->rendezVousPourDecisionCompteRealise() !== null;
     }
 
     public function canBeDecided(): bool
@@ -221,7 +226,7 @@ class DemandeCreationCompte extends Model implements HasMedia
             return false;
         }
 
-        $rdv = $this->rendezVousFinalisationRealise();
+        $rdv = $this->rendezVousPourDecisionCompteRealise();
 
         return $rdv !== null && $rdv->peutEtreTraiteApresRendezVous();
     }
@@ -347,5 +352,38 @@ class DemandeCreationCompte extends Model implements HasMedia
         }
 
         return $pieces;
+    }
+
+    public function agentPieceRouteName(?User $viewer): ?string
+    {
+        if ($viewer?->hasRole('admin')) {
+            return 'admin.comptes-demandes.piece';
+        }
+
+        if ($viewer?->hasRole(User::ROLE_AGENT_FORMALITES)) {
+            return 'formalites.comptes-demandes.piece';
+        }
+
+        return null;
+    }
+
+    public function agentPieceUrl(Media $media, ?User $viewer, bool $inline = false): ?string
+    {
+        $routeName = $this->agentPieceRouteName($viewer);
+
+        if ($routeName === null) {
+            return null;
+        }
+
+        if ($media->model_type !== static::class || (int) $media->model_id !== (int) $this->id) {
+            return null;
+        }
+
+        $url = route($routeName, [
+            'demandeCreationCompte' => $this,
+            'media' => $media,
+        ]);
+
+        return $inline ? $url.'?inline=1' : $url;
     }
 }

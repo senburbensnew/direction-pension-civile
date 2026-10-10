@@ -23,6 +23,7 @@ title Diagramme de Cas d'Utilisation\nSystème de Gestion des Pensions Civiles
 actor "Pensionne\n(Retraité)" as Pensionne
 actor "Fonctionnaire\n(Agent actif)" as Fonctionnaire
 actor "Institution" as Institution
+actor "Public\n(Visiteur)" as Public
 actor "Agent /\nSecrétariat" as Agent
 actor "Direction" as Direction
 actor "Service\n(Liquidation, Formalité,\nComptabilité, etc.)" as Service
@@ -40,6 +41,7 @@ package "Portail Usager" {
         usecase "Demander l'arrêt\nde virement" as UC_AV
         usecase "Soumettre une preuve\nd'existence" as UC_PE
         usecase "Demander une pension\nde réversion" as UC_PR
+        usecase "Mettre à jour\nles informations" as UC_MAJ
     }
 
     package "Demandes Fonctionnaire" {
@@ -49,6 +51,11 @@ package "Portail Usager" {
 
     package "Demandes Institution" {
         usecase "Soumettre une demande\nd'adhésion" as UC_ADH
+    }
+
+    package "Demandes publiques" {
+        usecase "Demander une rencontre\n(visioconférence)" as UC_REN
+        usecase "Demander une création\nde compte" as UC_CREA
     }
 
     package "Gestion du dossier usager" {
@@ -98,6 +105,7 @@ package "Administration Système" {
     usecase "Gérer les statuts\nde demandes" as UC_STATUTS
     usecase "Consulter les\nlogs système" as UC_SYS_LOGS
     usecase "Gérer le contenu\ndu site (actualités, carousel)" as UC_CONTENU
+    usecase "Gérer le circuit\nde traitement" as UC_CIRCUIT
 }
 
 ' ──────────────── RELATIONS PENSIONNE ────────────────
@@ -119,6 +127,7 @@ Pensionne --> UC_RI
 Pensionne --> UC_AV
 Pensionne --> UC_PE
 Pensionne --> UC_PR
+Pensionne --> UC_MAJ
 
 ' ──────────────── RELATIONS FONCTIONNAIRE ────────────────
 Fonctionnaire --> UC_AUTH
@@ -143,6 +152,10 @@ Institution --> UC_DOCS
 Institution --> UC_SUIVI
 Institution --> UC_MSG_USR
 Institution --> UC_ADH
+
+' ──────────────── RELATIONS PUBLIC ────────────────
+Public --> UC_REN
+Public --> UC_CREA
 
 ' ──────────────── RELATIONS AGENT / SECRETARIAT ────────────────
 Agent --> UC_CORBEILLE
@@ -187,6 +200,7 @@ Admin --> UC_SERVICES
 Admin --> UC_STATUTS
 Admin --> UC_SYS_LOGS
 Admin --> UC_CONTENU
+Admin --> UC_CIRCUIT
 Admin --> UC_CORBEILLE
 Admin --> UC_DETAILS
 
@@ -199,6 +213,7 @@ UC_RI       ..> UC_BROUILLON : <<include>>
 UC_AV       ..> UC_BROUILLON : <<include>>
 UC_PE       ..> UC_BROUILLON : <<include>>
 UC_PR       ..> UC_BROUILLON : <<include>>
+UC_MAJ      ..> UC_BROUILLON : <<include>>
 UC_EC       ..> UC_BROUILLON : <<include>>
 UC_DP       ..> UC_BROUILLON : <<include>>
 UC_ADH      ..> UC_BROUILLON : <<include>>

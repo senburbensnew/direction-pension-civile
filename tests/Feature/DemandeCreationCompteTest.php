@@ -8,16 +8,19 @@ use App\Models\Demande;
 use App\Models\DemandeCreationCompte;
 use App\Models\PensionnaireReference;
 use App\Models\User;
+use App\Notifications\DemandeCreationCompteSoumise;
 use App\Services\OCR\OcrService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Facades\Storage;
 use Tests\TestCase;
+use Tests\Traits\SeedsRequiredData;
 
 class DemandeCreationCompteTest extends TestCase
 {
-    use RefreshDatabase;
+    use RefreshDatabase, SeedsRequiredData;
 
     protected function setUp(): void
     {
@@ -87,6 +90,28 @@ class DemandeCreationCompteTest extends TestCase
         P-AU-P
         29/12/2023
         31/07/2028
+        TXT;
+    }
+
+    private function matriculeFiscalOcrText(): string
+    {
+        return <<<TXT
+        REPUBLIQUE D'HAITI
+        DIRECTION GENERALE DES IMPOTS
+        MATRICULE FISCAL DU CONTRIBUABLE
+        NIF
+        004-521-636-4
+        Nom
+        MILORME
+        Prénom
+        PIERRE RUBENS
+        Profession / Secteur d'Activité
+        TRAVAILLEURS N'AYANT DECLARE AUCUNE PROFESSION
+        Code SAE
+        Adresses : 1
+        LAMANDOU, JACMEL
+        Date
+        04-NOV-25
         TXT;
     }
 
@@ -182,7 +207,125 @@ class DemandeCreationCompteTest extends TestCase
     }
 
     /** @test */
-    public function guest_can_submit_a_pdf_without_a_nif(): void
+    public function guest_can_open_rdv_page_after_account_submission(): void
+    {
+        Storage::fake('public');
+        $this->seedRoles();
+        $this->seedServices();
+
+        $this->post(route('demandes.compte.store'), $this->validAccountStorePayload())
+            ->assertRedirect(route('demandes.rencontre.create'));
+
+        $provisional = User::query()
+            ->where('account_status', AccountStatusEnum::PROVISOIRE)
+            ->firstOrFail();
+
+        $this->assertAuthenticatedAs($provisional);
+
+        $this->get(route('demandes.rencontre.create'))
+            ->assertOk()
+            ->assertSee('Demande de rendez-vous');
+    }
+
+    /** @test */
+    public function submitting_while_logged_in_as_agent_switches_to_provisional_user(): void
+    {
+        Storage::fake('public');
+        $this->seedRoles();
+        $this->seedServices();
+
+        $agent = User::factory()->create();
+        $agent->assignRole('fonctionnaire');
+
+        $this->actingAs($agent);
+
+        $this->post(route('demandes.compte.store'), $this->validAccountStorePayload([
+            'telephone' => '+509 22 00 0011',
+            'nif' => '123-456-789-1',
+            'email' => 'autre.pensionne@example.com',
+        ]))->assertRedirect(route('demandes.rencontre.create'));
+
+        $provisional = User::query()
+            ->where('account_status', AccountStatusEnum::PROVISOIRE)
+            ->firstOrFail();
+
+        $this->assertAuthenticatedAs($provisional);
+        $this->assertNotSame($agent->id, $provisional->id);
+
+        $this->get(route('demandes.rencontre.create'))
+            ->assertOk()
+            ->assertSee('Demande de rendez-vous');
+    }
+
+    /**
+     * @param  array<string, mixed>  $overrides
+     * @return array<string, mixed>
+     */
+    private function validAccountStorePayload(array $overrides = []): array
+    {
+        return array_merge([
+            'user_type' => 'pensionne',
+            'telephone' => '+509 22 00 0000',
+            'nif' => '123-456-789-0',
+            'pension_code' => '8-34321',
+            'email' => 'jean.pierre@example.com',
+            'adresse' => '12, rue Capois, Port-au-Prince',
+            'piece_identite_type' => 'cin',
+            'piece_identite' => UploadedFile::fake()->image('cin.jpg', 800, 600),
+            'password' => 'password123',
+            'accept_terms' => '1',
+        ], $overrides);
+    }
+
+    /** @test */
+    public function provisional_user_receives_notification_after_submission(): void
+    {
+        Notification::fake();
+        Storage::fake('public');
+
+        $this->post(route('demandes.compte.store'), [
+            'user_type' => 'pensionne',
+            'telephone' => '+509 22 00 0000',
+            'nif' => '123-456-789-0',
+            'pension_code' => '8-34321',
+            'email' => 'jean.pierre@example.com',
+            'adresse' => '12, rue Capois, Port-au-Prince',
+            'piece_identite_type' => 'cin',
+            'piece_identite' => UploadedFile::fake()->image('cin.jpg', 800, 600),
+            'password' => 'password123',
+            'accept_terms' => '1',
+        ])->assertRedirect(route('demandes.rencontre.create'));
+
+        Notification::assertSentTo(
+            User::first(),
+            DemandeCreationCompteSoumise::class,
+            fn (DemandeCreationCompteSoumise $notification) => $notification->demande->id === DemandeCreationCompte::first()->id
+        );
+    }
+
+    /** @test */
+    public function provisional_user_is_notified_even_without_email(): void
+    {
+        Notification::fake();
+        Storage::fake('public');
+
+        $this->post(route('demandes.compte.store'), [
+            'user_type' => 'pensionne',
+            'telephone' => '+509 22 00 0099',
+            'nif' => '123-456-789-9',
+            'pension_code' => '8-34321',
+            'adresse' => '12, rue Capois, Port-au-Prince',
+            'piece_identite_type' => 'cin',
+            'piece_identite' => UploadedFile::fake()->image('cin.jpg', 800, 600),
+            'password' => 'password123',
+            'accept_terms' => '1',
+        ])->assertRedirect(route('demandes.rencontre.create'));
+
+        Notification::assertSentTo(User::first(), DemandeCreationCompteSoumise::class);
+    }
+
+    /** @test */
+    public function guest_cannot_submit_without_a_nif(): void
     {
         Storage::fake('public');
 
@@ -195,14 +338,9 @@ class DemandeCreationCompteTest extends TestCase
             'piece_identite' => UploadedFile::fake()->create('cin.pdf', 120, 'application/pdf'),
             'password' => 'password123',
             'accept_terms' => '1',
-        ])->assertRedirect(route('demandes.rencontre.create'))
-            ->assertSessionMissing('success');
+        ])->assertSessionHasErrors('nif');
 
-        $demande = DemandeCreationCompte::first();
-        $this->assertNull($demande->nif);
-        $this->assertSame('8-34321', $demande->pension_code);
-        $this->assertTrue($demande->hasMedia('identite_cin'));
-        $this->assertSame('cin.pdf', $demande->getFirstMedia('identite_cin')->file_name);
+        $this->assertNull(DemandeCreationCompte::first());
     }
 
     /** @test */
@@ -332,6 +470,48 @@ class DemandeCreationCompteTest extends TestCase
         $resolver = \App\Services\Account\UserCategoryResolver::for($user);
         $this->assertTrue($resolver->hasCategory('externe'));
         $this->assertTrue($resolver->hasCategory('pensionne'));
+    }
+
+    /** @test */
+    public function guest_can_submit_mandataire_account_request(): void
+    {
+        Storage::fake('public');
+
+        $this->seedPensionReference('8-34399', 'LAMOUR', 'ROSE');
+
+        $this->post(route('demandes.compte.store'), [
+            'user_type' => 'pensionne',
+            'telephone' => '+509 38123458',
+            'pension_code' => '8-34399',
+            'adresse' => 'Delmas 33',
+            'is_mandataire' => '1',
+            'piece_identite_type' => 'passeport',
+            'piece_identite' => UploadedFile::fake()->image('passeport.jpg', 800, 600),
+            'mandat_designation' => UploadedFile::fake()->create('mandat.pdf', 100, 'application/pdf'),
+            'password' => 'password123',
+            'accept_terms' => '1',
+        ])->assertRedirect(route('demandes.rencontre.create'));
+
+        $demande = DemandeCreationCompte::query()->latest('id')->first();
+        $this->assertTrue($demande->is_mandataire);
+        $this->assertFalse($demande->is_mineur);
+        $this->assertSame('8-34399', $demande->pension_code);
+        $this->assertTrue($demande->hasMedia('mandat_designation'));
+
+        $user = $demande->user->fresh(['categoryAssignments']);
+        $resolver = \App\Services\Account\UserCategoryResolver::for($user);
+        $this->assertTrue($resolver->hasCategory('externe'));
+        $this->assertFalse($user->hasRole('pensionne'));
+        $this->assertTrue($resolver->hasPensionPortalAccess());
+
+        $this->assertDatabaseHas('pension_mandats', [
+            'user_id' => $user->id,
+            'status' => 'en_attente',
+        ]);
+
+        $this->assertFalse(
+            \App\Models\UserBeneficiaireLink::query()->where('user_id', $user->id)->exists()
+        );
     }
 
     /** @test */
@@ -547,6 +727,30 @@ class DemandeCreationCompteTest extends TestCase
             ->assertJsonPath('fields.emis_le', '29/12/2023')
             ->assertJsonPath('fields.expire_le', '31/07/2028')
             ->assertJsonPath('documents.0.fields.nom', 'MILORME');
+    }
+
+    /** @test */
+    public function guest_ocr_extracts_matricule_fiscal_fields(): void
+    {
+        Storage::fake('public');
+
+        $this->mock(OcrService::class, function ($mock) {
+            $mock->shouldReceive('extract')->andReturn($this->matriculeFiscalOcrText());
+        });
+
+        $this->post(route('demandes.compte.ocr'), [
+            'piece_identite_type' => 'matricule_fiscal',
+            'piece_identite' => UploadedFile::fake()->image('matricule.jpg', 1200, 800),
+        ], ['Accept' => 'application/json'])
+            ->assertOk()
+            ->assertJsonPath('ok', true)
+            ->assertJsonPath('fields.type_document', 'matricule_fiscal')
+            ->assertJsonPath('fields.nif', '0045216364')
+            ->assertJsonPath('fields.nom', 'MILORME')
+            ->assertJsonPath('fields.prenom', 'PIERRE RUBENS')
+            ->assertJsonMissingPath('fields.profession')
+            ->assertJsonMissingPath('fields.date_emission')
+            ->assertJsonMissingPath('fields.adresse');
     }
 
     /** @test */

@@ -45,5 +45,6 @@
         {{ $slot }}
     </main>
     <!-- <script src="{{ asset('build/assets/app-BiTlx0PY.js') }}"></script> -->
+    @stack('scripts')
 </body>
 </html>

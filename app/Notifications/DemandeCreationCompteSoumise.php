@@ -5,11 +5,10 @@ namespace App\Notifications;
 use App\Models\DemandeCreationCompte;
 use App\Notifications\Concerns\UsesStandardChannels;
 use Illuminate\Bus\Queueable;
-use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
 
-class DemandeCreationCompteSoumise extends Notification implements ShouldQueue
+class DemandeCreationCompteSoumise extends Notification
 {
     use Queueable;
     use UsesStandardChannels;
@@ -17,12 +16,22 @@ class DemandeCreationCompteSoumise extends Notification implements ShouldQueue
     public function __construct(
         public DemandeCreationCompte $demande
     ) {
-        $this->afterCommit();
     }
 
     public function via(object $notifiable): array
     {
-        return $this->standardVia($notifiable);
+        $channels = $this->standardVia($notifiable);
+
+        $email = strtolower(trim((string) ($notifiable->email ?? '')));
+
+        if ($email === '' || str_ends_with($email, '@provisoire.dpc.ht')) {
+            $channels = array_values(array_filter(
+                $channels,
+                fn ($channel) => $channel !== 'mail'
+            ));
+        }
+
+        return $channels;
     }
 
     public function toMail(object $notifiable): MailMessage

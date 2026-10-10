@@ -77,13 +77,30 @@
                 $visioPilotageOk = ($data['modalite'] ?? '') === 'visio'
                     && filled($demande->visio_token)
                     && $visioPilotage->canAccess(auth()->user(), $demande);
+                $visioPilotageStatus = $visioPilotageOk
+                    ? $visioPilotage->status($demande)
+                    : null;
             @endphp
             @if($visioPilotageOk)
                 <p class="mt-4">
-                    <a href="{{ route('demandes.rencontre.visio', $demande->visio_token) }}"
-                       class="inline-flex items-center gap-2 px-4 py-2 bg-navy text-white text-sm font-semibold rounded-lg hover:bg-orange-600">
-                        Rejoindre / ouvrir la visioconférence
-                    </a>
+                    @if($visioPilotageStatus === 'actif')
+                        <a href="{{ route('demandes.rencontre.visio', $demande->visio_token) }}"
+                           class="inline-flex items-center gap-2 px-4 py-2 bg-navy text-white text-sm font-semibold rounded-lg hover:bg-orange-600">
+                            Rejoindre la visioconférence
+                        </a>
+                    @elseif($visioPilotageStatus === 'en_attente')
+                        <span class="text-sm text-amber-800">
+                            Salle disponible à partir du
+                            {{ $visioPilotage->opensAt($demande)?->format('d/m/Y à H:i') ?? '—' }}
+                            — la page se met à jour automatiquement.
+                        </span>
+                        <a href="{{ route('demandes.rencontre.visio', $demande->visio_token) }}"
+                           class="ml-2 text-sm font-semibold text-navy hover:underline">
+                            Page visio
+                        </a>
+                    @else
+                        <span class="text-sm text-gray-500">Lien de visioconférence expiré.</span>
+                    @endif
                 </p>
             @endif
         </section>
@@ -223,4 +240,8 @@
             </ol>
         </section>
     </div>
+
+    @if(($visioPilotageStatus ?? null) === 'en_attente' && filled($demande->visio_token))
+        <x-rencontre-visio-auto-refresh :token="$demande->visio_token" />
+    @endif
 </x-app-layout>

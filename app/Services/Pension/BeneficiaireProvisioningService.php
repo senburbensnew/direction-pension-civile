@@ -5,7 +5,10 @@ namespace App\Services\Pension;
 use App\Enums\BeneficiaireRelationEnum;
 use App\Models\AffiliationPension;
 use App\Models\Beneficiaire;
+use App\Enums\PensionMandatStatusEnum;
 use App\Models\DemandeCreationCompte;
+use App\Models\PensionMandat;
+use App\Models\PensionnaireReference;
 use App\Models\User;
 use App\Models\UserBeneficiaireLink;
 use Illuminate\Support\Facades\DB;
@@ -169,5 +172,57 @@ class BeneficiaireProvisioningService
         }
 
         return [];
+    }
+
+    public function beneficiaireForPensionCode(string $code): Beneficiaire
+    {
+        $code = AffiliationPension::normalizeCode($code);
+        $affiliation = AffiliationPension::findByCode($code);
+
+        if ($affiliation?->beneficiaire) {
+            return $affiliation->beneficiaire;
+        }
+
+        $reference = PensionnaireReference::query()
+            ->whereRaw('UPPER(TRIM(PENSIONNAIRE_ID)) = ?', [$code])
+            ->first();
+
+        $beneficiaire = Beneficiaire::create([
+            'firstname' => $reference?->PRENOM,
+            'lastname' => $reference?->NOM,
+            'is_mineur' => false,
+        ]);
+
+        $this->syncAffiliation($beneficiaire, $code, true);
+
+        return $beneficiaire;
+    }
+
+    public function provisionMandataireFromDemandeCreation(
+        User $user,
+        DemandeCreationCompte $demande,
+    ): PensionMandat {
+        return DB::transaction(function () use ($user, $demande) {
+            $code = (string) ($demande->pension_code ?? '');
+            $beneficiaire = $this->beneficiaireForPensionCode($code);
+
+            $mandat = PensionMandat::create([
+                'user_id' => $user->id,
+                'beneficiaire_id' => $beneficiaire->id,
+                'type' => 'designation_ouverture_compte',
+                'status' => PensionMandatStatusEnum::EN_ATTENTE,
+                'notes' => 'Créé via demande de compte mandataire '.$demande->code,
+            ]);
+
+            if ($demande->hasMedia('mandat_designation')) {
+                $demande->getFirstMedia('mandat_designation')?->copy(
+                    $mandat,
+                    'mandat_document',
+                    'public'
+                );
+            }
+
+            return $mandat;
+        });
     }
 }

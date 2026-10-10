@@ -193,7 +193,7 @@
                                             <i class="fas fa-user-circle mr-2 text-gray-400"></i>
                                             {{ __('Profile') }}
                                         </x-dropdown-link>
-                                        @role('pensionne')
+                                        @if(auth()->user()?->hasPensionPortalAccess())
                                             <x-dropdown-link :href="route('compte.affiliations.index')">
                                                 <i class="fas fa-id-card mr-2 text-gray-400"></i>
                                                 Mes codes pension
@@ -202,7 +202,7 @@
                                                 <i class="fas fa-file-signature mr-2 text-gray-400"></i>
                                                 Mes mandats
                                             </x-dropdown-link>
-                                        @endrole
+                                        @endif
                                     @endif
                                     @role('admin')
                                         <x-dropdown-link :href="route('admin.dashboard.index')">
@@ -210,12 +210,12 @@
                                             {{ __('messages.admin_panel') }}
                                         </x-dropdown-link>
                                     @endrole                                    
-                                    @hasanyrole('pensionne|fonctionnaire|institution')
+                                    @if(auth()->user()?->hasPensionPortalAccess() || auth()->user()?->hasAnyRole(['fonctionnaire', 'institution']))
                                             <x-dropdown-link :href="route('personal.index')">
                                                 <i class="fas fa-tachometer-alt mr-2 text-gray-400"></i>
                                                 {{ __('messages.my_requests') }}
                                             </x-dropdown-link>
-                                    @endhasanyrole                                   
+                                    @endif                                   
                                     @auth
                                         @role([ 'direction',
                                                 'directeur',

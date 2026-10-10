@@ -10,6 +10,7 @@ use App\Models\User;
 use App\Models\WorkflowStep;
 use App\Notifications\DemandeStatusChangedNotification;
 use App\Notifications\RencontreAgentAssigneNotification;
+use App\Services\Account\UserCategoryRoleSyncService;
 use App\Services\RencontreAvailabilityService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
@@ -77,6 +78,8 @@ class DemandeRencontreSchedulerTest extends TestCase
     {
         $user = User::factory()->create($overrides);
         $user->assignRole('pensionne');
+        app(UserCategoryRoleSyncService::class)
+            ->assignCategory($user, 'pensionne', primary: true, syncRoles: false);
 
         return $user;
     }

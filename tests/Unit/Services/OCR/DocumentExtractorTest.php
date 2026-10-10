@@ -450,4 +450,146 @@ class DocumentExtractorTest extends TestCase
         $this->assertSame('9876543210', $data['nif']);
         $this->assertSame('001234567890', $data['compte_bancaire']);
     }
+
+    /** @test */
+    public function it_extracts_matricule_fiscal_card_fields(): void
+    {
+        $text = <<<TXT
+        MATRICULE FISCAL DU CONTRIBUABLE
+        NIF
+        004-521-636-4
+        Nom
+        MILORME
+        Prénom
+        PIERRE RUBENS
+        Profession / Secteur d'Activité
+        COMMERCANT
+        Adresses : 1
+        LAMANDOU, JACMEL
+        Date
+        04-NOV-25
+        TXT;
+
+        $data = $this->extractor->extractKeyValues(
+            $text,
+            TypeDemandeEnum::DEMANDE_CREATION_COMPTE,
+            [],
+            'matricule_fiscal',
+        );
+
+        $this->assertSame('matricule_fiscal', $data['type_document']);
+        $this->assertSame('0045216364', $data['nif']);
+        $this->assertSame('MILORME', $data['nom']);
+        $this->assertSame('PIERRE RUBENS', $data['prenom']);
+        $this->assertArrayNotHasKey('profession', $data);
+        $this->assertArrayNotHasKey('date_emission', $data);
+        $this->assertArrayNotHasKey('adresse', $data);
+    }
+
+    /** @test */
+    public function it_extracts_matricule_fiscal_names_when_labels_are_stacked(): void
+    {
+        $text = <<<TXT
+        MATRICULE FISCAL DU CONTRIBUABLE
+        NIF
+        004-521-636-4
+        Nom
+        Prénom
+        MILORME
+        PIERRE RUBENS
+        Profession / Secteur d'Activité
+        COMMERCANT
+        TXT;
+
+        $data = $this->extractor->extractKeyValues(
+            $text,
+            TypeDemandeEnum::DEMANDE_CREATION_COMPTE,
+            [],
+            'matricule_fiscal',
+        );
+
+        $this->assertSame('MILORME', $data['nom']);
+        $this->assertSame('PIERRE RUBENS', $data['prenom']);
+    }
+
+    /** @test */
+    public function it_ignores_agent_names_on_matricule_fiscal(): void
+    {
+        $text = <<<TXT
+        MATRICULE FISCAL DU CONTRIBUABLE
+        NIF 004-521-636-4
+        Nom MILORME
+        Prénom PIERRE RUBENS
+        Nom Agent NICOLE ROMAIN
+        Prénom Agent VINCENT
+        TXT;
+
+        $data = $this->extractor->extractKeyValues(
+            $text,
+            TypeDemandeEnum::DEMANDE_CREATION_COMPTE,
+            [],
+            'matricule_fiscal',
+        );
+
+        $this->assertSame('MILORME', $data['nom']);
+        $this->assertSame('PIERRE RUBENS', $data['prenom']);
+    }
+
+    /** @test */
+    public function it_extracts_matricule_fiscal_names_after_nif_despite_empty_labels_and_headers(): void
+    {
+        $text = <<<'TXT'
+        NIF
+        Nom:
+        Prénom :
+        REPUBLIQUE D'HAITI
+        DIRECTION GENERALE DES IMPOTS
+        MATRICULE FISCAL DU CONTRIBUABLE
+        004-521-636-4
+        MILORME
+        PIERRE RUBENE
+        Profession / Secteur FURS NAYANT DECLARE AUCUNE F
+        Code SAE:
+        Nom Agent:
+        NICOLE ROMAIN
+        Prénom Agent:
+        VINCENT
+        TXT;
+
+        $data = $this->extractor->extractKeyValues(
+            $text,
+            TypeDemandeEnum::DEMANDE_CREATION_COMPTE,
+            [],
+            'matricule_fiscal',
+        );
+
+        $this->assertSame('MILORME', $data['nom']);
+        $this->assertSame('PIERRE RUBENE', $data['prenom']);
+        $this->assertSame('0045216364', $data['nif']);
+        $this->assertArrayNotHasKey('profession', $data);
+    }
+
+    /** @test */
+    public function it_keeps_contributor_names_when_agent_lines_appear_after_on_matricule_fiscal(): void
+    {
+        $text = <<<TXT
+        MATRICULE FISCAL DU CONTRIBUABLE
+        Nom MILORME
+        Prénom PIERRE RUBENS
+        Profession / Secteur
+        COMMERCANT
+        Nom ROMAIN
+        Prénom VINCENT
+        TXT;
+
+        $data = $this->extractor->extractKeyValues(
+            $text,
+            TypeDemandeEnum::DEMANDE_CREATION_COMPTE,
+            [],
+            'matricule_fiscal',
+        );
+
+        $this->assertSame('MILORME', $data['nom']);
+        $this->assertSame('PIERRE RUBENS', $data['prenom']);
+    }
 }

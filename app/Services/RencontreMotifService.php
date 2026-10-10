@@ -36,17 +36,54 @@ class RencontreMotifService
      */
     public function motifsForUser(?User $user): array
     {
-        if (! $user?->hasPensionPortalAccess() && ! $this->userNeedsFinalisationCompteRdv($user)) {
+        if (! $user) {
+            return [];
+        }
+
+        if (! $user->hasPensionPortalAccess()
+            && ! $this->userHasPendingDemandeCreationCompte($user)) {
             return [];
         }
 
         return array_intersect_key(
             $this->motifs(),
-            array_flip([DemandeCreationCompte::MOTIF_RDV_FINALISATION])
+            array_flip($this->motifKeysBookableForPortal())
         );
     }
 
-    public function userNeedsFinalisationCompteRdv(?User $user): bool
+    /**
+     * Motifs affichés à la prise de rendez-vous en ligne.
+     *
+     * @return list<string>
+     */
+    public function motifKeysBookableForPortal(): array
+    {
+        $explicit = config('rencontre.portal_bookable.motif_keys', []);
+
+        if (is_array($explicit) && $explicit !== []) {
+            $known = array_keys($this->motifs());
+
+            return array_values(array_intersect(
+                array_map('strval', $explicit),
+                $known
+            ));
+        }
+
+        $services = config('rencontre.portal_bookable.services', [Service::FORMALITE]);
+        $services = is_array($services) ? array_map('strval', $services) : [Service::FORMALITE];
+
+        $keys = [];
+
+        foreach (config('rencontre.motifs', []) as $key => $cfg) {
+            if (in_array((string) ($cfg['service'] ?? ''), $services, true)) {
+                $keys[] = (string) $key;
+            }
+        }
+
+        return array_values(array_unique($keys));
+    }
+
+    public function userHasPendingDemandeCreationCompte(?User $user): bool
     {
         if (! $user?->isProvisionnel()) {
             return false;
@@ -55,6 +92,65 @@ class RencontreMotifService
         $demande = $user->demandeCreationCompte;
 
         return $demande !== null && $demande->isPending();
+    }
+
+    /**
+     * Clés motif dont un RDV réalisé peut débloquer acceptation/refus d’une DCC en attente.
+     *
+     * @return list<string>
+     */
+    public function motifKeysEligibleForAccountDecision(): array
+    {
+        $serviceCode = (string) config(
+            'rencontre.account_decision.service',
+            Service::FORMALITE
+        );
+
+        $keys = [];
+
+        foreach (config('rencontre.motifs', []) as $key => $cfg) {
+            if ((string) ($cfg['service'] ?? '') === $serviceCode) {
+                $keys[] = (string) $key;
+            }
+        }
+
+        foreach (config('rencontre.account_decision.legacy_motif_keys', []) as $legacy) {
+            $keys[] = (string) $legacy;
+        }
+
+        return array_values(array_unique($keys));
+    }
+
+    public function countsTowardAccountDecision(string $motifKey): bool
+    {
+        $motifKey = $this->normalizeMotifKey($motifKey);
+
+        return in_array($motifKey, $this->motifKeysEligibleForAccountDecision(), true);
+    }
+
+    /**
+     * Rendez-vous éligibles pour une décision sur DCC (ordre : plus récent d’abord).
+     *
+     * @return \Illuminate\Database\Eloquent\Builder<Demande>
+     */
+    public function eligibleAccountDecisionRendezVousQuery(int $userId): \Illuminate\Database\Eloquent\Builder
+    {
+        $motifKeys = $this->motifKeysEligibleForAccountDecision();
+
+        $query = Demande::query()
+            ->where('type', TypeDemandeEnum::DEMANDE_RENCONTRE->value)
+            ->where('created_by', $userId)
+            ->latest();
+
+        if ($motifKeys === []) {
+            return $query->whereRaw('0 = 1');
+        }
+
+        return $query->where(function ($q) use ($motifKeys) {
+            foreach ($motifKeys as $motifKey) {
+                $q->orWhere('data->motif_key', $motifKey);
+            }
+        });
     }
 
     /**
@@ -268,17 +364,29 @@ class RencontreMotifService
      *
      * @return array<string, mixed>
      */
-    public function documentValidationRules(string $motif): array
+    public function documentValidationRules(string $motif, ?User $user = null): array
     {
         $rules = [];
         $docs = $this->documentsConfig($motif);
+        $openingCompte = $user !== null
+            && $this->userHasPendingDemandeCreationCompte($user)
+            && $this->countsTowardAccountDecision($motif);
 
         foreach ($docs['single'] as $key => $cfg) {
             $field = "doc_{$key}";
             $mimeRule = 'mimes:' . ($cfg['mimes'] ?? 'pdf,jpg,jpeg,png');
             $maxKb = (int) ($cfg['max_kb'] ?? 5120);
+            $required = $cfg['required'] ?? false;
 
-            if ($cfg['required'] ?? false) {
+            if ($openingCompte) {
+                $required = match ($key) {
+                    'carte_pension' => false,
+                    'matricule_fiscal' => true,
+                    default => $required,
+                };
+            }
+
+            if ($required) {
                 $rules[$field] = [
                     'required',
                     'file',

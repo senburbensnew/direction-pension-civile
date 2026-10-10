@@ -323,7 +323,8 @@
                             {{ __('messages.media_libraries') }}
                         </a>
                     </li>
-                    @role('pensionne')
+                    @auth
+                        @if(app(\App\Services\RencontreMotifService::class)->motifsForUser(auth()->user()) !== [])
                     <li>
                         <a href="{{ route('demandes.rencontre.create') }}"
                             class="text-slate-600 block px-4 py-3 hover:bg-gray-100
@@ -332,7 +333,8 @@
                             {{ __('messages.appointment_request') }}
                         </a>
                     </li>
-                    @endrole
+                        @endif
+                    @endauth
                 </ul>
             </li>
 

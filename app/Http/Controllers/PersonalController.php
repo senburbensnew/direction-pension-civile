@@ -784,7 +784,7 @@ class PersonalController extends Controller
 
             if (
                 $owner?->isProvisionnel()
-                && in_array($motifKey, DemandeCreationCompte::rdvFinalisationMotifKeys(), true)
+                && app(\App\Services\RencontreMotifService::class)->countsTowardAccountDecision($motifKey)
             ) {
                 $compteProvisional = \App\Models\DemandeCreationCompte::query()
                     ->where('user_id', $owner->id)

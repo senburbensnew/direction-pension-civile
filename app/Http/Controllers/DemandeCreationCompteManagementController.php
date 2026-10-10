@@ -3,9 +3,13 @@
 namespace App\Http\Controllers;
 
 use App\Models\DemandeCreationCompte;
+use App\Models\User;
 use App\Services\AccountCreation\DemandeCreationCompteReviewService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\ValidationException;
+use Spatie\MediaLibrary\MediaCollections\Models\Media;
+use Symfony\Component\HttpFoundation\Response;
 
 class DemandeCreationCompteManagementController extends Controller
 {
@@ -56,10 +60,39 @@ class DemandeCreationCompteManagementController extends Controller
 
         return view($this->viewName('show'), [
             'demande' => $demandeCreationCompte,
-            'rendezVousFinalisation' => $demandeCreationCompte->rendezVousFinalisation(),
+            'rendezVousPourDecisionCompte' => $demandeCreationCompte->rendezVousPourDecisionCompte(),
             'routePrefix' => $this->routePrefix(),
             'canDecide' => $this->canDecide(),
         ]);
+    }
+
+    public function piece(
+        Request $request,
+        DemandeCreationCompte $demandeCreationCompte,
+        Media $media
+    ): Response {
+        abort_unless($this->canViewPieces(), 403);
+
+        abort_unless(
+            $media->model_type === DemandeCreationCompte::class
+            && (int) $media->model_id === (int) $demandeCreationCompte->id,
+            404
+        );
+
+        $disk = Storage::disk($media->disk);
+
+        abort_unless($disk->exists($media->getPathRelativeToRoot()), 404);
+
+        $disposition = $request->boolean('inline') ? 'inline' : 'attachment';
+        $filename = str_replace('"', '', $media->file_name);
+
+        return response()->file(
+            $disk->path($media->getPathRelativeToRoot()),
+            [
+                'Content-Type' => $media->mime_type ?: 'application/octet-stream',
+                'Content-Disposition' => $disposition.'; filename="'.$filename.'"',
+            ]
+        );
     }
 
     public function accepter(Request $request, DemandeCreationCompte $demandeCreationCompte)
@@ -130,6 +163,21 @@ class DemandeCreationCompteManagementController extends Controller
     private function canDecide(): bool
     {
         return ! $this->usesAdminUi()
-            && (bool) request()->user()?->hasRole(\App\Models\User::ROLE_AGENT_FORMALITES);
+            && (bool) request()->user()?->hasRole(User::ROLE_AGENT_FORMALITES);
+    }
+
+    private function canViewPieces(): bool
+    {
+        $user = request()->user();
+
+        if (! $user) {
+            return false;
+        }
+
+        if ($this->usesAdminUi()) {
+            return $user->hasRole('admin');
+        }
+
+        return $user->hasRole(User::ROLE_AGENT_FORMALITES);
     }
 }

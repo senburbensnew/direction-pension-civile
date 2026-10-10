@@ -3,15 +3,13 @@
     $rdvStatut = $rdvStatut ?? $demande->rencontreStatut();
     $data = $demande->data ?? [];
     $motifKey = (string) ($data['motif_key'] ?? '');
-    $isFinalisationCompte = in_array(
-        $motifKey,
-        \App\Models\DemandeCreationCompte::rdvFinalisationMotifKeys(),
-        true
-    );
+    $motifsService = app(\App\Services\RencontreMotifService::class);
     $isFormaliteMotif = str_starts_with($motifKey, 'demande_formalites') || str_starts_with($motifKey, 'formalites');
     $owner = $demande->user ?? \App\Models\User::find($demande->created_by);
     $compteCreation = $compteCreation ?? null;
-    if ($isFinalisationCompte && ! $compteCreation && $owner?->isProvisionnel()) {
+    $decisionComptePossible = $owner?->isProvisionnel()
+        && $motifsService->countsTowardAccountDecision($motifKey);
+    if ($decisionComptePossible && ! $compteCreation) {
         $compteCreation = \App\Models\DemandeCreationCompte::query()
             ->where('user_id', $owner->id)
             ->where('status', \App\Models\DemandeCreationCompte::STATUS_EN_ATTENTE)
@@ -21,11 +19,11 @@
     $rdvRealise = $rdvStatut === \App\Enums\RencontreStatutEnum::REALISE;
     $rdvTraitable = $demande->peutEtreTraiteApresRendezVous();
     $rdvTerminal = $rdvStatut->isTerminal();
-    $postTreatmentLabel = $isFinalisationCompte
-        ? 'Décision création de compte'
+    $postTreatmentLabel = $decisionComptePossible
+        ? 'Décision création de compte (si applicable)'
         : ($isFormaliteMotif ? 'Enregistrement formalité' : 'Suite du dossier');
     $postTreatmentDone = false;
-    if ($isFinalisationCompte && $compteCreation && ! $compteCreation->isPending()) {
+    if ($decisionComptePossible && $compteCreation && ! $compteCreation->isPending()) {
         $postTreatmentDone = true;
     }
     if ($isFormaliteMotif && $rdvRealise && $owner && ! $owner->isProvisionnel()) {

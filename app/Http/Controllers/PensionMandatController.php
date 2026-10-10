@@ -3,10 +3,8 @@
 namespace App\Http\Controllers;
 
 use App\Enums\PensionMandatStatusEnum;
-use App\Enums\BeneficiaireRelationEnum;
 use App\Models\Beneficiaire;
 use App\Models\PensionMandat;
-use App\Services\Pension\UserBeneficiaireLinkService;
 use App\Rules\CodePension;
 use App\Notifications\PensionMandatSoumisNotification;
 use App\Services\Pension\BeneficiaireProvisioningService;
@@ -73,12 +71,6 @@ class PensionMandatController extends Controller
                 $mandat->addMediaFromRequest('mandat_document')
                     ->toMediaCollection('mandat_document');
             }
-
-            app(UserBeneficiaireLinkService::class)->attach(
-                $user,
-                $beneficiaire,
-                BeneficiaireRelationEnum::MANDATAIRE,
-            );
         });
 
         $user->notify(new PensionMandatSoumisNotification($mandat->fresh()));

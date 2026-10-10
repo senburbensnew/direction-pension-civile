@@ -79,7 +79,7 @@ class DemandeCreationCompteManagementTest extends TestCase
             'type' => \App\Enums\TypeDemandeEnum::DEMANDE_RENCONTRE->value,
             'created_by' => $demande->user_id,
             'data' => [
-                'motif_key' => DemandeCreationCompte::MOTIF_RDV_FINALISATION,
+                'motif_key' => 'demande_formalites_mandats',
                 'rdv_statut' => \App\Enums\RencontreStatutEnum::REALISE->value,
                 'date_souhaitee' => now()->subDay()->toDateString(),
                 'heure_souhaitee' => '10:00',
@@ -212,7 +212,7 @@ class DemandeCreationCompteManagementTest extends TestCase
             'type' => \App\Enums\TypeDemandeEnum::DEMANDE_RENCONTRE->value,
             'created_by' => $demande->user_id,
             'data' => [
-                'motif_key' => DemandeCreationCompte::MOTIF_RDV_FINALISATION,
+                'motif_key' => 'demande_formalites_mandats',
                 'rdv_statut' => \App\Enums\RencontreStatutEnum::REALISE->value,
                 'date_souhaitee' => now()->addDay()->toDateString(),
                 'heure_souhaitee' => '14:00',
@@ -334,6 +334,44 @@ class DemandeCreationCompteManagementTest extends TestCase
     }
 
     /** @test */
+    public function formalites_agent_can_download_submitted_identity_piece(): void
+    {
+        Storage::fake('public');
+        $demande = $this->makePendingDemande();
+        $demande->addMedia(UploadedFile::fake()->image('cin.jpg', 400, 300))
+            ->toMediaCollection('identite_cin', 'public');
+        $media = $demande->getFirstMedia('identite_cin');
+
+        $agent = $this->makeFormalites();
+
+        $download = $this->actingAs($agent)
+            ->get(route('formalites.comptes-demandes.piece', [$demande, $media]));
+        $download->assertOk();
+        $this->assertStringContainsString(
+            'attachment',
+            (string) $download->headers->get('content-disposition')
+        );
+
+        $inline = $this->actingAs($agent)
+            ->get(route('formalites.comptes-demandes.piece', [$demande, $media]).'?inline=1');
+        $inline->assertOk();
+        $this->assertStringContainsString(
+            'inline',
+            (string) $inline->headers->get('content-disposition')
+        );
+
+        $other = $this->makePendingDemande([
+            'nif' => '999-888-777-6',
+            'email' => 'other@example.com',
+            'telephone' => '+50922009999',
+            'pension_code' => '8-99999',
+        ]);
+        $this->actingAs($agent)
+            ->get(route('formalites.comptes-demandes.piece', [$other, $media]))
+            ->assertNotFound();
+    }
+
+    /** @test */
     public function accepted_request_cannot_be_processed_again(): void
     {
         $demande = $this->makePendingDemande();
@@ -379,6 +417,8 @@ class DemandeCreationCompteManagementTest extends TestCase
             'account_status' => AccountStatusEnum::PROVISOIRE,
         ]);
         $user->assignRole('pensionne');
+        app(\App\Services\Account\UserCategoryRoleSyncService::class)
+            ->assignCategory($user, 'pensionne', primary: true, syncRoles: false);
 
         $this->actingAs($user)
             ->get(route('demandes.virements.create'))
@@ -440,5 +480,37 @@ class DemandeCreationCompteManagementTest extends TestCase
             $owner->fresh()->account_status
         );
         $this->assertTrue($compte->fresh()->histories()->where('event', \App\Models\DemandeCreationCompteHistory::EVENT_RDV_REALISE)->exists());
+    }
+
+    /** @test */
+    public function account_decision_uses_latest_realise_rdv_when_a_newer_active_rdv_exists(): void
+    {
+        $this->seedStatuses();
+        $demande = $this->makePendingDemande();
+
+        \App\Models\Demande::create([
+            'type' => \App\Enums\TypeDemandeEnum::DEMANDE_RENCONTRE->value,
+            'created_by' => $demande->user_id,
+            'data' => [
+                'motif_key' => 'demande_formalites_mandats',
+                'rdv_statut' => \App\Enums\RencontreStatutEnum::REALISE->value,
+                'date_souhaitee' => now()->subDays(2)->toDateString(),
+                'heure_souhaitee' => '10:00',
+            ],
+        ]);
+
+        \App\Models\Demande::create([
+            'type' => \App\Enums\TypeDemandeEnum::DEMANDE_RENCONTRE->value,
+            'created_by' => $demande->user_id,
+            'data' => [
+                'motif_key' => 'demande_formalites_mandats',
+                'rdv_statut' => \App\Enums\RencontreStatutEnum::ACTIF->value,
+                'date_souhaitee' => now()->addDay()->toDateString(),
+                'heure_souhaitee' => '14:00',
+            ],
+        ]);
+
+        $this->assertTrue($demande->fresh()->hasRendezVousRealise());
+        $this->assertTrue($demande->fresh()->canBeDecided());
     }
 }

@@ -4,6 +4,7 @@ namespace App\Http\Middleware;
 
 use App\Enums\AccountStatusEnum;
 use App\Models\User;
+use App\Services\RencontreMotifService;
 use Closure;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -52,6 +53,7 @@ class EnsurePermanentAccount
         'demandes.rencontre.physique',
         'demandes.rencontre.annuler',
         'demandes.rencontre.visio',
+        'demandes.rencontre.visio.status',
     ];
 
     public function handle(Request $request, Closure $next): Response
@@ -93,8 +95,11 @@ class EnsurePermanentAccount
             return 'Votre compte est désactivé. Veuillez contacter la Direction.';
         }
 
+        $canRdv = $user->hasPensionPortalAccess()
+            || app(RencontreMotifService::class)->userHasPendingDemandeCreationCompte($user);
+
         return 'Votre compte est en attente de validation. Seules la consultation de vos demandes'
-            .($user->hasPensionPortalAccess() ? ', les notifications et la prise de rendez-vous' : ' et les notifications')
+            .($canRdv ? ', les notifications et la prise de rendez-vous' : ' et les notifications')
             .' sont disponibles pour le moment.';
     }
 
@@ -110,11 +115,11 @@ class EnsurePermanentAccount
             return true;
         }
 
-        if ($user->hasPensionPortalAccess()
-            && in_array($routeName, self::PROVISIONNEL_PENSIONNE_ROUTES, true)) {
-            return true;
+        if (! in_array($routeName, self::PROVISIONNEL_PENSIONNE_ROUTES, true)) {
+            return false;
         }
 
-        return false;
+        return $user->hasPensionPortalAccess()
+            || app(RencontreMotifService::class)->userHasPendingDemandeCreationCompte($user);
     }
 }

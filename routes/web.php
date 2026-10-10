@@ -426,6 +426,16 @@ Route::middleware(['auth', 'account.permanent'])->group(function () {
             '[A-Fa-f0-9]{64}'
         )
         ->name('demandes.rencontre.visio');
+
+    Route::get(
+        '/rendez-vous/visio/{token}/status',
+        [DemandeRencontreController::class, 'visioStatus']
+    )
+        ->where(
+            'token',
+            '[A-Fa-f0-9]{64}'
+        )
+        ->name('demandes.rencontre.visio.status');
 });
 
 /*
@@ -1037,6 +1047,14 @@ Route::middleware(['auth', 'account.permanent'])->group(function () {
                 ]
             )->name('show');
 
+            Route::get(
+                '/{demandeCreationCompte}/pieces/{media}',
+                [
+                    DemandeCreationCompteManagementController::class,
+                    'piece',
+                ]
+            )->name('piece');
+
             Route::post(
                 '/{demandeCreationCompte}/accepter',
                 [
@@ -1416,6 +1434,14 @@ Route::prefix('admin')
                         'show',
                     ]
                 )->name('show');
+
+                Route::get(
+                    '/{demandeCreationCompte}/pieces/{media}',
+                    [
+                        DemandeCreationCompteManagementController::class,
+                        'piece',
+                    ]
+                )->name('piece');
             });
 
         /*

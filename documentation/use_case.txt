@@ -10,6 +10,7 @@ ACTEURS
   - Pensionne (Retraité)
   - Fonctionnaire (Agent actif)
   - Institution
+  - Public (Visiteur)
   - Agent / Secrétariat
   - Direction
   - Service (Liquidation, Formalité, Comptabilité, etc.)
@@ -28,6 +29,7 @@ ACTEURS
     UC_AV   Demander l'arrêt de virement
     UC_PE   Soumettre une preuve d'existence
     UC_PR   Demander une pension de réversion
+    UC_MAJ  Mettre à jour les informations
 
   [Demandes Fonctionnaire]
     UC_EC   Demander un état de carrière
@@ -35,6 +37,10 @@ ACTEURS
 
   [Demandes Institution]
     UC_ADH  Soumettre une demande d'adhésion
+
+  [Demandes publiques]
+    UC_REN   Demander une rencontre (visioconférence)
+    UC_CREA  Demander une création de compte
 
   [Gestion du dossier usager]
     UC_BROUILLON  Créer un brouillon de demande
@@ -79,6 +85,7 @@ ACTEURS
     UC_STATUTS   Gérer les statuts de demandes
     UC_SYS_LOGS  Consulter les logs système
     UC_CONTENU   Gérer le contenu du site (actualités, carousel)
+    UC_CIRCUIT   Gérer le circuit de traitement
 
 ────────────────────────────────────────────
   RELATIONS ACTEUR → CAS D'UTILISATION
@@ -87,7 +94,7 @@ ACTEURS
   Pensionne  →  UC_AUTH, UC_PROFIL, UC_MDP, UC_BROUILLON,
                    UC_SOUMETTRE, UC_DOCS, UC_COMPL, UC_SUIVI,
                    UC_ANNULER, UC_MSG_USR,
-                   UC_VB, UC_ATT, UC_TC, UC_AP, UC_RI, UC_AV, UC_PE, UC_PR
+                   UC_VB, UC_ATT, UC_TC, UC_AP, UC_RI, UC_AV, UC_PE, UC_PR, UC_MAJ
 
   Fonctionnaire →  UC_AUTH, UC_PROFIL, UC_MDP, UC_BROUILLON,
                    UC_SOUMETTRE, UC_DOCS, UC_COMPL, UC_SUIVI,
@@ -95,6 +102,8 @@ ACTEURS
 
   Institution   →  UC_AUTH, UC_PROFIL, UC_BROUILLON, UC_SOUMETTRE,
                    UC_DOCS, UC_SUIVI, UC_MSG_USR, UC_ADH
+
+  Public        →  UC_REN, UC_CREA
 
   Agent         →  UC_CORBEILLE, UC_DETAILS, UC_TRANSFER, UC_REQ_COMPL,
                    UC_STATUS, UC_MSG_SVC, UC_LOGS, UC_PDF, UC_HIST, UC_CLOTURE
@@ -107,7 +116,7 @@ ACTEURS
                    UC_REQ_COMPL, UC_MSG_SVC, UC_PDF, UC_CLOTURE
 
   Admin         →  UC_USERS, UC_ROLES, UC_SERVICES, UC_STATUTS,
-                   UC_SYS_LOGS, UC_CONTENU, UC_CORBEILLE, UC_DETAILS
+                   UC_SYS_LOGS, UC_CONTENU, UC_CIRCUIT, UC_CORBEILLE, UC_DETAILS
 
 ────────────────────────────────────────────
   RELATIONS <<include>> / <<extend>>
@@ -115,7 +124,7 @@ ACTEURS
 
   Toutes les demandes spécifiques  <<include>>  UC_BROUILLON
     (UC_VB, UC_ATT, UC_TC, UC_AP, UC_RI, UC_AV, UC_PE, UC_PR,
-     UC_EC, UC_DP, UC_ADH)
+     UC_MAJ, UC_EC, UC_DP, UC_ADH)
 
   UC_SOUMETTRE  <<include>>  UC_DOCS
 

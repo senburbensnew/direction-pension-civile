@@ -100,7 +100,7 @@ class MonDemandeCreationCompteTest extends TestCase
             'created_by' => $user->id,
             'data' => [
                 'motif_key' => 'demande_formalites_mandats',
-                'motif' => 'Finalisation de la création de compte',
+                'motif' => 'Demande de formalités de pension et mandats',
                 'date_souhaitee' => '2026-12-01',
                 'heure_souhaitee' => '14:00',
                 'rdv_statut' => 'demande',
