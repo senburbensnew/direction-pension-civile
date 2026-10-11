@@ -112,19 +112,23 @@ class DemandeRencontreController extends Controller
             'allowedTimes' => $this->availability
                 ->allowedTimes(),
 
-            'slotConfig' => [
-                'start' => $this->availability
-                    ->startTime(),
+            'slotConfig' => array_merge(
+                [
+                    'start' => $this->availability->bookingWindowStart(),
+                    'end' => $this->availability->bookingWindowEnd(),
+                    'minutes' => $this->availability->slotMinutes(),
+                    'daily_capacity' => $this->availability->dailyCapacity(),
+                ],
+                $this->availability->calendarDisplayWindow()
+            ),
 
-                'end' => $this->availability
-                    ->endTime(),
-
-                'minutes' => $this->availability
-                    ->slotMinutes(),
-
-                'daily_capacity' => $this->availability
-                    ->dailyCapacity(),
-            ],
+            'bookingAgentsReadyByServiceCode' => Service::query()
+                ->orderBy('id')
+                ->get()
+                ->mapWithKeys(fn (Service $service) => [
+                    $service->code => $this->availability->hasBookingAgents($service),
+                ])
+                ->all(),
 
             'motifPrepareHints' => collect(
                 config('rencontre.motifs', [])
@@ -133,6 +137,12 @@ class DemandeRencontreController extends Controller
             ])->all(),
 
             'supplementConfig' => config('rencontre.supplement', []),
+
+            'allowWeekends' => $this->availability->allowsWeekends(),
+
+            'bookingDaysLabel' => $this->availability->bookingDaysLabel(),
+
+            'bookingHoursLabel' => $this->availability->bookingHoursLabel(),
 
             'identite' => $this->identityDefaults($user),
         ];
@@ -177,27 +187,26 @@ class DemandeRencontreController extends Controller
             return [];
         }
 
-        $nom = $user->lastname ?? '';
+        $prenom = $user->formPrenom();
+        $nom = $user->formNom();
 
-        if (! $nom) {
-            $nom = $user->name ?? '';
-        }
-
-        if (! $nom) {
-            $nom = trim(
-                ($user->firstname ?? '')
-                . ' '
-                . ($user->lastname ?? '')
+        if ($prenom === '' && $nom === '') {
+            $prenom = (string) (
+                $user->firstname
+                ?? $user->prenom
+                ?? ''
+            );
+            $nom = (string) (
+                $user->lastname
+                ?? $user->name
+                ?? ''
             );
         }
 
         return [
-            'prenom' => $user->firstname
-                ?? $user->prenom
-                ?? '',
-
+            'prenom' => $prenom,
             'nom' => $nom,
-
+            'email' => $user->email ?? '',
             'telephone' => $user->telephone
                 ?? $user->phone
                 ?? '',
@@ -295,10 +304,11 @@ class DemandeRencontreController extends Controller
             $service
         )) {
             throw ValidationException::withMessages([
-                'heure_souhaitee' =>
-                    'Ce créneau n’est pas disponible pour le service « '
-                    . $service->nom
-                    . ' ». Veuillez choisir un autre créneau.',
+                'heure_souhaitee' => $this->availability->bookableSlotUserMessage(
+                    $validated['date_souhaitee'],
+                    $validated['heure_souhaitee'],
+                    $service
+                ),
             ]);
         }
 
@@ -377,9 +387,10 @@ class DemandeRencontreController extends Controller
 
                 $motifLabel = $this->motifsService->motifLabel($validated['motif']);
 
-                $data = [
+                $data = array_merge($this->identityDefaults($user), [
                     'motif_key' => $validated['motif'],
                     'motif' => $motifLabel,
+                    'objet' => $motifLabel,
 
                     'modalite' =>
                         $validated['modalite'],
@@ -413,6 +424,8 @@ class DemandeRencontreController extends Controller
                     'service_responsable' =>
                         $service->nom,
 
+                    'service_propose' => $motifLabel,
+
                     'unite' =>
                         $service->nom,
 
@@ -427,7 +440,7 @@ class DemandeRencontreController extends Controller
                             $validated['motif'],
                             $validated['modalite']
                         ),
-                ];
+                ]);
 
                 $demande = Demande::create([
                     'code' => $code,
@@ -775,13 +788,11 @@ class DemandeRencontreController extends Controller
         $user = $request->user();
 
         abort_unless(
-            $this->canValidate($user)
-            || $user?->hasAnyRole([
-                'admin',
-                'direction',
-            ]),
+            $this->canAccessPilotage($user),
             403
         );
+
+        $filtre = $request->string('filtre')->toString() ?: 'programmes';
 
         $query = Demande::query()
             ->where(
@@ -791,8 +802,8 @@ class DemandeRencontreController extends Controller
             ->with([
                 'service',
                 'currentStep',
-                'histories',
                 'user',
+                'assignments.agent',
             ])
             ->latest();
 
@@ -800,6 +811,16 @@ class DemandeRencontreController extends Controller
             $query->where(
                 'data->rdv_statut',
                 $request->string('statut')
+            );
+        } elseif ($filtre === 'programmes') {
+            $query->whereNotIn(
+                'data->rdv_statut',
+                RencontreStatutEnum::terminalValues()
+            );
+        } elseif ($filtre === 'historique') {
+            $query->whereIn(
+                'data->rdv_statut',
+                RencontreStatutEnum::terminalValues()
             );
         }
 
@@ -809,26 +830,36 @@ class DemandeRencontreController extends Controller
             ->paginate(20)
             ->withQueryString();
 
-        return view(
-            'demandes.rencontre.index',
-            [
-                'demandes' =>
-                    $demandes,
+        $appelsVeille = collect();
+        if ($user?->hasAnyRole([
+            User::ROLE_AGENT_RDV,
+            User::ROLE_VALIDATEUR_RDV,
+            'service_accueil_formalites',
+            'responsable_service_accueil_formalites',
+            'direction',
+            'admin',
+        ])) {
+            $reminders = app(\App\Services\RencontreReminderService::class);
+            $date = $reminders->reminderDate();
+            $isAgentRdvOnly = $user->hasRole(User::ROLE_AGENT_RDV)
+                && ! $user->hasAnyRole(['admin', 'direction', 'directeur', 'assistant_directeur']);
 
-                'agents' =>
-                    $this->availability
-                        ->allBookingAgents(),
+            $appelsVeille = $isAgentRdvOnly
+                ? $reminders->appointmentsOnForAgent($date, $user->id)
+                : $reminders->appointmentsOn($date);
+        }
 
-                'canValidate' =>
-                    $this->canValidate($user),
-
-                'reminderData' =>
-                    $this->reminderData(),
-
-                'statuts' =>
-                    RencontreStatutEnum::cases(),
-            ]
-        );
+        return view('demandes.rencontre.pilotage.index', [
+            'demandes' => $demandes,
+            'filtre' => $filtre,
+            'agents' => $this->availability->allBookingAgents(),
+            'canValidate' => $this->canManageRencontreWorkflow($user),
+            'canReassignInPilotage' => $this->hasPilotageReassignRole($user),
+            'canResponsablePilotageActions' => $this->isPilotageReassignOnlyUser($user),
+            'reminderData' => $this->reminderData(),
+            'statuts' => RencontreStatutEnum::cases(),
+            'appelsVeille' => $appelsVeille,
+        ]);
     }
 
     /*
@@ -901,10 +932,16 @@ class DemandeRencontreController extends Controller
                         $demande,
                         $this->responsibleServiceForDemande($demande)
                     ),
-                'canValidate' => $this->canValidate($user),
+                'canValidate' => $this->canManageRencontreWorkflow($user),
                 'canReassignAgent' => $this->canReassignAgent(
                     $demande,
                     $user
+                ),
+                'canResponsablePilotageActions' => $this->isPilotageReassignOnlyUser($user)
+                    && $this->canReassignAgent($demande, $user),
+                'reattribuerRoute' => route(
+                    'rencontres.pilotage.reattribuer',
+                    $demande
                 ),
                 'eventLabel' => fn (string $event) =>
                     $this->rdvWorkflow->eventLabel($event),
@@ -1013,7 +1050,66 @@ class DemandeRencontreController extends Controller
             }
         }
 
+        if ($this->canReassignAgent($demande, $user)) {
+            return true;
+        }
+
         return false;
+    }
+
+    private function pilotageReassignOnlyRoles(): array
+    {
+        return config(
+            'rencontre.pilotage_reassign_only_roles',
+            ['responsable_service_accueil_formalites']
+        );
+    }
+
+    private function hasPilotageReassignRole(?User $user): bool
+    {
+        if (! $user) {
+            return false;
+        }
+
+        return $user->hasAnyRole(
+            config(
+                'rencontre.reassign_roles',
+                ['admin', 'direction', 'validateur_rdv']
+            )
+        );
+    }
+
+    private function isPilotageReassignOnlyUser(?User $user): bool
+    {
+        if (! $user) {
+            return false;
+        }
+
+        $onlyRoles = $this->pilotageReassignOnlyRoles();
+
+        if ($onlyRoles === []) {
+            return false;
+        }
+
+        return $user->hasAnyRole($onlyRoles)
+            && ! $this->canManageRencontreWorkflow($user);
+    }
+
+    private function canAccessPilotage(?User $user): bool
+    {
+        if (! $user) {
+            return false;
+        }
+
+        if ($user->hasAnyRole(['admin', 'direction'])) {
+            return true;
+        }
+
+        if ($this->canManageRencontreWorkflow($user)) {
+            return true;
+        }
+
+        return $user->hasAnyRole($this->pilotageReassignOnlyRoles());
     }
 
     private function canReassignAgent(
@@ -1052,25 +1148,21 @@ class DemandeRencontreController extends Controller
 
     private function canValidate(?User $user): bool
     {
-        if (!$user) {
+        return $this->canManageRencontreWorkflow($user);
+    }
+
+    private function canManageRencontreWorkflow(?User $user): bool
+    {
+        if (! $user) {
             return false;
         }
 
-        if ($user->hasAnyRole([
+        return $user->hasAnyRole([
             'admin',
             'direction',
             $this->availability->agentRole(),
             (string) config('rdv.validator_role', 'validateur_rdv'),
-        ])) {
-            return true;
-        }
-
-        $reassignRoles = config(
-            'rencontre.reassign_roles',
-            ['responsable_service_accueil_formalites']
-        );
-
-        return $user->hasAnyRole($reassignRoles);
+        ]);
     }
 
     /*
@@ -1319,12 +1411,28 @@ class DemandeRencontreController extends Controller
         Request $request,
         Demande $demande
     ) {
-        $this->authorizeRdvAgent(
-            $demande,
-            $request->user()
+        $user = $request->user();
+
+        abort_unless(
+            $demande->isRencontre(),
+            404
         );
 
+        if ($this->canManageRencontreWorkflow($user)) {
+            $this->authorizeRdvAgent($demande, $user);
+        } else {
+            abort_unless(
+                $this->canReassignAgent($demande, $user),
+                403
+            );
+        }
+
         $this->assertNotTerminal($demande);
+
+        $request->merge([
+            'commentaire' => $request->input('commentaire')
+                ?: $request->input('motif'),
+        ]);
 
         $validated = $request->validate([
             'commentaire' => [
@@ -1797,10 +1905,7 @@ class DemandeRencontreController extends Controller
         );
 
         abort_unless(
-            $user && (
-                $this->canValidate($user)
-                || $this->canReassignAgent($demande, $user)
-            ),
+            $user && $this->canManageRencontreWorkflow($user),
             403
         );
 
@@ -1810,10 +1915,6 @@ class DemandeRencontreController extends Controller
                 'direction',
             ])
         ) {
-            return;
-        }
-
-        if ($this->canReassignAgent($demande, $user)) {
             return;
         }
 

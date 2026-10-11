@@ -40,30 +40,20 @@
                 </div>
                 <div class="text-sm text-gray-600">
                     <p>Service Formalités : <strong>{{ $data['service_responsable'] ?? $demande->service?->nom ?? 'Formalités' }}</strong></p>
-                    <p>Service proposé (motif) : <strong>{{ $data['service_propose'] ?? '—' }}</strong></p>
+                    <p>Motif : <strong>{{ $demande->rencontreMotifLabel() }}</strong></p>
                     <p>Agent : <strong>{{ $data['agent_nom'] ?? $demande->assignments->first()?->agent?->displayName() ?? '—' }}</strong></p>
                 </div>
             </div>
-            <ol class="mt-5 flex flex-wrap gap-2 text-xs">
-                @foreach(\App\Enums\RencontreStatutEnum::cases() as $etat)
-                    <li class="px-2 py-1 rounded-full {{ $rdvStatut === $etat ? $etat->badgeClass().' font-semibold ring-1 ring-navy/20' : 'bg-gray-50 text-gray-400' }}">
-                        {{ $etat->label() }}
-                    </li>
-                @endforeach
-            </ol>
         </section>
 
         <section class="bg-white border border-gray-200 rounded-2xl p-6">
             <h3 class="text-base font-bold text-gray-800 mb-4">Informations transmises par l’usager</h3>
             <dl class="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
-                <div><dt class="text-gray-500">Nom et prénom</dt><dd class="font-medium">{{ trim(($data['prenom'] ?? '').' '.($data['nom'] ?? '')) ?: '—' }}</dd></div>
+                <div><dt class="text-gray-500">Nom et prénom</dt><dd class="font-medium">{{ $demande->rencontreDemandeurNom() }}</dd></div>
                 <div><dt class="text-gray-500">N° pension / matricule</dt><dd class="font-medium">{{ $data['numero_pension'] ?? '—' }}</dd></div>
                 <div><dt class="text-gray-500">Téléphone</dt><dd class="font-medium">{{ $data['telephone'] ?? '—' }}</dd></div>
-                <div><dt class="text-gray-500">Courriel</dt><dd class="font-medium">{{ $data['email'] ?? '—' }}</dd></div>
-                <div><dt class="text-gray-500">Motif</dt><dd class="font-medium">{{ $data['motif'] ?? $data['objet'] ?? '—' }}</dd></div>
-                @if(!empty($data['motif_key']))
-                    <div><dt class="text-gray-500">Clé motif</dt><dd class="font-medium font-mono text-xs">{{ $data['motif_key'] }}</dd></div>
-                @endif
+                <div><dt class="text-gray-500">Courriel</dt><dd class="font-medium">{{ $demande->rencontreDemandeurEmail() }}</dd></div>
+                <div><dt class="text-gray-500">Objet / motif</dt><dd class="font-medium">{{ $demande->rencontreObjet() }}</dd></div>
                 <div><dt class="text-gray-500">Lieu ou visio</dt><dd class="font-medium">{{ $data['lieu_rdv'] ?? ($demande->visio_token ? 'Lien sécurisé DPC' : '—') }}</dd></div>
                 <div class="md:col-span-2"><dt class="text-gray-500">Service responsable</dt><dd class="font-medium">{{ $data['service_responsable'] ?? $demande->service?->nom ?? '—' }}</dd></div>
             </dl>
@@ -109,6 +99,27 @@
             @include('demandes.rencontre._confirmation', ['confirmation' => $confirmation])
         @endif
 
+        @if(($canResponsablePilotageActions ?? false) && $pending && ! $canAct)
+            <section class="bg-white border border-gray-200 rounded-2xl p-6 space-y-1">
+                <h3 class="text-base font-bold text-gray-800 mb-1">Actions responsable</h3>
+                <p class="text-sm text-gray-500 mb-4">
+                    Réattribuez le rendez-vous à un autre agent formalités (créneau inchangé) ou annulez-le avec un motif.
+                </p>
+                @include('demandes.rencontre._reattribuer-agent', [
+                    'demande' => $demande,
+                    'bookingAgents' => $bookingAgents ?? collect(),
+                    'canReassignAgent' => true,
+                    'rdvPending' => $pending,
+                    'reattribuerRoute' => $reattribuerRoute ?? null,
+                    'reassignStandalone' => true,
+                ])
+                @include('demandes.rencontre._pilotage-annuler-rdv', [
+                    'demande' => $demande,
+                    'rdvPending' => $pending,
+                ])
+            </section>
+        @endif
+
         @if($canAct && $pending)
             <section class="bg-white border border-gray-200 rounded-2xl p-6 space-y-5">
                 <h3 class="text-base font-bold text-gray-800">Formalités — examen, attribution et validation</h3>
@@ -132,21 +143,25 @@
                             <button class="px-4 py-2 bg-green-600 hover:bg-green-700 text-white text-sm font-semibold rounded-lg">Valider définitivement</button>
                         </form>
                     @endif
-                    <form method="POST" action="{{ route('rencontres.pilotage.refuser', $demande) }}" class="flex flex-wrap items-center gap-2">
+                    <form method="POST" action="{{ route('rencontres.pilotage.refuser', $demande) }}" class="flex flex-wrap items-center gap-2"
+                          onsubmit="return confirm('Confirmer l’annulation de ce rendez-vous ?');">
                         @csrf
                         <input type="hidden" name="return" value="{{ route('rencontres.pilotage.show', $demande) }}">
-                        <input type="text" name="motif" required maxlength="500" placeholder="Motif d’annulation"
-                               class="border border-red-200 rounded-lg px-3 py-2 text-sm">
-                        <button class="px-4 py-2 bg-red-50 text-red-700 border border-red-200 text-sm font-semibold rounded-lg">Annuler</button>
+                        <input type="text" name="commentaire" required maxlength="2000" placeholder="Motif d’annulation"
+                               class="border border-red-200 rounded-lg px-3 py-2 text-sm min-w-[14rem] flex-1">
+                        <button type="submit" class="px-4 py-2 bg-red-50 text-red-700 border border-red-200 text-sm font-semibold rounded-lg">Annuler le RDV</button>
                     </form>
                 </div>
 
-                @include('demandes.rencontre._reattribuer-agent', [
-                    'demande' => $demande,
-                    'bookingAgents' => $bookingAgents ?? collect(),
-                    'canReassignAgent' => $canReassignAgent ?? false,
-                    'rdvPending' => $pending,
-                ])
+                @if($canReassignAgent ?? false)
+                    @include('demandes.rencontre._reattribuer-agent', [
+                        'demande' => $demande,
+                        'bookingAgents' => $bookingAgents ?? collect(),
+                        'canReassignAgent' => true,
+                        'rdvPending' => $pending,
+                        'reattribuerRoute' => $reattribuerRoute ?? null,
+                    ])
+                @endif
 
                 <form method="POST" action="{{ route('rencontres.pilotage.proposer-creneau', $demande) }}" class="border-t border-gray-100 pt-4 space-y-3">
                     @csrf

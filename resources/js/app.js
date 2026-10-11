@@ -32,9 +32,85 @@ function initDatepickers() {
     });
 }
 
+function initRdvBookingTimePickers() {
+    document.querySelectorAll('[data-rdv-booking-times]').forEach((form) => {
+        if (form.dataset.rdvTimesReady === '1') {
+            return;
+        }
+
+        form.dataset.rdvTimesReady = '1';
+
+        const minuteIncrement = Math.max(
+            1,
+            Number(form.dataset.slotMinutes || 15)
+        );
+
+        const timeConfig = {
+            locale: French,
+            enableTime: true,
+            noCalendar: true,
+            dateFormat: 'H:i',
+            time_24hr: true,
+            allowInput: true,
+            minuteIncrement,
+            disableMobile: true,
+            maxTime: '23:45',
+        };
+
+        const startInput = form.querySelector('[data-rdv-booking-start]');
+
+        if (startInput && !startInput._flatpickr) {
+            flatpickr(startInput, timeConfig);
+        }
+
+        const endInput = form.querySelector('[data-rdv-booking-end]');
+        let endPicker = null;
+
+        if (endInput && !endInput._flatpickr) {
+            endPicker = flatpickr(endInput, {
+                ...timeConfig,
+                onOpen: () => {
+                    if (endInput.value === '24:00') {
+                        endPicker.clear(false);
+                    }
+                },
+                onChange: () => {
+                    delete endInput.dataset.midnightEnd;
+                },
+            });
+        } else if (endInput?._flatpickr) {
+            endPicker = endInput._flatpickr;
+        }
+
+        form.querySelectorAll('[data-rdv-set-end-midnight]').forEach((button) => {
+            button.addEventListener('click', () => {
+                if (!endInput) {
+                    return;
+                }
+
+                endInput.dataset.midnightEnd = '1';
+                endInput.value = '24:00';
+                endPicker?.close();
+            });
+        });
+
+        if (endInput?.value === '24:00') {
+            endInput.dataset.midnightEnd = '1';
+        }
+
+        form.addEventListener('submit', () => {
+            if (endInput?.dataset.midnightEnd === '1') {
+                endInput.value = '24:00';
+            }
+        });
+    });
+}
+
 // Run on initial load and after Livewire/Turbo navigations if present
 document.addEventListener('DOMContentLoaded', initDatepickers);
+document.addEventListener('DOMContentLoaded', initRdvBookingTimePickers);
 document.addEventListener('livewire:navigated', initDatepickers);
+document.addEventListener('livewire:navigated', initRdvBookingTimePickers);
 
 document.addEventListener('DOMContentLoaded', () => {
     if (document.getElementById('dpc-chronogramme')) {

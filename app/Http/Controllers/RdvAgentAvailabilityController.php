@@ -51,15 +51,12 @@ class RdvAgentAvailabilityController extends Controller
             'dateAvailabilities' => $dateAvailabilities,
             'blockedAvailabilities' => $blocked,
             'holidayEvents' => $availability->holidayEvents(),
-            'weekdays' => [
-                1 => 'Lundi',
-                2 => 'Mardi',
-                3 => 'Mercredi',
-                4 => 'Jeudi',
-                5 => 'Vendredi',
-            ],
-            'globalStart' => $availability->startTime(),
-            'globalEnd' => $availability->endTime(),
+            'weekdays' => $availability->weekdayLabels(),
+            'allowWeekends' => $availability->allowsWeekends(),
+            'bookingDaysLabel' => $availability->bookingDaysLabel(),
+            'globalStart' => $availability->bookingWindowStart(),
+            'globalEnd' => $availability->bookingWindowEnd(),
+            'calendarDisplay' => $availability->calendarDisplayWindow(),
             'slotMinutes' => $availability->slotMinutes(),
             'slotPresets' => $availability->slotPresets(),
             'minDate' => $minDate,
@@ -80,10 +77,11 @@ class RdvAgentAvailabilityController extends Controller
 
         $minDate = now()->toDateString();
         $maxDate = now()->addMonths(6)->toDateString();
+        $maxWeekday = $availability->allowsWeekends() ? 7 : 5;
 
         $validated = $request->validate([
             'recurring' => ['nullable', 'array'],
-            'recurring.*.weekday' => ['required', 'integer', 'between:1,5'],
+            'recurring.*.weekday' => ['required', 'integer', 'between:1,'.$maxWeekday],
             'recurring.*.start_time' => ['required', 'date_format:H:i'],
             'recurring.*.end_time' => ['required', 'date_format:H:i'],
 
@@ -94,7 +92,7 @@ class RdvAgentAvailabilityController extends Controller
 
             'blocks' => ['nullable', 'array'],
             'blocks.*.available_on' => ['nullable', 'date', 'after_or_equal:'.$minDate, 'before_or_equal:'.$maxDate],
-            'blocks.*.weekday' => ['nullable', 'integer', 'between:1,5'],
+            'blocks.*.weekday' => ['nullable', 'integer', 'between:1,'.$maxWeekday],
             'blocks.*.start_time' => ['nullable', 'date_format:H:i'],
             'blocks.*.end_time' => ['nullable', 'date_format:H:i'],
             'blocks.*.all_day' => ['nullable', 'boolean'],
@@ -137,7 +135,7 @@ class RdvAgentAvailabilityController extends Controller
 
             $day = Carbon::parse($window['available_on']);
 
-            if ($day->isWeekend()) {
+            if ($availability->isWeekendBlocked($day)) {
                 throw ValidationException::withMessages([
                     "dates.{$index}.available_on" =>
                         'Les rendez-vous ne sont pas planifiés le week-end.',
@@ -192,7 +190,7 @@ class RdvAgentAvailabilityController extends Controller
 
             if ($hasDate) {
                 $day = Carbon::parse($block['available_on']);
-                if ($day->isWeekend()) {
+                if ($availability->isWeekendBlocked($day)) {
                     throw ValidationException::withMessages([
                         "blocks.{$index}.available_on" =>
                             'Indisponibilité : date invalide (week-end).',

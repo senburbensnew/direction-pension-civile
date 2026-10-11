@@ -673,6 +673,76 @@ class Demande extends Model implements HasMedia
             );
     }
 
+    public function rencontreDemandeurNom(): string
+    {
+        $data = $this->data ?? [];
+        $fromData = trim(
+            (string) ($data['prenom'] ?? '')
+            .' '
+            .(string) ($data['nom'] ?? '')
+        );
+
+        if ($fromData !== '') {
+            return $fromData;
+        }
+
+        return $this->user?->displayName() ?: '—';
+    }
+
+    public function rencontreDemandeurEmail(): string
+    {
+        $data = $this->data ?? [];
+
+        if (filled($data['email'] ?? null)) {
+            return (string) $data['email'];
+        }
+
+        return (string) ($this->user?->email ?? '—');
+    }
+
+    public function rencontreObjet(): string
+    {
+        $data = $this->data ?? [];
+
+        foreach (['objet', 'motif', 'objet_demande'] as $key) {
+            if (filled($data[$key] ?? null)) {
+                return (string) $data[$key];
+            }
+        }
+
+        return '—';
+    }
+
+    public function rencontreMotifLabel(): string
+    {
+        $data = $this->data ?? [];
+
+        if (filled($data['motif'] ?? null)) {
+            return (string) $data['motif'];
+        }
+
+        if (filled($data['service_propose'] ?? null)) {
+            return (string) $data['service_propose'];
+        }
+
+        if (! $this->isRencontre()) {
+            return '—';
+        }
+
+        $motifKey = (string) ($data['motif_key'] ?? '');
+
+        if ($motifKey !== '') {
+            $label = app(\App\Services\RencontreMotifService::class)
+                ->motifLabel($motifKey);
+
+            if (filled($label)) {
+                return (string) $label;
+            }
+        }
+
+        return '—';
+    }
+
     public function statutAffiche(): string
     {
         if ($this->isRencontre()) {

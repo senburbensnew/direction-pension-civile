@@ -16,8 +16,10 @@ use App\Rules\Nif;
 use App\Rules\Ninu;
 use App\Rules\Telephone;
 use App\Services\AccountCreation\IdentityVerificationService;
+use App\Services\RencontreMotifService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rules\Password;
 use Illuminate\Validation\ValidationException;
@@ -360,15 +362,62 @@ class DemandeCreationCompteController extends Controller
         /* ============================================================
          * LAYER 1 — Idempotency key (refresh / retry / double-submit)
          * ============================================================ */
-        $idempotencyKey = $request->input('idempotency_key');
-    
-        if (filled($idempotencyKey)) {
+        $idempotencyKey = trim((string) $request->input('idempotency_key', ''));
+
+        if ($this->requestsJsonResponse($request) && $idempotencyKey === '') {
+            return response()->json([
+                'message' => 'Rechargez la page, puis soumettez à nouveau.',
+                'errors' => [
+                    'idempotency_key' => ['Rechargez la page, puis soumettez à nouveau.'],
+                ],
+            ], 422);
+        }
+
+        $storeLock = null;
+
+        if ($idempotencyKey !== '') {
             $existing = DemandeCreationCompte::where('idempotency_key', $idempotencyKey)->first();
-    
+
             if ($existing) {
                 return $this->redirectToRdv($request, $existing, 'idempotency_hit');
             }
+
+            $storeLock = Cache::lock('demande_compte:store:'.$idempotencyKey, 120);
+
+            if (! $storeLock->get()) {
+                usleep(250_000);
+                $existing = DemandeCreationCompte::where('idempotency_key', $idempotencyKey)->first();
+
+                if ($existing) {
+                    return $this->redirectToRdv($request, $existing, 'idempotency_hit');
+                }
+
+                if ($this->requestsJsonResponse($request)) {
+                    return response()->json([
+                        'message' => 'Une soumission est déjà en cours. Patientez quelques secondes.',
+                    ], 429);
+                }
+
+                return back()->with('error', 'Une soumission est déjà en cours. Patientez quelques secondes.');
+            }
         }
+
+        try {
+            return $this->persistDemandeCreationCompte(
+                $request,
+                $validated,
+                $idempotencyKey !== '' ? $idempotencyKey : null
+            );
+        } finally {
+            $storeLock?->release();
+        }
+    }
+
+    private function persistDemandeCreationCompte(
+        Request $request,
+        array $validated,
+        ?string $idempotencyKey
+    ): Response|RedirectResponse|JsonResponse {
     
         /* ============================================================
          * LAYER 2 — Field dedup (same person, new session, same data)
@@ -595,7 +644,8 @@ class DemandeCreationCompteController extends Controller
     {
         return $request->expectsJson()
             || $request->ajax()
-            || $request->wantsJson();
+            || $request->wantsJson()
+            || $request->filled('idempotency_key');
     }
 
     /**
@@ -654,10 +704,20 @@ class DemandeCreationCompteController extends Controller
                 ->with('error', $message);
         }
 
-        Auth::login($demande->user);
-        $request->session()->regenerate();
+        $user = $demande->user->fresh(['demandeCreationCompte']);
 
-        $url = route('demandes.rencontre.create');
+        Auth::login($user);
+        $request->session()->regenerate();
+        $request->session()->save();
+
+        $url = $this->postSubmitRedirectUrl($user);
+
+        if ($url !== route('demandes.rencontre.create', absolute: true)) {
+            $request->session()->flash(
+                'success',
+                'Votre demande a été enregistrée. Prenez rendez-vous pour finaliser l’ouverture de votre compte.'
+            );
+        }
 
         if ($this->requestsJsonResponse($request)) {
             return response()->json([
@@ -670,6 +730,18 @@ class DemandeCreationCompteController extends Controller
         }
 
         return redirect()->to($url);
+    }
+
+    private function postSubmitRedirectUrl(User $user): string
+    {
+        $motifs = app(RencontreMotifService::class);
+
+        if ($user->hasPensionPortalAccess()
+            || $motifs->userHasPendingDemandeCreationCompte($user)) {
+            return route('demandes.rencontre.create', absolute: true);
+        }
+
+        return route('compte.provisoire', absolute: true);
     }
 
     private function resolveOcrDocuments(

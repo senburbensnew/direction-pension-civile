@@ -5,11 +5,14 @@ namespace App\Services;
 use App\Enums\RencontreStatutEnum;
 use App\Enums\TypeDemandeEnum;
 use App\Models\Demande;
+use App\Models\Holiday;
 use App\Models\RdvAgentAvailability;
 use App\Models\Service;
 use App\Models\User;
 use Carbon\Carbon;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\DB;
 use InvalidArgumentException;
 
 class RencontreAvailabilityService
@@ -46,17 +49,17 @@ class RencontreAvailabilityService
 
     public function startTime(): string
     {
-        return (string) config(
-            'rdv.start',
-            self::DEFAULT_START_TIME
+        return $this->parameterTime(
+            'rdv_booking_start',
+            (string) config('rdv.start', self::DEFAULT_START_TIME)
         );
     }
 
     public function endTime(): string
     {
-        return (string) config(
-            'rdv.end',
-            self::DEFAULT_END_TIME
+        return $this->parameterTime(
+            'rdv_booking_end',
+            (string) config('rdv.end', self::DEFAULT_END_TIME)
         );
     }
 
@@ -98,6 +101,158 @@ class RencontreAvailabilityService
         );
     }
 
+    public function allowsWeekends(): bool
+    {
+        return $this->parameterBool('rdv_allow_weekends');
+    }
+
+    /**
+     * Paramètres booléens admin (table parameters, value = 'true' | 'false').
+     */
+    private function parameterBool(string $parameterName): bool
+    {
+        return Cache::remember($parameterName, 60, function () use ($parameterName) {
+            $value = DB::table('parameters')
+                ->where('name', $parameterName)
+                ->value('value');
+
+            return $value === 'true';
+        });
+    }
+
+    private function parameterTime(string $parameterName, string $default): string
+    {
+        $cached = Cache::remember($parameterName, 60, function () use ($parameterName, $default) {
+            $value = DB::table('parameters')
+                ->where('name', $parameterName)
+                ->value('value');
+
+            return $this->normalizeBookingTime($value)
+                ?? $this->normalizeBookingTime($default)
+                ?? $default;
+        });
+
+        return $cached;
+    }
+
+    public function normalizeBookingTime(?string $time): ?string
+    {
+        if ($time === null || $time === '') {
+            return null;
+        }
+
+        $time = trim($time);
+
+        if ($time === '24:00' || $time === '24:00:00') {
+            return '24:00';
+        }
+
+        try {
+            return Carbon::createFromFormat(
+                strlen($time) === 5 ? 'H:i' : 'H:i:s',
+                $time
+            )->format('H:i');
+        } catch (\Throwable) {
+            return null;
+        }
+    }
+
+    public function bookingWindowStart(): string
+    {
+        return $this->startTime();
+    }
+
+    public function bookingWindowEnd(): string
+    {
+        return $this->endTime();
+    }
+
+    public function bookingHoursLabel(): string
+    {
+        return $this->startTime().' à '.$this->endTime()
+            .' (créneaux de '.$this->slotMinutes().' minutes)';
+    }
+
+    /**
+     * Bornes d’affichage FullCalendar (légère marge autour de la plage réservable).
+     *
+     * @return array{display_start: string, display_end: string}
+     */
+    public function calendarDisplayWindow(): array
+    {
+        $start = $this->startTime();
+        $end = $this->endTime();
+
+        if ($start === '00:00' && $end === '24:00') {
+            return ['display_start' => '00:00', 'display_end' => '24:00'];
+        }
+
+        $startMinutes = $this->timeStringToMinutes($start);
+        $endMinutes = $end === '24:00'
+            ? 24 * 60
+            : $this->timeStringToMinutes($end);
+
+        $displayStartMinutes = max(0, min($startMinutes, 8 * 60) - 60);
+        $displayEndMinutes = min(24 * 60, max($endMinutes, 16 * 60) + 60);
+
+        return [
+            'display_start' => $this->minutesToTimeString($displayStartMinutes),
+            'display_end' => $displayEndMinutes >= 24 * 60
+                ? '24:00'
+                : $this->minutesToTimeString($displayEndMinutes),
+        ];
+    }
+
+    private function timeStringToMinutes(string $time): int
+    {
+        [$hour, $minute] = array_map('intval', explode(':', $time));
+
+        return $hour * 60 + $minute;
+    }
+
+    private function minutesToTimeString(int $minutes): string
+    {
+        $hours = intdiv($minutes, 60);
+        $mins = $minutes % 60;
+
+        return sprintf('%02d:%02d', $hours, $mins);
+    }
+
+    public function isWeekendBlocked(Carbon $day): bool
+    {
+        return ! $this->allowsWeekends() && $day->isWeekend();
+    }
+
+    public function bookingDaysLabel(): string
+    {
+        return $this->allowsWeekends()
+            ? 'du lundi au dimanche'
+            : 'du lundi au vendredi';
+    }
+
+    /**
+     * Jours ISO (1 = lundi … 7 = dimanche) proposés dans les formulaires agent.
+     *
+     * @return array<int, string>
+     */
+    public function weekdayLabels(): array
+    {
+        $days = [
+            1 => 'Lundi',
+            2 => 'Mardi',
+            3 => 'Mercredi',
+            4 => 'Jeudi',
+            5 => 'Vendredi',
+        ];
+
+        if ($this->allowsWeekends()) {
+            $days[6] = 'Samedi';
+            $days[7] = 'Dimanche';
+        }
+
+        return $days;
+    }
+
     /*
     |--------------------------------------------------------------------------
     | Créneaux
@@ -121,10 +276,13 @@ class RencontreAvailabilityService
             $this->startTime()
         );
 
-        $end = Carbon::createFromFormat(
-            'H:i',
-            $this->endTime()
-        );
+        $endTime = $this->endTime();
+
+        if ($endTime === '24:00') {
+            $end = Carbon::createFromTime(0, 0)->addDay();
+        } else {
+            $end = Carbon::createFromFormat('H:i', $endTime);
+        }
 
         $times = [];
 
@@ -150,7 +308,7 @@ class RencontreAvailabilityService
             return false;
         }
 
-        if ($day->isWeekend()) {
+        if ($this->isWeekendBlocked($day)) {
             return false;
         }
 
@@ -225,7 +383,8 @@ class RencontreAvailabilityService
     public function agentIsAvailableAt(
         User $agent,
         string $date,
-        string $time
+        string $time,
+        ?Collection $rules = null,
     ): bool {
         if (!$this->isAllowedTime($time)) {
             return false;
@@ -239,7 +398,7 @@ class RencontreAvailabilityService
 
         $weekday = (int) $day->dayOfWeekIso;
 
-        if ($weekday < 1 || $weekday > 5) {
+        if ($this->isWeekendBlocked($day)) {
             return false;
         }
 
@@ -252,7 +411,7 @@ class RencontreAvailabilityService
         $slotStart = Carbon::createFromFormat('H:i', $normalized);
         $slotEnd = $slotStart->copy()->addMinutes($this->slotMinutes());
 
-        $rules = RdvAgentAvailability::query()
+        $rules ??= RdvAgentAvailability::query()
             ->where('user_id', $agent->id)
             ->get();
 
@@ -433,6 +592,38 @@ class RencontreAvailabilityService
             ->where('service_id', $service->id)
             ->orderBy('id')
             ->get();
+    }
+
+    public function hasBookingAgents(Service $service): bool
+    {
+        return $this->bookingAgents($service)->isNotEmpty();
+    }
+
+    /**
+     * Message d’erreur affiché à l’usager lorsqu’un créneau ne peut pas être réservé.
+     */
+    public function bookableSlotUserMessage(
+        string $date,
+        string $time,
+        Service $service
+    ): string {
+        if (! $this->hasBookingAgents($service)) {
+            return 'La prise de rendez-vous en ligne est indisponible pour le service « '
+                .$service->nom
+                .' » : aucun agent n’est configuré. Veuillez contacter la Direction de la Pension Civile.';
+        }
+
+        if (! $this->isBookableDate($date)) {
+            return 'Cette date n’est pas ouvrée (week-end ou jour férié en Haïti).';
+        }
+
+        if (! $this->isAllowedTime($time)) {
+            return 'L’heure choisie est en dehors des créneaux autorisés.';
+        }
+
+        return 'Ce créneau n’est pas disponible pour le service « '
+            .$service->nom
+            .' ». Veuillez choisir un autre créneau.';
     }
 
     /**
@@ -628,11 +819,11 @@ class RencontreAvailabilityService
             return false;
         }
 
-        $weekday = (int) $day->dayOfWeekIso;
-
-        if ($weekday < 1 || $weekday > 5) {
+        if ($this->isWeekendBlocked($day)) {
             return false;
         }
+
+        $weekday = (int) $day->dayOfWeekIso;
 
         $pools = config(
             'rdv.rotation.weekday_agent_ids.'.$service->code
@@ -924,34 +1115,60 @@ class RencontreAvailabilityService
         $from ??= now()->startOfDay();
         $to ??= now()->copy()->addWeeks(8)->endOfDay();
 
-        if ($this->bookingAgents($service)->isEmpty()) {
-            return [];
+        $bookingAgents = $this->bookingAgents($service);
+
+        if ($bookingAgents->isEmpty()) {
+            return $this->allOpenSlotsMarkedUnavailable($from, $to);
         }
 
+        $agentIds = $bookingAgents->pluck('id')->all();
+        $holidayDates = $this->holidayDateLookup($from, $to);
+        $rulesByAgent = RdvAgentAvailability::query()
+            ->whereIn('user_id', $agentIds)
+            ->get()
+            ->groupBy('user_id');
+        $reservationIndex = $this->buildAgentReservationIndex(
+            $agentIds,
+            $from->toDateString(),
+            $to->toDateString()
+        );
+
+        $allowedTimes = $this->allowedTimes();
+        $dailyCapacity = $this->dailyCapacity();
         $unavailable = [];
         $cursor = $from->copy();
 
         while ($cursor->lte($to)) {
             $dateStr = $cursor->toDateString();
 
-            if (!$this->isBookableDate($dateStr)) {
+            if (!$this->isBookableDateForLookup($dateStr, $holidayDates)) {
                 $cursor->addDay();
 
                 continue;
             }
 
-            $agents = $this->agentsForAssignment($service, $dateStr);
+            $agents = $bookingAgents
+                ->filter(
+                    fn (User $agent) => $this->agentInRotationPool(
+                        $agent,
+                        $service,
+                        $dateStr
+                    )
+                )
+                ->values();
 
-            foreach ($this->allowedTimes() as $time) {
+            foreach ($allowedTimes as $time) {
                 $hasAgent = false;
 
                 foreach ($agents as $agent) {
-                    if ($this->agentCanTakeSlot(
+                    if ($this->agentCanTakeSlotUsingIndex(
                         $agent,
                         $dateStr,
                         $time,
-                        null,
-                        $service
+                        $service,
+                        $rulesByAgent->get($agent->id, collect()),
+                        $reservationIndex,
+                        $dailyCapacity
                     )) {
                         $hasAgent = true;
                         break;
@@ -959,6 +1176,194 @@ class RencontreAvailabilityService
                 }
 
                 if (!$hasAgent) {
+                    $unavailable[] = $dateStr.' '.$time;
+                }
+            }
+
+            $cursor->addDay();
+        }
+
+        return $unavailable;
+    }
+
+    /**
+     * @return array<string, true>
+     */
+    private function holidayDateLookup(Carbon $from, Carbon $to): array
+    {
+        $dates = Holiday::query()
+            ->haiti()
+            ->whereBetween('date', [
+                $from->toDateString(),
+                $to->toDateString(),
+            ])
+            ->pluck('date');
+
+        $lookup = [];
+
+        foreach ($dates as $date) {
+            $lookup[Carbon::parse($date)->toDateString()] = true;
+        }
+
+        return $lookup;
+    }
+
+    private function isBookableDateForLookup(
+        string $date,
+        array $holidayDates
+    ): bool {
+        try {
+            $day = Carbon::parse($date)->startOfDay();
+        } catch (\Throwable) {
+            return false;
+        }
+
+        if ($this->isWeekendBlocked($day)) {
+            return false;
+        }
+
+        if (isset($holidayDates[$day->toDateString()])) {
+            return false;
+        }
+
+        return ! $day->isPast() || $day->isToday();
+    }
+
+    /**
+     * @param  array<int>  $agentIds
+     * @return array{
+     *     takenSlots: array<string, true>,
+     *     dailyCounts: array<string, int>
+     * }
+     */
+    private function buildAgentReservationIndex(
+        array $agentIds,
+        string $fromDate,
+        string $toDate
+    ): array {
+        $takenSlots = [];
+        $dailyCounts = [];
+
+        if ($agentIds === []) {
+            return [
+                'takenSlots' => $takenSlots,
+                'dailyCounts' => $dailyCounts,
+            ];
+        }
+
+        $demandes = Demande::query()
+            ->where('type', TypeDemandeEnum::DEMANDE_RENCONTRE->value)
+            ->whereBetween('data->date_souhaitee', [$fromDate, $toDate])
+            ->whereIn('data->agent_id', $agentIds)
+            ->get();
+
+        foreach ($demandes as $demande) {
+            if (! $demande->rencontreStatut()->reservesSlot()) {
+                continue;
+            }
+
+            $data = $demande->data ?? [];
+            $agentId = (int) ($data['agent_id'] ?? 0);
+            $date = $data['date_souhaitee'] ?? null;
+            $time = Demande::normalizeRencontreTime($data['heure_souhaitee'] ?? null);
+
+            if ($agentId <= 0 || ! $date || ! $time) {
+                continue;
+            }
+
+            $takenSlots[$this->reservationSlotKey($agentId, $date, $time)] = true;
+
+            $dayKey = $this->reservationDayKey($agentId, $date);
+            $dailyCounts[$dayKey] = ($dailyCounts[$dayKey] ?? 0) + 1;
+        }
+
+        return [
+            'takenSlots' => $takenSlots,
+            'dailyCounts' => $dailyCounts,
+        ];
+    }
+
+    private function reservationSlotKey(
+        int $agentId,
+        string $date,
+        string $time
+    ): string {
+        return $agentId.'|'.$date.'|'.$time;
+    }
+
+    private function reservationDayKey(int $agentId, string $date): string
+    {
+        return $agentId.'|'.$date;
+    }
+
+    /**
+     * @param  array{takenSlots: array<string, true>, dailyCounts: array<string, int>}  $reservationIndex
+     * @param  Collection<int, RdvAgentAvailability>  $agentRules
+     */
+    private function agentCanTakeSlotUsingIndex(
+        User $agent,
+        string $date,
+        string $time,
+        Service $service,
+        Collection $agentRules,
+        array $reservationIndex,
+        int $dailyCapacity
+    ): bool {
+        if (! $this->isBookingAgent($agent, $service)) {
+            return false;
+        }
+
+        if (! $this->isAllowedTime($time)) {
+            return false;
+        }
+
+        if (! $this->agentInRotationPool($agent, $service, $date)) {
+            return false;
+        }
+
+        if (! $this->agentIsAvailableAt($agent, $date, $time, $agentRules)) {
+            return false;
+        }
+
+        $normalized = Demande::normalizeRencontreTime($time);
+
+        if (! $normalized) {
+            return false;
+        }
+
+        $slotKey = $this->reservationSlotKey($agent->id, $date, $normalized);
+
+        if (isset($reservationIndex['takenSlots'][$slotKey])) {
+            return false;
+        }
+
+        $dayKey = $this->reservationDayKey($agent->id, $date);
+        $dailyCount = $reservationIndex['dailyCounts'][$dayKey] ?? 0;
+
+        if ($dailyCount >= $dailyCapacity) {
+            return false;
+        }
+
+        return true;
+    }
+
+    /**
+     * Tous les créneaux ouvrés sur la plage (aucun agent → tout bloquer côté calendrier).
+     *
+     * @return array<int, string>
+     */
+    private function allOpenSlotsMarkedUnavailable(
+        Carbon $from,
+        Carbon $to
+    ): array {
+        $unavailable = [];
+        $cursor = $from->copy();
+
+        while ($cursor->lte($to)) {
+            $dateStr = $cursor->toDateString();
+
+            if ($this->isBookableDate($dateStr)) {
+                foreach ($this->allowedTimes() as $time) {
                     $unavailable[] = $dateStr.' '.$time;
                 }
             }

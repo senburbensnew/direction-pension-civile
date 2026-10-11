@@ -1,16 +1,25 @@
 <x-app-layout>
+    <x-slot name="header">
+        <div class="min-w-0">
+            <h2 class="font-semibold text-xl text-gray-800 leading-tight truncate">
+                Demande de compte
+            </h2>
+            <p class="text-sm text-gray-500 mt-0.5 hidden sm:block truncate">
+                {{ $demande->libellePublic() }}
+            </p>
+        </div>
+    </x-slot>
 
-<div class="max-w-6xl mx-auto px-4 py-8">
-    <nav class="flex items-center gap-1.5 text-xs text-gray-400 mb-4" aria-label="Fil d'Ariane">
-        <a href="{{ route('personal.cart') }}" class="hover:text-gray-600 transition-colors">Corbeille</a>
-        <svg class="w-3 h-3 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
-        <a href="{{ route($routePrefix ?? 'formalites').'.comptes-demandes.index' }}" class="hover:text-gray-600 transition-colors">Création de compte</a>
-        <svg class="w-3 h-3 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
-        <span class="text-gray-600 font-medium truncate" aria-current="page">{{ $demande->code ?? $demande->libellePublic() }}</span>
-    </nav>
+    <div class="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8 space-y-6">
+        <nav class="text-sm text-gray-500 flex flex-wrap items-center gap-x-2 gap-y-1" aria-label="Fil d'Ariane">
+            <a href="{{ route('personal.cart') }}" class="hover:text-[#173052] transition-colors">Corbeille</a>
+            <span class="text-gray-300" aria-hidden="true">/</span>
+            <a href="{{ route($routePrefix ?? 'formalites').'.comptes-demandes.index' }}"
+               class="hover:text-[#173052] transition-colors">Création de compte</a>
+            <span class="text-gray-300" aria-hidden="true">/</span>
+            <span class="text-gray-700 font-medium truncate">{{ $demande->code ?? $demande->libellePublic() }}</span>
+        </nav>
 
-    <div class="space-y-6">
         @include('comptes-demandes._detail')
     </div>
-</div>
 </x-app-layout>

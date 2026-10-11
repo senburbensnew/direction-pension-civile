@@ -48,6 +48,10 @@ function isWeekend(date) {
     return day === 0 || day === 6;
 }
 
+function isBlockedWeekend(date, allowWeekends) {
+    return !allowWeekends && isWeekend(date);
+}
+
 function readHolidays(el) {
     try {
         const raw = JSON.parse(el.dataset.holidays || '[]');
@@ -324,10 +328,16 @@ export function initAgentAvailabilityCalendar() {
     const slotMinutes = Number(el.dataset.slotMinutes || 15);
     const minTime = el.dataset.minTime || '14:00:00';
     const maxTime = el.dataset.maxTime || '16:00:00';
+    const allowWeekends = el.dataset.allowWeekends === '1';
     const displayMinTime = el.dataset.displayMinTime || '08:00:00';
-    const displayMaxTime = el.dataset.displayMaxTime || '16:00:00';
+    const displayMaxTime = el.dataset.displayMaxTime || '18:00:00';
     const maxDateStr = el.dataset.maxDate || null;
     const holidays = readHolidays(el);
+
+    const bookingMinTime = minTime;
+    const bookingMaxTime = maxTime === '24:00' || maxTime === '24:00:00'
+        ? '24:00:00'
+        : maxTime;
 
     const toSlotTime = (value) =>
         (value.length === 5 ? `${value}:00` : value);
@@ -337,8 +347,8 @@ export function initAgentAvailabilityCalendar() {
     const isWithinWindow = (start, end) => {
         const startMin = start.getHours() * 60 + start.getMinutes();
         const endMin = end.getHours() * 60 + end.getMinutes();
-        const windowStart = parseTimeToMinutes(minTime);
-        const windowEnd = parseTimeToMinutes(maxTime);
+        const windowStart = parseTimeToMinutes(bookingMinTime);
+        const windowEnd = parseTimeToMinutes(bookingMaxTime);
 
         return startMin >= windowStart && endMin <= windowEnd;
     };
@@ -385,7 +395,7 @@ export function initAgentAvailabilityCalendar() {
     };
 
     const canPlaceSlot = (start, end) => {
-        if (isWeekend(start) || isHoliday(start)) {
+        if (isBlockedWeekend(start, allowWeekends) || isHoliday(start)) {
             setHint('Créneau non autorisé (week-end ou jour férié).', true);
 
             return false;
@@ -399,7 +409,7 @@ export function initAgentAvailabilityCalendar() {
 
         if (!isWithinWindow(start, end)) {
             setHint(
-                `Hors plage autorisée (${minTime.slice(0, 5)}–${maxTime.slice(0, 5)}).`,
+                `Hors plage autorisée (${bookingMinTime.slice(0, 5)}–${bookingMaxTime.slice(0, 5)}).`,
                 true
             );
 
@@ -587,7 +597,7 @@ export function initAgentAvailabilityCalendar() {
         expandRows: true,
         allDaySlot: true,
         nowIndicator: true,
-        weekends: true,
+        weekends: allowWeekends,
         scrollTime: toSlotTime(displayMinTime),
         scrollTimeReset: false,
         selectable: true,
@@ -634,16 +644,18 @@ export function initAgentAvailabilityCalendar() {
         },
         businessHours: [
             {
-                daysOfWeek: [1, 2, 3, 4, 5],
-                startTime: minTime.slice(0, 5),
-                endTime: maxTime.slice(0, 5),
+                daysOfWeek: allowWeekends
+                    ? [0, 1, 2, 3, 4, 5, 6]
+                    : [1, 2, 3, 4, 5],
+                startTime: bookingMinTime.slice(0, 5),
+                endTime: bookingMaxTime.slice(0, 5),
             },
         ],
         selectConstraint: 'businessHours',
         selectAllow: (selection) => {
             const { start, end } = selection;
 
-            if (isWeekend(start) || isHoliday(start)) {
+            if (isBlockedWeekend(start, allowWeekends) || isHoliday(start)) {
                 return false;
             }
 

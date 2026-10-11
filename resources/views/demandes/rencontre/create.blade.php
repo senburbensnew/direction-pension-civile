@@ -1,8 +1,10 @@
-@extends('layouts.main')
+<x-app-layout>
+    <x-slot name="header">
+        <h2 class="font-semibold text-xl text-gray-800 leading-tight">
+            Demande de rendez-vous
+        </h2>
+    </x-slot>
 
-@section('title', 'Demande de rendez-vous')
-
-@section('content')
     <style>
         [x-cloak] {
             display: none !important;
@@ -16,6 +18,18 @@
         .rdv-mode.is-active {
             border-color: #173052;
             background: #f4f6f9;
+        }
+
+        .rdv-step-dot {
+            width: 1.75rem;
+            height: 1.75rem;
+            border-radius: 9999px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.75rem;
+            font-weight: 700;
+            flex-shrink: 0;
         }
     </style>
 
@@ -56,26 +70,20 @@
 
     <div class="py-10 px-4 sm:px-6 lg:px-8">
 
-        <div class="max-w-7xl mx-auto space-y-8">
+        <div class="max-w-6xl mx-auto space-y-8">
 
             {{-- =====================================================
                 TITRE
             ====================================================== --}}
 
             <div class="text-center">
-
-                <span class="text-xs font-bold text-orange-500 uppercase tracking-widest">
-                    Communications
-                </span>
-
-                <h1 class="text-4xl font-bold text-navy mt-2 mb-3">
+                <h1 class="text-3xl sm:text-4xl font-bold text-navy mt-2 mb-3">
                     Demande de rendez-vous
                 </h1>
 
-                <p class="text-gray-600 max-w-2xl mx-auto">
-                    Ministère de l’Économie et des Finances — Direction de la Pension Civile.
+                <p class="text-sm text-gray-500 max-w-xl mx-auto mt-2">
+                    Quatre étapes : mode → motif et créneau → pièces → confirmation.
                 </p>
-
             </div>
 
 
@@ -108,27 +116,16 @@
 
 
             {{-- =====================================================
-                MESSAGE SUCCÈS
+                MESSAGE SUCCÈS + RÉCAP (affichés dans le conteneur centré)
             ====================================================== --}}
 
-            @if(session('success'))
-
-                <section class="bg-white border border-gray-200 card-shadow p-6 sm:p-8">
-
-                    <div class="flex items-start gap-3 text-green-800">
-
-                        <i class="fa-solid fa-check-circle text-green-500 mt-0.5 shrink-0"></i>
-
-                        <p class="text-base">
-                            {{ session('success') }}
-                        </p>
-
-                    </div>
-
-                </section>
-
+            @if(session('rdv_recap'))
                 @include('demandes.rencontre._success-recap')
-
+            @elseif(session('success'))
+                <div class="flex items-start gap-3 rounded-lg border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-800">
+                    <i class="fa-solid fa-check-circle text-green-500 mt-0.5 shrink-0"></i>
+                    <p>{{ session('success') }}</p>
+                </div>
             @endif
 
 
@@ -311,6 +308,25 @@
 
             @else
 
+                @php
+                    $bookingAgentsReady = $bookingAgentsReadyByServiceCode ?? [];
+                    $motifCodesForCheck = array_values($motifServiceCodes ?? []);
+                    $missingAgentServices = collect($motifCodesForCheck)
+                        ->filter(fn ($code) => array_key_exists($code, $bookingAgentsReady) && ! $bookingAgentsReady[$code])
+                        ->unique()
+                        ->values();
+                @endphp
+
+                @if($missingAgentServices->isNotEmpty())
+                    <div class="rounded-lg border border-amber-300 bg-amber-50 px-4 py-3 text-sm text-amber-950">
+                        <p class="font-semibold">Prise de rendez-vous temporairement indisponible</p>
+                        <p class="mt-1">
+                            Aucun agent n’est configuré pour recevoir des rendez-vous en ligne sur le service
+                            <strong>Accueil et Formalités</strong>.
+                        </p>
+                    </div>
+                @endif
+
                 {{-- =================================================
                     FORMULAIRE
                 ================================================== --}}
@@ -361,6 +377,35 @@
 
                     @csrf
 
+                    <nav class="mb-6 rounded-xl border border-gray-200 bg-white px-4 py-3 shadow-sm" aria-label="Étapes du formulaire">
+                        <ol class="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between text-sm">
+                            <li class="flex items-center gap-2 min-w-0">
+                                <span
+                                    class="rdv-step-dot"
+                                    :class="modalite ? 'bg-navy text-white' : 'bg-gray-200 text-gray-600'"
+                                >1</span>
+                                <span :class="modalite ? 'font-semibold text-navy' : 'text-gray-500'">Mode</span>
+                            </li>
+                            <li class="flex items-center gap-2 min-w-0">
+                                <span
+                                    class="rdv-step-dot"
+                                    :class="motif && dateSouhaitee && heureSouhaitee ? 'bg-navy text-white' : (modalite ? 'bg-orange-100 text-orange-800' : 'bg-gray-200 text-gray-600')"
+                                >2</span>
+                                <span :class="modalite ? 'text-gray-800' : 'text-gray-500'">Motif et créneau</span>
+                            </li>
+                            <li class="flex items-center gap-2 min-w-0">
+                                <span class="rdv-step-dot bg-gray-200 text-gray-600">3</span>
+                                <span class="text-gray-500">Pièces jointes</span>
+                            </li>
+                            <li class="flex items-center gap-2 min-w-0">
+                                <span
+                                    class="rdv-step-dot"
+                                    :class="accepte ? 'bg-navy text-white' : 'bg-gray-200 text-gray-600'"
+                                >4</span>
+                                <span class="text-gray-500">Confirmation</span>
+                            </li>
+                        </ol>
+                    </nav>
 
                     {{-- =================================================
                         MODE DE RENDEZ-VOUS
@@ -491,7 +536,7 @@
                         x-show="modalite"
                         x-cloak
                         class="dpc-accordion bg-white border border-gray-200 card-shadow"
-                        @if($detailsHasError) open @endif
+                        open
                         @toggle="if ($el.open) window.dispatchEvent(new Event('resize'))"
                     >
 
@@ -600,16 +645,13 @@
 
                             </p>
 
-                            @include('demandes.rencontre._documents-a-preparer')
-
-                            @include('demandes.rencontre._documents')
-
+                            @include('demandes.rencontre._scheduler')
 
                             {{-- LIEU --}}
 
                             <div
                                 x-show="modalite === 'physique'"
-                                class="mb-5"
+                                class="mb-5 mt-6 pt-6 border-t border-gray-100"
                             >
 
                                 <label
@@ -666,17 +708,16 @@
 
                             </div>
 
-
-                            {{-- SCHEDULER --}}
-
-                            @include('demandes.rencontre._scheduler')
-
+                            <div class="mt-6 pt-6 border-t border-gray-100 space-y-5">
+                                @include('demandes.rencontre._documents-a-preparer')
+                                @include('demandes.rencontre._documents')
+                            </div>
 
                             {{-- VISIO --}}
 
                             <div
                                 x-show="modalite === 'visio'"
-                                class="mb-5 rounded-xl border border-navy/10 bg-slate-50 p-4"
+                                class="mb-5 mt-6 rounded-xl border border-navy/10 bg-slate-50 p-4"
                             >
 
                                 <p class="text-base font-medium text-navy">
@@ -719,16 +760,32 @@
                     <div
                         x-show="modalite"
                         x-cloak
-                        class="flex justify-end"
+                        class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 pt-2"
                     >
+
+                        <p
+                            x-show="!accepte"
+                            x-cloak
+                            class="text-sm text-gray-500"
+                        >
+                            Cochez la confirmation dans l’étape 4 pour activer l’envoi.
+                        </p>
+                        <p
+                            x-show="accepte && (!dateSouhaitee || !heureSouhaitee)"
+                            x-cloak
+                            class="text-sm text-amber-800"
+                        >
+                            Sélectionnez un créneau dans l’agenda avant de confirmer.
+                        </p>
+                        <p x-show="accepte && dateSouhaitee && heureSouhaitee" class="hidden sm:block sm:flex-1" aria-hidden="true"></p>
 
                         <button
                             type="submit"
 
                             {{-- Désactivation pendant l'envoi --}}
-                            :disabled="!accepte || submitting"
+                            :disabled="!accepte || submitting || !dateSouhaitee || !heureSouhaitee"
 
-                            class="inline-flex items-center justify-center gap-2 px-8 py-3 bg-navy text-white font-semibold hover:opacity-90 transition disabled:opacity-40 disabled:cursor-not-allowed min-w-[150px]"
+                            class="inline-flex items-center justify-center gap-2 px-8 py-3 bg-navy text-white font-semibold rounded-lg hover:opacity-90 transition disabled:opacity-40 disabled:cursor-not-allowed min-w-[150px] sm:ml-auto"
                         >
 
                             {{-- État normal --}}
@@ -850,16 +907,26 @@
                         !this.dateSouhaitee ||
                         !this.heureSouhaitee
                     ) {
-
                         return 'Aucun créneau sélectionné';
-
                     }
 
-                    return (
-                        this.dateSouhaitee
-                        + ' à '
-                        + this.heureSouhaitee
+                    const parsed = new Date(
+                        `${this.dateSouhaitee}T${this.heureSouhaitee}:00`
                     );
+
+                    if (Number.isNaN(parsed.getTime())) {
+                        return `${this.dateSouhaitee} à ${this.heureSouhaitee}`;
+                    }
+
+                    return new Intl.DateTimeFormat('fr-FR', {
+                        weekday: 'long',
+                        day: 'numeric',
+                        month: 'long',
+                        year: 'numeric',
+                        hour: '2-digit',
+                        minute: '2-digit',
+                        hour12: false,
+                    }).format(parsed);
                 },
 
                 recapLieuOuLien() {
@@ -907,4 +974,4 @@
             <x-rencontre-visio-auto-refresh :token="$rdvActif->visio_token" />
         @endif
     @endif
-@endsection
+</x-app-layout>

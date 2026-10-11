@@ -91,11 +91,11 @@
 @endphp
 
 <header class="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden mb-6">
-    <div class="h-1 w-full bg-gradient-to-r from-indigo-600 via-violet-500 to-purple-500"></div>
+    <div class="h-1 w-full bg-gradient-to-r from-[#173052] via-[#1e3d6b] to-[#2a5085]"></div>
     <div class="px-5 py-5 sm:px-6 flex flex-wrap items-start justify-between gap-4">
         <div class="flex items-start gap-4 min-w-0">
-            <div class="w-12 h-12 rounded-xl bg-indigo-50 border border-indigo-100 flex items-center justify-center shrink-0">
-                <svg class="w-6 h-6 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <div class="w-12 h-12 rounded-xl bg-sky-50 border border-sky-200 flex items-center justify-center shrink-0">
+                <svg class="w-6 h-6 text-[#173052]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
                           d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"/>
                 </svg>
@@ -138,7 +138,7 @@
                     <li @class([
                         'inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full ring-1',
                         'bg-green-50 text-green-800 ring-green-200' => $step['state'] === 'done',
-                        'bg-indigo-50 text-indigo-800 ring-indigo-200' => $step['state'] === 'current',
+                        'bg-sky-50 text-[#173052] ring-sky-200' => $step['state'] === 'current',
                         'bg-white text-gray-400 ring-gray-200' => $step['state'] === 'muted',
                     ])>
                         @if($step['state'] === 'done')
@@ -171,7 +171,7 @@
     <a href="#dcc-identite" class="px-2.5 py-1 rounded-lg bg-white border border-gray-200 text-gray-700">Identité</a>
     <a href="#dcc-pieces" class="px-2.5 py-1 rounded-lg bg-white border border-gray-200 text-gray-700">Pièces</a>
     @if($demande->isPending())
-        <a href="#dcc-decision" class="px-2.5 py-1 rounded-lg bg-indigo-50 border border-indigo-200 text-indigo-800">Décision</a>
+        <a href="#dcc-decision" class="px-2.5 py-1 rounded-lg bg-sky-50 border border-sky-200 text-[#173052]">Décision</a>
     @endif
     <a href="#dcc-journal" class="px-2.5 py-1 rounded-lg bg-white border border-gray-200 text-gray-700">Journal</a>
 </nav>
@@ -184,8 +184,8 @@
         $rdvData = $rdvDecisionCompte->data ?? [];
         $rdvStatutCompte = $rdvDecisionCompte->rencontreStatut();
     @endphp
-    <section class="bg-white border border-indigo-200 rounded-2xl p-5 space-y-3 shadow-sm">
-        <h2 class="text-sm font-bold text-indigo-900">Rendez-vous Formalités lié</h2>
+    <section class="bg-white border border-sky-200 rounded-2xl p-5 space-y-3 shadow-sm">
+        <h2 class="text-sm font-bold text-[#173052]">Rendez-vous Formalités lié</h2>
         @include('demandes.rencontre._workflow-banner', [
             'demande' => $rdvDecisionCompte,
             'rdvStatut' => $rdvStatutCompte,
@@ -233,7 +233,7 @@
                     <p class="text-xs text-amber-700 mt-2">Dossier pensionné mineur — lien : {{ $demande->representant_lien ?: '—' }}</p>
                 @endif
                 @if($demande->is_mandataire ?? false)
-                    <p class="text-xs text-indigo-700 mt-2">Ouverture de compte mandataire — code pension : {{ $demande->pension_code ?: '—' }}</p>
+                    <p class="text-xs text-[#173052]/80 mt-2">Ouverture de compte mandataire — code pension : {{ $demande->pension_code ?: '—' }}</p>
                 @endif
             </div>
             <div class="text-sm text-gray-600">
@@ -468,12 +468,12 @@
     <div class="hidden lg:block bg-white border border-gray-200 rounded-2xl p-4 shadow-sm">
         <p class="text-xs font-bold uppercase tracking-wide text-gray-500 mb-2">Aller à</p>
         <ul class="space-y-1 text-sm font-medium">
-            <li><a href="#dcc-identite" class="text-indigo-700 hover:underline">Identité</a></li>
-            <li><a href="#dcc-pieces" class="text-indigo-700 hover:underline">Pièces & OCR</a></li>
+            <li><a href="#dcc-identite" class="text-[#173052] hover:underline">Identité</a></li>
+            <li><a href="#dcc-pieces" class="text-[#173052] hover:underline">Pièces & OCR</a></li>
             @if($demande->isPending())
-                <li><a href="#dcc-decision" class="text-indigo-700 hover:underline">Décision</a></li>
+                <li><a href="#dcc-decision" class="text-[#173052] hover:underline">Décision</a></li>
             @endif
-            <li><a href="#dcc-journal" class="text-indigo-700 hover:underline">Journal</a></li>
+            <li><a href="#dcc-journal" class="text-[#173052] hover:underline">Journal</a></li>
         </ul>
     </div>
 

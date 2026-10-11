@@ -191,10 +191,11 @@
                     data-slot-minutes="{{ $slotMinutes }}"
                     data-min-time="{{ $globalStart }}"
                     data-max-time="{{ $globalEnd }}"
-                    data-display-min-time="08:00"
-                    data-display-max-time="18:00"
                     data-max-date="{{ $maxDate }}"
                     data-holidays='@json($holidayEvents ?? [])'
+                    data-allow-weekends="{{ ($allowWeekends ?? false) ? '1' : '0' }}"
+                    data-display-min-time="{{ $calendarDisplay['display_start'] ?? '08:00' }}"
+                    data-display-max-time="{{ $calendarDisplay['display_end'] ?? '18:00' }}"
                 ></div>
             </section>
 
@@ -203,7 +204,7 @@
                 <div>
                     <h2 class="text-lg font-semibold text-gray-900">Horaires récurrents</h2>
                     <p class="text-sm text-gray-600 mt-1">
-                        Plages qui s’appliquent chaque semaine (lundi–vendredi), sauf si une date précise ou une indisponibilité prime ce jour-là.
+                        Plages qui s’appliquent chaque semaine ({{ $bookingDaysLabel ?? 'du lundi au vendredi' }}), sauf si une date précise ou une indisponibilité prime ce jour-là.
                     </p>
                 </div>
 

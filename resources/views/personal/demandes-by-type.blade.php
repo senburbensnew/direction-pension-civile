@@ -8,7 +8,9 @@
     <div class="py-12">
         <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
             <nav class="text-sm text-gray-500 flex items-center mb-5">
-                <a href="{{ route('personal.dashboard') }}" class="hover:underline">Dashboard</a>
+                <a href="{{ route('personal.index') }}" class="hover:underline">Tableau de bord</a>
+                <span class="mx-2">/</span>
+                <a href="{{ route('personal.dashboard') }}" class="hover:underline">Mes demandes</a>
                 <span class="mx-2">/</span>
                 <span class="text-gray-700 font-semibold">{{ $type }}</span>
             </nav>
@@ -84,7 +86,7 @@
                     </table>
 
                     <!-- Show pagination only if there are results -->
-                    @if ($requests->isNotEmpty())
+                    @if ($requests instanceof \Illuminate\Contracts\Pagination\Paginator && $requests->hasPages())
                         <div class="mt-4">
                             {{ $requests->links() }}
                         </div>

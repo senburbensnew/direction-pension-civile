@@ -1,6 +1,12 @@
 <?php
 
 return [
+    /*
+    | Week-end et plage horaire : table parameters
+    | (rdv_allow_weekends, rdv_booking_start, rdv_booking_end) — réglables dans l’admin.
+    | Les valeurs ci-dessous servent de repli si les paramètres sont absents.
+    */
+
     'slot_minutes' => 15,
 
     'start' => '14:00',

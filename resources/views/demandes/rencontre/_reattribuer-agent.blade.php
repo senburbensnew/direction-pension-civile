@@ -1,14 +1,32 @@
 @if(($canReassignAgent ?? false) && ($rdvPending ?? true))
-    <div class="border-t border-gray-100 pt-5 mb-5">
-        <details class="group">
-            <summary class="cursor-pointer inline-flex items-center gap-2 text-sm font-semibold text-navy hover:text-navy/80">
-                <i class="fa-solid fa-user-pen"></i>
-                Réattribuer à un autre agent
-            </summary>
+    @php
+        $reattribuerAction = $reattribuerRoute
+            ?? route('demandes.rencontre.reattribuer', $demande);
+        $standalone = (bool) ($reassignStandalone ?? false);
+    @endphp
+    <div @class([
+        'border-t border-gray-100 pt-5 mb-5' => ! $standalone,
+        'space-y-3' => $standalone,
+    ])>
+        @if($standalone)
+            <p class="text-sm font-semibold text-navy">
+                <i class="fa-solid fa-user-pen mr-1"></i>
+                Choisir un nouvel agent
+            </p>
+        @else
+            <details class="group">
+                <summary class="cursor-pointer inline-flex items-center gap-2 text-sm font-semibold text-navy hover:text-navy/80">
+                    <i class="fa-solid fa-user-pen"></i>
+                    Réattribuer à un autre agent
+                </summary>
+        @endif
             <form
                 method="POST"
-                action="{{ route('demandes.rencontre.reattribuer', $demande) }}"
-                class="mt-3 flex flex-wrap items-end gap-3 bg-slate-50 border border-gray-200 rounded-lg p-4"
+                action="{{ $reattribuerAction }}"
+                @class([
+                    'mt-3 flex flex-wrap items-end gap-3 bg-slate-50 border border-gray-200 rounded-lg p-4',
+                    'mt-0' => $standalone,
+                ])
                 onsubmit="return confirm('Confirmer la réattribution de ce rendez-vous ?');"
             >
                 @csrf
@@ -46,6 +64,8 @@
             <p class="text-xs text-gray-500 mt-2">
                 Seuls les agents éligibles ce jour-là (rotation, disponibilités déclarées, charge journalière et fériés) sont proposés. Le créneau date/heure reste inchangé.
             </p>
-        </details>
+        @if(! $standalone)
+            </details>
+        @endif
     </div>
 @endif

@@ -127,4 +127,12 @@ return [
         'responsable_service_accueil_formalites',
     ],
 
+    /*
+    | Pilotage RDV : consulter, réattribuer l’agent et annuler le rendez-vous
+    | (sans valider, clôturer, réorienter, etc.).
+    */
+    'pilotage_reassign_only_roles' => [
+        'responsable_service_accueil_formalites',
+    ],
+
 ];

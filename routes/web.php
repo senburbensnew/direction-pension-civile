@@ -2095,6 +2095,16 @@ Route::prefix('admin')
             [ContactParameterController::class, 'update']
         )->name('contact-parameters.update');
 
+        Route::get(
+            'rdv-settings',
+            [\App\Http\Controllers\Admin\RdvSettingsController::class, 'index']
+        )->name('rdv-settings.index');
+
+        Route::put(
+            'rdv-settings',
+            [\App\Http\Controllers\Admin\RdvSettingsController::class, 'update']
+        )->name('rdv-settings.update');
+
         Route::post(
             'contact-subjects',
             [ContactSubjectController::class, 'store']

@@ -15,12 +15,18 @@ use App\Models\User;
 use App\Models\WorkflowStep;
 use App\Notifications\DemandeComplementSoumisNotification;
 use App\Services\DemandeWorkflowService;
+use App\Services\PersonalDemandeCatalog;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
 class PersonalController extends Controller
 {
+    public function __construct(
+        private PersonalDemandeCatalog $demandeCatalog,
+    ) {
+    }
+
     /**
      * Résout l'ID du service de l'utilisateur connecté.
      * Si service_id n'est pas défini, fait un fallback par rôle.
@@ -55,246 +61,46 @@ class PersonalController extends Controller
 
     public function index()
     {
-        return redirect()->route('personal.dashboard');
+        return view('personal.overview', [
+            'stats' => $this->demandeCatalog->statsCardsForUser(),
+        ]);
     }
 
     public function dashboard(Request $request)
     {
-        $query = Demande::where('created_by', auth()->id());
+        $demandes = Demande::where('created_by', auth()->id())
+            ->with('currentStep')
+            ->latest()
+            ->get();
 
-        if ($request->filled('status_id')) {
-            $query->where('current_step_id', $request->status_id);
-        }
+        // Filtres type / étape — désactivés pour le moment
+        // if ($request->filled('step_code')) { ... }
+        // if ($request->filled('type')) { ... }
+        // $statuses = WorkflowStep::query()...
+        // $typesDemandes = TypeDemande::orderBy('label')->get();
 
-        if ($request->filled('type')) {
-            $query->where('type', $request->type);
-        }
-
-        $demandes = $query->with('currentStep')->latest()->get();
-
-        $statuses = WorkflowStep::orderBy('nom')->get();
-        $typesDemandes = TypeDemande::orderBy('label')->get();
-
-        return view('personal.index2', compact(
-            'demandes',
-            'statuses',
-            'typesDemandes'
-        ));
+        return view('personal.mes-demandes', compact('demandes'));
     }
 
     public function requestsDashboard(Request $request)
     {
-        $requestType = $request['request_type'];
-        $requests = [];
-        $stats = [
-            'pending'     => 0,
-            'approved'    => 0,
-            'in_progress' => 0,
-            'rejected'    => 0,
-            'completed'   => 0,
-            'canceled'    => 0,
-        ];
-        $type = '';
+        $requestType = $request->query('request_type');
 
-        switch ($requestType) {
-            case 'bankTransferRequest':
-                $baseQuery = Demande::forUser()
-                    ->ofType(TypeDemandeEnum::DEMANDE_VIREMENT_BANCAIRE->value);
-
-                $requests = $baseQuery->latest()->paginate(10);
-
-                $stats = [
-                    'pending'     => (clone $baseQuery)->pending()->count(),
-                    'approved'    => (clone $baseQuery)->approved()->count(),
-                    'in_progress' => (clone $baseQuery)->inProgress()->count(),
-                    'rejected'    => (clone $baseQuery)->rejected()->count(),
-                    'canceled'    => (clone $baseQuery)->canceled()->count(),
-                    'completed'   => (clone $baseQuery)->completed()->count(),
-                ];
-                $type = 'Demande de virement';
-                break;
-            case 'certificateRequest':
-                $baseQuery = Demande::forUser()
-                    ->ofType(TypeDemandeEnum::DEMANDE_ATTESTATION->value);
-
-                $requests = $baseQuery->latest()->paginate(10);
-
-                $stats = [
-                    'pending'     => (clone $baseQuery)->pending()->count(),
-                    'approved'    => (clone $baseQuery)->approved()->count(),
-                    'in_progress' => (clone $baseQuery)->inProgress()->count(),
-                    'rejected'    => (clone $baseQuery)->rejected()->count(),
-                    'canceled'    => (clone $baseQuery)->canceled()->count(),
-                    'completed'   => (clone $baseQuery)->completed()->count(),
-                ];
-                $type = 'Demande d\'attestation';
-                break;
-            case 'checkTransferRequest':
-                $baseQuery = Demande::forUser()
-                    ->ofType(TypeDemandeEnum::DEMANDE_TRANSFERT_CHEQUE->value);
-
-                $requests = $baseQuery->latest()->paginate(10);
-
-                $stats = [
-                    'pending'     => (clone $baseQuery)->pending()->count(),
-                    'approved'    => (clone $baseQuery)->approved()->count(),
-                    'in_progress' => (clone $baseQuery)->inProgress()->count(),
-                    'rejected'    => (clone $baseQuery)->rejected()->count(),
-                    'canceled'    => (clone $baseQuery)->canceled()->count(),
-                    'completed'   => (clone $baseQuery)->completed()->count(),
-                ];
-                $type = 'Demande de transfert de chèques';
-                break;
-            case 'paymentStopRequest':
-                $baseQuery = Demande::forUser()
-                    ->ofType(TypeDemandeEnum::DEMANDE_ARRET_PAIEMENT->value);
-
-                $requests = $baseQuery->latest()->paginate(10);
-
-                $stats = [
-                    'pending'     => (clone $baseQuery)->pending()->count(),
-                    'approved'    => (clone $baseQuery)->approved()->count(),
-                    'in_progress' => (clone $baseQuery)->inProgress()->count(),
-                    'rejected'    => (clone $baseQuery)->rejected()->count(),
-                    'canceled'    => (clone $baseQuery)->canceled()->count(),
-                    'completed'   => (clone $baseQuery)->completed()->count(),
-                ];
-                $type = 'Demande d\'arrêt de paiement';
-                break;
-            case 'reinstateRequest':
-                $baseQuery = Demande::forUser()
-                    ->ofType(TypeDemandeEnum::DEMANDE_REINSERTION->value);
-
-                $requests = $baseQuery->latest()->paginate(10);
-
-                $stats = [
-                    'pending'     => (clone $baseQuery)->pending()->count(),
-                    'approved'    => (clone $baseQuery)->approved()->count(),
-                    'in_progress' => (clone $baseQuery)->inProgress()->count(),
-                    'rejected'    => (clone $baseQuery)->rejected()->count(),
-                    'canceled'    => (clone $baseQuery)->canceled()->count(),
-                    'completed'   => (clone $baseQuery)->completed()->count(),
-                ];
-                $type = 'Demande de réinsertion';
-                break;
-            case 'transferStopRequest':
-                $baseQuery = Demande::forUser()
-                    ->ofType(TypeDemandeEnum::DEMANDE_ARRET_VIREMENT->value);
-
-                $requests = $baseQuery->latest()->paginate(10);
-
-                $stats = [
-                    'pending'     => (clone $baseQuery)->pending()->count(),
-                    'approved'    => (clone $baseQuery)->approved()->count(),
-                    'in_progress' => (clone $baseQuery)->inProgress()->count(),
-                    'rejected'    => (clone $baseQuery)->rejected()->count(),
-                    'canceled'    => (clone $baseQuery)->canceled()->count(),
-                    'completed'   => (clone $baseQuery)->completed()->count(),
-                ];
-                $type = 'Demande d\'arrêt de virement';
-                break;
-            case 'existenceProofRequest':
-                $baseQuery = Demande::forUser()
-                    ->ofType(TypeDemandeEnum::DEMANDE_PREUVE_EXISTENCE->value);
-
-                $requests = $baseQuery->latest()->paginate(10);
-
-                $stats = [
-                    'pending'     => (clone $baseQuery)->pending()->count(),
-                    'approved'    => (clone $baseQuery)->approved()->count(),
-                    'in_progress' => (clone $baseQuery)->inProgress()->count(),
-                    'rejected'    => (clone $baseQuery)->rejected()->count(),
-                    'canceled'    => (clone $baseQuery)->canceled()->count(),
-                    'completed'   => (clone $baseQuery)->completed()->count(),
-                ];
-                $type = 'Preuve d\'existence';
-                break;
-            case 'informationUpdateRequest':
-                $baseQuery = Demande::forUser()
-                    ->ofType(TypeDemandeEnum::DEMANDE_MISE_A_JOUR->value);
-
-                $requests = $baseQuery->latest()->paginate(10);
-
-                $stats = [
-                    'pending'     => (clone $baseQuery)->pending()->count(),
-                    'approved'    => (clone $baseQuery)->approved()->count(),
-                    'in_progress' => (clone $baseQuery)->inProgress()->count(),
-                    'rejected'    => (clone $baseQuery)->rejected()->count(),
-                    'canceled'    => (clone $baseQuery)->canceled()->count(),
-                    'completed'   => (clone $baseQuery)->completed()->count(),
-                ];
-                $type = 'Mise à jour des informations';
-                break;
-            case 'reversionaryPensionRequest':
-                $baseQuery = Demande::forUser()
-                    ->ofType(TypeDemandeEnum::DEMANDE_PENSION_REVERSION->value);
-
-                $requests = $baseQuery->latest()->paginate(10);
-
-                $stats = [
-                    'pending'     => (clone $baseQuery)->pending()->count(),
-                    'approved'    => (clone $baseQuery)->approved()->count(),
-                    'in_progress' => (clone $baseQuery)->inProgress()->count(),
-                    'rejected'    => (clone $baseQuery)->rejected()->count(),
-                    'canceled'    => (clone $baseQuery)->canceled()->count(),
-                    'completed'   => (clone $baseQuery)->completed()->count(),
-                ];
-                $type = 'Demande de pension de réversion';
-                break;
-            case 'careerStateRequest':
-                $baseQuery = Demande::forUser()
-                    ->ofType(TypeDemandeEnum::DEMANDE_ETAT_CARRIERE->value);
-
-                $requests = $baseQuery->latest()->paginate(10);
-
-                $stats = [
-                    'pending'     => (clone $baseQuery)->pending()->count(),
-                    'approved'    => (clone $baseQuery)->approved()->count(),
-                    'in_progress' => (clone $baseQuery)->inProgress()->count(),
-                    'rejected'    => (clone $baseQuery)->rejected()->count(),
-                    'canceled'    => (clone $baseQuery)->canceled()->count(),
-                    'completed'   => (clone $baseQuery)->completed()->count(),
-                ];
-
-                $type = 'Demande d\'état de carrière';
-                break;
-            case 'pensionRequest':
-                $baseQuery = Demande::forUser()
-                    ->ofType(TypeDemandeEnum::DEMANDE_PENSION->value);
-
-                $requests = $baseQuery->latest()->paginate(10);
-
-                $stats = [
-                    'pending'     => (clone $baseQuery)->pending()->count(),
-                    'approved'    => (clone $baseQuery)->approved()->count(),
-                    'in_progress' => (clone $baseQuery)->inProgress()->count(),
-                    'rejected'    => (clone $baseQuery)->rejected()->count(),
-                    'canceled'    => (clone $baseQuery)->canceled()->count(),
-                    'completed'   => (clone $baseQuery)->completed()->count(),
-                ];
-
-                $type = 'Demande de pension';
-                break;
-            case 'adhesionRequest':
-                $baseQuery = Demande::forUser()
-                    ->ofType(TypeDemandeEnum::DEMANDE_ADHESION->value);
-
-                $requests = $baseQuery->latest()->paginate(10);
-
-                $stats = [
-                    'pending'     => (clone $baseQuery)->pending()->count(),
-                    'approved'    => (clone $baseQuery)->approved()->count(),
-                    'in_progress' => (clone $baseQuery)->inProgress()->count(),
-                    'rejected'    => (clone $baseQuery)->rejected()->count(),
-                    'canceled'    => (clone $baseQuery)->canceled()->count(),
-                    'completed'   => (clone $baseQuery)->completed()->count(),
-                ];
-
-                $type = 'Demande d\'adhésion';
-                break;
+        if (! is_string($requestType) || $requestType === '') {
+            return redirect()->route('personal.dashboard');
         }
 
-        return view('personal.requests', compact('requests', 'stats', 'requestType', 'type'));
+        $entry = $this->demandeCatalog->find($requestType);
+        if (! $entry) {
+            abort(404);
+        }
+
+        $baseQuery = Demande::forUser()->ofType($entry['enum']->value);
+        $requests = $baseQuery->latest()->paginate(10);
+        $stats = $this->demandeQueryStats($baseQuery);
+        $type = $entry['label'];
+
+        return view('personal.demandes-by-type', compact('requests', 'stats', 'requestType', 'type'));
     }
 
     public function showRequestForAuthenticatedUser(Request $request, int $id)
@@ -538,64 +344,7 @@ class PersonalController extends Controller
         $serviceId   = $this->resolveServiceId();
         $requestType = $request->input('request_type');
 
-        $map = [
-            'bankTransferRequest' => [
-                'enum' => TypeDemandeEnum::DEMANDE_VIREMENT_BANCAIRE,
-                'label' => 'Demande de virement',
-            ],
-            'certificateRequest' => [
-                'enum' => TypeDemandeEnum::DEMANDE_ATTESTATION,
-                'label' => 'Demande d\'attestation',
-            ],
-            'checkTransferRequest' => [
-                'enum' => TypeDemandeEnum::DEMANDE_TRANSFERT_CHEQUE,
-                'label' => 'Demande de transfert de chèques',
-            ],
-            'paymentStopRequest' => [
-                'enum' => TypeDemandeEnum::DEMANDE_ARRET_PAIEMENT,
-                'label' => 'Demande d\'arrêt de paiement',
-            ],
-            'reinstateRequest' => [
-                'enum' => TypeDemandeEnum::DEMANDE_REINSERTION,
-                'label' => 'Demande de réinsertion',
-            ],
-            'transferStopRequest' => [
-                'enum' => TypeDemandeEnum::DEMANDE_ARRET_VIREMENT,
-                'label' => 'Demande d\'arrêt de virement',
-            ],
-            'existenceProofRequest' => [
-                'enum' => TypeDemandeEnum::DEMANDE_PREUVE_EXISTENCE,
-                'label' => 'Preuve d\'existence',
-            ],
-            'informationUpdateRequest' => [
-                'enum' => TypeDemandeEnum::DEMANDE_MISE_A_JOUR,
-                'label' => 'Mise à jour des informations',
-            ],
-            'reversionaryPensionRequest' => [
-                'enum' => TypeDemandeEnum::DEMANDE_PENSION_REVERSION,
-                'label' => 'Demande de pension de réversion',
-            ],
-            'careerStateRequest' => [
-                'enum' => TypeDemandeEnum::DEMANDE_ETAT_CARRIERE,
-                'label' => 'Demande d\'état de carrière',
-            ],
-            'pensionRequest' => [
-                'enum' => TypeDemandeEnum::DEMANDE_PENSION,
-                'label' => 'Demande de pension',
-            ],
-            'adhesionRequest' => [
-                'enum' => TypeDemandeEnum::DEMANDE_ADHESION,
-                'label' => 'Demande d\'adhésion',
-            ],
-            'rencontreRequest' => [
-                'enum' => TypeDemandeEnum::DEMANDE_RENCONTRE,
-                'label' => 'Attribution de rendez-vous',
-            ],
-            'accountCreationRequest' => [
-                'enum' => TypeDemandeEnum::DEMANDE_CREATION_COMPTE,
-                'label' => 'Demande de création de compte',
-            ],
-        ];
+        $map = $this->demandeCatalog->corbeilleTypeMap();
 
         abort_unless(isset($map[$requestType]), 404);
 
@@ -606,15 +355,7 @@ class PersonalController extends Controller
 
         $requests = $baseQuery->latest()->paginate(10);
 
-        $stats = [
-            'pending'     => (clone $baseQuery)->pending()->count(),
-            'approved'    => (clone $baseQuery)->approved()->count(),
-            'in_progress' => (clone $baseQuery)->inProgress()->count(),
-            'rejected'    => (clone $baseQuery)->rejected()->count(),
-            'canceled'    => (clone $baseQuery)->canceled()->count(),
-            'completed'   => (clone $baseQuery)->completed()->count(),
-        ];
-
+        $stats = $this->demandeQueryStats($baseQuery);
         $type = $config['label'];
 
         return view('personal.dashboard-corbeille', compact(
@@ -912,5 +653,21 @@ class PersonalController extends Controller
         }
 
         return view('personal.dashboard-corbeille', compact('requests', 'type', 'folder', 'stats'));
+    }
+
+    /**
+     * @param  \Illuminate\Database\Eloquent\Builder<\App\Models\Demande>  $baseQuery
+     * @return array{pending: int, approved: int, in_progress: int, rejected: int, canceled: int, completed: int}
+     */
+    private function demandeQueryStats($baseQuery): array
+    {
+        return [
+            'pending'     => (clone $baseQuery)->pending()->count(),
+            'approved'    => (clone $baseQuery)->approved()->count(),
+            'in_progress' => (clone $baseQuery)->inProgress()->count(),
+            'rejected'    => (clone $baseQuery)->rejected()->count(),
+            'canceled'    => (clone $baseQuery)->canceled()->count(),
+            'completed'   => (clone $baseQuery)->completed()->count(),
+        ];
     }
 }

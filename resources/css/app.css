@@ -420,11 +420,7 @@ select option {
     height: 1.35rem;
 }
 
-.dpc-rdv-scheduler .fc-non-business,
-.dpc-rdv-scheduler .fc-timegrid-col.fc-day-sat,
-.dpc-rdv-scheduler .fc-timegrid-col.fc-day-sun,
-.dpc-rdv-scheduler .fc-daygrid-day.fc-day-sat .fc-daygrid-day-frame,
-.dpc-rdv-scheduler .fc-daygrid-day.fc-day-sun .fc-daygrid-day-frame {
+.dpc-rdv-scheduler .fc-non-business {
     background: repeating-linear-gradient(
         -45deg,
         #f3f4f6,
@@ -432,12 +428,44 @@ select option {
         #e5e7eb 6px,
         #e5e7eb 7px
     );
+    cursor: not-allowed;
 }
 
-.dpc-rdv-scheduler .fc-non-business,
-.dpc-rdv-scheduler .fc-timegrid-col.fc-day-sat,
-.dpc-rdv-scheduler .fc-timegrid-col.fc-day-sun {
-    cursor: not-allowed;
+.dpc-rdv-scheduler .fc-timegrid-col.fc-day-past .fc-timegrid-slot:not(.fc-non-business) {
+    opacity: 0.55;
+}
+
+.rdv-legend-swatch {
+    display: inline-block;
+    width: 1rem;
+    height: 1rem;
+    border-radius: 0.2rem;
+    flex-shrink: 0;
+    border: 1px solid #d1d5db;
+}
+
+.rdv-legend-available {
+    background: #fff;
+}
+
+.rdv-legend-muted {
+    background: repeating-linear-gradient(
+        -45deg,
+        #f3f4f6,
+        #f3f4f6 4px,
+        #e5e7eb 4px,
+        #e5e7eb 5px
+    );
+}
+
+.rdv-legend-past {
+    background: #e5e7eb;
+    opacity: 0.85;
+}
+
+.rdv-legend-reserved {
+    background: #9ca3af;
+    border-color: #6b7280;
 }
 
 .dpc-rdv-scheduler .fc-event {

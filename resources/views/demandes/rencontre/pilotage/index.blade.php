@@ -4,7 +4,13 @@
     <div class="flex items-center justify-between gap-4">
         <div>
             <h1 class="text-xl font-bold text-gray-800">Pilotage des rendez-vous</h1>
-            <p class="text-sm text-gray-500 mt-0.5">Consultation, acceptation, réorientation et historique — responsable de service.</p>
+            <p class="text-sm text-gray-500 mt-0.5">
+                @if($canResponsablePilotageActions ?? false)
+                    Consultation, réattribution à un autre agent et annulation des rendez-vous programmés.
+                @else
+                    Consultation, acceptation, réorientation et historique.
+                @endif
+            </p>
             <div class="mt-3 flex flex-wrap gap-2 text-xs">
                 <a href="{{ route('rencontres.pilotage.index', ['filtre' => 'programmes']) }}"
                    class="px-3 py-1 rounded-full {{ ($filtre ?? 'programmes') === 'programmes' ? 'bg-navy text-white' : 'bg-gray-100 text-gray-600' }}">Programmés</a>
@@ -39,7 +45,7 @@
                 @foreach($appelsVeille as $rdv)
                     @php $data = $rdv->data ?? []; @endphp
                     <li>
-                        {{ trim(($data['prenom'] ?? '').' '.($data['nom'] ?? '')) }}
+                        {{ $rdv->rencontreDemandeurNom() }}
                         · {{ $data['telephone'] ?? 'n° manquant' }}
                         · demain {{ $data['heure_souhaitee'] ?? '' }}
                     </li>
@@ -49,18 +55,18 @@
     @endif
 
     <div class="bg-white rounded-xl border border-gray-200 shadow-sm overflow-x-auto">
-        <table class="w-full text-sm">
+        <table class="w-full min-w-[56rem] text-sm table-fixed sm:table-auto">
             <thead class="bg-gray-50 border-b border-gray-100">
                 <tr>
-                    <th class="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">Déposé le</th>
-                    <th class="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">Demandeur</th>
+                    <th class="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide whitespace-nowrap w-[8.5rem]">Déposé le</th>
+                    <th class="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide min-w-[11rem] sm:min-w-[13rem]">Demandeur</th>
                     <th class="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">Objet</th>
                     <th class="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">Date souhaitée</th>
                     <th class="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">Service</th>
                     <th class="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">Agent Formalités</th>
                     <th class="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">Modalité</th>
                     <th class="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">Statut</th>
-                    <th class="px-4 py-3"></th>
+                    <th class="px-4 py-3 text-right text-xs font-semibold text-gray-500 uppercase tracking-wide whitespace-nowrap w-[7rem]">Actions</th>
                 </tr>
             </thead>
             <tbody class="divide-y divide-gray-50">
@@ -71,16 +77,16 @@
                         $rdvStatut = $d->rencontreStatut();
                         $isPending = ! $rdvStatut->isTerminal();
                     @endphp
-                    <tr class="hover:bg-gray-50 transition-colors" x-data="{ open: false }">
+                    <tr class="hover:bg-gray-50 transition-colors">
                         <td class="px-4 py-3 text-xs text-gray-600 whitespace-nowrap">{{ $d->created_at?->format('d/m/Y H:i') ?? '—' }}</td>
-                        <td class="px-4 py-3">
-                            <p class="font-medium text-gray-800">{{ ($data['prenom'] ?? '') . ' ' . ($data['nom'] ?? '') }}</p>
-                            <p class="text-xs text-gray-400">{{ $data['email'] ?? '—' }}</p>
+                        <td class="px-4 py-3 min-w-[11rem] sm:min-w-[13rem] align-top">
+                            <p class="font-medium text-gray-800 leading-snug break-words">{{ $d->rencontreDemandeurNom() }}</p>
+                            <p class="text-xs text-gray-400 break-all sm:break-normal mt-0.5">{{ $d->rencontreDemandeurEmail() }}</p>
                             @if(!empty($data['organisation']))
                                 <p class="text-xs text-gray-400 italic">{{ $data['organisation'] }}</p>
                             @endif
                         </td>
-                        <td class="px-4 py-3 text-gray-700 max-w-xs truncate">{{ $data['objet'] ?? '—' }}</td>
+                        <td class="px-4 py-3 text-gray-700 max-w-xs truncate">{{ $d->rencontreObjet() }}</td>
                         <td class="px-4 py-3 text-gray-600 text-xs">
                             {{ isset($data['date_souhaitee']) ? \Carbon\Carbon::parse($data['date_souhaitee'])->format('d/m/Y') : '—' }}
                             @if(!empty($data['heure_souhaitee']))
@@ -113,69 +119,15 @@
                                 {{ $rdvStatut->label() }}
                             </span>
                         </td>
-                        <td class="px-4 py-3 text-right">
-                            <div class="flex items-center justify-end gap-2">
-                                <a href="{{ route('rencontres.pilotage.show', $d) }}"
-                                   class="text-xs text-indigo-600 hover:underline font-medium">
-                                    Consulter
-                                </a>
-                                <button @click="open = !open"
-                                        class="text-xs text-gray-500 hover:underline font-medium">
-                                    Aperçu
-                                </button>
-                                @if($isPending && ($canValidate ?? false))
-                                    <form method="POST" action="{{ route('rencontres.pilotage.accepter', $d) }}"
-                                          onsubmit="return confirm('Confirmer l\'acceptation ?')">
-                                        @csrf
-                                        <button type="submit"
-                                                class="text-xs px-2 py-1 bg-green-600 hover:bg-green-700 text-white rounded font-medium transition">
-                                            Valider
-                                        </button>
-                                    </form>
-                                    <button @click="open = true"
-                                            class="text-xs px-2 py-1 bg-red-50 hover:bg-red-100 text-red-600 border border-red-200 rounded font-medium transition">
-                                        Refuser
-                                    </button>
+                        <td class="px-4 py-3 text-right align-top whitespace-nowrap">
+                            <a href="{{ route('rencontres.pilotage.show', $d) }}"
+                               class="inline-flex items-center justify-center min-w-[5.5rem] px-3 py-1.5 text-xs font-semibold rounded-lg bg-navy text-white hover:opacity-90 transition">
+                                @if(($canResponsablePilotageActions ?? false) && $isPending)
+                                    Gérer
+                                @else
+                                    Ouvrir
                                 @endif
-                            </div>
-
-                            <div x-show="open" x-cloak x-transition
-                                 class="mt-3 text-left bg-gray-50 border border-gray-200 rounded-lg p-4 space-y-3">
-
-                                @if(!empty($data['message']))
-                                    <div>
-                                        <p class="text-xs font-semibold text-gray-500 mb-1">Message</p>
-                                        <p class="text-sm text-gray-700">{{ $data['message'] }}</p>
-                                    </div>
-                                @endif
-
-                                @if($d->annotation)
-                                    <div class="bg-yellow-50 border border-yellow-200 rounded p-2">
-                                        <p class="text-xs font-semibold text-yellow-700 mb-0.5">Annotation</p>
-                                        <p class="text-sm text-yellow-800">{{ $d->annotation }}</p>
-                                    </div>
-                                @endif
-
-                                @if($isPending && ($canValidate ?? false))
-                                    <form method="POST" action="{{ route('rencontres.pilotage.refuser', $d) }}" class="border-t border-gray-200 pt-3">
-                                        @csrf
-                                        <p class="text-xs font-semibold text-gray-500 mb-1">Motif du refus</p>
-                                        <textarea name="motif" rows="2" required maxlength="500"
-                                                  class="w-full text-sm border border-gray-300 rounded px-3 py-2 focus:ring-red-300 focus:outline-none"
-                                                  placeholder="Expliquer pourquoi la demande est refusée…"></textarea>
-                                        <div class="flex gap-2 mt-2">
-                                            <button type="submit"
-                                                    class="px-3 py-1.5 bg-red-600 hover:bg-red-700 text-white text-xs font-medium rounded transition">
-                                                Confirmer le refus
-                                            </button>
-                                            <button type="button" @click="open = false"
-                                                    class="px-3 py-1.5 text-gray-500 text-xs hover:underline">
-                                                Annuler
-                                            </button>
-                                        </div>
-                                    </form>
-                                @endif
-                            </div>
+                            </a>
                         </td>
                     </tr>
                 @empty

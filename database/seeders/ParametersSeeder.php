@@ -15,6 +15,21 @@ class ParametersSeeder extends Seeder
     {
         $params = [
             ['name' => 'is_maintenance_mode', 'description' => 'En maintenance',           'value' => 'false'],
+            [
+                'name' => 'rdv_allow_weekends',
+                'description' => 'Autoriser la réservation le week-end (samedi et dimanche)',
+                'value' => 'false',
+            ],
+            [
+                'name' => 'rdv_booking_start',
+                'description' => 'Heure de début des créneaux réservables (HH:MM)',
+                'value' => '14:00',
+            ],
+            [
+                'name' => 'rdv_booking_end',
+                'description' => 'Heure de fin des créneaux réservables (HH:MM, 24:00 = fin de journée)',
+                'value' => '16:00',
+            ],
             ['name' => 'contact_address',      'description' => 'Adresse du siège social',  'value' => '5, Avenue Charles Sumner, Port-au-Prince, Haïti (W.I)'],
             ['name' => 'contact_phone',        'description' => 'Numéro de téléphone',      'value' => '+(509) 29 92 1007'],
             ['name' => 'contact_hours',        'description' => 'Heures d\'ouverture',      'value' => 'Lun–Ven : 8h00 - 16h00'],

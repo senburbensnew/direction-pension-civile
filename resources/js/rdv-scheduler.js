@@ -72,6 +72,10 @@ function isWeekend(date) {
     return day === 0 || day === 6;
 }
 
+function isBlockedWeekend(date, allowWeekends) {
+    return !allowWeekends && isWeekend(date);
+}
+
 function startOfLocalDay(date = new Date()) {
     return new Date(
         date.getFullYear(),
@@ -256,6 +260,15 @@ export function initRdvScheduler() {
     const holidays =
         readHolidayDates(el);
 
+    const allowWeekends =
+        el.dataset.allowWeekends === '1';
+
+    const bookingDaysLabel =
+        el.dataset.bookingDaysLabel || 'du lundi au vendredi';
+
+    const bookingHoursLabel =
+        el.dataset.bookingHoursLabel || null;
+
     let activeServiceCode =
         el.dataset.defaultService || '';
 
@@ -295,7 +308,9 @@ export function initRdvScheduler() {
         const slotStart = start.getHours() * 60 + start.getMinutes();
         const slotEnd = slotStart + slotMinutes;
         const windowStart = timeToMinutes(minTime);
-        const windowEnd = timeToMinutes(maxTime);
+        const windowEnd = maxTime.startsWith('24:')
+            ? 24 * 60
+            : timeToMinutes(maxTime);
 
         return slotStart >= windowStart && slotEnd <= windowEnd;
     };
@@ -305,6 +320,13 @@ export function initRdvScheduler() {
         const end = maxTime.slice(0, 5);
 
         return `${start}–${end}`;
+    };
+
+    const bookingWindowMessage = () => {
+        const hoursPart = bookingHoursLabel
+            || `${rdvWindowLabel()} (créneaux de ${slotMinutes} minutes)`;
+
+        return `Plage réservable : ${bookingDaysLabel}, ${hoursPart}.`;
     };
 
     const showMessage = (text, isError = false) => {
@@ -324,6 +346,13 @@ export function initRdvScheduler() {
             'text-navy',
             !isError
         );
+
+        if (isError) {
+            selectionEl.scrollIntoView({
+                behavior: 'smooth',
+                block: 'nearest',
+            });
+        }
     };
 
     const setSelection = (start) => {
@@ -337,9 +366,9 @@ export function initRdvScheduler() {
             return;
         }
 
-        if (isWeekend(start) || !isWithinBookingWindow(start)) {
+        if (isBlockedWeekend(start, allowWeekends) || !isWithinBookingWindow(start)) {
             showMessage(
-                `Plage réservable : du lundi au vendredi, ${rdvWindowLabel()} (créneaux de ${slotMinutes} minutes).`,
+                bookingWindowMessage(),
                 true
             );
 
@@ -372,7 +401,13 @@ export function initRdvScheduler() {
         );
 
         showMessage(
-            `Créneau sélectionné : ${formatSelectionLabel(start)} (${slotMinutes} minutes)`
+            `Créneau enregistré (${slotMinutes} min). Vérifiez le récapitulatif avant d’envoyer.`
+        );
+
+        window.dispatchEvent(
+            new CustomEvent('rdv-slot-selected', {
+                detail: { date, time },
+            })
         );
 
         calendar
@@ -509,7 +544,7 @@ export function initRdvScheduler() {
             return;
         }
 
-        if (isWeekend(start)) {
+        if (isBlockedWeekend(start, allowWeekends)) {
             showMessage(
                 'Les créneaux ne sont pas réservables le week-end.',
                 true
@@ -520,7 +555,7 @@ export function initRdvScheduler() {
 
         if (!isWithinBookingWindow(start)) {
             showMessage(
-                `Plage réservable : du lundi au vendredi, ${rdvWindowLabel()} (créneaux de ${slotMinutes} minutes).`,
+                bookingWindowMessage(),
                 true
             );
 
@@ -529,7 +564,7 @@ export function initRdvScheduler() {
 
         if (isPastSlot(start)) {
             showMessage(
-                'Ce créneau est déjà passé. Veuillez en choisir un autre.',
+                'Cette heure est déjà passée. Choisissez un autre créneau ou un jour ultérieur.',
                 true
             );
 
@@ -537,7 +572,7 @@ export function initRdvScheduler() {
         }
 
         showMessage(
-            `Plage réservable : du lundi au vendredi, ${rdvWindowLabel()} (créneaux de ${slotMinutes} minutes).`,
+            bookingWindowMessage(),
             true
         );
     };
@@ -556,7 +591,7 @@ export function initRdvScheduler() {
 
         firstDay: 0,
 
-        height: 520,
+        height: 480,
 
         expandRows: true,
 
@@ -564,7 +599,7 @@ export function initRdvScheduler() {
 
         nowIndicator: true,
 
-        weekends: true,
+        weekends: allowWeekends,
 
         scrollTime: toSlotTime(displayMinTime),
 
@@ -639,17 +674,13 @@ export function initRdvScheduler() {
 
         businessHours: [
             {
-                daysOfWeek: [
-                    1,
-                    2,
-                    3,
-                    4,
-                    5
-                ],
-                startTime:
-                    minTime.slice(0, 5),
-                endTime:
-                    maxTime.slice(0, 5),
+                daysOfWeek: allowWeekends
+                    ? [0, 1, 2, 3, 4, 5, 6]
+                    : [1, 2, 3, 4, 5],
+                startTime: minTime.slice(0, 5),
+                endTime: maxTime.startsWith('24:')
+                    ? '24:00'
+                    : maxTime.slice(0, 5),
             },
         ],
 
@@ -672,7 +703,7 @@ export function initRdvScheduler() {
                 duration ===
                     slotMinutes * 60 * 1000 &&
 
-                !isWeekend(start) &&
+                !isBlockedWeekend(start, allowWeekends) &&
 
                 !isHoliday(start) &&
 
@@ -815,7 +846,7 @@ export function initRdvScheduler() {
                         (
                             isReserved(selected) ||
                             !isWithinBookingWindow(selected) ||
-                            isWeekend(selected) ||
+                            isBlockedWeekend(selected, allowWeekends) ||
                             isHoliday(selected)
                         )
                     ) {
@@ -869,7 +900,7 @@ export function initRdvScheduler() {
     if (
         initial &&
         !isPastSlot(initial) &&
-        !isWeekend(initial) &&
+        !isBlockedWeekend(initial, allowWeekends) &&
         !isHoliday(initial) &&
         !isReserved(initial) &&
         isWithinBookingWindow(initial)
@@ -902,7 +933,8 @@ export function initRdvScheduler() {
     } else {
 
         showMessage(
-            'Aucun créneau sélectionné.'
+            'Choisissez un jour à venir, puis un créneau dans la zone blanche (plage horaire). '
+            + 'Les zones grisées ou déjà passées ne sont pas sélectionnables.'
         );
     }
 }

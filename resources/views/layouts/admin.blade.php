@@ -269,7 +269,7 @@
             </div>
 
             {{-- Paramètres --}}
-            <div x-data="{ open: {{ request()->routeIs('admin.settings', 'admin.contact-parameters.*', 'admin.ocr.test*') ? 'true' : 'false' }} }">
+            <div x-data="{ open: {{ request()->routeIs('admin.settings', 'admin.contact-parameters.*', 'admin.rdv-settings.*', 'admin.ocr.test*') ? 'true' : 'false' }} }">
                 <button @click="open = !open"
                     class="nav-section mt-2 w-full flex items-center justify-between cursor-pointer hover:text-slate-300 transition-colors">
                     <span>Paramètres</span>
@@ -288,6 +288,10 @@
                     <a href="{{ route('admin.contact-parameters.index') }}"
                        class="nav-link {{ request()->routeIs('admin.contact-parameters.*') ? 'active' : '' }}">
                        <i class="fas fa-address-card"></i> Infos de contact
+                    </a>
+                    <a href="{{ route('admin.rdv-settings.index') }}"
+                       class="nav-link {{ request()->routeIs('admin.rdv-settings.*') ? 'active' : '' }}">
+                       <i class="fas fa-calendar-week"></i> Paramètres RDV
                     </a>
                 </div>
             </div>

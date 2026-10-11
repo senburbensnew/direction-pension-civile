@@ -1,15 +1,25 @@
 <x-app-layout>
     <x-slot name="header">
         <h2 class="font-semibold text-xl text-gray-800 leading-tight">
-            {{ __('messages.my_requests_title') }}
+            Tableau de bord
         </h2>
     </x-slot>
 
     <div class="px-5 py-8">
-        {{-- ===================== MES DEMANDES ===================== --}}
-        <fieldset class="border-2 border-gray-200 rounded-lg mt-8 pl-3 ml-1 mr-1">
+        <div class="max-w-7xl mx-auto mb-6 flex flex-wrap items-center justify-between gap-3">
+            <p class="text-sm text-gray-600">
+                Synthèse de vos demandes par type. Cliquez sur une carte pour voir le détail.
+            </p>
+            <a href="{{ route('personal.dashboard') }}"
+               class="inline-flex items-center gap-2 text-sm font-medium text-blue-700 hover:text-blue-900">
+                <i class="fas fa-list"></i>
+                Voir toutes mes demandes
+            </a>
+        </div>
+
+        <fieldset class="border-2 border-gray-200 rounded-lg mt-2 pl-3 ml-1 mr-1">
             <legend class="text-lg font-semibold ml-4 px-4 text-gray-700 bg-white rounded-full shadow-sm">
-                <i class="fas fa-tachometer-alt mr-2 text-gray-400"></i> {{ __('messages.my_requests') }}
+                <i class="fas fa-th-large mr-2 text-gray-400"></i> Par type de demande
             </legend>
 
             <div class="py-6 pl-5 pr-5">

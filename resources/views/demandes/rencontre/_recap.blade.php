@@ -1,5 +1,8 @@
 <section x-show="modalite" x-cloak>
-<details class="dpc-accordion bg-white border border-gray-200 card-shadow" @if($recapHasError) open @endif>
+<details
+    class="dpc-accordion bg-white border border-gray-200 card-shadow"
+    @if($recapHasError || old('date_souhaitee')) open @endif
+>
     <summary>
         <span class="flex items-center gap-3">
             <span class="text-2xl text-navy flex items-center justify-center shrink-0">

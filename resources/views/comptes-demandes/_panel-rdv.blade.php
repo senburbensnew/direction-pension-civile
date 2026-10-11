@@ -18,14 +18,14 @@
 @endphp
 
 <div id="compte-creation" class="max-w-7xl mx-auto mt-5 sm:px-6 lg:px-8 scroll-mt-24">
-    <div class="bg-white rounded-2xl border border-indigo-200 shadow-sm overflow-hidden">
+    <div class="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
 
-        <div class="h-1 w-full bg-gradient-to-r from-indigo-600 via-violet-500 to-purple-500"></div>
+        <div class="h-1 w-full bg-gradient-to-r from-[#173052] via-[#1e3d6b] to-[#2a5085]"></div>
 
         <div class="px-5 py-4 sm:px-6 border-b border-gray-100 flex flex-wrap items-start justify-between gap-4">
             <div class="flex items-start gap-3 min-w-0">
-                <div class="w-11 h-11 rounded-xl bg-indigo-50 border border-indigo-100 flex items-center justify-center shrink-0">
-                    <svg class="w-6 h-6 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <div class="w-11 h-11 rounded-xl bg-sky-50 border border-sky-200 flex items-center justify-center shrink-0">
+                    <svg class="w-6 h-6 text-[#173052]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
                               d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"/>
                     </svg>
@@ -41,7 +41,7 @@
                 </div>
             </div>
             <a href="{{ $compteShowRoute }}"
-               class="inline-flex items-center gap-2 px-3 py-2 text-sm font-semibold text-indigo-700 bg-indigo-50 hover:bg-indigo-100 rounded-xl transition-colors">
+               class="inline-flex items-center gap-2 px-3 py-2 text-sm font-semibold text-[#173052] bg-sky-50 hover:bg-sky-100 rounded-xl transition-colors">
                 Dossier complet
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
             </a>
@@ -58,7 +58,7 @@
                     <li @class([
                         'inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full ring-1',
                         'bg-green-50 text-green-800 ring-green-200' => $step['state'] === 'done',
-                        'bg-indigo-50 text-indigo-800 ring-indigo-200' => $step['state'] === 'current',
+                        'bg-sky-50 text-[#173052] ring-sky-200' => $step['state'] === 'current',
                         'bg-white text-gray-400 ring-gray-200' => $step['state'] === 'muted',
                     ])>
                         @if($step['state'] === 'done')
@@ -116,7 +116,7 @@
                                 $pieceDownloadUrl = $cp->agentPieceUrl($pieceMedia, auth()->user(), false) ?? $pieceMedia->getUrl();
                                 $isImage = str_starts_with((string) $pieceMedia->mime_type, 'image/');
                             @endphp
-                            <div class="flex items-center gap-3 rounded-xl border border-gray-200 p-2.5 hover:border-indigo-200 hover:bg-indigo-50/30 transition-colors">
+                            <div class="flex items-center gap-3 rounded-xl border border-gray-200 p-2.5 hover:border-sky-200 hover:bg-sky-50/40 transition-colors">
                                 @if($isImage)
                                     <a href="{{ $pieceViewUrl }}" target="_blank" rel="noopener" class="shrink-0">
                                         <img src="{{ $pieceViewUrl }}" alt="" class="w-14 h-14 object-cover rounded-lg border border-gray-200 bg-gray-100">
@@ -129,8 +129,8 @@
                                 <div class="min-w-0 flex-1">
                                     <p class="text-sm font-medium text-gray-900 truncate">{{ $piece['label'] }}</p>
                                     <div class="flex gap-3 mt-1 text-xs font-semibold">
-                                        <a href="{{ $pieceViewUrl }}" target="_blank" rel="noopener" class="text-indigo-700 hover:underline">Ouvrir</a>
-                                        <a href="{{ $pieceDownloadUrl }}" class="text-indigo-700 hover:underline">Télécharger</a>
+                                        <a href="{{ $pieceViewUrl }}" target="_blank" rel="noopener" class="text-[#173052] hover:underline">Ouvrir</a>
+                                        <a href="{{ $pieceDownloadUrl }}" class="text-[#173052] hover:underline">Télécharger</a>
                                     </div>
                                 </div>
                             </div>

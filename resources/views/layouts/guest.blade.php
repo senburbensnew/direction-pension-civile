@@ -1,5 +1,7 @@
 <!DOCTYPE html>
-<html lang="{{ str_replace('_', '-', app()->getLocale()) }}" class="site-public-root guest-auth-page" data-theme="light">
+<html lang="{{ str_replace('_', '-', app()->getLocale()) }}"
+      @class(['site-public-root', 'guest-auth-page', 'guest-auth-locked' => ! $wide])
+      data-theme="light">
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -7,11 +9,15 @@
     <title>{{ config('app.name', 'Laravel') }}</title>
 
     <x-fonts />
-    <!-- <link href="{{ asset('build/assets/app-bInZ0-a9.css') }}" rel="stylesheet"> -->
     @vite(['resources/css/app.css', 'resources/js/app.js'])
     <style>
-        html.guest-auth-page,
-        html.guest-auth-page body.guest-auth {
+        html.guest-auth-page {
+            font-size: 100%;
+        }
+
+        /* Login / register : viewport fixe, scroll interne si besoin */
+        html.guest-auth-locked,
+        html.guest-auth-locked body.guest-auth {
             margin: 0;
             height: 100dvh;
             min-height: 100dvh;
@@ -22,6 +28,7 @@
         .guest-auth-shell {
             display: flex;
             align-items: stretch;
+            justify-content: center;
             position: fixed;
             inset: 0;
             width: 100%;
@@ -29,45 +36,6 @@
             max-height: 100dvh;
             min-height: 0;
             overflow: hidden;
-        }
-        .guest-auth-photo {
-            display: none;
-            flex: 0 0 50%;
-            width: 50%;
-            min-height: 0;
-            align-self: stretch;
-            position: relative;
-            overflow: hidden;
-            flex-direction: column;
-            justify-content: flex-end;
-            align-items: center;
-            padding: 2.5rem 2rem;
-            background: #1e3a8a;
-        }
-        .guest-auth-photo img {
-            position: absolute;
-            inset: 0;
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-            object-position: center 18%;
-        }
-        .guest-auth-photo::before {
-            content: '';
-            position: absolute;
-            inset: 0;
-            background: linear-gradient(180deg, rgba(30, 64, 175, 0.58) 0%, rgba(37, 99, 235, 0.42) 46%, rgba(23, 48, 82, 0.72) 100%);
-            z-index: 1;
-        }
-        .guest-auth-photo p {
-            position: relative;
-            z-index: 2;
-            margin: 0;
-            color: #ffffff;
-            font-size: 0.95rem;
-            font-weight: 500;
-            text-align: center;
-            text-shadow: 0 1px 3px rgba(15, 23, 42, 0.45);
         }
         .guest-auth-form {
             flex: 1 1 0;
@@ -79,10 +47,9 @@
             overscroll-behavior: contain;
             display: flex;
             flex-direction: column;
+            align-items: center;
             background: #f9fafb;
         }
-        /* Equal spacers center a short form. They shrink to nothing when the
-           form is taller than the pane, so the scroll starts at the first field. */
         .guest-auth-form::before,
         .guest-auth-form::after {
             content: "";
@@ -121,27 +88,48 @@
         .guest-auth-form--no-scroll .guest-auth-copy {
             padding-top: 0.5rem;
         }
-        @media (min-width: 1024px) {
-            .guest-auth-photo { display: flex; }
-        }
-        .guest-auth-form-inner.is-wide {
-            width: 100%;
-            max-width: min(80rem, calc(100vw - 2rem));
+
+        /* Demande de compte : page fluide, pas de hauteur fixe */
+        html.guest-auth-page:not(.guest-auth-locked) body.guest-auth {
+            margin: 0;
+            min-height: 100%;
+            background: #f9fafb;
         }
     </style>
 </head>
 
 <body class="site-public guest-auth font-sans antialiased">
 
+@if ($wide)
+    <main class="min-h-dvh flex justify-center px-4 py-6 sm:px-6 sm:py-8">
+        <div class="guest-auth-card w-full max-w-[48rem] bg-white rounded-2xl shadow-sm border border-gray-100 px-6 sm:px-8 py-6">
+            <div class="flex flex-col items-center mb-4">
+                <a href="{{ url('/') }}" title="Retour à l'accueil">
+                    <img src="{{ asset('images/setting-logo-1-M13oPLiYoM.png') }}"
+                         class="w-14 h-14 object-contain mb-3 hover:opacity-80 transition-opacity"
+                         alt="Logo DPC">
+                </a>
+                <p class="text-gray-700 text-sm font-medium tracking-wide uppercase text-center">
+                    Direction de la Pension Civile
+                </p>
+            </div>
+            {{ $slot }}
+        </div>
+    </main>
+@else
     <div class="guest-auth-shell">
-
         <div @class(['guest-auth-form', 'guest-auth-form--no-scroll' => $noScroll])>
-            <div class="guest-auth-form-inner {{ $wide ? 'is-wide' : '' }}">
-                <div class="w-full min-w-0 overflow-x-hidden {{ $wide ? 'max-w-7xl' : 'max-w-md' }} bg-white rounded-2xl shadow-sm border border-gray-100 px-8 {{ $wide ? 'py-6' : ($noScroll ? 'py-5' : 'py-10') }}">
-                    <div class="flex flex-col items-center {{ $wide ? 'mb-4' : ($noScroll ? 'mb-4' : 'mb-8') }}">
+            <div class="guest-auth-form-inner">
+                <div @class([
+                    'w-full min-w-0 overflow-x-hidden bg-white rounded-2xl shadow-sm border border-gray-100 px-8',
+                    'max-w-md',
+                    'py-5' => $noScroll,
+                    'py-10' => ! $noScroll,
+                ])>
+                    <div class="flex flex-col items-center {{ $noScroll ? 'mb-4' : 'mb-8' }}">
                         <a href="{{ url('/') }}" title="Retour à l'accueil">
                             <img src="{{ asset('images/setting-logo-1-M13oPLiYoM.png') }}"
-                                 class="{{ $wide || $noScroll ? 'w-14 h-14' : 'w-20 h-20' }} object-contain {{ $noScroll ? 'mb-2' : 'mb-3' }} hover:opacity-80 transition-opacity"
+                                 class="{{ $noScroll ? 'w-14 h-14' : 'w-20 h-20' }} object-contain {{ $noScroll ? 'mb-2' : 'mb-3' }} hover:opacity-80 transition-opacity"
                                  alt="Logo DPC">
                         </a>
                         <p class="text-gray-700 text-sm font-medium tracking-wide uppercase text-center">
@@ -159,6 +147,7 @@
             </div>
         </div>
     </div>
-    <!-- <script src="{{ asset('build/assets/app-BiTlx0PY.js') }}"></script> -->
+@endif
+
 </body>
 </html>

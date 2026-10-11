@@ -1,8 +1,10 @@
-@extends('layouts.main')
+<x-app-layout>
+    <x-slot name="header">
+        <h2 class="font-semibold text-xl text-gray-800 leading-tight">
+            Mon profil
+        </h2>
+    </x-slot>
 
-@section('title', 'Mon profil')
-
-@section('content')
 @php
     $user = auth()->user();
     $isInstitution = $user->hasRole('institution');
@@ -22,9 +24,7 @@
     <div class="max-w-7xl mx-auto space-y-8">
 
         <div class="text-center">
-            <span class="text-xs font-bold text-orange-500 uppercase tracking-widest">Compte</span>
             <h1 class="text-4xl font-bold text-navy mt-2 mb-3">Mon profil</h1>
-            <p class="text-gray-600">{{ $displayName }} · {{ $user->email }}</p>
         </div>
 
         <section class="bg-white border border-gray-200 card-shadow p-6 sm:p-8">
@@ -181,7 +181,7 @@
                         <input type="text" name="nif" id="nif"
                                value="{{ old('nif', $user->nif) }}"
                                placeholder="ex: 809-062-525-6"
-                               class="{{ $inputClass }} @error('nif') border-red-500 @enderror">
+                               class="{{ $inputClass }} {{ $errors->has('nif') ? 'border-red-500' : '' }}">
                         @error('nif')
                             <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
                         @enderror
@@ -192,7 +192,7 @@
                             <label for="ninu" class="block text-sm font-medium text-gray-700 mb-1">NINU</label>
                             <input type="text" name="ninu" id="ninu"
                                    value="{{ old('ninu', $user->ninu) }}"
-                                   class="{{ $inputClass }} @error('ninu') border-red-500 @enderror">
+                                   class="{{ $inputClass }} {{ $errors->has('ninu') ? 'border-red-500' : '' }}">
                             @error('ninu')
                                 <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
                             @enderror
@@ -204,7 +204,7 @@
                         <input type="text" name="phone" id="phone"
                                value="{{ old('phone', $user->phone) }}"
                                placeholder="+509XXXXXXXX"
-                               class="{{ $inputClass }} @error('phone') border-red-500 @enderror">
+                               class="{{ $inputClass }} {{ $errors->has('phone') ? 'border-red-500' : '' }}">
                         @error('phone')
                             <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
                         @enderror
@@ -255,7 +255,7 @@
                                name="current_password"
                                id="update_password_current_password"
                                autocomplete="current-password"
-                               class="{{ $inputClass }} @error('current_password', 'updatePassword') border-red-500 @enderror">
+                               class="{{ $inputClass }} {{ $errors->updatePassword->has('current_password') ? 'border-red-500' : '' }}">
                         @error('current_password', 'updatePassword')
                             <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
                         @enderror
@@ -269,7 +269,7 @@
                                name="password"
                                id="update_password_password"
                                autocomplete="new-password"
-                               class="{{ $inputClass }} @error('password', 'updatePassword') border-red-500 @enderror">
+                               class="{{ $inputClass }} {{ $errors->updatePassword->has('password') ? 'border-red-500' : '' }}">
                         @error('password', 'updatePassword')
                             <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
                         @enderror
@@ -297,4 +297,4 @@
 
     </div>
 </div>
-@endsection
+</x-app-layout>

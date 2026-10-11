@@ -45,7 +45,7 @@
         @endif
 
         {{-- En-tête --}}
-        <header class="relative overflow-hidden rounded-2xl bg-gradient-to-br from-[#173052] via-[#1e3d6b] to-[#2a5085] text-white shadow-md">
+        <header class="relative overflow-hidden rounded bg-gradient-to-br from-[#173052] via-[#1e3d6b] to-[#2a5085] text-white shadow-md">
             <div class="absolute inset-0 opacity-[0.08] pointer-events-none" aria-hidden="true">
                 <div class="absolute -right-10 -top-10 h-48 w-48 rounded-full bg-white"></div>
                 <div class="absolute -left-6 bottom-0 h-32 w-32 rounded-full bg-orange-400"></div>

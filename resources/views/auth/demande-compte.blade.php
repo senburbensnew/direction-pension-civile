@@ -544,6 +544,7 @@
             enctype="multipart/form-data"
             x-ref="form"
             @submit.prevent="onSubmit"
+            x-on:pageshow.window="handlePageShow($event)"
         >
             @csrf
 
@@ -1022,9 +1023,18 @@
                             Lecture et vérification OCR
                         </h3>
 
-                        <p class="text-xs text-gray-500 mt-0.5">
-                            Les informations sont extraites automatiquement des documents.
-                            Vérifiez-les et corrigez-les si nécessaire.
+                        <p class="text-xs mt-0.5 flex flex-wrap items-center gap-x-2 gap-y-1">
+                            <span class="text-gray-500">
+                                Les informations sont extraites automatiquement des documents.
+                            </span>
+
+                            <span
+                                class="inline-flex items-center gap-1.5 rounded-md border border-amber-400 bg-amber-50 px-2 py-0.5 text-xs font-semibold text-amber-950 shadow-sm"
+                                role="alert"
+                            >
+                                <i class="fas fa-exclamation-triangle text-amber-600 text-[10px]" aria-hidden="true"></i>
+                                Vérifiez-les et corrigez-les si nécessaire.
+                            </span>
                         </p>
                     </div>
                 </div>
@@ -1087,17 +1097,25 @@
                                 <div class="compte-ocr-preview">
 
                                     <img
-                                        x-show="previews[doc.key] && !previews[doc.key].pdf"
-                                        :src="previews[doc.key] && previews[doc.key].url"
+                                        x-show="previews[doc.key]?.url && !previews[doc.key]?.loading"
+                                        :src="previews[doc.key]?.url"
                                         :alt="doc.label"
                                     >
 
-                                    <iframe
-                                        x-show="previews[doc.key] && previews[doc.key].pdf"
-                                        :src="previews[doc.key] && previews[doc.key].url"
-                                        class="w-full min-h-[16rem]"
-                                        title="Aperçu PDF"
-                                    ></iframe>
+                                    <p
+                                        x-show="previews[doc.key]?.loading"
+                                        class="text-sm text-gray-500 px-4 text-center"
+                                    >
+                                        <i class="fas fa-spinner fa-spin mr-1"></i>
+                                        Préparation de l’aperçu…
+                                    </p>
+
+                                    <p
+                                        x-show="previews[doc.key]?.error"
+                                        class="text-sm text-amber-700 px-4 text-center"
+                                    >
+                                        Aperçu PDF indisponible. Les données OCR restent modifiables à droite.
+                                    </p>
 
                                     <p
                                         x-show="!previews[doc.key]"
@@ -1897,7 +1915,7 @@
                     type="button"
                     x-show="step > 1"
                     @click="prev()"
-                    :disabled="busy"
+                    :disabled="busy || isSubmitting()"
                     class="flex-1 py-2.5 px-4 border border-gray-300 text-gray-700 font-semibold text-sm rounded-lg hover:bg-gray-50 transition-colors disabled:opacity-50"
                 >
                     <i class="fas fa-arrow-left mr-2"></i>
@@ -1925,11 +1943,28 @@
                 <button
                     type="submit"
                     x-show="step === 4"
-                    :disabled="busy"
-                    class="flex-1 py-2.5 px-4 bg-[#173052] hover:bg-orange-600 text-white font-semibold text-sm rounded-lg transition-colors disabled:opacity-50"
+                    :disabled="isSubmitting()"
+                    class="flex-1 inline-flex items-center justify-center gap-2 py-2.5 px-4 min-w-[150px] bg-navy text-white font-semibold text-sm rounded-lg hover:opacity-90 transition disabled:opacity-40 disabled:cursor-not-allowed"
                 >
-                    <i class="fas fa-paper-plane mr-2"></i>
-                    Soumettre
+                    <template x-if="!isSubmitting()">
+                        <span class="inline-flex items-center gap-2">
+                            <i class="fa-solid fa-paper-plane"></i>
+                            Soumettre
+                        </span>
+                    </template>
+
+                    <template x-if="isSubmitting()">
+                        <span
+                            class="inline-flex items-center gap-2"
+                            aria-live="polite"
+                        >
+                            <i
+                                class="fa-solid fa-spinner fa-spin"
+                                aria-hidden="true"
+                            ></i>
+                            Enregistrement…
+                        </span>
+                    </template>
                 </button>
 
             </div>
@@ -2043,6 +2078,7 @@
                 })(),
 
                 _redirecting: false,
+                _submitSent: false,
 
                 ocrUrl: initial.ocrUrl,
                 availabilityUrl: initial.availabilityUrl,
@@ -2052,9 +2088,15 @@
                  * ======================================================== */
 
                 openSections: {
-                    resume: true,
+                    resume: false,
                     pieces: false,
-                    ocr: true,
+                    ocr: false,
+                },
+
+                closeRecapSections() {
+                    this.openSections.resume = false;
+                    this.openSections.pieces = false;
+                    this.openSections.ocr = false;
                 },
 
                 /* ========================================================
@@ -2723,17 +2765,60 @@
                 revokePreviews() {
                     Object.values(this.previews)
                         .forEach((preview) => {
-                            if (preview?.url) {
-                                URL.revokeObjectURL(
-                                    preview.url
-                                );
+                            const url = preview?.url;
+                            if (typeof url === 'string' && url.startsWith('blob:')) {
+                                URL.revokeObjectURL(url);
                             }
                         });
 
                     this.previews = {};
                 },
 
-                buildPreviews() {
+                async loadPdfJs() {
+                    if (this._pdfJs) {
+                        return this._pdfJs;
+                    }
+
+                    const pdfjs = await import(
+                        'https://cdn.jsdelivr.net/npm/pdfjs-dist@4.4.168/build/pdf.min.mjs'
+                    );
+
+                    pdfjs.GlobalWorkerOptions.workerSrc =
+                        'https://cdn.jsdelivr.net/npm/pdfjs-dist@4.4.168/build/pdf.worker.min.mjs';
+
+                    this._pdfJs = pdfjs;
+
+                    return pdfjs;
+                },
+
+                async renderPdfFirstPage(file) {
+                    const pdfjs = await this.loadPdfJs();
+                    const data = new Uint8Array(await file.arrayBuffer());
+                    const pdf = await pdfjs.getDocument({ data }).promise;
+                    const page = await pdf.getPage(1);
+                    const baseViewport = page.getViewport({ scale: 1 });
+                    const maxWidth = 720;
+                    const scale = Math.min(2, maxWidth / baseViewport.width);
+                    const viewport = page.getViewport({ scale });
+                    const canvas = document.createElement('canvas');
+                    const context = canvas.getContext('2d');
+
+                    canvas.width = viewport.width;
+                    canvas.height = viewport.height;
+
+                    await page.render({
+                        canvasContext: context,
+                        viewport,
+                    }).promise;
+
+                    return {
+                        url: canvas.toDataURL('image/jpeg', 0.92),
+                        loading: false,
+                        fromPdf: true,
+                    };
+                },
+
+                async buildPreviews() {
                     this.revokePreviews();
 
                     const next = {};
@@ -2747,29 +2832,44 @@
                             'piece_identite',
                         ];
 
-                    keys.forEach((key) => {
+                    for (const key of keys) {
                         const file =
                             document.getElementById(key)
                                 ?.files?.[0];
 
                         if (!file) {
-                            return;
+                            continue;
                         }
 
-                        const pdf =
+                        const isPdf =
                             file.type === 'application/pdf' ||
                             /\.pdf$/i.test(file.name);
 
-                        if (
-                            file.type.startsWith('image/') ||
-                            pdf
-                        ) {
+                        if (file.type.startsWith('image/')) {
                             next[key] = {
                                 url: URL.createObjectURL(file),
-                                pdf,
+                                loading: false,
                             };
+                            continue;
                         }
-                    });
+
+                        if (isPdf) {
+                            next[key] = { url: '', loading: true };
+                            this.previews = { ...next };
+
+                            try {
+                                next[key] = await this.renderPdfFirstPage(file);
+                            } catch {
+                                next[key] = {
+                                    url: '',
+                                    loading: false,
+                                    error: true,
+                                };
+                            }
+
+                            this.previews = { ...next };
+                        }
+                    }
 
                     this.previews = next;
                 },
@@ -2928,7 +3028,7 @@
                     );
                 },
 
-                applyOcr(payload) {
+                async applyOcr(payload) {
                     this.ocrDocuments =
                         (payload?.documents || [])
                             .map((doc) =>
@@ -2938,7 +3038,7 @@
                     this.syncOcrFields();
                     this.prefillAccountFieldsFromOcr();
 
-                    this.buildPreviews();
+                    await this.buildPreviews();
                 },
 
                 csrfToken() {
@@ -3015,8 +3115,6 @@
                     this.busy = true;
                     this.busyLabel = 'Lecture OCR…';
                     this.stepError = '';
-
-                    this.buildPreviews();
 
                     try {
                         const formData = new FormData();
@@ -3119,7 +3217,7 @@
                             formData
                         );
 
-                        this.applyOcr(data);
+                        await this.applyOcr(data);
 
                         return true;
 
@@ -3133,7 +3231,7 @@
                          * même à l'étape 2 si au moins un document a pu
                          * être récupéré.
                          */
-                        this.applyOcr(error);
+                        await this.applyOcr(error);
 
                         const message =
                             this.firstError(error);
@@ -3289,6 +3387,7 @@
                             return;
                         }
 
+                        this.closeRecapSections();
                         this.step = 4;
 
                         return;
@@ -3299,21 +3398,70 @@
                  * SOUMISSION
                  * ======================================================== */
 
+                isSubmitting() {
+                    return this.step === 4
+                        && this.busy
+                        && (this._submitSent || this._redirecting);
+                },
+
+                resetSubmitState() {
+                    if (this._redirecting) {
+                        return;
+                    }
+
+                    this.busy = false;
+                    this.busyLabel = '';
+                    this._submitSent = false;
+                },
+
+                handlePageShow(event) {
+                    if (this._redirecting) {
+                        return;
+                    }
+
+                    this.busy = false;
+                    this.busyLabel = '';
+                    this._submitSent = false;
+                },
+
                 async onSubmit() {
+                    if (this.busy || this._redirecting || this._submitSent) {
+                        return;
+                    }
+
+                    const finalStep = this.step === 4;
+
+                    if (finalStep) {
+                        this._submitSent = true;
+                        this.busy = true;
+                        this.busyLabel = 'Vérification…';
+                        this.stepError = '';
+                        this._redirecting = false;
+                    }
+
                     this.syncFromForm();
 
                     if (!this.validateDocuments()) {
                         this.step = 1;
+                        if (finalStep) {
+                            this.resetSubmitState();
+                        }
                         return;
                     }
 
                     if (!this.validateAccount()) {
                         this.step = 3;
+                        if (finalStep) {
+                            this.resetSubmitState();
+                        }
                         return;
                     }
 
                     if (!this.validateTerms()) {
                         this.step = 4;
+                        if (finalStep) {
+                            this.resetSubmitState();
+                        }
                         return;
                     }
 
@@ -3356,8 +3504,9 @@
                         formData.delete('pension_code');
                     }
 
+                    this._submitSent = true;
                     this.busy = true;
-                    this.busyLabel = 'Envoi…';
+                    this.busyLabel = 'Envoi de la demande…';
                     this.stepError = '';
                     this._redirecting = false;
 
@@ -3368,22 +3517,50 @@
                                 'X-CSRF-TOKEN': this.csrfToken(),
                                 'X-Requested-With': 'XMLHttpRequest',
                                 'Accept': 'application/json',
+                                'X-Demande-Compte-Submit': '1',
                             },
                             credentials: 'same-origin',
                             redirect: 'manual',
                             body: formData,
                         });
 
-                        const rdvFallback = "{{ route('demandes.rencontre.create') }}";
+                        const rdvFallback = @js(route('demandes.rencontre.create', absolute: true));
 
-                        const goToRdv = (url) => {
-                            const target = (url || '').trim() || rdvFallback;
-                            this._redirecting = true;
-                            sessionStorage.removeItem('demande_compte_idem');
-                            window.location.assign(target);
+                        const resolveRedirect = (url) => {
+                            const candidate = (url || '').trim() || rdvFallback;
+                            try {
+                                return new URL(candidate, window.location.origin).href;
+                            } catch {
+                                return rdvFallback;
+                            }
                         };
 
-                        /* ── Redirection HTTP (soumission classique) ── */
+                        const goToRdv = (url) => {
+                            const target = resolveRedirect(url);
+                            this._redirecting = true;
+                            this.busyLabel = 'Redirection…';
+                            sessionStorage.removeItem('demande_compte_idem');
+                            window.setTimeout(() => {
+                                window.location.replace(target);
+                            }, 0);
+                        };
+
+                        if (response.status === 419) {
+                            this.stepError =
+                                'Session expirée. Rechargez la page (F5), puis soumettez à nouveau.';
+                            this.resetSubmitState();
+                            return;
+                        }
+
+                        if (response.status === 429) {
+                            const data = await response.json().catch(() => ({}));
+                            this.stepError = data.message
+                                || 'Une soumission est déjà en cours. Patientez quelques secondes.';
+                            this.resetSubmitState();
+                            return;
+                        }
+
+                        /* ── Redirection HTTP (réponse non-JSON) ── */
                         if (response.status >= 300 && response.status < 400) {
                             goToRdv(response.headers.get('Location') || rdvFallback);
                             return;
@@ -3394,8 +3571,15 @@
                             const data = await response.json().catch(() => ({}));
                             const errors = data.errors || {};
 
+                            if (data.message && Object.keys(errors).length === 0) {
+                                this.stepError = data.message;
+                                this.resetSubmitState();
+                                return;
+                            }
+
                             this.applyServerErrors(errors);
                             this.step = this.stepFromServerErrors(errors);
+                            this.resetSubmitState();
 
                             return;
                         }
@@ -3409,10 +3593,11 @@
                             if (data.ok === false) {
                                 this.stepError = data.message
                                     || 'Une erreur est survenue lors de l’envoi.';
+                                this.resetSubmitState();
                                 return;
                             }
 
-                            goToRdv(data.redirect_url);
+                            goToRdv(data.redirect_url || rdvFallback);
                             return;
                         }
 
@@ -3420,14 +3605,15 @@
                         const data = await response.json().catch(() => ({}));
                         this.stepError = data.message
                             || 'Une erreur est survenue lors de l’envoi.';
+                        this.resetSubmitState();
 
                     } catch (e) {
                         this.stepError =
                             'Impossible de contacter le serveur. Vérifiez votre connexion.';
+                        this.resetSubmitState();
                     } finally {
                         if (!this._redirecting) {
-                            this.busy = false;
-                            this.busyLabel = '';
+                            this.resetSubmitState();
                         }
                     }
                 },

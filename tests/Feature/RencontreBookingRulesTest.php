@@ -15,6 +15,8 @@ use App\Services\HaitiHolidayService;
 use App\Services\RencontreAvailabilityService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Tests\TestCase;
 use Tests\Traits\SeedsRequiredData;
@@ -50,6 +52,69 @@ class RencontreBookingRulesTest extends TestCase
         $agent->assignRole(User::ROLE_AGENT_RDV);
 
         return $agent;
+    }
+
+    public function test_saturday_is_not_bookable_by_default(): void
+    {
+        $availability = app(RencontreAvailabilityService::class);
+        $saturday = now()->next('Saturday')->toDateString();
+
+        $this->assertFalse($availability->isBookableDate($saturday));
+    }
+
+    public function test_saturday_is_bookable_when_weekend_parameter_enabled(): void
+    {
+        DB::table('parameters')->updateOrInsert(
+            ['name' => 'rdv_allow_weekends'],
+            [
+                'name' => 'rdv_allow_weekends',
+                'description' => 'test',
+                'value' => 'true',
+            ]
+        );
+        Cache::forget('rdv_allow_weekends');
+
+        $availability = app(RencontreAvailabilityService::class);
+        $saturday = now()->next('Saturday')->toDateString();
+
+        $this->assertTrue($availability->isBookableDate($saturday));
+    }
+
+    public function test_time_outside_config_window_is_rejected_by_default(): void
+    {
+        $availability = app(RencontreAvailabilityService::class);
+        $date = now()->next('Wednesday')->toDateString();
+
+        $this->assertFalse($availability->isAllowedTime('09:00'));
+        $this->assertTrue($availability->isAllowedTime('14:00'));
+    }
+
+    public function test_custom_booking_window_accepts_morning_slot_when_configured(): void
+    {
+        DB::table('parameters')->updateOrInsert(
+            ['name' => 'rdv_booking_start'],
+            [
+                'name' => 'rdv_booking_start',
+                'description' => 'test',
+                'value' => '09:00',
+            ]
+        );
+        DB::table('parameters')->updateOrInsert(
+            ['name' => 'rdv_booking_end'],
+            [
+                'name' => 'rdv_booking_end',
+                'description' => 'test',
+                'value' => '24:00',
+            ]
+        );
+        Cache::forget('rdv_booking_start');
+        Cache::forget('rdv_booking_end');
+
+        $availability = app(RencontreAvailabilityService::class);
+
+        $this->assertTrue($availability->isAllowedTime('09:00'));
+        $this->assertTrue($availability->isAllowedTime('23:45'));
+        $this->assertFalse($availability->isAllowedTime('08:45'));
     }
 
     public function test_haitian_holiday_date_is_not_bookable(): void
