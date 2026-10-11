@@ -124,6 +124,10 @@
         @media (min-width: 1024px) {
             .guest-auth-photo { display: flex; }
         }
+        .guest-auth-form-inner.is-wide {
+            width: 100%;
+            max-width: min(80rem, calc(100vw - 2rem));
+        }
     </style>
 </head>
 
@@ -133,8 +137,7 @@
 
         <div @class(['guest-auth-form', 'guest-auth-form--no-scroll' => $noScroll])>
             <div class="guest-auth-form-inner {{ $wide ? 'is-wide' : '' }}">
-                <div class="w-full min-w-0 overflow-x-hidden {{ $wide ? 'max-w-3xl' : 'max-w-md' }} bg-white rounded-2xl shadow-sm border border-gray-100 px-8 {{ $wide ? 'py-6' : ($noScroll ? 'py-5' : 'py-10') }}"
-                     @if ($wide) style="max-width: 48rem;" @endif>
+                <div class="w-full min-w-0 overflow-x-hidden {{ $wide ? 'max-w-7xl' : 'max-w-md' }} bg-white rounded-2xl shadow-sm border border-gray-100 px-8 {{ $wide ? 'py-6' : ($noScroll ? 'py-5' : 'py-10') }}">
                     <div class="flex flex-col items-center {{ $wide ? 'mb-4' : ($noScroll ? 'mb-4' : 'mb-8') }}">
                         <a href="{{ url('/') }}" title="Retour à l'accueil">
                             <img src="{{ asset('images/setting-logo-1-M13oPLiYoM.png') }}"

@@ -29,10 +29,7 @@ use App\Rules\PensionnaireReferenceExists;
 
 class DemandeCreationCompteController extends Controller
 {
-    public function __construct(
-        private IdentityVerificationService $identityVerification
-    ) {
-    }
+    public function __construct(private IdentityVerificationService $identityVerification) {}
 
     public function create()
     {
@@ -88,6 +85,108 @@ class DemandeCreationCompteController extends Controller
                 ? 'Adresse e-mail disponible.'
                 : 'Cette adresse e-mail est déjà utilisée.',
         ]);
+    }
+
+    private function nifAvailability(string $value): array
+    {
+        if ($value === '') {
+            return [
+                'available' => true,
+                'empty' => true,
+                'message' => null,
+            ];
+        }
+
+        if (! preg_match('/^\d{3}-\d{3}-\d{3}-\d$/', $value)) {
+            return [
+                'available' => false,
+                'format_ok' => false,
+                'message' => 'Le NIF doit être au format 000-000-000-0.',
+            ];
+        }
+
+        $available = ! User::nifExists($value)
+            && ! DemandeCreationCompte::pendingDigitsMatch(
+                'nif',
+                User::normalizeDigits($value)
+            );
+
+        return [
+            'available' => $available,
+            'format_ok' => true,
+            'message' => $available ? 'NIF disponible.' : 'Ce NIF est déjà utilisé.',
+        ];
+    }
+
+    private function pensionCodeAvailabilityForMandataire(string $value): array
+    {
+        if ($value === '') {
+            return [
+                'available' => false,
+                'empty' => true,
+                'message' => 'Indiquez le code pension du pensionné que vous représentez.',
+            ];
+        }
+
+        $value = strtoupper(trim($value));
+
+        if (! preg_match('/^(7-[A-Z0-9]{5}|8-\d{5})$/', $value)) {
+            return [
+                'available' => false,
+                'format_ok' => false,
+                'message' => 'Le code pension doit être au format 7-XXXXX (ex. 7-JM183) ou 8-XXXXX (ex. 8-34321).',
+            ];
+        }
+
+        $rule = new PensionnaireReferenceExists();
+        $failed = false;
+        $rule->validate('pension_code', $value, function () use (&$failed) {
+            $failed = true;
+        });
+
+        return [
+            'available' => ! $failed,
+            'format_ok' => true,
+            'message' => $failed
+                ? 'Ce code pension est introuvable dans la base de référence.'
+                : 'Code pension reconnu.',
+        ];
+    }
+
+    private function pensionCodeAvailability(string $value): array
+    {
+        if ($value === '') {
+            return [
+                'available' => true,
+                'empty'     => true,
+                'message'   => null,
+            ];
+        }
+    
+        // ✅ Normalisation : on travaille sur la version uppercase
+        $value = strtoupper(trim($value));
+    
+        if (! preg_match('/^(7-[A-Z0-9]{5}|8-\d{5})$/', $value)) {
+            return [
+                'available' => true,
+                'format_ok' => false,
+                'message'   => 'Le code pension doit être au format 7-XXXXX (ex. 7-JM183) ou 8-XXXXX (ex. 8-34321).',
+            ];
+        }
+    
+        $available = ! AffiliationPension::codeExists($value)
+            && ! DemandeCreationCompte::pendingDigitsMatch(
+                'pension_code',
+                User::normalizeDigits($value)
+            );
+    
+        return [
+            'available' => $available,
+            'format_ok' => true,
+            'message'   => $available
+                ? 'Code pension disponible.'
+                : 'Ce code pension est déjà utilisé.',
+        ];
     }
 
     /**
@@ -238,12 +337,7 @@ class DemandeCreationCompteController extends Controller
     }
 
     public function store(Request $request)
-    {
-        Log::info('Demande store payload', [
-            'request' => $request->except(['password']),
-            'files'   => $request->allFiles(),
-        ]);
-    
+    {    
         /* ── Validation ── */
         try {
             $validated = $this->validateDemande($request, requireTerms: true);
@@ -931,108 +1025,6 @@ class DemandeCreationCompteController extends Controller
                 'accept_terms' => 'conditions d’utilisation et politique de confidentialité',
             ]
         );
-    }
-
-    private function nifAvailability(string $value): array
-    {
-        if ($value === '') {
-            return [
-                'available' => true,
-                'empty' => true,
-                'message' => null,
-            ];
-        }
-
-        if (! preg_match('/^\d{3}-\d{3}-\d{3}-\d$/', $value)) {
-            return [
-                'available' => false,
-                'format_ok' => false,
-                'message' => 'Le NIF doit être au format 000-000-000-0.',
-            ];
-        }
-
-        $available = ! User::nifExists($value)
-            && ! DemandeCreationCompte::pendingDigitsMatch(
-                'nif',
-                User::normalizeDigits($value)
-            );
-
-        return [
-            'available' => $available,
-            'format_ok' => true,
-            'message' => $available ? 'NIF disponible.' : 'Ce NIF est déjà utilisé.',
-        ];
-    }
-
-    private function pensionCodeAvailabilityForMandataire(string $value): array
-    {
-        if ($value === '') {
-            return [
-                'available' => false,
-                'empty' => true,
-                'message' => 'Indiquez le code pension du pensionné que vous représentez.',
-            ];
-        }
-
-        $value = strtoupper(trim($value));
-
-        if (! preg_match('/^(7-[A-Z0-9]{5}|8-\d{5})$/', $value)) {
-            return [
-                'available' => false,
-                'format_ok' => false,
-                'message' => 'Le code pension doit être au format 7-XXXXX (ex. 7-JM183) ou 8-XXXXX (ex. 8-34321).',
-            ];
-        }
-
-        $rule = new PensionnaireReferenceExists();
-        $failed = false;
-        $rule->validate('pension_code', $value, function () use (&$failed) {
-            $failed = true;
-        });
-
-        return [
-            'available' => ! $failed,
-            'format_ok' => true,
-            'message' => $failed
-                ? 'Ce code pension est introuvable dans la base de référence.'
-                : 'Code pension reconnu.',
-        ];
-    }
-
-    private function pensionCodeAvailability(string $value): array
-    {
-        if ($value === '') {
-            return [
-                'available' => true,
-                'empty'     => true,
-                'message'   => null,
-            ];
-        }
-    
-        // ✅ Normalisation : on travaille sur la version uppercase
-        $value = strtoupper(trim($value));
-    
-        if (! preg_match('/^(7-[A-Z0-9]{5}|8-\d{5})$/', $value)) {
-            return [
-                'available' => true,
-                'format_ok' => false,
-                'message'   => 'Le code pension doit être au format 7-XXXXX (ex. 7-JM183) ou 8-XXXXX (ex. 8-34321).',
-            ];
-        }
-    
-        $available = ! AffiliationPension::codeExists($value)
-            && ! DemandeCreationCompte::pendingDigitsMatch(
-                'pension_code',
-                User::normalizeDigits($value)
-            );
-    
-        return [
-            'available' => $available,
-            'format_ok' => true,
-            'message'   => $available
-                ? 'Code pension disponible.'
-                : 'Ce code pension est déjà utilisé.',
-        ];
     }
 
     private function createProvisionalUser(
