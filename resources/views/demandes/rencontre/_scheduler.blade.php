@@ -96,6 +96,10 @@
                 <span class="rdv-legend-swatch rdv-legend-reserved" aria-hidden="true"></span>
                 Indisponible (complet)
             </li>
+            <li class="flex items-center gap-2">
+                <span class="rdv-legend-swatch rdv-legend-muted" aria-hidden="true"></span>
+                Férié (Haïti) — nom affiché dans l’agenda
+            </li>
         </ul>
     </div>
 

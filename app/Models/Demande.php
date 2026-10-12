@@ -659,6 +659,26 @@ class Demande extends Model implements HasMedia
             === TypeDemandeEnum::DEMANDE_RENCONTRE->value;
     }
 
+    /**
+     * URL de la salle visio.
+     *
+     * @param  'create'|'pilotage'|'dossier'|'corbeille'|null  $back  Page de retour après la visio
+     */
+    public function visioPageUrl(?string $back = null): ?string
+    {
+        if (! filled($this->visio_token)) {
+            return null;
+        }
+
+        $params = ['token' => $this->visio_token];
+
+        if (in_array($back, ['create', 'pilotage', 'dossier', 'corbeille'], true)) {
+            $params['back'] = $back;
+        }
+
+        return route('demandes.rencontre.visio', $params);
+    }
+
     public function rencontreStatut(): RencontreStatutEnum
     {
         $stored = RencontreStatutEnum::tryFrom(
@@ -872,6 +892,39 @@ class Demande extends Model implements HasMedia
     {
         return $this->rencontreStatut() === RencontreStatutEnum::REALISE
             && $this->rencontreHeureEstPassee();
+    }
+
+    /**
+     * Une formalité a déjà été enregistrée pour ce RDV ou l’exercice fiscal en cours du pensionné.
+     */
+    public function formaliteRdvEnregistree(): bool
+    {
+        if ($this->formalites()->exists()) {
+            return true;
+        }
+
+        $owner = $this->user ?? User::find($this->created_by);
+
+        if (! $owner) {
+            return false;
+        }
+
+        $anneeActive = AnneeFiscale::active();
+
+        if ($anneeActive && Formalite::forYear($owner->id, $anneeActive->id)) {
+            return true;
+        }
+
+        return false;
+    }
+
+    /**
+     * Afficher le bouton « Traiter la formalité » sur le dossier agent.
+     */
+    public function peutProposerTraitementFormaliteApresRdv(): bool
+    {
+        return $this->peutEtreTraiteApresRendezVous()
+            && ! $this->formaliteRdvEnregistree();
     }
 
     /**

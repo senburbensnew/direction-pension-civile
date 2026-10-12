@@ -11,6 +11,7 @@ use App\Models\WorkflowStep;
 use App\Notifications\DemandeStatusChangedNotification;
 use App\Notifications\RencontreAgentAssigneNotification;
 use App\Services\Account\UserCategoryRoleSyncService;
+use App\Services\HaitiHolidayService;
 use App\Services\RencontreAvailabilityService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
@@ -29,6 +30,7 @@ class DemandeRencontreSchedulerTest extends TestCase
         $this->seedRoles();
         $this->seedServices();
         Storage::fake('public');
+        app(HaitiHolidayService::class)->generate(now()->year);
     }
 
     /**
@@ -45,6 +47,7 @@ class DemandeRencontreSchedulerTest extends TestCase
             'lieu_rdv' => 'Siège de la DPC — Port-au-Prince',
             'doc_carte_pension' => UploadedFile::fake()->image('carte.jpg'),
             'doc_piece_identite' => UploadedFile::fake()->image('id.jpg'),
+            'doc_matricule_fiscal' => UploadedFile::fake()->image('nif.jpg'),
             'telephone' => '+50938123456',
             'confirmation_lu_accepte' => '1',
         ], $overrides);

@@ -255,7 +255,7 @@
                             <div class="mt-4 flex flex-wrap items-center gap-3">
 
                                 @if($visioActifCanJoin && $visioActifStatus === 'actif')
-                                    <a href="{{ route('demandes.rencontre.visio', $rdvActif->visio_token) }}"
+                                    <a href="{{ $rdvActif->visioPageUrl('create') }}"
                                     class="inline-flex items-center gap-2 px-4 py-2 bg-navy text-white text-sm font-semibold rounded-lg hover:bg-orange-600 transition">
                                         <i class="fa-solid fa-video"></i>
                                         Rejoindre la visioconférence
@@ -266,7 +266,7 @@
                                         {{ $visioServiceActif->opensAt($rdvActif)?->format('d/m/Y à H:i') ?? '—' }}
                                     </span>
                                 @elseif($visioActifCanJoin)
-                                    <a href="{{ route('demandes.rencontre.visio', $rdvActif->visio_token) }}"
+                                    <a href="{{ $rdvActif->visioPageUrl('create') }}"
                                     class="text-sm font-semibold text-navy hover:underline">
                                         Page visioconférence
                                     </a>
@@ -785,7 +785,7 @@
                             {{-- Désactivation pendant l'envoi --}}
                             :disabled="!accepte || submitting || !dateSouhaitee || !heureSouhaitee"
 
-                            class="inline-flex items-center justify-center gap-2 px-8 py-3 bg-navy text-white font-semibold rounded-lg hover:opacity-90 transition disabled:opacity-40 disabled:cursor-not-allowed min-w-[150px] sm:ml-auto"
+                            class="inline-flex items-center justify-center gap-2 px-8 py-3 bg-navy text-white font-semibold hover:opacity-90 transition disabled:opacity-40 disabled:cursor-not-allowed min-w-[150px] sm:ml-auto"
                         >
 
                             {{-- État normal --}}

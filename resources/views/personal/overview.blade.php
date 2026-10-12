@@ -5,8 +5,8 @@
         </h2>
     </x-slot>
 
-    <div class="px-5 py-8">
-        <div class="max-w-7xl mx-auto mb-6 flex flex-wrap items-center justify-between gap-3">
+    <x-portal-page class="!px-5">
+        <div class="mb-6 flex flex-wrap items-center justify-between gap-3">
             <p class="text-sm text-gray-600">
                 Synthèse de vos demandes par type. Cliquez sur une carte pour voir le détail.
             </p>
@@ -147,5 +147,5 @@
                 </div>
             </div>
         </fieldset>
-    </div>
+    </x-portal-page>
 </x-app-layout>

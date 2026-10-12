@@ -29,12 +29,18 @@
         $activeCount = $totalCount - $draftCount;
     @endphp
 
-    <div class="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8"
+    <x-portal-page bottom="pb-6"
          x-data="{ open: false, deleteUrl: '', title: '' }"
          @open-delete-modal.window="open = true; deleteUrl = $event.detail.url; title = $event.detail.title">
 
+        <header class="dossier-header px-5 py-5 sm:px-6 mb-6 border-l-4 border-l-[#173052]">
+            <p class="dossier-kicker">Mon espace</p>
+            <h1 class="mt-1 text-xl font-semibold text-[#173052] tracking-tight">Mes demandes</h1>
+            <p class="mt-2 text-sm text-gray-600">Suivi de l’ensemble de vos dossiers déposés en ligne.</p>
+        </header>
+
         @if(auth()->user()?->isProvisionnel())
-            <div class="mb-6 rounded-xl border border-amber-200 bg-amber-50 p-4 sm:p-5 text-sm text-amber-950">
+            <div class="mb-6 dossier-notice dossier-notice--amber p-4 sm:p-5 text-sm text-amber-950 bg-amber-50/80">
                 <p class="font-semibold flex items-center gap-2">
                     <i class="fas fa-hourglass-half text-amber-600"></i>
                     Compte provisoire
@@ -59,17 +65,17 @@
 
         {{-- Stats --}}
         <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
-            <div class="rounded-xl border border-gray-200 bg-white px-5 py-4 shadow-sm">
-                <p class="text-xs font-semibold uppercase tracking-wide text-gray-400">Total</p>
-                <p class="text-2xl font-bold text-gray-900 mt-1">{{ $totalCount }}</p>
+            <div class="dossier-stat">
+                <p class="dossier-stat__label">Total</p>
+                <p class="dossier-stat__value text-2xl">{{ $totalCount }}</p>
             </div>
-            <div class="rounded-xl border border-sky-200 bg-sky-50/80 px-5 py-4 shadow-sm">
-                <p class="text-xs font-semibold uppercase tracking-wide text-sky-700">En cours / soumises</p>
-                <p class="text-2xl font-bold text-sky-900 mt-1">{{ $activeCount }}</p>
+            <div class="dossier-stat border-l-4 border-l-[#173052]">
+                <p class="dossier-stat__label">En cours / soumises</p>
+                <p class="dossier-stat__value text-2xl">{{ $activeCount }}</p>
             </div>
-            <div class="rounded-xl border border-gray-200 bg-gray-50 px-5 py-4 shadow-sm">
-                <p class="text-xs font-semibold uppercase tracking-wide text-gray-500">Brouillons</p>
-                <p class="text-2xl font-bold text-gray-800 mt-1">{{ $draftCount }}</p>
+            <div class="dossier-stat bg-gray-50/80">
+                <p class="dossier-stat__label">Brouillons</p>
+                <p class="dossier-stat__value text-2xl">{{ $draftCount }}</p>
             </div>
         </div>
 
@@ -117,12 +123,9 @@
         --}}
 
         {{-- Table --}}
-        <div class="rounded-2xl border border-gray-200 bg-white shadow-sm overflow-hidden">
-            <div class="px-5 py-3 border-b border-gray-100 bg-gray-50/80 flex items-center justify-between gap-3">
-                <h3 class="text-sm font-semibold text-gray-700">
-                    <i class="fas fa-folder-open text-gray-400 mr-2"></i>
-                    Liste des dossiers
-                </h3>
+        <section class="dossier-card overflow-hidden">
+            <div class="dossier-card-head">
+                <h3>Liste des dossiers</h3>
                 {{-- @if(request()->hasAny(['type', 'step_code']))
                     <span class="text-xs text-gray-500">{{ $totalCount }} résultat{{ $totalCount > 1 ? 's' : '' }}</span>
                 @endif --}}
@@ -214,7 +217,7 @@
                             <tr>
                                 <td colspan="7" class="px-5 py-16 text-center">
                                     <div class="max-w-sm mx-auto">
-                                        <div class="w-14 h-14 mx-auto mb-3 rounded-2xl bg-gray-100 flex items-center justify-center">
+                                        <div class="w-14 h-14 mx-auto mb-3 bg-gray-100 border border-gray-200 flex items-center justify-center">
                                             <i class="fas fa-inbox text-xl text-gray-300"></i>
                                         </div>
                                         <p class="font-semibold text-gray-700">Aucune demande</p>
@@ -228,7 +231,7 @@
                     </tbody>
                 </table>
             </div>
-        </div>
+        </section>
 
         {{-- Delete modal --}}
         <div x-show="open" x-cloak
@@ -262,5 +265,5 @@
                 </div>
             </div>
         </div>
-    </div>
+    </x-portal-page>
 </x-app-layout>

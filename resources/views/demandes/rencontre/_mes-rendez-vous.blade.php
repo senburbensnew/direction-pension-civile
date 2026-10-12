@@ -59,7 +59,7 @@
                         @if($visioStatus)
                             <p class="text-xs mt-2">
                                 @if($visioStatus === 'actif')
-                                    <a href="{{ route('demandes.rencontre.visio', $rdv->visio_token) }}"
+                                    <a href="{{ $rdv->visioPageUrl('create') }}"
                                        class="inline-flex items-center gap-1 text-navy font-semibold hover:underline">
                                         Rejoindre la visioconférence
                                     </a>
@@ -73,7 +73,7 @@
                     </div>
                     <div class="flex flex-wrap items-center gap-2">
                     @if(! $isPhysique && $rdv->visio_token && $visioStatus === 'en_attente')
-                        <a href="{{ route('demandes.rencontre.visio', $rdv->visio_token) }}"
+                        <a href="{{ $rdv->visioPageUrl('create') }}"
                            class="inline-flex items-center gap-2 px-4 py-2 border border-navy/20 text-navy text-sm font-semibold rounded-lg hover:bg-slate-50">
                             Voir le lien
                         </a>

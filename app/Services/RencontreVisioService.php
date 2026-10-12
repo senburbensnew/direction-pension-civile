@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Enums\RencontreStatutEnum;
 use App\Enums\TypeDemandeEnum;
 use App\Models\Demande;
 use App\Models\User;
@@ -68,10 +69,15 @@ class RencontreVisioService
             return false;
         }
 
-        // ✅ Plus robuste : s'appuie sur rencontreStatut() qui
-        // retombe sur data['rdv_statut'] puis sur le workflow.
-        if ($demande->rencontreStatut()->isTerminal()) {
-            return false;
+        $rdvStatut = $demande->rencontreStatut();
+
+        if ($rdvStatut->isTerminal()) {
+            // RDV marqué réalisé : la salle reste accessible jusqu’à la fin de la fenêtre visio.
+            if ($rdvStatut === RencontreStatutEnum::REALISE && $this->isActive($demande)) {
+                // continue
+            } else {
+                return false;
+            }
         }
 
         if (

@@ -469,6 +469,11 @@ class User extends Authenticatable
         return $this->belongsTo(Gender::class);
     }
 
+    public function civilStatus()
+    {
+        return $this->belongsTo(CivilStatus::class);
+    }
+
     public function isDirection(): bool
     {
         return $this->hasAnyRole(self::DIRECTION_ROLES);

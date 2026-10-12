@@ -134,6 +134,52 @@ function expandRecurringEvents(recurring, rangeStart, rangeEnd) {
     return events;
 }
 
+function buildHolidayBackgroundEvents(
+    holidays,
+    rangeStart,
+    rangeEnd,
+    displayMinTime,
+    displayMaxTime
+) {
+    const events = [];
+    const min = displayMinTime.slice(0, 5);
+    let max = displayMaxTime.slice(0, 5);
+
+    if (max === '24:00') {
+        max = '23:59';
+    }
+
+    for (let cursor = new Date(rangeStart); cursor <= rangeEnd; cursor = addDays(cursor, 1)) {
+        const dateStr = formatDate(cursor);
+
+        if (!holidays.has(dateStr)) {
+            continue;
+        }
+
+        const start = buildSlotDate(dateStr, min);
+        const end = buildSlotDate(dateStr, max);
+
+        if (end <= start) {
+            continue;
+        }
+
+        events.push({
+            id: `holiday-bg-${dateStr}`,
+            title: holidays.get(dateStr) || 'Jour férié',
+            start,
+            end,
+            display: 'background',
+            classNames: ['dpc-rdv-holiday-bg'],
+            editable: false,
+            extendedProps: {
+                holiday: true,
+            },
+        });
+    }
+
+    return events;
+}
+
 function buildEventsFromState(state, rangeStart, rangeEnd) {
     const events = [];
 
@@ -309,11 +355,27 @@ function slotEndFromStart(start, slotMinutes) {
 export function initAgentAvailabilityCalendar() {
     const el = document.getElementById('dpc-agent-availability-calendar');
 
-    if (!el || el.dataset.ready === '1') {
+    if (!el || el.dataset.agentAvailReady === '1') {
         return;
     }
 
+    // Ancienne init : le calendrier public (rdv-scheduler) partageait la classe dpc-rdv-scheduler.
+    if (el.dataset.ready === '1' && el._rdvCalendar) {
+        el._rdvCalendar.destroy();
+        el.innerHTML = '';
+        delete el.dataset.ready;
+        delete el._rdvCalendar;
+    }
+
     const alpine = () => window.__dpcAgentAvailability;
+
+    const markDirty = () => {
+        const state = alpine();
+
+        if (state && typeof state.markDirty === 'function') {
+            state.markDirty();
+        }
+    };
 
     if (!alpine()) {
         document.addEventListener(
@@ -344,6 +406,9 @@ export function initAgentAvailabilityCalendar() {
 
     const isHoliday = (start) => holidays.has(formatDate(start));
 
+    const holidayCellClassNames = (arg) =>
+        holidays.has(formatDate(arg.date)) ? ['dpc-rdv-holiday'] : [];
+
     const isWithinWindow = (start, end) => {
         const startMin = start.getHours() * 60 + start.getMinutes();
         const endMin = end.getHours() * 60 + end.getMinutes();
@@ -367,16 +432,25 @@ export function initAgentAvailabilityCalendar() {
 
     const refreshEvents = () => {
         const state = alpine();
-
-        if (!state) {
-            return;
-        }
-
         const view = calendar.view;
         const rangeStart = view.activeStart;
         const rangeEnd = addDays(view.activeEnd, -1);
 
         calendar.getEvents().forEach((event) => event.remove());
+
+        buildHolidayBackgroundEvents(
+            holidays,
+            rangeStart,
+            rangeEnd,
+            displayMinTime,
+            displayMaxTime
+        ).forEach((event) => {
+            calendar.addEvent(event);
+        });
+
+        if (!state) {
+            return;
+        }
 
         buildEventsFromState(state, rangeStart, rangeEnd).forEach((event) => {
             calendar.addEvent(event);
@@ -474,6 +548,7 @@ export function initAgentAvailabilityCalendar() {
         state.paintMode = mode;
         el.dataset.paintMode = mode;
 
+        markDirty();
         refreshEvents();
     };
 
@@ -538,6 +613,7 @@ export function initAgentAvailabilityCalendar() {
                         state.blocks.splice(index, 1);
                     }
 
+                    markDirty();
                     setHint('Plage retirée. Cliquez sur Enregistrer pour sauvegarder.');
                     refreshEvents();
                 },
@@ -652,6 +728,9 @@ export function initAgentAvailabilityCalendar() {
             },
         ],
         selectConstraint: 'businessHours',
+        dayCellClassNames: holidayCellClassNames,
+        dayHeaderClassNames: holidayCellClassNames,
+        slotLaneClassNames: holidayCellClassNames,
         selectAllow: (selection) => {
             const { start, end } = selection;
 
@@ -673,6 +752,10 @@ export function initAgentAvailabilityCalendar() {
         },
         eventClick: (info) => {
             info.jsEvent.preventDefault();
+
+            if (info.event.extendedProps?.holiday) {
+                return;
+            }
 
             if (info.jsEvent.button !== 0) {
                 return;
@@ -698,6 +781,7 @@ export function initAgentAvailabilityCalendar() {
                 state.blocks.splice(index, 1);
             }
 
+            markDirty();
             setHint('Plage retirée. Clic droit sur un bloc : plus d’options.');
             refreshEvents();
         },
@@ -714,7 +798,9 @@ export function initAgentAvailabilityCalendar() {
     });
 
     calendar.render();
-    el.dataset.ready = '1';
+    el.dataset.agentAvailReady = '1';
+    el._agentAvailCalendar = calendar;
+    refreshEvents();
 
     el.addEventListener('contextmenu', (e) => {
         if (e.target.closest('.fc-event')) {

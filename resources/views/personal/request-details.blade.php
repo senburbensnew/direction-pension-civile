@@ -18,61 +18,45 @@
 @endphp
 
 <x-app-layout>
-    {{-- ══ HEADER UNIFIÉ ══ --}}
-    <div class="max-w-7xl mx-auto pt-5 sm:px-6 lg:px-8">
+    <x-portal-page class="dossier-page space-y-6" bottom="pb-28">
 
-        {{-- Fil d'Ariane --}}
-        <nav class="flex items-center gap-1.5 text-xs text-gray-400 mb-3 px-1">
-            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/>
-            </svg>
-            @if($from === 'dashboard')
-                <a href="{{ route('personal.dashboard') }}" class="hover:text-gray-600 transition-colors">Mes demandes</a>
-            @elseif($from === 'cart')
-                <a href="{{ route('personal.cart') }}" class="hover:text-gray-600 transition-colors">Corbeille</a>
-            @endif
-            <svg class="w-3 h-3 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
-            </svg>
-            <span class="text-gray-500 font-medium">Détail du dossier</span>
-        </nav>
+        <header class="dossier-header px-5 py-5 sm:px-6">
+            <div class="flex flex-wrap justify-between items-start gap-4">
 
-        {{-- Carte header principale --}}
-        <div class="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden">
-
-            <div class="h-1 w-full bg-gradient-to-r from-blue-600 via-indigo-500 to-purple-500"></div>
-
-            <div class="px-6 py-5">
-                <div class="flex flex-wrap justify-between items-start gap-4">
-
-                    <div class="flex items-start gap-4">
-                        <div class="w-12 h-12 rounded-xl bg-blue-50 border border-blue-100 flex items-center justify-center flex-shrink-0">
-                            <svg class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
-                            </svg>
+                    <div class="min-w-0 flex-1">
+                        <p class="dossier-kicker">Dossier #{{ $request->id }}</p>
+                        <div class="mt-1 flex flex-wrap items-center gap-2">
+                            <h1 class="text-xl font-semibold text-[#173052] tracking-tight">{{ $request->libellePublic() }}</h1>
+                            @if($request->isRencontre() || $request->currentStep)
+                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-md text-xs font-medium ring-1 ring-inset {{ $request->statutBadgeClass() }}">
+                                    {{ $request->statutAffiche() }}
+                                </span>
+                            @endif
+                            @if($request->is_urgent ?? false)
+                                <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-xs font-semibold bg-red-50 text-red-800 ring-1 ring-red-200">
+                                    Urgent
+                                </span>
+                            @endif
                         </div>
-                        <div>
-                            <div class="flex flex-wrap items-center gap-2 mb-1">
-                                <h1 class="text-lg font-bold text-gray-900 tracking-tight">{{ $request->libellePublic() }}</h1>
-                                @if($request->isRencontre() || $request->currentStep)
-                                    <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold ring-1 {{ $request->statutBadgeClass() }}">
-                                        <span class="w-1.5 h-1.5 rounded-full bg-current opacity-70"></span>
-                                        {{ $request->statutAffiche() }}
-                                    </span>
-                                @endif
-                                @if($request->is_urgent ?? false)
-                                    <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-bold bg-red-100 text-red-700 ring-1 ring-red-200">
-                                        <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/></svg>
-                                        URGENT
-                                    </span>
-                                @endif
+                        <dl class="mt-3 flex flex-wrap gap-x-6 gap-y-1 text-sm text-gray-600">
+                            <div>
+                                <span class="text-gray-500">Type · </span>
+                                <span class="font-medium text-gray-800">{{ \App\Enums\TypeDemandeEnum::tryFrom((string) $request->type)?->label() ?? $request->type }}</span>
                             </div>
-                            <p class="text-sm text-gray-500">{{ \App\Enums\TypeDemandeEnum::tryFrom((string) $request->type)?->label() ?? $request->type }}</p>
-                            <p class="text-xs text-gray-400 mt-0.5">Déposé le {{ $request->created_at->format('d/m/Y') }} à {{ $request->created_at->format('H:i') }}</p>
-                        </div>
+                            <div>
+                                <span class="text-gray-500">Dépôt · </span>
+                                <span class="font-medium text-gray-800">{{ $request->created_at->format('d/m/Y à H:i') }}</span>
+                            </div>
+                            @if($from === 'cart' && auth()->user()?->service)
+                                <div>
+                                    <span class="text-gray-500">Service · </span>
+                                    <span class="font-medium text-gray-800">{{ auth()->user()->service->nom }}</span>
+                                </div>
+                            @endif
+                        </dl>
                     </div>
 
-                    <div class="flex flex-wrap items-center gap-2">
+                    <div class="flex flex-wrap items-center gap-2 shrink-0">
 
                         @if($from === 'cart')
                             @hasanyrole('secretariat|direction|service_liquidation|service_accueil_formalites|service_controle_placement|service_comptabilite|service_assurance|administration|admin|agent_rdv|validateur_rdv')
@@ -88,13 +72,13 @@
                                         </div>
                                     </div>
                                     @if($request->isAnnotated())
-                                        <a href="{{ route('demande.print', $request->id) }}" target="_blank" title="Imprimer"
-                                           class="inline-flex items-center justify-center w-9 h-9 bg-gray-700 hover:bg-gray-800 text-white rounded-xl transition-all shadow-sm">
+                                        <a href="{{ route('demande.print', $request->id) }}" target="_blank" class="dossier-btn-secondary">
                                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/></svg>
+                                            Imprimer
                                         </a>
-                                        <a href="{{ route('demande.pdf', $request->id) }}" target="_blank" title="Télécharger PDF"
-                                           class="inline-flex items-center justify-center w-9 h-9 bg-red-600 hover:bg-red-700 text-white rounded-xl transition-all shadow-sm">
+                                        <a href="{{ route('demande.pdf', $request->id) }}" target="_blank" class="dossier-btn-secondary">
                                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+                                            PDF
                                         </a>
                                     @endif
 
@@ -126,7 +110,7 @@
                                         @php $transferOptions = $transferOptions ?? collect(); @endphp
                                         @if($request->isAnnotated() && $transferOptions->isNotEmpty())
                                             <button onclick="document.getElementById('transferModal').classList.remove('hidden')"
-                                                    class="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-xl transition-all shadow-sm hover:shadow">
+                                                    class="dossier-btn-primary">
                                                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"/>
                                                 </svg>
@@ -154,7 +138,7 @@
                                         @unless($isAgentRdvOnly ?? false)
                                             @if($request->currentStep?->code !== 'COMPLEMENT_REQUIS')
                                                 <button onclick="document.getElementById('complementModal').classList.remove('hidden'); document.getElementById('complementModal').closest('.bg-white').classList.remove('hidden')"
-                                                        class="inline-flex items-center gap-2 px-4 py-2 bg-orange-500 hover:bg-orange-600 text-white text-sm font-medium rounded-xl transition-all shadow-sm hover:shadow">
+                                                        class="dossier-btn-accent">
                                                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
                                                     </svg>
@@ -171,17 +155,17 @@
                                         <div class="w-px h-6 bg-gray-200"></div>
 
                                         @if($request->isAnnotated())
-                                            <a href="{{ route('demande.print', $request->id) }}" target="_blank" title="Imprimer"
-                                               class="inline-flex items-center justify-center w-9 h-9 bg-gray-700 hover:bg-gray-800 text-white rounded-xl transition-all shadow-sm hover:shadow">
+                                            <a href="{{ route('demande.print', $request->id) }}" target="_blank" class="dossier-btn-secondary">
                                                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/>
                                                 </svg>
+                                                Imprimer
                                             </a>
-                                            <a href="{{ route('demande.pdf', $request->id) }}" target="_blank" title="Télécharger PDF"
-                                               class="inline-flex items-center justify-center w-9 h-9 bg-red-600 hover:bg-red-700 text-white rounded-xl transition-all shadow-sm hover:shadow">
+                                            <a href="{{ route('demande.pdf', $request->id) }}" target="_blank" class="dossier-btn-secondary">
                                                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
                                                 </svg>
+                                                PDF
                                             </a>
                                         @endif
                                     @endunless
@@ -233,45 +217,29 @@
                         @elseif($from === 'cart')
                             <a href="{{ route('personal.cart') }}"
                                title="{{ __('messages.back_to_basket') }}"
-                               class="inline-flex items-center justify-center w-9 h-9 bg-gray-100 hover:bg-gray-200 text-gray-600 rounded-xl transition-colors">
+                               class="dossier-btn-secondary">
                                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
                                 </svg>
-                            </a>
-                        @endif
-
-                        @if($request->isRencontre() && !empty($compteProvisional) && auth()->user()?->hasAnyRole(['admin', \App\Models\User::ROLE_AGENT_FORMALITES]))
-                            <a href="#compte-creation"
-                               class="inline-flex items-center gap-1.5 px-3 py-2 text-xs font-semibold text-indigo-700 bg-indigo-50 hover:bg-indigo-100 rounded-xl ring-1 ring-indigo-200 transition-colors">
-                                Compte provisoire
-                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                                Corbeille
                             </a>
                         @endif
 
                     </div>
-                </div>
             </div>
-        </div>
-    </div>
+        </header>
+
+        @if($from === 'cart')
+            @include('personal.partials.demandeur-compte-panel', ['demande' => $request])
+        @endif
 
     {{-- ══════════════ SECTION DÉDIÉE — TRAITEMENT RDV (agent) ══════════════ --}}
     @if($rdvAgentMode ?? false)
-        <div class="max-w-7xl mx-auto mt-5 sm:px-6 lg:px-8">
-            <div class="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
-                <div class="h-1 w-full bg-gradient-to-r from-slate-600 via-blue-600 to-indigo-600"></div>
-                <div class="px-5 sm:px-6 py-4 flex items-center gap-3 border-b border-gray-100">
-                    <div class="w-10 h-10 rounded-xl bg-blue-50 border border-blue-100 flex items-center justify-center shrink-0">
-                        <svg class="w-5 h-5 text-blue-600 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
-                        </svg>
-                    </div>
-                    <div>
-                        <h2 class="text-gray-900 font-bold text-sm tracking-wide">Traitement du rendez-vous</h2>
-                        <p class="text-gray-500 text-xs mt-0.5">Clôture, refus, report ou annulation</p>
-                    </div>
-                </div>
-
+        <x-dossier-collapsible
+            title="Traitement du rendez-vous"
+            subtitle="Clôture, refus, report ou annulation"
+            :open="true"
+        >
                 @php
                     $rdv           = $request->data ?? [];
                     $rdvStatut     = $request->rencontreStatut();
@@ -321,12 +289,6 @@
                 @endphp
 
                 <div class="p-6 space-y-5">
-                    @include('demandes.rencontre._workflow-banner', [
-                        'demande' => $request,
-                        'rdvStatut' => $rdvStatut,
-                        'compteCreation' => $compteProvisional ?? null,
-                    ])
-
                     <dl class="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm mb-6">
                         <div>
                             <dt class="text-gray-500">Statut</dt>
@@ -362,7 +324,7 @@
                                             Rendez-vous passé — lien expiré
                                         </span>
                                     @elseif($visioCanAccess && $visioWindowStatus === 'actif')
-                                        <a href="{{ route('demandes.rencontre.visio', $request->visio_token) }}"
+                                        <a href="{{ $request->visioPageUrl('dossier') }}"
                                            class="inline-flex items-center gap-2 text-blue-600 hover:underline font-semibold">
                                             Rejoindre la visioconférence
                                         </a>
@@ -372,7 +334,7 @@
                                             {{ $visioService->opensAt($request)?->format('d/m/Y à H:i') ?? '—' }}
                                         </span>
                                     @elseif($visioCanAccess)
-                                        <a href="{{ route('demandes.rencontre.visio', $request->visio_token) }}"
+                                        <a href="{{ $request->visioPageUrl('dossier') }}"
                                            class="text-blue-600 hover:underline text-sm">
                                             Ouvrir la page visio
                                         </a>
@@ -409,13 +371,17 @@
                         $isFormalite = str_starts_with($motifKey, 'demande_formalites')
                             || str_starts_with($motifKey, 'formalites');
                         $ownerFormalite = $request->user ?? \App\Models\User::find($request->created_by);
-                        $peutTraiterFormalite = $request->peutEtreTraiteApresRendezVous()
+                        $peutTraiterFormalite = $request->peutProposerTraitementFormaliteApresRdv()
                             && $isFormalite
                             && ! $ownerFormalite?->isProvisionnel();
+                        $formaliteDejaTraitee = $isFormalite
+                            && ! $ownerFormalite?->isProvisionnel()
+                            && $request->formaliteRdvEnregistree();
                         $formaliteConsultation = $rdvStatut === \App\Enums\RencontreStatutEnum::REALISE
                             && $isFormalite
                             && ! $ownerFormalite?->isProvisionnel()
-                            && ! $peutTraiterFormalite;
+                            && ! $peutTraiterFormalite
+                            && ! $formaliteDejaTraitee;
                     @endphp
 
                     @if($formaliteConsultation ?? false)
@@ -431,7 +397,36 @@
                         </div>
                     @endif
 
-                    @if($peutTraiterFormalite)
+                    @if($formaliteDejaTraitee ?? false)
+                        @php
+                            $formaliteRdv = $request->formalites()->with('anneeFiscale')->latest('realisee_at')->first()
+                                ?? ($ownerFormalite && ($af = \App\Models\AnneeFiscale::active())
+                                    ? \App\Models\Formalite::forYear($ownerFormalite->id, $af->id)
+                                    : null);
+                        @endphp
+                        <div class="mb-5 flex flex-wrap items-center gap-3 bg-slate-50 border border-slate-200 rounded-xl px-4 py-3">
+                            <svg class="w-5 h-5 text-emerald-600 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                            </svg>
+                            <div class="flex-1 min-w-0 text-sm text-slate-800">
+                                <p class="font-semibold">Formalité enregistrée</p>
+                                <p class="text-xs text-slate-600 mt-0.5">
+                                    @if($formaliteRdv)
+                                        Exercice {{ $formaliteRdv->anneeFiscale?->code ?? '—' }}
+                                        @if($formaliteRdv->realisee_at)
+                                            · {{ $formaliteRdv->realisee_at->format('d/m/Y à H:i') }}
+                                        @endif
+                                    @else
+                                        La formalité a déjà été traitée pour ce pensionné.
+                                    @endif
+                                </p>
+                            </div>
+                            <a href="{{ route('demandes.rencontre.formalite', $request) }}"
+                               class="text-sm font-semibold text-[#173052] hover:underline">
+                                Consulter
+                            </a>
+                        </div>
+                    @elseif($peutTraiterFormalite)
                         <div class="mb-5 flex flex-wrap items-center gap-3 bg-emerald-50 border border-emerald-200 rounded-xl px-4 py-3">
                             <svg class="w-5 h-5 text-emerald-600 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -484,22 +479,17 @@
                         @endif
 
                         @if($peutClore)
-                            <div class="border-t border-gray-100 pt-5 mb-5">
-                                <p class="text-xs font-bold text-gray-700 uppercase tracking-wide mb-3">Clôturer le rendez-vous</p>
+                            <div class="mb-5 pt-1 border-t border-gray-100">
+                                <p class="text-sm font-semibold text-[#173052] mb-1">Clôturer le rendez-vous</p>
+                                <p class="text-sm text-gray-600 mb-4">Choisissez le résultat du créneau avant de traiter la création de compte.</p>
 
-                                <div class="flex flex-wrap items-start gap-3">
+                                <div class="flex flex-wrap items-center gap-3">
                                     <form method="POST" action="{{ route('demandes.rencontre.clore', $request) }}"
-                                        onsubmit="return confirm('Marquer ce rendez-vous comme réalisé ?');"
-                                        class="flex items-center gap-2">
+                                        onsubmit="return confirm('Marquer ce rendez-vous comme réalisé ?');">
                                         @csrf
                                         <input type="hidden" name="statut" value="realise">
-                                        <!-- <input type="text" name="commentaire" maxlength="2000"
-                                            value="{{ old('commentaire') }}"
-                                            placeholder="Commentaire (optionnel)"
-                                            class="border border-green-200 rounded-lg px-3 py-2 text-sm w-64"> -->
-                                        <button type="submit"
-                                                class="inline-flex items-center gap-2 px-4 py-2 bg-green-600 hover:bg-green-700 text-white text-sm font-semibold rounded-lg">
-                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <button type="submit" class="dossier-btn-success">
+                                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
                                             </svg>
                                             Marquer réalisé
@@ -507,17 +497,11 @@
                                     </form>
 
                                     <form method="POST" action="{{ route('demandes.rencontre.clore', $request) }}"
-                                        onsubmit="return confirm('Marquer ce rendez-vous comme non honoré ?');"
-                                        class="flex items-center gap-2">
+                                        onsubmit="return confirm('Marquer ce rendez-vous comme non honoré ?');">
                                         @csrf
                                         <input type="hidden" name="statut" value="non_honore">
-                                        <!-- <input type="text" name="commentaire" maxlength="2000"
-                                            value="{{ old('commentaire') }}"
-                                            placeholder="Motif (optionnel)"
-                                            class="border border-slate-200 rounded-lg px-3 py-2 text-sm w-64"> -->
-                                        <button type="submit"
-                                                class="inline-flex items-center gap-2 px-4 py-2 bg-slate-600 hover:bg-slate-700 text-white text-sm font-semibold rounded-lg">
-                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <button type="submit" class="dossier-btn-neutral">
+                                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
                                             </svg>
                                             Non honoré
@@ -541,29 +525,23 @@
                                         </svg>
                                     </summary>
                                     <form method="POST" action="{{ route('demandes.rencontre.proposerCreneau', $request) }}"
-                                        class="mt-3 flex flex-wrap items-end gap-3 bg-blue-50 border border-blue-200 rounded-lg p-4">
+                                        class="mt-3 border border-gray-200 bg-gray-50/80 p-4 space-y-4"
+                                        onsubmit="return confirm('Confirmer le report de ce rendez-vous ?');">
                                         @csrf
                                         <input type="hidden" name="report" value="1">
-                                        <div>
-                                            <label class="block text-xs font-medium text-gray-600 mb-1">Nouvelle date</label>
-                                            <input type="date" name="date_souhaitee" required
-                                                min="{{ now()->toDateString() }}"
-                                                value="{{ old('date_souhaitee') }}"
-                                                class="border border-gray-300 rounded-lg px-3 py-2 text-sm">
+                                        @if(! empty($rdvScheduler))
+                                            @include('demandes.rencontre._report-creneau-scheduler', [
+                                                'demande' => $request,
+                                                'rdvScheduler' => $rdvScheduler,
+                                            ])
+                                        @else
+                                            <p class="text-sm text-gray-600">Configuration agenda indisponible. Contactez l’administrateur.</p>
+                                        @endif
+                                        <div class="flex justify-end">
+                                            <button type="submit" class="dossier-btn-primary">
+                                                Enregistrer le report
+                                            </button>
                                         </div>
-                                        <div>
-                                            <label class="block text-xs font-medium text-gray-600 mb-1">Nouvelle heure</label>
-                                            <input type="time" name="heure_souhaitee" required
-                                                value="{{ old('heure_souhaitee') }}"
-                                                class="border border-gray-300 rounded-lg px-3 py-2 text-sm">
-                                        </div>
-                                        <button type="submit"
-                                                class="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold rounded-lg">
-                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
-                                            </svg>
-                                            Reporter
-                                        </button>
                                     </form>
                                 </details>
                             </div>
@@ -636,8 +614,7 @@
                         </div>
                     @endif
                 </div>
-            </div>
-        </div>
+        </x-dossier-collapsible>
     @endif
 
     {{-- ═══════════════════════════════════════════════════════════════════════════════
@@ -683,25 +660,16 @@
             $rdvPassed = $rdvDateTime && $rdvDateTime->isPast();
         @endphp
 
-        <div class="max-w-7xl mx-auto mt-5 sm:px-6 lg:px-8">
-            <div class="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
-
-                <div class="px-6 py-4 border-b border-gray-100 flex items-start gap-4">
-                    <div class="w-11 h-11 rounded-xl bg-gradient-to-br from-blue-50 to-indigo-50 border border-blue-100 flex items-center justify-center flex-shrink-0">
-                        <svg class="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8"
-                                  d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
-                        </svg>
-                    </div>
-                    <div class="flex-1 min-w-0">
-                        <h3 class="text-base font-bold text-gray-900">Suivi du rendez-vous</h3>
-                        <p class="text-xs text-gray-500 mt-0.5">Ce rendez-vous est traité par le service des Formalités</p>
-                    </div>
-                    <span class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold {{ $rdvStatut->badgeClass() }} self-center">
-                        <span class="w-1.5 h-1.5 rounded-full bg-current opacity-70"></span>
-                        {{ $rdvStatut->label() }}
-                    </span>
-                </div>
+        <x-dossier-collapsible
+            title="Suivi du rendez-vous"
+            subtitle="Informations du créneau et pilotage responsable"
+            :open="false"
+        >
+            <x-slot:actions>
+                <span class="inline-flex items-center px-2.5 py-0.5 text-xs font-medium ring-1 ring-inset {{ $rdvStatut->badgeClass() }}">
+                    {{ $rdvStatut->label() }}
+                </span>
+            </x-slot:actions>
 
                 @if($rdvDateDisplay)
                     <div class="px-6 py-5 bg-gradient-to-r from-blue-50/80 via-indigo-50/60 to-blue-50/40 border-b border-blue-100/60">
@@ -775,7 +743,7 @@
                                             Rendez-vous passé — lien expiré
                                         </span>
                                     @elseif(!empty($request->visio_token))
-                                        <a href="{{ route('demandes.rencontre.visio', $request->visio_token) }}"
+                                        <a href="{{ $request->visioPageUrl('dossier') }}"
                                            class="inline-flex items-center gap-1 text-blue-600 hover:text-blue-700 hover:underline">
                                             Rejoindre la visioconférence
                                             <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -836,9 +804,10 @@
                     'rdvStatut' => $rdvStatut,
                     'rdvPending' => ! $rdvStatut->isTerminal(),
                     'rdvTimes' => $rdvTimes ?? [],
+                    'rdvScheduler' => $rdvScheduler ?? null,
+                    'canManageRencontreRdv' => $canManageRencontreRdv ?? false,
                 ])
-            </div>
-        </div>
+        </x-dossier-collapsible>
     @endif
 
     @if($request->isRencontre() && !empty($compteProvisional) && auth()->user()?->hasAnyRole(['admin', \App\Models\User::ROLE_AGENT_FORMALITES]))
@@ -856,13 +825,8 @@
 
             {{-- ====================== ALERTE RÉCEPTION EN ATTENTE ====================== --}}
             @if($from === 'cart' && isset($pendingWorkflow) && $pendingWorkflow)
-                <div class="bg-white rounded-2xl border-2 border-amber-400 shadow-sm overflow-hidden" x-data="{ showRefus: false }">
-                    <div class="bg-amber-400 px-4 py-2.5 flex items-center gap-2">
-                        <svg class="w-4 h-4 text-white flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
-                        </svg>
-                        <span class="text-white font-bold text-sm tracking-wide">RÉCEPTION REQUISE</span>
-                    </div>
+                <div class="dossier-notice dossier-notice--amber" x-data="{ showRefus: false }">
+                    <p class="dossier-notice__head bg-amber-50/80 text-amber-900">Réception requise</p>
                     <div class="p-4">
                         <p class="text-sm text-gray-700 mb-1">
                             Dossier transféré
@@ -879,19 +843,18 @@
                             Vous devez confirmer ou refuser la réception avant toute autre action sur ce dossier.
                         </p>
 
-                        <div class="space-y-2">
+                        <div class="space-y-3">
                             <form method="POST" action="{{ route('admin.interactions.accepter', $pendingWorkflow) }}">
                                 @csrf
-                                <button type="submit"
-                                        class="w-full flex items-center justify-center gap-2 bg-green-600 hover:bg-green-700 text-white text-sm font-semibold py-2.5 rounded-xl transition-all shadow-sm hover:shadow">
-                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <button type="submit" class="dossier-btn-success w-full justify-center">
+                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
                                     </svg>
                                     Confirmer la réception
                                 </button>
                             </form>
                             <button type="button" @click="showRefus = !showRefus"
-                                    class="w-full flex items-center justify-center gap-2 bg-white hover:bg-red-50 text-red-600 border border-red-200 hover:border-red-300 text-sm font-semibold py-2.5 rounded-xl transition-all">
+                                    class="dossier-btn-danger-outline w-full justify-center">
                                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z"/>
                                 </svg>
@@ -908,12 +871,10 @@
                                 <textarea name="motif" rows="2" placeholder="Motif du refus (optionnel)"
                                         class="w-full border border-red-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-red-300 bg-white mb-2 resize-none"></textarea>
                                 <div class="flex gap-2">
-                                    <button type="submit"
-                                            class="flex-1 bg-red-600 hover:bg-red-700 text-white text-sm font-semibold py-2 rounded-lg transition-colors">
+                                    <button type="submit" class="dossier-btn-danger flex-1 justify-center">
                                         Confirmer
                                     </button>
-                                    <button type="button" @click="showRefus = false"
-                                            class="px-4 text-gray-500 hover:text-gray-700 text-sm py-2 rounded-lg hover:bg-gray-100 transition-colors">
+                                    <button type="button" @click="showRefus = false" class="dossier-btn-secondary">
                                         Annuler
                                     </button>
                                 </div>
@@ -980,12 +941,12 @@
                                     @elseif($request->visio_token)
                                         <div class="mt-3">
                                             @if($visioStatus === 'actif')
-                                                <a href="{{ route('demandes.rencontre.visio', $request->visio_token) }}"
+                                                <a href="{{ $request->visioPageUrl('dossier') }}"
                                                 class="inline-flex items-center gap-2 px-3 py-1.5 bg-navy text-white text-xs font-semibold rounded-lg">
                                                     Rejoindre la visioconférence
                                                 </a>
                                             @elseif($visioStatus === 'en_attente')
-                                                <a href="{{ route('demandes.rencontre.visio', $request->visio_token) }}"
+                                                <a href="{{ $request->visioPageUrl('dossier') }}"
                                                 class="inline-flex items-center gap-2 text-xs font-semibold text-navy hover:underline">
                                                     Lien sécurisé — actif 15 min avant le RDV
                                                 </a>
@@ -2639,30 +2600,37 @@
                             @endif
 
                             @if($supplementalDocs->isNotEmpty())
-                                <div class="space-y-2">
+                                <div class="space-y-4">
                                     @foreach($supplementalDocs->groupBy('label') as $label => $docs)
                                         <div>
                                             @if($label)
-                                                <p class="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">{{ $label }}</p>
+                                                <p class="text-xs font-medium uppercase tracking-wide text-gray-500 mb-2">{{ $label }}</p>
                                             @endif
-                                            @foreach($docs as $doc)
-                                                <div class="flex items-center justify-between bg-gray-50 border border-gray-200 rounded px-3 py-2 text-sm">
-                                                    <a href="{{ $doc->getUrl() }}" target="_blank" class="flex items-center gap-2 text-blue-700 hover:underline truncate">
-                                                        <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"/></svg>
-                                                        <span class="truncate">{{ $doc->file_name }}</span>
-                                                    </a>
-                                                    <div class="flex items-center gap-3 ml-3 flex-shrink-0">
-                                                        <span class="text-gray-400 text-xs">{{ round($doc->size / 1024, 1) }} Ko</span>
-                                                        @if($canAddDocs)
-                                                            <form method="POST" action="{{ route('demandedocument.destroy', $doc->id) }}" onsubmit="return confirm('Supprimer ce document ?')">
-                                                                @csrf
-                                                                @method('DELETE')
-                                                                <button type="submit" class="text-red-500 hover:text-red-700 text-xs">Supprimer</button>
-                                                            </form>
-                                                        @endif
-                                                    </div>
-                                                </div>
-                                            @endforeach
+                                            <ul class="border border-gray-200 divide-y divide-gray-100">
+                                                @foreach($docs as $doc)
+                                                    @php $docUrl = $doc->getUrl(); @endphp
+                                                    <li class="flex flex-wrap items-center justify-between gap-x-4 gap-y-1 px-3 py-2.5 text-sm bg-white">
+                                                        <div class="min-w-0 flex-1">
+                                                            <p class="font-medium text-gray-900 truncate">{{ $doc->file_name }}</p>
+                                                            <p class="text-xs text-gray-500">{{ round($doc->size / 1024, 1) }} Ko</p>
+                                                        </div>
+                                                        <div class="flex items-center gap-3 shrink-0">
+                                                            <div class="flex items-center gap-2 text-xs font-medium text-[#173052]">
+                                                                <a href="{{ $docUrl }}" target="_blank" rel="noopener" class="hover:underline">Ouvrir</a>
+                                                                <span class="text-gray-300" aria-hidden="true">·</span>
+                                                                <a href="{{ $docUrl }}" download class="hover:underline">Télécharger</a>
+                                                            </div>
+                                                            @if($canAddDocs)
+                                                                <form method="POST" action="{{ route('demandedocument.destroy', $doc->id) }}" onsubmit="return confirm('Supprimer ce document ?')">
+                                                                    @csrf
+                                                                    @method('DELETE')
+                                                                    <button type="submit" class="text-red-600 hover:underline text-xs">Supprimer</button>
+                                                                </form>
+                                                            @endif
+                                                        </div>
+                                                    </li>
+                                                @endforeach
+                                            </ul>
                                         </div>
                                     @endforeach
                                 </div>
@@ -2797,20 +2765,14 @@
         </div>{{-- end grid --}}
     </div>{{-- end layout --}}
 
-    {{-- ══════════════════════════════════════════════════════════════════════════════
-         HISTORIQUE DE LA DEMANDE — PLEINE LARGEUR
-    ═══════════════════════════════════════════════════════════════════════════════ --}}
-    <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
-        <div class="bg-white rounded-2xl border border-gray-200 shadow-sm" x-data="{ open: {{ $request->isRencontre() ? 'true' : 'false' }} }">
-            <div class="px-6">
-                <button type="button" @click="open = !open" class="w-full flex items-center justify-between py-4">
-                    <h3 class="text-base font-semibold text-gray-800">{{ __('messages.history_label') }}</h3>
-                    <svg class="w-4 h-4 text-gray-400 transition-transform duration-200" :class="open ? 'rotate-180' : ''" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
-                    </svg>
-                </button>
-                <div x-show="open" x-transition>
-                    <div class="rounded-xl border border-gray-100 mb-4">
+    <x-dossier-collapsible
+        class="rounded-none"
+        :title="__('messages.history_label')"
+        subtitle="Statuts et commentaires enregistrés"
+        :open="false"
+    >
+                    <div class="px-5 sm:px-6 pb-4">
+                    <div class="border border-gray-100">
                         @forelse ($requestHistories as $history)
                             <div class="p-4 border-b border-gray-100 last:border-b-0">
                                 <div class="flex justify-between items-start">
@@ -2840,11 +2802,9 @@
                             <div class="p-4 text-center text-gray-400 text-sm">{{ __('messages.no_history') }}</div>
                         @endforelse
                     </div>
-                    <div class="pb-4">{{ $requestHistories->links() }}</div>
-                </div>
-            </div>
-        </div>
-    </div>
+                    <div class="pt-4">{{ $requestHistories->links() }}</div>
+                    </div>
+    </x-dossier-collapsible>
 
     @if($request->isRencontre() && ($request->data['modalite'] ?? '') === 'visio' && filled($request->visio_token))
         @php
@@ -2854,4 +2814,5 @@
             <x-rencontre-visio-auto-refresh :token="$request->visio_token" />
         @endif
     @endif
+    </x-portal-page>
 </x-app-layout>

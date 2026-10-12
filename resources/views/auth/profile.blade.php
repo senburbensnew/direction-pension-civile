@@ -6,27 +6,36 @@
     </x-slot>
 
 @php
-    $user = auth()->user();
+    $user = $user ?? auth()->user();
     $isInstitution = $user->hasRole('institution');
-    $displayName = $isInstitution
-        ? ($user->name ?: 'Institution')
-        : (trim(($user->firstname ?? '') . ' ' . ($user->lastname ?? '')) ?: ($user->name ?: 'Utilisateur'));
     $inputClass = 'w-full rounded-none border-gray-300 shadow-sm focus:border-navy focus:ring-navy';
     $lockedClass = 'w-full rounded-none border-gray-300 bg-gray-100 text-gray-600 cursor-not-allowed shadow-sm';
     $btnClass = 'px-5 py-2.5 bg-navy hover:bg-orange-500 text-white text-sm font-semibold transition-colors';
+    $empty = '—';
+    $fmtDate = function ($d) use ($empty) {
+        if (blank($d)) {
+            return $empty;
+        }
+        return $d instanceof \DateTimeInterface
+            ? $d->format('d/m/Y')
+            : \Illuminate\Support\Carbon::parse($d)->format('d/m/Y');
+    };
+    $fmtDateTime = function ($d) use ($empty) {
+        if (blank($d)) {
+            return $empty;
+        }
+        return $d instanceof \DateTimeInterface
+            ? $d->format('d/m/Y H:i')
+            : \Illuminate\Support\Carbon::parse($d)->format('d/m/Y H:i');
+    };
+    $accountStatus = $user->resolvedAccountStatus();
 @endphp
 
 <style>
     .card-shadow { box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1); }
 </style>
 
-<div class="py-10 px-4 sm:px-6 lg:px-8">
-    <div class="max-w-7xl mx-auto space-y-8">
-
-        <div class="text-center">
-            <h1 class="text-4xl font-bold text-navy mt-2 mb-3">Mon profil</h1>
-        </div>
-
+<x-portal-page bottom="pb-10" class="space-y-8">
         <section class="bg-white border border-gray-200 card-shadow p-6 sm:p-8">
             <div class="flex items-center gap-3 mb-2">
                 <span class="text-3xl text-navy flex items-center justify-center shrink-0">
@@ -60,18 +69,11 @@
                     </div>
 
                     <div class="flex-1 space-y-2">
-                        <input type="file"
-                               name="profile_photo"
-                               id="profile_photo"
-                               accept=".jpg,.jpeg,.png,image/jpeg,image/png"
-                               class="block w-full text-sm text-gray-600
-                                      file:mr-3 file:py-2 file:px-4 file:border-0
-                                      file:text-sm file:font-semibold file:bg-navy file:text-white
-                                      hover:file:bg-orange-500
-                                      {{ $errors->has('profile_photo') ? 'text-red-600' : '' }}">
-                        @error('profile_photo')
-                            <p class="text-sm text-red-600">{{ $message }}</p>
-                        @enderror
+                        <x-file-input
+                            name="profile_photo"
+                            id="profile_photo"
+                            accept=".jpg,.jpeg,.png,image/jpeg,image/png"
+                        />
                     </div>
                 </div>
 
@@ -111,7 +113,96 @@
                 </span>
                 <h2 class="text-xl font-bold text-navy">Informations personnelles</h2>
             </div>
-            <p class="text-sm text-gray-500 mb-4">Les champs verrouillés ne peuvent pas être modifiés ici.</p>
+            <p class="text-sm text-gray-500 mb-6">Données enregistrées sur votre compte (lecture seule).</p>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                @if ($isInstitution)
+                    <div class="md:col-span-2">
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Nom</label>
+                        <input type="text" value="{{ $user->name ?: $empty }}" disabled class="{{ $lockedClass }}">
+                    </div>
+                @else
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Prénom</label>
+                        <input type="text" value="{{ $user->firstname ?: $empty }}" disabled class="{{ $lockedClass }}">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Nom de famille</label>
+                        <input type="text" value="{{ $user->lastname ?: $empty }}" disabled class="{{ $lockedClass }}">
+                    </div>
+                @endif
+
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Date de naissance</label>
+                    <input type="text" value="{{ $fmtDate($user->birth_date) }}" disabled class="{{ $lockedClass }}">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Sexe</label>
+                    <input type="text" value="{{ $user->gender?->name ?: $empty }}" disabled class="{{ $lockedClass }}">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">État civil</label>
+                    <input type="text" value="{{ $user->civilStatus?->name ?: $empty }}" disabled class="{{ $lockedClass }}">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Statut du compte</label>
+                    <input type="text" value="{{ $accountStatus->label() }}" disabled class="{{ $lockedClass }}">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Email</label>
+                    <input type="text" value="{{ $user->email ?: $empty }}" disabled class="{{ $lockedClass }}">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Email vérifié le</label>
+                    <input type="text"
+                           value="{{ $user->email_verified_at ? $fmtDateTime($user->email_verified_at) : 'Non vérifié' }}"
+                           disabled
+                           class="{{ $lockedClass }}">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Nom d’utilisateur</label>
+                    <input type="text" value="{{ $user->username ?: $empty }}" disabled class="{{ $lockedClass }}">
+                </div>
+                <div class="md:col-span-2">
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Adresse</label>
+                    <input type="text" value="{{ $user->address ?: $empty }}" disabled class="{{ $lockedClass }}">
+                </div>
+
+                @if ($user->service_id)
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Service</label>
+                        <input type="text" value="{{ $user->service?->nom ?: $empty }}" disabled class="{{ $lockedClass }}">
+                    </div>
+                @endif
+
+                @if ($user->institution_id)
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Institution</label>
+                        <input type="text" value="{{ $user->institution?->displayName() ?: $empty }}" disabled class="{{ $lockedClass }}">
+                    </div>
+                @endif
+
+                @if ($user->signature)
+                    <div class="md:col-span-2">
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Signature</label>
+                        <div class="p-3 border border-gray-200 bg-gray-50 inline-block">
+                            <img src="{{ asset('storage/' . $user->signature) }}"
+                                 alt="Signature enregistrée"
+                                 class="max-h-24 max-w-xs object-contain">
+                        </div>
+                    </div>
+                @endif
+            </div>
+        </section>
+
+        <section class="bg-white border border-gray-200 card-shadow p-6 sm:p-8">
+            <div class="flex items-center gap-3 mb-2">
+                <span class="text-3xl text-navy flex items-center justify-center shrink-0">
+                    <i class="fa-solid fa-pen-to-square" aria-hidden="true"></i>
+                </span>
+                <h2 class="text-xl font-bold text-navy">Coordonnées modifiables</h2>
+            </div>
+            <p class="text-sm text-gray-500 mb-4">Vous pouvez compléter ou mettre à jour votre adresse e-mail, NIF, NINU et téléphone ci-dessous.</p>
 
             @if (session('status') === 'profile-updated')
                 <p class="mb-4 text-sm text-green-700">Informations mises à jour avec succès.</p>
@@ -122,58 +213,18 @@
                 @method('PATCH')
 
                 <input type="hidden" name="name" value="{{ old('name', $user->name) }}">
-                <input type="hidden" name="email" value="{{ old('email', $user->email) }}">
 
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    @if ($isInstitution)
-                        <div>
-                            <label for="name_display" class="block text-sm font-medium text-gray-700 mb-1">
-                                Nom <span class="text-gray-400 text-xs">(non modifiable)</span>
-                            </label>
-                            <input type="text" id="name_display"
-                                   value="{{ old('name', $user->name) }}"
-                                   disabled
-                                   class="{{ $lockedClass }}">
-                        </div>
-                    @else
-                        <div>
-                            <label for="firstname" class="block text-sm font-medium text-gray-700 mb-1">
-                                Prénom <span class="text-gray-400 text-xs">(non modifiable)</span>
-                            </label>
-                            <input type="text" id="firstname"
-                                   value="{{ old('firstname', $user->firstname) }}"
-                                   disabled
-                                   class="{{ $lockedClass }}">
-                        </div>
-                        <div>
-                            <label for="lastname" class="block text-sm font-medium text-gray-700 mb-1">
-                                Nom de famille <span class="text-gray-400 text-xs">(non modifiable)</span>
-                            </label>
-                            <input type="text" id="lastname"
-                                   value="{{ old('lastname', $user->lastname) }}"
-                                   disabled
-                                   class="{{ $lockedClass }}">
-                        </div>
-                    @endif
-
-                    <div>
-                        <label for="email_display" class="block text-sm font-medium text-gray-700 mb-1">
-                            Email <span class="text-gray-400 text-xs">(non modifiable)</span>
-                        </label>
-                        <input type="email" id="email_display"
+                    <div class="md:col-span-2">
+                        <label for="email" class="block text-sm font-medium text-gray-700 mb-1">Adresse e-mail</label>
+                        <input type="email" name="email" id="email"
                                value="{{ old('email', $user->email) }}"
-                               disabled
-                               class="{{ $lockedClass }}">
-                    </div>
-
-                    <div>
-                        <label for="username_display" class="block text-sm font-medium text-gray-700 mb-1">
-                            Nom d’utilisateur <span class="text-gray-400 text-xs">(non modifiable)</span>
-                        </label>
-                        <input type="text" id="username_display"
-                               value="{{ old('username', $user->username) }}"
-                               disabled
-                               class="{{ $lockedClass }}">
+                               autocomplete="email"
+                               placeholder="exemple@gmail.com"
+                               class="{{ $inputClass }} {{ $errors->has('email') ? 'border-red-500' : '' }}">
+                        @error('email')
+                            <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                        @enderror
                     </div>
 
                     <div>
@@ -208,16 +259,6 @@
                         @error('phone')
                             <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
                         @enderror
-                    </div>
-
-                    <div>
-                        <label for="sexe" class="block text-sm font-medium text-gray-700 mb-1">
-                            Sexe <span class="text-gray-400 text-xs">(non modifiable)</span>
-                        </label>
-                        <input type="text" id="sexe"
-                               value="{{ old('sexe', optional($user->gender)->name) }}"
-                               disabled
-                               class="{{ $lockedClass }}">
                     </div>
                 </div>
 
@@ -295,6 +336,5 @@
             </form>
         </section>
 
-    </div>
-</div>
+</x-portal-page>
 </x-app-layout>

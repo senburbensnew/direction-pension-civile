@@ -12,7 +12,7 @@
         </div>
     </x-slot>
 
-    <div class="py-8 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto space-y-6">
+    <x-portal-page class="space-y-6">
 
         @if (session('warning'))
             <div class="flex gap-3 rounded-xl border border-amber-300 bg-amber-50 px-4 py-3 text-sm text-amber-950 shadow-sm">
@@ -317,5 +317,5 @@
             Direction de la Pension Civile — assistance :
             <a href="{{ route('contact') }}" class="text-[#173052] font-medium hover:underline">nous contacter</a>
         </p>
-    </div>
+    </x-portal-page>
 </x-app-layout>

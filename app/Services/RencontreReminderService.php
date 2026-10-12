@@ -43,6 +43,9 @@ class RencontreReminderService
 
                 return $slot && Carbon::parse($slot)->toDateString() === $date;
             })
+            ->sortBy(fn (Demande $demande) => Demande::normalizeRencontreTime(
+                $demande->data['heure_souhaitee'] ?? '99:99'
+            ))
             ->values();
     }
 

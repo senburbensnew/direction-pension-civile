@@ -5,43 +5,38 @@
         </h2>
     </x-slot>
 
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
+    <x-portal-page class="space-y-6">
 
-        <nav class="flex flex-wrap items-center gap-2 text-sm text-gray-500" aria-label="Fil d'Ariane">
-            <a href="{{ route('personal.cart') }}" class="inline-flex items-center gap-1.5 text-[#173052] hover:text-orange-600 font-medium transition-colors">
-                <i class="fas fa-inbox text-xs" aria-hidden="true"></i>
-                Corbeille
-            </a>
-            <i class="fas fa-chevron-right text-[10px] text-gray-300" aria-hidden="true"></i>
-            <span class="text-gray-800 font-semibold">{{ $type }}</span>
-        </nav>
-
-        <div class="flex flex-wrap items-end justify-between gap-4">
-            <div>
-                <h1 class="text-xl sm:text-2xl font-bold text-gray-900">{{ $type }}</h1>
-                <p class="text-sm text-gray-600 mt-1">
-                    Dossiers de votre service — ouvrez une ligne pour traiter la demande.
-                </p>
+        <header class="dossier-header px-5 py-5 sm:px-6 border-l-4 border-l-[#173052]">
+            <p class="dossier-kicker">
+                <a href="{{ route('personal.cart') }}" class="text-[#173052] hover:underline">Corbeille</a>
+                · {{ $type }}
+            </p>
+            <div class="mt-1 flex flex-wrap items-end justify-between gap-4">
+                <div>
+                    <h1 class="text-xl font-semibold text-[#173052] tracking-tight">{{ $type }}</h1>
+                    <p class="text-sm text-gray-600 mt-1">Dossiers de votre service — ouvrez une ligne pour traiter la demande.</p>
+                </div>
+                @if($requests->total() > 0)
+                    <p class="text-sm text-gray-500 tabular-nums">
+                        <span class="font-semibold text-gray-800">{{ $requests->total() }}</span> dossier(s)
+                    </p>
+                @endif
             </div>
-            @if($requests->total() > 0)
-                <p class="text-sm text-gray-500 tabular-nums">
-                    <span class="font-semibold text-gray-800">{{ $requests->total() }}</span> dossier(s)
-                </p>
-            @endif
-        </div>
+        </header>
 
-        <div class="rounded-2xl border border-gray-200 bg-white shadow-sm overflow-hidden">
+        <section class="dossier-card overflow-hidden">
             <div class="overflow-x-auto">
-                <table class="min-w-full text-sm">
+                <table class="dossier-table min-w-full text-sm">
                     <thead>
-                        <tr class="bg-gray-50 border-b border-gray-200">
-                            <th class="px-5 py-3.5 text-left text-xs font-semibold uppercase tracking-wide text-gray-500">Dossier</th>
-                            <th class="px-5 py-3.5 text-left text-xs font-semibold uppercase tracking-wide text-gray-500">Étape</th>
-                            <th class="px-5 py-3.5 text-left text-xs font-semibold uppercase tracking-wide text-gray-500">Soumis le</th>
-                            @if($folder === 'rencontre')
-                                <th class="px-5 py-3.5 text-left text-xs font-semibold uppercase tracking-wide text-gray-500">Rendez-vous</th>
+                        <tr>
+                            <th>Dossier</th>
+                            <th>Étape</th>
+                            <th>Soumis le</th>
+                            @if(in_array($folder, ['rencontre', 'clotures'], true))
+                                <th>Rendez-vous</th>
                             @endif
-                            <th class="px-5 py-3.5 text-right text-xs font-semibold uppercase tracking-wide text-gray-500">Action</th>
+                            <th class="text-right">Action</th>
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-gray-100">
@@ -69,7 +64,7 @@
                                 <td class="px-5 py-4 text-gray-600 whitespace-nowrap tabular-nums">
                                     {{ $req->submitted_at?->format('d/m/Y H:i') ?? $req->created_at->format('d/m/Y H:i') }}
                                 </td>
-                                @if($folder === 'rencontre')
+                                @if(in_array($folder, ['rencontre', 'clotures'], true))
                                     @php
                                         $dateRdv = data_get($req->data, 'date_souhaitee');
                                         $heureRdv = data_get($req->data, 'heure_souhaitee');
@@ -97,9 +92,9 @@
                             </tr>
                         @empty
                             <tr>
-                                <td colspan="{{ $folder === 'rencontre' ? 6 : 5 }}" class="px-5 py-16 text-center">
+                                <td colspan="{{ in_array($folder, ['rencontre', 'clotures'], true) ? 6 : 5 }}" class="px-5 py-16 text-center">
                                     <div class="mx-auto max-w-sm">
-                                        <span class="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-gray-100 text-gray-400">
+                                        <span class="mx-auto flex h-14 w-14 items-center justify-center bg-gray-100 border border-gray-200 text-gray-400">
                                             <i class="fas fa-folder-open text-xl" aria-hidden="true"></i>
                                         </span>
                                         <h3 class="mt-4 text-base font-semibold text-gray-900">Répertoire vide</h3>
@@ -122,6 +117,6 @@
                     {{ $requests->withQueryString()->links() }}
                 </div>
             @endif
-        </div>
-    </div>
+        </section>
+    </x-portal-page>
 </x-app-layout>

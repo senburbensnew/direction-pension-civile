@@ -1,6 +1,5 @@
 {{--
     Panneau compact « création de compte » affiché sur le dossier rendez-vous (personal/request).
-    Le dossier complet reste sur formalites/comptes-demandes/{id}.
 --}}
 @php
     $cp = $compte;
@@ -12,165 +11,117 @@
         : route('formalites.comptes-demandes.show', $cp);
     $rdvRealise = $request->rencontreStatut() === \App\Enums\RencontreStatutEnum::REALISE;
     $cpPending = $cp->isPending();
-    $stepRdv = $rdvRealise ? 'done' : ($cpPending ? 'current' : 'done');
-    $stepPieces = count($pieces) > 0 ? 'done' : ($cpPending ? 'current' : 'muted');
-    $stepDecision = $estTraitable ? 'current' : (! $cpPending ? 'done' : 'muted');
 @endphp
 
-<div id="compte-creation" class="max-w-7xl mx-auto mt-5 sm:px-6 lg:px-8 scroll-mt-24">
-    <div class="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
+<x-dossier-collapsible
+    id="compte-creation"
+    title="Création de compte (provisoire)"
+    :subtitle="($cp->displayName() ?: '—').' · '.$cp->code"
+    :open="false"
+>
+    <x-slot:actions>
+        <span class="inline-flex items-center px-2.5 py-0.5 text-xs font-medium ring-1 ring-inset {{ $cp->statusBadgeClass() }}">
+            {{ $cp->statusLabel() }}
+        </span>
+        <a href="{{ $compteShowRoute }}" class="dossier-btn-secondary shrink-0">
+            Dossier complet
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+        </a>
+    </x-slot:actions>
 
-        <div class="h-1 w-full bg-gradient-to-r from-[#173052] via-[#1e3d6b] to-[#2a5085]"></div>
+    <div class="px-5 sm:px-6 py-5 space-y-5">
+        @if($estTraitable)
+            <p class="text-sm text-gray-700 dossier-notice border-l-emerald-600 bg-gray-50 px-4 py-3">
+                Le rendez-vous est <strong class="font-semibold text-gray-900">réalisé</strong>. Vous pouvez accepter ou refuser la création du compte après vérification des pièces.
+            </p>
+        @elseif($cpPending && ! $rdvRealise)
+            <p class="text-sm text-gray-700 dossier-notice dossier-notice--amber px-4 py-3 bg-amber-50/40">
+                Marquez d’abord ce rendez-vous comme <strong class="font-semibold text-gray-900">réalisé</strong> pour débloquer la décision sur le compte.
+            </p>
+        @elseif($cpPending)
+            <p class="text-sm text-gray-700 dossier-notice dossier-notice--amber px-4 py-3 bg-amber-50/40">
+                La décision sera disponible après l’heure prévue du rendez-vous.
+            </p>
+        @endif
 
-        <div class="px-5 py-4 sm:px-6 border-b border-gray-100 flex flex-wrap items-start justify-between gap-4">
-            <div class="flex items-start gap-3 min-w-0">
-                <div class="w-11 h-11 rounded-xl bg-sky-50 border border-sky-200 flex items-center justify-center shrink-0">
-                    <svg class="w-6 h-6 text-[#173052]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
-                              d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"/>
-                    </svg>
-                </div>
-                <div class="min-w-0">
-                    <div class="flex flex-wrap items-center gap-2">
-                        <h2 class="text-base font-bold text-gray-900">Création de compte (provisoire)</h2>
-                        <span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold {{ $cp->statusBadgeClass() }}">
-                            {{ $cp->statusLabel() }}
-                        </span>
-                    </div>
-                    <p class="text-sm text-gray-500 mt-0.5 truncate">{{ $cp->displayName() ?: '—' }} · {{ $cp->code }}</p>
-                </div>
+        <dl class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-x-6 gap-y-4 text-sm">
+            <div>
+                <dt class="text-xs font-medium text-gray-500">Téléphone</dt>
+                <dd class="mt-1 font-medium text-gray-900">{{ $cp->telephone ?: '—' }}</dd>
             </div>
-            <a href="{{ $compteShowRoute }}"
-               class="inline-flex items-center gap-2 px-3 py-2 text-sm font-semibold text-[#173052] bg-sky-50 hover:bg-sky-100 rounded-xl transition-colors">
-                Dossier complet
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
-            </a>
-        </div>
-
-        {{-- Étapes --}}
-        <div class="px-5 sm:px-6 py-3 bg-gray-50/80 border-b border-gray-100">
-            <ol class="flex flex-wrap items-center gap-2 text-xs font-medium">
-                @foreach([
-                    ['label' => 'RDV réalisé', 'state' => $stepRdv],
-                    ['label' => 'Pièces déposées', 'state' => $stepPieces],
-                    ['label' => 'Décision', 'state' => $stepDecision],
-                ] as $step)
-                    <li @class([
-                        'inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full ring-1',
-                        'bg-green-50 text-green-800 ring-green-200' => $step['state'] === 'done',
-                        'bg-sky-50 text-[#173052] ring-sky-200' => $step['state'] === 'current',
-                        'bg-white text-gray-400 ring-gray-200' => $step['state'] === 'muted',
-                    ])>
-                        @if($step['state'] === 'done')
-                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
-                        @endif
-                        {{ $step['label'] }}
-                    </li>
-                @endforeach
-            </ol>
-        </div>
-
-        <div class="p-5 sm:p-6 space-y-5">
-
-            @if($estTraitable)
-                <p class="text-sm text-green-800 bg-green-50 border border-green-200 rounded-xl px-4 py-3">
-                    Le rendez-vous est <strong>réalisé</strong>. Vous pouvez accepter ou refuser la création du compte après vérification des pièces.
-                </p>
-            @elseif($cpPending && ! $rdvRealise)
-                <p class="text-sm text-amber-800 bg-amber-50 border border-amber-200 rounded-xl px-4 py-3">
-                    Marquez d’abord ce rendez-vous comme <strong>réalisé</strong> pour débloquer la décision sur le compte.
-                </p>
-            @elseif($cpPending)
-                <p class="text-sm text-amber-800 bg-amber-50 border border-amber-200 rounded-xl px-4 py-3">
-                    La décision sera disponible après l’heure prévue du rendez-vous.
-                </p>
-            @endif
-
-            <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 text-sm">
-                <div class="rounded-xl border border-gray-200 bg-gray-50/50 px-3 py-2.5">
-                    <p class="text-[10px] uppercase tracking-wide text-gray-400 font-semibold">Téléphone</p>
-                    <p class="font-medium text-gray-900 mt-0.5 truncate">{{ $cp->telephone ?: '—' }}</p>
-                </div>
-                <div class="rounded-xl border border-gray-200 bg-gray-50/50 px-3 py-2.5">
-                    <p class="text-[10px] uppercase tracking-wide text-gray-400 font-semibold">NIF</p>
-                    <p class="font-medium text-gray-900 mt-0.5 truncate">{{ $cp->nif ?: '—' }}</p>
-                </div>
-                <div class="rounded-xl border border-gray-200 bg-gray-50/50 px-3 py-2.5">
-                    <p class="text-[10px] uppercase tracking-wide text-gray-400 font-semibold">E-mail</p>
-                    <p class="font-medium text-gray-900 mt-0.5 truncate" title="{{ $cp->email }}">{{ $cp->email ?: '—' }}</p>
-                </div>
-                <div class="rounded-xl border border-gray-200 bg-gray-50/50 px-3 py-2.5">
-                    <p class="text-[10px] uppercase tracking-wide text-gray-400 font-semibold">Dépôt</p>
-                    <p class="font-medium text-gray-900 mt-0.5">{{ ($cp->soumise_at ?? $cp->created_at)?->format('d/m/Y') }}</p>
-                </div>
+            <div>
+                <dt class="text-xs font-medium text-gray-500">NIF</dt>
+                <dd class="mt-1 font-medium text-gray-900 font-mono">{{ $cp->nif ?: '—' }}</dd>
             </div>
+            <div>
+                <dt class="text-xs font-medium text-gray-500">Courriel</dt>
+                <dd class="mt-1 font-medium text-gray-800 break-all">
+                    @if(filled($cp->email))
+                        <a href="mailto:{{ $cp->email }}" class="text-[#173052] hover:underline">{{ $cp->email }}</a>
+                    @else
+                        —
+                    @endif
+                </dd>
+            </div>
+            <div>
+                <dt class="text-xs font-medium text-gray-500">Dépôt</dt>
+                <dd class="mt-1 font-medium text-gray-900">{{ ($cp->soumise_at ?? $cp->created_at)?->format('d/m/Y') }}</dd>
+            </div>
+        </dl>
 
-            @if(! empty($pieces))
-                <div>
-                    <p class="text-xs font-bold text-gray-600 uppercase tracking-wide mb-2">Pièces jointes</p>
-                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                        @foreach($pieces as $piece)
-                            @php
-                                $pieceMedia = $piece['media'];
-                                $pieceViewUrl = $cp->agentPieceUrl($pieceMedia, auth()->user(), true) ?? $pieceMedia->getUrl();
-                                $pieceDownloadUrl = $cp->agentPieceUrl($pieceMedia, auth()->user(), false) ?? $pieceMedia->getUrl();
-                                $isImage = str_starts_with((string) $pieceMedia->mime_type, 'image/');
-                            @endphp
-                            <div class="flex items-center gap-3 rounded-xl border border-gray-200 p-2.5 hover:border-sky-200 hover:bg-sky-50/40 transition-colors">
-                                @if($isImage)
-                                    <a href="{{ $pieceViewUrl }}" target="_blank" rel="noopener" class="shrink-0">
-                                        <img src="{{ $pieceViewUrl }}" alt="" class="w-14 h-14 object-cover rounded-lg border border-gray-200 bg-gray-100">
-                                    </a>
-                                @else
-                                    <div class="w-14 h-14 rounded-lg bg-gray-100 border border-gray-200 flex items-center justify-center shrink-0 text-gray-400">
-                                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M7 21h10a2 2 0 002-2V9l-5-5H7a2 2 0 00-2 2v13a2 2 0 002 2z"/></svg>
-                                    </div>
-                                @endif
-                                <div class="min-w-0 flex-1">
-                                    <p class="text-sm font-medium text-gray-900 truncate">{{ $piece['label'] }}</p>
-                                    <div class="flex gap-3 mt-1 text-xs font-semibold">
-                                        <a href="{{ $pieceViewUrl }}" target="_blank" rel="noopener" class="text-[#173052] hover:underline">Ouvrir</a>
-                                        <a href="{{ $pieceDownloadUrl }}" class="text-[#173052] hover:underline">Télécharger</a>
-                                    </div>
-                                </div>
+        @if(! empty($pieces))
+            <div class="border-t border-gray-100 pt-5">
+                <h3 class="text-xs font-medium uppercase tracking-wide text-gray-500 mb-2">Pièces jointes</h3>
+                <ul class="border border-gray-200 divide-y divide-gray-100">
+                    @foreach($pieces as $piece)
+                        @php
+                            $pieceMedia = $piece['media'];
+                            $pieceViewUrl = $cp->agentPieceUrl($pieceMedia, auth()->user(), true) ?? $pieceMedia->getUrl();
+                            $pieceDownloadUrl = $cp->agentPieceUrl($pieceMedia, auth()->user(), false) ?? $pieceMedia->getUrl();
+                        @endphp
+                        <li class="flex flex-wrap items-center justify-between gap-x-4 gap-y-1 px-3 py-2.5 text-sm bg-white">
+                            <div class="min-w-0 flex-1">
+                                <p class="font-medium text-gray-900">{{ $piece['label'] }}</p>
+                                <p class="text-xs text-gray-500 truncate">{{ $pieceMedia->file_name }}</p>
                             </div>
-                        @endforeach
-                    </div>
-                </div>
-            @endif
+                            <div class="flex items-center gap-2 shrink-0 text-xs font-medium text-[#173052]">
+                                <a href="{{ $pieceViewUrl }}" target="_blank" rel="noopener" class="hover:underline">Ouvrir</a>
+                                <span class="text-gray-300" aria-hidden="true">·</span>
+                                <a href="{{ $pieceDownloadUrl }}" class="hover:underline">Télécharger</a>
+                            </div>
+                        </li>
+                    @endforeach
+                </ul>
+            </div>
+        @endif
 
-            @if($estTraitable && $canDecideCompte)
-                <div class="flex flex-wrap gap-2 pt-2 border-t border-gray-100">
-                    <form method="POST" action="{{ route('formalites.comptes-demandes.accepter', $cp) }}"
-                          onsubmit="return confirm('Accepter la création de compte pour ce demandeur ?');">
-                        @csrf
-                        <button type="submit"
-                                class="inline-flex items-center gap-2 px-4 py-2.5 bg-green-600 hover:bg-green-700 text-white text-sm font-semibold rounded-xl shadow-sm">
-                            Accepter le compte
-                        </button>
-                    </form>
-                    <button type="button"
-                            onclick="document.getElementById('refusComptePanel').classList.toggle('hidden')"
-                            class="inline-flex items-center gap-2 px-4 py-2.5 bg-white border border-red-200 text-red-700 hover:bg-red-50 text-sm font-semibold rounded-xl">
-                        Refuser
-                    </button>
-                </div>
-                <div id="refusComptePanel" class="hidden bg-red-50 border border-red-200 rounded-xl p-4">
-                    <form method="POST" action="{{ route('formalites.comptes-demandes.refuser', $cp) }}"
-                          onsubmit="return confirm('Refuser la création de compte ? Cette action est définitive.');">
-                        @csrf
-                        <label class="block text-xs font-semibold text-red-800 mb-1">Motif du refus <span class="text-red-500">*</span></label>
-                        <textarea name="refusal_reason" rows="3" required minlength="5" maxlength="1000"
-                                  class="w-full border border-red-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-red-300 mb-3"
-                                  placeholder="Expliquez la raison du refus...">{{ old('refusal_reason') }}</textarea>
-                        <div class="flex flex-wrap gap-2">
-                            <button type="submit" class="px-4 py-2 bg-red-600 hover:bg-red-700 text-white text-sm font-semibold rounded-lg">Confirmer le refus</button>
-                            <button type="button" onclick="document.getElementById('refusComptePanel').classList.add('hidden')"
-                                    class="px-4 py-2 text-gray-600 hover:text-gray-800 text-sm">Annuler</button>
-                        </div>
-                    </form>
-                </div>
-            @endif
-        </div>
+        @if($estTraitable && $canDecideCompte)
+            <div class="flex flex-wrap gap-2 pt-4 border-t border-gray-100">
+                <form method="POST" action="{{ route('formalites.comptes-demandes.accepter', $cp) }}"
+                      onsubmit="return confirm('Accepter la création de compte pour ce demandeur ?');">
+                    @csrf
+                    <button type="submit" class="dossier-btn-success">Accepter le compte</button>
+                </form>
+                <button type="button"
+                        onclick="document.getElementById('refusComptePanel').classList.toggle('hidden')"
+                        class="dossier-btn-danger-outline">
+                    Refuser
+                </button>
+            </div>
+            <div id="refusComptePanel" class="hidden border border-gray-200 bg-gray-50 p-4">
+                <form method="POST" action="{{ route('formalites.comptes-demandes.refuser', $cp) }}"
+                      onsubmit="return confirm('Refuser la création de compte ? Cette action est définitive.');">
+                    @csrf
+                    <label class="block text-xs font-medium text-gray-700 mb-1">Motif du refus <span class="text-red-500">*</span></label>
+                    <textarea name="refusal_reason" rows="3" required minlength="5" maxlength="1000"
+                              class="dossier-field mb-3 bg-white"
+                              placeholder="Expliquez la raison du refus...">{{ old('refusal_reason') }}</textarea>
+                    <div class="flex flex-wrap gap-2">
+                        <button type="submit" class="dossier-btn-danger">Confirmer le refus</button>
+                        <button type="button" onclick="document.getElementById('refusComptePanel').classList.add('hidden')" class="dossier-btn-secondary">Annuler</button>
+                    </div>
+                </form>
+            </div>
+        @endif
     </div>
-</div>
+</x-dossier-collapsible>

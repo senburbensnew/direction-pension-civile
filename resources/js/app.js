@@ -8,6 +8,56 @@ window.Alpine = Alpine;
 window.flatpickr = flatpickr;
 window.French = French;
 
+document.addEventListener('alpine:init', () => {
+    Alpine.data('searchableSelect', (config) => ({
+        open: false,
+        query: '',
+        selectedValue: String(config.selected ?? ''),
+        options: config.options ?? [],
+        placeholder: config.placeholder ?? '',
+        searchPlaceholder: config.searchPlaceholder ?? 'Rechercher…',
+
+        toggle() {
+            this.open = ! this.open;
+            if (this.open) {
+                this.$nextTick(() => this.$refs.searchInput?.focus());
+            } else {
+                this.query = '';
+            }
+        },
+
+        select(value) {
+            this.selectedValue = String(value);
+            this.open = false;
+            this.query = '';
+        },
+
+        get filteredOptions() {
+            const q = this.query.trim().toLowerCase();
+            if (q === '') {
+                return this.options;
+            }
+
+            return this.options.filter((option) =>
+                option.label.toLowerCase().includes(q)
+                || String(option.value).toLowerCase().includes(q)
+            );
+        },
+
+        get selectedLabel() {
+            const match = this.options.find(
+                (option) => String(option.value) === String(this.selectedValue)
+            );
+
+            if (match?.label) {
+                return match.label;
+            }
+
+            return this.placeholder;
+        },
+    }));
+});
+
 Alpine.start();
 
 // Locale → { flatpickr locale, display format shown to user }
@@ -30,6 +80,24 @@ function initDatepickers() {
         allowInput: true,
         disableMobile: false,
     });
+}
+
+function resolveRdvBookingTimeInput(form, input, datasetKey) {
+    if (!input) {
+        return '';
+    }
+
+    const fromInput = (input.value || '').trim();
+    if (fromInput !== '') {
+        return fromInput;
+    }
+
+    const fromDataset = (form.dataset[datasetKey] || '').trim();
+    if (fromDataset !== '') {
+        input.value = fromDataset;
+    }
+
+    return fromDataset;
 }
 
 function initRdvBookingTimePickers() {
@@ -58,17 +126,29 @@ function initRdvBookingTimePickers() {
         };
 
         const startInput = form.querySelector('[data-rdv-booking-start]');
+        const initialStart = resolveRdvBookingTimeInput(form, startInput, 'initialStart');
 
         if (startInput && !startInput._flatpickr) {
-            flatpickr(startInput, timeConfig);
+            const startPicker = flatpickr(startInput, {
+                ...timeConfig,
+                defaultDate: initialStart || undefined,
+            });
+
+            if (initialStart && startPicker.selectedDates.length === 0) {
+                startPicker.setDate(initialStart, false);
+            }
         }
 
         const endInput = form.querySelector('[data-rdv-booking-end]');
+        const initialEnd = resolveRdvBookingTimeInput(form, endInput, 'initialEnd');
         let endPicker = null;
 
         if (endInput && !endInput._flatpickr) {
+            const endIsMidnight = initialEnd === '24:00';
+
             endPicker = flatpickr(endInput, {
                 ...timeConfig,
+                defaultDate: endIsMidnight ? undefined : (initialEnd || undefined),
                 onOpen: () => {
                     if (endInput.value === '24:00') {
                         endPicker.clear(false);
@@ -78,6 +158,13 @@ function initRdvBookingTimePickers() {
                     delete endInput.dataset.midnightEnd;
                 },
             });
+
+            if (endIsMidnight) {
+                endInput.value = '24:00';
+                endInput.dataset.midnightEnd = '1';
+            } else if (initialEnd && endPicker.selectedDates.length === 0) {
+                endPicker.setDate(initialEnd, false);
+            }
         } else if (endInput?._flatpickr) {
             endPicker = endInput._flatpickr;
         }
@@ -116,13 +203,14 @@ document.addEventListener('DOMContentLoaded', () => {
     if (document.getElementById('dpc-chronogramme')) {
         import('./chronogramme.js').then(({ initDpcChronogramme }) => initDpcChronogramme());
     }
-    if (document.getElementById('dpc-rdv-scheduler')) {
-        import('./rdv-scheduler.js').then(({ initRdvScheduler }) => initRdvScheduler());
-    }
-    if (document.getElementById('dpc-agent-availability-calendar')) {
+    const agentAvailCal = document.getElementById('dpc-agent-availability-calendar');
+    if (agentAvailCal) {
         import('./rdv-agent-availability.js').then(({ initAgentAvailabilityCalendar }) =>
             initAgentAvailabilityCalendar()
         );
+    }
+    if (document.querySelector('.dpc-rdv-scheduler')) {
+        import('./rdv-scheduler.js').then(({ initRdvScheduler }) => initRdvScheduler());
     }
 });
 

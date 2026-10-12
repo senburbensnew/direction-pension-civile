@@ -18,7 +18,14 @@ class ProfileController extends Controller
      */
     public function edit(Request $request): View
     {
-        return view('auth.profile');
+        $user = $request->user()->loadMissing([
+            'gender',
+            'civilStatus',
+            'service',
+            'institution',
+        ]);
+
+        return view('auth.profile', compact('user'));
     }
 
     /**

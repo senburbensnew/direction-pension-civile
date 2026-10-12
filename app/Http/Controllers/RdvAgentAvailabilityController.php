@@ -45,12 +45,16 @@ class RdvAgentAvailabilityController extends Controller
 
         $minDate = now()->toDateString();
         $maxDate = now()->addMonths(6)->toDateString();
+        $maxDateCarbon = Carbon::parse($maxDate)->endOfDay();
 
         return view('demandes.rencontre.disponibilites', [
             'recurringAvailabilities' => $recurring,
             'dateAvailabilities' => $dateAvailabilities,
             'blockedAvailabilities' => $blocked,
-            'holidayEvents' => $availability->holidayEvents(),
+            'holidayEvents' => $availability->holidayEvents(
+                now()->startOfDay(),
+                $maxDateCarbon
+            ),
             'weekdays' => $availability->weekdayLabels(),
             'allowWeekends' => $availability->allowsWeekends(),
             'bookingDaysLabel' => $availability->bookingDaysLabel(),
@@ -139,6 +143,13 @@ class RdvAgentAvailabilityController extends Controller
                 throw ValidationException::withMessages([
                     "dates.{$index}.available_on" =>
                         'Les rendez-vous ne sont pas planifiés le week-end.',
+                ]);
+            }
+
+            if (!$availability->isBookableDate($window['available_on'])) {
+                throw ValidationException::withMessages([
+                    "dates.{$index}.available_on" =>
+                        'Cette date n’est pas ouvrée (week-end ou jour férié en Haïti).',
                 ]);
             }
 

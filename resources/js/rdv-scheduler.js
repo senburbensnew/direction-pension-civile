@@ -88,6 +88,67 @@ function startOfLocalDay(date = new Date()) {
     );
 }
 
+function addDays(date, days) {
+    const copy = new Date(date.getTime());
+
+    copy.setDate(copy.getDate() + days);
+
+    return copy;
+}
+
+function buildSlotDate(dateStr, timeStr) {
+    const [year, month, day] = dateStr.split('-').map(Number);
+    const [hour, minute] = timeStr.slice(0, 5).split(':').map(Number);
+
+    return new Date(year, month - 1, day, hour, minute, 0, 0);
+}
+
+function buildHolidayBackgroundEvents(
+    holidays,
+    rangeStart,
+    rangeEnd,
+    displayMinTime,
+    displayMaxTime
+) {
+    const events = [];
+    const min = displayMinTime.slice(0, 5);
+    let max = displayMaxTime.slice(0, 5);
+
+    if (max === '24:00') {
+        max = '23:59';
+    }
+
+    for (let cursor = new Date(rangeStart); cursor <= rangeEnd; cursor = addDays(cursor, 1)) {
+        const dateStr = formatDate(cursor);
+
+        if (!holidays.has(dateStr)) {
+            continue;
+        }
+
+        const start = buildSlotDate(dateStr, min);
+        const end = buildSlotDate(dateStr, max);
+
+        if (end <= start) {
+            continue;
+        }
+
+        events.push({
+            id: `holiday-bg-${dateStr}`,
+            title: holidays.get(dateStr) || 'Jour férié',
+            start,
+            end,
+            display: 'background',
+            classNames: ['dpc-rdv-holiday-bg'],
+            editable: false,
+            extendedProps: {
+                holiday: true,
+            },
+        });
+    }
+
+    return events;
+}
+
 function readHolidayDates(el) {
     try {
         const raw = JSON.parse(el.dataset.holidays || '[]');
@@ -219,22 +280,75 @@ function formatSelectionLabel(start) {
     }).format(start);
 }
 
+function bindLazyRdvScheduler(details, el) {
+    if (details.dataset.rdvLazyBound === '1') {
+        return;
+    }
+
+    details.dataset.rdvLazyBound = '1';
+
+    details.addEventListener('toggle', () => {
+        if (!details.open) {
+            return;
+        }
+
+        if (el.dataset.ready !== '1') {
+            initOneRdvScheduler(el);
+
+            return;
+        }
+
+        el._rdvCalendar?.updateSize();
+    });
+}
+
+function isAgentAvailabilityScheduler(el) {
+    return (
+        el.id === 'dpc-agent-availability-calendar'
+        || el.classList.contains('dpc-agent-availability-scheduler')
+    );
+}
+
 export function initRdvScheduler() {
+    document.querySelectorAll('.dpc-rdv-scheduler').forEach((el) => {
+        if (isAgentAvailabilityScheduler(el)) {
+            return;
+        }
 
-    const el = document.getElementById('dpc-rdv-scheduler');
+        if (el.dataset.ready === '1') {
+            return;
+        }
 
+        const details = el.closest('details');
+
+        if (details && !details.open) {
+            bindLazyRdvScheduler(details, el);
+
+            return;
+        }
+
+        initOneRdvScheduler(el);
+    });
+}
+
+function initOneRdvScheduler(el) {
     if (!el || el.dataset.ready === '1') {
         return;
     }
 
+    const form = el.closest('form') || document;
+
     const dateInput =
-        document.getElementById('date_souhaitee');
+        form.querySelector('[name="date_souhaitee"]')
+        || document.getElementById('date_souhaitee');
 
     const timeInput =
-        document.getElementById('heure_souhaitee');
+        form.querySelector('[name="heure_souhaitee"]')
+        || document.getElementById('heure_souhaitee');
 
     const selectionEl =
-        document.getElementById('dpc-rdv-selection');
+        el.parentElement?.querySelector('[data-dpc-rdv-selection]')
+        || document.getElementById('dpc-rdv-selection');
 
     const slotMinutes =
         Number(el.dataset.slotMinutes || 15);
@@ -293,6 +407,9 @@ export function initRdvScheduler() {
     const isHoliday = (start) => {
         return holidays.has(formatDate(start));
     };
+
+    const holidayCellClassNames = (arg) =>
+        holidays.has(formatDate(arg.date)) ? ['dpc-rdv-holiday'] : [];
 
     const isReserved = (start) => {
         return reserved.has(slotKey(start));
@@ -471,7 +588,9 @@ export function initRdvScheduler() {
         calendar
             .getEvents()
             .filter(
-                event => event.id !== 'selection'
+                (event) =>
+                    event.id !== 'selection' &&
+                    !String(event.id || '').startsWith('holiday-bg-')
             )
             .forEach(
                 event => event.remove()
@@ -686,6 +805,9 @@ export function initRdvScheduler() {
 
         selectConstraint: 'businessHours',
 
+        dayCellClassNames: holidayCellClassNames,
+        slotLaneClassNames: holidayCellClassNames,
+
         /*
          * IMPORTANT :
          * Plus aucune condition sur agentId.
@@ -781,6 +903,17 @@ export function initRdvScheduler() {
                 return;
             }
 
+            if (info.event.extendedProps?.holiday) {
+                const dateStr = formatDate(info.event.start);
+
+                showMessage(
+                    `Jour férié en Haïti (${holidays.get(dateStr) || 'Jour férié'}). Choisissez une autre date.`,
+                    true
+                );
+
+                return;
+            }
+
             if (
                 info.event.extendedProps.reserved
             ) {
@@ -792,10 +925,44 @@ export function initRdvScheduler() {
             }
         },
 
+        datesSet: () => {
+            refreshHolidayEvents();
+        },
+
         events: reservedEvents(),
     });
 
+    const refreshHolidayEvents = () => {
+        const view = calendar.view;
+
+        if (!view) {
+            return;
+        }
+
+        calendar
+            .getEvents()
+            .filter((event) =>
+                String(event.id || '').startsWith('holiday-bg-')
+            )
+            .forEach((event) => event.remove());
+
+        const rangeStart = view.activeStart;
+        const rangeEnd = addDays(view.activeEnd, -1);
+
+        buildHolidayBackgroundEvents(
+            holidays,
+            rangeStart,
+            rangeEnd,
+            displayMinTime,
+            displayMaxTime
+        ).forEach((event) => {
+            calendar.addEvent(event);
+        });
+    };
+
     calendar.render();
+
+    el._rdvCalendar = calendar;
 
     requestAnimationFrame(() => {
         calendar.updateSize();
@@ -815,10 +982,7 @@ export function initRdvScheduler() {
         refreshReserved();
     });
 
-    const form =
-        el.closest('form');
-
-    if (form) {
+    if (form && form.tagName === 'FORM') {
 
         form.addEventListener(
             'submit',

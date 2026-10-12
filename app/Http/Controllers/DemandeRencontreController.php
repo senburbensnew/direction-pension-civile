@@ -75,8 +75,10 @@ class DemandeRencontreController extends Controller
             'reservedSlotsByService' =>
                 $this->availability->unavailableSlotsByServiceCode(),
 
-            'holidayEvents' =>
-                $this->availability->holidayEvents(),
+            'holidayEvents' => $this->availability->holidayEvents(
+                now()->startOfDay(),
+                now()->copy()->addMonths(6)->endOfDay()
+            ),
 
             'rdvActif' => $this->activeAppointment($user),
 
@@ -824,6 +826,42 @@ class DemandeRencontreController extends Controller
             );
         }
 
+        if ($request->filled('modalite')) {
+            $modalite = $request->string('modalite')->toString();
+            if (in_array($modalite, ['physique', 'visio'], true)) {
+                $query->where('data->modalite', $modalite);
+            }
+        }
+
+        if ($request->filled('agent_id')) {
+            $query->where('data->agent_id', (int) $request->input('agent_id'));
+        }
+
+        if ($request->filled('date_du')) {
+            $query->where('data->date_souhaitee', '>=', $request->string('date_du')->toString());
+        }
+
+        if ($request->filled('date_au')) {
+            $query->where('data->date_souhaitee', '<=', $request->string('date_au')->toString());
+        }
+
+        if ($request->filled('q')) {
+            $term = '%'.$request->string('q')->trim()->toString().'%';
+            $query->where(function ($q) use ($term) {
+                $q->where('code', 'like', $term)
+                    ->orWhere('data->prenom', 'like', $term)
+                    ->orWhere('data->nom', 'like', $term)
+                    ->orWhere('data->telephone', 'like', $term)
+                    ->orWhere('data->email', 'like', $term)
+                    ->orWhereHas('user', function ($uq) use ($term) {
+                        $uq->where('email', 'like', $term)
+                            ->orWhere('firstname', 'like', $term)
+                            ->orWhere('lastname', 'like', $term)
+                            ->orWhere('name', 'like', $term);
+                    });
+            });
+        }
+
         $this->scopePilotageListForUser($query, $user);
 
         $demandes = $query
@@ -831,22 +869,12 @@ class DemandeRencontreController extends Controller
             ->withQueryString();
 
         $appelsVeille = collect();
-        if ($user?->hasAnyRole([
-            User::ROLE_AGENT_RDV,
-            User::ROLE_VALIDATEUR_RDV,
-            'service_accueil_formalites',
-            'responsable_service_accueil_formalites',
-            'direction',
-            'admin',
-        ])) {
+        if ($user?->hasRole(User::ROLE_AGENT_RDV)) {
             $reminders = app(\App\Services\RencontreReminderService::class);
-            $date = $reminders->reminderDate();
-            $isAgentRdvOnly = $user->hasRole(User::ROLE_AGENT_RDV)
-                && ! $user->hasAnyRole(['admin', 'direction', 'directeur', 'assistant_directeur']);
-
-            $appelsVeille = $isAgentRdvOnly
-                ? $reminders->appointmentsOnForAgent($date, $user->id)
-                : $reminders->appointmentsOn($date);
+            $appelsVeille = $reminders->appointmentsOnForAgent(
+                $reminders->reminderDate(),
+                (int) $user->id
+            );
         }
 
         return view('demandes.rencontre.pilotage.index', [
@@ -891,7 +919,8 @@ class DemandeRencontreController extends Controller
             'service',
             'user',
             'currentStep',
-            'histories',
+            'assignments.agent',
+            'histories.changer',
         ]);
 
         $rdvStatut = $this->rdvWorkflow->statut($demande);
@@ -917,7 +946,6 @@ class DemandeRencontreController extends Controller
                 'demande' => $demande,
                 'compteCreation' => $compteCreation,
                 'service' => $demande->service,
-                'services' => Service::query()->orderBy('nom')->get(),
                 'histories' => $demande->histories
                     ->sortByDesc('created_at'),
                 'rdvStatus' => $rdvStatut,
@@ -1639,105 +1667,6 @@ class DemandeRencontreController extends Controller
 
     /*
     |--------------------------------------------------------------------------
-    | REORIENTATION
-    |--------------------------------------------------------------------------
-    */
-
-    public function reorienter(
-        Request $request,
-        Demande $demande
-    ) {
-        $this->authorizeRdvAgent(
-            $demande,
-            $request->user()
-        );
-
-        $this->assertNotTerminal($demande);
-
-        $validated = $request->validate([
-            'service_id' => [
-                'required',
-                'exists:services,id',
-            ],
-
-            'commentaire' => [
-                'required',
-                'string',
-                'max:2000',
-            ],
-        ]);
-
-        $service = Service::findOrFail(
-            $validated['service_id']
-        );
-
-        $data = $demande->data ?? [];
-
-        $data['service_id'] =
-            $service->id;
-
-        $data['service_code'] =
-            $service->code;
-
-        $data['service_responsable'] =
-            $service->nom;
-
-        $data['unite'] =
-            $service->nom;
-
-        unset(
-            $data['agent_id'],
-            $data['agent_nom']
-        );
-
-        $demande->update([
-            'current_service_id' =>
-                $service->id,
-
-            'data' =>
-                $data,
-        ]);
-
-        DemandeHistory::create([
-            'demande_id' =>
-                $demande->id,
-
-            'event' =>
-                'REORIENTED',
-
-            'statut' =>
-                $this->rdvWorkflow
-                    ->statut($demande)
-                    ->value,
-
-            'commentaire' =>
-                $validated['commentaire'],
-
-            'changed_by' =>
-                $request->user()->id,
-
-            'champs' => [
-                'action' =>
-                    'reorientation',
-
-                'service_id' =>
-                    $service->id,
-
-                'service_code' =>
-                    $service->code,
-            ],
-        ]);
-
-        return back()->with(
-            'success',
-            'La demande a été réorientée vers le service « '
-            . $service->nom
-            . ' ».'
-        );
-    }
-
-    /*
-    |--------------------------------------------------------------------------
     | SUITE
     |--------------------------------------------------------------------------
     */
@@ -2021,47 +1950,87 @@ class DemandeRencontreController extends Controller
         ];
     }
 
+    /**
+     * Page de retour depuis la visio (?back= create|pilotage|dossier, mémorisé en session).
+     */
     private function resolveVisioReturnUrl(
         Request $request,
         Demande $demande
     ): string {
-        $sessionKey = 'visio_return.'.$demande->visio_token;
+        $sessionKey = 'visio_back.'.$demande->visio_token;
+        $user = $request->user();
+        $back = $request->query('back');
 
-        $candidate = $this->safeSameHostUrl(
-            $request->query('return')
-        );
-
-        if ($candidate !== null && ! $this->isVisioPageUrl($candidate)) {
-            session([$sessionKey => $candidate]);
-
-            return $candidate;
+        if (is_string($back) && in_array($back, ['create', 'pilotage', 'dossier', 'corbeille'], true)) {
+            session([$sessionKey => $back]);
+        } elseif (
+            $user
+            && (int) $demande->created_by === (int) $user->id
+            && $back !== 'pilotage'
+        ) {
+            session([$sessionKey => 'create']);
+            $back = 'create';
+        } else {
+            $back = session($sessionKey);
         }
 
-        $referer = $this->safeSameHostUrl(
-            $request->headers->get('referer')
-        );
+        $url = match ($back) {
+            'create' => route('demandes.rencontre.create'),
+            'pilotage' => route('rencontres.pilotage.show', $demande),
+            'dossier' => route('personal.request.show', $demande->id),
+            'corbeille' => $this->visioCorbeilleRencontreUrl(),
+            default => $this->defaultVisioReturnUrl($request, $demande),
+        };
 
-        if ($referer !== null && ! $this->isVisioPageUrl($referer)) {
-            session([$sessionKey => $referer]);
+        return $this->finalizeVisioBackUrl($user, $url);
+    }
 
-            return $referer;
+    private function visioCorbeilleRencontreUrl(): string
+    {
+        return route('personal.cart.folder', ['folder' => 'rencontre']);
+    }
+
+    /**
+     * Les agents RDV retournent toujours vers le dossier « rencontre » de la corbeille.
+     */
+    private function finalizeVisioBackUrl(?User $user, string $url): string
+    {
+        if (
+            $user?->hasRole(User::ROLE_AGENT_RDV)
+            && ! $user->hasAnyRole([
+                User::ROLE_VALIDATEUR_RDV,
+                'admin',
+                'direction',
+            ])
+        ) {
+            return $this->visioCorbeilleRencontreUrl();
         }
 
-        $cached = session($sessionKey);
+        return $url;
+    }
 
-        if (is_string($cached) && $cached !== '') {
-            return $cached;
-        }
-
+    private function defaultVisioReturnUrl(
+        Request $request,
+        Demande $demande
+    ): string {
         $user = $request->user();
 
         if ($user && (int) $demande->created_by === (int) $user->id) {
             return route('demandes.rencontre.create');
         }
 
+        if ($user?->hasRole('pensionne')) {
+            return route('demandes.rencontre.create');
+        }
+
         if ($user?->hasAnyRole([
             User::ROLE_AGENT_RDV,
             User::ROLE_AGENT_FORMALITES,
+        ])) {
+            return $this->visioCorbeilleRencontreUrl();
+        }
+
+        if ($user?->hasAnyRole([
             User::ROLE_VALIDATEUR_RDV,
             'admin',
             'direction',
@@ -2072,28 +2041,4 @@ class DemandeRencontreController extends Controller
         return route('personal.request.show', $demande->id);
     }
 
-    private function safeSameHostUrl(?string $url): ?string
-    {
-        if (! is_string($url) || $url === '') {
-            return null;
-        }
-
-        if (str_starts_with($url, '/')) {
-            return url($url);
-        }
-
-        $host = parse_url($url, PHP_URL_HOST);
-        $appHost = parse_url((string) config('app.url'), PHP_URL_HOST);
-
-        if ($host === null || $appHost === null || $host !== $appHost) {
-            return null;
-        }
-
-        return $url;
-    }
-
-    private function isVisioPageUrl(string $url): bool
-    {
-        return str_contains($url, '/rendez-vous/visio/');
-    }
 }

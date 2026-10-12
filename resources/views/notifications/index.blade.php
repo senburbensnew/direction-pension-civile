@@ -17,23 +17,28 @@
         $readTotal = max(0, $notifications->total() - $unreadTotal);
     @endphp
 
-    <div x-data="{ open: false, deleteUrl: '', deleteId: '', pageVisible: {{ $notifications->count() }} }"
-         @notification-deleted.window="pageVisible = Math.max(0, pageVisible - 1)"
-         class="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
+    <x-portal-page bottom="pb-6" class="space-y-6"
+         x-data="{ open: false, deleteUrl: '', deleteId: '', pageVisible: {{ $notifications->count() }} }"
+         @notification-deleted.window="pageVisible = Math.max(0, pageVisible - 1)">
 
-        {{-- Stats --}}
-        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
-            <div class="rounded-xl border border-gray-200 bg-white px-5 py-4 shadow-sm">
-                <p class="text-xs font-semibold uppercase tracking-wide text-gray-400">Total</p>
-                <p class="text-2xl font-bold text-gray-900 mt-1">{{ $notifications->total() }}</p>
+        <header class="dossier-header px-5 py-5 sm:px-6 border-l-4 border-l-[#173052]">
+            <p class="dossier-kicker">Mon espace</p>
+            <h1 class="mt-1 text-xl font-semibold text-[#173052] tracking-tight">Mes notifications</h1>
+            <p class="mt-2 text-sm text-gray-600">Alertes sur vos dossiers et activités du portail.</p>
+        </header>
+
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <div class="dossier-stat">
+                <p class="dossier-stat__label">Total</p>
+                <p class="dossier-stat__value text-2xl">{{ $notifications->total() }}</p>
             </div>
-            <div class="rounded-xl border border-blue-200 bg-blue-50/80 px-5 py-4 shadow-sm">
-                <p class="text-xs font-semibold uppercase tracking-wide text-blue-600">Non lues</p>
-                <p class="text-2xl font-bold text-blue-900 mt-1">{{ $unreadTotal }}</p>
+            <div class="dossier-stat border-l-4 border-l-[#173052]">
+                <p class="dossier-stat__label">Non lues</p>
+                <p class="dossier-stat__value text-2xl">{{ $unreadTotal }}</p>
             </div>
-            <div class="rounded-xl border border-gray-200 bg-gray-50 px-5 py-4 shadow-sm">
-                <p class="text-xs font-semibold uppercase tracking-wide text-gray-500">Lues</p>
-                <p class="text-2xl font-bold text-gray-800 mt-1">{{ $readTotal }}</p>
+            <div class="dossier-stat bg-gray-50/80">
+                <p class="dossier-stat__label">Lues</p>
+                <p class="dossier-stat__value text-2xl">{{ $readTotal }}</p>
             </div>
         </div>
 
@@ -52,8 +57,7 @@
             @if ($unreadTotal > 0)
                 <form method="POST" action="{{ route('notifications.markAllAsRead') }}">
                     @csrf
-                    <button type="submit"
-                            class="inline-flex items-center justify-center gap-2 w-full sm:w-auto text-sm font-medium bg-[#173052] hover:bg-[#1e3d6b] text-white px-4 py-2.5 rounded-lg shadow-sm transition-colors">
+                    <button type="submit" class="dossier-btn-primary w-full sm:w-auto justify-center">
                         <i class="fas fa-check-double text-xs"></i>
                         Tout marquer comme lu
                     </button>
@@ -62,12 +66,9 @@
         </div>
 
         {{-- List --}}
-        <div class="rounded-2xl border border-gray-200 bg-white shadow-sm overflow-hidden">
-            <div class="px-5 py-3 border-b border-gray-100 bg-gray-50/80">
-                <h3 class="text-sm font-semibold text-gray-700">
-                    <i class="fas fa-bell text-gray-400 mr-2"></i>
-                    Fil d'activité
-                </h3>
+        <section class="dossier-card overflow-hidden">
+            <div class="dossier-card-head">
+                <h3>Fil d'activité</h3>
             </div>
 
             <div class="divide-y divide-gray-100">
@@ -181,7 +182,7 @@
             <div x-show="pageVisible === 0"
                  x-cloak
                  class="py-16 sm:py-20 px-6 text-center">
-                <div class="w-16 h-16 mx-auto mb-4 rounded-2xl bg-gray-100 flex items-center justify-center">
+                <div class="w-16 h-16 mx-auto mb-4 bg-gray-100 border border-gray-200 flex items-center justify-center">
                     <i class="fas fa-bell-slash text-2xl text-gray-300"></i>
                 </div>
                 <p class="text-gray-700 font-semibold text-lg">Aucune notification</p>
@@ -189,7 +190,7 @@
                     Lorsqu'un événement concerne vos dossiers, il apparaîtra ici.
                 </p>
             </div>
-        </div>
+        </section>
 
         @if ($notifications->hasPages())
             <div class="mt-8 flex justify-center">
@@ -235,5 +236,5 @@
                 </div>
             </div>
         </div>
-    </div>
+    </x-portal-page>
 </x-app-layout>

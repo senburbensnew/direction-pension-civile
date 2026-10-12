@@ -1168,25 +1168,6 @@ Route::middleware(['auth', 'account.permanent'])->group(function () {
                 ]
             )->name('clore');
 
-            /*
-            |--------------------------------------------------------------------------
-            | Réorientation administrative
-            |--------------------------------------------------------------------------
-            |
-            | Une réorientation est volontaire et administrative.
-            | Elle ne fait pas partie de la détermination automatique
-            | initiale du service par motif.
-            |
-            */
-
-            Route::post(
-                '/{demande}/reorienter',
-                [
-                    DemandeRencontreController::class,
-                    'reorienter',
-                ]
-            )->name('reorienter');
-
             Route::post(
                 '/{demande}/suite',
                 [

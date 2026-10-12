@@ -31,36 +31,23 @@
                 <form
                     method="POST"
                     action="{{ route('demandes.rencontre.proposerCreneau', $demande) }}"
-                    class="mt-3 flex flex-wrap items-end gap-3 bg-blue-50 border border-blue-200 rounded-lg p-4"
+                    class="mt-3 border border-gray-200 bg-gray-50/80 p-4 space-y-4"
                     onsubmit="return confirm('Confirmer le nouveau créneau pour ce rendez-vous ?');"
                 >
                     @csrf
                     <input type="hidden" name="report" value="1">
-                    <div class="min-w-[10rem]">
-                        <label class="block text-xs font-medium text-gray-600 mb-1">Nouvelle date</label>
-                        <input type="date" name="date_souhaitee" required
-                            min="{{ now()->toDateString() }}"
-                            value="{{ old('date_souhaitee') }}"
-                            class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm">
-                    </div>
-                    <div class="min-w-[8rem]">
-                        <label class="block text-xs font-medium text-gray-600 mb-1">Nouvelle heure</label>
-                        @if(!empty($rdvTimes) && count($rdvTimes))
-                            <select name="heure_souhaitee" required class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm">
-                                @foreach($rdvTimes as $time)
-                                    <option value="{{ $time }}" @selected(old('heure_souhaitee') === $time)>{{ $time }}</option>
-                                @endforeach
-                            </select>
-                        @else
-                            <input type="time" name="heure_souhaitee" required
-                                value="{{ old('heure_souhaitee') }}"
-                                class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm">
-                        @endif
-                    </div>
+                    @if(! empty($rdvScheduler))
+                        @include('demandes.rencontre._report-creneau-scheduler', [
+                            'demande' => $demande,
+                            'rdvScheduler' => $rdvScheduler,
+                        ])
+                    @else
+                        <p class="text-sm text-gray-600">Configuration agenda indisponible.</p>
+                    @endif
                     @if(($bookingAgents ?? collect())->isNotEmpty())
-                        <div class="min-w-[14rem] flex-1">
+                        <div class="max-w-md">
                             <label class="block text-xs font-medium text-gray-600 mb-1">Agent (optionnel)</label>
-                            <select name="agent_id" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm">
+                            <select name="agent_id" class="w-full border border-gray-300 px-3 py-2 text-sm bg-white">
                                 <option value="">— Automatique —</option>
                                 @foreach($bookingAgents as $agent)
                                     <option value="{{ $agent->id }}" @selected((int) old('agent_id', $demande->data['agent_id'] ?? 0) === (int) $agent->id)>
@@ -70,9 +57,11 @@
                             </select>
                         </div>
                     @endif
-                    <button type="submit" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold rounded-lg">
-                        Enregistrer le créneau
-                    </button>
+                    <div class="flex justify-end">
+                        <button type="submit" class="dossier-btn-primary">
+                            Enregistrer le créneau
+                        </button>
+                    </div>
                 </form>
             </details>
         @endif

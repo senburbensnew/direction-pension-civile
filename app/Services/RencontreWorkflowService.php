@@ -3,7 +3,6 @@
 namespace App\Services;
 
 use App\Enums\RencontreStatutEnum;
-use App\Http\Controllers\DemandeRencontreController;
 use App\Models\Demande;
 use App\Models\DemandeCreationCompte;
 use App\Models\DemandeCreationCompteHistory;
@@ -719,9 +718,10 @@ class RencontreWorkflowService
 
                 'pieces' =>
                     $data['documents_a_preparer']
-                    ?? DemandeRencontreController::DOCUMENTS_A_PREPARER[
+                    ?? $this->motifsService->prepareHints(
+                        (string) ($data['motif_key'] ?? $data['motif'] ?? ''),
                         $modalite
-                    ],
+                    ),
             ]
         );
     }

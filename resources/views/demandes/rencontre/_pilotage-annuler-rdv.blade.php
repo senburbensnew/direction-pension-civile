@@ -16,14 +16,14 @@
             required
             maxlength="2000"
             placeholder="Motif de l’annulation (obligatoire)…"
-            class="w-full text-sm border border-red-200 rounded-lg px-3 py-2 focus:ring-red-200 focus:outline-none"
+            class="dpc-filter-field border-red-200 min-h-[4rem]"
         >{{ old('commentaire') }}</textarea>
         @error('commentaire')
             <p class="text-xs text-red-600">{{ $message }}</p>
         @enderror
         <button
             type="submit"
-            class="px-4 py-2 bg-red-600 hover:bg-red-700 text-white text-sm font-semibold rounded-lg"
+            class="px-4 py-2 bg-red-600 hover:bg-red-700 text-white text-sm font-semibold"
         >
             Confirmer l’annulation
         </button>

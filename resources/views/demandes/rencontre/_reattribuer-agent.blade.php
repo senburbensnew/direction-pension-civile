@@ -24,25 +24,32 @@
                 method="POST"
                 action="{{ $reattribuerAction }}"
                 @class([
-                    'mt-3 flex flex-wrap items-end gap-3 bg-slate-50 border border-gray-200 rounded-lg p-4',
+                    'mt-3 flex flex-wrap items-end gap-3 bg-slate-50 border border-gray-200 p-4',
                     'mt-0' => $standalone,
                 ])
                 onsubmit="return confirm('Confirmer la réattribution de ce rendez-vous ?');"
             >
                 @csrf
+                @php
+                    $reattribuerAgentOptions = collect($bookingAgents ?? [])
+                        ->map(fn ($agent) => ['value' => (string) $agent->id, 'label' => $agent->displayName()])
+                        ->prepend(['value' => '', 'label' => 'Choisir un agent'])
+                        ->values()
+                        ->all();
+                    $reattribuerSelectedAgent = (string) (($demande->data['agent_id'] ?? '') ?: '');
+                @endphp
                 <div class="min-w-[14rem] flex-1">
-                    <label class="block text-xs font-medium text-gray-600 mb-1">Nouvel agent</label>
-                    <select name="agent_id" required class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm">
-                        <option value="">Choisir un agent</option>
-                        @foreach($bookingAgents ?? [] as $agent)
-                            <option
-                                value="{{ $agent->id }}"
-                                @selected((int) ($demande->data['agent_id'] ?? 0) === (int) $agent->id)
-                            >
-                                {{ $agent->displayName() }}
-                            </option>
-                        @endforeach
-                    </select>
+                    <x-searchable-select
+                        name="agent_id"
+                        label="Nouvel agent"
+                        :options="$reattribuerAgentOptions"
+                        :value="$reattribuerSelectedAgent"
+                        placeholder="Choisir un agent"
+                        :force-search="true"
+                        required
+                        input-class="dpc-filter-field"
+                        label-class="block text-xs font-medium text-gray-600 mb-1"
+                    />
                     @error('agent_id')
                         <p class="mt-1 text-xs text-red-600">{{ $message }}</p>
                     @enderror
@@ -54,10 +61,10 @@
                         name="commentaire"
                         maxlength="2000"
                         placeholder="Motif de la réattribution"
-                        class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm"
+                        class="dpc-filter-field"
                     >
                 </div>
-                <button type="submit" class="px-4 py-2 bg-navy text-white text-sm font-semibold rounded-lg">
+                <button type="submit" class="px-4 py-2 bg-navy text-white text-sm font-semibold">
                     Réattribuer
                 </button>
             </form>

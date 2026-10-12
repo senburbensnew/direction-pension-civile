@@ -25,6 +25,8 @@
         action="{{ route('admin.rdv-settings.update') }}"
         data-rdv-booking-times
         data-slot-minutes="{{ $slotMinutes }}"
+        data-initial-start="{{ $bookingStart }}"
+        data-initial-end="{{ $bookingEnd }}"
         class="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden"
     >
         @csrf
@@ -79,8 +81,7 @@
                             data-rdv-booking-start
                             required
                             autocomplete="off"
-                            placeholder="14:00"
-                            class="w-full rounded-lg border-gray-300 text-sm focus:border-indigo-500 focus:ring-indigo-500 flatpickr-input"
+                            class="w-full rounded-lg border-gray-300 text-sm text-gray-900 focus:border-indigo-500 focus:ring-indigo-500"
                         >
                         @error('booking_start')
                             <p class="text-xs text-red-600 mt-1">{{ $message }}</p>
@@ -96,8 +97,7 @@
                             data-rdv-booking-end
                             required
                             autocomplete="off"
-                            placeholder="16:00"
-                            class="w-full rounded-lg border-gray-300 text-sm focus:border-indigo-500 focus:ring-indigo-500 flatpickr-input"
+                            class="w-full rounded-lg border-gray-300 text-sm text-gray-900 focus:border-indigo-500 focus:ring-indigo-500"
                         >
                         <button
                             type="button"

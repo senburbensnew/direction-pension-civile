@@ -17,7 +17,8 @@
             ->first();
     }
     $rdvRealise = $rdvStatut === \App\Enums\RencontreStatutEnum::REALISE;
-    $rdvTraitable = $demande->peutEtreTraiteApresRendezVous();
+    $rdvTraitable = $demande->peutProposerTraitementFormaliteApresRdv();
+    $formaliteRdvFaite = $demande->formaliteRdvEnregistree();
     $rdvTerminal = $rdvStatut->isTerminal();
     $postTreatmentLabel = $decisionComptePossible
         ? 'Décision création de compte (si applicable)'
@@ -26,11 +27,8 @@
     if ($decisionComptePossible && $compteCreation && ! $compteCreation->isPending()) {
         $postTreatmentDone = true;
     }
-    if ($isFormaliteMotif && $rdvRealise && $owner && ! $owner->isProvisionnel()) {
-        $anneeActive = \App\Models\AnneeFiscale::active();
-        if ($anneeActive && \App\Models\Formalite::forYear($owner->id, $anneeActive->id)) {
-            $postTreatmentDone = true;
-        }
+    if ($isFormaliteMotif && $rdvRealise && $owner && ! $owner->isProvisionnel() && $formaliteRdvFaite) {
+        $postTreatmentDone = true;
     }
     $steps = [
         ['key' => 'soumis', 'label' => 'Demande soumise', 'done' => true],
@@ -49,7 +47,7 @@
         : route('personal.request.show', $demande->id);
 @endphp
 
-<div class="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 space-y-3">
+<div class="border border-slate-200 bg-slate-50 px-4 py-3 space-y-3">
     <p class="text-xs font-bold uppercase tracking-wide text-slate-500">Parcours du rendez-vous</p>
     <ol class="flex flex-wrap gap-2 text-xs">
         @foreach($steps as $index => $step)
@@ -75,14 +73,18 @@
             </a>
         @endif
         @if($isFormaliteMotif && $rdvRealise && ! $owner?->isProvisionnel())
-            <a href="{{ route('demandes.rencontre.formalite', $demande) }}"
-               @class([
-                   'font-semibold hover:underline',
-                   'text-emerald-700' => $rdvTraitable,
-                   'text-amber-700' => ! $rdvTraitable,
-               ])>
-                {{ $rdvTraitable ? 'Traiter la formalité' : 'Formalité (après l’heure du RDV)' }}
-            </a>
+            @if($formaliteRdvFaite)
+                <span class="text-emerald-700 font-semibold">Formalité enregistrée</span>
+            @else
+                <a href="{{ route('demandes.rencontre.formalite', $demande) }}"
+                   @class([
+                       'font-semibold hover:underline',
+                       'text-emerald-700' => $rdvTraitable,
+                       'text-amber-700' => ! $rdvTraitable,
+                   ])>
+                    {{ $rdvTraitable ? 'Traiter la formalité' : 'Formalité (après l’heure du RDV)' }}
+                </a>
+            @endif
         @endif
         <a href="{{ $dossierRoute }}" class="text-navy font-semibold hover:underline">
             Dossier rendez-vous

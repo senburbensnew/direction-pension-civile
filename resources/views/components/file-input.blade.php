@@ -6,6 +6,7 @@
     'required' => false,
     'label' => null,
     'hint' => null,
+    'onChange' => null,
 ])
 
 @php
@@ -14,11 +15,11 @@
     $hasError = $errors->has($errorName) || $errors->has($errorName . '.*');
     $noFileLabel = __('messages.no_file_selected');
     $filesSelectedLabel = __('messages.files_selected');
-    $browseLabel = __('actions.browse');
-    $changeLabel = __('messages.change_file');
+    $chooseLabel = $multiple ? __('messages.choose_files') : __('messages.choose_file');
     $stashedLabel = app(\App\Services\Form\FormUploadStashService::class)
         ->displayNamesForRequest(request())[$errorName] ?? null;
     $keptHint = __('messages.file_kept_after_error');
+    $wrapperClass = trim('mt-1 block w-full text-sm ' . ($hasError ? 'text-red-600' : 'text-gray-600') . ' ' . ($attributes->get('class') ?? ''));
 @endphp
 
 @if($label)
@@ -31,7 +32,6 @@
     x-data="{
         files: [],
         stashedLabel: @js($stashedLabel),
-        dragging: false,
         hasError: {{ $hasError ? 'true' : 'false' }},
         init() {
             if (this.stashedLabel) {
@@ -40,14 +40,6 @@
         },
         handleChange(e) {
             this.files = Array.from(e.target.files);
-        },
-        handleDrop(e) {
-            this.dragging = false;
-            const dt = e.dataTransfer;
-            if (dt.files.length) {
-                this.$refs.input.files = dt.files;
-                this.files = Array.from(dt.files);
-            }
         },
         get fileLabel() {
             if (this.files.length === 0) {
@@ -58,24 +50,13 @@
         },
         get showKeptHint() {
             return this.stashedLabel && this.files.length === 0;
-        },
-        get actionLabel() {
-            return this.files.length ? @js($changeLabel) : @js($browseLabel);
         }
     }"
-    @dragover.prevent="dragging = true"
-    @dragleave.prevent="dragging = false"
-    @drop.prevent="handleDrop($event)"
-    class="mt-1"
+    class="{{ $wrapperClass }}"
 >
     <label
         for="{{ $inputId }}"
-        class="dpc-file-field"
-        :class="{
-            'is-error': hasError,
-            'is-filled': files.length > 0 || stashedLabel,
-            'is-dragging': dragging
-        }"
+        class="group flex w-full min-w-0 cursor-pointer items-center"
     >
         <input
             x-ref="input"
@@ -85,27 +66,26 @@
             @if($accept) accept="{{ $accept }}" @endif
             @if($multiple) multiple @endif
             @if($required) required @endif
-            @change="handleChange($event)"
+            @change="handleChange($event)@if($onChange); {{ $onChange }}@endif"
+            class="sr-only"
             {{ $attributes->except(['class']) }}
         >
 
-        <span class="dpc-file-field-icon" aria-hidden="true">
-            <i class="far fa-file"></i>
-        </span>
+        <span
+            class="mr-3 shrink-0 border-0 bg-navy py-2 px-4 text-sm font-semibold text-white transition-colors group-hover:bg-orange-500"
+        >{{ $chooseLabel }}</span>
 
-        <span class="dpc-file-field-name" x-text="fileLabel">{{ $noFileLabel }}</span>
-
-        <span class="dpc-file-field-action" x-text="actionLabel">{{ $browseLabel }}</span>
+        <span class="min-w-0 flex-1 truncate" x-text="fileLabel">{{ $noFileLabel }}</span>
     </label>
+
+    <p x-show="showKeptHint" x-cloak class="mt-1 text-xs text-emerald-700">
+        {{ $keptHint }} <span class="font-medium" x-text="stashedLabel"></span>
+    </p>
 </div>
 
 @if($hint)
     <p class="mt-1 text-xs text-gray-500">{{ $hint }}</p>
 @endif
-
-<p x-show="showKeptHint" x-cloak class="mt-1 text-xs text-emerald-700">
-    {{ $keptHint }} <span class="font-medium" x-text="stashedLabel"></span>
-</p>
 
 @error($errorName)
     <p class="mt-1 text-xs text-red-600">{{ $message }}</p>

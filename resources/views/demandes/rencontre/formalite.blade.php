@@ -9,25 +9,23 @@
             : null;
     @endphp
 
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
-        <nav class="flex flex-wrap items-center gap-1.5 text-sm text-gray-500" aria-label="Fil d'Ariane">
-            <a href="{{ route('personal.cart') }}" class="text-navy font-medium hover:underline">Corbeille</a>
-            <span class="text-gray-300" aria-hidden="true">/</span>
-            <a href="{{ route('personal.request.show', $demande->id) }}" class="text-navy font-medium hover:underline truncate max-w-[14rem] sm:max-w-none">
-                {{ $demande->libellePublic() }}
-            </a>
-            <span class="text-gray-300" aria-hidden="true">/</span>
-            <span class="text-gray-800 font-semibold">Formalité</span>
-        </nav>
-
-        @if(session('success'))
-            <div class="bg-green-50 border border-green-200 text-green-800 rounded-xl px-4 py-3 text-sm">
-                {{ session('success') }}
+    <x-portal-page class="space-y-6">
+        <header class="dossier-header px-5 py-5 sm:px-6 border-l-4 border-l-emerald-600">
+            <p class="dossier-kicker">
+                <a href="{{ route('personal.cart') }}" class="text-[#173052] hover:underline">Corbeille</a>
+                · <a href="{{ route('personal.request.show', $demande->id) }}" class="text-[#173052] hover:underline">{{ $demande->libellePublic() }}</a>
+            </p>
+            <div class="mt-1 flex flex-wrap items-center gap-3">
+                <h1 class="text-xl font-semibold text-[#173052] tracking-tight">Traitement de la formalité</h1>
+                <span class="inline-flex items-center px-2.5 py-0.5 text-xs font-medium ring-1 ring-inset {{ $rdvStatut->badgeClass() }}">{{ $rdvStatut->label() }}</span>
             </div>
-        @endif
+            <p class="text-sm text-gray-600 mt-2 max-w-3xl">
+                Enregistrez la formalité fiscale liée à ce rendez-vous. Vérifiez l’identité du pensionné et l’exercice concerné avant validation.
+            </p>
+        </header>
 
         @if($errors->any())
-            <div class="bg-red-50 border border-red-200 text-red-800 rounded-xl px-4 py-3 text-sm">
+            <div class="dossier-notice border-l-red-500 bg-red-50 text-red-800 px-4 py-3 text-sm">
                 <ul class="list-disc list-inside space-y-1">
                     @foreach($errors->all() as $error)
                         <li>{{ $error }}</li>
@@ -37,7 +35,7 @@
         @endif
 
         @if($rdvStatut === \App\Enums\RencontreStatutEnum::REALISE && ! ($peutEnregistrer ?? false) && $rdvScheduledAt && $rdvScheduledAt->isFuture())
-            <div class="flex items-start gap-3 bg-amber-50 border border-amber-200 rounded-xl px-4 py-3 text-sm text-amber-900">
+            <div class="dossier-notice dossier-notice--amber bg-amber-50/80 px-4 py-3 text-sm text-amber-900">
                 <svg class="w-5 h-5 flex-shrink-0 mt-0.5 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
                 </svg>
@@ -48,26 +46,15 @@
             </div>
         @endif
 
-        <div class="flex flex-col lg:flex-row lg:items-end lg:justify-between gap-4">
-            <div>
-                <h1 class="text-2xl font-bold text-navy">Traitement de la formalité</h1>
-                <p class="text-sm text-gray-600 mt-1 max-w-3xl">
-                    Enregistrez la formalité fiscale liée à ce rendez-vous. Vérifiez l’identité du pensionné et l’exercice concerné avant validation.
-                </p>
-            </div>
-            <span class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold w-fit {{ $rdvStatut->badgeClass() }}">
-                <span class="w-1.5 h-1.5 rounded-full bg-current opacity-70"></span>
-                {{ $rdvStatut->label() }}
-            </span>
-        </div>
-
         <div class="grid grid-cols-1 xl:grid-cols-12 gap-6 items-start">
             {{-- Colonne principale : enregistrement --}}
             <div class="xl:col-span-7 space-y-6">
-                <section class="bg-white border border-gray-200 rounded-2xl shadow-sm overflow-hidden">
-                    <div class="px-6 py-4 border-b border-gray-100 bg-gray-50/80">
-                        <h2 class="text-base font-bold text-gray-900">Nouvelle formalité</h2>
-                        <p class="text-xs text-gray-500 mt-0.5">Une seule formalité par exercice et par pensionné.</p>
+                <section class="dossier-card overflow-hidden">
+                    <div class="dossier-card-head">
+                        <div>
+                            <h2>Nouvelle formalité</h2>
+                            <p class="text-xs text-gray-500 mt-0.5 font-normal">Une seule formalité par exercice et par pensionné.</p>
+                        </div>
                     </div>
 
                     <div class="p-6">
@@ -145,7 +132,7 @@
 
             {{-- Colonne latérale : contexte --}}
             <aside class="xl:col-span-5 space-y-6">
-                <section class="bg-white border border-gray-200 rounded-2xl shadow-sm p-6 space-y-4">
+                <section class="dossier-card p-5 sm:p-6 space-y-4">
                     <h2 class="text-sm font-bold uppercase tracking-wide text-gray-500">Rendez-vous</h2>
                     <dl class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-1 gap-4 text-sm">
                         <div>
@@ -195,7 +182,7 @@
                 </section>
 
                 @if($formalites->isNotEmpty())
-                    <section class="bg-white border border-gray-200 rounded-2xl shadow-sm p-6 space-y-3">
+                    <section class="dossier-card p-5 sm:p-6 space-y-3">
                         <h2 class="text-sm font-bold uppercase tracking-wide text-gray-500">
                             Historique ({{ $formalites->count() }})
                         </h2>
@@ -236,5 +223,5 @@
                 @endif
             </aside>
         </div>
-    </div>
+    </x-portal-page>
 </x-app-layout>

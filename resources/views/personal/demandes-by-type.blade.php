@@ -5,8 +5,7 @@
         </h2>
     </x-slot>
 
-    <div class="py-12">
-        <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
+    <x-portal-page bottom="pb-12">
             <nav class="text-sm text-gray-500 flex items-center mb-5">
                 <a href="{{ route('personal.index') }}" class="hover:underline">Tableau de bord</a>
                 <span class="mx-2">/</span>
@@ -93,8 +92,7 @@
                     @endif
                 </div>
             </div>
-        </div>
-    </div>
+    </x-portal-page>
 {{-- Delete confirmation modal --}}
 <div x-data="{ open: false, deleteUrl: '', title: '' }"
      x-on:open-delete-modal.window="open = true; deleteUrl = $event.detail.url; title = $event.detail.title"
@@ -130,6 +128,5 @@
             </form>
         </div>
     </div>
-</div>
 
 </x-app-layout>

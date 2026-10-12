@@ -16,6 +16,7 @@ use App\Models\WorkflowStep;
 use App\Notifications\DemandeComplementSoumisNotification;
 use App\Services\DemandeWorkflowService;
 use App\Services\PersonalDemandeCatalog;
+use App\Services\RencontreMotifService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -105,7 +106,7 @@ class PersonalController extends Controller
 
     public function showRequestForAuthenticatedUser(Request $request, int $id)
     {
-        $demande = Demande::with(['service', 'currentStep.service', 'workflows.toService', 'workflows.fromService'])
+        $demande = Demande::with(['service', 'currentStep.service', 'workflows.toService', 'workflows.fromService', 'user'])
             ->where('created_by', auth()->id())
             ->findOrFail($id);
 
@@ -202,88 +203,43 @@ class PersonalController extends Controller
     {
         $serviceId = $this->resolveServiceId();
 
+        /*
+         * Répertoires visibles dans la corbeille (phase actuelle).
+         */
         $folderStats = [
-            ['key' => 'urgent',          'label' => 'Dossiers urgents',           'icon' => 'fa-exclamation-triangle', 'color' => 'red'],
-            ['key' => 'pension',         'label' => 'Demandes de pension',        'icon' => 'fa-file-alt',             'color' => 'blue'],
-            ['key' => 'prestations',     'label' => 'Demandes de prestations',    'icon' => 'fa-money-bill-wave',      'color' => 'yellow'],
-            ['key' => 'administratif',   'label' => 'Dossiers administratifs',    'icon' => 'fa-folder',               'color' => 'indigo'],
-            ['key' => 'correspondances', 'label' => 'Correspondances',            'icon' => 'fa-envelope',             'color' => 'purple'],
-            ['key' => 'rencontre',       'label' => 'Attribution de rendez-vous', 'icon' => 'fa-calendar-check',       'color' => 'green'],
-            ['key' => 'autres',          'label' => 'Autres',                     'icon' => 'fa-ellipsis-h',           'color' => 'gray'],
-            ['key' => 'clotures',        'label' => 'Dossiers clôturés',          'icon' => 'fa-archive',              'color' => 'teal'],
+            [
+                'key' => 'rencontre',
+                'label' => 'Attribution de rendez-vous',
+                'icon' => 'fa-calendar-check',
+                'color' => 'green',
+                'count' => 0,
+            ],
+            [
+                'key' => 'clotures',
+                'label' => 'Dossiers clôturés',
+                'icon' => 'fa-archive',
+                'color' => 'slate',
+                'count' => 0,
+            ],
         ];
 
         $currentUser = auth()->user();
         $isAgentRdvOnly = $currentUser?->hasRole('agent_rdv')
             && ! $currentUser->hasAnyRole(['admin', 'direction']);
 
-            foreach ($folderStats as &$folder) {
-                $query = Demande::where('current_service_id', $serviceId);
-            
-                /*
-                |--------------------------------------------------------------------------
-                | Filtre global agent RDV
-                |--------------------------------------------------------------------------
-                |
-                | Un agent RDV ne voit QUE les dossiers qui lui sont attribués,
-                | quel que soit le type (rencontre, pension, prestation…).
-                |
-                */
-                if ($isAgentRdvOnly) {
-                    $query->where('data->agent_id', $currentUser->id);
-                }
-            
-                if ($folder['key'] === 'clotures') {
-                    $query->where(function ($q) {
-                        $q->where(function ($q2) {
-                            $q2->where('type', TypeDemandeEnum::DEMANDE_RENCONTRE->value)
-                               ->whereIn('data->rdv_statut', RencontreStatutEnum::terminalValues());
-                        })
-                        ->orWhere(function ($q2) {
-                            $q2->where('type', '!=', TypeDemandeEnum::DEMANDE_RENCONTRE->value)
-                               ->whereHas('currentStep', fn ($s) => $s->whereIn('code', [
-                                   'FINALISEE', 'REJETEE', 'ANNULEE',
-                               ]));
-                        });
-                    });
-            
-                } elseif ($folder['key'] === 'urgent') {
-                    $query->where(function ($q) {
-                        $q->where(function ($q2) {
-                            $q2->where('type', TypeDemandeEnum::DEMANDE_RENCONTRE->value)
-                               ->where(function ($q3) {
-                                   $q3->whereNotIn('data->rdv_statut', RencontreStatutEnum::terminalValues())
-                                      ->orWhereNull('data->rdv_statut');
-                               });
-                        })->orWhere(function ($q2) {
-                            $q2->where('type', '!=', TypeDemandeEnum::DEMANDE_RENCONTRE->value)
-                               ->whereHas('currentStep', fn ($s) => $s->whereNotIn('code', [
-                                   'FINALISEE', 'REJETEE', 'ANNULEE',
-                               ]));
-                        });
-                    })->where(function ($q) {
-                        $q->where('is_urgent', true)
-                          ->orWhere('submitted_at', '<=', now()->subDays(30));
-                    });
-            
-                } elseif ($folder['key'] === 'rencontre') {
-                    $query->where('type', TypeDemandeEnum::DEMANDE_RENCONTRE->value)
-                          ->where(function ($q) {
-                              $q->whereNotIn('data->rdv_statut', RencontreStatutEnum::terminalValues())
-                                ->orWhereNull('data->rdv_statut');
-                          });
-            
-                } else {
-                    $query->where('type', '!=', TypeDemandeEnum::DEMANDE_RENCONTRE->value)
-                          ->whereHas('currentStep', fn ($s) => $s->whereNotIn('code', [
-                              'FINALISEE', 'REJETEE', 'ANNULEE',
-                          ]))
-                          ->where('categorie', $folder['key']);
-                }
-            
-                $folder['count'] = $query->count();
-            }
-        unset($folder);
+        $folderStats[0]['count'] = $this->rencontreCorbeilleQuery(
+            $serviceId,
+            $currentUser,
+            $isAgentRdvOnly,
+            closedOnly: false
+        )->count();
+
+        $folderStats[1]['count'] = $this->rencontreCorbeilleQuery(
+            $serviceId,
+            $currentUser,
+            $isAgentRdvOnly,
+            closedOnly: true
+        )->count();
 
         $actingServiceIds = ($serviceId && auth()->user())
             ? \App\Models\AgentDelegation::actingServiceIds(auth()->id(), $serviceId)
@@ -308,8 +264,7 @@ class PersonalController extends Controller
         | Appels de rappel — veille des rencontres
         |--------------------------------------------------------------------------
         |
-        | Un agent RDV ne voit que ses propres rendez-vous.
-        | Direction / admin voient l'ensemble.
+        | Réservé aux agents RDV : leurs rendez-vous du lendemain à rappeler.
         |
         */
 
@@ -317,16 +272,12 @@ class PersonalController extends Controller
         $demandesComptePending = collect();
         $user = auth()->user();
 
-        if ($user?->hasAnyRole([User::ROLE_AGENT_RDV, 'service_accueil_formalites', 'direction', 'admin'])) {
+        if ($user?->hasRole(User::ROLE_AGENT_RDV)) {
             $reminders = app(\App\Services\RencontreReminderService::class);
-            $date      = $reminders->reminderDate();
-
-            $isAgentRdvOnly = $user->hasRole(User::ROLE_AGENT_RDV)
-                && ! $user->hasAnyRole(['admin', 'direction', 'directeur', 'assistant_directeur']);
-
-            $appelsVeille = $isAgentRdvOnly
-                ? $reminders->appointmentsOnForAgent($date, $user->id)
-                : $reminders->appointmentsOn($date);
+            $appelsVeille = $reminders->appointmentsOnForAgent(
+                $reminders->reminderDate(),
+                (int) $user->id
+            );
         }
 
         if ($user?->hasAnyRole(['admin', User::ROLE_AGENT_FORMALITES])) {
@@ -377,6 +328,7 @@ class PersonalController extends Controller
             'workflows.toService',
             'workflows.fromService',
             'service',
+            'user',
         ])->findOrFail($id);
 
         if ($user && (int) $requestModel->created_by === (int) $user->id) {
@@ -518,10 +470,33 @@ class PersonalController extends Controller
         |
         */
         $compteProvisional = null;
+        $rdvScheduler = null;
 
         if ($requestModel->isRencontre()) {
-            $owner = $requestModel->user ?? User::find($requestModel->created_by);
             $motifKey = (string) ($requestModel->data['motif_key'] ?? '');
+            $motifServiceCodes = app(RencontreMotifService::class)->motifServiceCodes();
+
+            $rdvScheduler = [
+                'reservedSlotsByService' => $availability->unavailableSlotsByServiceCode(),
+                'holidayEvents' => $availability->holidayEvents(
+                    now()->startOfDay(),
+                    now()->copy()->addMonths(6)->endOfDay()
+                ),
+                'slotConfig' => array_merge(
+                    [
+                        'start' => $availability->bookingWindowStart(),
+                        'end' => $availability->bookingWindowEnd(),
+                        'minutes' => $availability->slotMinutes(),
+                    ],
+                    $availability->calendarDisplayWindow()
+                ),
+                'defaultService' => $motifServiceCodes[$motifKey] ?? Service::FORMALITE,
+                'allowWeekends' => $availability->allowsWeekends(),
+                'bookingDaysLabel' => $availability->bookingDaysLabel(),
+                'bookingHoursLabel' => $availability->bookingHoursLabel(),
+            ];
+
+            $owner = $requestModel->user ?? User::find($requestModel->created_by);
 
             if (
                 $owner?->isProvisionnel()
@@ -562,6 +537,7 @@ class PersonalController extends Controller
             'rdvTimes'              => $requestModel->isRencontre()
                 ? $availability->allowedTimes()
                 : [],
+            'rdvScheduler'          => $rdvScheduler,
             'compteProvisional' => $compteProvisional,
         ]);
     }
@@ -572,70 +548,26 @@ class PersonalController extends Controller
         $folder    = $request->input('folder');
 
         $folders = [
-            'urgent'          => 'Dossiers urgents',
-            'pension'         => 'Demandes de pension',
-            'prestations'     => 'Demandes de prestations',
-            'administratif'   => 'Dossiers administratifs',
-            'correspondances' => 'Correspondances',
-            'rencontre'       => 'Attribution de rendez-vous',
-            'autres'          => 'Autres',
-            'clotures'        => 'Dossiers clôturés',
+            'rencontre' => 'Attribution de rendez-vous',
+            'clotures' => 'Dossiers clôturés',
         ];
 
         abort_unless(isset($folders[$folder]), 404);
 
-        $userId = auth()->id();
+        $currentUser = auth()->user();
+        $isAgentRdvOnly = $currentUser?->hasRole('agent_rdv')
+            && ! $currentUser->hasAnyRole(['admin', 'direction']);
 
-        $folderScope = function ($q) use ($folder, $serviceId, $userId) {
-            $q->where('current_service_id', $serviceId);
+        $closedOnly = $folder === 'clotures';
 
-            if ($folder === 'clotures') {
-                $q->where(function ($q2) {
-                    $q2->where(function ($q3) {
-                        $q3->where('type', TypeDemandeEnum::DEMANDE_RENCONTRE->value)
-                           ->whereIn('data->rdv_statut', RencontreStatutEnum::terminalValues());
-                    })->orWhere(function ($q3) {
-                        $q3->where('type', '!=', TypeDemandeEnum::DEMANDE_RENCONTRE->value)
-                           ->whereHas('currentStep', fn ($s) => $s->whereIn('code', [
-                               'FINALISEE', 'REJETEE', 'ANNULEE',
-                           ]));
-                    });
-                });
-
-            } elseif ($folder === 'urgent') {
-                $q->where(function ($q2) {
-                    $q2->where(function ($q3) {
-                        $q3->where('type', TypeDemandeEnum::DEMANDE_RENCONTRE->value)
-                           ->where(function ($q4) {
-                               $q4->whereNotIn('data->rdv_statut', RencontreStatutEnum::terminalValues())
-                                  ->orWhereNull('data->rdv_statut');
-                           });
-                    })->orWhere(function ($q3) {
-                        $q3->where('type', '!=', TypeDemandeEnum::DEMANDE_RENCONTRE->value)
-                           ->whereHas('currentStep', fn ($s) => $s->whereNotIn('code', [
-                               'FINALISEE', 'REJETEE', 'ANNULEE',
-                           ]));
-                    });
-                })->where(function ($q2) {
-                    $q2->where('is_urgent', true)
-                       ->orWhere('submitted_at', '<=', now()->subDays(30));
-                });
-
-            } elseif ($folder === 'rencontre') {
-                $q->where('type', TypeDemandeEnum::DEMANDE_RENCONTRE->value)
-                  ->where(function ($q2) {
-                      $q2->whereNotIn('data->rdv_statut', RencontreStatutEnum::terminalValues())
-                        ->orWhereNull('data->rdv_statut');
-                  })
-                  ->where('data->agent_id', $userId);
-
-            } else {
-                $q->where('type', '!=', TypeDemandeEnum::DEMANDE_RENCONTRE->value)
-                  ->whereHas('currentStep', fn ($s) => $s->whereNotIn('code', [
-                      'FINALISEE', 'REJETEE', 'ANNULEE',
-                  ]))
-                  ->where('categorie', $folder);
-            }
+        $folderScope = function ($q) use ($serviceId, $currentUser, $isAgentRdvOnly, $closedOnly) {
+            $this->applyRencontreCorbeilleScope(
+                $q,
+                $serviceId,
+                $currentUser,
+                $isAgentRdvOnly,
+                $closedOnly
+            );
         };
 
         $requests = Demande::with('currentStep')
@@ -669,5 +601,54 @@ class PersonalController extends Controller
             'canceled'    => (clone $baseQuery)->canceled()->count(),
             'completed'   => (clone $baseQuery)->completed()->count(),
         ];
+    }
+
+    /**
+     * @return \Illuminate\Database\Eloquent\Builder<Demande>
+     */
+    private function rencontreCorbeilleQuery(
+        ?int $serviceId,
+        ?User $currentUser,
+        bool $isAgentRdvOnly,
+        bool $closedOnly
+    ) {
+        $query = Demande::query();
+
+        $this->applyRencontreCorbeilleScope(
+            $query,
+            $serviceId,
+            $currentUser,
+            $isAgentRdvOnly,
+            $closedOnly
+        );
+
+        return $query;
+    }
+
+    /**
+     * @param  \Illuminate\Database\Eloquent\Builder<Demande>  $query
+     */
+    private function applyRencontreCorbeilleScope(
+        $query,
+        ?int $serviceId,
+        ?User $currentUser,
+        bool $isAgentRdvOnly,
+        bool $closedOnly
+    ): void {
+        $query->where('current_service_id', $serviceId)
+            ->where('type', TypeDemandeEnum::DEMANDE_RENCONTRE->value);
+
+        if ($closedOnly) {
+            $query->whereIn('data->rdv_statut', RencontreStatutEnum::terminalValues());
+        } else {
+            $query->where(function ($q) {
+                $q->whereNotIn('data->rdv_statut', RencontreStatutEnum::terminalValues())
+                    ->orWhereNull('data->rdv_statut');
+            });
+        }
+
+        if ($isAgentRdvOnly && $currentUser) {
+            $query->where('data->agent_id', $currentUser->id);
+        }
     }
 }

@@ -24,7 +24,7 @@ class ProfileUpdateRequest extends FormRequest
         $rules = [
             'name'  => ['required', 'string', 'max:255'],
             'email' => [
-                'required',
+                'nullable',
                 'string',
                 'lowercase',
                 'email',

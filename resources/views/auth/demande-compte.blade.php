@@ -46,9 +46,7 @@
         $step3Fields = [
             'user_type',
             'telephone',
-            'email',
             'nif',
-            'ninu',
             'pension_code',
             'password',
             'adresse',
@@ -97,9 +95,7 @@
             'ocrDocuments' => $ocrDocumentsInitial,
 
             'telephone' => old('telephone', ''),
-            'email' => old('email', ''),
             'nif' => old('nif', ''),
-            'ninu' => old('ninu', ''),
             'pensionCode' => old('pension_code', ''),
             'adresse' => old('adresse', ''),
 
@@ -124,10 +120,8 @@
          * ============================================================ */
 
         [name="nif"],
-        [name="ninu"],
         [name="pension_code"],
         [name="telephone"],
-        [name="email"],
         [name="adresse"],
         [name="password"],
         [name="accept_terms"],
@@ -542,6 +536,7 @@
             action="{{ route('demandes.compte.store') }}"
             class="space-y-4"
             enctype="multipart/form-data"
+            novalidate
             x-ref="form"
             @submit.prevent="onSubmit"
             x-on:pageshow.window="handlePageShow($event)"
@@ -690,43 +685,14 @@
                             <span class="text-red-500">*</span>
                         </span>
 
-                        <label
-                            for="piece_identite"
-                            class="dpc-file-field"
-                            :class="{
-                                'is-error': fieldErrors.piece_identite,
-                                'is-filled': files.piece_identite
-                            }"
-                        >
-                            <input
-                                type="file"
-                                id="piece_identite"
-                                name="piece_identite"
-                                accept="image/jpeg,image/png,image/webp,application/pdf,.jpg,.jpeg,.png,.webp,.pdf"
-                                @change="
-                                    files.piece_identite = $event.target.files[0]?.name || '';
-                                    clearFieldError('piece_identite');
-                                "
-                            >
-
-                            <span class="dpc-file-field-icon" aria-hidden="true">
-                                <i class="far fa-file"></i>
-                            </span>
-
-                            <span
-                                class="dpc-file-field-name"
-                                x-text="files.piece_identite || 'Aucun fichier choisi'"
-                            ></span>
-
-                            <span
-                                class="dpc-file-field-action"
-                                x-text="files.piece_identite ? 'Changer' : 'Parcourir'"
-                            ></span>
-                        </label>
-
-                        <p class="text-xs text-gray-500 mt-1">
-                            JPG, PNG, WEBP ou PDF — 5 Mo max.
-                        </p>
+                        <x-file-input
+                            name="piece_identite"
+                            id="piece_identite"
+                            accept="image/jpeg,image/png,image/webp,application/pdf,.jpg,.jpeg,.png,.webp,.pdf"
+                            hint="JPG, PNG, WEBP ou PDF — 5 Mo max."
+                            on-change="files.piece_identite = $event.target.files[0]?.name || ''; clearFieldError('piece_identite')"
+                            x-bind:class="fieldErrors.piece_identite ? 'text-red-600' : ''"
+                        />
 
                         <p
                             x-cloak
@@ -741,12 +707,14 @@
                             <h4 class="text-sm font-semibold text-gray-800">Formulaire de désignation signé</h4>
                             <p class="text-xs text-gray-500 mt-1">Procuration ou formulaire de désignation du mandataire (PDF ou image).</p>
                         </div>
-                        <label for="mandat_designation" class="dpc-file-field" :class="{ 'is-error': fieldErrors.mandat_designation, 'is-filled': files.mandat_designation }">
-                            <input type="file" id="mandat_designation" name="mandat_designation" accept="image/jpeg,image/png,image/webp,application/pdf,.jpg,.jpeg,.png,.webp,.pdf"
-                                @change="files.mandat_designation = $event.target.files[0]?.name || ''; clearFieldError('mandat_designation')">
-                            <span class="dpc-file-field-name" x-text="files.mandat_designation || 'Aucun fichier choisi'"></span>
-                            <span class="dpc-file-field-action" x-text="files.mandat_designation ? 'Changer' : 'Parcourir'"></span>
-                        </label>
+                        <x-file-input
+                            name="mandat_designation"
+                            id="mandat_designation"
+                            accept="image/jpeg,image/png,image/webp,application/pdf,.jpg,.jpeg,.png,.webp,.pdf"
+                            hint="PDF ou image — 5 Mo max."
+                            on-change="files.mandat_designation = $event.target.files[0]?.name || ''; clearFieldError('mandat_designation')"
+                            x-bind:class="fieldErrors.mandat_designation ? 'text-red-600' : ''"
+                        />
                         <p x-cloak x-show="fieldErrors.mandat_designation" class="text-xs text-red-600" x-text="fieldErrors.mandat_designation"></p>
                     </div>
 
@@ -779,43 +747,14 @@
                                 <span class="text-red-500">*</span>
                             </span>
 
-                            <label
-                                for="acte_naissance"
-                                class="dpc-file-field"
-                                :class="{
-                                    'is-error': fieldErrors.acte_naissance,
-                                    'is-filled': files.acte_naissance
-                                }"
-                            >
-                                <input
-                                    type="file"
-                                    id="acte_naissance"
-                                    name="acte_naissance"
-                                    accept="image/jpeg,image/png,image/webp,application/pdf,.jpg,.jpeg,.png,.webp,.pdf"
-                                    @change="
-                                        files.acte_naissance = $event.target.files[0]?.name || '';
-                                        clearFieldError('acte_naissance');
-                                    "
-                                >
-
-                                <span class="dpc-file-field-icon" aria-hidden="true">
-                                    <i class="far fa-file"></i>
-                                </span>
-
-                                <span
-                                    class="dpc-file-field-name"
-                                    x-text="files.acte_naissance || 'Aucun fichier choisi'"
-                                ></span>
-
-                                <span
-                                    class="dpc-file-field-action"
-                                    x-text="files.acte_naissance ? 'Changer' : 'Parcourir'"
-                                ></span>
-                            </label>
-
-                            <p class="text-xs text-gray-500 mt-1">
-                                JPG, PNG, WEBP ou PDF — 5 Mo max.
-                            </p>
+                            <x-file-input
+                                name="acte_naissance"
+                                id="acte_naissance"
+                                accept="image/jpeg,image/png,image/webp,application/pdf,.jpg,.jpeg,.png,.webp,.pdf"
+                                hint="JPG, PNG, WEBP ou PDF — 5 Mo max."
+                                on-change="files.acte_naissance = $event.target.files[0]?.name || ''; clearFieldError('acte_naissance')"
+                                x-bind:class="fieldErrors.acte_naissance ? 'text-red-600' : ''"
+                            />
 
                             <p
                                 x-cloak
@@ -946,43 +885,14 @@
                                 <span class="text-red-500">*</span>
                             </span>
 
-                            <label
-                                for="piece_identite_representant"
-                                class="dpc-file-field"
-                                :class="{
-                                    'is-error': fieldErrors.piece_identite_representant,
-                                    'is-filled': files.piece_identite_representant
-                                }"
-                            >
-                                <input
-                                    type="file"
-                                    id="piece_identite_representant"
-                                    name="piece_identite_representant"
-                                    accept="image/jpeg,image/png,image/webp,application/pdf,.jpg,.jpeg,.png,.webp,.pdf"
-                                    @change="
-                                        files.piece_identite_representant = $event.target.files[0]?.name || '';
-                                        clearFieldError('piece_identite_representant');
-                                    "
-                                >
-
-                                <span class="dpc-file-field-icon" aria-hidden="true">
-                                    <i class="far fa-file"></i>
-                                </span>
-
-                                <span
-                                    class="dpc-file-field-name"
-                                    x-text="files.piece_identite_representant || 'Aucun fichier choisi'"
-                                ></span>
-
-                                <span
-                                    class="dpc-file-field-action"
-                                    x-text="files.piece_identite_representant ? 'Changer' : 'Parcourir'"
-                                ></span>
-                            </label>
-
-                            <p class="text-xs text-gray-500 mt-1">
-                                JPG, PNG, WEBP ou PDF — 5 Mo max.
-                            </p>
+                            <x-file-input
+                                name="piece_identite_representant"
+                                id="piece_identite_representant"
+                                accept="image/jpeg,image/png,image/webp,application/pdf,.jpg,.jpeg,.png,.webp,.pdf"
+                                hint="JPG, PNG, WEBP ou PDF — 5 Mo max."
+                                on-change="files.piece_identite_representant = $event.target.files[0]?.name || ''; clearFieldError('piece_identite_representant')"
+                                x-bind:class="fieldErrors.piece_identite_representant ? 'text-red-600' : ''"
+                            />
 
                             <p
                                 x-cloak
@@ -1334,41 +1244,6 @@
                         ></p>
                     </div>
 
-                    {{-- NINU --}}
-                    <div>
-                        <label
-                            for="ninu"
-                            class="block text-sm font-medium text-gray-700 mb-1"
-                        >
-                            NINU
-                        </label>
-
-                        <input
-                            id="ninu"
-                            type="text"
-                            name="ninu"
-                            x-model="ninu"
-                            @input="
-                                ninu = ninu.replace(/\D+/g, '').slice(0, 10);
-                                clearFieldError('ninu');
-                            "
-                            placeholder="0123456789"
-                            inputmode="numeric"
-                            autocomplete="off"
-                            maxlength="10"
-                            pattern="\d{10}"
-                            class="w-full py-2.5 px-3 border rounded-lg text-sm focus:outline-none focus:ring-2"
-                            :class="borderClass('ninu')"
-                        >
-
-                        <p
-                            x-cloak
-                            x-show="fieldErrors.ninu"
-                            class="text-xs text-red-600 mt-1"
-                            x-text="fieldErrors.ninu"
-                        ></p>
-                    </div>
-
                     {{-- Code pension (optionnel) --}}
                     <div x-show="userType === 'pensionne'">
                         <div class="flex items-center gap-1.5 mb-1">
@@ -1424,44 +1299,10 @@
                         ></p>
                     </div>
 
-                    {{-- Email --}}
-                    <div>
-                        <label
-                            for="email"
-                            class="block text-sm font-medium text-gray-700 mb-1"
-                        >
-                            Adresse e-mail
-                        </label>
-
-                        <input
-                            id="email"
-                            type="email"
-                            name="email"
-                            x-model="email"
-                            @input="clearFieldError('email'); scheduleAvailabilityCheck('email')"
-                            placeholder="exemple@gmail.com"
-                            autocomplete="email"
-                            class="w-full py-2.5 px-3 border rounded-lg text-sm focus:outline-none focus:ring-2"
-                            :class="borderClass('email')"
-                        >
-
-                        <p
-                            x-show="!fieldErrors.email && emailMessage"
-                            x-cloak
-                            class="text-xs mt-1"
-                            :class="emailStatus === 'error'
-                                ? 'text-red-600'
-                                : 'text-green-700'"
-                            x-text="emailMessage"
-                        ></p>
-
-                        <p
-                            x-cloak
-                            x-show="fieldErrors.email"
-                            class="text-xs text-red-600 mt-1"
-                            x-text="fieldErrors.email"
-                        ></p>
-                    </div>
+                    <p class="text-xs text-gray-500">
+                        Le NINU et l’adresse e-mail pourront être complétés plus tard dans
+                        <span class="font-medium">Mon profil</span>, une fois le compte créé.
+                    </p>
 
                     {{-- Mot de passe --}}
                     <div>
@@ -1623,19 +1464,9 @@
                                 <span x-text="nif || '—'"></span>
                             </p>
 
-                            <p>
-                                <span class="text-gray-500">NINU :</span>
-                                <span x-text="ninu || '—'"></span>
-                            </p>
-
                             <p x-show="userType === 'pensionne'">
                                 <span class="text-gray-500">Code pension :</span>
                                 <span x-text="pension_code || '—'"></span>
-                            </p>
-
-                            <p>
-                                <span class="text-gray-500">E-mail :</span>
-                                <span x-text="email || '—'"></span>
                             </p>
 
                             <p>
@@ -2046,9 +1877,7 @@
                 userType: initial.userType || 'pensionne',
 
                 telephone: initial.telephone || '',
-                email: initial.email || '',
                 nif: initial.nif || '',
-                ninu: initial.ninu || '',
                 pension_code: initial.pensionCode || '',
                 adresse: initial.adresse || '',
 
@@ -2109,19 +1938,14 @@
                 pension_codeStatus: '',
                 pension_codeMessage: '',
 
-                emailStatus: '',
-                emailMessage: '',
-
                 _checkTimers: {
                     nif: null,
                     pension_code: null,
-                    email: null,
                 },
 
                 _checkSeq: {
                     nif: 0,
                     pension_code: 0,
-                    email: 0,
                 },
 
                 /* ========================================================
@@ -2425,10 +2249,6 @@
                         this.scheduleAvailabilityCheck('pension_code');
                     }
 
-                    if ((this.email || '').trim()) {
-                        this.scheduleAvailabilityCheck('email');
-                    }
-
                     /*
                      * Synchronise les fichiers présents après un retour
                      * de validation Laravel.
@@ -2513,9 +2333,7 @@
 
                         user_type: 3,
                         telephone: 3,
-                        email: 3,
                         nif: 3,
-                        ninu: 3,
                         pension_code: 3,
                         password: 3,
                         adresse: 3,
@@ -2568,11 +2386,6 @@
                     const value = (this[field] || '').trim();
 
                     this[field + 'Message'] = '';
-
-                    if (field === 'email' && value === '') {
-                        this.emailStatus = '';
-                        return;
-                    }
 
                     if (field === 'nif') {
                         if (value === '') {
@@ -2643,12 +2456,6 @@
                         const data = await response.json();
 
                         if (seq !== this._checkSeq[field]) {
-                            return data;
-                        }
-
-                        if (data.empty && field === 'email') {
-                            this.emailStatus = '';
-                            this.emailMessage = '';
                             return data;
                         }
 
@@ -2927,21 +2734,8 @@
                                 this.formatNifForInput(value),
                         },
                         {
-                            ocrKeys: ['ninu', 'numero_identification_unique'],
-                            target: 'ninu',
-                            format: (value) =>
-                                String(value || '')
-                                    .replace(/\D+/g, '')
-                                    .slice(0, 10),
-                        },
-                        {
                             ocrKeys: ['adresse'],
                             target: 'adresse',
-                            format: (value) => String(value || '').trim(),
-                        },
-                        {
-                            ocrKeys: ['email'],
-                            target: 'email',
                             format: (value) => String(value || '').trim(),
                         },
                         {
@@ -3008,9 +2802,6 @@
                         this.scheduleAvailabilityCheck('pension_code');
                     }
 
-                    if ((this.email || '').trim()) {
-                        this.scheduleAvailabilityCheck('email');
-                    }
                 },
 
                 formatNifForInput(value) {
@@ -3266,14 +3057,8 @@
                     this.telephone =
                         fieldValue('telephone');
 
-                    this.email =
-                        fieldValue('email');
-
                     this.nif =
                         fieldValue('nif');
-
-                    this.ninu =
-                        fieldValue('ninu');
 
                     this.pension_code =
                         fieldValue('pension_code');
@@ -3444,6 +3229,8 @@
                     if (!this.validateDocuments()) {
                         this.step = 1;
                         if (finalStep) {
+                            this.stepError =
+                                'Des documents sont manquants ou invalides. Vérifiez l’étape « Documents ».';
                             this.resetSubmitState();
                         }
                         return;
@@ -3452,6 +3239,8 @@
                     if (!this.validateAccount()) {
                         this.step = 3;
                         if (finalStep) {
+                            this.stepError =
+                                'Certaines informations du compte sont incomplètes ou invalides. Vérifiez l’étape « Informations ».';
                             this.resetSubmitState();
                         }
                         return;
@@ -3460,6 +3249,8 @@
                     if (!this.validateTerms()) {
                         this.step = 4;
                         if (finalStep) {
+                            this.stepError =
+                                'Vous devez accepter les conditions d’utilisation avant de soumettre.';
                             this.resetSubmitState();
                         }
                         return;
@@ -3481,14 +3272,6 @@
                             pensionInput.value = trimmed.toUpperCase();
                             this.pension_code = pensionInput.value;
                         }
-                    }
-
-                    /* Normaliser le NINU avant envoi */
-                    const ninuInput = document.getElementById('ninu');
-
-                    if (ninuInput && ninuInput.value) {
-                        ninuInput.value = ninuInput.value.replace(/\D+/g, '').slice(0, 10);
-                        this.ninu = ninuInput.value;
                     }
 
                     const formData = new FormData(form);
@@ -3648,9 +3431,7 @@
 
                         'user_type',
                         'telephone',
-                        'email',
                         'nif',
-                        'ninu',
                         'pension_code',
                         'password',
                         'adresse',
@@ -3768,16 +3549,6 @@
                         }
                     }
 
-                    /* NINU. */
-                    /* NINU : 10 chiffres sans tiret. */
-                    if (
-                        this.ninu &&
-                        !/^\d{10}$/.test(this.ninu)
-                    ) {
-                        nextErrors.ninu =
-                            'Le NINU doit contenir exactement 10 chiffres (sans tiret).';
-                    }
-
                     /*
                     * Code pension : désormais OPTIONNEL.
                     * Format accepté (casse ignorée) :
@@ -3821,15 +3592,6 @@
                                 this.pension_codeMessage ||
                                 'Ce code pension n’est pas disponible.';
                         }
-                    }
-
-                    /* Email. */
-                    if (
-                        this.emailStatus === 'error'
-                    ) {
-                        nextErrors.email =
-                            this.emailMessage ||
-                            'Cette adresse e-mail n’est pas disponible.';
                     }
 
                     /* Mot de passe. */

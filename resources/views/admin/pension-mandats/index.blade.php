@@ -3,11 +3,7 @@
         <h2 class="font-semibold text-xl text-gray-800 leading-tight">Validation des mandats pension</h2>
     </x-slot>
 
-    <div class="py-8 px-4 max-w-6xl mx-auto space-y-4">
-        @if(session('success'))
-            <div class="rounded-lg border border-green-200 bg-green-50 p-4 text-green-800">{{ session('success') }}</div>
-        @endif
-
+    <x-portal-page class="max-w-6xl space-y-4">
         @foreach($mandats as $mandat)
             <article class="bg-white border rounded-xl shadow-sm p-5">
                 <div class="flex flex-wrap justify-between gap-2 mb-3">
@@ -77,5 +73,5 @@
         @endforeach
 
         <div>{{ $mandats->links() }}</div>
-    </div>
+    </x-portal-page>
 </x-app-layout>

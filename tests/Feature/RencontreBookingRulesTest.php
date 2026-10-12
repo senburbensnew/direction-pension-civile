@@ -153,6 +153,31 @@ class RencontreBookingRulesTest extends TestCase
         );
     }
 
+    public function test_agent_cannot_save_positive_availability_on_haitian_holiday(): void
+    {
+        $agent = $this->makeFormalitesAgent();
+        $holiday = Holiday::haiti()->firstOrFail();
+
+        while ($holiday->date->isWeekend()) {
+            app(HaitiHolidayService::class)->generate($holiday->date->year + 1);
+            $holiday = Holiday::haiti()
+                ->whereDate('date', '>', now())
+                ->firstOrFail();
+        }
+
+        $this->actingAs($agent)
+            ->from(route('rencontres.pilotage.disponibilites.edit'))
+            ->post(route('rencontres.pilotage.disponibilites.update'), [
+                'dates' => [[
+                    'available_on' => $holiday->date->format('Y-m-d'),
+                    'start_time' => '14:00',
+                    'end_time' => '16:00',
+                ]],
+            ])
+            ->assertRedirect(route('rencontres.pilotage.disponibilites.edit'))
+            ->assertSessionHasErrors('dates.0.available_on');
+    }
+
     public function test_store_rejects_booking_on_haitian_holiday(): void
     {
         $this->makeFormalitesAgent();

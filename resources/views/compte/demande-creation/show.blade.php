@@ -1,20 +1,21 @@
 <x-app-layout>
-    <div class="max-w-7xl mx-auto py-8 px-4 sm:px-6 lg:px-8 space-y-6">
-        <div>
-            <h1 class="text-xl font-bold text-gray-900">Ma demande de création de compte</h1>
-            <p class="text-sm text-gray-600 mt-1">
+    <x-portal-page class="space-y-6">
+        <header class="dossier-header px-5 py-5 sm:px-6 border-l-4 border-l-indigo-600">
+            <p class="dossier-kicker">Compte provisoire</p>
+            <h1 class="mt-1 text-xl font-semibold text-[#173052] tracking-tight">Ma demande de création de compte</h1>
+            <p class="text-sm text-gray-600 mt-2">
                 {{ $demande->libellePublic() }}
                 · déposée le {{ ($demande->soumise_at ?? $demande->created_at)?->format('d/m/Y à H:i') }}
             </p>
-        </div>
+        </header>
 
         @if (session('success'))
-            <div class="text-sm text-green-800 bg-green-50 border border-green-200 rounded-lg px-4 py-3">
+            <div class="text-sm text-green-800 bg-green-50 border border-green-200 px-4 py-3">
                 {{ session('success') }}
             </div>
         @endif
 
-        <section class="bg-white border border-gray-200 rounded-2xl p-6 space-y-4">
+        <section class="dossier-card p-5 sm:p-6 space-y-4">
             <div class="flex flex-wrap items-center justify-between gap-3">
                 <div>
                     <p class="text-xs uppercase tracking-wide text-gray-400">Statut de la demande</p>
@@ -32,7 +33,7 @@
             </div>
 
             @if($demande->status === \App\Models\DemandeCreationCompte::STATUS_REFUSEE && $demande->refusal_reason)
-                <div class="rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-900">
+                <div class="dossier-notice border-l-red-500 bg-red-50 p-4 text-sm text-red-900">
                     <p class="font-semibold">Motif du refus</p>
                     <p class="mt-1">{{ $demande->refusal_reason }}</p>
                 </div>
@@ -41,7 +42,7 @@
 
         @if($editable)
             <form method="post" action="{{ route('compte.demande.update') }}" enctype="multipart/form-data"
-                  class="bg-white border border-gray-200 rounded-2xl p-6 space-y-4">
+                  class="dossier-card p-5 sm:p-6 space-y-4">
                 @csrf
                 @method('patch')
 
@@ -120,14 +121,13 @@
                     </div>
                 </div>
 
-                <button type="submit"
-                        class="inline-flex items-center px-4 py-2 rounded-lg bg-[#173052] text-white text-sm font-medium hover:bg-orange-600">
+                <button type="submit" class="dossier-btn-primary">
                     Enregistrer les modifications
                 </button>
             </form>
         @else
-            <section class="bg-white border border-gray-200 rounded-2xl p-6">
-                <h2 class="text-base font-bold text-gray-800 mb-4">Informations enregistrées</h2>
+            <section class="dossier-card p-5 sm:p-6">
+                <h2 class="text-sm font-semibold text-[#173052] mb-4">Informations enregistrées</h2>
                 <dl class="grid sm:grid-cols-2 gap-3 text-sm">
                     <div><dt class="text-gray-500">Nom complet</dt><dd class="font-medium">{{ $demande->displayName() }}</dd></div>
                     <div><dt class="text-gray-500">Téléphone</dt><dd class="font-medium">{{ $demande->telephone ?: '—' }}</dd></div>
@@ -138,8 +138,8 @@
         @endif
 
         @if($pieces !== [])
-            <section class="bg-white border border-gray-200 rounded-2xl p-6">
-                <h2 class="text-base font-bold text-gray-800 mb-3">Documents joints</h2>
+            <section class="dossier-card p-5 sm:p-6">
+                <h2 class="text-sm font-semibold text-[#173052] mb-3">Documents joints</h2>
                 <ul class="text-sm space-y-2">
                     @foreach($pieces as $piece)
                         <li class="flex items-center gap-2 text-gray-700">
@@ -151,10 +151,10 @@
         @endif
 
         <div class="flex flex-wrap gap-3">
-            <a href="{{ route('personal.dashboard') }}" class="text-sm text-navy font-semibold hover:underline">Mes demandes</a>
+            <a href="{{ route('personal.dashboard') }}" class="dossier-link">Mes demandes</a>
             @if(auth()->user()?->isProvisionnel() && auth()->user()?->hasPensionPortalAccess())
-                <a href="{{ route('demandes.rencontre.create') }}" class="text-sm text-navy font-semibold hover:underline">Prendre rendez-vous</a>
+                <a href="{{ route('demandes.rencontre.create') }}" class="dossier-link">Prendre rendez-vous</a>
             @endif
         </div>
-    </div>
+    </x-portal-page>
 </x-app-layout>

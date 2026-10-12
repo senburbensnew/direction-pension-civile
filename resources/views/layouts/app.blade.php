@@ -55,11 +55,26 @@
 
         .portal-sidebar-collapsed-only { display: none; }
         .portal-collapse-icon-collapsed { display: none; }
+
+        /* Barres fixées en bas : alignées sur la zone principale (pas sous la sidebar). */
+        .portal-fixed-bottom {
+            position: fixed;
+            right: 0;
+            bottom: 0;
+            left: 0;
+            z-index: 30;
+            transition: left .2s ease;
+        }
+        @media (min-width: 1024px) {
+            .portal-fixed-bottom {
+                left: var(--portal-sidebar-active);
+            }
+        }
     </style>
     @stack('styles')
 </head>
 
-<body class="site-public w-full min-h-dvh font-sans antialiased bg-[#e6ebf1] text-gray-800 overflow-x-hidden">
+<body class="site-public portal-sidebar-collapsed w-full min-h-dvh font-sans antialiased bg-[#e6ebf1] text-gray-800 overflow-x-hidden">
 
     <noscript>
         <div class="fixed inset-0 z-[10001] flex items-center justify-center bg-black/80">
@@ -77,7 +92,7 @@
         @include('layouts.partials.app-sidebar')
     </aside>
 
-    <div id="portal-main" class="flex flex-col min-h-dvh min-w-0">
+    <div id="portal-main" class="flex flex-col min-h-dvh min-w-0 bg-white">
 
         <header class="bg-white border-b border-gray-200 sticky top-0 z-30">
             <div class="flex items-start sm:items-center justify-between gap-3 px-4 py-3">
@@ -138,31 +153,49 @@
 
         @php
             $showGlobalFlash = ! request()->routeIs('demandes.rencontre.create');
+            $hasGlobalFlash = $showGlobalFlash && (
+                session('success') || session('error') || session('warning')
+            );
+            $portalMainWide = request()->routeIs('demandes.rencontre.visio');
         @endphp
-        @if($showGlobalFlash && (session('success') || session('error') || session('warning')))
-            <div class="container mx-auto px-4 pt-4 space-y-2 w-full">
-                @if(session('success'))
-                    <div class="flex items-center gap-2 bg-green-50 border border-green-300 text-green-800 rounded-lg px-4 py-2.5 text-sm">
-                        <i class="fas fa-check-circle text-green-500 flex-shrink-0"></i>
-                        {{ session('success') }}
-                    </div>
-                @endif
-                @if(session('error'))
-                    <div class="flex items-center gap-2 bg-red-50 border border-red-300 text-red-800 rounded-lg px-4 py-2.5 text-sm">
-                        <i class="fas fa-exclamation-circle text-red-500 flex-shrink-0"></i>
-                        {{ session('error') }}
-                    </div>
-                @endif
-                @if(session('warning'))
-                    <div class="flex items-center gap-2 bg-amber-50 border border-amber-300 text-amber-900 rounded-lg px-4 py-2.5 text-sm">
-                        <i class="fas fa-exclamation-triangle text-amber-500 flex-shrink-0"></i>
-                        {{ session('warning') }}
-                    </div>
-                @endif
-            </div>
-        @endif
+        <main @class([
+            'flex-1 w-full min-h-0 pb-10',
+            'max-w-none px-3 sm:px-5 lg:px-6' => $portalMainWide,
+        ])>
+            @if($hasGlobalFlash)
+                <div class="max-w-7xl mx-auto w-full px-4 sm:px-6 lg:px-8 pt-3 pb-2 space-y-2">
+                    @if(session('success'))
+                        <div class="flex items-start gap-2 bg-green-50 border border-green-300 text-green-800 rounded-lg px-4 py-2.5 text-sm">
+                            <i class="fas fa-check-circle text-green-500 flex-shrink-0 mt-0.5"></i>
+                            <div class="min-w-0 space-y-1">
+                                <p>{{ session('success') }}</p>
+                                @if(session('created_password'))
+                                    <p class="font-mono text-sm">
+                                        Mot de passe provisoire :
+                                        <strong>{{ session('created_password') }}</strong>
+                                    </p>
+                                    <p class="text-xs text-green-700">
+                                        Communiquez-le au demandeur (affichage unique sur cette page).
+                                    </p>
+                                @endif
+                            </div>
+                        </div>
+                    @endif
+                    @if(session('error'))
+                        <div class="flex items-center gap-2 bg-red-50 border border-red-300 text-red-800 rounded-lg px-4 py-2.5 text-sm">
+                            <i class="fas fa-exclamation-circle text-red-500 flex-shrink-0"></i>
+                            {{ session('error') }}
+                        </div>
+                    @endif
+                    @if(session('warning'))
+                        <div class="flex items-center gap-2 bg-amber-50 border border-amber-300 text-amber-900 rounded-lg px-4 py-2.5 text-sm">
+                            <i class="fas fa-exclamation-triangle text-amber-500 flex-shrink-0"></i>
+                            {{ session('warning') }}
+                        </div>
+                    @endif
+                </div>
+            @endif
 
-        <main class="container mx-auto flex-1 w-full min-h-[calc(100dvh-13rem)] bg-white pb-10">
             {{ $slot }}
         </main>
     </div>
@@ -170,9 +203,11 @@
     <script>
         (function () {
             var key = 'portal-sidebar-collapsed';
-            if (localStorage.getItem(key) === '1' && window.innerWidth >= 1024) {
-                document.body.classList.add('portal-sidebar-collapsed');
-            }
+            try {
+                if (window.innerWidth >= 1024 && localStorage.getItem(key) === '0') {
+                    document.body.classList.remove('portal-sidebar-collapsed');
+                }
+            } catch (e) {}
         })();
 
         function togglePortalSidebar() {

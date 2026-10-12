@@ -91,7 +91,42 @@ class RencontreVisioTest extends TestCase
         $this->actingAs($owner)
             ->get(route('demandes.rencontre.visio', $demande->visio_token))
             ->assertOk()
-            ->assertSee('Ouvrir la salle dans un nouvel onglet');
+            ->assertSee('Nouvel onglet')
+            ->assertSee('Salle ouverte');
+    }
+
+    public function test_visio_page_shows_unavailable_when_schedule_is_missing(): void
+    {
+        $owner = User::factory()->create();
+        $agent = User::factory()->create();
+        $demande = $this->makeVisioDemande($owner, $agent, [
+            'date_souhaitee' => null,
+            'heure_souhaitee' => null,
+        ]);
+
+        $this->actingAs($owner)
+            ->get(route('demandes.rencontre.visio', $demande->visio_token))
+            ->assertOk()
+            ->assertSee('Lien indisponible')
+            ->assertDontSee('Salle ouverte');
+    }
+
+    public function test_realised_appointment_stays_accessible_during_visio_window(): void
+    {
+        $this->travelTo(now()->startOfDay()->setTime(14, 0));
+
+        $owner = User::factory()->create();
+        $agent = User::factory()->create();
+        $demande = $this->makeVisioDemande($owner, $agent, [
+            'date_souhaitee' => now()->toDateString(),
+            'heure_souhaitee' => '14:00',
+            'rdv_statut' => 'realise',
+        ]);
+
+        $this->actingAs($owner)
+            ->get(route('demandes.rencontre.visio', $demande->visio_token))
+            ->assertOk()
+            ->assertSee('Salle ouverte');
     }
 
     public function test_unknown_token_is_not_found(): void

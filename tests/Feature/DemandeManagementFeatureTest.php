@@ -620,10 +620,9 @@ class DemandeManagementFeatureTest extends TestCase
     }
 
     /** @test */
-    public function validateur_can_reorient_and_record_follow_up(): void
+    public function validateur_pilotage_show_is_consultation_and_reassign_only(): void
     {
         $formaliteId = Service::where('code', Service::FORMALITE)->value('id');
-        $liqId = Service::where('code', Service::LIQUIDATION)->value('id');
         $manager = User::factory()->create(['service_id' => $formaliteId]);
         $manager->assignRole(User::ROLE_VALIDATEUR_RDV);
         User::factory()->create(['service_id' => $formaliteId])->assignRole(User::ROLE_AGENT_RDV);
@@ -636,36 +635,21 @@ class DemandeManagementFeatureTest extends TestCase
                 'motif_key' => 'demande_formalites_mandats',
                 'objet' => 'Formalités',
                 'modalite' => 'visio',
+                'date_souhaitee' => now()->addDays(3)->toDateString(),
+                'heure_souhaitee' => '09:00',
             ],
         ]);
-        $show = route('rencontres.pilotage.show', $demande);
 
         $this->actingAs($manager)
             ->get(route('rencontres.pilotage.show', $demande))
             ->assertOk()
-            ->assertSee('Informations transmises par l’usager')
-            ->assertSee('Historique du rendez-vous');
-
-        $this->from($show)->actingAs($manager)
-            ->post(route('rencontres.pilotage.reorienter', $demande), [
-                'service_id' => $liqId,
-                'commentaire' => 'Dossier de liquidation.',
-            ])
-            ->assertRedirect($show);
-
-        $this->assertSame($liqId, $demande->fresh()->current_service_id);
-
-        $this->from($show)->actingAs($manager)
-            ->post(route('rencontres.pilotage.suite', $demande), [
-                'suite' => 'Usager informé du transfert.',
-            ])
-            ->assertRedirect($show);
-
-        $this->assertDatabaseHas('demande_histories', [
-            'demande_id' => $demande->id,
-            'event' => 'SUITE',
-            'commentaire' => 'Usager informé du transfert.',
-        ]);
+            ->assertSee('Coordonnées et compléments')
+            ->assertSee('Historique du rendez-vous')
+            ->assertSee('Réattribuer à un autre agent')
+            ->assertDontSee('Valider définitivement')
+            ->assertDontSee('Annuler le rendez-vous')
+            ->assertDontSee('Clôturer le rendez-vous')
+            ->assertDontSee('Enregistrer la suite');
     }
 
     /** @test */
