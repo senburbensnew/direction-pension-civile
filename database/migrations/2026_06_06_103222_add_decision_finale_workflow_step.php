@@ -2,12 +2,20 @@
 
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
     public function up(): void
     {
+        if (DB::getDriverName() === 'sqlite') {
+            $this->rebuildWorkflowStepsForSqlite();
+            $this->seedDecisionFinaleStep();
+
+            return;
+        }
+
         // 1. Drop the FK that currently depends on workflow_steps_service_type_unique
         Schema::table('workflow_steps', function (Blueprint $table) {
             $table->dropForeign(['service_id']);
@@ -26,9 +34,9 @@ return new class extends Migration
         // 4. Re-add the FK — adjust onDelete/onUpdate to match the original definition
         Schema::table('workflow_steps', function (Blueprint $table) {
             $table->foreign('service_id')
-                  ->references('id')
-                  ->on('services')
-                  ->cascadeOnDelete();
+                ->references('id')
+                ->on('services')
+                ->cascadeOnDelete();
         });
 
         // 5. New unique constraint: one step per (code, type_demande)
@@ -36,26 +44,35 @@ return new class extends Migration
             $table->unique(['code', 'type_demande'], 'workflow_steps_code_type_unique');
         });
 
-        // 6. Seed the DECISION_FINALE step
-        $directionId = \DB::table('services')->where('code', 'direction')->value('id');
-        if ($directionId) {
-            \DB::table('workflow_steps')->updateOrInsert(
-                ['code' => 'DECISION_FINALE', 'type_demande' => null],
-                [
-                    'nom'         => 'Décision finale',
-                    'description' => 'Approbation ou rejet définitif du dossier par la Direction',
-                    'service_id'  => $directionId,
-                    'ordre'       => 100,
-                    'created_at'  => now(),
-                    'updated_at'  => now(),
-                ]
-            );
-        }
+        $this->seedDecisionFinaleStep();
     }
 
     public function down(): void
     {
-        \DB::table('workflow_steps')->where('code', 'DECISION_FINALE')->delete();
+        DB::table('workflow_steps')->where('code', 'DECISION_FINALE')->delete();
+
+        if (DB::getDriverName() === 'sqlite') {
+            $rows = DB::table('workflow_steps')->get();
+            DB::statement('PRAGMA foreign_keys = OFF');
+            Schema::drop('workflow_steps');
+            Schema::create('workflow_steps', function (Blueprint $table) {
+                $table->id();
+                $table->string('code');
+                $table->string('nom');
+                $table->string('description')->nullable();
+                $table->unsignedBigInteger('service_id')->nullable();
+                $table->string('type_demande')->nullable();
+                $table->unsignedSmallInteger('ordre')->default(0);
+                $table->timestamps();
+                $table->unique(['service_id', 'type_demande'], 'workflow_steps_service_type_unique');
+                $table->index('service_id', 'workflow_steps_service_id_index');
+            });
+            foreach ($rows as $row) {
+                DB::table('workflow_steps')->insert((array) $row);
+            }
+
+            return;
+        }
 
         // 1. Drop FK before touching indexes
         Schema::table('workflow_steps', function (Blueprint $table) {
@@ -80,9 +97,51 @@ return new class extends Migration
         // 5. Re-add FK
         Schema::table('workflow_steps', function (Blueprint $table) {
             $table->foreign('service_id')
-                  ->references('id')
-                  ->on('services')
-                  ->cascadeOnDelete();
+                ->references('id')
+                ->on('services')
+                ->cascadeOnDelete();
         });
+    }
+
+    private function rebuildWorkflowStepsForSqlite(): void
+    {
+        $rows = DB::table('workflow_steps')->get();
+
+        DB::statement('PRAGMA foreign_keys = OFF');
+        Schema::drop('workflow_steps');
+        Schema::create('workflow_steps', function (Blueprint $table) {
+            $table->id();
+            $table->string('code');
+            $table->string('nom');
+            $table->string('description')->nullable();
+            $table->unsignedBigInteger('service_id')->nullable();
+            $table->string('type_demande')->nullable();
+            $table->unsignedSmallInteger('ordre')->default(0);
+            $table->timestamps();
+            $table->unique(['code', 'type_demande'], 'workflow_steps_code_type_unique');
+            $table->index('service_id', 'workflow_steps_service_id_index');
+        });
+
+        foreach ($rows as $row) {
+            DB::table('workflow_steps')->insert((array) $row);
+        }
+    }
+
+    private function seedDecisionFinaleStep(): void
+    {
+        $directionId = DB::table('services')->where('code', 'direction')->value('id');
+        if ($directionId) {
+            DB::table('workflow_steps')->updateOrInsert(
+                ['code' => 'DECISION_FINALE', 'type_demande' => null],
+                [
+                    'nom' => 'Décision finale',
+                    'description' => 'Approbation ou rejet définitif du dossier par la Direction',
+                    'service_id' => $directionId,
+                    'ordre' => 100,
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ]
+            );
+        }
     }
 };

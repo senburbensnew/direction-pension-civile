@@ -20,6 +20,10 @@ php artisan test
 # Run a single test file
 php artisan test tests/Feature/ExampleTest.php
 
+# Switch local database (MySQL ↔ SQLite)
+composer db:mysql
+composer db:sqlite
+
 # Run migrations
 php artisan migrate
 

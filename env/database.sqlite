@@ -1,0 +1,3 @@
+DB_CONNECTION=sqlite
+DB_DATABASE=__PROJECT_ROOT__/database/database.sqlite
+DB_FOREIGN_KEYS=true
