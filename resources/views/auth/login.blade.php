@@ -126,16 +126,5 @@
                 {{ __('messages.request_account') }}
             </a>
         </p>
-
-        {{-- Retour à l'accueil --}}
-        <div class="pt-1 text-center">
-            <a
-                href="{{ url('/') }}"
-                class="inline-flex items-center gap-2 text-sm text-gray-600 hover:text-[#173052] font-medium transition-colors"
-            >
-                <i class="fas fa-home text-xs"></i>
-                <span>Retour à l’accueil</span>
-            </a>
-        </div>
     </form>
 </x-guest-layout>
