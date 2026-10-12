@@ -88,11 +88,19 @@
             position: relative;
             z-index: 2;
             margin: 0;
+            max-width: 18rem;
             color: #ffffff;
-            font-size: 0.95rem;
+            font-size: 0.8rem;
             font-weight: 500;
+            line-height: 1.45;
             text-align: center;
             text-shadow: 0 1px 3px rgba(15, 23, 42, 0.45);
+        }
+
+        @media (min-width: 1024px) {
+            .guest-auth-photo p {
+                font-size: 0.875rem;
+            }
         }
 
         .guest-auth-form {
@@ -266,11 +274,13 @@
 
 <body class="site-public guest-auth font-sans antialiased">
 
+@php($guestCopyrightLine = '© ' . date('Y') . ' Direction de la Pension Civile — République d\'Haïti')
+
 <div class="guest-auth-shell">
     @if ($showPhoto)
         <aside class="guest-auth-photo" aria-hidden="true">
             <img src="{{ asset('images/guest-auth-pension-couple.jpg') }}" alt="">
-            <p>Direction de la Pension Civile</p>
+            <p>{{ $guestCopyrightLine }}</p>
         </aside>
     @endif
 
@@ -336,8 +346,8 @@
             </div>
 
             @if ($showCopyright)
-                <p class="guest-auth-copy text-sm text-gray-600 text-center">
-                    &copy; {{ date('Y') }} Direction de la Pension Civile — République d'Haïti
+                <p class="guest-auth-copy text-xs sm:text-sm text-gray-500 text-center">
+                    {{ $guestCopyrightLine }}
                 </p>
             @endif
         </div>

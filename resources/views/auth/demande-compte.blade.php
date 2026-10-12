@@ -1,4 +1,4 @@
-<x-guest-layout :wide="true" :show-copyright="false">
+<x-guest-layout :wide="true">
     @php
         // Profils mineur / mandataire temporairement indisponibles à l’inscription en ligne.
         $isMandataire = false;

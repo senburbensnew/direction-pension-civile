@@ -1,4 +1,4 @@
-<x-guest-layout :no-scroll="true" :show-copyright="false">
+<x-guest-layout :no-scroll="true">
 
     {{-- Session status --}}
     <x-auth-session-status class="mb-3" :status="session('status')" />
