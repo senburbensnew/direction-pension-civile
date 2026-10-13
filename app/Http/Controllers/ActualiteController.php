@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Actualite;
+use App\Services\ImageStorageService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
@@ -28,13 +29,13 @@ class ActualiteController extends Controller
         return view('actualites.index', compact('actualites'));
     }
 
-
-    public function adminIndex(Request $request){
+    public function adminIndex(Request $request)
+    {
         $query = Actualite::query();
 
         if ($request->filled('q')) {
-            $query->where('title', 'like', '%' . $request->q . '%')
-                ->orWhere('category', 'like', '%' . $request->q . '%');
+            $query->where('title', 'like', '%'.$request->q.'%')
+                ->orWhere('category', 'like', '%'.$request->q.'%');
         }
 
         $actualites = $query
@@ -54,15 +55,15 @@ class ActualiteController extends Controller
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'title'        => 'required|string|max:255',
-            'description'  => 'nullable|string',
+            'title' => 'required|string|max:255',
+            'description' => 'nullable|string',
             'content_text' => 'nullable|string',
-            'category'     => 'nullable|string|max:255',
-            'posted_in'    => 'nullable|string|max:255',
-            'published'    => 'nullable|boolean',
+            'category' => 'nullable|string|max:255',
+            'posted_in' => 'nullable|string|max:255',
+            'published' => 'nullable|boolean',
 
-            'images'       => 'nullable|array',
-            'images.*'     => 'image|mimes:jpg,jpeg,png,webp|max:2048',
+            'images' => 'nullable|array',
+            'images.*' => 'image|mimes:jpg,jpeg,png,webp|max:2048',
         ]);
 
         DB::beginTransaction();
@@ -70,18 +71,23 @@ class ActualiteController extends Controller
         try {
             // 1️⃣ Create actualité
             $actualite = Actualite::create([
-                'title'        => $validated['title'],
-                'description'  => $validated['description'] ?? null,
+                'title' => $validated['title'],
+                'description' => $validated['description'] ?? null,
                 'content_text' => $validated['content_text'] ?? null,
-                'category'     => $validated['category'] ?? null,
-                'posted_in'    => $validated['posted_in'] ?? null,
-                'published'    => $request->has('published'), // true if checked, false if not
+                'category' => $validated['category'] ?? null,
+                'posted_in' => $validated['posted_in'] ?? null,
+                'published' => $request->has('published'), // true if checked, false if not
             ]);
 
             // 2️⃣ Store images
             if ($request->hasFile('images')) {
+                $images = app(ImageStorageService::class);
                 foreach ($request->file('images') as $image) {
-                    $path = $image->store('actualites', 'public');
+                    $path = $images->storeUploadedImage(
+                        $image,
+                        'actualites',
+                        config('media.upload_max_widths.actualite'),
+                    );
 
                     $actualite->images()->create([
                         'image_path' => $path,
@@ -111,7 +117,7 @@ class ActualiteController extends Controller
             return back()
                 ->withInput()
                 ->withErrors([
-                    'error' => 'Une erreur est survenue lors de la création de l’actualité.'
+                    'error' => 'Une erreur est survenue lors de la création de l’actualité.',
                 ]);
         }
     }
@@ -120,6 +126,7 @@ class ActualiteController extends Controller
     public function show($id)
     {
         $actu = Actualite::with('images')->findOrFail($id);
+
         return view('actualites.show', compact('actu'));
     }
 
@@ -127,6 +134,7 @@ class ActualiteController extends Controller
     public function edit($id)
     {
         $actualiteEdit = Actualite::findOrFail($id);
+
         return view('admin.actualites.edit', compact('actualiteEdit'));
     }
 
@@ -134,26 +142,26 @@ class ActualiteController extends Controller
     public function update(Request $request, $id)
     {
         $request->validate([
-            'title'        => 'required|string|max:255',
-            'description'  => 'required|string',
+            'title' => 'required|string|max:255',
+            'description' => 'required|string',
             'content_text' => 'required|string',
-            'category'     => 'nullable|string|max:255',
-            'posted_in'    => 'nullable|string|max:255',
-            'published'    => 'nullable|boolean',
-            'images.*'     => 'nullable|image|mimes:jpg,jpeg,png,webp|max:2048', // validate each uploaded image
+            'category' => 'nullable|string|max:255',
+            'posted_in' => 'nullable|string|max:255',
+            'published' => 'nullable|boolean',
+            'images.*' => 'nullable|image|mimes:jpg,jpeg,png,webp|max:2048', // validate each uploaded image
             'delete_images' => 'nullable|array', // array of image IDs to delete
-            'delete_images.*' => 'integer|exists:actualite_images,id'
+            'delete_images.*' => 'integer|exists:actualite_images,id',
         ]);
 
         $actualite = Actualite::findOrFail($id);
 
         // Update main fields
-        $actualite->title        = $request->title;
-        $actualite->description  = $request->description;
+        $actualite->title = $request->title;
+        $actualite->description = $request->description;
         $actualite->content_text = $request->content_text;
-        $actualite->category     = $request->category;
-        $actualite->posted_in    = $request->posted_in;
-        $actualite->published    = $request->boolean('published', true); // default true
+        $actualite->category = $request->category;
+        $actualite->posted_in = $request->posted_in;
+        $actualite->published = $request->boolean('published', true); // default true
 
         $actualite->save();
 
@@ -162,18 +170,22 @@ class ActualiteController extends Controller
             foreach ($request->delete_images as $imageId) {
                 $image = $actualite->images()->find($imageId);
                 if ($image) {
-                    Storage::disk('public')->delete($image->image_path); // delete file
-                    $image->delete(); // delete DB record
+                    app(ImageStorageService::class)->deleteWithVariants($image->image_path);
+                    $image->delete();
                 }
             }
         }
 
         // Handle multiple uploaded images
         if ($request->hasFile('images')) {
+            $images = app(ImageStorageService::class);
             foreach ($request->file('images') as $image) {
-                $path = $image->store('actualites', 'public');
+                $path = $images->storeUploadedImage(
+                    $image,
+                    'actualites',
+                    config('media.upload_max_widths.actualite'),
+                );
 
-                // Save each image in the related table
                 $actualite->images()->create([
                     'image_path' => $path,
                 ]);
@@ -190,8 +202,9 @@ class ActualiteController extends Controller
         $actualite = Actualite::with('images')->findOrFail($id);
 
         // Delete all associated image files
+        $images = app(ImageStorageService::class);
         foreach ($actualite->images as $image) {
-            Storage::disk('public')->delete($image->image_path);
+            $images->deleteWithVariants($image->image_path);
         }
 
         $actualite->delete(); // images cascade-deleted via FK
@@ -203,7 +216,7 @@ class ActualiteController extends Controller
     public function togglePublish($id)
     {
         $actualite = Actualite::findOrFail($id);
-        $actualite->published = !$actualite->published;
+        $actualite->published = ! $actualite->published;
         $actualite->save();
 
         return back()->with('success', $actualite->published ? 'Actualité publiée.' : 'Actualité dépubliée.');

@@ -24,9 +24,7 @@
             <!-- HEADER -->
             <div class="flex flex-col md:flex-row justify-between items-center mb-12 gap-8">
                 <div>
-                    <img src="{{ asset('images/setting-logo-1-M13oPLiYoM.png') }}"
-                         alt="Logo"
-                         class="w-24 h-24 object-cover">
+                    <x-dpc-logo class="w-24 h-24 object-cover" />
                 </div>
 
                 <div class="mx-4 md:mx-12 text-center flex-grow">

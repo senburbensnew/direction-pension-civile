@@ -2,8 +2,8 @@
 
 namespace App\Models;
 
+use App\Support\PublicMedia;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Support\Facades\Storage;
 
 class Partenaire extends Model
 {
@@ -13,13 +13,36 @@ class Partenaire extends Model
 
     public function logoUrl(): ?string
     {
-        if (!$this->logo) {
+        if (! $this->logo) {
             return null;
         }
-        if (str_starts_with($this->logo, 'images/')) {
-            return asset($this->logo);
+
+        return $this->logoSources()['url'];
+    }
+
+    public function logoComponentSrc(): ?string
+    {
+        if (! $this->logo) {
+            return null;
         }
-        return Storage::url($this->logo);
+
+        return PublicMedia::componentSrc($this->logo);
+    }
+
+    /**
+     * @return array{url: string, webp: ?string, width: ?int, height: ?int}|null
+     */
+    public function logoSources(): ?array
+    {
+        if (! $this->logo) {
+            return null;
+        }
+
+        if (str_starts_with($this->logo, 'http://') || str_starts_with($this->logo, 'https://')) {
+            return ['url' => $this->logo, 'webp' => null, 'width' => null, 'height' => null];
+        }
+
+        return PublicMedia::forUploadedOrStatic($this->logo);
     }
 
     public function scopeActive($query)

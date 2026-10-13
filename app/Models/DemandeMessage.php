@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use Database\Seeders\RolesAndPermissionsSeeder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
@@ -30,11 +31,7 @@ class DemandeMessage extends Model
 
     public function isFromService(): bool
     {
-        return $this->sender?->hasAnyRole([
-            'direction', 'directeur', 'assistant_directeur', 'secretariat', 'service_liquidation',
-            'service_accueil_formalites', 'service_controle_placement',
-            'service_comptabilite', 'service_assurance', 'administration', 'admin',
-        ]) ?? false;
+        return $this->sender?->hasAnyRole(RolesAndPermissionsSeeder::internalRoles()) ?? false;
     }
 
     public function markAsRead(): void

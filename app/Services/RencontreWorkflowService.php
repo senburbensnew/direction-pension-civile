@@ -11,6 +11,7 @@ use App\Models\Service;
 use App\Models\User;
 use App\Models\WorkflowStep;
 use App\Notifications\RencontreAgentAssigneNotification;
+use Database\Seeders\RolesAndPermissionsSeeder;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\ValidationException;
 
@@ -49,8 +50,8 @@ class RencontreWorkflowService
     /**
      * Applique un changement de statut.
      *
-     * @param array<string, mixed> $data
-     * @param array<string, mixed> $champs
+     * @param  array<string, mixed>  $data
+     * @param  array<string, mixed>  $champs
      */
     public function apply(
         Demande $demande,
@@ -171,10 +172,10 @@ class RencontreWorkflowService
             $user,
             'CREATED',
             'Rendez-vous enregistré et activé automatiquement (réf. '
-                . $demande->code
-                . '). Service responsable : '
-                . $service->nom
-                . '.',
+                .$demande->code
+                .'). Service responsable : '
+                .$service->nom
+                .'.',
             [
                 'service_id' => $service->id,
                 'service_code' => $service->code,
@@ -255,17 +256,15 @@ class RencontreWorkflowService
             $demande
         );
 
-        if (!$this->availability->isBookableDate($date)) {
+        if (! $this->availability->isBookableDate($date)) {
             throw ValidationException::withMessages([
-                'date_souhaitee' =>
-                    'Cette date n’est pas ouvrée (week-end ou jour férié en Haïti).',
+                'date_souhaitee' => 'Cette date n’est pas ouvrée (week-end ou jour férié en Haïti).',
             ]);
         }
 
-        if (!$this->availability->isAllowedTime($heure)) {
+        if (! $this->availability->isAllowedTime($heure)) {
             throw ValidationException::withMessages([
-                'heure_souhaitee' =>
-                    'Choisissez un créneau de 15 minutes entre 14h00 et 16h00.',
+                'heure_souhaitee' => 'Choisissez un créneau de 15 minutes entre 14h00 et 16h00.',
             ]);
         }
 
@@ -279,14 +278,13 @@ class RencontreWorkflowService
 
         $agent = $agentId ? User::find($agentId) : null;
 
-        if ($agentId && !$agent) {
+        if ($agentId && ! $agent) {
             throw ValidationException::withMessages([
-                'agent_id' =>
-                    'L’agent sélectionné est introuvable.',
+                'agent_id' => 'L’agent sélectionné est introuvable.',
             ]);
         }
 
-        if (!$agent) {
+        if (! $agent) {
             $agent = $this->availability->findAvailableAgent(
                 $date,
                 $heure,
@@ -294,10 +292,9 @@ class RencontreWorkflowService
                 $demande
             );
 
-            if (!$agent) {
+            if (! $agent) {
                 throw ValidationException::withMessages([
-                    'heure_souhaitee' =>
-                        'Aucun agent disponible dans le service responsable pour ce créneau (rotation, disponibilités ou charge).',
+                    'heure_souhaitee' => 'Aucun agent disponible dans le service responsable pour ce créneau (rotation, disponibilités ou charge).',
                 ]);
             }
         }
@@ -366,23 +363,23 @@ class RencontreWorkflowService
 
         $commentaire = $report
             ? 'Rendez-vous reporté au '
-                . $date
-                . ' à '
-                . $payload['heure_souhaitee']
-                . ' avec '
-                . $agent->displayName()
-                . ' ('
-                . $service->nom
-                . ').'
+                .$date
+                .' à '
+                .$payload['heure_souhaitee']
+                .' avec '
+                .$agent->displayName()
+                .' ('
+                .$service->nom
+                .').'
             : 'Nouveau créneau proposé : '
-                . $date
-                . ' à '
-                . $payload['heure_souhaitee']
-                . ' avec '
-                . $agent->displayName()
-                . ' ('
-                . $service->nom
-                . ').';
+                .$date
+                .' à '
+                .$payload['heure_souhaitee']
+                .' avec '
+                .$agent->displayName()
+                .' ('
+                .$service->nom
+                .').';
 
         $updated = $this->apply(
             $demande,
@@ -469,7 +466,7 @@ class RencontreWorkflowService
         $this->assertOpen($demande);
 
         if (
-            !in_array(
+            ! in_array(
                 $statut,
                 [
                     RencontreStatutEnum::REALISE,
@@ -501,14 +498,12 @@ class RencontreWorkflowService
             'CLOSED',
             $commentaire
                 ?: 'Clôture du rendez-vous : '
-                . $statut->label()
-                . '.',
+                .$statut->label()
+                .'.',
             [
-                'cloture_par' =>
-                    $user->id,
+                'cloture_par' => $user->id,
 
-                'cloture_at' =>
-                    now()->toIso8601String(),
+                'cloture_at' => now()->toIso8601String(),
             ],
             [
                 'action' => 'cloture',
@@ -556,24 +551,20 @@ class RencontreWorkflowService
                     $compte->recordHistory(
                         DemandeCreationCompteHistory::EVENT_RDV_REALISE,
                         'Rendez-vous réalisé ('
-                            . $updated->code
-                            . '). En attente de décision du service responsable : '
-                            . $service->nom
-                            . '.',
+                            .$updated->code
+                            .'). En attente de décision du service responsable : '
+                            .$service->nom
+                            .'.',
                         $user,
                         DemandeCreationCompte::STATUS_EN_ATTENTE,
                         [
-                            'rdv_id' =>
-                                $updated->id,
+                            'rdv_id' => $updated->id,
 
-                            'rdv_code' =>
-                                $updated->code,
+                            'rdv_code' => $updated->code,
 
-                            'service_id' =>
-                                $service->id,
+                            'service_id' => $service->id,
 
-                            'service_code' =>
-                                $service->code,
+                            'service_code' => $service->code,
                         ]
                     );
                 }
@@ -599,7 +590,7 @@ class RencontreWorkflowService
 
         $isDemandeur = (int) $user->id === $demandeurId;
         $isAgentRdv = $agentId > 0 && (int) $user->id === $agentId;
-        $isAdmin = $user->hasAnyRole(['admin', 'direction']);
+        $isAdmin = $user->hasAnyRole(RolesAndPermissionsSeeder::adminOrDirectionRoles());
 
         abort_unless(
             $isDemandeur || $isAgentRdv || $isAdmin,
@@ -628,10 +619,10 @@ class RencontreWorkflowService
             $user,
             'CANCELED',
             match ($acteur) {
-                'agent_rdv' => 'Rendez-vous annulé par l’agent RDV. Motif : ' . $motif,
-                'administrateur' => 'Rendez-vous annulé par un administrateur. Motif : ' . $motif,
+                'agent_rdv' => 'Rendez-vous annulé par l’agent RDV. Motif : '.$motif,
+                'administrateur' => 'Rendez-vous annulé par un administrateur. Motif : '.$motif,
                 default => 'Rendez-vous annulé par le demandeur.'
-                    . ($motif ? ' Motif : ' . $motif : ''),
+                    .($motif ? ' Motif : '.$motif : ''),
             },
             [
                 'annule_par' => $user->id,
@@ -675,36 +666,29 @@ class RencontreWorkflowService
         return array_merge(
             $existing,
             [
-                'numero' =>
-                    $demande->code,
+                'numero' => $demande->code,
 
-                'date' =>
-                    $data['date_souhaitee']
+                'date' => $data['date_souhaitee']
                     ?? null,
 
-                'heure' =>
-                    Demande::normalizeRencontreTime(
-                        $data['heure_souhaitee']
-                        ?? null
-                    ),
+                'heure' => Demande::normalizeRencontreTime(
+                    $data['heure_souhaitee']
+                    ?? null
+                ),
 
-                'service' =>
-                    $data['service_responsable']
+                'service' => $data['service_responsable']
                     ?? $service?->nom
                     ?? 'Service responsable non défini',
 
-                'mode' =>
-                    $modalite === 'physique'
+                'mode' => $modalite === 'physique'
                         ? 'Présentiel'
                         : 'Visioconférence',
 
-                'lieu' =>
-                    $modalite === 'physique'
+                'lieu' => $modalite === 'physique'
                         ? ($data['lieu_rdv'] ?? '—')
                         : null,
 
-                'lien' =>
-                    $modalite === 'visio'
+                'lien' => $modalite === 'visio'
                     && $demande->visio_token
                         ? route(
                             'demandes.rencontre.visio',
@@ -716,8 +700,7 @@ class RencontreWorkflowService
                                 : null
                         ),
 
-                'pieces' =>
-                    $data['documents_a_preparer']
+                'pieces' => $data['documents_a_preparer']
                     ?? $this->motifsService->prepareHints(
                         (string) ($data['motif_key'] ?? $data['motif'] ?? ''),
                         $modalite
@@ -757,8 +740,7 @@ class RencontreWorkflowService
 
             'SUITE' => 'Suite donnée',
 
-            'IDENTITY_CONFIRMED' =>
-                'Identité confirmée',
+            'IDENTITY_CONFIRMED' => 'Identité confirmée',
 
             default => $event,
         };
@@ -821,10 +803,9 @@ class RencontreWorkflowService
             ?? $demande->data['motif']
             ?? null;
 
-        if (!$motif) {
+        if (! $motif) {
             throw ValidationException::withMessages([
-                'motif' =>
-                    'Le motif de la demande est obligatoire pour déterminer le service responsable.',
+                'motif' => 'Le motif de la demande est obligatoire pour déterminer le service responsable.',
             ]);
         }
 
@@ -833,10 +814,9 @@ class RencontreWorkflowService
             $demande->user
         );
 
-        if (!$service) {
+        if (! $service) {
             throw ValidationException::withMessages([
-                'motif' =>
-                    'Aucun service responsable n’a été défini pour le motif sélectionné.',
+                'motif' => 'Aucun service responsable n’a été défini pour le motif sélectionné.',
             ]);
         }
 
@@ -910,10 +890,9 @@ class RencontreWorkflowService
         */
 
         throw ValidationException::withMessages([
-            'agent_id' =>
-                'Aucun agent de rendez-vous disponible pour le service responsable « '
-                . $service->nom
-                . ' » sur le créneau demandé.',
+            'agent_id' => 'Aucun agent de rendez-vous disponible pour le service responsable « '
+                .$service->nom
+                .' » sur le créneau demandé.',
         ]);
     }
 
@@ -929,7 +908,7 @@ class RencontreWorkflowService
         );
 
         if (
-            !$agent
+            ! $agent
             || (int) $agent->id === (int) $usager->id
         ) {
             return;
@@ -945,14 +924,11 @@ class RencontreWorkflowService
             Log::error(
                 'RencontreWorkflowService: could not notify assigned agent',
                 [
-                    'agent_id' =>
-                        $agent->id,
+                    'agent_id' => $agent->id,
 
-                    'demande_id' =>
-                        $demande->id,
+                    'demande_id' => $demande->id,
 
-                    'error' =>
-                        $e->getMessage(),
+                    'error' => $e->getMessage(),
                 ]
             );
         }

@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Enums\RencontreStatutEnum;
 use App\Enums\TypeDemandeEnum;
+use App\Models\AgentDelegation;
 use App\Models\Demande;
 use App\Models\DemandeCreationCompte;
 use App\Models\DemandeHistory;
@@ -16,17 +17,21 @@ use App\Models\WorkflowStep;
 use App\Notifications\DemandeComplementSoumisNotification;
 use App\Services\DemandeWorkflowService;
 use App\Services\PersonalDemandeCatalog;
+use App\Services\RencontreAvailabilityService;
 use App\Services\RencontreMotifService;
+use App\Services\RencontreReminderService;
+use Database\Seeders\RolesAndPermissionsSeeder;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Spatie\Activitylog\Models\Activity;
 
 class PersonalController extends Controller
 {
     public function __construct(
         private PersonalDemandeCatalog $demandeCatalog,
-    ) {
-    }
+    ) {}
 
     /**
      * Résout l'ID du service de l'utilisateur connecté.
@@ -40,18 +45,7 @@ class PersonalController extends Controller
             return $user->service_id;
         }
 
-        $roleToService = [
-            'direction'                  => Service::DIRECTION,
-            'secretariat'                => Service::SECRETARIAT,
-            'service_liquidation'        => Service::LIQUIDATION,
-            'service_controle_placement' => Service::CONTROLE_PLACEMENT,
-            'service_comptabilite'       => Service::COMPTABILITE,
-            'service_accueil_formalites' => Service::FORMALITE,
-            'service_formalite'          => Service::FORMALITE,
-            'service_assurance'          => Service::ASSURANCE,
-        ];
-
-        foreach ($roleToService as $role => $code) {
+        foreach (RolesAndPermissionsSeeder::roleToServiceCode() as $role => $code) {
             if ($user->hasRole($role)) {
                 return Service::where('code', $code)->value('id');
             }
@@ -127,13 +121,13 @@ class PersonalController extends Controller
             : $demande->isClosed();
 
         return view('personal.request-details', [
-            'from'             => 'dashboard',
-            'request'          => $demande,
+            'from' => 'dashboard',
+            'request' => $demande,
             'requestHistories' => $requestHistories,
-            'activityLogs'     => collect(),
-            'messages'         => $messages,
-            'isClosed'         => $isClosed,
-            'rdvAgentMode'     => false,
+            'activityLogs' => collect(),
+            'messages' => $messages,
+            'isClosed' => $isClosed,
+            'rdvAgentMode' => false,
             'compteProvisional' => null,
         ]);
     }
@@ -147,19 +141,19 @@ class PersonalController extends Controller
         abort_unless($demande->needsComplement(), 403, 'Cette action n\'est disponible que pour les demandes en complément requis.');
 
         $request->validate([
-            'message'      => 'required|string|max:3000',
-            'documents'    => 'nullable|array|max:10',
-            'documents.*'  => 'file|max:5120|mimes:pdf,jpg,jpeg,png,doc,docx',
+            'message' => 'required|string|max:3000',
+            'documents' => 'nullable|array|max:10',
+            'documents.*' => 'file|max:5120|mimes:pdf,jpg,jpeg,png,doc,docx',
         ]);
 
         DB::transaction(function () use ($demande, $request) {
             $soumiseStepId = WorkflowStep::idForCode('SOUMISE');
-            $directionId   = Service::where('code', Service::DIRECTION)->value('id');
+            $directionId = Service::where('code', Service::DIRECTION)->value('id');
 
             DemandeMessage::create([
                 'demande_id' => $demande->id,
-                'sender_id'  => auth()->id(),
-                'body'       => $request->message,
+                'sender_id' => auth()->id(),
+                'body' => $request->message,
             ]);
 
             if ($request->hasFile('documents')) {
@@ -171,15 +165,15 @@ class PersonalController extends Controller
             }
 
             $demande->update(array_filter([
-                'current_step_id'    => $soumiseStepId,
+                'current_step_id' => $soumiseStepId,
                 'current_service_id' => $directionId,
             ]));
 
             DemandeHistory::create([
-                'demande_id'  => $demande->id,
-                'statut'      => 'SOUMISE',
-                'commentaire' => 'Réponse de l\'usager — dossier retourné à la Direction : ' . $request->message,
-                'changed_by'  => auth()->id(),
+                'demande_id' => $demande->id,
+                'statut' => 'SOUMISE',
+                'commentaire' => 'Réponse de l\'usager — dossier retourné à la Direction : '.$request->message,
+                'changed_by' => auth()->id(),
             ]);
         });
 
@@ -225,7 +219,7 @@ class PersonalController extends Controller
 
         $currentUser = auth()->user();
         $isAgentRdvOnly = $currentUser?->hasRole('agent_rdv')
-            && ! $currentUser->hasAnyRole(['admin', 'direction']);
+            && ! $currentUser->hasAnyRole(RolesAndPermissionsSeeder::adminOrDirectionRoles());
 
         $folderStats[0]['count'] = $this->rencontreCorbeilleQuery(
             $serviceId,
@@ -242,7 +236,7 @@ class PersonalController extends Controller
         )->count();
 
         $actingServiceIds = ($serviceId && auth()->user())
-            ? \App\Models\AgentDelegation::actingServiceIds(auth()->id(), $serviceId)
+            ? AgentDelegation::actingServiceIds(auth()->id(), $serviceId)
             : array_filter([$serviceId]);
 
         $pendingAffectations = DemandeInteraction::with(['demande.user', 'demande.currentStep'])
@@ -273,7 +267,7 @@ class PersonalController extends Controller
         $user = auth()->user();
 
         if ($user?->hasRole(User::ROLE_AGENT_RDV)) {
-            $reminders = app(\App\Services\RencontreReminderService::class);
+            $reminders = app(RencontreReminderService::class);
             $appelsVeille = $reminders->appointmentsOnForAgent(
                 $reminders->reminderDate(),
                 (int) $user->id
@@ -287,12 +281,13 @@ class PersonalController extends Controller
                 ->limit(15)
                 ->get();
         }
+
         return view('personal.corbeille', compact('folderStats', 'pendingAffectations', 'pendingReceptions', 'appelsVeille', 'demandesComptePending'));
     }
 
     public function requestsDashboardCorbeille(Request $request)
     {
-        $serviceId   = $this->resolveServiceId();
+        $serviceId = $this->resolveServiceId();
         $requestType = $request->input('request_type');
 
         $map = $this->demandeCatalog->corbeilleTypeMap();
@@ -334,20 +329,7 @@ class PersonalController extends Controller
         if ($user && (int) $requestModel->created_by === (int) $user->id) {
             $viewAsAgent = $user->service_id
                 && (int) $requestModel->current_service_id === (int) $user->service_id
-                && $user->hasAnyRole([
-                    'secretariat',
-                    'direction',
-                    'service_liquidation',
-                    'service_accueil_formalites',
-                    'service_formalite',
-                    'service_controle_placement',
-                    'service_comptabilite',
-                    'service_assurance',
-                    'admin',
-                    User::ROLE_AGENT_RDV,
-                    User::ROLE_AGENT_FORMALITES,
-                    User::ROLE_VALIDATEUR_RDV,
-                ]);
+                && $user->hasAnyRole(RolesAndPermissionsSeeder::internalRoles());
 
             if (! $viewAsAgent) {
                 return $this->showRequestForAuthenticatedUser(request(), (int) $id);
@@ -364,7 +346,7 @@ class PersonalController extends Controller
         $affectations = $requestModel->affectations()->with('toService', 'initiatedBy')->get();
 
         $actingServiceIds = ($user && $user->service_id)
-            ? \App\Models\AgentDelegation::actingServiceIds($user->id, $user->service_id)
+            ? AgentDelegation::actingServiceIds($user->id, $user->service_id)
             : [];
 
         $pendingWorkflow = $requestModel->interactions()
@@ -372,7 +354,7 @@ class PersonalController extends Controller
             ->where('type', DemandeInteraction::TYPE_TRANSFERT)
             ->where('statut', DemandeInteraction::STATUT_EN_ATTENTE)
             ->when(
-                count($actingServiceIds) > 0 && !($user && $user->hasRole('admin')),
+                count($actingServiceIds) > 0 && ! ($user && $user->hasRole('admin')),
                 fn ($q) => $q->whereIn('to_service_id', $actingServiceIds)
             )
             ->latest()
@@ -387,7 +369,7 @@ class PersonalController extends Controller
             : null;
 
         $isCurrentServiceOwner = $user?->service_id && $requestModel->current_service_id === $user->service_id;
-        if (!$isCurrentServiceOwner && !$user?->hasRole('admin') && !$user?->isDirection() && $user?->service_id) {
+        if (! $isCurrentServiceOwner && ! $user?->hasRole('admin') && ! $user?->isDirection() && $user?->service_id) {
             $submittedAvis = DemandeInteraction::where('demande_id', $requestModel->id)
                 ->where('type', DemandeInteraction::TYPE_AVIS)
                 ->where('to_service_id', $user->service_id)
@@ -402,7 +384,7 @@ class PersonalController extends Controller
             ->orderBy('id', 'desc')
             ->paginate(10);
 
-        $activityLogs = \Spatie\Activitylog\Models\Activity::forSubject($requestModel)
+        $activityLogs = Activity::forSubject($requestModel)
             ->with('causer')
             ->latest()
             ->take(20)
@@ -411,7 +393,7 @@ class PersonalController extends Controller
         $messages = $requestModel->messages()->with('sender')->get();
 
         $messages->each(function ($msg) {
-            if (!$msg->isFromService() && is_null($msg->read_at)) {
+            if (! $msg->isFromService() && is_null($msg->read_at)) {
                 $msg->markAsRead();
             }
         });
@@ -421,7 +403,7 @@ class PersonalController extends Controller
             ? $requestModel->rencontreStatut()->isTerminal()
             : $requestModel->isClosed();
 
-        $availability = app(\App\Services\RencontreAvailabilityService::class);
+        $availability = app(RencontreAvailabilityService::class);
 
         $responsableService = $requestModel->currentStep?->service ?? $requestModel->service;
 
@@ -430,11 +412,11 @@ class PersonalController extends Controller
             : (bool) $user?->hasRole(User::ROLE_AGENT_RDV);
 
         $isAgentRdvOnly = $user?->hasAnyRole([
-                User::ROLE_AGENT_RDV,
-                User::ROLE_AGENT_FORMALITES,
-                'service_accueil_formalites',
-            ])
-            && ! $user->hasAnyRole(['admin', 'direction']);
+            User::ROLE_AGENT_RDV,
+            User::ROLE_AGENT_FORMALITES,
+            'service_accueil_formalites',
+        ])
+            && ! $user->hasAnyRole(RolesAndPermissionsSeeder::adminOrDirectionRoles());
 
         $rdvAgentMode = $isAgentRdvOnly && $requestModel->isRencontre();
 
@@ -444,14 +426,14 @@ class PersonalController extends Controller
         if ($requestModel->isRencontre() && $user) {
             $reassignRoles = config(
                 'rencontre.reassign_roles',
-                ['admin', 'direction', 'validateur_rdv']
+                array_merge(RolesAndPermissionsSeeder::adminOrDirectionRoles(), ['validateur_rdv'])
             );
 
             if ($user->hasAnyRole($reassignRoles)) {
-                if ($user->hasAnyRole(['admin', 'direction'])) {
+                if ($user->hasAnyRole(RolesAndPermissionsSeeder::adminOrDirectionRoles())) {
                     $canReassignRencontre = true;
                 } elseif ($responsableService) {
-                    $canReassignRencontre = !$user->service_id
+                    $canReassignRencontre = ! $user->service_id
                         || (int) $user->service_id === (int) $responsableService->id;
                 }
             }
@@ -500,44 +482,44 @@ class PersonalController extends Controller
 
             if (
                 $owner?->isProvisionnel()
-                && app(\App\Services\RencontreMotifService::class)->countsTowardAccountDecision($motifKey)
+                && app(RencontreMotifService::class)->countsTowardAccountDecision($motifKey)
             ) {
-                $compteProvisional = \App\Models\DemandeCreationCompte::query()
+                $compteProvisional = DemandeCreationCompte::query()
                     ->where('user_id', $owner->id)
-                    ->where('status', \App\Models\DemandeCreationCompte::STATUS_EN_ATTENTE)
+                    ->where('status', DemandeCreationCompte::STATUS_EN_ATTENTE)
                     ->latest()
                     ->first();
             }
         }
 
         return view('personal.request-details', [
-            'from'                  => 'cart',
-            'request'               => $requestModel,
-            'requestHistories'      => $requestHistories,
-            'allowedServices'       => $allowedServices,
-            'transferOptions'       => $transferOptions,
-            'circuitLocked'         => $circuitLocked,
-            'affectations'          => $affectations,
-            'activityLogs'          => $activityLogs,
-            'messages'              => $messages,
-            'pendingWorkflow'       => $pendingWorkflow,
-            'pendingAffectation'    => $pendingAffectation,
-            'isClosed'              => $isClosed,
-            'rdvAgents'             => $responsableService
+            'from' => 'cart',
+            'request' => $requestModel,
+            'requestHistories' => $requestHistories,
+            'allowedServices' => $allowedServices,
+            'transferOptions' => $transferOptions,
+            'circuitLocked' => $circuitLocked,
+            'affectations' => $affectations,
+            'activityLogs' => $activityLogs,
+            'messages' => $messages,
+            'pendingWorkflow' => $pendingWorkflow,
+            'pendingAffectation' => $pendingAffectation,
+            'isClosed' => $isClosed,
+            'rdvAgents' => $responsableService
                                         ? $availability->agentsAssignableForDemande(
                                             $requestModel,
                                             $responsableService
                                         )
                                         : collect(),
-            'canValidateRencontre'  => $canValidateRencontre,
-            'isAgentRdvOnly'        => $isAgentRdvOnly,
-            'rdvAgentMode'          => $rdvAgentMode,
-            'canReassignRencontre'  => $canReassignRencontre,
+            'canValidateRencontre' => $canValidateRencontre,
+            'isAgentRdvOnly' => $isAgentRdvOnly,
+            'rdvAgentMode' => $rdvAgentMode,
+            'canReassignRencontre' => $canReassignRencontre,
             'canManageRencontreRdv' => $canManageRencontreRdv,
-            'rdvTimes'              => $requestModel->isRencontre()
+            'rdvTimes' => $requestModel->isRencontre()
                 ? $availability->allowedTimes()
                 : [],
-            'rdvScheduler'          => $rdvScheduler,
+            'rdvScheduler' => $rdvScheduler,
             'compteProvisional' => $compteProvisional,
         ]);
     }
@@ -545,7 +527,7 @@ class PersonalController extends Controller
     public function corbeilleByFolder(Request $request)
     {
         $serviceId = $this->resolveServiceId();
-        $folder    = $request->input('folder');
+        $folder = $request->input('folder');
 
         $folders = [
             'rencontre' => 'Attribution de rendez-vous',
@@ -556,7 +538,7 @@ class PersonalController extends Controller
 
         $currentUser = auth()->user();
         $isAgentRdvOnly = $currentUser?->hasRole('agent_rdv')
-            && ! $currentUser->hasAnyRole(['admin', 'direction']);
+            && ! $currentUser->hasAnyRole(RolesAndPermissionsSeeder::adminOrDirectionRoles());
 
         $closedOnly = $folder === 'clotures';
 
@@ -588,23 +570,23 @@ class PersonalController extends Controller
     }
 
     /**
-     * @param  \Illuminate\Database\Eloquent\Builder<\App\Models\Demande>  $baseQuery
+     * @param  Builder<Demande>  $baseQuery
      * @return array{pending: int, approved: int, in_progress: int, rejected: int, canceled: int, completed: int}
      */
     private function demandeQueryStats($baseQuery): array
     {
         return [
-            'pending'     => (clone $baseQuery)->pending()->count(),
-            'approved'    => (clone $baseQuery)->approved()->count(),
+            'pending' => (clone $baseQuery)->pending()->count(),
+            'approved' => (clone $baseQuery)->approved()->count(),
             'in_progress' => (clone $baseQuery)->inProgress()->count(),
-            'rejected'    => (clone $baseQuery)->rejected()->count(),
-            'canceled'    => (clone $baseQuery)->canceled()->count(),
-            'completed'   => (clone $baseQuery)->completed()->count(),
+            'rejected' => (clone $baseQuery)->rejected()->count(),
+            'canceled' => (clone $baseQuery)->canceled()->count(),
+            'completed' => (clone $baseQuery)->completed()->count(),
         ];
     }
 
     /**
-     * @return \Illuminate\Database\Eloquent\Builder<Demande>
+     * @return Builder<Demande>
      */
     private function rencontreCorbeilleQuery(
         ?int $serviceId,
@@ -626,7 +608,7 @@ class PersonalController extends Controller
     }
 
     /**
-     * @param  \Illuminate\Database\Eloquent\Builder<Demande>  $query
+     * @param  Builder<Demande>  $query
      */
     private function applyRencontreCorbeilleScope(
         $query,

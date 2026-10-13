@@ -4,14 +4,14 @@ namespace App\Services\Account;
 
 use App\Models\User;
 use App\Models\UserCategoryAssignment;
+use Database\Seeders\RolesAndPermissionsSeeder;
 use Illuminate\Support\Collection;
 
 class UserCategoryResolver
 {
     public function __construct(
         private readonly ?User $user,
-    ) {
-    }
+    ) {}
 
     public static function for(?User $user): self
     {
@@ -95,7 +95,7 @@ class UserCategoryResolver
             return true;
         }
 
-        $portalRoles = config('dpc_roles.portal_roles', []);
+        $portalRoles = RolesAndPermissionsSeeder::portalRoles();
 
         foreach ($this->user->getRoleNames() as $roleName) {
             if (! in_array((string) $roleName, $portalRoles, true)) {
@@ -105,5 +105,4 @@ class UserCategoryResolver
 
         return false;
     }
-
 }

@@ -2,8 +2,8 @@
 
 namespace App\Models;
 
+use App\Support\PublicMedia;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Support\Facades\Storage;
 
 class InstitutionImage extends Model
 {
@@ -13,10 +13,15 @@ class InstitutionImage extends Model
 
     public function imageUrl(): string
     {
-        if (str_starts_with($this->image, 'images/')) {
-            return asset($this->image);
-        }
-        return Storage::url($this->image);
+        return PublicMedia::preferredUrl($this->mediaSources());
+    }
+
+    /**
+     * @return array{url: string, webp: ?string, width: ?int, height: ?int}
+     */
+    public function mediaSources(): array
+    {
+        return PublicMedia::forUploadedOrStatic($this->image);
     }
 
     public function scopeActive($query)

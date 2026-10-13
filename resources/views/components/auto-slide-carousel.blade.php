@@ -20,15 +20,14 @@
                     @foreach ($images as $image)
                         <div
                             class="asc-item cursor-zoom-in"
-                            @click="$dispatch('open-slide-lightbox', { src: @js($image['src']), alt: @js($image['alt']) })"
+                            @click="$dispatch('open-slide-lightbox', { src: @js($image['display'] ?? $image['src']), alt: @js($image['alt']) })"
                         >
-                            <img
-                                src="{{ $image['src'] }}"
-                                alt="{{ $image['alt'] }}"
+                            <x-optimized-image
+                                :src="$image['src']"
+                                :alt="$image['alt']"
                                 class="w-full h-full object-cover rounded-lg transition-transform duration-300 hover:scale-105"
-                                loading="lazy"
-                                onerror="this.onerror=null;this.src='{{ asset('images/image_placeholder.png') }}'"
-                            >
+                                sizes="(min-width: 768px) 280px, 45vw"
+                            ></x-optimized-image>
                         </div>
                     @endforeach
                 @endfor

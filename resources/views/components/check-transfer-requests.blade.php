@@ -5,8 +5,7 @@
         <div class="flex flex-col md:flex-row justify-between items-center mb-12 gap-8">
             <div class="text-center mb-6 flex flex-col md:flex-row items-center justify-center w-full gap-4 md:gap-8">
                 <!-- Visible on all screens -->
-                <img src="{{ asset('images/setting-logo-1-M13oPLiYoM.png') }}" alt="Logo"
-                    class="w-16 h-16 md:w-24 md:h-24 object-cover shrink-0 order-1 md:order-none">
+                <x-dpc-logo class="w-16 h-16 md:w-24 md:h-24 object-cover shrink-0 order-1 md:order-none" />
 
                 <div class="px-4 order-2 md:order-none">
                     <h2 class="text-lg md:text-xl font-bold mb-1">Direction de la Pension Civile (DPC)</h2>
@@ -16,8 +15,7 @@
                 </div>
 
                 <!-- Hidden on mobile, visible on md+ screens -->
-                <img src="{{ asset('images/setting-logo-1-M13oPLiYoM.png') }}" alt="Logo"
-                    class="w-16 h-16 md:w-24 md:h-24 object-cover shrink-0 order-1 md:order-none hidden md:block">
+                <x-dpc-logo class="w-16 h-16 md:w-24 md:h-24 object-cover shrink-0 order-1 md:order-none hidden md:block" />
             </div>
         </div>
 

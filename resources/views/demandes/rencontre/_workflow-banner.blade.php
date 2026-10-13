@@ -37,10 +37,8 @@
         ['key' => 'post', 'label' => $postTreatmentLabel, 'done' => $postTreatmentDone],
     ];
     $compteShowRoute = null;
-    if ($compteCreation && auth()->user()?->hasAnyRole(['admin', \App\Models\User::ROLE_AGENT_FORMALITES])) {
-        $compteShowRoute = auth()->user()->hasRole('admin')
-            ? route('admin.comptes-demandes.show', $compteCreation)
-            : route('formalites.comptes-demandes.show', $compteCreation);
+    if ($compteCreation && auth()->user()?->hasRole(\App\Models\User::ROLE_AGENT_FORMALITES)) {
+        $compteShowRoute = route('formalites.comptes-demandes.show', $compteCreation);
     }
     $dossierRoute = auth()->user()?->hasPensionPortalAccess() && (int) auth()->id() === (int) $demande->created_by
         ? route('personal.request.authenticated-user-request.show', $demande->id)

@@ -4,9 +4,14 @@
                 <!-- Logo — lg:mr-auto pushes nav+user to the right on large screens -->
                 <div class="flex items-center flex-shrink-0 lg:mr-auto">
                     <a href="{{ route('home') }}" class="flex items-center gap-3 group">
-                        <img src="{{ asset('images/setting-logo-1-M13oPLiYoM.png') }}"
-                             alt="Logo"
-                             class="w-10 h-10 md:w-16 md:h-16 transition-transform group-hover:scale-105">
+                        <x-optimized-image
+                            src="images/setting-logo-1-M13oPLiYoM.png"
+                            alt="Logo"
+                            width="64"
+                            height="64"
+                            class="w-10 h-10 md:w-16 md:h-16 transition-transform group-hover:scale-105"
+                            loading="eager"
+                        />
                         <div class="flex flex-col">
                             <span class="text-base md:text-lg font-semibold tracking-tight leading-tight group-hover:text-orange-500 transition-colors">
                                 {{ __('messages.direction') }}

@@ -8,7 +8,7 @@ return new class extends Migration
 {
     public function up(): void
     {
-        Role::firstOrCreate(['name' => User::ROLE_AGENT_FORMALITES, 'guard_name' => 'web']);
+        // Référentiel Spatie : RolesAndPermissionsSeeder
     }
 
     public function down(): void

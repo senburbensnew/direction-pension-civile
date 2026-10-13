@@ -5,21 +5,26 @@ namespace App\Http\Controllers;
 use App\Enums\RencontreStatutEnum;
 use App\Enums\TypeDemandeEnum;
 use App\Helpers\CodeGeneratorService;
+use App\Models\AnneeFiscale;
 use App\Models\Demande;
+use App\Models\DemandeCreationCompte;
 use App\Models\DemandeHistory;
 use App\Models\DirectionDepartementale;
 use App\Models\Formalite;
 use App\Models\Service;
 use App\Models\User;
 use App\Rules\Telephone;
+use App\Services\DemandeWorkflowService;
 use App\Services\RencontreAvailabilityService;
 use App\Services\RencontreMotifService;
+use App\Services\RencontreReminderService;
 use App\Services\RencontreVisioService;
 use App\Services\RencontreWorkflowService;
+use Database\Seeders\RolesAndPermissionsSeeder;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
-use App\Models\AnneeFiscale;
 use Illuminate\Validation\ValidationException;
 
 class DemandeRencontreController extends Controller
@@ -29,8 +34,7 @@ class DemandeRencontreController extends Controller
         private RencontreVisioService $visio,
         private RencontreMotifService $motifsService,
         private RencontreWorkflowService $rdvWorkflow,
-    ) {
-    }
+    ) {}
 
     /*
     |--------------------------------------------------------------------------
@@ -72,8 +76,7 @@ class DemandeRencontreController extends Controller
         );
 
         return [
-            'reservedSlotsByService' =>
-                $this->availability->unavailableSlotsByServiceCode(),
+            'reservedSlotsByService' => $this->availability->unavailableSlotsByServiceCode(),
 
             'holidayEvents' => $this->availability->holidayEvents(
                 now()->startOfDay(),
@@ -159,7 +162,7 @@ class DemandeRencontreController extends Controller
 
     private function activeAppointment(?User $user): ?Demande
     {
-        if (!$user) {
+        if (! $user) {
             return null;
         }
 
@@ -229,8 +232,7 @@ class DemandeRencontreController extends Controller
 
         if ($this->activeAppointment($user)) {
             throw ValidationException::withMessages([
-                'date_souhaitee' =>
-                    'Un rendez-vous est déjà en cours. Annulez-le avant d’en prendre un autre.',
+                'date_souhaitee' => 'Un rendez-vous est déjà en cours. Annulez-le avant d’en prendre un autre.',
             ]);
         }
 
@@ -264,7 +266,7 @@ class DemandeRencontreController extends Controller
 
             'telephone' => [
                 'nullable',
-                new Telephone(),
+                new Telephone,
             ],
 
             'message' => [
@@ -279,12 +281,11 @@ class DemandeRencontreController extends Controller
             ],
         ], $this->motifsService->documentValidationRules($motifKey, $user)));
 
-        if (!$this->availability->isBookableDate(
+        if (! $this->availability->isBookableDate(
             $validated['date_souhaitee']
         )) {
             throw ValidationException::withMessages([
-                'date_souhaitee' =>
-                    'Cette date n’est pas ouvrée (week-end ou jour férié en Haïti).',
+                'date_souhaitee' => 'Cette date n’est pas ouvrée (week-end ou jour férié en Haïti).',
             ]);
         }
 
@@ -293,14 +294,13 @@ class DemandeRencontreController extends Controller
             $user
         );
 
-        if (!$service) {
+        if (! $service) {
             throw ValidationException::withMessages([
-                'motif' =>
-                    'Aucun service responsable n’est configuré pour le motif sélectionné.',
+                'motif' => 'Aucun service responsable n’est configuré pour le motif sélectionné.',
             ]);
         }
 
-        if (!$this->availability->isBookableSlot(
+        if (! $this->availability->isBookableSlot(
             $validated['date_souhaitee'],
             $validated['heure_souhaitee'],
             $service
@@ -320,12 +320,11 @@ class DemandeRencontreController extends Controller
             $service
         );
 
-        if (!$agent) {
+        if (! $agent) {
             throw ValidationException::withMessages([
-                'heure_souhaitee' =>
-                    'Aucun agent disponible du service « '
-                    . $service->nom
-                    . ' » pour ce créneau.',
+                'heure_souhaitee' => 'Aucun agent disponible du service « '
+                    .$service->nom
+                    .' » pour ce créneau.',
             ]);
         }
 
@@ -346,14 +345,13 @@ class DemandeRencontreController extends Controller
                 $uploadedDocs
             ) {
                 if (
-                    !$this->availability->isBookingAgent(
+                    ! $this->availability->isBookingAgent(
                         $agent,
                         $service
                     )
                 ) {
                     throw ValidationException::withMessages([
-                        'heure_souhaitee' =>
-                            'L’agent disponible ne correspond plus au service responsable.',
+                        'heure_souhaitee' => 'L’agent disponible ne correspond plus au service responsable.',
                     ]);
                 }
 
@@ -365,8 +363,7 @@ class DemandeRencontreController extends Controller
                     )
                 ) {
                     throw ValidationException::withMessages([
-                        'heure_souhaitee' =>
-                            'Ce créneau vient d’être réservé par un autre rendez-vous.',
+                        'heure_souhaitee' => 'Ce créneau vient d’être réservé par un autre rendez-vous.',
                     ]);
                 }
 
@@ -377,8 +374,7 @@ class DemandeRencontreController extends Controller
                     ) >= $this->availability->dailyCapacity()
                 ) {
                     throw ValidationException::withMessages([
-                        'date_souhaitee' =>
-                            'La capacité journalière de l’agent est atteinte.',
+                        'date_souhaitee' => 'La capacité journalière de l’agent est atteinte.',
                     ]);
                 }
 
@@ -394,70 +390,53 @@ class DemandeRencontreController extends Controller
                     'motif' => $motifLabel,
                     'objet' => $motifLabel,
 
-                    'modalite' =>
-                        $validated['modalite'],
+                    'modalite' => $validated['modalite'],
 
-                    'date_souhaitee' =>
-                        $validated['date_souhaitee'],
+                    'date_souhaitee' => $validated['date_souhaitee'],
 
-                    'heure_souhaitee' =>
-                        Demande::normalizeRencontreTime(
-                            $validated['heure_souhaitee']
-                        ),
+                    'heure_souhaitee' => Demande::normalizeRencontreTime(
+                        $validated['heure_souhaitee']
+                    ),
 
-                    'telephone' =>
-                        $validated['telephone']
+                    'telephone' => $validated['telephone']
                         ?? $user->telephone
                         ?? $user->phone
                         ?? null,
 
-                    'message' =>
-                        $validated['message'] ?? null,
+                    'message' => $validated['message'] ?? null,
 
-                    'lieu_rdv' =>
-                        $validated['lieu_rdv'] ?? null,
+                    'lieu_rdv' => $validated['lieu_rdv'] ?? null,
 
-                    'service_id' =>
-                        $service->id,
+                    'service_id' => $service->id,
 
-                    'service_code' =>
-                        $service->code,
+                    'service_code' => $service->code,
 
-                    'service_responsable' =>
-                        $service->nom,
+                    'service_responsable' => $service->nom,
 
                     'service_propose' => $motifLabel,
 
-                    'unite' =>
-                        $service->nom,
+                    'unite' => $service->nom,
 
-                    'agent_id' =>
-                        $agent->id,
+                    'agent_id' => $agent->id,
 
-                    'agent_nom' =>
-                        $agent->displayName(),
+                    'agent_nom' => $agent->displayName(),
 
-                    'documents_a_preparer' =>
-                        $this->motifsService->prepareHints(
-                            $validated['motif'],
-                            $validated['modalite']
-                        ),
+                    'documents_a_preparer' => $this->motifsService->prepareHints(
+                        $validated['motif'],
+                        $validated['modalite']
+                    ),
                 ]);
 
                 $demande = Demande::create([
                     'code' => $code,
 
-                    'type' =>
-                        TypeDemandeEnum::DEMANDE_RENCONTRE->value,
+                    'type' => TypeDemandeEnum::DEMANDE_RENCONTRE->value,
 
-                    'created_by' =>
-                        $user->id,
+                    'created_by' => $user->id,
 
-                    'current_service_id' =>
-                        $service->id,
+                    'current_service_id' => $service->id,
 
-                    'data' =>
-                        $data,
+                    'data' => $data,
                 ]);
 
                 $demande = $this->rdvWorkflow->enregistrerSoumission(
@@ -545,7 +524,7 @@ class DemandeRencontreController extends Controller
         Demande $demande,
         ?User $user
     ): bool {
-        if (!$user) {
+        if (! $user) {
             return false;
         }
 
@@ -557,13 +536,14 @@ class DemandeRencontreController extends Controller
             return true;
         }
 
-        if ($user->hasAnyRole(['admin', 'direction'])) {
+        if ($user->hasAnyRole(RolesAndPermissionsSeeder::adminOrDirectionRoles())) {
             return true;
         }
 
         if ($user->hasRole($this->availability->agentRole())) {
             try {
                 $service = $this->responsibleServiceForDemande($demande);
+
                 return $this->availability->isBookingAgent($user, $service);
             } catch (\Exception $e) {
                 return false;
@@ -605,20 +585,20 @@ class DemandeRencontreController extends Controller
         return view(
             'demandes.rencontre.visio',
             [
-                'demande'  => $demande,
-                'backUrl'  => $backUrl,
+                'demande' => $demande,
+                'backUrl' => $backUrl,
 
-                'status'   => $this->visio->status($demande),
+                'status' => $this->visio->status($demande),
 
-                'date'     => $data['date_souhaitee']  ?? null,
+                'date' => $data['date_souhaitee'] ?? null,
 
-                'heure'    => Demande::normalizeRencontreTime(
+                'heure' => Demande::normalizeRencontreTime(
                     $data['heure_souhaitee'] ?? null
                 ),
 
                 'startsAt' => $this->visio->startsAt($demande),
 
-                'opensAt'  => $this->visio->opensAt($demande),
+                'opensAt' => $this->visio->opensAt($demande),
 
                 'closesAt' => $this->visio->closesAt($demande),
 
@@ -665,7 +645,7 @@ class DemandeRencontreController extends Controller
 
         $demande->load(['user', 'service']);
 
-        $data  = $demande->data ?? [];
+        $data = $demande->data ?? [];
         $owner = $demande->user ?? User::find($demande->created_by);
 
         $formalites = Formalite::query()
@@ -682,17 +662,17 @@ class DemandeRencontreController extends Controller
             : null;
 
         return view('demandes.rencontre.formalite', [
-            'demande'               => $demande,
-            'owner'                 => $owner,
-            'rdvStatut'             => $this->rdvWorkflow->statut($demande),
-            'rdvScheduledAt'        => $demande->rencontreScheduledAt(),
-            'peutEnregistrer'       => $demande->peutEtreTraiteApresRendezVous(),
-            'formalites'            => $formalites,
-            'anneesDispo'           => $anneesDispo,
-            'anneeActive'           => $anneeActive,
+            'demande' => $demande,
+            'owner' => $owner,
+            'rdvStatut' => $this->rdvWorkflow->statut($demande),
+            'rdvScheduledAt' => $demande->rencontreScheduledAt(),
+            'peutEnregistrer' => $demande->peutEtreTraiteApresRendezVous(),
+            'formalites' => $formalites,
+            'anneesDispo' => $anneesDispo,
+            'anneeActive' => $anneeActive,
             'formaliteAnneeEnCours' => $formaliteAnneeEnCours,
-            'motif'                 => $data['motif'] ?? '—',
-            'cartePension'          => $data['carte_pension_path'] ?? null,
+            'motif' => $data['motif'] ?? '—',
+            'cartePension' => $data['carte_pension_path'] ?? null,
         ]);
     }
 
@@ -716,7 +696,7 @@ class DemandeRencontreController extends Controller
             ],
         ]);
 
-        $owner   = $demande->user ?? User::find($demande->created_by);
+        $owner = $demande->user ?? User::find($demande->created_by);
         $service = $demande->service;
 
         $anneeFiscale = AnneeFiscale::findOrFail($validated['annee_fiscale_id']);
@@ -725,9 +705,8 @@ class DemandeRencontreController extends Controller
 
         if ($existante) {
             throw ValidationException::withMessages([
-                'annee_fiscale_id' =>
-                    'Ce pensionné a déjà une formalité enregistrée pour l’exercice '
-                    . $anneeFiscale->code . '.',
+                'annee_fiscale_id' => 'Ce pensionné a déjà une formalité enregistrée pour l’exercice '
+                    .$anneeFiscale->code.'.',
             ]);
         }
 
@@ -740,30 +719,30 @@ class DemandeRencontreController extends Controller
             $anneeFiscale
         ) {
             $formalite = Formalite::create([
-                'user_id'          => $owner->id,
+                'user_id' => $owner->id,
                 'annee_fiscale_id' => $anneeFiscale->id,
-                'realisee_at'      => now(),
-                'realisee_par'     => $request->user()->id,
-                'demande_id'       => $demande->id,
-                'motif_key'        => $demande->data['motif_key'] ?? null,
-                'service_id'       => $service?->id,
-                'commentaire'      => $validated['commentaire'] ?? null,
+                'realisee_at' => now(),
+                'realisee_par' => $request->user()->id,
+                'demande_id' => $demande->id,
+                'motif_key' => $demande->data['motif_key'] ?? null,
+                'service_id' => $service?->id,
+                'commentaire' => $validated['commentaire'] ?? null,
             ]);
 
             DemandeHistory::create([
-                'demande_id'  => $demande->id,
-                'event'       => 'FORMALITE_ENREGISTREE',
-                'statut'      => $this->rdvWorkflow->statut($demande)->value,
+                'demande_id' => $demande->id,
+                'event' => 'FORMALITE_ENREGISTREE',
+                'statut' => $this->rdvWorkflow->statut($demande)->value,
                 'commentaire' => 'Formalité enregistrée pour l’exercice '
-                    . $anneeFiscale->code . '.'
-                    . (!empty($validated['commentaire'])
-                        ? ' ' . $validated['commentaire']
+                    .$anneeFiscale->code.'.'
+                    .(! empty($validated['commentaire'])
+                        ? ' '.$validated['commentaire']
                         : ''),
-                'changed_by'  => $request->user()->id,
-                'champs'      => [
-                    'action'             => 'formalite',
-                    'formalite_id'       => $formalite->id,
-                    'annee_fiscale_id'   => $anneeFiscale->id,
+                'changed_by' => $request->user()->id,
+                'champs' => [
+                    'action' => 'formalite',
+                    'formalite_id' => $formalite->id,
+                    'annee_fiscale_id' => $anneeFiscale->id,
                     'annee_fiscale_code' => $anneeFiscale->code,
                 ],
             ]);
@@ -775,7 +754,7 @@ class DemandeRencontreController extends Controller
             ->route('demandes.rencontre.formalite', $demande)
             ->with(
                 'success',
-                'Formalité enregistrée pour l’exercice ' . $anneeFiscale->code . '.'
+                'Formalité enregistrée pour l’exercice '.$anneeFiscale->code.'.'
             );
     }
 
@@ -870,7 +849,7 @@ class DemandeRencontreController extends Controller
 
         $appelsVeille = collect();
         if ($user?->hasRole(User::ROLE_AGENT_RDV)) {
-            $reminders = app(\App\Services\RencontreReminderService::class);
+            $reminders = app(RencontreReminderService::class);
             $appelsVeille = $reminders->appointmentsOnForAgent(
                 $reminders->reminderDate(),
                 (int) $user->id
@@ -933,9 +912,9 @@ class DemandeRencontreController extends Controller
             $this->motifsService->countsTowardAccountDecision($motifKey)
             && $owner?->isProvisionnel()
         ) {
-            $compteCreation = \App\Models\DemandeCreationCompte::query()
+            $compteCreation = DemandeCreationCompte::query()
                 ->where('user_id', $owner->id)
-                ->where('status', \App\Models\DemandeCreationCompte::STATUS_EN_ATTENTE)
+                ->where('status', DemandeCreationCompte::STATUS_EN_ATTENTE)
                 ->latest()
                 ->first();
         }
@@ -971,18 +950,17 @@ class DemandeRencontreController extends Controller
                     'rencontres.pilotage.reattribuer',
                     $demande
                 ),
-                'eventLabel' => fn (string $event) =>
-                    $this->rdvWorkflow->eventLabel($event),
+                'eventLabel' => fn (string $event) => $this->rdvWorkflow->eventLabel($event),
             ]
         );
     }
 
     /**
-     * @param  \Illuminate\Database\Eloquent\Builder<Demande>  $query
+     * @param  Builder<Demande>  $query
      */
     private function scopePilotageListForUser($query, User $user): void
     {
-        if ($user->hasAnyRole(['admin', 'direction', 'directeur', 'assistant_directeur'])) {
+        if ($user->hasAnyRole(RolesAndPermissionsSeeder::adminOrDirectionRoles())) {
             return;
         }
 
@@ -1012,7 +990,7 @@ class DemandeRencontreController extends Controller
         Demande $demande,
         ?User $user
     ): bool {
-        if (!$user) {
+        if (! $user) {
             return false;
         }
 
@@ -1023,10 +1001,7 @@ class DemandeRencontreController extends Controller
         }
 
         if (
-            $user->hasAnyRole([
-                'admin',
-                'direction',
-            ])
+            $user->hasAnyRole(RolesAndPermissionsSeeder::adminOrDirectionRoles())
         ) {
             return true;
         }
@@ -1045,7 +1020,7 @@ class DemandeRencontreController extends Controller
                 return false;
             }
 
-            if (!$user->service_id) {
+            if (! $user->service_id) {
                 return true;
             }
 
@@ -1102,7 +1077,7 @@ class DemandeRencontreController extends Controller
         return $user->hasAnyRole(
             config(
                 'rencontre.reassign_roles',
-                ['admin', 'direction', 'validateur_rdv']
+                array_merge(RolesAndPermissionsSeeder::adminOrDirectionRoles(), ['validateur_rdv'])
             )
         );
     }
@@ -1129,7 +1104,7 @@ class DemandeRencontreController extends Controller
             return false;
         }
 
-        if ($user->hasAnyRole(['admin', 'direction'])) {
+        if ($user->hasAnyRole(RolesAndPermissionsSeeder::adminOrDirectionRoles())) {
             return true;
         }
 
@@ -1144,20 +1119,20 @@ class DemandeRencontreController extends Controller
         Demande $demande,
         ?User $user
     ): bool {
-        if (!$user) {
+        if (! $user) {
             return false;
         }
 
         $roles = config(
             'rencontre.reassign_roles',
-            ['admin', 'direction', 'validateur_rdv']
+            array_merge(RolesAndPermissionsSeeder::adminOrDirectionRoles(), ['validateur_rdv'])
         );
 
-        if (!$user->hasAnyRole($roles)) {
+        if (! $user->hasAnyRole($roles)) {
             return false;
         }
 
-        if ($user->hasAnyRole(['admin', 'direction'])) {
+        if ($user->hasAnyRole(RolesAndPermissionsSeeder::adminOrDirectionRoles())) {
             return true;
         }
 
@@ -1167,7 +1142,7 @@ class DemandeRencontreController extends Controller
             return false;
         }
 
-        if (!$user->service_id) {
+        if (! $user->service_id) {
             return true;
         }
 
@@ -1185,12 +1160,13 @@ class DemandeRencontreController extends Controller
             return false;
         }
 
-        return $user->hasAnyRole([
-            'admin',
-            'direction',
-            $this->availability->agentRole(),
-            (string) config('rdv.validator_role', 'validateur_rdv'),
-        ]);
+        return $user->hasAnyRole(array_merge(
+            RolesAndPermissionsSeeder::adminOrDirectionRoles(),
+            [
+                $this->availability->agentRole(),
+                (string) config('rdv.validator_role', 'validateur_rdv'),
+            ]
+        ));
     }
 
     /*
@@ -1313,41 +1289,38 @@ class DemandeRencontreController extends Controller
             $demande
         );
 
-        if (!empty($validated['agent_id'])) {
+        if (! empty($validated['agent_id'])) {
             $agent = User::find(
                 $validated['agent_id']
             );
 
             if (
-                !$agent
-                || !$this->availability->isBookingAgent(
+                ! $agent
+                || ! $this->availability->isBookingAgent(
                     $agent,
                     $service
                 )
             ) {
                 throw ValidationException::withMessages([
-                    'agent_id' =>
-                        'L’agent sélectionné n’appartient pas au service responsable.',
+                    'agent_id' => 'L’agent sélectionné n’appartient pas au service responsable.',
                 ]);
             }
         }
 
-        if (!$this->availability->isBookableDate(
+        if (! $this->availability->isBookableDate(
             $validated['date_souhaitee']
         )) {
             throw ValidationException::withMessages([
-                'date_souhaitee' =>
-                    'Cette date n’est pas ouvrée (week-end ou jour férié en Haïti).',
+                'date_souhaitee' => 'Cette date n’est pas ouvrée (week-end ou jour férié en Haïti).',
             ]);
         }
 
-        if (!empty($validated['agent_id'])) {
+        if (! empty($validated['agent_id'])) {
             $targetAgent = User::find($validated['agent_id']);
 
-            if (!$targetAgent) {
+            if (! $targetAgent) {
                 throw ValidationException::withMessages([
-                    'agent_id' =>
-                        'L’agent sélectionné est introuvable.',
+                    'agent_id' => 'L’agent sélectionné est introuvable.',
                 ]);
             }
 
@@ -1364,16 +1337,15 @@ class DemandeRencontreController extends Controller
                     'agent_id' => $blockReason,
                 ]);
             }
-        } elseif (!$this->availability->isBookableSlot(
+        } elseif (! $this->availability->isBookableSlot(
             $validated['date_souhaitee'],
             $validated['heure_souhaitee'],
             $service
         )) {
             throw ValidationException::withMessages([
-                'heure_souhaitee' =>
-                    'Aucun agent du service « '
-                    . $service->nom
-                    . ' » n’est disponible pour ce créneau.',
+                'heure_souhaitee' => 'Aucun agent du service « '
+                    .$service->nom
+                    .' » n’est disponible pour ce créneau.',
             ]);
         }
 
@@ -1477,15 +1449,12 @@ class DemandeRencontreController extends Controller
             'REJECTED',
             $validated['commentaire'],
             [
-                'refuse_par' =>
-                    $request->user()->id,
+                'refuse_par' => $request->user()->id,
 
-                'refuse_at' =>
-                    now()->toIso8601String(),
+                'refuse_at' => now()->toIso8601String(),
             ],
             [
-                'action' =>
-                    'refus',
+                'action' => 'refus',
             ]
         );
 
@@ -1495,7 +1464,7 @@ class DemandeRencontreController extends Controller
             return back()->with(
                 'error',
                 'Le refus n’a pas pu être appliqué (statut actuel : '
-                . $this->rdvWorkflow->statut($demande)->value . ').'
+                .$this->rdvWorkflow->statut($demande)->value.').'
             );
         }
 
@@ -1604,20 +1573,18 @@ class DemandeRencontreController extends Controller
 
         $agent = User::findOrFail($validated['agent_id']);
 
-        if (!$this->availability->isBookingAgent($agent, $service)) {
+        if (! $this->availability->isBookingAgent($agent, $service)) {
             throw ValidationException::withMessages([
-                'agent_id' =>
-                    'L’agent sélectionné n’appartient pas au service responsable.',
+                'agent_id' => 'L’agent sélectionné n’appartient pas au service responsable.',
             ]);
         }
 
         $date = $demande->data['date_souhaitee'] ?? null;
         $heure = $demande->data['heure_souhaitee'] ?? null;
 
-        if (!$date || !$heure) {
+        if (! $date || ! $heure) {
             throw ValidationException::withMessages([
-                'agent_id' =>
-                    'Impossible de réattribuer : date ou heure du rendez-vous manquante.',
+                'agent_id' => 'Impossible de réattribuer : date ou heure du rendez-vous manquante.',
             ]);
         }
 
@@ -1640,7 +1607,7 @@ class DemandeRencontreController extends Controller
             $service,
             $agent,
             $user,
-            app(\App\Services\DemandeWorkflowService::class)
+            app(DemandeWorkflowService::class)
         );
 
         DemandeHistory::create([
@@ -1660,8 +1627,8 @@ class DemandeRencontreController extends Controller
         return back()->with(
             'success',
             'Le rendez-vous a été réattribué à '
-            . $agent->displayName()
-            . '.'
+            .$agent->displayName()
+            .'.'
         );
     }
 
@@ -1695,18 +1662,14 @@ class DemandeRencontreController extends Controller
             'SUITE',
             $validated['suite'],
             [
-                'suite' =>
-                    $validated['suite'],
+                'suite' => $validated['suite'],
 
-                'suite_par' =>
-                    $request->user()->id,
+                'suite_par' => $request->user()->id,
 
-                'suite_at' =>
-                    now()->toIso8601String(),
+                'suite_at' => now()->toIso8601String(),
             ],
             [
-                'action' =>
-                    'suite',
+                'action' => 'suite',
             ]
         );
 
@@ -1740,18 +1703,14 @@ class DemandeRencontreController extends Controller
             'IDENTITY_CONFIRMED',
             'Identité du demandeur confirmée.',
             [
-                'identite_confirmee' =>
-                    true,
+                'identite_confirmee' => true,
 
-                'identite_confirmee_par' =>
-                    $request->user()->id,
+                'identite_confirmee_par' => $request->user()->id,
 
-                'identite_confirmee_at' =>
-                    now()->toIso8601String(),
+                'identite_confirmee_at' => now()->toIso8601String(),
             ],
             [
-                'action' =>
-                    'confirmation_identite',
+                'action' => 'confirmation_identite',
             ]
         );
 
@@ -1802,10 +1761,9 @@ class DemandeRencontreController extends Controller
             ?? $demande->data['motif']
             ?? null;
 
-        if (!$motif) {
+        if (! $motif) {
             throw ValidationException::withMessages([
-                'motif' =>
-                    'Impossible de déterminer le service responsable : le motif est absent.',
+                'motif' => 'Impossible de déterminer le service responsable : le motif est absent.',
             ]);
         }
 
@@ -1814,10 +1772,9 @@ class DemandeRencontreController extends Controller
             $demande->user
         );
 
-        if (!$service) {
+        if (! $service) {
             throw ValidationException::withMessages([
-                'motif' =>
-                    'Aucun service responsable n’est configuré pour ce motif.',
+                'motif' => 'Aucun service responsable n’est configuré pour ce motif.',
             ]);
         }
 
@@ -1838,12 +1795,7 @@ class DemandeRencontreController extends Controller
             403
         );
 
-        if (
-            $user->hasAnyRole([
-                'admin',
-                'direction',
-            ])
-        ) {
+        if ($user->hasAnyRole(RolesAndPermissionsSeeder::adminOrDirectionRoles())) {
             return;
         }
 
@@ -1997,11 +1949,10 @@ class DemandeRencontreController extends Controller
     {
         if (
             $user?->hasRole(User::ROLE_AGENT_RDV)
-            && ! $user->hasAnyRole([
-                User::ROLE_VALIDATEUR_RDV,
-                'admin',
-                'direction',
-            ])
+            && ! $user->hasAnyRole(array_merge(
+                RolesAndPermissionsSeeder::adminOrDirectionRoles(),
+                [User::ROLE_VALIDATEUR_RDV]
+            ))
         ) {
             return $this->visioCorbeilleRencontreUrl();
         }
@@ -2030,15 +1981,13 @@ class DemandeRencontreController extends Controller
             return $this->visioCorbeilleRencontreUrl();
         }
 
-        if ($user?->hasAnyRole([
-            User::ROLE_VALIDATEUR_RDV,
-            'admin',
-            'direction',
-        ])) {
+        if ($user?->hasAnyRole(array_merge(
+            RolesAndPermissionsSeeder::adminOrDirectionRoles(),
+            [User::ROLE_VALIDATEUR_RDV]
+        ))) {
             return route('rencontres.pilotage.show', $demande);
         }
 
         return route('personal.request.show', $demande->id);
     }
-
 }

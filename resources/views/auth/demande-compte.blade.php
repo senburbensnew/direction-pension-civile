@@ -13,12 +13,8 @@
             ],
         ];
 
-        $pieceTypes = [
-            'cin' => 'Carte d’identification nationale',
-            'passeport' => 'Passeport',
-            'permis' => 'Permis de conduire',
-            'matricule_fiscal' => 'Matricule fiscal',
-        ];
+        $pieceTypes = __('guest.account_request.piece_types');
+        $lienTypes = __('guest.account_request.lien_types');
 
         $serverErrors = collect($errors->messages())
             ->map(fn (array $messages) => $messages[0] ?? '')
@@ -107,6 +103,9 @@
             'availabilityUrl' => route('demandes.compte.disponibilite'),
 
             'fieldErrors' => $serverErrors,
+
+            'ui' => __('guest.account_request'),
+            'i18n' => __('guest.account_request_js'),
         ];
     @endphp
 
@@ -404,11 +403,11 @@
 
         <div class="mb-4 text-center">
             <h2 class="text-xl font-bold text-gray-800">
-                Demande de création de compte
+                {{ __('guest.account_request.title') }}
             </h2>
 
             <p class="mt-1 text-sm text-gray-500">
-                Étape
+                {{ __('guest.account_request.step_label') }}
                 <span x-text="currentStepNumber"></span>
                 /
                 <span x-text="totalSteps"></span>
@@ -445,8 +444,8 @@
                 <div class="flex-1 min-w-0">
                     <p class="text-sm font-semibold text-red-800">
                         <span x-text="errorCount"></span>
-                        <span x-text="errorCount > 1 ? 'erreurs à corriger' : 'erreur à corriger'"></span>
-                        avant de soumettre la demande.
+                        <span x-text="errorCount > 1 ? ui.errors_plural : ui.errors_singular"></span>
+                        <span x-text="' ' + ui.errors_before_submit"></span>
                     </p>
 
                     <ul class="mt-2 space-y-1 text-sm text-red-700">
@@ -462,7 +461,7 @@
                                     <span x-text="err.message"></span>
                                     <span
                                         class="ml-1 text-[11px] text-red-500 italic"
-                                        x-text="'→ étape ' + err.step"
+                                        x-text="ui.error_goto_step + ' ' + err.step"
                                     ></span>
                                 </button>
                             </li>
@@ -474,7 +473,7 @@
                     type="button"
                     @click="clearAllErrors()"
                     class="text-red-400 hover:text-red-600 shrink-0"
-                    aria-label="Masquer le récapitulatif des erreurs"
+                    :aria-label="ui.hide_error_summary"
                 >
                     <i class="fas fa-times"></i>
                 </button>
@@ -485,7 +484,7 @@
              INDICATEUR DES ÉTAPES
              ============================================================ --}}
 
-        <ol class="compte-steps" aria-label="Étapes du formulaire">
+        <ol class="compte-steps" aria-label="{{ __('guest.account_request.steps_aria') }}">
             <template x-for="(item, index) in visibleSteps" :key="item.id">
                 <li
                     class="compte-step"
@@ -581,7 +580,7 @@
                 {{-- Profil du demandeur --}}
                 <fieldset class="space-y-2">
                     <legend class="text-sm font-medium text-gray-700 mb-1">
-                        Profil du demandeur
+                        {{ __('guest.account_request.profile_legend') }}
                     </legend>
                     <div class="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:gap-x-6 sm:gap-y-2">
                         <label class="inline-flex items-center gap-2 cursor-pointer text-sm text-gray-700">
@@ -592,7 +591,7 @@
                                 x-model="accountProfile"
                                 @change="applyAccountProfile()"
                             >
-                            <span>Pensionné titulaire</span>
+                            <span>{{ __('guest.account_request.profile_titulaire') }}</span>
                         </label>
                         <!-- <label class="inline-flex items-center gap-2 cursor-not-allowed text-sm text-gray-400" title="Bientôt disponible">
                             <input
@@ -616,9 +615,9 @@
                         </label> -->
                     </div>
                     <p class="text-xs text-gray-500">
-                        <span x-show="accountProfile === 'titulaire'">Majeur — compte ouvert à votre nom.</span>
-                        <span x-show="accountProfile === 'mineur'" x-cloak>Compte au nom du représentant légal.</span>
-                        <span x-show="accountProfile === 'mandataire'" x-cloak>Procuration pour agir au nom d’un pensionné.</span>
+                        <span x-show="accountProfile === 'titulaire'" x-text="ui.profile_titulaire_hint"></span>
+                        <span x-show="accountProfile === 'mineur'" x-cloak x-text="ui.profile_mineur_hint"></span>
+                        <span x-show="accountProfile === 'mandataire'" x-cloak x-text="ui.profile_mandataire_hint"></span>
                     </p>
                     <input type="hidden" name="is_mineur" id="is_mineur" :value="isMineur ? '1' : '0'">
                     <input type="hidden" name="is_mandataire" id="is_mandataire" :value="isMandataire ? '1' : '0'">
@@ -634,11 +633,11 @@
                     class="compte-document-card required space-y-4"
                 >
                     <div>
-                        <h4 class="text-sm font-semibold text-gray-800" x-text="isMandataire ? 'Pièce d’identité du mandataire' : 'Document du pensionné'"></h4>
+                        <h4 class="text-sm font-semibold text-gray-800" x-text="isMandataire ? ui.doc_mandataire_title : ui.doc_pensionne_title"></h4>
 
                         <p class="text-xs text-gray-500 mt-1">
-                            <span x-show="!isMandataire">Choisissez le type de document, puis téléversez le fichier correspondant.</span>
-                            <span x-show="isMandataire" x-cloak>Le compte sera créé au nom du mandataire (vous).</span>
+                            <span x-show="!isMandataire" x-text="ui.doc_upload_hint"></span>
+                            <span x-show="isMandataire" x-cloak x-text="ui.doc_mandataire_account"></span>
                         </p>
                     </div>
 
@@ -647,7 +646,7 @@
                             for="piece_identite_type"
                             class="block text-sm font-medium text-gray-700 mb-1"
                         >
-                            Type de document
+                            {{ __('guest.account_request.document_type') }}
                             <span class="text-red-500">*</span>
                         </label>
 
@@ -659,7 +658,7 @@
                             class="w-full py-2.5 px-3 border rounded-lg text-sm focus:outline-none focus:ring-2"
                             :class="borderClass('piece_identite_type')"
                         >
-                            <option value="">Choisir un document</option>
+                            <option value="">{{ __('guest.account_request.choose_document') }}</option>
 
                             @foreach ($pieceTypes as $value => $label)
                                 <option
@@ -681,7 +680,7 @@
 
                     <div>
                         <span class="block text-sm font-medium text-gray-700 mb-1">
-                            Document
+                            {{ __('guest.account_request.document') }}
                             <span class="text-red-500">*</span>
                         </span>
 
@@ -689,7 +688,7 @@
                             name="piece_identite"
                             id="piece_identite"
                             accept="image/jpeg,image/png,image/webp,application/pdf,.jpg,.jpeg,.png,.webp,.pdf"
-                            hint="JPG, PNG, WEBP ou PDF — 5 Mo max."
+                            hint="{{ __('guest.account_request.file_hint_image_pdf') }}"
                             on-change="files.piece_identite = $event.target.files[0]?.name || ''; clearFieldError('piece_identite')"
                             x-bind:class="fieldErrors.piece_identite ? 'text-red-600' : ''"
                         />
@@ -704,14 +703,14 @@
 
                     <div x-show="isMandataire" x-cloak class="space-y-2 border-t border-gray-100 pt-4">
                         <div>
-                            <h4 class="text-sm font-semibold text-gray-800">Formulaire de désignation signé</h4>
-                            <p class="text-xs text-gray-500 mt-1">Procuration ou formulaire de désignation du mandataire (PDF ou image).</p>
+                            <h4 class="text-sm font-semibold text-gray-800">{{ __('guest.account_request.mandat_title') }}</h4>
+                            <p class="text-xs text-gray-500 mt-1">{{ __('guest.account_request.mandat_hint') }}</p>
                         </div>
                         <x-file-input
                             name="mandat_designation"
                             id="mandat_designation"
                             accept="image/jpeg,image/png,image/webp,application/pdf,.jpg,.jpeg,.png,.webp,.pdf"
-                            hint="PDF ou image — 5 Mo max."
+                            hint="{{ __('guest.account_request.file_hint_pdf_image') }}"
                             on-change="files.mandat_designation = $event.target.files[0]?.name || ''; clearFieldError('mandat_designation')"
                             x-bind:class="fieldErrors.mandat_designation ? 'text-red-600' : ''"
                         />
@@ -733,11 +732,11 @@
                     <div class="compte-document-card required space-y-4">
                         <div>
                             <h4 class="text-sm font-semibold text-gray-800">
-                                Acte de naissance du pensionné mineur
+                                {{ __('guest.account_request.birth_act_title') }}
                             </h4>
 
                             <p class="text-xs text-gray-500 mt-1">
-                                L’acte de naissance doit correspondre au pensionné mineur.
+                                {{ __('guest.account_request.birth_act_hint') }}
                             </p>
                         </div>
 
@@ -769,12 +768,11 @@
                     <div class="compte-document-card required space-y-4">
                         <div>
                             <h4 class="text-sm font-semibold text-gray-800">
-                                Pièce d’identité du représentant légal
+                                {{ __('guest.account_request.representant_id_title') }}
                             </h4>
 
                             <p class="text-xs text-gray-500 mt-1">
-                                Le compte de connexion est créé au nom du représentant, qui agit pour le pensionné mineur
-                                (titulaire du code pension saisi ci-dessus). Le représentant n’a pas besoin d’être pensionné.
+                                {{ __('guest.account_request.representant_id_hint') }}
                             </p>
                         </div>
 
@@ -783,7 +781,7 @@
                                 for="representant_lien"
                                 class="block text-sm font-medium text-gray-700 mb-1"
                             >
-                                Représentant légal
+                                {{ __('guest.account_request.legal_representative') }}
                                 <span class="text-red-500">*</span>
                             </label>
 
@@ -795,28 +793,16 @@
                                 class="w-full py-2.5 px-3 border rounded-lg text-sm focus:outline-none focus:ring-2"
                                 :class="borderClass('representant_lien')"
                             >
-                                <option value="">Choisir</option>
+                                <option value="">{{ __('guest.account_request.choose') }}</option>
 
-                                <option
-                                    value="pere"
-                                    @selected(old('representant_lien') === 'pere')
-                                >
-                                    Père
-                                </option>
-
-                                <option
-                                    value="mere"
-                                    @selected(old('representant_lien') === 'mere')
-                                >
-                                    Mère
-                                </option>
-
-                                <option
-                                    value="tuteur"
-                                    @selected(old('representant_lien') === 'tuteur')
-                                >
-                                    Tuteur subrogé
-                                </option>
+                                @foreach ($lienTypes as $value => $label)
+                                    <option
+                                        value="{{ $value }}"
+                                        @selected(old('representant_lien') === $value)
+                                    >
+                                        {{ $label }}
+                                    </option>
+                                @endforeach
                             </select>
 
                             <p
@@ -837,7 +823,7 @@
                                     @checked(old('representant_est_pensionne'))
                                 >
                                 <span class="text-sm text-gray-700">
-                                    Je suis moi-même pensionné titulaire (en plus d’être représentant de ce mineur)
+                                    {{ __('guest.account_request.representant_pensionne') }}
                                 </span>
                             </label>
                         </div>
@@ -847,7 +833,7 @@
                                 for="piece_identite_representant_type"
                                 class="block text-sm font-medium text-gray-700 mb-1"
                             >
-                                Type de pièce d’identité
+                                {{ __('guest.account_request.id_piece_type') }}
                                 <span class="text-red-500">*</span>
                             </label>
 
@@ -859,7 +845,7 @@
                                 class="w-full py-2.5 px-3 border rounded-lg text-sm focus:outline-none focus:ring-2"
                                 :class="borderClass('piece_identite_representant_type')"
                             >
-                                <option value="">Choisir un document</option>
+                                <option value="">{{ __('guest.account_request.choose_document') }}</option>
 
                                 @foreach ($pieceTypes as $value => $label)
                                     <option
@@ -930,12 +916,12 @@
                 <div class="flex items-start gap-3 border-b border-gray-200 pb-3">
                     <div>
                         <h3 class="text-base font-bold text-gray-800">
-                            Lecture et vérification OCR
+                            {{ __('guest.account_request.ocr_step_title') }}
                         </h3>
 
                         <p class="text-xs mt-0.5 flex flex-wrap items-center gap-x-2 gap-y-1">
                             <span class="text-gray-500">
-                                Les informations sont extraites automatiquement des documents.
+                                {{ __('guest.account_request.ocr_step_intro') }}
                             </span>
 
                             <span
@@ -943,7 +929,7 @@
                                 role="alert"
                             >
                                 <i class="fas fa-exclamation-triangle text-amber-600 text-[10px]" aria-hidden="true"></i>
-                                Vérifiez-les et corrigez-les si nécessaire.
+                                {{ __('guest.account_request.ocr_verify_warning') }}
                             </span>
                         </p>
                     </div>
@@ -956,11 +942,11 @@
 
                             <div>
                                 <p class="text-sm font-semibold text-yellow-800">
-                                    Aucun résultat OCR disponible
+                                    {{ __('guest.account_request.ocr_no_result') }}
                                 </p>
 
                                 <p class="text-xs text-yellow-700 mt-1">
-                                    Vous pouvez revenir à l’étape précédente pour vérifier les documents.
+                                    {{ __('guest.account_request.ocr_no_result_hint') }}
                                 </p>
                             </div>
                         </div>
@@ -984,8 +970,7 @@
                                     x-show="doc.error"
                                     class="text-xs text-red-600 mt-1"
                                 >
-                                    Lecture automatique impossible.
-                                    Vous pouvez saisir les informations manuellement.
+                                    {{ __('guest.account_request.ocr_read_failed') }}
                                 </p>
                             </div>
 
@@ -1001,7 +986,7 @@
                             {{-- Document --}}
                             <div>
                                 <p class="text-xs font-semibold uppercase tracking-wide text-gray-500 mb-2">
-                                    Document
+                                    {{ __('guest.account_request.document') }}
                                 </p>
 
                                 <div class="compte-ocr-preview">
@@ -1017,21 +1002,21 @@
                                         class="text-sm text-gray-500 px-4 text-center"
                                     >
                                         <i class="fas fa-spinner fa-spin mr-1"></i>
-                                        Préparation de l’aperçu…
+                                        {{ __('guest.account_request.ocr_preview_loading') }}
                                     </p>
 
                                     <p
                                         x-show="previews[doc.key]?.error"
                                         class="text-sm text-amber-700 px-4 text-center"
                                     >
-                                        Aperçu PDF indisponible. Les données OCR restent modifiables à droite.
+                                        {{ __('guest.account_request.ocr_preview_pdf_unavail') }}
                                     </p>
 
                                     <p
                                         x-show="!previews[doc.key]"
                                         class="text-sm text-gray-400 px-4 text-center"
                                     >
-                                        Aperçu indisponible
+                                        {{ __('guest.account_request.ocr_preview_unavail') }}
                                     </p>
                                 </div>
                             </div>
@@ -1039,7 +1024,7 @@
                             {{-- Données OCR --}}
                             <div>
                                 <p class="text-xs font-semibold uppercase tracking-wide text-gray-500 mb-2">
-                                    Informations extraites
+                                    {{ __('guest.account_request.ocr_extracted_info') }}
                                 </p>
 
                                 <div class="space-y-2.5">
@@ -1073,8 +1058,7 @@
                 <div class="rounded-lg bg-gray-50 border border-gray-200 p-3">
                     <p class="text-xs text-gray-600">
                         <i class="fas fa-info-circle text-[#173052] mr-1"></i>
-                        Les données OCR pourront être consultées dans le récapitulatif
-                        avant l’envoi définitif de la demande.
+                        {{ __('guest.account_request.ocr_recap_hint') }}
                     </p>
                 </div>
             </div>
@@ -1092,11 +1076,11 @@
                 <div class="flex items-start gap-3 border-b border-gray-200 pb-3">
                     <div>
                         <h3 class="text-base font-bold text-gray-800">
-                            Informations du compte
+                            {{ __('guest.account_request.account_step_title') }}
                         </h3>
 
                         <p class="text-xs text-gray-500 mt-0.5">
-                            Complétez les informations qui serviront à créer votre compte.
+                            {{ __('guest.account_request.account_step_intro') }}
                         </p>
                     </div>
                 </div>
@@ -1157,7 +1141,7 @@
                                 for="telephone"
                                 class="block text-sm font-medium text-gray-700"
                             >
-                                Numéro de téléphone
+                                {{ __('guest.account_request.phone_number') }}
                                 <span class="text-red-500">*</span>
                             </label>
                             <x-format-hint-icon
@@ -1197,7 +1181,7 @@
                                 for="nif"
                                 class="block text-sm font-medium text-gray-700"
                             >
-                                Matricule fiscal (NIF)
+                                {{ __('guest.account_request.nif_label') }}
                                 <span class="text-red-500">*</span>
                             </label>
                             <x-format-hint-icon
@@ -1251,8 +1235,8 @@
                                 for="pension_code"
                                 class="block text-sm font-medium text-gray-700"
                             >
-                                Code pension
-                                <span class="text-xs font-normal text-gray-400">(si code pension)</span>
+                                {{ __('guest.account_request.pension_code_label') }}
+                                <span class="text-xs font-normal text-gray-400">{{ __('guest.account_request.pension_code_optional') }}</span>
                             </label>
                             <x-format-hint-icon
                                 :text="__('messages.format_hint_pension_code')"
@@ -1270,7 +1254,7 @@
                                 clearFieldError('pension_code');
                                 scheduleAvailabilityCheck('pension_code');
                             "
-                            placeholder="7-XXXXX ou 8-XXXXX"
+                            placeholder="{{ __('guest.account_request.pension_code_placeholder') }}"
                             inputmode="text"
                             autocomplete="off"
                             maxlength="7"
@@ -1300,8 +1284,7 @@
                     </div>
 
                     <p class="text-xs text-gray-500">
-                        Le NINU et l’adresse e-mail pourront être complétés plus tard dans
-                        <span class="font-medium">Mon profil</span>, une fois le compte créé.
+                        {!! __('guest.account_request.profile_later_hint', ['profile' => '<span class="font-medium">'.e(__('guest.account_request.my_profile')).'</span>']) !!}
                     </p>
 
                     {{-- Mot de passe --}}
@@ -1310,7 +1293,7 @@
                             for="password"
                             class="block text-sm font-medium text-gray-700 mb-1"
                         >
-                            Mot de passe
+                            {{ __('messages.password') }}
                             <span class="text-red-500">*</span>
                         </label>
 
@@ -1332,8 +1315,8 @@
                                 @click="showPassword = !showPassword"
                                 class="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-600"
                                 :aria-label="showPassword
-                                    ? 'Masquer le mot de passe'
-                                    : 'Afficher le mot de passe'"
+                                    ? @js(__('guest.login.hide_password'))
+                                    : @js(__('guest.login.show_password'))"
                             >
                                 <i
                                     :class="showPassword
@@ -1348,7 +1331,7 @@
                             x-show="!fieldErrors.password"
                             class="text-xs text-gray-400 mt-1"
                         >
-                            Au moins 8 caractères. Vous l’utiliserez pour vous connecter.
+                            {{ __('guest.account_request.password_hint') }}
                         </p>
 
                         <p
@@ -1365,7 +1348,7 @@
                             for="adresse"
                             class="block text-sm font-medium text-gray-700 mb-1"
                         >
-                            Adresse actuelle
+                            {{ __('guest.account_request.current_address') }}
                             <span class="text-red-500">*</span>
                         </label>
 
@@ -1375,7 +1358,7 @@
                             rows="2"
                             x-model="adresse"
                             @input="clearFieldError('adresse')"
-                            placeholder="Rue, commune, département…"
+                            placeholder="{{ __('guest.account_request.address_placeholder') }}"
                             class="w-full py-2.5 px-3 border rounded-lg text-sm focus:outline-none focus:ring-2 resize-none"
                             :class="borderClass('adresse')"
                         ></textarea>
@@ -1403,11 +1386,11 @@
                 <div class="flex items-start gap-3 border-b border-gray-200 pb-3">
                     <div>
                         <h3 class="text-base font-bold text-gray-800">
-                            Récapitulatif et validation
+                            {{ __('guest.account_request.recap_step_title') }}
                         </h3>
 
                         <p class="text-xs text-gray-500 mt-0.5">
-                            Vérifiez les informations ci-dessous puis validez votre demande.
+                            {{ __('guest.account_request.recap_step_intro') }}
                         </p>
                     </div>
                 </div>
@@ -1429,9 +1412,9 @@
                             </span>
 
                             <span>
-                                Informations du compte
+                                {{ __('guest.account_request.recap_account') }}
                                 <span class="compte-collapsible-sub">
-                                    Identité, contacts et connexion
+                                    {{ __('guest.account_request.recap_account_sub') }}
                                 </span>
                             </span>
                         </span>
@@ -1450,38 +1433,38 @@
                         <div class="text-sm text-gray-700 space-y-2">
 
                             <p>
-                                <span class="text-gray-500">Type de compte :</span>
+                                <span class="text-gray-500" x-text="ui.recap_account_type"></span>
                                 <span x-text="userTypeLabel"></span>
                             </p>
 
                             <p>
-                                <span class="text-gray-500">Téléphone :</span>
+                                <span class="text-gray-500" x-text="ui.recap_phone"></span>
                                 <span x-text="telephone || '—'"></span>
                             </p>
 
                             <p>
-                                <span class="text-gray-500">Matricule fiscal (NIF) :</span>
+                                <span class="text-gray-500" x-text="ui.recap_nif"></span>
                                 <span x-text="nif || '—'"></span>
                             </p>
 
                             <p x-show="userType === 'pensionne'">
-                                <span class="text-gray-500">Code pension :</span>
+                                <span class="text-gray-500" x-text="ui.recap_pension_code"></span>
                                 <span x-text="pension_code || '—'"></span>
                             </p>
 
                             <p>
-                                <span class="text-gray-500">Mot de passe :</span>
-                                défini
+                                <span class="text-gray-500" x-text="ui.recap_password"></span>
+                                {{ __('guest.account_request.recap_password_set') }}
                             </p>
 
                             <p>
-                                <span class="text-gray-500">Adresse actuelle :</span>
+                                <span class="text-gray-500" x-text="ui.recap_address"></span>
                                 <span x-text="adresse || '—'"></span>
                             </p>
 
                             <p>
-                                <span class="text-gray-500">Pensionné mineur :</span>
-                                <span x-text="isMineur ? 'Oui' : 'Non'"></span>
+                                <span class="text-gray-500" x-text="ui.recap_minor"></span>
+                                <span x-text="isMineur ? ui.yes : ui.no"></span>
                             </p>
                         </div>
                     </div>
@@ -1504,9 +1487,9 @@
                             </span>
 
                             <span>
-                                Pièces justificatives
+                                {{ __('guest.account_request.recap_attachments') }}
                                 <span class="compte-collapsible-sub">
-                                    Documents joints à la demande
+                                    {{ __('guest.account_request.recap_attachments_sub') }}
                                 </span>
                             </span>
                         </span>
@@ -1527,19 +1510,15 @@
                             <template x-if="!isMineur">
                                 <div class="space-y-1">
                                     <p>
-                                        <span class="text-gray-500">
-                                            Document :
-                                        </span>
+                                        <span class="text-gray-500" x-text="ui.recap_document"></span>
 
                                         <span x-text="pieceTypeLabel"></span>
                                     </p>
 
                                     <p>
-                                        <span class="text-gray-500">
-                                            Fichier :
-                                        </span>
+                                        <span class="text-gray-500" x-text="ui.recap_file"></span>
 
-                                        <span x-text="files.piece_identite || 'À joindre'"></span>
+                                        <span x-text="files.piece_identite || ui.to_attach"></span>
                                     </p>
                                 </div>
                             </template>
@@ -1547,35 +1526,27 @@
                             <template x-if="isMineur">
                                 <div class="space-y-1">
                                     <p>
-                                        <span class="text-gray-500">
-                                            Acte de naissance :
-                                        </span>
+                                        <span class="text-gray-500" x-text="ui.recap_birth_act"></span>
 
-                                        <span x-text="files.acte_naissance || 'À joindre'"></span>
+                                        <span x-text="files.acte_naissance || ui.to_attach"></span>
                                     </p>
 
                                     <p>
-                                        <span class="text-gray-500">
-                                            Représentant :
-                                        </span>
+                                        <span class="text-gray-500" x-text="ui.recap_representant"></span>
 
                                         <span x-text="representantLienLabel"></span>
                                     </p>
 
                                     <p>
-                                        <span class="text-gray-500">
-                                            Pièce du représentant :
-                                        </span>
+                                        <span class="text-gray-500" x-text="ui.recap_representant_id"></span>
 
                                         <span x-text="representantPieceTypeLabel"></span>
                                     </p>
 
                                     <p>
-                                        <span class="text-gray-500">
-                                            Fichier :
-                                        </span>
+                                        <span class="text-gray-500" x-text="ui.recap_file"></span>
 
-                                        <span x-text="files.piece_identite_representant || 'À joindre'"></span>
+                                        <span x-text="files.piece_identite_representant || ui.to_attach"></span>
                                     </p>
                                 </div>
                             </template>
@@ -1604,9 +1575,9 @@
                             </span>
 
                             <span>
-                                Informations extraites par OCR
+                                {{ __('guest.account_request.recap_ocr') }}
                                 <span class="compte-collapsible-sub">
-                                    Détails lus sur les documents
+                                    {{ __('guest.account_request.recap_ocr_sub') }}
                                 </span>
                             </span>
                         </span>
@@ -1670,7 +1641,7 @@
                                     class="text-[11px] text-red-600 italic"
                                 >
                                     <i class="fas fa-exclamation-triangle mr-1"></i>
-                                    Ce document n’a pas pu être lu automatiquement.
+                                    {{ __('guest.account_request.ocr_recap_failed') }}
                                 </p>
                             </div>
                         </template>
@@ -1694,24 +1665,24 @@
                         >
 
                         <span class="text-sm text-gray-700">
-                            J’accepte les
+                            {{ __('guest.account_request.accept_terms_prefix') }}
 
                             <a
                                 href="{{ route('terms.policy') }}"
                                 target="_blank"
                                 class="text-navy hover:text-orange-500 font-medium underline"
                             >
-                                conditions d’utilisation
+                                {{ __('guest.account_request.terms_of_use') }}
                             </a>
 
-                            et la
+                            {{ __('guest.account_request.accept_terms_and') }}
 
                             <a
                                 href="{{ route('privacy.policy') }}"
                                 target="_blank"
                                 class="text-navy hover:text-orange-500 font-medium underline"
                             >
-                                politique de confidentialité
+                                {{ __('guest.account_request.privacy_policy') }}
                             </a>.
                         </span>
                     </label>
@@ -1750,7 +1721,7 @@
                     class="flex-1 py-2.5 px-4 border border-gray-300 text-gray-700 font-semibold text-sm rounded-lg hover:bg-gray-50 transition-colors disabled:opacity-50"
                 >
                     <i class="fas fa-arrow-left mr-2"></i>
-                    Précédent
+                    {{ __('guest.account_request.prev') }}
                 </button>
 
                 <button
@@ -1761,7 +1732,7 @@
                     class="flex-1 py-2.5 px-4 bg-[#173052] hover:bg-orange-600 text-white font-semibold text-sm rounded-lg transition-colors disabled:opacity-50"
                 >
                     <span x-show="!busy">
-                        Suivant
+                        {{ __('guest.account_request.next') }}
                         <i class="fas fa-arrow-right ml-2"></i>
                     </span>
 
@@ -1780,7 +1751,7 @@
                     <template x-if="!isSubmitting()">
                         <span class="inline-flex items-center gap-2">
                             <i class="fa-solid fa-paper-plane"></i>
-                            Soumettre
+                            {{ __('guest.account_request.submit') }}
                         </span>
                     </template>
 
@@ -1793,7 +1764,7 @@
                                 class="fa-solid fa-spinner fa-spin"
                                 aria-hidden="true"
                             ></i>
-                            Enregistrement…
+                            {{ __('guest.account_request.submitting') }}
                         </span>
                     </template>
                 </button>
@@ -1805,13 +1776,13 @@
                  ============================================================ --}}
 
             <p class="text-center text-sm text-gray-500">
-                Vous avez déjà un compte ?
+                {{ __('guest.account_request.already_have_account') }}
 
                 <a
                     href="{{ route('login') }}"
                     class="text-navy hover:text-orange-500 font-medium"
                 >
-                    Se connecter
+                    {{ __('guest.account_request.sign_in') }}
                 </a>
             </p>
         </form>
@@ -1819,19 +1790,11 @@
 
     <script>
         function demandeCompteForm(initial) {
-            const pieceLabels = {
-                cin: 'Carte d’identification nationale',
-                passeport: 'Passeport',
-                permis: 'Permis de conduire',
-                matricule_fiscal: 'Matricule fiscal',
-                acte_naissance: 'Acte de naissance',
-            };
-
-            const lienLabels = {
-                pere: 'Père',
-                mere: 'Mère',
-                tuteur: 'Tuteur subrogé',
-            };
+            const i18n = initial.i18n || {};
+            const pieceLabels = i18n.piece_labels || {};
+            const lienLabels = i18n.lien_labels || {};
+            const validation = i18n.validation || {};
+            const busyLabels = i18n.busy || {};
 
             const fieldValue = (id) =>
                 document.getElementById(id)?.value?.trim() || '';
@@ -1853,6 +1816,9 @@
             };
 
             return {
+                ui: initial.ui || {},
+                v: validation,
+
                 /* ========================================================
                  * ÉTAT
                  * ======================================================== */
@@ -2041,100 +2007,11 @@
                  * ÉTAPES
                  * ======================================================== */
 
-                steps: [
-                    {
-                        id: 1,
-                        label: 'Documents',
-                        caption: 'Téléversement',
-                    },
-                    {
-                        id: 2,
-                        label: 'OCR',
-                        caption: 'Vérification',
-                    },
-                    {
-                        id: 3,
-                        label: 'Informations',
-                        caption: 'Compte',
-                    },
-                    {
-                        id: 4,
-                        label: 'Validation',
-                        caption: 'Récapitulatif',
-                    },
-                ],
+                steps: i18n.steps || [],
 
-                fieldLabels: {
-                    nif: 'NIF',
-                    code_pension: 'Code pension',
-                    nom: 'Nom',
-                    prenom: 'Prénom',
-                    email: 'E-mail',
-                    telephone: 'Téléphone',
-                    adresse: 'Adresse',
-                    dossier: 'Dossier',
-                    date_naissance: 'Date de naissance',
-                    type: 'Type',
-                    sexe: 'Sexe',
-                    groupe_sanguin: 'Groupe sanguin',
-                    lieu_emission: 'Lieu d’émission',
-                    emis_le: 'Émis le',
-                    expire_le: 'Expire le',
-                    numero_carte: 'Numéro de carte',
-                    nationalite: 'Nationalité',
-                    lieu_naissance: 'Lieu de naissance',
-                    date_emission: 'Date d’émission',
-                    date_expiration: 'Date d’expiration',
-                    numero_identification_unique: 'N° d’identification unique',
-                    numero_passeport: 'Numéro de passeport',
-                    taille: 'Taille',
-                    numero_personnel: 'Numéro personnel',
-                    can: 'CAN',
-                    numero_acte: 'Numéro d’acte',
-                    nom_pere: 'Nom du père',
-                    nom_mere: 'Nom de la mère',
-                    commune: 'Commune',
-                    date_acte: 'Date de l’acte',
-                    annee_acte: 'Année',
-                    registre: 'Registre',
-                    date_naissance_texte: 'Date de naissance (en lettres)',
-                    heure_naissance: 'Heure de naissance',
-                    section_communale: 'Section communale',
-                    officier_etat_civil: 'Officier d’état civil',
-                    temoins: 'Témoins',
-                    lieu_delivrance: 'Lieu de délivrance',
-                    date_delivrance: 'Date de délivrance',
-                    autorite_delivrance: 'Autorité de délivrance',
-                    profession: 'Profession / secteur d’activité',
-                    code_sae: 'Code SAE',
-                },
+                fieldLabels: i18n.field_labels || {},
 
-                /* ========================================================
-                 * LIBELLÉS DES CHAMPS DU FORMULAIRE
-                 * (pour le récapitulatif global des erreurs)
-                 * ======================================================== */
-
-                formFieldLabels: {
-                    user_type: 'Type de compte',
-                    telephone: 'Numéro de téléphone',
-                    email: 'Adresse e-mail',
-                    nif: 'NIF',
-                    ninu: 'NINU',
-                    pension_code: 'Code pension',
-                    password: 'Mot de passe',
-                    adresse: 'Adresse actuelle',
-                    accept_terms: 'Conditions d’utilisation',
-
-                    is_mineur: 'Pensionné mineur',
-                    piece_identite_type: 'Type de pièce d’identité',
-                    piece_identite: 'Pièce d’identité du pensionné',
-                    acte_naissance: 'Acte de naissance',
-                    representant_lien: 'Représentant légal',
-                    piece_identite_representant_type: 'Type de pièce du représentant',
-                    piece_identite_representant: 'Pièce d’identité du représentant',
-
-                    ocr_documents_json: 'Données OCR',
-                },
+                formFieldLabels: i18n.form_field_labels || {},
 
                 /* ========================================================
                  * GETTERS
@@ -2174,7 +2051,7 @@
 
                 get userTypeLabel() {
                     return this.userType === 'pensionne'
-                        ? 'Pensionné'
+                        ? (i18n.user_type_pensionne || this.userType)
                         : this.userType;
                 },
 
@@ -2385,8 +2262,7 @@
 
                         if (!/^\d{3}-\d{3}-\d{3}-\d$/.test(value)) {
                             this.nifStatus = 'error';
-                            this.nifMessage =
-                                'Le NIF doit être au format 000-000-000-0.';
+                            this.nifMessage = validation.nif_format;
                             return;
                         }
                     }
@@ -2405,8 +2281,7 @@
 
                         if (!/^(7-[A-Z0-9]{5}|8-\d{5})$/i.test(value)) {
                             this.pension_codeStatus = 'error';
-                            this.pension_codeMessage =
-                                'Le code pension doit être au format 7-XXXXX (ex. 7-JM183) ou 8-XXXXX (ex. 8-34321).';
+                            this.pension_codeMessage = validation.pension_code_format;
                             return;
                         }
                     }
@@ -2846,7 +2721,7 @@
                     }
 
                     return payload?.message ||
-                        'Une erreur est survenue.';
+                        validation.generic_error;
                 },
 
                 async postRequest(url, body) {
@@ -2893,7 +2768,7 @@
 
                 async runOcr() {
                     this.busy = true;
-                    this.busyLabel = 'Lecture OCR…';
+                    this.busyLabel = busyLabels.ocr || '';
                     this.stepError = '';
 
                     try {
@@ -3208,7 +3083,7 @@
                     if (finalStep) {
                         this._submitSent = true;
                         this.busy = true;
-                        this.busyLabel = 'Vérification…';
+                        this.busyLabel = busyLabels.verifying || '';
                         this.stepError = '';
                         this._redirecting = false;
                     }
@@ -3218,8 +3093,7 @@
                     if (!this.validateDocuments()) {
                         this.step = 1;
                         if (finalStep) {
-                            this.stepError =
-                                'Des documents sont manquants ou invalides. Vérifiez l’étape « Documents ».';
+                            this.stepError = validation.documents_step_error;
                             this.resetSubmitState();
                         }
                         return;
@@ -3228,8 +3102,7 @@
                     if (!this.validateAccount()) {
                         this.step = 3;
                         if (finalStep) {
-                            this.stepError =
-                                'Certaines informations du compte sont incomplètes ou invalides. Vérifiez l’étape « Informations ».';
+                            this.stepError = validation.account_step_error;
                             this.resetSubmitState();
                         }
                         return;
@@ -3238,8 +3111,7 @@
                     if (!this.validateTerms()) {
                         this.step = 4;
                         if (finalStep) {
-                            this.stepError =
-                                'Vous devez accepter les conditions d’utilisation avant de soumettre.';
+                            this.stepError = validation.accept_terms_submit;
                             this.resetSubmitState();
                         }
                         return;
@@ -3278,7 +3150,7 @@
 
                     this._submitSent = true;
                     this.busy = true;
-                    this.busyLabel = 'Envoi de la demande…';
+                    this.busyLabel = busyLabels.submitting || '';
                     this.stepError = '';
                     this._redirecting = false;
 
@@ -3310,7 +3182,7 @@
                         const goToRdv = (url) => {
                             const target = resolveRedirect(url);
                             this._redirecting = true;
-                            this.busyLabel = 'Redirection…';
+                            this.busyLabel = busyLabels.redirect || '';
                             sessionStorage.removeItem('demande_compte_idem');
                             window.setTimeout(() => {
                                 window.location.replace(target);
@@ -3318,8 +3190,7 @@
                         };
 
                         if (response.status === 419) {
-                            this.stepError =
-                                'Session expirée. Rechargez la page (F5), puis soumettez à nouveau.';
+                            this.stepError = validation.session_expired;
                             this.resetSubmitState();
                             return;
                         }
@@ -3327,7 +3198,7 @@
                         if (response.status === 429) {
                             const data = await response.json().catch(() => ({}));
                             this.stepError = data.message
-                                || 'Une soumission est déjà en cours. Patientez quelques secondes.';
+                                || validation.submission_in_progress;
                             this.resetSubmitState();
                             return;
                         }
@@ -3364,7 +3235,7 @@
 
                             if (data.ok === false) {
                                 this.stepError = data.message
-                                    || 'Une erreur est survenue lors de l’envoi.';
+                                    || validation.submit_error;
                                 this.resetSubmitState();
                                 return;
                             }
@@ -3376,12 +3247,11 @@
                         /* ── Other error ── */
                         const data = await response.json().catch(() => ({}));
                         this.stepError = data.message
-                            || 'Une erreur est survenue lors de l’envoi.';
+                            || validation.submit_error;
                         this.resetSubmitState();
 
                     } catch (e) {
-                        this.stepError =
-                            'Impossible de contacter le serveur. Vérifiez votre connexion.';
+                        this.stepError = validation.server_unreachable;
                         this.resetSubmitState();
                     } finally {
                         if (!this._redirecting) {
@@ -3447,39 +3317,39 @@
 
                         if (!this.pieceType) {
                             nextErrors.piece_identite_type =
-                                'Veuillez choisir un type de document.';
+                                validation.choose_document_type;
                         }
 
                         if (!hasFile('piece_identite')) {
                             nextErrors.piece_identite =
-                                'Veuillez télécharger le document.';
+                                validation.upload_document;
                         }
 
                         if (this.isMandataire && !hasFile('mandat_designation')) {
                             nextErrors.mandat_designation =
-                                'Veuillez télécharger le formulaire de désignation signé.';
+                                validation.upload_mandat;
                         }
 
                     } else {
 
                         if (!hasFile('acte_naissance')) {
                             nextErrors.acte_naissance =
-                                'Veuillez télécharger l’acte de naissance.';
+                                validation.upload_birth_act;
                         }
 
                         if (!this.representantLien) {
                             nextErrors.representant_lien =
-                                'Veuillez indiquer le représentant légal.';
+                                validation.choose_representant;
                         }
 
                         if (!this.representantPieceType) {
                             nextErrors.piece_identite_representant_type =
-                                'Veuillez choisir le type de pièce du représentant.';
+                                validation.choose_representant_piece;
                         }
 
                         if (!hasFile('piece_identite_representant')) {
                             nextErrors.piece_identite_representant =
-                                'Veuillez télécharger la pièce d’identité du représentant.';
+                                validation.upload_representant_piece;
                         }
                     }
 
@@ -3503,38 +3373,38 @@
 
                     if (!this.userType) {
                         nextErrors.user_type =
-                            'Veuillez choisir un type de compte.';
+                            validation.choose_account_type;
                     }
 
                     /* Téléphone international obligatoire. */
                     if (!this.telephone) {
                         nextErrors.telephone =
-                            'Le numéro de téléphone est obligatoire.';
+                            validation.telephone_required;
                     } else if (
                         !/^\+[1-9]\d{7,14}$/.test(
                             this.telephone
                         )
                     ) {
                         nextErrors.telephone =
-                            'Le numéro de téléphone doit être au format international avec son indicatif pays (ex. +50938123456).';
+                            validation.telephone_format;
                     }
 
                     /* NIF (obligatoire sauf pensionné mineur). */
                     if (!this.isMineur) {
                         if (!this.nif) {
                             nextErrors.nif =
-                                'Le NIF est obligatoire.';
+                                validation.nif_required;
                         } else if (
                             !/^\d{3}-\d{3}-\d{3}-\d$/.test(
                                 this.nif
                             )
                         ) {
                             nextErrors.nif =
-                                'Le NIF doit être au format 000-000-000-0.';
+                                validation.nif_format;
                         } else if (this.nifStatus === 'error') {
                             nextErrors.nif =
                                 this.nifMessage ||
-                                'Ce NIF n’est pas disponible.';
+                                validation.nif_unavailable;
                         }
                     }
 
@@ -3547,20 +3417,20 @@
                     if (this.isMandataire) {
                         if (!this.pension_code) {
                             nextErrors.pension_code =
-                                'Indiquez le code pension du pensionné que vous représentez.';
+                                validation.pension_code_mandataire;
                         } else if (
                             !/^(7-[A-Z0-9]{5}|8-\d{5})$/i.test(
                                 this.pension_code
                             )
                         ) {
                             nextErrors.pension_code =
-                                'Le code pension doit être au format 7-XXXXX (ex. 7-JM183) ou 8-XXXXX (ex. 8-34321).';
+                                validation.pension_code_format;
                         } else if (
                             this.pension_codeStatus === 'error'
                         ) {
                             nextErrors.pension_code =
                                 this.pension_codeMessage ||
-                                'Ce code pension n’est pas reconnu.';
+                                validation.pension_code_unrecognized;
                         }
                     } else if (
                         this.userType === 'pensionne' &&
@@ -3572,14 +3442,14 @@
                             )
                         ) {
                             nextErrors.pension_code =
-                                'Le code pension doit être au format 7-XXXXX (ex. 7-JM183) ou 8-XXXXX (ex. 8-34321).';
+                                validation.pension_code_format;
                         } else if (
                             this.pension_codeStatus ===
                             'error'
                         ) {
                             nextErrors.pension_code =
                                 this.pension_codeMessage ||
-                                'Ce code pension n’est pas disponible.';
+                                validation.pension_code_unavailable;
                         }
                     }
 
@@ -3594,13 +3464,13 @@
                         passwordField.value.length < 8
                     ) {
                         nextErrors.password =
-                            'Le mot de passe doit contenir au moins 8 caractères.';
+                            validation.password_min;
                     }
 
                     /* Adresse actuelle. */
                     if (!this.adresse) {
                         nextErrors.adresse =
-                            'L’adresse actuelle est obligatoire.';
+                            validation.address_required;
                     }
 
                     this.fieldErrors = {
@@ -3621,7 +3491,7 @@
 
                     if (!this.acceptTerms) {
                         nextErrors.accept_terms =
-                            'Vous devez accepter les conditions d’utilisation et la politique de confidentialité.';
+                            validation.accept_terms;
                     }
 
                     this.fieldErrors = {

@@ -5,9 +5,9 @@
 
     {{-- Heading --}}
     <div class="mb-3 text-center">
-        <h2 class="text-xl font-bold text-gray-800">Connexion</h2>
+        <h2 class="text-xl font-bold text-gray-800">{{ __('guest.login.title') }}</h2>
         <p class="text-sm text-gray-700 mt-1">
-            Bienvenue. Veuillez vous identifier pour continuer.
+            {{ __('guest.login.welcome') }}
         </p>
     </div>
 
@@ -70,7 +70,7 @@
                         href="{{ route('password.request') }}"
                         class="text-sm text-[#173052] hover:text-orange-500 font-medium transition-colors"
                     >
-                        Mot de passe oublié ?
+                        {{ __('messages.forgot_password') }}
                     </a>
                 @endif
             </div>
@@ -95,7 +95,7 @@
                     type="button"
                     @click="show = !show"
                     class="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-600 transition-colors"
-                    :aria-label="show ? 'Masquer le mot de passe' : 'Afficher le mot de passe'"
+                    :aria-label="show ? @js(__('guest.login.hide_password')) : @js(__('guest.login.show_password'))"
                 >
                     <i
                         :class="show ? 'fas fa-eye-slash' : 'fas fa-eye'"
@@ -118,7 +118,7 @@
 
         {{-- Création de compte --}}
         <p class="text-center text-sm text-gray-500">
-            Pas encore de compte ?
+            {{ __('guest.login.no_account') }}
             <a
                 href="{{ route('demandes.compte.create') }}"
                 class="text-navy hover:text-orange-500 font-medium"

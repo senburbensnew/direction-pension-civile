@@ -67,12 +67,7 @@
                     {{ __('messages.my_requests') }}
                 </x-dropdown-link>
             @endif
-            @role([
-                'direction', 'directeur', 'assistant_directeur', 'secretariat',
-                'service_liquidation', 'service_accueil_formalites', 'service_controle_placement',
-                'service_comptabilite', 'service_assurance', 'administration',
-                'validateur_rdv', 'agent_rdv', 'agent_formalites',
-            ])
+            @role(\Database\Seeders\RolesAndPermissionsSeeder::internalRoles())
                 <x-dropdown-link :href="route('personal.cart')">
                     <i class="fas fa-shopping-cart mr-2 text-gray-400"></i>
                     {{ __('messages.basket') }}

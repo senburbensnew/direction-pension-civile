@@ -4,13 +4,13 @@ namespace Tests\Feature;
 
 use App\Enums\RencontreStatutEnum;
 use App\Enums\TypeDemandeEnum;
-use Database\Seeders\WorkflowSteps\RencontreWorkflowStepSeeder;
 use App\Models\Demande;
 use App\Models\DemandeInteraction;
 use App\Models\Service;
+use App\Models\User;
 use App\Models\WorkflowStep;
 use App\Models\WorkflowStepTransition;
-use App\Models\User;
+use Database\Seeders\WorkflowSteps\RencontreWorkflowStepSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 use Tests\Traits\SeedsRequiredData;
@@ -29,7 +29,7 @@ class DemandeManagementFeatureTest extends TestCase
     }
 
     /**
-     * Direction user: has 'direction' role (not 'admin') + admin role to access admin panel.
+     * Direction user: has 'directeur' role (not 'admin') + admin role to access admin panel.
      * In production, direction employees are also given the 'admin' role to access the admin panel.
      */
     private function makeDirectionUser(): User
@@ -37,7 +37,8 @@ class DemandeManagementFeatureTest extends TestCase
         $user = User::factory()->create([
             'service_id' => Service::where('code', Service::DIRECTION)->value('id'),
         ]);
-        $user->assignRole(['admin', 'direction']);
+        $user->assignRole(['admin', 'directeur']);
+
         return $user;
     }
 
@@ -58,15 +59,17 @@ class DemandeManagementFeatureTest extends TestCase
             'service_id' => Service::where('code', $serviceCode)->value('id'),
         ]);
         $user->assignRole('admin');
+
         return $user;
     }
 
     private function makeDemande(User $owner, string $statusCode = 'SOUMISE'): Demande
     {
         $stepId = WorkflowStep::idForCode($statusCode);
+
         return Demande::create([
-            'type'           => TypeDemandeEnum::DEMANDE_ATTESTATION->value,
-            'created_by'     => $owner->id,
+            'type' => TypeDemandeEnum::DEMANDE_ATTESTATION->value,
+            'created_by' => $owner->id,
             'current_step_id' => $stepId,
         ]);
     }
@@ -74,34 +77,34 @@ class DemandeManagementFeatureTest extends TestCase
     private function makeDemandeThatHasBeenProcessed(User $owner): Demande
     {
         // DEMANDE_ATTESTATION requires: secretariat → service_accueil_formalites
-        $demande     = $this->makeDemande($owner, 'EN_COURS');
-        $direction   = Service::where('code', Service::DIRECTION)->first();
+        $demande = $this->makeDemande($owner, 'EN_COURS');
+        $direction = Service::where('code', Service::DIRECTION)->first();
         $secretariat = Service::where('code', Service::SECRETARIAT)->first();
-        $formalite   = Service::where('code', Service::FORMALITE)->first();
+        $formalite = Service::where('code', Service::FORMALITE)->first();
 
         foreach ([$secretariat, $formalite] as $service) {
             DemandeInteraction::create([
-                'demande_id'      => $demande->id,
-                'type'            => DemandeInteraction::TYPE_TRANSFERT,
+                'demande_id' => $demande->id,
+                'type' => DemandeInteraction::TYPE_TRANSFERT,
                 'from_service_id' => $direction->id,
-                'to_service_id'   => $service->id,
-                'initiated_by'    => $owner->id,
-                'statut'          => DemandeInteraction::STATUT_ACCEPTE,
-                'repondu_by'      => $owner->id,
-                'repondu_at'      => now(),
+                'to_service_id' => $service->id,
+                'initiated_by' => $owner->id,
+                'statut' => DemandeInteraction::STATUT_ACCEPTE,
+                'repondu_by' => $owner->id,
+                'repondu_at' => now(),
             ]);
         }
 
         // Final return to Direction
         DemandeInteraction::create([
-            'demande_id'      => $demande->id,
-            'type'            => DemandeInteraction::TYPE_TRANSFERT,
+            'demande_id' => $demande->id,
+            'type' => DemandeInteraction::TYPE_TRANSFERT,
             'from_service_id' => $formalite->id,
-            'to_service_id'   => $direction->id,
-            'initiated_by'    => $owner->id,
-            'statut'          => DemandeInteraction::STATUT_ACCEPTE,
-            'repondu_by'      => $owner->id,
-            'repondu_at'      => now(),
+            'to_service_id' => $direction->id,
+            'initiated_by' => $owner->id,
+            'statut' => DemandeInteraction::STATUT_ACCEPTE,
+            'repondu_by' => $owner->id,
+            'repondu_at' => now(),
         ]);
 
         return $demande;
@@ -141,9 +144,9 @@ class DemandeManagementFeatureTest extends TestCase
         $dirUser = User::factory()->create([
             'service_id' => Service::where('code', Service::DIRECTION)->value('id'),
         ]);
-        $dirUser->assignRole('direction');
+        $dirUser->assignRole('directeur');
 
-        $owner   = $this->makeRegularUser();
+        $owner = $this->makeRegularUser();
         $demande = $this->makeDemande($owner);
 
         $response = $this->actingAs($dirUser)
@@ -166,30 +169,30 @@ class DemandeManagementFeatureTest extends TestCase
         $secretariat = Service::where('code', Service::SECRETARIAT)->first();
 
         $dirUser = User::factory()->create(['service_id' => $directionId]);
-        $dirUser->assignRole('direction');
+        $dirUser->assignRole('directeur');
 
         $soumise = WorkflowStep::forCode('SOUMISE');
         $soumise->update(['service_id' => $directionId]);
 
         $secStep = WorkflowStep::create([
-            'code'       => 'EN_INSTRUCTION_SECRETARIAT',
-            'nom'        => 'Dispatch — Secrétariat',
+            'code' => 'EN_INSTRUCTION_SECRETARIAT',
+            'nom' => 'Dispatch — Secrétariat',
             'service_id' => $secretariat->id,
-            'ordre'      => 25,
+            'ordre' => 25,
             'type_noeud' => 'intermediaire',
         ]);
         WorkflowStepTransition::create([
             'from_step_id' => $soumise->id,
-            'to_step_id'   => $secStep->id,
-            'action'       => 'Transmettre au Secrétariat pour dispatching',
-            'ordre'        => 10,
+            'to_step_id' => $secStep->id,
+            'action' => 'Transmettre au Secrétariat pour dispatching',
+            'ordre' => 10,
         ]);
 
-        $owner   = $this->makeRegularUser();
+        $owner = $this->makeRegularUser();
         $demande = $this->makeDemande($owner);
         $demande->update([
             'current_service_id' => $directionId,
-            'current_step_id'    => $soumise->id,
+            'current_step_id' => $soumise->id,
         ]);
 
         $response = $this->actingAs($dirUser)
@@ -210,8 +213,8 @@ class DemandeManagementFeatureTest extends TestCase
     public function pensionne_user_cannot_annotate_demande(): void
     {
         // Regular user (pensionne) — no direction role → controller aborts 403
-        $user    = $this->makeRegularUser();
-        $owner   = $this->makeRegularUser();
+        $user = $this->makeRegularUser();
+        $owner = $this->makeRegularUser();
         $demande = $this->makeDemande($owner);
 
         $response = $this->actingAs($user)
@@ -228,8 +231,8 @@ class DemandeManagementFeatureTest extends TestCase
         $dirUser = User::factory()->create([
             'service_id' => Service::where('code', Service::DIRECTION)->value('id'),
         ]);
-        $dirUser->assignRole('direction');
-        $owner   = $this->makeRegularUser();
+        $dirUser->assignRole('directeur');
+        $owner = $this->makeRegularUser();
         $demande = $this->makeDemande($owner);
 
         $response = $this->actingAs($dirUser)
@@ -247,11 +250,11 @@ class DemandeManagementFeatureTest extends TestCase
     public function direction_agent_can_request_complement_from_user(): void
     {
         // Agent with direction role but NO admin role — passes not.admin
-        $agent   = User::factory()->create([
+        $agent = User::factory()->create([
             'service_id' => Service::where('code', Service::DIRECTION)->value('id'),
         ]);
-        $agent->assignRole('direction');
-        $owner   = $this->makeRegularUser();
+        $agent->assignRole('directeur');
+        $owner = $this->makeRegularUser();
         $demande = $this->makeDemande($owner);
 
         $response = $this->actingAs($agent)
@@ -267,7 +270,7 @@ class DemandeManagementFeatureTest extends TestCase
 
         $this->assertDatabaseHas('demande_messages', [
             'demande_id' => $demande->id,
-            'body'       => 'Veuillez fournir une copie de votre pièce d\'identité.',
+            'body' => 'Veuillez fournir une copie de votre pièce d\'identité.',
         ]);
     }
 
@@ -277,8 +280,8 @@ class DemandeManagementFeatureTest extends TestCase
         $agent = User::factory()->create([
             'service_id' => Service::where('code', Service::DIRECTION)->value('id'),
         ]);
-        $agent->assignRole('direction');
-        $owner   = $this->makeRegularUser();
+        $agent->assignRole('directeur');
+        $owner = $this->makeRegularUser();
         $demande = $this->makeDemande($owner);
 
         $response = $this->actingAs($agent)
@@ -295,7 +298,7 @@ class DemandeManagementFeatureTest extends TestCase
     public function direction_admin_can_approve_processed_demande(): void
     {
         $dirUser = $this->makeDirectionUser(); // admin + direction roles
-        $owner   = $this->makeRegularUser();
+        $owner = $this->makeRegularUser();
         $demande = $this->makeDemandeThatHasBeenProcessed($owner);
 
         $response = $this->actingAs($dirUser)
@@ -312,7 +315,7 @@ class DemandeManagementFeatureTest extends TestCase
     public function direction_admin_cannot_approve_unprocessed_demande(): void
     {
         $dirUser = $this->makeDirectionUser();
-        $owner   = $this->makeRegularUser();
+        $owner = $this->makeRegularUser();
         $demande = $this->makeDemande($owner); // no workflow processed
 
         $response = $this->actingAs($dirUser)
@@ -326,7 +329,7 @@ class DemandeManagementFeatureTest extends TestCase
     {
         $admin = User::factory()->create();
         $admin->assignRole('admin'); // no direction role
-        $owner   = $this->makeRegularUser();
+        $owner = $this->makeRegularUser();
         $demande = $this->makeDemandeThatHasBeenProcessed($owner);
 
         $response = $this->actingAs($admin)
@@ -341,7 +344,7 @@ class DemandeManagementFeatureTest extends TestCase
     public function direction_admin_can_close_processed_demande(): void
     {
         $dirUser = $this->makeDirectionUser();
-        $owner   = $this->makeRegularUser();
+        $owner = $this->makeRegularUser();
         $demande = $this->makeDemandeThatHasBeenProcessed($owner);
 
         $response = $this->actingAs($dirUser)
@@ -360,7 +363,7 @@ class DemandeManagementFeatureTest extends TestCase
     public function direction_admin_can_reject_demande(): void
     {
         $dirUser = $this->makeDirectionUser();
-        $owner   = $this->makeRegularUser();
+        $owner = $this->makeRegularUser();
         $demande = $this->makeDemande($owner);
 
         $response = $this->actingAs($dirUser)
@@ -378,7 +381,7 @@ class DemandeManagementFeatureTest extends TestCase
     {
         $admin = User::factory()->create();
         $admin->assignRole('admin');
-        $owner   = $this->makeRegularUser();
+        $owner = $this->makeRegularUser();
         $demande = $this->makeDemande($owner);
 
         $response = $this->actingAs($admin)
@@ -393,7 +396,7 @@ class DemandeManagementFeatureTest extends TestCase
     public function direction_admin_can_cancel_demande(): void
     {
         $dirUser = $this->makeDirectionUser();
-        $owner   = $this->makeRegularUser();
+        $owner = $this->makeRegularUser();
         $demande = $this->makeDemande($owner);
 
         $response = $this->actingAs($dirUser)
@@ -413,12 +416,12 @@ class DemandeManagementFeatureTest extends TestCase
     {
         $admin = User::factory()->create();
         $admin->assignRole('admin');
-        $owner   = $this->makeRegularUser();
+        $owner = $this->makeRegularUser();
         $demande = $this->makeDemande($owner, 'SOUMISE');
 
         $response = $this->actingAs($admin)
             ->post(route('admin.demandes.updateStatus', $demande), [
-                'etat'        => 'EN_ATTENTE',
+                'etat' => 'EN_ATTENTE',
                 'commentaire' => 'Mise en attente de vérification.',
             ]);
 
@@ -434,7 +437,7 @@ class DemandeManagementFeatureTest extends TestCase
     {
         $admin = User::factory()->create();
         $admin->assignRole('admin');
-        $owner   = $this->makeRegularUser();
+        $owner = $this->makeRegularUser();
         $demande = $this->makeDemande($owner);
 
         $response = $this->actingAs($admin)
@@ -450,10 +453,10 @@ class DemandeManagementFeatureTest extends TestCase
     {
         $admin = User::factory()->create();
         $admin->assignRole('admin');
-        $owner   = $this->makeRegularUser();
+        $owner = $this->makeRegularUser();
         $demande = $this->makeDemande($owner);
-        $liq     = Service::where('code', Service::LIQUIDATION)->first();
-        $sec     = Service::where('code', Service::SECRETARIAT)->first();
+        $liq = Service::where('code', Service::LIQUIDATION)->first();
+        $sec = Service::where('code', Service::SECRETARIAT)->first();
 
         $response = $this->actingAs($admin)
             ->post(route('admin.demandes.affecter', $demande), [
@@ -464,13 +467,13 @@ class DemandeManagementFeatureTest extends TestCase
         $response->assertSessionHas('success');
 
         $this->assertDatabaseHas('demande_interactions', [
-            'demande_id'    => $demande->id,
-            'type'          => DemandeInteraction::TYPE_AVIS,
+            'demande_id' => $demande->id,
+            'type' => DemandeInteraction::TYPE_AVIS,
             'to_service_id' => $liq->id,
         ]);
         $this->assertDatabaseHas('demande_interactions', [
-            'demande_id'    => $demande->id,
-            'type'          => DemandeInteraction::TYPE_AVIS,
+            'demande_id' => $demande->id,
+            'type' => DemandeInteraction::TYPE_AVIS,
             'to_service_id' => $sec->id,
         ]);
     }
@@ -480,7 +483,7 @@ class DemandeManagementFeatureTest extends TestCase
     {
         $admin = User::factory()->create();
         $admin->assignRole('admin');
-        $owner   = $this->makeRegularUser();
+        $owner = $this->makeRegularUser();
         $demande = $this->makeDemande($owner);
 
         $response = $this->actingAs($admin)
@@ -495,24 +498,24 @@ class DemandeManagementFeatureTest extends TestCase
     public function assigner_agent_creates_assignment_record(): void
     {
         $serviceId = Service::where('code', Service::DIRECTION)->value('id');
-        $admin     = $this->makeDirectionUser();
-        $agent     = User::factory()->create(['service_id' => $serviceId]);
-        $owner     = $this->makeRegularUser();
-        $demande   = $this->makeDemande($owner);
+        $admin = $this->makeDirectionUser();
+        $agent = User::factory()->create(['service_id' => $serviceId]);
+        $owner = $this->makeRegularUser();
+        $demande = $this->makeDemande($owner);
         $demande->update(['current_service_id' => $serviceId]);
 
         $response = $this->actingAs($admin)
             ->post(route('admin.demandes.assigner-agent', $demande), [
                 'user_id' => $agent->id,
-                'note'    => 'Test affectation',
+                'note' => 'Test affectation',
             ]);
 
         $response->assertRedirect();
         $this->assertDatabaseHas('assignments', [
-            'demande_id'  => $demande->id,
-            'user_id'     => $agent->id,
+            'demande_id' => $demande->id,
+            'user_id' => $agent->id,
             'assigned_by' => $admin->id,
-            'ended_at'    => null,
+            'ended_at' => null,
         ]);
     }
 
@@ -520,11 +523,11 @@ class DemandeManagementFeatureTest extends TestCase
     public function assigner_agent_closes_previous_assignment(): void
     {
         $serviceId = Service::where('code', Service::DIRECTION)->value('id');
-        $admin     = $this->makeDirectionUser();
-        $agent1    = User::factory()->create(['service_id' => $serviceId]);
-        $agent2    = User::factory()->create(['service_id' => $serviceId]);
-        $owner     = $this->makeRegularUser();
-        $demande   = $this->makeDemande($owner);
+        $admin = $this->makeDirectionUser();
+        $agent1 = User::factory()->create(['service_id' => $serviceId]);
+        $agent2 = User::factory()->create(['service_id' => $serviceId]);
+        $owner = $this->makeRegularUser();
+        $demande = $this->makeDemande($owner);
         $demande->update(['current_service_id' => $serviceId]);
 
         $this->actingAs($admin)->post(route('admin.demandes.assigner-agent', $demande), ['user_id' => $agent1->id]);
@@ -541,9 +544,9 @@ class DemandeManagementFeatureTest extends TestCase
     {
         $dirServiceId = Service::where('code', Service::DIRECTION)->value('id');
         $liqServiceId = Service::where('code', Service::LIQUIDATION)->value('id');
-        $admin  = $this->makeDirectionUser();
-        $agent  = User::factory()->create(['service_id' => $liqServiceId]);
-        $owner  = $this->makeRegularUser();
+        $admin = $this->makeDirectionUser();
+        $agent = User::factory()->create(['service_id' => $liqServiceId]);
+        $owner = $this->makeRegularUser();
         $demande = $this->makeDemande($owner);
         $demande->update(['current_service_id' => $dirServiceId]);
 
@@ -562,11 +565,11 @@ class DemandeManagementFeatureTest extends TestCase
         ]);
         $agent->assignRole('pensionne');
         $demande = Demande::create([
-            'type'           => TypeDemandeEnum::DEMANDE_RENCONTRE->value,
-            'created_by'     => null,
+            'type' => TypeDemandeEnum::DEMANDE_RENCONTRE->value,
+            'created_by' => null,
             'current_service_id' => Service::where('code', Service::FORMALITE)->value('id'),
             'current_step_id' => WorkflowStep::idForCode('SOUMISE', TypeDemandeEnum::DEMANDE_RENCONTRE->value),
-            'data'           => [
+            'data' => [
                 'motif_key' => 'demande_formalites_mandats',
                 'objet' => 'Test',
             ],
@@ -584,14 +587,14 @@ class DemandeManagementFeatureTest extends TestCase
             'service_id' => Service::where('code', Service::FORMALITE)->value('id'),
         ])->assignRole(User::ROLE_AGENT_RDV);
 
-        $admin   = User::factory()->create();
+        $admin = User::factory()->create();
         $admin->assignRole(['admin', User::ROLE_VALIDATEUR_RDV]);
-        $demande  = Demande::create([
-            'type'           => TypeDemandeEnum::DEMANDE_RENCONTRE->value,
-            'created_by'     => null,
+        $demande = Demande::create([
+            'type' => TypeDemandeEnum::DEMANDE_RENCONTRE->value,
+            'created_by' => null,
             'current_service_id' => Service::where('code', Service::FORMALITE)->value('id'),
             'current_step_id' => WorkflowStep::idForCode('SOUMISE', TypeDemandeEnum::DEMANDE_RENCONTRE->value),
-            'data'           => [
+            'data' => [
                 'motif_key' => 'demande_formalites_mandats',
                 'prenom' => 'Jean',
                 'nom' => 'Dupont',
@@ -614,7 +617,7 @@ class DemandeManagementFeatureTest extends TestCase
             $demande->fresh()->rencontreStatut()
         );
         $this->assertDatabaseHas('demandes', [
-            'id'              => $demande->id,
+            'id' => $demande->id,
             'current_step_id' => WorkflowStep::idForCode('ACTIF', TypeDemandeEnum::DEMANDE_RENCONTRE->value),
         ]);
     }
@@ -655,18 +658,18 @@ class DemandeManagementFeatureTest extends TestCase
     /** @test */
     public function admin_can_refuse_rencontre_with_motif(): void
     {
-        $admin    = User::factory()->create();
+        $admin = User::factory()->create();
         $admin->assignRole(['admin', User::ROLE_VALIDATEUR_RDV]);
         User::factory()->create([
             'service_id' => Service::where('code', Service::FORMALITE)->value('id'),
         ])->assignRole(User::ROLE_AGENT_RDV);
 
-        $demande  = Demande::create([
-            'type'           => TypeDemandeEnum::DEMANDE_RENCONTRE->value,
-            'created_by'     => null,
+        $demande = Demande::create([
+            'type' => TypeDemandeEnum::DEMANDE_RENCONTRE->value,
+            'created_by' => null,
             'current_service_id' => Service::where('code', Service::FORMALITE)->value('id'),
             'current_step_id' => WorkflowStep::idForCode('SOUMISE', TypeDemandeEnum::DEMANDE_RENCONTRE->value),
-            'data'           => [
+            'data' => [
                 'motif_key' => 'demande_formalites_mandats',
                 'prenom' => 'Jean',
                 'nom' => 'Dupont',
@@ -686,7 +689,7 @@ class DemandeManagementFeatureTest extends TestCase
             ->assertSessionHas('success');
 
         $this->assertDatabaseHas('demandes', [
-            'id'         => $demande->id,
+            'id' => $demande->id,
             'current_step_id' => WorkflowStep::idForCode('REFUSE', TypeDemandeEnum::DEMANDE_RENCONTRE->value),
         ]);
         $this->assertSame(RencontreStatutEnum::REFUSE, $demande->fresh()->rencontreStatut());

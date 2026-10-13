@@ -162,8 +162,15 @@
         </a></p>
         </div>
         <div class="w-full md:w-1/3 text-center md:text-right">
-            <img src="{{ asset('images/setting-logo-1-M13oPLiYoM.png') }}" alt="Logo"
-                class="mx-auto md:mx-0 md:ml-auto" style="max-width: 80px;">
+            <x-optimized-image
+                src="images/setting-logo-1-M13oPLiYoM.png"
+                alt="Logo"
+                class="mx-auto md:mx-0 md:ml-auto"
+                style="max-width: 80px;"
+                width="80"
+                height="80"
+                loading="lazy"
+            ></x-optimized-image>
         </div>
     </div>
 </div>

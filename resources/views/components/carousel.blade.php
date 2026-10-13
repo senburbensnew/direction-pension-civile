@@ -106,11 +106,17 @@
         overflow: hidden;
     }
 
+    .hero-carousel .swiper-slide picture,
     .hero-carousel .swiper-slide img {
         width: 100%;
         height: 100%;
         object-fit: cover;
         object-position: center;
         display: block;
+    }
+
+    .hero-carousel .swiper-slide picture {
+        position: absolute;
+        inset: 0;
     }
 </style>

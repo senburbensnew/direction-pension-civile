@@ -36,5 +36,11 @@ class Actualite extends Model
 
         return $image?->url() ?? asset('images/image_placeholder.png');
     }
-}
 
+    public function coverComponentSrc(): string
+    {
+        $image = $this->images->first();
+
+        return $image?->componentSrc() ?? 'images/image_placeholder.png';
+    }
+}

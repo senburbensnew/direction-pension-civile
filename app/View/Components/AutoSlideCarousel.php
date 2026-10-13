@@ -3,6 +3,7 @@
 namespace App\View\Components;
 
 use App\Models\InstitutionImage;
+use App\Support\PublicMedia;
 use Illuminate\View\Component;
 
 class AutoSlideCarousel extends Component
@@ -13,7 +14,8 @@ class AutoSlideCarousel extends Component
     {
         $this->images = InstitutionImage::active()->ordered()->get()
             ->map(fn ($img) => [
-                'src' => $img->imageUrl(),
+                'src' => PublicMedia::componentSrc($img->image),
+                'display' => $img->imageUrl(),
                 'alt' => $img->title ?? 'Institution en images',
             ])->toArray();
     }

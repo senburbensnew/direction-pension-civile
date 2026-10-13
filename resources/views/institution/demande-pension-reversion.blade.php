@@ -11,18 +11,14 @@
             <!-- Header Section -->
             <div class="flex flex-col md:flex-row justify-between items-center mt-12 mb-12 gap-8">
                 <div class="text-center mb-6 flex flex-col md:flex-row items-center justify-center w-full gap-4 md:gap-8">
-                    <img src="{{ asset('images/setting-logo-1-M13oPLiYoM.png') }}"
-                        alt="Logo de la Direction de la Pension Civile"
-                        class="w-16 h-16 md:w-24 md:h-24 object-cover shrink-0" loading="lazy">
+                    <x-dpc-logo class="w-16 h-16 md:w-24 md:h-24 object-cover shrink-0" />
 
                     <div class="px-4">
                         <h1 class="text-lg md:text-xl font-bold mb-1">Demande de Pension par Réversion</h1>
                         <p class="text-sm text-gray-600">Direction de la Pension Civile (DPC)</p>
                     </div>
 
-                    <img src="{{ asset('images/setting-logo-1-M13oPLiYoM.png') }}" alt=""
-                        class="w-16 h-16 md:w-24 md:h-24 object-cover shrink-0 hidden md:block" role="presentation"
-                        loading="lazy">
+                    <x-dpc-logo class="w-16 h-16 md:w-24 md:h-24 object-cover shrink-0 hidden md:block" />
                 </div>
             </div>
             

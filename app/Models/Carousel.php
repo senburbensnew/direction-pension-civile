@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Support\PublicMedia;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
@@ -17,7 +18,7 @@ class Carousel extends Model
 
     protected $casts = [
         'text_styles' => 'array',
-        'status'      => 'boolean',
+        'status' => 'boolean',
     ];
 
     public const TEXT_SIZES = [
@@ -28,36 +29,36 @@ class Carousel extends Model
     ];
 
     public const POSITIONS = [
-        'bottom-left'   => 'Bas gauche',
+        'bottom-left' => 'Bas gauche',
         'bottom-center' => 'Bas centre',
-        'bottom-right'  => 'Bas droite',
-        'center'        => 'Centre',
-        'top-left'      => 'Haut gauche',
-        'top-center'    => 'Haut centre',
+        'bottom-right' => 'Bas droite',
+        'center' => 'Centre',
+        'top-left' => 'Haut gauche',
+        'top-center' => 'Haut centre',
     ];
 
     public const TEXT_STYLES = [
-        'bold'      => 'Gras',
-        'italic'    => 'Italique',
+        'bold' => 'Gras',
+        'italic' => 'Italique',
         'underline' => 'Souligné',
         'uppercase' => 'Majuscules',
     ];
 
     public const FONT_FAMILIES = [
-        'sans'      => 'Sans Serif',
-        'serif'     => 'Serif',
-        'playfair'  => 'Playfair Display',
-        'oswald'    => 'Oswald',
+        'sans' => 'Sans Serif',
+        'serif' => 'Serif',
+        'playfair' => 'Playfair Display',
+        'oswald' => 'Oswald',
         'condensed' => 'Condensé',
     ];
 
     public const FONT_STACK = '"Source Sans 3", system-ui, sans-serif';
 
     public const FONT_CSS = [
-        'sans'      => self::FONT_STACK,
-        'serif'     => self::FONT_STACK,
-        'playfair'  => self::FONT_STACK,
-        'oswald'    => self::FONT_STACK,
+        'sans' => self::FONT_STACK,
+        'serif' => self::FONT_STACK,
+        'playfair' => self::FONT_STACK,
+        'oswald' => self::FONT_STACK,
         'condensed' => self::FONT_STACK,
     ];
 
@@ -75,10 +76,19 @@ class Carousel extends Model
     {
         $styles = $this->text_styles ?? [];
         $classes = [];
-        if (in_array('bold', $styles))      $classes[] = 'font-bold';
-        if (in_array('italic', $styles))    $classes[] = 'italic';
-        if (in_array('underline', $styles)) $classes[] = 'underline';
-        if (in_array('uppercase', $styles)) $classes[] = 'uppercase tracking-wide';
+        if (in_array('bold', $styles)) {
+            $classes[] = 'font-bold';
+        }
+        if (in_array('italic', $styles)) {
+            $classes[] = 'italic';
+        }
+        if (in_array('underline', $styles)) {
+            $classes[] = 'underline';
+        }
+        if (in_array('uppercase', $styles)) {
+            $classes[] = 'uppercase tracking-wide';
+        }
+
         return implode(' ', $classes);
     }
 
@@ -88,10 +98,14 @@ class Carousel extends Model
      */
     public function imageUrl(): string
     {
-        if (str_starts_with($this->image, 'images/')) {
-            return asset($this->image);
-        }
+        return $this->imageSources()['url'];
+    }
 
-        return asset('storage/' . $this->image);
+    /**
+     * @return array{url: string, webp: ?string, width: ?int, height: ?int}
+     */
+    public function imageSources(): array
+    {
+        return PublicMedia::forUploadedOrStatic($this->image);
     }
 }

@@ -4,8 +4,8 @@
     @endphp
 
     <div class="mb-5 text-center">
-        <h2 class="text-xl font-bold text-gray-800">Créer un compte</h2>
-        <p class="text-sm text-gray-500 mt-0.5">Remplissez les informations ci-dessous pour vous inscrire.</p>
+        <h2 class="text-xl font-bold text-gray-800">{{ __('guest.register.title') }}</h2>
+        <p class="text-sm text-gray-500 mt-0.5">{{ __('guest.register.intro') }}</p>
     </div>
 
     <form method="POST" action="{{ route('register') }}" enctype="multipart/form-data" class="space-y-4">
@@ -17,7 +17,7 @@
                 <x-profile-picture :showLabel="false" />
             </div>
             <div class="flex-1">
-                <p class="text-sm font-medium text-gray-700 mb-2">Qui êtes-vous ?</p>
+                <p class="text-sm font-medium text-gray-700 mb-2">{{ __('guest.register.who_are_you') }}</p>
                 <div class="flex flex-col gap-2">
                     @foreach ($accountCategories as $category)
                         @php

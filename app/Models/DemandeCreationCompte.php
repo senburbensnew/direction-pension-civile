@@ -3,10 +3,11 @@
 namespace App\Models;
 
 use App\Enums\RencontreStatutEnum;
-use App\Enums\TypeDemandeEnum;
+use App\Services\RencontreMotifService;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Support\Carbon;
 use Spatie\MediaLibrary\HasMedia;
 use Spatie\MediaLibrary\InteractsWithMedia;
 use Spatie\MediaLibrary\MediaCollections\Models\Media;
@@ -36,7 +37,7 @@ class DemandeCreationCompte extends Model implements HasMedia
 
     protected $fillable = [
         'code',
-        'idempotency_key', 
+        'idempotency_key',
         'user_type',
         'firstname',
         'lastname',
@@ -116,7 +117,7 @@ class DemandeCreationCompte extends Model implements HasMedia
         return $this->traiteePar();
     }
 
-    public function traiteeLe(): ?\Illuminate\Support\Carbon
+    public function traiteeLe(): ?Carbon
     {
         return $this->approuvee_at ?? $this->rejetee_at;
     }
@@ -171,7 +172,7 @@ class DemandeCreationCompte extends Model implements HasMedia
             return null;
         }
 
-        $rendezVous = app(\App\Services\RencontreMotifService::class)
+        $rendezVous = app(RencontreMotifService::class)
             ->eligibleAccountDecisionRendezVousQuery((int) $this->user_id)
             ->get();
 
@@ -195,7 +196,7 @@ class DemandeCreationCompte extends Model implements HasMedia
             return null;
         }
 
-        return app(\App\Services\RencontreMotifService::class)
+        return app(RencontreMotifService::class)
             ->eligibleAccountDecisionRendezVousQuery((int) $this->user_id)
             ->get()
             ->first(
@@ -356,10 +357,6 @@ class DemandeCreationCompte extends Model implements HasMedia
 
     public function agentPieceRouteName(?User $viewer): ?string
     {
-        if ($viewer?->hasRole('admin')) {
-            return 'admin.comptes-demandes.piece';
-        }
-
         if ($viewer?->hasRole(User::ROLE_AGENT_FORMALITES)) {
             return 'formalites.comptes-demandes.piece';
         }

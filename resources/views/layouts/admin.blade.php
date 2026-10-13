@@ -7,7 +7,7 @@
     <title>@yield('title', 'Administration') — Direction de la Pension Civile</title>
     <x-fonts />
     @vite(['resources/css/app.css', 'resources/js/app.js'])
-    <!-- <link href="{{ asset('build/assets/app-bInZ0-a9.css') }}" rel="stylesheet"> -->
+    <!-- <link href="{{ asset('build/assets/app-DH4eVY7K.css') }}" rel="stylesheet"> -->
     <style>
         :root { --sidebar-w: 15rem; }
 
@@ -58,7 +58,7 @@
 
         {{-- Brand --}}
         <div class="flex items-center gap-3 px-4 py-4 border-b border-white/10">
-            <img src="{{ asset('images/setting-logo-1-M13oPLiYoM.png') }}" alt="Logo" class="w-8 h-8 rounded">
+            <x-optimized-image src="images/setting-logo-1-M13oPLiYoM.png" alt="Logo" class="w-8 h-8 rounded" width="32" height="32" loading="eager"></x-optimized-image>
             <div class="leading-tight">
                 <p class="text-white text-sm font-semibold leading-none">Direction de la Pension Civile</p>
                 <p class="text-slate-400 text-xs">Administration</p>
@@ -84,24 +84,8 @@
                 </div>
             </div>
 
-            {{-- Traitement des dossiers --}}
-            <div x-data="{ open: {{ request()->routeIs('admin.demandes.*') ? 'true' : 'false' }} }">
-                <button @click="open = !open"
-                    class="nav-section mt-2 w-full flex items-center justify-between cursor-pointer hover:text-slate-300 transition-colors">
-                    <span>Traitement des dossiers</span>
-                    <i class="fas fa-chevron-down text-[9px] transition-transform duration-200"
-                       :class="open ? '' : '-rotate-90'"></i>
-                </button>
-                <div x-show="open" x-transition.duration.150ms>
-                    <a href="{{ route('admin.demandes.index') }}"
-                       class="nav-link {{ request()->routeIs('admin.demandes.*') ? 'active' : '' }}">
-                       <i class="fas fa-folder-open"></i> Dossiers
-                    </a>
-                </div>
-            </div>
-
             {{-- Utilisateurs & Accès --}}
-            <div x-data="{ open: {{ request()->routeIs('admin.users.*', 'admin.roles.*', 'admin.permissions.*', 'admin.comptes-demandes.*') ? 'true' : 'false' }} }">
+            <div x-data="{ open: {{ request()->routeIs('admin.users.*', 'admin.roles.*', 'admin.permissions.*') ? 'true' : 'false' }} }">
                 <button @click="open = !open"
                     class="nav-section mt-2 w-full flex items-center justify-between cursor-pointer hover:text-slate-300 transition-colors">
                     <span>Utilisateurs &amp; Accès</span>
@@ -112,10 +96,6 @@
                     <a href="{{ route('admin.users.index') }}"
                        class="nav-link {{ request()->routeIs('admin.users.*') ? 'active' : '' }}">
                        <i class="fas fa-users"></i> Utilisateurs
-                    </a>
-                    <a href="{{ route('admin.comptes-demandes.index') }}"
-                       class="nav-link {{ request()->routeIs('admin.comptes-demandes.*') ? 'active' : '' }}">
-                       <i class="fas fa-user-plus"></i> Demandes de compte
                     </a>
                     <a href="{{ route('admin.roles.index') }}"
                        class="nav-link {{ request()->routeIs('admin.roles.*') ? 'active' : '' }}">
@@ -144,22 +124,6 @@
                     <a href="{{ route('admin.directions.index') }}"
                        class="nav-link {{ request()->routeIs('admin.directions.*') ? 'active' : '' }}">
                        <i class="fas fa-map-marker-alt"></i> Directions Départementales
-                    </a>
-                </div>
-            </div>
-
-            {{-- Configuration workflow --}}
-            <div x-data="{ open: {{ request()->routeIs('admin.flux-transitions.*', 'admin.workflow-steps.*') ? 'true' : 'false' }} }">
-                <button @click="open = !open"
-                    class="nav-section mt-2 w-full flex items-center justify-between cursor-pointer hover:text-slate-300 transition-colors">
-                    <span>Configuration workflow</span>
-                    <i class="fas fa-chevron-down text-[9px] transition-transform duration-200"
-                       :class="open ? '' : '-rotate-90'"></i>
-                </button>
-                <div x-show="open" x-transition.duration.150ms>
-                    <a href="{{ route('admin.flux-transitions.index') }}"
-                       class="nav-link {{ request()->routeIs('admin.flux-transitions.*', 'admin.workflow-steps.*') ? 'active' : '' }}">
-                       <i class="fas fa-route"></i> Circuit de traitement
                     </a>
                 </div>
             </div>
@@ -434,7 +398,7 @@
             if (window.innerWidth >= 1024) closeSidebar();
         });
     </script>
-    <!-- <script src="{{ asset('build/assets/app-BiTlx0PY.js') }}"></script> -->
     @stack('scripts')
+    <!-- <script src="{{ asset('build/assets/app-CKnLtXCO.js') }}"></script> -->
 </body>
 </html>

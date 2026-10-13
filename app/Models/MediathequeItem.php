@@ -2,8 +2,8 @@
 
 namespace App\Models;
 
+use App\Support\PublicMedia;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Support\Facades\Storage;
 
 class MediathequeItem extends Model
 {
@@ -13,14 +13,14 @@ class MediathequeItem extends Model
     ];
 
     protected $casts = [
-        'published'   => 'boolean',
+        'published' => 'boolean',
         'is_featured' => 'boolean',
     ];
 
     public static array $types = [
-        'image'    => 'Image',
-        'video'    => 'Vidéo',
-        'audio'    => 'Audio',
+        'image' => 'Image',
+        'video' => 'Vidéo',
+        'audio' => 'Audio',
         'document' => 'Document',
     ];
 
@@ -31,7 +31,7 @@ class MediathequeItem extends Model
 
     public function fileUrl(): ?string
     {
-        if (!$this->file_path) {
+        if (! $this->file_path) {
             return null;
         }
         if (str_starts_with($this->file_path, 'http')) {
@@ -39,9 +39,23 @@ class MediathequeItem extends Model
         }
         // Root-relative URLs work regardless of APP_URL host/port (e.g. :8000).
         if (str_starts_with($this->file_path, 'media/')) {
-            return '/' . ltrim($this->file_path, '/');
+            return '/'.ltrim($this->file_path, '/');
         }
-        return '/storage/' . ltrim($this->file_path, '/');
+
+        return '/storage/'.ltrim($this->file_path, '/');
+    }
+
+    public function fileComponentSrc(): ?string
+    {
+        if (! $this->file_path || $this->type !== 'image') {
+            return null;
+        }
+
+        if (str_starts_with($this->file_path, 'media/')) {
+            return $this->file_path;
+        }
+
+        return PublicMedia::componentSrc($this->file_path);
     }
 
     public function isLegacyPublicFile(): bool
@@ -51,23 +65,23 @@ class MediathequeItem extends Model
 
     public function isExternal(): bool
     {
-        return !$this->file_path && $this->url;
+        return ! $this->file_path && $this->url;
     }
 
     /** YouTube / Vimeo embed URL, or null if not embeddable. */
     public function embedUrl(): ?string
     {
         $url = $this->url;
-        if (!$url) {
+        if (! $url) {
             return null;
         }
 
         if (preg_match('~(?:youtube\.com/watch\?v=|youtu\.be/|youtube\.com/embed/)([A-Za-z0-9_-]{6,})~', $url, $m)) {
-            return 'https://www.youtube.com/embed/' . $m[1];
+            return 'https://www.youtube.com/embed/'.$m[1];
         }
 
         if (preg_match('~vimeo\.com/(?:video/)?(\d+)~', $url, $m)) {
-            return 'https://player.vimeo.com/video/' . $m[1];
+            return 'https://player.vimeo.com/video/'.$m[1];
         }
 
         if (str_contains($url, 'youtube.com/embed/') || str_contains($url, 'player.vimeo.com/video/')) {

@@ -122,7 +122,8 @@ return [
     */
     'reassign_roles' => [
         'admin',
-        'direction',
+        'directeur',
+        'assistant_directeur',
         'validateur_rdv',
         'responsable_service_accueil_formalites',
     ],

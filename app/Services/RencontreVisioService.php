@@ -7,6 +7,7 @@ use App\Enums\TypeDemandeEnum;
 use App\Models\Demande;
 use App\Models\User;
 use Carbon\Carbon;
+use Database\Seeders\RolesAndPermissionsSeeder;
 use Illuminate\Support\Str;
 
 class RencontreVisioService
@@ -62,8 +63,8 @@ class RencontreVisioService
         Demande $demande
     ): bool {
         if (
-            !$user
-            || !$demande->isRencontre()
+            ! $user
+            || ! $demande->isRencontre()
             || ($demande->data['modalite'] ?? '') !== 'visio'
         ) {
             return false;
@@ -96,19 +97,18 @@ class RencontreVisioService
 
         if (
             $demande
-            ->assignments()
-            ->whereNull('ended_at')
-            ->where('user_id', $user->id)
-            ->exists()
+                ->assignments()
+                ->whereNull('ended_at')
+                ->where('user_id', $user->id)
+                ->exists()
         ) {
             return true;
         }
 
-        return $user->hasAnyRole([
-            User::ROLE_VALIDATEUR_RDV,
-            'admin',
-            'direction',
-        ]);
+        return $user->hasAnyRole(array_merge(
+            RolesAndPermissionsSeeder::adminOrDirectionRoles(),
+            [User::ROLE_VALIDATEUR_RDV]
+        ));
     }
 
     public function startsAt(
@@ -123,13 +123,13 @@ class RencontreVisioService
             ?? null
         );
 
-        if (!$date || !$time) {
+        if (! $date || ! $time) {
             return null;
         }
 
         try {
             return Carbon::parse(
-                $date . ' ' . $time
+                $date.' '.$time
             );
         } catch (\Throwable) {
             return null;
@@ -154,7 +154,7 @@ class RencontreVisioService
     ): ?Carbon {
         $start = $this->startsAt($demande);
 
-        if (!$start) {
+        if (! $start) {
             return null;
         }
 
@@ -199,7 +199,7 @@ class RencontreVisioService
         $opens = $this->opensAt($demande);
         $closes = $this->closesAt($demande);
 
-        if (!$opens || !$closes) {
+        if (! $opens || ! $closes) {
             return 'indisponible';
         }
 
@@ -220,7 +220,7 @@ class RencontreVisioService
     ): ?string {
         $token = $demande->visio_token;
 
-        if (!$token) {
+        if (! $token) {
             return null;
         }
 
@@ -242,22 +242,19 @@ class RencontreVisioService
             32
         );
 
-        $room = $prefix . '-' . substr($token, 0, $length);
+        $room = $prefix.'-'.substr($token, 0, $length);
 
         $params = [
-            'config.prejoinPageEnabled' =>
-                config('rdv.visio.prejoin') ? 'true' : 'false',
+            'config.prejoinPageEnabled' => config('rdv.visio.prejoin') ? 'true' : 'false',
 
-            'config.startWithAudioMuted' =>
-                config('rdv.visio.start_audio_muted') ? 'true' : 'false',
+            'config.startWithAudioMuted' => config('rdv.visio.start_audio_muted') ? 'true' : 'false',
 
-            'config.startWithVideoMuted' =>
-                config('rdv.visio.start_video_muted') ? 'true' : 'false',
+            'config.startWithVideoMuted' => config('rdv.visio.start_video_muted') ? 'true' : 'false',
 
             'config.disableDeepLinking' => 'true',
-            'config.disableProfile'     => 'true',
+            'config.disableProfile' => 'true',
 
-            'interfaceConfig.SHOW_JITSI_WATERMARK'    => 'false',
+            'interfaceConfig.SHOW_JITSI_WATERMARK' => 'false',
             'interfaceConfig.SHOW_BRANDING_WATERMARK' => 'false',
         ];
 
@@ -269,16 +266,16 @@ class RencontreVisioService
 
             if ($displayName) {
                 $params['userInfo.displayName'] =
-                    '"' . addslashes($displayName) . '"';
+                    '"'.addslashes($displayName).'"';
             }
 
             if (! empty($user->email)) {
                 $params['userInfo.email'] =
-                    '"' . addslashes($user->email) . '"';
+                    '"'.addslashes($user->email).'"';
             }
         }
 
-        return 'https://' . $domain . '/' . $room
-            . '#' . http_build_query($params, '', '&');
+        return 'https://'.$domain.'/'.$room
+            .'#'.http_build_query($params, '', '&');
     }
 }

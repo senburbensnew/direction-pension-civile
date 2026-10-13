@@ -144,9 +144,12 @@
                                 @if(!empty($event['images']))
                                     @foreach($event['images'] as $image)
                                         <figure class="mt-5">
-                                            <img src="{{ asset($image['src']) }}"
-                                                 alt="{{ $image['alt'] }}"
-                                                 class="w-full max-w-2xl bg-white">
+                                            <x-optimized-image
+                                                :src="$image['src']"
+                                                :alt="$image['alt']"
+                                                class="w-full max-w-2xl bg-white"
+                                                sizes="(min-width: 768px) 672px, 100vw"
+                                            ></x-optimized-image>
                                             <figcaption class="mt-2 text-sm text-gray-600">{{ $image['alt'] }}</figcaption>
                                         </figure>
                                     @endforeach

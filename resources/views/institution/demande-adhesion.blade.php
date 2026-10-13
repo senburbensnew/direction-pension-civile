@@ -4,9 +4,7 @@
     <div class="max-w-6xl mx-auto p-6">
         <div id="form-section" class="mx-auto bg-white p-6 shadow-md rounded-lg relative m-2">
             <div class="flex justify-center gap-5">
-                    <img src="{{ asset('images/setting-logo-1-M13oPLiYoM.png') }}" 
-                    alt="Logo de la Direction de la Pension Civile"
-                    class="w-16 h-16 md:w-20 md:h-20 object-contain" />
+                    <x-dpc-logo class="w-16 h-16 md:w-20 md:h-20 object-contain" />
 
                     <div class="text-center mb-8">
                         <h1 class="text-xl font-bold mb-2">MINISTERE DE L'ECONOMIE ET DES FINANCES (MEF)</h1>
@@ -14,9 +12,7 @@
                         <p class="text-gray-600">FICHE INDIVIDUELLE DES EMPLOYES COTISANT AU FONDS DE PENSION</p>
                     </div>
 
-                    <img src="{{ asset('images/setting-logo-1-M13oPLiYoM.png') }}" 
-                    alt="Logo de la Direction de la Pension Civile"
-                    class="w-16 h-16 md:w-20 md:h-20 object-contain" />
+                    <x-dpc-logo class="w-16 h-16 md:w-20 md:h-20 object-contain" />
             </div>
 
             @if (session('success'))

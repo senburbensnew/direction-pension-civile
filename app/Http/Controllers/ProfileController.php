@@ -2,14 +2,15 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\View\View;
+use App\Http\Requests\ProfilePhotoUpdateRequest;
+use App\Http\Requests\ProfileUpdateRequest;
+use App\Services\ImageStorageService;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Http\RedirectResponse;
-use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Redirect;
-use App\Http\Requests\ProfileUpdateRequest;
-use App\Http\Requests\ProfilePhotoUpdateRequest;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\View\View;
 
 class ProfileController extends Controller
 {
@@ -73,10 +74,14 @@ class ProfileController extends Controller
         Storage::disk('public')->makeDirectory('profile_photos');
 
         if ($user->profile_photo) {
-            Storage::disk('public')->delete($user->profile_photo);
+            app(ImageStorageService::class)->deleteWithVariants($user->profile_photo);
         }
 
-        $path = $file->store('profile_photos', 'public');
+        $path = app(ImageStorageService::class)->storeUploadedImage(
+            $file,
+            'profile_photos',
+            config('media.upload_max_widths.profile'),
+        );
 
         $user->update([
             'profile_photo' => $path,

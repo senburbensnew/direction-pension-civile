@@ -6,7 +6,7 @@
     {{-- Heading --}}
     <div class="mb-6 text-center">
         <h2 class="text-xl font-bold text-gray-800">
-            Mot de passe oublié
+            {{ __('guest.password.forgot_title') }}
         </h2>
 
         <p class="text-base text-gray-700 mt-1">
@@ -62,7 +62,7 @@
                 class="text-[#173052] hover:text-orange-500 font-medium transition-colors"
             >
                 <i class="fas fa-arrow-left text-xs mr-1"></i>
-                Retour à la connexion
+                {{ __('guest.password.back_to_login') }}
             </a>
         </p>
 

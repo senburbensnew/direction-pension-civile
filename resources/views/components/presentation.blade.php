@@ -3,10 +3,6 @@
         ? 'https://ui-avatars.com/api/?name=' . urlencode($nom) . '&background=E91E63&color=fff'
         : 'https://ui-avatars.com/api/?name=' . urlencode($nom) . '&background=0D8ABC&color=fff';
 
-    $photoSrc = str_starts_with($desktopImage, 'http://') || str_starts_with($desktopImage, 'https://')
-        ? $desktopImage
-        : asset($desktopImage);
-
     $isCard = $variant === 'card';
 @endphp
 
@@ -24,16 +20,17 @@
     </span>
 
     <div class="flex justify-center mb-3">
-        <img
-            src="{{ $photoSrc }}"
-            alt="{{ $nom }}"
+        <x-optimized-image
+            :src="$photoComponentSrc"
+            :alt="$nom"
             @class([
                 'w-full',
                 'h-64 object-cover object-top' => $isCard,
                 'h-auto max-h-96 object-contain rounded-lg' => ! $isCard,
             ])
+            sizes="(min-width: 1024px) 320px, 80vw"
             onerror="this.onerror=null; this.src='{{ $avatar }}';"
-        />
+        ></x-optimized-image>
     </div>
 
     <p @class([

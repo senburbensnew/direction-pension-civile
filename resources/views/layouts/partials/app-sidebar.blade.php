@@ -6,12 +6,7 @@
     $hasPortal = $user?->hasPensionPortalAccess();
     $demandeCompte = $user?->demandeCreationCompte;
 
-    $corbeilleRoles = [
-        'direction', 'directeur', 'assistant_directeur', 'secretariat',
-        'service_liquidation', 'service_accueil_formalites', 'service_controle_placement',
-        'service_comptabilite', 'service_assurance', 'administration',
-        'validateur_rdv', 'agent_rdv', 'agent_formalites',
-    ];
+    $corbeilleRoles = \Database\Seeders\RolesAndPermissionsSeeder::internalRoles();
     $showCorbeille = $user && $user->hasAnyRole($corbeilleRoles);
     $showPersonal = $hasPortal || $user?->hasAnyRole(['fonctionnaire', 'institution']);
     $rencontreMotifs = $user
@@ -26,7 +21,7 @@
 
 <div class="portal-sidebar-brand flex items-center gap-2 px-3 py-3 border-b border-white/10">
     <a href="{{ $sidebarHome }}" class="flex items-center gap-2 min-w-0 flex-1 group" title="Mon espace">
-        <img src="{{ asset('images/setting-logo-1-M13oPLiYoM.png') }}" alt="DPC" class="w-8 h-8 rounded flex-shrink-0">
+        <x-optimized-image src="images/setting-logo-1-M13oPLiYoM.png" alt="DPC" class="w-8 h-8 rounded flex-shrink-0" width="32" height="32" loading="eager"></x-optimized-image>
         <div class="portal-sidebar-label leading-tight min-w-0 overflow-hidden">
             <p class="text-white text-xs font-semibold leading-snug truncate">Pension Civile</p>
             <p class="text-slate-400 text-[10px]">Mon espace</p>

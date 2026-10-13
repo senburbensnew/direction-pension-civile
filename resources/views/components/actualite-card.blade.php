@@ -2,11 +2,13 @@
 
 <article class="bg-white border border-gray-200 flex flex-col overflow-hidden" style="box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1);">
     <a href="{{ route('actualites.show', $actualite->id) }}" class="block overflow-hidden bg-gray-50">
-        <img src="{{ $actualite->coverUrl() }}"
-             alt="{{ $actualite->title }}"
-             class="w-full object-cover"
-             style="aspect-ratio: 16/10;"
-             loading="lazy" />
+        <x-optimized-image
+            :src="$actualite->coverComponentSrc()"
+            :alt="$actualite->title"
+            class="w-full object-cover"
+            style="aspect-ratio: 16/10;"
+            sizes="(min-width: 1024px) 33vw, (min-width: 640px) 50vw, 100vw"
+        ></x-optimized-image>
     </a>
     <div class="flex flex-col flex-1 p-5">
         <p class="text-xs font-bold text-orange-500 uppercase tracking-widest mb-2">

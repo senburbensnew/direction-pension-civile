@@ -59,7 +59,7 @@
                     <div class="flex flex-wrap items-center gap-2 shrink-0">
 
                         @if($from === 'cart')
-                            @hasanyrole('secretariat|direction|service_liquidation|service_accueil_formalites|service_controle_placement|service_comptabilite|service_assurance|administration|admin|agent_rdv|validateur_rdv')
+                            @if(auth()->user()?->hasAnyRole(\Database\Seeders\RolesAndPermissionsSeeder::internalRoles()))
 
                                 @if(isset($isClosed) && $isClosed)
                                     <div class="flex items-center gap-2 bg-gray-50 border border-gray-300 rounded-xl px-3 py-2">
@@ -171,7 +171,7 @@
                                     @endunless
                                 @endif
 
-                            @endhasanyrole
+                            @endif
                         @endif
 
                         @if($from === 'dashboard')
@@ -810,7 +810,7 @@
         </x-dossier-collapsible>
     @endif
 
-    @if($request->isRencontre() && !empty($compteProvisional) && auth()->user()?->hasAnyRole(['admin', \App\Models\User::ROLE_AGENT_FORMALITES]))
+    @if($request->isRencontre() && !empty($compteProvisional) && auth()->user()?->hasRole(\App\Models\User::ROLE_AGENT_FORMALITES))
         @include('comptes-demandes._panel-rdv', [
             'request' => $request,
             'compte' => $compteProvisional,
@@ -1084,7 +1084,7 @@
 
             {{-- ====================== PROVENANCE (Direction) ====================== --}}
             @if($from === 'cart' && !($rdvAgentMode ?? false))
-                @role('direction|directeur|assistant_directeur')
+                @role('directeur|assistant_directeur')
                 @php
                     $lastIncoming = $request->interactions()
                         ->with(['fromService', 'initiatedBy'])
@@ -1196,7 +1196,7 @@
                                         le {{ $request->annotated_at->format('d/m/Y à H:i') }}
                                     </p>
                                 </div>
-                                @role('direction|directeur|assistant_directeur')
+                                @role('directeur|assistant_directeur')
                                     @if(!isset($isClosed) || !$isClosed)
                                         <button onclick="document.getElementById('annotationModal').classList.remove('hidden')"
                                                 class="text-xs text-amber-700 underline hover:text-amber-900">
@@ -1217,7 +1217,7 @@
                     @endif
 
                     @if(!isset($isClosed) || !$isClosed)
-                    @role('direction|directeur|assistant_directeur')
+                    @role('directeur|assistant_directeur')
                         <div id="annotationModal"
                             class="{{ $request->isAnnotated() ? 'hidden' : '' }} bg-white border border-gray-200 rounded-lg shadow p-5 mb-4">
                             <h3 class="text-base font-semibold text-gray-800 mb-3">
@@ -1270,7 +1270,7 @@
 
             @unless(($rdvAgentMode ?? false) || ($isAgentRdvOnly ?? false))
                 @if($from === 'cart' && !$request->isRencontre() && (!isset($isClosed) || !$isClosed) && (!isset($pendingWorkflow) || !$pendingWorkflow) && (!isset($pendingAffectation) || !$pendingAffectation) && $request->currentStep?->code !== 'COMPLEMENT_REQUIS')
-                    @hasanyrole('secretariat|direction|service_liquidation|service_accueil_formalites|service_controle_placement|service_comptabilite|service_assurance|administration|admin')
+                    @if(auth()->user()?->hasAnyRole(\Database\Seeders\RolesAndPermissionsSeeder::internalRoles()))
                         <div class="bg-white border border-gray-200 rounded-2xl shadow-sm overflow-hidden">
                             <div class="px-4 py-3 border-b border-gray-100 flex items-center justify-between">
                                 <div class="flex items-center gap-2">
@@ -1312,7 +1312,7 @@
                                 </div>
                             </div>
                         </div>
-                    @endhasanyrole
+                    @endif
                 @endif
             @endunless
 
@@ -1462,7 +1462,7 @@
                                     <span class="text-xs bg-indigo-200 text-indigo-800 font-semibold px-2 py-0.5 rounded-full">{{ $affectations->count() }}</span>
                                 @endif
                             </div>
-                            @role('direction|directeur|assistant_directeur')
+                            @role('directeur|assistant_directeur')
                                 @if(!isset($isClosed) || !$isClosed)
                                     <button type="button"
                                             onclick="document.getElementById('affectationPanel').classList.toggle('hidden')"
@@ -1477,7 +1477,7 @@
                         </div>
 
                         @if(!isset($isClosed) || !$isClosed)
-                        @role('direction|directeur|assistant_directeur')
+                        @role('directeur|assistant_directeur')
                             <div id="affectationPanel" class="hidden border-b border-indigo-100 px-4 py-4 bg-indigo-50/30">
                                 <form method="POST" action="{{ route('admin.demandes.affecter', $request->id) }}">
                                     @csrf
@@ -1590,7 +1590,7 @@
 
             {{-- ── Rouvrir (sidebar, Direction, dossier clôturé) ── --}}
             @if($from === 'cart' && isset($isClosed) && $isClosed && !($rdvAgentMode ?? false))
-                @role('direction|directeur|assistant_directeur')
+                @role('directeur|assistant_directeur')
                     <div class="bg-white rounded-2xl border-2 border-gray-300 shadow-sm overflow-hidden" x-data="{ open: false }">
                         <div class="bg-gray-100 px-4 py-2.5 flex items-center gap-2">
                             <svg class="w-4 h-4 text-gray-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -1626,7 +1626,7 @@
 
             {{-- ── Décision finale Direction (sidebar) ── --}}
             @if($from === 'cart' && !($rdvAgentMode ?? false))
-                @role('direction|directeur|assistant_directeur')
+                @role('directeur|assistant_directeur')
                     @php
                         $directionServiceId = \App\Models\Service::where('code', \App\Models\Service::DIRECTION)->value('id');
                         $isAtDirection = $request->current_service_id === $directionServiceId;

@@ -4,8 +4,11 @@ namespace Tests\Feature\Auth;
 
 use App\Enums\UserTypeEnum;
 use App\Models\User;
+use Database\Seeders\RolesAndPermissionsSeeder;
 use Database\Seeders\UserCategoriesSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Spatie\Permission\Models\Role;
+use Spatie\Permission\PermissionRegistrar;
 use Tests\TestCase;
 
 /**
@@ -20,9 +23,9 @@ class RegistrationTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
-        app()[\Spatie\Permission\PermissionRegistrar::class]->forgetCachedPermissions();
-        foreach (['admin', 'direction', 'pensionne', 'fonctionnaire', 'institution', 'secretariat', 'liquidation'] as $role) {
-            \Spatie\Permission\Models\Role::firstOrCreate(['name' => $role]);
+        app()[PermissionRegistrar::class]->forgetCachedPermissions();
+        foreach (RolesAndPermissionsSeeder::canonicalRoles() as $role) {
+            Role::firstOrCreate(['name' => $role]);
         }
         $this->seed(UserCategoriesSeeder::class);
     }

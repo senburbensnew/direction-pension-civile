@@ -48,7 +48,7 @@
     </style>
 
     @php
-        $internalRoles = ['admin','direction','directeur','assistant_directeur','secretariat','service_liquidation','service_accueil_formalites','service_controle_placement','service_comptabilite','service_assurance','agent_formalites'];
+        $internalRoles = \Database\Seeders\RolesAndPermissionsSeeder::internalRoles();
         $isInternalUser = auth()->check() && auth()->user()->hasAnyRole($internalRoles);
         $isProvisionnel = auth()->user()?->isProvisionnel();
     @endphp
@@ -118,7 +118,7 @@
             </li>
 
             <!-- Pensionaire Dropdown -->
-            @if (!$isInternalUser && (auth()->guest() || (auth()->user()?->can('CAN_VIEW_PENSIONNE_MENU') && ! $isProvisionnel)))
+            <!-- @if (!$isInternalUser && (auth()->guest() || (auth()->user()?->can('CAN_VIEW_PENSIONNE_MENU') && ! $isProvisionnel)))
                 <li class="relative w-full md:w-auto border-b md:border-none group">
                     <button
                         class="dropdown-toggle flex w-full items-center justify-between px-4 md:px-3 py-3
@@ -200,10 +200,10 @@
                         </li>
                     </ul>
                 </li>
-            @endif
+            @endif -->
 
             <!-- Fonctionnaire Dropdown -->
-            @if (!$isInternalUser && (auth()->guest() || auth()->user()?->can('CAN_VIEW_FONCTIONNAIRE_MENU')))
+            <!-- @if (!$isInternalUser && (auth()->guest() || auth()->user()?->can('CAN_VIEW_FONCTIONNAIRE_MENU')))
                 <li class="relative w-full md:w-auto border-b md:border-none group">
                     <button
                         class="dropdown-toggle flex w-full items-center justify-between px-4 md:px-3 py-3
@@ -235,20 +235,20 @@
                                 {{ __('messages.simulateur-calcul') }}
                             </a>
                         </li>
-{{--                         <li>
+                        <li>
                             <a href="{{ route('demandes.demande-pension.index') }}"
                                 class="text-slate-600 block px-4 py-3 hover:bg-gray-100
                                                transition-colors text-base truncate-text
                                                focus:outline-none focus:ring-2 ">
                                 {{ __('messages.pension_request') }}
                             </a>
-                        </li> --}}
+                        </li>
                     </ul>
                 </li>
-            @endif
+            @endif -->
 
             <!-- Institution Dropdown -->
-            @if (!$isInternalUser && (auth()->guest() || auth()->user()?->can('CAN_VIEW_INSTITUTION_MENU')))
+            <!-- @if (!$isInternalUser && (auth()->guest() || auth()->user()?->can('CAN_VIEW_INSTITUTION_MENU')))
                 <li class="relative w-full md:w-auto border-b md:border-none group">
                     <button
                         class="dropdown-toggle flex w-full items-center justify-between px-4 md:px-3 py-3
@@ -290,7 +290,7 @@
                         </li>
                     </ul>
                 </li>
-            @endif
+            @endif -->
 
             <li class="relative w-full md:w-auto border-b md:border-none group">
                 <button

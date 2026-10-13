@@ -33,10 +33,13 @@
         <div class="grid grid-cols-1 lg:grid-cols-[18rem_1fr] gap-6 items-start">
             <aside class="bg-white border border-gray-200 card-shadow p-6 text-center">
                 <h2 class="text-lg font-bold text-navy mb-4">{{ $official->role }}</h2>
-                <img src="{{ $official->photoUrl() }}"
-                     alt="{{ $official->nom }}"
-                     class="w-full h-auto max-h-96 object-contain bg-white mb-4"
-                     onerror="this.onerror=null; this.src='{{ $avatar }}';">
+                <x-optimized-image
+                    :src="$official->photoComponentSrc()"
+                    :alt="$official->nom"
+                    class="w-full h-auto max-h-96 object-contain bg-white mb-4"
+                    sizes="18rem"
+                    onerror="this.onerror=null; this.src='{{ $avatar }}';"
+                ></x-optimized-image>
                 <p class="font-semibold text-navy">{{ $official->nom }}</p>
                 <a href="{{ route('quisommesnous.mots', ['role' => $official->slug]) }}"
                    class="inline-flex items-center gap-1.5 mt-3 text-base font-medium text-navy hover:text-orange-500">

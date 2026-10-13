@@ -1,11 +1,9 @@
 @php
     $rencontreCount = (int) (collect($folderStats ?? [])->firstWhere('key', 'rencontre')['count'] ?? 0);
     $cloturesCount = (int) (collect($folderStats ?? [])->firstWhere('key', 'clotures')['count'] ?? 0);
-    $showComptesCard = auth()->user()?->hasAnyRole(['admin', \App\Models\User::ROLE_AGENT_FORMALITES]);
+    $showComptesCard = auth()->user()?->hasRole(\App\Models\User::ROLE_AGENT_FORMALITES);
     $comptesCount = isset($demandesComptePending) ? $demandesComptePending->count() : 0;
-    $comptesRoute = auth()->user()?->hasRole('admin')
-        ? route('admin.comptes-demandes.index')
-        : route('formalites.comptes-demandes.index');
+    $comptesRoute = route('formalites.comptes-demandes.index');
 
     $tones = [
         'rencontre' => [

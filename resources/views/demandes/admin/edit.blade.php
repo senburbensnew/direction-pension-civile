@@ -25,7 +25,7 @@
     @endif
 
     {{-- ── Provenance du dossier (visible Direction) ──────────────────────── --}}
-    @role('direction|directeur|assistant_directeur')
+    @role('directeur|assistant_directeur')
     @php
         $lastIncoming = $demande->interactions()
             ->with(['fromService', 'toService', 'initiatedBy'])
@@ -252,7 +252,7 @@
     @endif
 
     {{-- ── Décision finale Direction ───────────────────────────────────────── --}}
-    @role('direction|directeur|assistant_directeur')
+    @role('directeur|assistant_directeur')
         @php
             $directionServiceId = \App\Models\Service::where('code', \App\Models\Service::DIRECTION)->value('id');
             $isAtDirection = $demande->current_service_id === $directionServiceId;

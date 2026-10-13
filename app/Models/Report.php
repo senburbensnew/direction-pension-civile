@@ -2,14 +2,15 @@
 
 namespace App\Models;
 
+use App\Support\PublicMedia;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Storage;
-use Illuminate\Database\Eloquent\Factories\HasFactory;
 
 class Report extends Model
 {
     use HasFactory;
-    
+
     protected $fillable = [
         'title',
         'year',
@@ -21,7 +22,7 @@ class Report extends Model
         'file_size',
         'status',
         'published_at',
-        'created_by'
+        'created_by',
     ];
 
     protected $casts = [
@@ -43,16 +44,17 @@ class Report extends Model
 
     public function coverUrl(): string
     {
-        $path = $this->cover_path;
+        return PublicMedia::preferredUrl(
+            PublicMedia::resolve($this->coverComponentSrc())
+        );
+    }
 
-        if (! $path) {
-            return asset('images/image_placeholder.png');
+    public function coverComponentSrc(): string
+    {
+        if (! $this->cover_path) {
+            return 'images/image_placeholder.png';
         }
 
-        if (str_starts_with($path, 'images/')) {
-            return asset($path);
-        }
-
-        return Storage::disk('public')->url($path);
+        return PublicMedia::componentSrc($this->cover_path);
     }
 }

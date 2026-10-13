@@ -15,25 +15,22 @@
                     @foreach ($institutions as $institution)
                         @php
                             $rawLogo = $institution['logo'] ?? null;
-                            if (!$rawLogo) {
-                                $logoSrc = asset('images/setting-logo-1-M13oPLiYoM.png');
-                            } elseif (str_starts_with($rawLogo, 'http') || str_starts_with($rawLogo, '/storage')) {
+                            if (! $rawLogo) {
+                                $logoSrc = 'images/setting-logo-1-M13oPLiYoM.png';
+                            } elseif (str_starts_with($rawLogo, 'http://') || str_starts_with($rawLogo, 'https://')) {
                                 $logoSrc = $rawLogo;
-                            } elseif (file_exists(public_path($rawLogo))) {
-                                $logoSrc = asset($rawLogo);
                             } else {
-                                $logoSrc = asset('images/setting-logo-1-M13oPLiYoM.png');
+                                $logoSrc = \App\Support\PublicMedia::componentSrc($rawLogo);
                             }
                         @endphp
                         <div class="carousel-item">
                             <div class="logo-wrap">
-                                <img
-                                    src="{{ $logoSrc }}"
-                                    alt="{{ $institution['name'] }}"
+                                <x-optimized-image
+                                    :src="$logoSrc"
+                                    :alt="$institution['name']"
                                     class="w-full h-full object-contain"
-                                    loading="lazy"
-                                    onerror="this.onerror=null;this.src='{{ asset('images/setting-logo-1-M13oPLiYoM.png') }}'"
-                                >
+                                    sizes="120px"
+                                ></x-optimized-image>
                             </div>
                             <p class="institution-name">{{ $institution['name'] }}</p>
                         </div>
@@ -53,12 +50,7 @@
     .carousel-track {
         display: flex;
         align-items: flex-start;
-        /* width: max-content is required so that translateX(-50%) is relative to the
-           full content width (all items), not the container width. Without it the
-           animation jumps at a random mid-point instead of at the exact loop seam. */
         width: max-content;
-        /* Do NOT use the animation shorthand — it resets animation-duration to 0s,
-           overriding the inline style. Set sub-properties individually instead. */
         animation-name: institutions-scroll;
         animation-timing-function: linear;
         animation-iteration-count: infinite;
@@ -70,8 +62,6 @@
         animation-play-state: paused;
     }
 
-    /* Fixed item width + margin-right means every slot = 160px + 40px = 200px.
-       Total track = 2N × 200px. translateX(-50%) = N × 200px = exactly one copy. */
     .carousel-item {
         flex-shrink: 0;
         width: 150px;
@@ -114,6 +104,13 @@
     .carousel-item:hover .logo-wrap {
         transform: translateY(-4px);
         box-shadow: 0 12px 24px rgba(0, 0, 0, 0.15);
+    }
+
+    .logo-wrap picture,
+    .logo-wrap img {
+        width: 100%;
+        height: 100%;
+        object-fit: contain;
     }
 
     .institution-name {

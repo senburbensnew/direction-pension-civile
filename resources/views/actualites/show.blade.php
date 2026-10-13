@@ -20,9 +20,13 @@
 
         <article class="bg-white border border-gray-200 card-shadow overflow-hidden">
             <div class="w-full overflow-hidden bg-gray-50" style="aspect-ratio: 16/7;">
-                <img src="{{ $actu->coverUrl() }}"
-                     alt="{{ $actu->title }}"
-                     class="w-full h-full object-cover">
+                <x-optimized-image
+                    :src="$actu->coverComponentSrc()"
+                    :alt="$actu->title"
+                    class="w-full h-full object-cover"
+                    sizes="100vw"
+                    priority
+                ></x-optimized-image>
             </div>
 
             <div class="p-6 sm:p-8">
@@ -59,11 +63,15 @@
                 @if($actu->images->count() > 1)
                     <div class="mb-7 overflow-hidden border border-gray-200">
                         <x-carousel>
-                            @foreach($actu->images as $image)
+                            @foreach($actu->images as $imageIndex => $image)
                                 <div class="swiper-slide">
-                                    <img src="{{ $image->url() }}"
-                                         class="w-full h-64 md:h-80 object-cover"
-                                         alt="Photo — {{ $actu->title }}" />
+                                    <x-carousel-slide-image
+                                        :sources="$image->mediaSources()"
+                                        alt="Photo — {{ $actu->title }}"
+                                        :priority="$imageIndex === 0"
+                                        class="w-full h-64 md:h-80 object-cover"
+                                        sizes="100vw"
+                                    ></x-carousel-slide-image>
                                 </div>
                             @endforeach
                         </x-carousel>

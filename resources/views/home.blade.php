@@ -2,6 +2,13 @@
 
 @section('title', __('messages.home'))
 
+@push('meta')
+    @php
+        $heroMedia = \App\Support\PublicMedia::forPublicPath('images/pension-hero-couple-salon.png');
+    @endphp
+    <link rel="preload" as="image" href="{{ $heroMedia['webp'] ?? $heroMedia['url'] }}" type="{{ $heroMedia['webp'] ? 'image/webp' : 'image/png' }}">
+@endpush
+
 @section('content')
 <style>
     .home-page .hero-carousel {
@@ -145,14 +152,17 @@
                         </div>
                     </div>
                     <div class="relative hidden md:block h-full">
-                        <img src="{{ asset('images/pension-hero-couple-salon.png') }}"
-                             alt="{{ __('home.hero_photo_alt') }}"
-                             class="hero-accueil-photo absolute inset-0">
+                        <x-optimized-image
+                            src="images/pension-hero-couple-salon.png"
+                            :alt="__('home.hero_photo_alt')"
+                            class="hero-accueil-photo absolute inset-0"
+                            priority
+                        ></x-optimized-image>
                     </div>
                 </div>
             </div>
 
-            @foreach($carousels as $slide)
+            @foreach($carousels as $slideIndex => $slide)
                 @php
                     $pos = $slide->overlay_position ?? 'bottom-left';
                     $gradientClass = match(true) {
@@ -187,9 +197,16 @@
                     $isExternalLink = $slide->link && preg_match('#^https?://#i', $slide->link);
                 @endphp
                 <div class="swiper-slide{{ $slide->link ? ' cursor-pointer' : '' }}">
-                    <img src="{{ $slide->imageUrl() }}"
-                         alt="{{ $slide->title ?? 'Direction de la Pension Civile' }}"
-                         loading="lazy">
+                    @php
+                        $slideAlt = $slide->title ?? 'Direction de la Pension Civile';
+                        $slideSources = $slide->imageSources();
+                        $slidePriority = $slideIndex === 0;
+                    @endphp
+                    <x-carousel-slide-image
+                        :sources="$slideSources"
+                        :alt="$slideAlt"
+                        :priority="$slidePriority"
+                    ></x-carousel-slide-image>
 
                     @if($hasOverlay)
                         {{-- Gradient overlay --}}

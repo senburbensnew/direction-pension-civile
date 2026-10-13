@@ -3,8 +3,14 @@
 namespace Tests\Feature;
 
 use App\Enums\AccountStatusEnum;
+use App\Enums\RencontreStatutEnum;
+use App\Enums\TypeDemandeEnum;
+use App\Models\Demande;
 use App\Models\DemandeCreationCompte;
+use App\Models\DemandeCreationCompteHistory;
 use App\Models\User;
+use App\Services\Account\UserCategoryRoleSyncService;
+use App\Services\RencontreWorkflowService;
 use Database\Seeders\UserCategoriesSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
@@ -75,12 +81,12 @@ class DemandeCreationCompteManagementTest extends TestCase
     {
         $this->seedStatuses();
 
-        \App\Models\Demande::create([
-            'type' => \App\Enums\TypeDemandeEnum::DEMANDE_RENCONTRE->value,
+        Demande::create([
+            'type' => TypeDemandeEnum::DEMANDE_RENCONTRE->value,
             'created_by' => $demande->user_id,
             'data' => [
                 'motif_key' => 'demande_formalites_mandats',
-                'rdv_statut' => \App\Enums\RencontreStatutEnum::REALISE->value,
+                'rdv_statut' => RencontreStatutEnum::REALISE->value,
                 'date_souhaitee' => now()->subDay()->toDateString(),
                 'heure_souhaitee' => '10:00',
             ],
@@ -90,7 +96,6 @@ class DemandeCreationCompteManagementTest extends TestCase
     /** @test */
     public function guest_cannot_open_management_screens(): void
     {
-        $this->get(route('admin.comptes-demandes.index'))->assertRedirect();
         $this->get(route('formalites.comptes-demandes.index'))->assertRedirect();
     }
 
@@ -101,42 +106,23 @@ class DemandeCreationCompteManagementTest extends TestCase
         $user->assignRole('pensionne');
 
         $this->actingAs($user)
-            ->get(route('admin.comptes-demandes.index'))
-            ->assertForbidden();
-
-        $this->actingAs($user)
             ->get(route('formalites.comptes-demandes.index'))
             ->assertForbidden();
     }
 
     /** @test */
-    public function admin_can_list_and_open_a_pending_request(): void
+    public function admin_cannot_open_formalites_comptes_management(): void
     {
         $demande = $this->makePendingDemande();
-
         $admin = $this->makeAdmin();
 
         $this->actingAs($admin)
-            ->get(route('admin.comptes-demandes.index'))
-            ->assertOk()
-            ->assertSee('Demandes de création de compte')
-            ->assertSee($demande->libellePublic())
-            ->assertSee('Jean');
+            ->get(route('formalites.comptes-demandes.index'))
+            ->assertForbidden();
 
         $this->actingAs($admin)
-            ->get(route('admin.comptes-demandes.show', $demande))
-            ->assertOk()
-            ->assertDontSee('Accepter le dossier')
-            ->assertSee('Pièces jointes et données lues (OCR)')
-            ->assertSee('Journal d’activité');
-
-        $this->markRendezVousRealise($demande);
-
-        $this->actingAs($admin)
-            ->get(route('admin.comptes-demandes.show', $demande))
-            ->assertOk()
-            ->assertSee('Consultation uniquement')
-            ->assertDontSee('Accepter le dossier');
+            ->get(route('formalites.comptes-demandes.show', $demande))
+            ->assertForbidden();
     }
 
     /** @test */
@@ -208,12 +194,12 @@ class DemandeCreationCompteManagementTest extends TestCase
         $demande = $this->makePendingDemande();
         $this->seedStatuses();
 
-        \App\Models\Demande::create([
-            'type' => \App\Enums\TypeDemandeEnum::DEMANDE_RENCONTRE->value,
+        Demande::create([
+            'type' => TypeDemandeEnum::DEMANDE_RENCONTRE->value,
             'created_by' => $demande->user_id,
             'data' => [
                 'motif_key' => 'demande_formalites_mandats',
-                'rdv_statut' => \App\Enums\RencontreStatutEnum::REALISE->value,
+                'rdv_statut' => RencontreStatutEnum::REALISE->value,
                 'date_souhaitee' => now()->addDay()->toDateString(),
                 'heure_souhaitee' => '14:00',
             ],
@@ -238,12 +224,12 @@ class DemandeCreationCompteManagementTest extends TestCase
         $demande = $this->makePendingDemande();
         $this->seedStatuses();
 
-        \App\Models\Demande::create([
-            'type' => \App\Enums\TypeDemandeEnum::DEMANDE_RENCONTRE->value,
+        Demande::create([
+            'type' => TypeDemandeEnum::DEMANDE_RENCONTRE->value,
             'created_by' => $demande->user_id,
             'data' => [
                 'motif_key' => 'demande_formalites_mandats',
-                'rdv_statut' => \App\Enums\RencontreStatutEnum::REALISE->value,
+                'rdv_statut' => RencontreStatutEnum::REALISE->value,
                 'date_souhaitee' => now()->subDay()->toDateString(),
                 'heure_souhaitee' => '10:00',
             ],
@@ -296,8 +282,8 @@ class DemandeCreationCompteManagementTest extends TestCase
         $this->assertDatabaseCount('users', 2);
         $this->assertTrue($demande->hasMedia('identite_cin'));
         $this->assertSame('Jean', $demande->firstname);
-        $this->assertTrue($demande->histories()->where('event', \App\Models\DemandeCreationCompteHistory::EVENT_ACCEPTEE)->exists());
-        $this->assertFalse($demande->histories()->where('event', \App\Models\DemandeCreationCompteHistory::EVENT_PIECES_SUPPRIMEES)->exists());
+        $this->assertTrue($demande->histories()->where('event', DemandeCreationCompteHistory::EVENT_ACCEPTEE)->exists());
+        $this->assertFalse($demande->histories()->where('event', DemandeCreationCompteHistory::EVENT_PIECES_SUPPRIMEES)->exists());
     }
 
     /** @test */
@@ -328,8 +314,8 @@ class DemandeCreationCompteManagementTest extends TestCase
         ]);
         $this->assertDatabaseCount('users', 2);
         $this->assertFalse($demande->user->allowsLogin());
-        $this->assertTrue($demande->histories()->where('event', \App\Models\DemandeCreationCompteHistory::EVENT_REFUSEE)->exists());
-        $this->assertTrue($demande->histories()->where('event', \App\Models\DemandeCreationCompteHistory::EVENT_COMPTE_BLOQUE)->exists());
+        $this->assertTrue($demande->histories()->where('event', DemandeCreationCompteHistory::EVENT_REFUSEE)->exists());
+        $this->assertTrue($demande->histories()->where('event', DemandeCreationCompteHistory::EVENT_COMPTE_BLOQUE)->exists());
         $this->assertTrue($demande->hasMedia('identite_cin'));
     }
 
@@ -417,7 +403,7 @@ class DemandeCreationCompteManagementTest extends TestCase
             'account_status' => AccountStatusEnum::PROVISOIRE,
         ]);
         $user->assignRole('pensionne');
-        app(\App\Services\Account\UserCategoryRoleSyncService::class)
+        app(UserCategoryRoleSyncService::class)
             ->assignCategory($user, 'pensionne', primary: true, syncRoles: false);
 
         $this->actingAs($user)
@@ -460,26 +446,26 @@ class DemandeCreationCompteManagementTest extends TestCase
             'adresse' => 'Port-au-Prince',
         ]);
 
-        $demande = \App\Models\Demande::create([
-            'type' => \App\Enums\TypeDemandeEnum::DEMANDE_RENCONTRE->value,
+        $demande = Demande::create([
+            'type' => TypeDemandeEnum::DEMANDE_RENCONTRE->value,
             'created_by' => $owner->id,
             'data' => [
                 'motif_key' => 'demande_formalites_mandats',
-                'rdv_statut' => \App\Enums\RencontreStatutEnum::ACTIF->value,
+                'rdv_statut' => RencontreStatutEnum::ACTIF->value,
                 'date_souhaitee' => now()->subDay()->toDateString(),
                 'heure_souhaitee' => '10:00',
             ],
         ]);
 
-        app(\App\Services\RencontreWorkflowService::class)
-            ->clore($demande->fresh(), $this->makeFormalites(), \App\Enums\RencontreStatutEnum::REALISE);
+        app(RencontreWorkflowService::class)
+            ->clore($demande->fresh(), $this->makeFormalites(), RencontreStatutEnum::REALISE);
 
         $this->assertTrue($owner->fresh()->isProvisionnel());
         $this->assertSame(
             AccountStatusEnum::PROVISOIRE,
             $owner->fresh()->account_status
         );
-        $this->assertTrue($compte->fresh()->histories()->where('event', \App\Models\DemandeCreationCompteHistory::EVENT_RDV_REALISE)->exists());
+        $this->assertTrue($compte->fresh()->histories()->where('event', DemandeCreationCompteHistory::EVENT_RDV_REALISE)->exists());
     }
 
     /** @test */
@@ -488,23 +474,23 @@ class DemandeCreationCompteManagementTest extends TestCase
         $this->seedStatuses();
         $demande = $this->makePendingDemande();
 
-        \App\Models\Demande::create([
-            'type' => \App\Enums\TypeDemandeEnum::DEMANDE_RENCONTRE->value,
+        Demande::create([
+            'type' => TypeDemandeEnum::DEMANDE_RENCONTRE->value,
             'created_by' => $demande->user_id,
             'data' => [
                 'motif_key' => 'demande_formalites_mandats',
-                'rdv_statut' => \App\Enums\RencontreStatutEnum::REALISE->value,
+                'rdv_statut' => RencontreStatutEnum::REALISE->value,
                 'date_souhaitee' => now()->subDays(2)->toDateString(),
                 'heure_souhaitee' => '10:00',
             ],
         ]);
 
-        \App\Models\Demande::create([
-            'type' => \App\Enums\TypeDemandeEnum::DEMANDE_RENCONTRE->value,
+        Demande::create([
+            'type' => TypeDemandeEnum::DEMANDE_RENCONTRE->value,
             'created_by' => $demande->user_id,
             'data' => [
                 'motif_key' => 'demande_formalites_mandats',
-                'rdv_statut' => \App\Enums\RencontreStatutEnum::ACTIF->value,
+                'rdv_statut' => RencontreStatutEnum::ACTIF->value,
                 'date_souhaitee' => now()->addDay()->toDateString(),
                 'heure_souhaitee' => '14:00',
             ],

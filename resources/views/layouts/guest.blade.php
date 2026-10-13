@@ -7,9 +7,17 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>{{ config('app.name', 'Laravel') }}</title>
+    @stack('meta')
+    @if ($showPhoto)
+        @php
+            $guestHeroMedia = \App\Support\PublicMedia::forPublicPath('images/guest-auth-pension-couple.jpg');
+        @endphp
+        <link rel="preload" as="image" href="{{ $guestHeroMedia['webp'] ?? $guestHeroMedia['url'] }}" type="{{ $guestHeroMedia['webp'] ? 'image/webp' : 'image/jpeg' }}">
+    @endif
 
     <x-fonts />
     @vite(['resources/css/app.css', 'resources/js/app.js'])
+    <!-- <link href="{{ asset('build/assets/app-DH4eVY7K.css') }}" rel="stylesheet"> -->
     <style>
         html.guest-auth-page {
             font-size: 100%;
@@ -67,6 +75,7 @@
             align-self: flex-start;
         }
 
+        .guest-auth-photo picture,
         .guest-auth-photo img {
             position: absolute;
             inset: 0;
@@ -74,6 +83,10 @@
             height: 100%;
             object-fit: cover;
             object-position: center center;
+        }
+
+        .guest-auth-photo picture img {
+            position: static;
         }
 
         .guest-auth-photo::before {
@@ -274,12 +287,16 @@
 
 <body class="site-public guest-auth font-sans antialiased">
 
-@php($guestCopyrightLine = '© ' . date('Y') . ' Direction de la Pension Civile — République d\'Haïti')
+@php($guestCopyrightLine = __('guest.layout.copyright', ['year' => date('Y')]))
 
 <div class="guest-auth-shell">
     @if ($showPhoto)
         <aside class="guest-auth-photo" aria-hidden="true">
-            <img src="{{ asset('images/guest-auth-pension-couple.jpg') }}" alt="">
+            <x-optimized-image
+                src="images/guest-auth-pension-couple.jpg"
+                alt=""
+                priority
+            />
             <p>{{ $guestCopyrightLine }}</p>
         </aside>
     @endif
@@ -296,13 +313,16 @@
                 'px-6 sm:px-8' => $wide,
             ])>
                 <div class="flex flex-col items-center {{ $wide ? 'mb-4' : ($noScroll ? 'mb-4' : 'mb-8') }}">
-                    <a href="{{ url('/') }}" title="Retour à l'accueil">
-                        <img src="{{ asset('images/setting-logo-1-M13oPLiYoM.png') }}"
-                             class="{{ $wide || $noScroll ? 'w-14 h-14' : 'w-20 h-20' }} object-contain {{ $noScroll ? 'mb-2' : 'mb-3' }} hover:opacity-80 transition-opacity"
-                             alt="Logo DPC">
+                    <a href="{{ url('/') }}" title="{{ __('guest.layout.back_home_title') }}">
+                        <x-optimized-image
+                            src="images/setting-logo-1-M13oPLiYoM.png"
+                            alt="{{ __('guest.layout.logo_alt') }}"
+                            class="{{ $wide || $noScroll ? 'w-14 h-14' : 'w-20 h-20' }} object-contain {{ $noScroll ? 'mb-2' : 'mb-3' }} hover:opacity-80 transition-opacity"
+                            loading="eager"
+                        ></x-optimized-image>
                     </a>
                     <p class="text-gray-700 text-sm font-medium tracking-wide uppercase text-center">
-                        Direction de la Pension Civile
+                        {{ __('guest.layout.direction') }}
                     </p>
                 </div>
                 {{ $slot }}
@@ -314,31 +334,31 @@
                         class="inline-flex items-center gap-2 text-sm text-gray-600 hover:text-[#173052] font-medium transition-colors"
                     >
                         <i class="fas fa-home text-xs" aria-hidden="true"></i>
-                        <span>Retour à l’accueil</span>
+                        <span>{{ __('guest.layout.back_home') }}</span>
                     </a>
 
-                    <div class="flex flex-wrap items-center justify-end gap-2" aria-label="Langue">
+                    <div class="flex flex-wrap items-center justify-end gap-2" aria-label="{{ __('guest.layout.language') }}">
                         @if ($locale === 'fr')
                             <span class="guest-lang-pill guest-lang-pill--active">
                                 <img src="{{ asset('images/france-flag-icon.svg') }}" alt="" aria-hidden="true">
-                                Français
+                                {{ __('guest.layout.french') }}
                             </span>
                         @else
-                            <a href="{{ route('locale', 'fr') }}" class="guest-lang-pill" title="Français">
+                            <a href="{{ route('locale', 'fr') }}" class="guest-lang-pill" title="{{ __('guest.layout.french') }}">
                                 <img src="{{ asset('images/france-flag-icon.svg') }}" alt="" aria-hidden="true">
-                                Français
+                                {{ __('guest.layout.french') }}
                             </a>
                         @endif
 
                         @if ($locale === 'ht')
                             <span class="guest-lang-pill guest-lang-pill--active">
                                 <img src="{{ asset('images/ht-flag.PNG') }}" alt="" aria-hidden="true">
-                                Kreyòl
+                                {{ __('guest.layout.creole') }}
                             </span>
                         @else
-                            <a href="{{ route('locale', 'ht') }}" class="guest-lang-pill" title="Kreyòl">
+                            <a href="{{ route('locale', 'ht') }}" class="guest-lang-pill" title="{{ __('guest.layout.creole') }}">
                                 <img src="{{ asset('images/ht-flag.PNG') }}" alt="" aria-hidden="true">
-                                Kreyòl
+                                {{ __('guest.layout.creole') }}
                             </a>
                         @endif
                     </div>
@@ -353,6 +373,7 @@
         </div>
     </div>
 </div>
-
+@stack('scripts')
+<!-- <script src="{{ asset('build/assets/app-CKnLtXCO.js') }}"></script> -->
 </body>
 </html>

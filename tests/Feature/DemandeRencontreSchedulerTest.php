@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Enums\AccountStatusEnum;
 use App\Enums\RencontreStatutEnum;
 use App\Enums\TypeDemandeEnum;
 use App\Models\Demande;
@@ -9,9 +10,12 @@ use App\Models\Service;
 use App\Models\User;
 use App\Models\WorkflowStep;
 use App\Notifications\DemandeStatusChangedNotification;
+use App\Notifications\DemandeSubmittedNotification;
 use App\Notifications\RencontreAgentAssigneNotification;
 use App\Services\Account\UserCategoryRoleSyncService;
+use App\Services\DemandeWorkflowService;
 use App\Services\HaitiHolidayService;
+use App\Services\Pension\BeneficiaireProvisioningService;
 use App\Services\RencontreAvailabilityService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
@@ -275,7 +279,7 @@ class DemandeRencontreSchedulerTest extends TestCase
         $directionUser = User::factory()->create([
             'service_id' => Service::where('code', Service::DIRECTION)->value('id'),
         ]);
-        $directionUser->assignRole('direction');
+        $directionUser->assignRole('directeur');
 
         $this->actingAs($user)
             ->post(route('demandes.rencontre.store'), $this->validStorePayload($agent))
@@ -295,10 +299,10 @@ class DemandeRencontreSchedulerTest extends TestCase
         $this->assertNull($demande->circuitSnapshot);
         Notification::assertNotSentTo(
             $directionUser,
-            \App\Notifications\DemandeSubmittedNotification::class
+            DemandeSubmittedNotification::class
         );
         $this->assertTrue(
-            app(\App\Services\DemandeWorkflowService::class)
+            app(DemandeWorkflowService::class)
                 ->availableTransferOptions($demande)
                 ->isEmpty()
         );
@@ -491,9 +495,9 @@ class DemandeRencontreSchedulerTest extends TestCase
         $this->seedStatuses();
         $agent = $this->makeFormalitesAgent();
         $user = $this->makePensionne([
-            'account_status' => \App\Enums\AccountStatusEnum::PROVISOIRE,
+            'account_status' => AccountStatusEnum::PROVISOIRE,
         ]);
-        app(\App\Services\Pension\BeneficiaireProvisioningService::class)
+        app(BeneficiaireProvisioningService::class)
             ->provisionAdultSelf($user, null, '8-34321');
 
         $this->actingAs($user)

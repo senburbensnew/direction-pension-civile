@@ -6,11 +6,13 @@
 
 <article class="bg-white border border-gray-200 card-shadow flex flex-col overflow-hidden">
     <a href="{{ route('reports.show', $report) }}" class="block overflow-hidden bg-gray-50">
-        <img src="{{ $report->coverUrl() }}"
-             alt="{{ $report->title }}"
-             class="w-full object-cover"
-             style="aspect-ratio: 16/10;"
-             loading="lazy" />
+        <x-optimized-image
+            :src="$report->coverComponentSrc()"
+            :alt="$report->title"
+            class="w-full object-cover"
+            style="aspect-ratio: 16/10;"
+            sizes="(min-width: 1024px) 33vw, (min-width: 640px) 50vw, 100vw"
+        ></x-optimized-image>
     </a>
     <div class="flex flex-col flex-1 p-5">
         <p class="text-xs font-bold text-orange-500 uppercase tracking-widest mb-2">

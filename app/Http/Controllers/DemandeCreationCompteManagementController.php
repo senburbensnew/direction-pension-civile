@@ -13,9 +13,7 @@ use Symfony\Component\HttpFoundation\Response;
 
 class DemandeCreationCompteManagementController extends Controller
 {
-    public function __construct(private DemandeCreationCompteReviewService $review)
-    {
-    }
+    public function __construct(private DemandeCreationCompteReviewService $review) {}
 
     public function index(Request $request)
     {
@@ -140,7 +138,7 @@ class DemandeCreationCompteManagementController extends Controller
 
     private function routePrefix(): string
     {
-        return $this->usesAdminUi() ? 'admin' : 'formalites';
+        return 'formalites';
     }
 
     private function named(string $action): string
@@ -150,34 +148,16 @@ class DemandeCreationCompteManagementController extends Controller
 
     private function viewName(string $page): string
     {
-        return $this->usesAdminUi()
-            ? 'admin.comptes-demandes.'.$page
-            : 'demandes.comptes-demandes.'.$page;
-    }
-
-    private function usesAdminUi(): bool
-    {
-        return request()->routeIs('admin.*');
+        return 'demandes.comptes-demandes.'.$page;
     }
 
     private function canDecide(): bool
     {
-        return ! $this->usesAdminUi()
-            && (bool) request()->user()?->hasRole(User::ROLE_AGENT_FORMALITES);
+        return (bool) request()->user()?->hasRole(User::ROLE_AGENT_FORMALITES);
     }
 
     private function canViewPieces(): bool
     {
-        $user = request()->user();
-
-        if (! $user) {
-            return false;
-        }
-
-        if ($this->usesAdminUi()) {
-            return $user->hasRole('admin');
-        }
-
-        return $user->hasRole(User::ROLE_AGENT_FORMALITES);
+        return (bool) request()->user()?->hasRole(User::ROLE_AGENT_FORMALITES);
     }
 }

@@ -2,15 +2,18 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Controllers\Concerns\StoresOptimizedImages;
 use App\Models\Partenaire;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Storage;
 
 class PartenaireController extends Controller
 {
+    use StoresOptimizedImages;
+
     public function index()
     {
         $partenaires = Partenaire::ordered()->get();
+
         return view('admin.partenaires.index', compact('partenaires'));
     }
 
@@ -22,22 +25,22 @@ class PartenaireController extends Controller
     public function store(Request $request)
     {
         $request->validate([
-            'name'        => 'required|string|max:255',
-            'logo'        => 'nullable|image|mimes:jpeg,png,jpg,gif,webp,svg|max:2048',
+            'name' => 'required|string|max:255',
+            'logo' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp,svg|max:2048',
             'website_url' => 'nullable|url|max:255',
-            'active'      => 'boolean',
-            'order'       => 'nullable|integer|min:0',
+            'active' => 'boolean',
+            'order' => 'nullable|integer|min:0',
         ]);
 
         $data = [
-            'name'        => $request->name,
+            'name' => $request->name,
             'website_url' => $request->website_url,
-            'active'      => $request->boolean('active', true),
-            'order'       => $request->order ?? (Partenaire::max('order') + 1),
+            'active' => $request->boolean('active', true),
+            'order' => $request->order ?? (Partenaire::max('order') + 1),
         ];
 
         if ($request->hasFile('logo')) {
-            $data['logo'] = $request->file('logo')->store('partenaires', 'public');
+            $data['logo'] = $this->storeOptimizedImage($request->file('logo'), 'partenaires', 'partenaire');
         }
 
         Partenaire::create($data);
@@ -54,25 +57,23 @@ class PartenaireController extends Controller
     public function update(Request $request, Partenaire $partenaire)
     {
         $request->validate([
-            'name'        => 'required|string|max:255',
-            'logo'        => 'nullable|image|mimes:jpeg,png,jpg,gif,webp,svg|max:2048',
+            'name' => 'required|string|max:255',
+            'logo' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp,svg|max:2048',
             'website_url' => 'nullable|url|max:255',
-            'active'      => 'boolean',
-            'order'       => 'nullable|integer|min:0',
+            'active' => 'boolean',
+            'order' => 'nullable|integer|min:0',
         ]);
 
         if ($request->hasFile('logo')) {
-            if ($partenaire->logo && !str_starts_with($partenaire->logo, 'images/')) {
-                Storage::disk('public')->delete($partenaire->logo);
-            }
-            $partenaire->logo = $request->file('logo')->store('partenaires', 'public');
+            $this->deleteOptimizedImage($partenaire->logo);
+            $partenaire->logo = $this->storeOptimizedImage($request->file('logo'), 'partenaires', 'partenaire');
         }
 
         $partenaire->update([
-            'name'        => $request->name,
+            'name' => $request->name,
             'website_url' => $request->website_url,
-            'active'      => $request->boolean('active', true),
-            'order'       => $request->order ?? $partenaire->order,
+            'active' => $request->boolean('active', true),
+            'order' => $request->order ?? $partenaire->order,
         ]);
 
         return redirect()->route('admin.partenaires.index')
@@ -92,9 +93,7 @@ class PartenaireController extends Controller
 
     public function destroy(Partenaire $partenaire)
     {
-        if ($partenaire->logo && !str_starts_with($partenaire->logo, 'images/')) {
-            Storage::disk('public')->delete($partenaire->logo);
-        }
+        $this->deleteOptimizedImage($partenaire->logo);
         $partenaire->delete();
 
         return redirect()->route('admin.partenaires.index')

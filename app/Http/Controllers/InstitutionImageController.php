@@ -2,15 +2,18 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Controllers\Concerns\StoresOptimizedImages;
 use App\Models\InstitutionImage;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Storage;
 
 class InstitutionImageController extends Controller
 {
+    use StoresOptimizedImages;
+
     public function index()
     {
         $images = InstitutionImage::ordered()->get();
+
         return view('admin.institution-images.index', compact('images'));
     }
 
@@ -22,19 +25,19 @@ class InstitutionImageController extends Controller
     public function store(Request $request)
     {
         $request->validate([
-            'title'  => 'nullable|string|max:255',
-            'image'  => 'required|image|mimes:jpeg,png,jpg,gif,webp|max:4096',
+            'title' => 'nullable|string|max:255',
+            'image' => 'required|image|mimes:jpeg,png,jpg,gif,webp|max:4096',
             'active' => 'boolean',
-            'order'  => 'nullable|integer|min:0',
+            'order' => 'nullable|integer|min:0',
         ]);
 
-        $path = $request->file('image')->store('institution-images', 'public');
+        $path = $this->storeOptimizedImage($request->file('image'), 'institution-images', 'institution');
 
         InstitutionImage::create([
-            'title'  => $request->title,
-            'image'  => $path,
+            'title' => $request->title,
+            'image' => $path,
             'active' => $request->boolean('active', true),
-            'order'  => $request->order ?? (InstitutionImage::max('order') + 1),
+            'order' => $request->order ?? (InstitutionImage::max('order') + 1),
         ]);
 
         return redirect()->route('admin.institution-images.index')
@@ -49,23 +52,21 @@ class InstitutionImageController extends Controller
     public function update(Request $request, InstitutionImage $institutionImage)
     {
         $request->validate([
-            'title'  => 'nullable|string|max:255',
-            'image'  => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:4096',
+            'title' => 'nullable|string|max:255',
+            'image' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:4096',
             'active' => 'boolean',
-            'order'  => 'nullable|integer|min:0',
+            'order' => 'nullable|integer|min:0',
         ]);
 
         if ($request->hasFile('image')) {
-            if (!str_starts_with($institutionImage->image, 'images/')) {
-                Storage::disk('public')->delete($institutionImage->image);
-            }
-            $institutionImage->image = $request->file('image')->store('institution-images', 'public');
+            $this->deleteOptimizedImage($institutionImage->image);
+            $institutionImage->image = $this->storeOptimizedImage($request->file('image'), 'institution-images', 'institution');
         }
 
         $institutionImage->update([
-            'title'  => $request->title,
+            'title' => $request->title,
             'active' => $request->boolean('active', true),
-            'order'  => $request->order ?? $institutionImage->order,
+            'order' => $request->order ?? $institutionImage->order,
         ]);
 
         return redirect()->route('admin.institution-images.index')
@@ -85,9 +86,7 @@ class InstitutionImageController extends Controller
 
     public function destroy(InstitutionImage $institutionImage)
     {
-        if (!str_starts_with($institutionImage->image, 'images/')) {
-            Storage::disk('public')->delete($institutionImage->image);
-        }
+        $this->deleteOptimizedImage($institutionImage->image);
         $institutionImage->delete();
 
         return redirect()->route('admin.institution-images.index')

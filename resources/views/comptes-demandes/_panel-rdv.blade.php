@@ -6,9 +6,7 @@
     $pieces = $cp->identityPieces();
     $estTraitable = $cp->canBeDecided();
     $canDecideCompte = auth()->user()->hasRole(\App\Models\User::ROLE_AGENT_FORMALITES);
-    $compteShowRoute = auth()->user()->hasRole('admin')
-        ? route('admin.comptes-demandes.show', $cp)
-        : route('formalites.comptes-demandes.show', $cp);
+    $compteShowRoute = route('formalites.comptes-demandes.show', $cp);
     $rdvRealise = $request->rencontreStatut() === \App\Enums\RencontreStatutEnum::REALISE;
     $cpPending = $cp->isPending();
 @endphp

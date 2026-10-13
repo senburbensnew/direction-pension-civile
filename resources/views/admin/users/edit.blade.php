@@ -294,7 +294,7 @@
                         <li class="flex items-center justify-between gap-3 px-4 py-3 text-sm">
                             <div>
                                 <span class="font-medium text-gray-800">
-                                    {{ \App\Enums\BeneficiaireRelationEnum::tryFrom($link->relation)?->label() ?? $link->relation }}
+                                    {{ $link->relation?->label() ?? '—' }}
                                 </span>
                                 <span class="text-gray-500"> — Bénéficiaire #{{ $link->beneficiaire_id }}</span>
                                 <span class="block text-xs text-gray-400">Codes : {{ $codes }}</span>

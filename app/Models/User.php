@@ -3,29 +3,32 @@
 namespace App\Models;
 
 use App\Enums\AccountStatusEnum;
-use App\Models\Gender;
-use App\Models\Service;
-use Illuminate\Support\Str;
-use Laravel\Sanctum\HasApiTokens;
-use Spatie\Permission\Traits\HasRoles;
-use Illuminate\Notifications\Notifiable;
+use App\Enums\BeneficiaireRelationEnum;
+use App\Services\Account\UserCategoryResolver;
+use App\Services\Pension\ActivePensionContext;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
-use App\Services\Account\UserCategoryResolver;
-use App\Services\Pension\ActivePensionContext;
 use Illuminate\Foundation\Auth\User as Authenticatable;
+use Illuminate\Notifications\Notifiable;
+use Illuminate\Support\Str;
+use Laravel\Sanctum\HasApiTokens;
+use Spatie\Permission\Traits\HasRoles;
 
 class User extends Authenticatable
 {
-    use HasApiTokens, HasFactory, Notifiable, HasRoles;
+    use HasApiTokens, HasFactory, HasRoles, Notifiable;
 
-    public const ROLE_DIRECTION = 'direction';
     public const ROLE_DIRECTEUR = 'directeur';
+
     public const ROLE_ASSISTANT_DIRECTEUR = 'assistant_directeur';
+
     public const ROLE_AGENT_RDV = 'agent_rdv';
+
     public const ROLE_VALIDATEUR_RDV = 'validateur_rdv';
+
     public const ROLE_AGENT_FORMALITES = 'agent_formalites';
 
     /** @deprecated Use AccountStatusEnum::ACTIF */
@@ -38,7 +41,6 @@ class User extends Authenticatable
 
     /** @var list<string> */
     public const DIRECTION_ROLES = [
-        self::ROLE_DIRECTION,
         self::ROLE_DIRECTEUR,
         self::ROLE_ASSISTANT_DIRECTEUR,
     ];
@@ -162,7 +164,7 @@ class User extends Authenticatable
         $suffix = 2;
 
         do {
-            $username = $base . $suffix;
+            $username = $base.$suffix;
 
             $exists = self::where('username', $username)->exists();
 
@@ -282,7 +284,7 @@ class User extends Authenticatable
             if ($beneficiaire) {
                 $selfLink = UserBeneficiaireLink::query()
                     ->where('beneficiaire_id', $beneficiaire->id)
-                    ->where('relation', \App\Enums\BeneficiaireRelationEnum::SELF->value)
+                    ->where('relation', BeneficiaireRelationEnum::SELF->value)
                     ->first();
 
                 $linkUser = $selfLink?->user ?? $beneficiaire->users()->first();
@@ -400,7 +402,7 @@ class User extends Authenticatable
         return $this->hasMany(UserCategoryAssignment::class);
     }
 
-    public function institution(): \Illuminate\Database\Eloquent\Relations\BelongsTo
+    public function institution(): BelongsTo
     {
         return $this->belongsTo(Institution::class);
     }

@@ -8,9 +8,7 @@ return new class extends Migration
 {
     public function up(): void
     {
-        foreach ([User::ROLE_DIRECTEUR, User::ROLE_ASSISTANT_DIRECTEUR] as $role) {
-            Role::firstOrCreate(['name' => $role, 'guard_name' => 'web']);
-        }
+        // Référentiel Spatie : RolesAndPermissionsSeeder
     }
 
     public function down(): void

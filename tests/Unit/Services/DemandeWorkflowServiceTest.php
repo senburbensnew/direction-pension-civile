@@ -4,17 +4,17 @@ namespace Tests\Unit\Services;
 
 use App\Enums\TypeDemandeEnum;
 use App\Models\Demande;
-use App\Models\DemandeHistory;
 use App\Models\DemandeInteraction;
-use App\Models\WorkflowStep;
-use App\Models\WorkflowStepTransition;
 use App\Models\Service;
 use App\Models\User;
+use App\Models\WorkflowStep;
+use App\Models\WorkflowStepTransition;
 use App\Notifications\DemandeStatusChangedNotification;
 use App\Notifications\DemandeSubmittedNotification;
 use App\Services\DemandeWorkflowService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Notification;
+use Symfony\Component\HttpKernel\Exception\HttpException;
 use Tests\TestCase;
 use Tests\Traits\SeedsRequiredData;
 
@@ -30,7 +30,7 @@ class DemandeWorkflowServiceTest extends TestCase
         $this->seedStatuses();
         $this->seedServices();
         $this->seedRoles();
-        $this->workflowService = new DemandeWorkflowService();
+        $this->workflowService = new DemandeWorkflowService;
     }
 
     private function makeUser(?string $role = null): User
@@ -39,12 +39,14 @@ class DemandeWorkflowServiceTest extends TestCase
         if ($role) {
             $user->assignRole($role);
         }
+
         return $user;
     }
 
     private function makeDemande(string $type = TypeDemandeEnum::DEMANDE_ATTESTATION->value): Demande
     {
         $user = $this->makeUser();
+
         return Demande::create(['type' => $type, 'created_by' => $user->id]);
     }
 
@@ -64,7 +66,7 @@ class DemandeWorkflowServiceTest extends TestCase
     public function submit_sets_status_to_soumise_and_assigns_direction_service(): void
     {
         $demande = $this->makeDemande();
-        $user    = $this->makeUser();
+        $user = $this->makeUser();
 
         $this->workflowService->submit($demande, $user);
 
@@ -74,9 +76,9 @@ class DemandeWorkflowServiceTest extends TestCase
         $this->assertEquals($this->direction()->id, $demande->current_service_id);
         $this->assertEquals($this->direction()->id, $demande->currentStep?->service_id);
         $this->assertDatabaseHas('demande_interactions', [
-            'demande_id'    => $demande->id,
+            'demande_id' => $demande->id,
             'to_service_id' => $this->direction()->id,
-            'statut'        => DemandeInteraction::STATUT_ACCEPTE,
+            'statut' => DemandeInteraction::STATUT_ACCEPTE,
         ]);
     }
 
@@ -84,15 +86,15 @@ class DemandeWorkflowServiceTest extends TestCase
     public function submit_creates_interaction_record_with_accepte_statut(): void
     {
         $demande = $this->makeDemande();
-        $user    = $this->makeUser();
+        $user = $this->makeUser();
 
         $this->workflowService->submit($demande, $user);
 
         $this->assertDatabaseHas('demande_interactions', [
-            'demande_id'    => $demande->id,
-            'type'          => DemandeInteraction::TYPE_TRANSFERT,
+            'demande_id' => $demande->id,
+            'type' => DemandeInteraction::TYPE_TRANSFERT,
             'to_service_id' => $this->direction()->id,
-            'statut'        => DemandeInteraction::STATUT_ACCEPTE,
+            'statut' => DemandeInteraction::STATUT_ACCEPTE,
         ]);
     }
 
@@ -105,11 +107,11 @@ class DemandeWorkflowServiceTest extends TestCase
 
         $owner = $this->makeUser('pensionne');
         $dirUser = User::factory()->create(['service_id' => $this->direction()->id]);
-        $dirUser->assignRole('direction');
+        $dirUser->assignRole('directeur');
 
         $demande = Demande::create([
-            'type'            => TypeDemandeEnum::DEMANDE_ATTESTATION->value,
-            'created_by'      => $owner->id,
+            'type' => TypeDemandeEnum::DEMANDE_ATTESTATION->value,
+            'created_by' => $owner->id,
             'current_step_id' => WorkflowStep::idForCode('BROUILLON'),
         ]);
 
@@ -125,7 +127,7 @@ class DemandeWorkflowServiceTest extends TestCase
     public function submit_captures_circuit_snapshot(): void
     {
         $demande = $this->makeDemande();
-        $user    = $this->makeUser();
+        $user = $this->makeUser();
 
         $this->workflowService->submit($demande, $user);
 
@@ -142,7 +144,7 @@ class DemandeWorkflowServiceTest extends TestCase
         $demande = $this->makeDemande();
         $demande->update([
             'current_service_id' => $this->direction()->id,
-            'current_step_id'    => $fromStep->id,
+            'current_step_id' => $fromStep->id,
         ]);
 
         $options = $this->workflowService->availableTransferOptions($demande);
@@ -155,16 +157,16 @@ class DemandeWorkflowServiceTest extends TestCase
     // ─── validateTransition() ────────────────────────────────────────────────
 
     /** @test */
-    public function validateTransition_returns_true_when_step_transition_exists(): void
+    public function validate_transition_returns_true_when_step_transition_exists(): void
     {
         $fromStep = WorkflowStep::create(['code' => 'DIR', 'nom' => 'Direction',   'service_id' => $this->direction()->id,   'ordre' => 10]);
-        $toStep   = WorkflowStep::create(['code' => 'LIQ', 'nom' => 'Liquidation', 'service_id' => $this->liquidation()->id, 'ordre' => 20]);
+        $toStep = WorkflowStep::create(['code' => 'LIQ', 'nom' => 'Liquidation', 'service_id' => $this->liquidation()->id, 'ordre' => 20]);
 
         WorkflowStepTransition::create([
             'from_step_id' => $fromStep->id,
-            'to_step_id'   => $toStep->id,
-            'action'       => 'transfer',
-            'ordre'        => 10,
+            'to_step_id' => $toStep->id,
+            'action' => 'transfer',
+            'ordre' => 10,
         ]);
 
         $this->assertTrue($this->workflowService->validateTransition(
@@ -174,7 +176,7 @@ class DemandeWorkflowServiceTest extends TestCase
     }
 
     /** @test */
-    public function validateTransition_returns_false_when_no_step_transition_configured(): void
+    public function validate_transition_returns_false_when_no_step_transition_configured(): void
     {
         WorkflowStep::create(['code' => 'DIR', 'nom' => 'Direction',   'service_id' => $this->direction()->id,   'ordre' => 10]);
         WorkflowStep::create(['code' => 'LIQ', 'nom' => 'Liquidation', 'service_id' => $this->liquidation()->id, 'ordre' => 20]);
@@ -200,28 +202,28 @@ class DemandeWorkflowServiceTest extends TestCase
         $soumise->update(['service_id' => $this->direction()->id]);
 
         $secStep = WorkflowStep::create([
-            'code'       => 'EN_INSTRUCTION_SECRETARIAT',
-            'nom'        => 'Dispatch — Secrétariat',
+            'code' => 'EN_INSTRUCTION_SECRETARIAT',
+            'nom' => 'Dispatch — Secrétariat',
             'service_id' => $this->secretariat()->id,
-            'ordre'      => 25,
+            'ordre' => 25,
             'type_noeud' => 'intermediaire',
         ]);
 
         WorkflowStepTransition::create([
             'from_step_id' => $soumise->id,
-            'to_step_id'   => $secStep->id,
-            'action'       => 'Transmettre au Secrétariat pour dispatching',
-            'ordre'        => 10,
+            'to_step_id' => $secStep->id,
+            'action' => 'Transmettre au Secrétariat pour dispatching',
+            'ordre' => 10,
         ]);
 
-        $user = $this->makeUser('direction');
+        $user = $this->makeUser('directeur');
         $demande = $this->makeDemande();
         $demande->update([
             'current_service_id' => $this->direction()->id,
-            'current_step_id'    => $soumise->id,
-            'annotation'         => 'Annoté',
-            'annotated_by'       => $user->id,
-            'annotated_at'       => now(),
+            'current_step_id' => $soumise->id,
+            'annotation' => 'Annoté',
+            'annotated_by' => $user->id,
+            'annotated_at' => now(),
         ]);
 
         $interaction = $this->workflowService->dispatchToSecretariatAfterAnnotation($demande, $user);
@@ -240,14 +242,14 @@ class DemandeWorkflowServiceTest extends TestCase
         $soumise = WorkflowStep::forCode('SOUMISE');
         $soumise->update(['service_id' => $this->direction()->id]);
 
-        $user = $this->makeUser('direction');
+        $user = $this->makeUser('directeur');
         $demande = $this->makeDemande();
         $demande->update([
             'current_service_id' => $this->direction()->id,
-            'current_step_id'    => $soumise->id,
-            'annotation'         => 'Annoté',
-            'annotated_by'       => $user->id,
-            'annotated_at'       => now(),
+            'current_step_id' => $soumise->id,
+            'annotation' => 'Annoté',
+            'annotated_by' => $user->id,
+            'annotated_at' => now(),
         ]);
 
         $this->assertNull(
@@ -260,13 +262,13 @@ class DemandeWorkflowServiceTest extends TestCase
     private function makeStepTransition(): WorkflowStep
     {
         $fromStep = WorkflowStep::create(['code' => 'DIR', 'nom' => 'Direction',   'service_id' => $this->direction()->id,   'ordre' => 10]);
-        $toStep   = WorkflowStep::create(['code' => 'LIQ', 'nom' => 'Liquidation', 'service_id' => $this->liquidation()->id, 'ordre' => 20]);
+        $toStep = WorkflowStep::create(['code' => 'LIQ', 'nom' => 'Liquidation', 'service_id' => $this->liquidation()->id, 'ordre' => 20]);
 
         WorkflowStepTransition::create([
             'from_step_id' => $fromStep->id,
-            'to_step_id'   => $toStep->id,
-            'action'       => 'transfer',
-            'ordre'        => 10,
+            'to_step_id' => $toStep->id,
+            'action' => 'transfer',
+            'ordre' => 10,
         ]);
 
         return $fromStep;
@@ -280,10 +282,10 @@ class DemandeWorkflowServiceTest extends TestCase
         $demande = $this->makeDemande();
         $demande->update([
             'current_service_id' => $this->direction()->id,
-            'current_step_id'    => $fromStep->id,
-            'annotation'         => 'Test',
-            'annotated_by'       => 1,
-            'annotated_at'       => now(),
+            'current_step_id' => $fromStep->id,
+            'annotation' => 'Test',
+            'annotated_by' => 1,
+            'annotated_at' => now(),
         ]);
 
         $user = $this->makeUser();
@@ -306,10 +308,10 @@ class DemandeWorkflowServiceTest extends TestCase
         $demande = $this->makeDemande();
         $demande->update([
             'current_service_id' => $this->direction()->id,
-            'current_step_id'    => $fromStep->id,
-            'annotation'         => 'Note',
-            'annotated_by'       => 1,
-            'annotated_at'       => now(),
+            'current_step_id' => $fromStep->id,
+            'annotation' => 'Note',
+            'annotated_by' => 1,
+            'annotated_at' => now(),
         ]);
 
         $user = $this->makeUser();
@@ -318,7 +320,7 @@ class DemandeWorkflowServiceTest extends TestCase
 
         $this->assertDatabaseHas('demande_histories', [
             'demande_id' => $demande->id,
-            'statut'     => 'TRANSFERT_EN_ATTENTE',
+            'statut' => 'TRANSFERT_EN_ATTENTE',
         ]);
     }
 
@@ -332,12 +334,12 @@ class DemandeWorkflowServiceTest extends TestCase
         $demande = $this->makeDemande();
         $demande->update([
             'current_service_id' => $this->direction()->id,
-            'current_step_id'    => $fromStep->id,
+            'current_step_id' => $fromStep->id,
         ]);
 
         $user = $this->makeUser();
 
-        $this->expectException(\Symfony\Component\HttpKernel\Exception\HttpException::class);
+        $this->expectException(HttpException::class);
 
         $this->workflowService->transfer($demande, $this->liquidation(), $user);
     }
@@ -345,17 +347,17 @@ class DemandeWorkflowServiceTest extends TestCase
     // ─── accepterReception() ─────────────────────────────────────────────────
 
     /** @test */
-    public function accepterReception_sets_interaction_to_accepte_and_status_to_en_cours(): void
+    public function accepter_reception_sets_interaction_to_accepte_and_status_to_en_cours(): void
     {
-        $user    = $this->makeUser();
+        $user = $this->makeUser();
         $demande = $this->makeDemande();
 
         $interaction = DemandeInteraction::create([
-            'demande_id'    => $demande->id,
-            'type'          => DemandeInteraction::TYPE_TRANSFERT,
+            'demande_id' => $demande->id,
+            'type' => DemandeInteraction::TYPE_TRANSFERT,
             'to_service_id' => $this->liquidation()->id,
-            'initiated_by'  => $user->id,
-            'statut'        => DemandeInteraction::STATUT_EN_ATTENTE,
+            'initiated_by' => $user->id,
+            'statut' => DemandeInteraction::STATUT_EN_ATTENTE,
         ]);
 
         $this->workflowService->accepterReception($interaction, $user);
@@ -368,20 +370,20 @@ class DemandeWorkflowServiceTest extends TestCase
     }
 
     /** @test */
-    public function accepterReception_aborts_422_when_already_processed(): void
+    public function accepter_reception_aborts_422_when_already_processed(): void
     {
-        $user    = $this->makeUser();
+        $user = $this->makeUser();
         $demande = $this->makeDemande();
 
         $interaction = DemandeInteraction::create([
-            'demande_id'    => $demande->id,
-            'type'          => DemandeInteraction::TYPE_TRANSFERT,
+            'demande_id' => $demande->id,
+            'type' => DemandeInteraction::TYPE_TRANSFERT,
             'to_service_id' => $this->liquidation()->id,
-            'initiated_by'  => $user->id,
-            'statut'        => DemandeInteraction::STATUT_ACCEPTE,
+            'initiated_by' => $user->id,
+            'statut' => DemandeInteraction::STATUT_ACCEPTE,
         ]);
 
-        $this->expectException(\Symfony\Component\HttpKernel\Exception\HttpException::class);
+        $this->expectException(HttpException::class);
 
         $this->workflowService->accepterReception($interaction, $user);
     }
@@ -389,20 +391,20 @@ class DemandeWorkflowServiceTest extends TestCase
     // ─── refuserReception() ──────────────────────────────────────────────────
 
     /** @test */
-    public function refuserReception_returns_demande_to_originating_service(): void
+    public function refuser_reception_returns_demande_to_originating_service(): void
     {
-        $user    = $this->makeUser();
+        $user = $this->makeUser();
         $demande = $this->makeDemande();
 
         $demande->update(['current_service_id' => $this->liquidation()->id]);
 
         $interaction = DemandeInteraction::create([
-            'demande_id'      => $demande->id,
-            'type'            => DemandeInteraction::TYPE_TRANSFERT,
+            'demande_id' => $demande->id,
+            'type' => DemandeInteraction::TYPE_TRANSFERT,
             'from_service_id' => $this->direction()->id,
-            'to_service_id'   => $this->liquidation()->id,
-            'initiated_by'    => $user->id,
-            'statut'          => DemandeInteraction::STATUT_EN_ATTENTE,
+            'to_service_id' => $this->liquidation()->id,
+            'initiated_by' => $user->id,
+            'statut' => DemandeInteraction::STATUT_EN_ATTENTE,
         ]);
 
         $this->workflowService->refuserReception($interaction, $user, 'Dossier incomplet');
@@ -419,9 +421,9 @@ class DemandeWorkflowServiceTest extends TestCase
     // ─── affecterServices() ──────────────────────────────────────────────────
 
     /** @test */
-    public function affecterServices_creates_avis_interactions_for_each_service(): void
+    public function affecter_services_creates_avis_interactions_for_each_service(): void
     {
-        $user    = $this->makeUser('direction');
+        $user = $this->makeUser('directeur');
         $demande = $this->makeDemande();
         $demande->update(['current_step_id' => WorkflowStep::idForCode('EN_COURS')]);
 
@@ -431,17 +433,17 @@ class DemandeWorkflowServiceTest extends TestCase
 
         $this->assertDatabaseCount('demande_interactions', 2);
         $this->assertDatabaseHas('demande_interactions', [
-            'demande_id'    => $demande->id,
-            'type'          => DemandeInteraction::TYPE_AVIS,
+            'demande_id' => $demande->id,
+            'type' => DemandeInteraction::TYPE_AVIS,
             'to_service_id' => $this->liquidation()->id,
-            'statut'        => DemandeInteraction::STATUT_EN_ATTENTE,
+            'statut' => DemandeInteraction::STATUT_EN_ATTENTE,
         ]);
     }
 
     /** @test */
-    public function affecterServices_updates_existing_interaction_rather_than_duplicating(): void
+    public function affecter_services_updates_existing_interaction_rather_than_duplicating(): void
     {
-        $user    = $this->makeUser('direction');
+        $user = $this->makeUser('directeur');
         $demande = $this->makeDemande();
         $demande->update(['current_step_id' => WorkflowStep::idForCode('EN_COURS')]);
 
@@ -457,18 +459,18 @@ class DemandeWorkflowServiceTest extends TestCase
     // ─── repondreAffectation() ───────────────────────────────────────────────
 
     /** @test */
-    public function repondreAffectation_updates_statut_and_creates_history(): void
+    public function repondre_affectation_updates_statut_and_creates_history(): void
     {
-        $user    = $this->makeUser();
+        $user = $this->makeUser();
         $demande = $this->makeDemande();
         $demande->update(['current_step_id' => WorkflowStep::idForCode('EN_COURS')]);
 
         $affectation = DemandeInteraction::create([
-            'demande_id'    => $demande->id,
-            'type'          => DemandeInteraction::TYPE_AVIS,
+            'demande_id' => $demande->id,
+            'type' => DemandeInteraction::TYPE_AVIS,
             'to_service_id' => $this->liquidation()->id,
-            'statut'        => DemandeInteraction::STATUT_EN_ATTENTE,
-            'initiated_by'  => $user->id,
+            'statut' => DemandeInteraction::STATUT_EN_ATTENTE,
+            'initiated_by' => $user->id,
         ]);
 
         $this->workflowService->repondreAffectation($affectation, $user, 'Avis favorable', 'TERMINE');

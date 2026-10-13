@@ -28,9 +28,7 @@
         <div class="flex flex-col md:flex-row justify-between items-center mb-12 gap-8">
             <div class="text-center mb-6 flex flex-col md:flex-row items-center justify-center w-full gap-4 md:gap-8">
 
-                <img src="{{ asset('images/setting-logo-1-M13oPLiYoM.png') }}"
-                    alt="Logo"
-                    class="w-16 h-16 md:w-24 md:h-24 object-cover shrink-0" loading="lazy">
+                <x-dpc-logo class="w-16 h-16 md:w-24 md:h-24 object-cover shrink-0" />
 
                 <div class="px-4">
                     <h1 class="text-lg md:text-xl font-bold mb-1">Formalité administrative</h1>
@@ -38,9 +36,7 @@
                     <p class="text-sm text-gray-600">Remplissez soigneusement les informations demandées</p>
                 </div>
 
-                <img src="{{ asset('images/setting-logo-1-M13oPLiYoM.png') }}"
-                    class="w-16 h-16 md:w-24 md:h-24 object-cover shrink-0 hidden md:block"
-                    loading="lazy">
+                <x-dpc-logo class="w-16 h-16 md:w-24 md:h-24 object-cover shrink-0 hidden md:block" />
             </div>
         </div>
 

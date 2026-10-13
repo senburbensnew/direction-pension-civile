@@ -2,8 +2,8 @@
 
 namespace App\Models;
 
+use App\Support\PublicMedia;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Support\Facades\Storage;
 
 class Official extends Model
 {
@@ -16,25 +16,52 @@ class Official extends Model
 
     public function photoUrl(): string
     {
-        if (!$this->photo) {
+        if (! $this->photo) {
             $name = urlencode($this->nom);
-            $bg   = $this->sexe === 'F' ? 'E91E63' : '0D8ABC';
+            $bg = $this->sexe === 'F' ? 'E91E63' : '0D8ABC';
+
             return "https://ui-avatars.com/api/?name={$name}&background={$bg}&color=fff&size=200";
         }
         if (str_starts_with($this->photo, 'images/') || str_starts_with($this->photo, 'http')) {
             return str_starts_with($this->photo, 'http') ? $this->photo : asset($this->photo);
         }
-        return Storage::url($this->photo);
+
+        return $this->mediaSources()['url'];
+    }
+
+    public function photoComponentSrc(): string
+    {
+        if (! $this->photo) {
+            return $this->photoUrl();
+        }
+
+        return PublicMedia::componentSrc($this->photo);
+    }
+
+    /**
+     * @return array{url: string, webp: ?string, width: ?int, height: ?int}
+     */
+    public function mediaSources(): array
+    {
+        if (! $this->photo) {
+            return ['url' => $this->photoUrl(), 'webp' => null, 'width' => null, 'height' => null];
+        }
+
+        if (str_starts_with($this->photo, 'http://') || str_starts_with($this->photo, 'https://')) {
+            return ['url' => $this->photo, 'webp' => null, 'width' => null, 'height' => null];
+        }
+
+        return PublicMedia::forUploadedOrStatic($this->photo);
     }
 
     public function hasDiscours(): bool
     {
-        return !empty($this->discours);
+        return ! empty($this->discours);
     }
 
     public function hasBiographie(): bool
     {
-        return !empty($this->biographie);
+        return ! empty($this->biographie);
     }
 
     public function biographieHtml(): string
@@ -58,9 +85,10 @@ class Official extends Model
         }
         // Plain text — convert paragraph breaks and line breaks to HTML
         $paragraphs = preg_split('/\n{2,}/', trim($content));
+
         return implode('', array_map(
-            fn($p) => '<p>' . nl2br(e(trim($p))) . '</p>',
-            array_filter($paragraphs, fn($p) => trim($p) !== '')
+            fn ($p) => '<p>'.nl2br(e(trim($p))).'</p>',
+            array_filter($paragraphs, fn ($p) => trim($p) !== '')
         ));
     }
 

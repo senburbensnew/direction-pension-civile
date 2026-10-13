@@ -2,68 +2,208 @@
 
 namespace Database\Seeders;
 
-use Illuminate\Database\Seeder;
-use Spatie\Permission\Models\Role;
-use Spatie\Permission\Models\Permission;
 use App\Models\User;
+use Illuminate\Database\Seeder;
+use Spatie\Permission\Models\Permission;
+use Spatie\Permission\Models\Role;
+use Spatie\Permission\PermissionRegistrar;
+
 class RolesAndPermissionsSeeder extends Seeder
 {
-    public function run()
+    public const GUARD = 'web';
+
+    public function run(): void
     {
-        $permissions = [
-            'CAN_VIEW_PENSIONNE_SECTION' => ['viewPensionneSection', 'viewPensionnaireSection'],
-            'CAN_VIEW_FONCTIONNAIRE_SECTION' => ['viewFonctionnaireSection'],
-            'CAN_VIEW_INSTITUTION_SECTION' => ['viewInstitutionSection'],
-            'CAN_VIEW_PENSIONNE_MENU' => ['viewPensionneMenu', 'viewPensionnaireMenu'],
-            'CAN_VIEW_FONCTIONNAIRE_MENU' => ['viewFonctionnaireMenu'],
-            'CAN_VIEW_INSTITUTION_MENU' => ['viewInstitutionMenu'],
-            'CAN_VIEW_DASHBOARD' => ['viewDashboard'],
+        $this->seedPermissions();
+        $this->seedRoles();
+        $this->syncRolePermissions();
+    }
+
+    /**
+     * @return list<string>
+     */
+    public static function permissionNames(): array
+    {
+        return [
+            'CAN_VIEW_PENSIONNE_SECTION',
+            'CAN_VIEW_FONCTIONNAIRE_SECTION',
+            'CAN_VIEW_INSTITUTION_SECTION',
+            'CAN_VIEW_PENSIONNE_MENU',
+            'CAN_VIEW_FONCTIONNAIRE_MENU',
+            'CAN_VIEW_INSTITUTION_MENU',
+            'CAN_VIEW_DASHBOARD',
         ];
+    }
 
-        foreach ($permissions as $name => $legacyNames) {
-            $permission = Permission::where('name', $name)->first();
+    /**
+     * @return list<string>
+     */
+    public static function allPermissionNames(): array
+    {
+        return self::permissionNames();
+    }
 
-            foreach ($legacyNames as $legacyName) {
-                $legacy = Permission::where('name', $legacyName)->first();
+    /**
+     * @return list<string>
+     */
+    public static function canonicalRoles(): array
+    {
+        return [
+            'admin',
+            'agent_formalites',
+            'agent_rdv',
+            'assistant_directeur',
+            'directeur',
+            'fonctionnaire',
+            'institution',
+            'pensionne',
+            'responsable_service_accueil_formalites',
+            'validateur_rdv',
+        ];
+    }
 
-                if (! $legacy) {
-                    continue;
-                }
+    /**
+     * @return list<string>
+     */
+    public static function rolesRequiringService(): array
+    {
+        return [
+            'agent_rdv',
+            'validateur_rdv',
+            'agent_formalites',
+            'responsable_service_accueil_formalites',
+        ];
+    }
 
-                if ($permission) {
-                    $legacy->delete();
-                } else {
-                    $legacy->update(['name' => $name]);
-                    $permission = $legacy;
-                }
-            }
+    /**
+     * @return list<string>
+     */
+    public static function portalRoles(): array
+    {
+        return [
+            'pensionne',
+            'fonctionnaire',
+            'institution',
+        ];
+    }
 
-            if (! $permission) {
-                Permission::create(['name' => $name, 'guard_name' => 'web']);
-            }
+    /**
+     * @return list<string>
+     */
+    public static function internalRoles(): array
+    {
+        return array_values(array_diff(self::canonicalRoles(), self::portalRoles()));
+    }
+
+    /**
+     * @return list<string>
+     */
+    public static function directionRoles(): array
+    {
+        return [
+            User::ROLE_DIRECTEUR,
+            User::ROLE_ASSISTANT_DIRECTEUR,
+        ];
+    }
+
+    /**
+     * @return list<string>
+     */
+    public static function adminOrDirectionRoles(): array
+    {
+        return array_values(array_unique(array_merge(['admin'], self::directionRoles())));
+    }
+
+    /**
+     * @return list<string>
+     */
+    public static function corbeilleAccessRoles(): array
+    {
+        return self::internalRoles();
+    }
+
+    /**
+     * @return array<string, string>
+     */
+    public static function roleToServiceCode(): array
+    {
+        return [
+            User::ROLE_DIRECTEUR => 'direction',
+            User::ROLE_ASSISTANT_DIRECTEUR => 'direction',
+            'responsable_service_accueil_formalites' => 'service_accueil_formalites',
+            User::ROLE_AGENT_FORMALITES => 'service_accueil_formalites',
+        ];
+    }
+
+    /**
+     * @return array<string, list<string>>
+     */
+    public static function rolePermissions(): array
+    {
+        $all = self::allPermissionNames();
+
+        return [
+            'admin' => $all,
+            'pensionne' => [
+                'CAN_VIEW_PENSIONNE_SECTION',
+                'CAN_VIEW_PENSIONNE_MENU',
+                'CAN_VIEW_DASHBOARD',
+            ],
+            'fonctionnaire' => [
+                'CAN_VIEW_FONCTIONNAIRE_SECTION',
+                'CAN_VIEW_FONCTIONNAIRE_MENU',
+                'CAN_VIEW_DASHBOARD',
+            ],
+            'institution' => [
+                'CAN_VIEW_INSTITUTION_SECTION',
+                'CAN_VIEW_INSTITUTION_MENU',
+                'CAN_VIEW_DASHBOARD',
+            ],
+        ];
+    }
+
+    /**
+     * @return list<string>
+     */
+    public static function allRoleNamesForSeeding(): array
+    {
+        return self::canonicalRoles();
+    }
+
+    public static function guard(): string
+    {
+        return self::GUARD;
+    }
+
+    private function seedPermissions(): void
+    {
+        foreach (self::permissionNames() as $name) {
+            Permission::firstOrCreate([
+                'name' => $name,
+                'guard_name' => self::guard(),
+            ]);
         }
 
-        app()[\Spatie\Permission\PermissionRegistrar::class]->forgetCachedPermissions();
+        app(PermissionRegistrar::class)->forgetCachedPermissions();
+    }
 
-        $canViewPensionneSection = Permission::where('name', 'CAN_VIEW_PENSIONNE_SECTION')->first();
-        $canViewFonctionnaireSection = Permission::where('name', 'CAN_VIEW_FONCTIONNAIRE_SECTION')->first();
-        $canViewInstitutionSection = Permission::where('name', 'CAN_VIEW_INSTITUTION_SECTION')->first();
-        $canViewPensionneMenu = Permission::where('name', 'CAN_VIEW_PENSIONNE_MENU')->first();
-        $canViewFonctionnaireMenu = Permission::where('name', 'CAN_VIEW_FONCTIONNAIRE_MENU')->first();
-        $canViewInstitutionMenu = Permission::where('name', 'CAN_VIEW_INSTITUTION_MENU')->first();
-        $canViewDashboard = Permission::where('name', 'CAN_VIEW_DASHBOARD')->first();
+    private function seedRoles(): void
+    {
+        foreach (self::allRoleNamesForSeeding() as $role) {
+            Role::firstOrCreate([
+                'name' => $role,
+                'guard_name' => self::guard(),
+            ]);
+        }
+    }
 
-        $roles = array_values(array_unique(array_merge(
-            config('dpc_roles.canonical', []),
-            array_keys(config('dpc_roles.legacy_aliases', [])),
-        )));
-
-        foreach ($roles as $role) {
-            Role::firstOrCreate(['name' => $role, 'guard_name' => 'web',]);
+    private function syncRolePermissions(): void
+    {
+        foreach (self::rolePermissions() as $roleName => $permissionNames) {
+            $role = Role::findByName($roleName, self::guard());
+            $role->syncPermissions($permissionNames);
         }
 
-        Role::where('name', 'pensionne')->first()->givePermissionTo([$canViewPensionneSection, $canViewPensionneMenu, $canViewDashboard]);
-        Role::where('name', 'fonctionnaire')->first()->givePermissionTo([$canViewFonctionnaireSection, $canViewFonctionnaireMenu, $canViewDashboard]);
-        Role::where('name', 'institution')->first()->givePermissionTo([$canViewInstitutionSection, $canViewInstitutionMenu, $canViewDashboard]);
+        app(PermissionRegistrar::class)->forgetCachedPermissions();
     }
 }

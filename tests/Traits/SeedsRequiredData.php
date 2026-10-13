@@ -2,10 +2,13 @@
 
 namespace Tests\Traits;
 
-use App\Models\WorkflowStep;
+use App\Enums\TypeDemandeEnum;
+use App\Models\Demande;
 use App\Models\Service;
+use App\Models\User;
+use App\Models\WorkflowStep;
+use Database\Seeders\RolesAndPermissionsSeeder;
 use Illuminate\Support\Facades\DB;
-use Spatie\Permission\Models\Role;
 
 trait SeedsRequiredData
 {
@@ -27,10 +30,10 @@ trait SeedsRequiredData
 
         foreach ($steps as $step) {
             DB::table('workflow_steps')->insertOrIgnore(array_merge($step, [
-                'service_id'   => null,
+                'service_id' => null,
                 'type_demande' => null,
-                'created_at'   => now(),
-                'updated_at'   => now(),
+                'created_at' => now(),
+                'updated_at' => now(),
             ]));
         }
     }
@@ -38,14 +41,14 @@ trait SeedsRequiredData
     protected function seedServices(): void
     {
         $services = [
-            Service::DIRECTION          => 'Direction',
-            Service::SECRETARIAT        => 'Secrétariat',
-            Service::LIQUIDATION        => 'Service Liquidation',
+            Service::DIRECTION => 'Direction',
+            Service::SECRETARIAT => 'Secrétariat',
+            Service::LIQUIDATION => 'Service Liquidation',
             Service::CONTROLE_PLACEMENT => 'Service Contrôle et Placement',
-            Service::COMPTABILITE       => 'Service Comptabilité',
-            Service::FORMALITE          => 'Accueil et Formalités',
-            Service::ADMINISTRATIF      => 'Service Administratif',
-            Service::ASSURANCE          => 'Service Assurance',
+            Service::COMPTABILITE => 'Service Comptabilité',
+            Service::FORMALITE => 'Accueil et Formalités',
+            Service::ADMINISTRATIF => 'Service Administratif',
+            Service::ASSURANCE => 'Service Assurance',
         ];
 
         foreach ($services as $code => $nom) {
@@ -55,33 +58,21 @@ trait SeedsRequiredData
 
     protected function seedRoles(): void
     {
-        $roles = [
-            'admin', 'direction', 'directeur', 'assistant_directeur', 'secretariat', 'service_liquidation',
-            'service_accueil_formalites', 'service_controle_placement',
-            'service_comptabilite', 'service_assurance',
-            'pensionne', 'fonctionnaire', 'institution',
-            \App\Models\User::ROLE_AGENT_RDV,
-            \App\Models\User::ROLE_VALIDATEUR_RDV,
-            \App\Models\User::ROLE_AGENT_FORMALITES,
-        ];
-
-        foreach ($roles as $role) {
-            Role::firstOrCreate(['name' => $role, 'guard_name' => 'web']);
-        }
+        $this->seed(RolesAndPermissionsSeeder::class);
     }
 
-    protected function createDemande(array $attributes = []): \App\Models\Demande
+    protected function createDemande(array $attributes = []): Demande
     {
         $user = isset($attributes['created_by'])
-            ? \App\Models\User::find($attributes['created_by'])
-            : \App\Models\User::factory()->create();
+            ? User::find($attributes['created_by'])
+            : User::factory()->create();
 
         $brouillonId = WorkflowStep::idForCode('BROUILLON');
 
-        return \App\Models\Demande::create(array_merge([
-            'type'       => \App\Enums\TypeDemandeEnum::DEMANDE_ATTESTATION->value,
+        return Demande::create(array_merge([
+            'type' => TypeDemandeEnum::DEMANDE_ATTESTATION->value,
             'created_by' => $user->id,
-            'current_step_id'  => $brouillonId,
+            'current_step_id' => $brouillonId,
         ], $attributes));
     }
 }

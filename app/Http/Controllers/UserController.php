@@ -12,10 +12,12 @@ use App\Models\UserBeneficiaireLink;
 use App\Models\UserCategory;
 use App\Services\Account\InstitutionAccountService;
 use App\Services\Account\UserCategoryRoleSyncService;
-use App\Services\Pension\UserBeneficiaireLinkService;
 use App\Services\Pension\BeneficiaireProvisioningService;
+use App\Services\Pension\UserBeneficiaireLinkService;
+use Database\Seeders\RolesAndPermissionsSeeder;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
+use Illuminate\Validation\ValidationException;
 use Spatie\Permission\Models\Role;
 
 class UserController extends Controller
@@ -44,10 +46,10 @@ class UserController extends Controller
 
     public function create()
     {
-        $roles        = Role::orderBy('name')->get();
-        $services     = Service::orderBy('nom')->get();
-        $genders      = Gender::orderBy('name')->get();
-        $categories   = UserCategory::orderBy('label')->get();
+        $roles = Role::orderBy('name')->get();
+        $services = Service::orderBy('nom')->get();
+        $genders = Gender::orderBy('name')->get();
+        $categories = UserCategory::orderBy('label')->get();
         $institutions = Institution::query()
             ->whereDoesntHave('loginUser')
             ->orderBy('raison_sociale')
@@ -61,23 +63,23 @@ class UserController extends Controller
         $categoryCodes = array_keys(config('account_categories.categories', []));
 
         $validated = $request->validate([
-            'name'              => 'required|string|max:255',
-            'firstname'         => 'nullable|string|max:255',
-            'lastname'          => 'nullable|string|max:255',
-            'email'             => 'required|string|email|max:255|unique:users',
-            'username'          => 'nullable|string|min:3|max:50|regex:/^[A-Za-z0-9._-]+$/|unique:users,username',
-            'phone'             => 'nullable|string|max:30',
-            'password'          => 'required|string|min:8|confirmed',
-            'role'              => 'nullable|string|exists:roles,name',
-            'service_id'        => 'nullable|integer|exists:services,id',
-            'gender_id'         => 'nullable|integer|exists:genders,id',
-            'category_codes'    => 'nullable|array',
-            'category_codes.*'  => ['string', Rule::in($categoryCodes)],
-            'primary_category'  => ['nullable', 'string', Rule::in($categoryCodes)],
-            'institution_id'    => 'nullable|integer|exists:institutions,id|unique:users,institution_id',
-            'pension_code'      => 'nullable|string|max:50',
-            'nif'               => 'nullable|string|max:20',
-            'ninu'              => 'nullable|string|max:20',
+            'name' => 'required|string|max:255',
+            'firstname' => 'nullable|string|max:255',
+            'lastname' => 'nullable|string|max:255',
+            'email' => 'required|string|email|max:255|unique:users',
+            'username' => 'nullable|string|min:3|max:50|regex:/^[A-Za-z0-9._-]+$/|unique:users,username',
+            'phone' => 'nullable|string|max:30',
+            'password' => 'required|string|min:8|confirmed',
+            'role' => 'nullable|string|exists:roles,name',
+            'service_id' => 'nullable|integer|exists:services,id',
+            'gender_id' => 'nullable|integer|exists:genders,id',
+            'category_codes' => 'nullable|array',
+            'category_codes.*' => ['string', Rule::in($categoryCodes)],
+            'primary_category' => ['nullable', 'string', Rule::in($categoryCodes)],
+            'institution_id' => 'nullable|integer|exists:institutions,id|unique:users,institution_id',
+            'pension_code' => 'nullable|string|max:50',
+            'nif' => 'nullable|string|max:20',
+            'ninu' => 'nullable|string|max:20',
         ]);
 
         $role = $validated['role'] ?? null;
@@ -127,10 +129,10 @@ class UserController extends Controller
     {
         $user->load(['categoryAssignments', 'roles', 'institution', 'beneficiaireLinks.beneficiaire.affiliations']);
 
-        $roles        = Role::orderBy('name')->get();
-        $services     = Service::orderBy('nom')->get();
-        $genders      = Gender::orderBy('name')->get();
-        $categories   = UserCategory::orderBy('label')->get();
+        $roles = Role::orderBy('name')->get();
+        $services = Service::orderBy('nom')->get();
+        $genders = Gender::orderBy('name')->get();
+        $categories = UserCategory::orderBy('label')->get();
         $institutions = Institution::query()
             ->where(function ($query) use ($user) {
                 $query->whereDoesntHave('loginUser')
@@ -153,28 +155,28 @@ class UserController extends Controller
         $categoryCodes = array_keys(config('account_categories.categories', []));
 
         $validated = $request->validate([
-            'name'             => 'required|string|max:255',
-            'firstname'        => 'nullable|string|max:255',
-            'lastname'         => 'nullable|string|max:255',
-            'email'            => 'required|string|email|max:255|unique:users,email,'.$user->id,
-            'username'         => 'nullable|string|min:3|max:50|regex:/^[A-Za-z0-9._-]+$/|unique:users,username,'.$user->id,
-            'phone'            => 'nullable|string|max:30',
-            'password'         => 'nullable|string|min:8|confirmed',
-            'role'             => 'nullable|string|exists:roles,name',
-            'service_id'       => 'nullable|integer|exists:services,id',
-            'gender_id'        => 'nullable|integer|exists:genders,id',
-            'category_codes'   => 'nullable|array',
+            'name' => 'required|string|max:255',
+            'firstname' => 'nullable|string|max:255',
+            'lastname' => 'nullable|string|max:255',
+            'email' => 'required|string|email|max:255|unique:users,email,'.$user->id,
+            'username' => 'nullable|string|min:3|max:50|regex:/^[A-Za-z0-9._-]+$/|unique:users,username,'.$user->id,
+            'phone' => 'nullable|string|max:30',
+            'password' => 'nullable|string|min:8|confirmed',
+            'role' => 'nullable|string|exists:roles,name',
+            'service_id' => 'nullable|integer|exists:services,id',
+            'gender_id' => 'nullable|integer|exists:genders,id',
+            'category_codes' => 'nullable|array',
             'category_codes.*' => ['string', Rule::in($categoryCodes)],
             'primary_category' => ['nullable', 'string', Rule::in($categoryCodes)],
-            'institution_id'   => [
+            'institution_id' => [
                 'nullable',
                 'integer',
                 Rule::exists('institutions', 'id'),
                 Rule::unique('users', 'institution_id')->ignore($user->id),
             ],
-            'pension_code'     => 'nullable|string|max:50',
-            'nif'              => 'nullable|string|max:20',
-            'ninu'             => 'nullable|string|max:20',
+            'pension_code' => 'nullable|string|max:50',
+            'nif' => 'nullable|string|max:20',
+            'ninu' => 'nullable|string|max:20',
         ]);
 
         $role = $validated['role'] ?? null;
@@ -290,10 +292,10 @@ class UserController extends Controller
             return;
         }
 
-        $requiresService = config('dpc_roles.requires_service', []);
+        $requiresService = RolesAndPermissionsSeeder::rolesRequiringService();
 
         if (in_array($role, $requiresService, true) && blank($serviceId)) {
-            throw \Illuminate\Validation\ValidationException::withMessages([
+            throw ValidationException::withMessages([
                 'service_id' => 'Ce rôle exige un service de rattachement.',
             ]);
         }

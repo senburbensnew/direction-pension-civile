@@ -1,9 +1,12 @@
 <?php
 
 use App\Http\Controllers\ActualiteController;
+use App\Http\Controllers\Admin\PensionMandatManagementController;
+use App\Http\Controllers\Admin\RdvSettingsController;
 use App\Http\Controllers\AdminController;
 use App\Http\Controllers\AdminDashboardController;
 use App\Http\Controllers\CarouselController;
+use App\Http\Controllers\CompteProvisoireController;
 use App\Http\Controllers\ContactController;
 use App\Http\Controllers\ContactParameterController;
 use App\Http\Controllers\ContactSubjectController;
@@ -22,31 +25,34 @@ use App\Http\Controllers\FluxTransitionController;
 use App\Http\Controllers\GlossaireController;
 use App\Http\Controllers\InstitutionImageController;
 use App\Http\Controllers\LocaleController;
-use App\Http\Controllers\CompteProvisoireController;
-use App\Http\Controllers\MonDemandeCreationCompteController;
 use App\Http\Controllers\MediathequeController;
+use App\Http\Controllers\MonDemandeCreationCompteController;
 use App\Http\Controllers\NewsletterController;
 use App\Http\Controllers\NotificationController;
-use App\Http\Controllers\OfficialController;
 use App\Http\Controllers\OcrTestController;
+use App\Http\Controllers\OfficialController;
 use App\Http\Controllers\PartenaireController;
-use App\Http\Controllers\PermissionController;
-use App\Http\Controllers\PersonalController;
 use App\Http\Controllers\PensionAffiliationController;
 use App\Http\Controllers\PensionContextController;
 use App\Http\Controllers\PensionMandatController;
-use App\Http\Controllers\Admin\PensionMandatManagementController;
+use App\Http\Controllers\PermissionController;
+use App\Http\Controllers\PersonalController;
 use App\Http\Controllers\PostController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\PublicationController;
 use App\Http\Controllers\QuiSommesNousController;
+use App\Http\Controllers\RdvAgentAvailabilityController;
 use App\Http\Controllers\ReportController;
 use App\Http\Controllers\RoleController;
 use App\Http\Controllers\ServiceController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\WorkflowStepController;
 use App\Models\Actualite;
+use App\Models\Carousel;
 use App\Models\Report;
+use App\Models\User;
+use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -67,7 +73,7 @@ Route::get('/', function () {
         ->take(3)
         ->get();
 
-    $carousels = \App\Models\Carousel::where(
+    $carousels = Carousel::where(
         'status',
         true
     )
@@ -268,7 +274,7 @@ Route::get(
     '/reports/view/{report}',
     fn (Report $report) => response()->file(
         storage_path(
-            'app/public/' . $report->file_path
+            'app/public/'.$report->file_path
         )
     )
 )->name('reports.view');
@@ -400,8 +406,8 @@ Route::middleware(['auth', 'account.permanent'])->group(function () {
     )->name('demandes.rencontre.reattribuer');
 
     Route::get(
-    '/demande-rencontre/{demande}/formalite',
-    [DemandeRencontreController::class, 'formalite']
+        '/demande-rencontre/{demande}/formalite',
+        [DemandeRencontreController::class, 'formalite']
     )->name('demandes.rencontre.formalite');
 
     Route::post(
@@ -534,55 +540,55 @@ Route::middleware(['auth', 'account.permanent'])->group(function () {
     */
 
     Route::middleware(['permanent.account', 'pension.context'])->group(function () {
-    Route::get(
-        '/profile',
-        [ProfileController::class, 'edit']
-    )->name('profile.edit');
+        Route::get(
+            '/profile',
+            [ProfileController::class, 'edit']
+        )->name('profile.edit');
 
-    Route::patch(
-        '/profile',
-        [ProfileController::class, 'update']
-    )->name('profile.update');
+        Route::patch(
+            '/profile',
+            [ProfileController::class, 'update']
+        )->name('profile.update');
 
-    Route::patch(
-        '/profile/profile-photo',
-        [ProfileController::class, 'updateProfilePhoto']
-    )->name('profile.profile-photo.update');
+        Route::patch(
+            '/profile/profile-photo',
+            [ProfileController::class, 'updateProfilePhoto']
+        )->name('profile.profile-photo.update');
 
-    Route::delete(
-        '/profile',
-        [ProfileController::class, 'destroy']
-    )->name('profile.destroy');
+        Route::delete(
+            '/profile',
+            [ProfileController::class, 'destroy']
+        )->name('profile.destroy');
 
-    Route::patch(
-        '/compte/contexte-pension',
-        [PensionContextController::class, 'update']
-    )->name('compte.pension-context.update');
+        Route::patch(
+            '/compte/contexte-pension',
+            [PensionContextController::class, 'update']
+        )->name('compte.pension-context.update');
 
-    Route::get(
-        '/compte/codes-pension',
-        [PensionAffiliationController::class, 'index']
-    )->name('compte.affiliations.index');
+        Route::get(
+            '/compte/codes-pension',
+            [PensionAffiliationController::class, 'index']
+        )->name('compte.affiliations.index');
 
-    Route::post(
-        '/compte/codes-pension',
-        [PensionAffiliationController::class, 'store']
-    )->name('compte.affiliations.store');
+        Route::post(
+            '/compte/codes-pension',
+            [PensionAffiliationController::class, 'store']
+        )->name('compte.affiliations.store');
 
-    Route::delete(
-        '/compte/codes-pension/{affiliation}',
-        [PensionAffiliationController::class, 'destroy']
-    )->name('compte.affiliations.destroy');
+        Route::delete(
+            '/compte/codes-pension/{affiliation}',
+            [PensionAffiliationController::class, 'destroy']
+        )->name('compte.affiliations.destroy');
 
-    Route::get(
-        '/compte/mandats',
-        [PensionMandatController::class, 'index']
-    )->name('compte.mandats.index');
+        Route::get(
+            '/compte/mandats',
+            [PensionMandatController::class, 'index']
+        )->name('compte.mandats.index');
 
-    Route::post(
-        '/compte/mandats',
-        [PensionMandatController::class, 'store']
-    )->name('compte.mandats.store');
+        Route::post(
+            '/compte/mandats',
+            [PensionMandatController::class, 'store']
+        )->name('compte.mandats.store');
     });
 
     /*
@@ -1028,7 +1034,7 @@ Route::middleware(['auth', 'account.permanent'])->group(function () {
 
     Route::prefix('formalites/comptes-demandes')
         ->name('formalites.comptes-demandes.')
-        ->middleware('role:'. \App\Models\User::ROLE_AGENT_FORMALITES)
+        ->middleware('role:'.User::ROLE_AGENT_FORMALITES)
         ->group(function () {
 
             Route::get(
@@ -1099,7 +1105,7 @@ Route::middleware(['auth', 'account.permanent'])->group(function () {
             Route::get(
                 '/disponibilites',
                 [
-                    \App\Http\Controllers\RdvAgentAvailabilityController::class,
+                    RdvAgentAvailabilityController::class,
                     'edit',
                 ]
             )->name('disponibilites.edit');
@@ -1107,7 +1113,7 @@ Route::middleware(['auth', 'account.permanent'])->group(function () {
             Route::post(
                 '/disponibilites',
                 [
-                    \App\Http\Controllers\RdvAgentAvailabilityController::class,
+                    RdvAgentAvailabilityController::class,
                     'update',
                 ]
             )->name('disponibilites.update');
@@ -1203,7 +1209,7 @@ Route::middleware(['auth', 'account.permanent'])->group(function () {
         ->name('admin.')
         ->middleware([
             'auth',
-            'role:admin|direction|directeur|assistant_directeur',
+            'role:admin|directeur|assistant_directeur',
         ])
         ->group(function () {
 
@@ -1347,7 +1353,7 @@ Route::prefix('admin')
         Route::post(
             '/toggle-maintenance',
             function () {
-                $current = \Illuminate\Support\Facades\DB::table(
+                $current = DB::table(
                     'parameters'
                 )
                     ->where(
@@ -1361,7 +1367,7 @@ Route::prefix('admin')
                         ? 'false'
                         : 'true';
 
-                \Illuminate\Support\Facades\DB::table(
+                DB::table(
                     'parameters'
                 )
                     ->where(
@@ -1372,7 +1378,7 @@ Route::prefix('admin')
                         'value' => $next,
                     ]);
 
-                \Illuminate\Support\Facades\Cache::forget(
+                Cache::forget(
                     'is_maintenance_mode'
                 );
 
@@ -1389,41 +1395,6 @@ Route::prefix('admin')
                     );
             }
         )->name('toggle.maintenance');
-
-        /*
-        |--------------------------------------------------------------------------
-        | Account creation requests
-        |--------------------------------------------------------------------------
-        */
-
-        Route::prefix('comptes-demandes')
-            ->name('comptes-demandes.')
-            ->group(function () {
-
-                Route::get(
-                    '/',
-                    [
-                        DemandeCreationCompteManagementController::class,
-                        'index',
-                    ]
-                )->name('index');
-
-                Route::get(
-                    '/{demandeCreationCompte}',
-                    [
-                        DemandeCreationCompteManagementController::class,
-                        'show',
-                    ]
-                )->name('show');
-
-                Route::get(
-                    '/{demandeCreationCompte}/pieces/{media}',
-                    [
-                        DemandeCreationCompteManagementController::class,
-                        'piece',
-                    ]
-                )->name('piece');
-            });
 
         /*
         |--------------------------------------------------------------------------
@@ -1494,10 +1465,40 @@ Route::prefix('admin')
             [RoleController::class, 'index']
         )->name('roles.index');
 
+        Route::post(
+            '/roles',
+            [RoleController::class, 'store']
+        )->name('roles.store');
+
+        Route::put(
+            '/roles/{role}',
+            [RoleController::class, 'update']
+        )->name('roles.update');
+
+        Route::delete(
+            '/roles/{role}',
+            [RoleController::class, 'destroy']
+        )->name('roles.destroy');
+
         Route::get(
             '/permissions',
             [PermissionController::class, 'index']
         )->name('permissions.index');
+
+        Route::post(
+            '/permissions',
+            [PermissionController::class, 'store']
+        )->name('permissions.store');
+
+        Route::put(
+            '/permissions/{permission}',
+            [PermissionController::class, 'update']
+        )->name('permissions.update');
+
+        Route::delete(
+            '/permissions/{permission}',
+            [PermissionController::class, 'destroy']
+        )->name('permissions.destroy');
 
         /*
         |--------------------------------------------------------------------------
@@ -2078,12 +2079,12 @@ Route::prefix('admin')
 
         Route::get(
             'rdv-settings',
-            [\App\Http\Controllers\Admin\RdvSettingsController::class, 'index']
+            [RdvSettingsController::class, 'index']
         )->name('rdv-settings.index');
 
         Route::put(
             'rdv-settings',
-            [\App\Http\Controllers\Admin\RdvSettingsController::class, 'update']
+            [RdvSettingsController::class, 'update']
         )->name('rdv-settings.update');
 
         Route::post(
@@ -2148,4 +2149,4 @@ Route::prefix('admin')
         )->name('partenaires.reorder');
     });
 
-require __DIR__ . '/auth.php';
+require __DIR__.'/auth.php';

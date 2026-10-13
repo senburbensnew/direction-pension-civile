@@ -17,7 +17,7 @@
 
             <!-- HEADER -->
             <div class="flex flex-col md:flex-row justify-around items-center mb-12 gap-8">
-                <img src="{{ asset('images/setting-logo-1-M13oPLiYoM.png') }}" class="w-24 h-24 object-cover">
+                <x-dpc-logo class="w-24 h-24 object-cover" />
                 <h1 class="text-xl md:text-2xl font-bold text-center">
                     MINISTERE DE L'ECONOMIE ET DES FINANCES<br>
                     <span class="underline">PENSION CIVILE</span><br>

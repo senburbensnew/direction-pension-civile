@@ -123,8 +123,12 @@
                     @if($kind === 'image' && $item->fileUrl())
                         <div class="relative h-44 bg-gray-50 cursor-zoom-in group flex items-center justify-center p-3"
                              @click="lbOpen = true; lbSrc = '{{ $item->fileUrl() }}'; lbAlt = '{{ addslashes($item->title) }}'">
-                            <img src="{{ $item->fileUrl() }}" alt="{{ $item->title }}"
-                                 class="max-w-full max-h-full object-contain transition-transform duration-300 group-hover:scale-105">
+                            <x-optimized-image
+                                :src="$item->fileComponentSrc()"
+                                :alt="$item->title"
+                                class="max-w-full max-h-full object-contain transition-transform duration-300 group-hover:scale-105"
+                                sizes="(min-width: 768px) 25vw, 50vw"
+                            ></x-optimized-image>
                             <div class="absolute inset-0 bg-black/0 group-hover:bg-black/15 transition-colors flex items-center justify-center">
                                 <i class="fa-solid fa-expand text-white opacity-0 group-hover:opacity-100 text-xl drop-shadow"></i>
                             </div>

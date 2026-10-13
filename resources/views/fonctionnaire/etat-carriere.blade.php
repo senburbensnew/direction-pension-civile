@@ -7,9 +7,7 @@
     <div class="mb-8">
         <!-- En-tête avec logos -->
         <div class="flex flex-col md:flex-row justify-around items-center mb-6 gap-4">
-            <img src="{{ asset('images/setting-logo-1-M13oPLiYoM.png') }}" 
-                 alt="Logo de la Direction de la Pension Civile"
-                 class="w-16 h-16 md:w-20 md:h-20 object-contain">
+            <x-dpc-logo class="w-16 h-16 md:w-20 md:h-20 object-contain" />
             
             <div class="text-center">
                 <h1 class="text-lg md:text-xl font-bold text-gray-800">Direction de la Pension Civile (DPC)</h1>
@@ -17,9 +15,7 @@
                 <p class="text-gray-600 mt-1">Formulaire de demande</p>
             </div>
             
-            <img src="{{ asset('images/setting-logo-1-M13oPLiYoM.png') }}" 
-                 alt="Logo" 
-                 class="w-16 h-16 md:w-20 md:h-20 object-contain hidden md:block">
+            <x-dpc-logo class="w-16 h-16 md:w-20 md:h-20 object-contain hidden md:block" />
         </div>
     </div>
 
