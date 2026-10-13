@@ -174,7 +174,7 @@ class RencontreAvailabilityService
     }
 
     /**
-     * Bornes d’affichage FullCalendar (légère marge autour de la plage réservable).
+     * Bornes d’affichage FullCalendar (identiques à la plage réservable).
      *
      * @return array{display_start: string, display_end: string}
      */
@@ -187,19 +187,9 @@ class RencontreAvailabilityService
             return ['display_start' => '00:00', 'display_end' => '24:00'];
         }
 
-        $startMinutes = $this->timeStringToMinutes($start);
-        $endMinutes = $end === '24:00'
-            ? 24 * 60
-            : $this->timeStringToMinutes($end);
-
-        $displayStartMinutes = max(0, min($startMinutes, 8 * 60) - 60);
-        $displayEndMinutes = min(24 * 60, max($endMinutes, 16 * 60) + 60);
-
         return [
-            'display_start' => $this->minutesToTimeString($displayStartMinutes),
-            'display_end' => $displayEndMinutes >= 24 * 60
-                ? '24:00'
-                : $this->minutesToTimeString($displayEndMinutes),
+            'display_start' => $start,
+            'display_end' => $end,
         ];
     }
 

@@ -27,8 +27,8 @@
     $bookingDaysLabel = $bookingDaysLabel ?? 'du lundi au vendredi';
     $bookingHoursLabel = $bookingHoursLabel ?? ($rdvStart.' à '.$rdvEnd);
     $allowWeekends = $allowWeekends ?? false;
-    $displayMin = $slotConfig['display_start'] ?? '08:00';
-    $displayMax = $slotConfig['display_end'] ?? '18:00';
+    $displayMin = $slotConfig['display_start'] ?? $rdvStart;
+    $displayMax = $slotConfig['display_end'] ?? $rdvEnd;
 @endphp
 
 <div class="mb-5" id="rdv-scheduler-section">

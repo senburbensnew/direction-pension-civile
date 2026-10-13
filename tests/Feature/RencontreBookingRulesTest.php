@@ -117,6 +117,35 @@ class RencontreBookingRulesTest extends TestCase
         $this->assertFalse($availability->isAllowedTime('08:45'));
     }
 
+    public function test_calendar_display_window_matches_booking_parameters(): void
+    {
+        DB::table('parameters')->updateOrInsert(
+            ['name' => 'rdv_booking_start'],
+            [
+                'name' => 'rdv_booking_start',
+                'description' => 'test',
+                'value' => '14:00',
+            ]
+        );
+        DB::table('parameters')->updateOrInsert(
+            ['name' => 'rdv_booking_end'],
+            [
+                'name' => 'rdv_booking_end',
+                'description' => 'test',
+                'value' => '16:00',
+            ]
+        );
+        Cache::forget('rdv_booking_start');
+        Cache::forget('rdv_booking_end');
+
+        $availability = app(RencontreAvailabilityService::class);
+
+        $this->assertSame(
+            ['display_start' => '14:00', 'display_end' => '16:00'],
+            $availability->calendarDisplayWindow()
+        );
+    }
+
     public function test_haitian_holiday_date_is_not_bookable(): void
     {
         $availability = app(RencontreAvailabilityService::class);

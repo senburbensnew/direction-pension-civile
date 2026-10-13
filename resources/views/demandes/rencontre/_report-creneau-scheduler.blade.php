@@ -11,8 +11,8 @@
     $slotMinutes = $slotConfig['minutes'] ?? 15;
     $rdvStart = $slotConfig['start'] ?? '14:00';
     $rdvEnd = $slotConfig['end'] ?? '16:00';
-    $displayMin = $slotConfig['display_start'] ?? '08:00';
-    $displayMax = $slotConfig['display_end'] ?? '18:00';
+    $displayMin = $slotConfig['display_start'] ?? $rdvStart;
+    $displayMax = $slotConfig['display_end'] ?? $rdvEnd;
     $oldDate = old('date_souhaitee', $demande->data['date_souhaitee'] ?? '');
     $oldTime = old('heure_souhaitee', $demande->data['heure_souhaitee'] ?? '');
     $oldTime = $oldTime ? \App\Models\Demande::normalizeRencontreTime($oldTime) : '';

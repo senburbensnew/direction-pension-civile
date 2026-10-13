@@ -391,8 +391,8 @@ export function initAgentAvailabilityCalendar() {
     const minTime = el.dataset.minTime || '14:00:00';
     const maxTime = el.dataset.maxTime || '16:00:00';
     const allowWeekends = el.dataset.allowWeekends === '1';
-    const displayMinTime = el.dataset.displayMinTime || '08:00:00';
-    const displayMaxTime = el.dataset.displayMaxTime || '18:00:00';
+    const displayMinTime = el.dataset.displayMinTime || minTime;
+    const displayMaxTime = el.dataset.displayMaxTime || maxTime;
     const maxDateStr = el.dataset.maxDate || null;
     const holidays = readHolidays(el);
 

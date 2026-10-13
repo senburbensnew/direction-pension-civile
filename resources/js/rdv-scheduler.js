@@ -360,10 +360,10 @@ function initOneRdvScheduler(el) {
         el.dataset.maxTime || '16:00:00';
 
     const displayMinTime =
-        el.dataset.displayMinTime || '08:00:00';
+        el.dataset.displayMinTime || minTime;
 
     const displayMaxTime =
-        el.dataset.displayMaxTime || '16:00:00';
+        el.dataset.displayMaxTime || maxTime;
 
     const toSlotTime = (value) =>
         value.length === 5 ? `${value}:00` : value;
