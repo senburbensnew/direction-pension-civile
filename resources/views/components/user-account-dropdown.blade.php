@@ -49,6 +49,10 @@
                         <i class="fas fa-id-card mr-2 text-gray-400"></i>
                         Mes codes pension
                     </x-dropdown-link>
+                    <x-dropdown-link :href="route('compte.beneficiaires.index')">
+                        <i class="fas fa-users mr-2 text-gray-400"></i>
+                        Mes bénéficiaires
+                    </x-dropdown-link>
                     <x-dropdown-link :href="route('compte.mandats.index')">
                         <i class="fas fa-file-signature mr-2 text-gray-400"></i>
                         Mes mandats

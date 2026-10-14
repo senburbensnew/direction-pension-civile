@@ -4,8 +4,10 @@ namespace Database\Seeders;
 
 use App\Models\Report;
 use App\Models\User;
+use App\Support\Storage\UploadPaths;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\File;
+use Illuminate\Support\Facades\Storage;
 
 class ReportSeeder extends Seeder
 {
@@ -20,57 +22,66 @@ class ReportSeeder extends Seeder
 
         $reports = [
             [
-                'title'       => 'Avis de liquidation de pension — 27 février 2026',
-                'year'        => 2026,
+                'title' => 'Avis de liquidation de pension — 27 février 2026',
+                'year' => 2026,
                 'description' => 'Avis de liquidation de pension pris en faveur de certains agents publics, publié le 27 février 2026.',
-                'source'      => 'avis-liquidation-pension-en-faveur-certains-agents-publics.pdf',
-                'cover_path'  => 'images/carousel/KEV_6728.jpg',
-                'published_at'=> now()->subDays(12),
+                'source' => 'avis-liquidation-pension-en-faveur-certains-agents-publics.pdf',
+                'cover_path' => 'cms/carousel/KEV_6728.jpg',
+                'published_at' => now()->subDays(12),
             ],
             [
-                'title'       => 'Rapport d’activités de la Direction de la Pension Civile — 2025',
-                'year'        => 2025,
+                'title' => 'Rapport d’activités de la Direction de la Pension Civile — 2025',
+                'year' => 2025,
                 'description' => 'Bilan annuel des activités, des liquidations traitées et des services rendus aux pensionnés et fonctionnaires.',
-                'source'      => 'decret-su-09-octobre-2015-sur-la-pension-civile-de-retraite.pdf',
-                'cover_path'  => 'images/carousel/KEV_6750.jpg',
-                'published_at'=> now()->subDays(40),
+                'source' => 'decret-su-09-octobre-2015-sur-la-pension-civile-de-retraite.pdf',
+                'cover_path' => 'cms/carousel/KEV_6750.jpg',
+                'published_at' => now()->subDays(40),
             ],
             [
-                'title'       => 'Note officielle sur le statut général de la Fonction Publique',
-                'year'        => 2024,
+                'title' => 'Note officielle sur le statut général de la Fonction Publique',
+                'year' => 2024,
                 'description' => 'Document de référence rappelant le cadre statutaire applicable aux agents de l’État et à la pension civile de retraite.',
-                'source'      => 'statut-general-fonction-publique-2005.pdf',
-                'cover_path'  => 'images/carousel/KEV_6792.jpg',
-                'published_at'=> now()->subDays(95),
+                'source' => 'statut-general-fonction-publique-2005.pdf',
+                'cover_path' => 'cms/carousel/KEV_6792.jpg',
+                'published_at' => now()->subDays(95),
             ],
         ];
 
         foreach ($reports as $data) {
-            $source = public_path('documents/' . $data['source']);
+            $publicationPath = UploadPaths::cms('publications').'/'.$data['source'];
+            $disk = Storage::disk(UploadPaths::publicDisk());
+
+            if ($disk->exists($publicationPath)) {
+                $source = $disk->path($publicationPath);
+            } else {
+                $source = public_path('documents/'.$data['source']);
+            }
+
             if (! File::exists($source)) {
                 continue;
             }
 
             $storedName = $data['source'];
-            $storedPath = 'reports/' . $data['year'] . '/' . $storedName;
-            $destination = storage_path('app/public/' . $storedPath);
+            $storedPath = UploadPaths::reportYear((string) $data['year']).'/'.$storedName;
 
-            File::ensureDirectoryExists(dirname($destination));
-            File::copy($source, $destination);
+            if (! $disk->exists($storedPath)) {
+                $disk->makeDirectory(UploadPaths::reportYear((string) $data['year']));
+                $disk->put($storedPath, File::get($source));
+            }
 
             Report::updateOrCreate(
                 ['title' => $data['title']],
                 [
-                    'year'         => $data['year'],
-                    'description'  => $data['description'],
-                    'file_name'    => $storedName,
-                    'file_path'    => $storedPath,
-                    'cover_path'   => $data['cover_path'],
-                    'mime_type'    => 'application/pdf',
-                    'file_size'    => File::size($source),
-                    'status'       => 'published',
+                    'year' => $data['year'],
+                    'description' => $data['description'],
+                    'file_name' => $storedName,
+                    'file_path' => $storedPath,
+                    'cover_path' => $data['cover_path'],
+                    'mime_type' => 'application/pdf',
+                    'file_size' => File::size($source),
+                    'status' => 'published',
                     'published_at' => $data['published_at'],
-                    'created_by'   => $authorId,
+                    'created_by' => $authorId,
                 ]
             );
         }

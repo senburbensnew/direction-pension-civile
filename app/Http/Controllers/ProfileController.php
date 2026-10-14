@@ -4,7 +4,11 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\ProfilePhotoUpdateRequest;
 use App\Http\Requests\ProfileUpdateRequest;
+use App\Models\CivilStatus;
+use App\Models\Gender;
+use App\Services\Account\ProfileFieldCompletionService;
 use App\Services\ImageStorageService;
+use App\Support\Storage\UploadPaths;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -26,7 +30,11 @@ class ProfileController extends Controller
             'institution',
         ]);
 
-        return view('auth.profile', compact('user'));
+        $genders = Gender::query()->orderBy('name')->get();
+        $civilStatuses = CivilStatus::query()->orderBy('name')->get();
+        $profileCompletion = app(ProfileFieldCompletionService::class);
+
+        return view('auth.profile', compact('user', 'genders', 'civilStatuses', 'profileCompletion'));
     }
 
     /**
@@ -34,13 +42,19 @@ class ProfileController extends Controller
      */
     public function update(ProfileUpdateRequest $request): RedirectResponse
     {
-        $request->user()->fill($request->validated());
+        $user = $request->user();
+        $data = app(ProfileFieldCompletionService::class)->mergeCompletableFields(
+            $user,
+            $request->validated()
+        );
 
-        if ($request->user()->isDirty('email')) {
-            $request->user()->email_verified_at = null;
+        $user->fill($data);
+
+        if ($user->isDirty('email')) {
+            $user->email_verified_at = null;
         }
 
-        $request->user()->save();
+        $user->save();
 
         return Redirect::route('profile.edit')->with('status', 'profile-updated');
     }
@@ -71,7 +85,7 @@ class ProfileController extends Controller
             ]);
         }
 
-        Storage::disk('public')->makeDirectory('profile_photos');
+        Storage::disk(UploadPaths::publicDisk())->makeDirectory(UploadPaths::userProfilePhoto());
 
         if ($user->profile_photo) {
             app(ImageStorageService::class)->deleteWithVariants($user->profile_photo);
@@ -79,7 +93,7 @@ class ProfileController extends Controller
 
         $path = app(ImageStorageService::class)->storeUploadedImage(
             $file,
-            'profile_photos',
+            UploadPaths::userProfilePhoto(),
             config('media.upload_max_widths.profile'),
         );
 

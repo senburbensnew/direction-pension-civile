@@ -15,7 +15,6 @@ return new class extends Migration
             $table->string('nif')->nullable();
             $table->date('date_naissance')->nullable();
             $table->boolean('is_mineur')->default(false);
-            $table->string('galipec_pensionnaire_id')->nullable();
             $table->timestamps();
 
             $table->index('nif');

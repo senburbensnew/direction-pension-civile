@@ -3,10 +3,8 @@
 namespace App\Services\Pension;
 
 use App\Enums\BeneficiaireRelationEnum;
-use App\Enums\PensionMandatStatusEnum;
 use App\Models\AffiliationPension;
 use App\Models\Beneficiaire;
-use App\Models\PensionMandat;
 use App\Models\User;
 use App\Models\UserBeneficiaireLink;
 use Illuminate\Support\Collection;
@@ -19,12 +17,12 @@ class ActivePensionContext
 
     public function __construct(
         private readonly ?User $user,
-    ) {
-    }
+        private readonly BeneficiaireAccessService $access,
+    ) {}
 
     public static function for(?User $user): self
     {
-        return new self($user);
+        return new self($user, app(BeneficiaireAccessService::class));
     }
 
     /**
@@ -36,24 +34,7 @@ class ActivePensionContext
             return collect();
         }
 
-        $fromLinks = UserBeneficiaireLink::query()
-            ->where('user_id', $this->user->id)
-            ->with('beneficiaire.affiliations')
-            ->get()
-            ->filter(fn (UserBeneficiaireLink $link) => $link->isActive())
-            ->map(fn (UserBeneficiaireLink $link) => $link->beneficiaire)
-            ->filter();
-
-        $fromMandats = PensionMandat::query()
-            ->where('user_id', $this->user->id)
-            ->where('status', PensionMandatStatusEnum::ACTIF->value)
-            ->with('beneficiaire.affiliations')
-            ->get()
-            ->filter(fn (PensionMandat $mandat) => $mandat->isCurrentlyActive())
-            ->map(fn (PensionMandat $mandat) => $mandat->beneficiaire)
-            ->filter();
-
-        return $fromLinks->merge($fromMandats)->unique('id')->values();
+        return $this->access->accessibleBeneficiaires($this->user);
     }
 
     public function resolveBeneficiaire(): ?Beneficiaire
@@ -83,7 +64,11 @@ class ActivePensionContext
             ->where('relation', BeneficiaireRelationEnum::SELF->value)
             ->first();
 
-        return $selfLink?->beneficiaire ?? $beneficiaires->first();
+        if ($selfLink && $this->access->linkGrantsAccess($selfLink)) {
+            return $selfLink->beneficiaire;
+        }
+
+        return $beneficiaires->first();
     }
 
     public function resolveAffiliation(): ?AffiliationPension
@@ -91,13 +76,13 @@ class ActivePensionContext
         $beneficiaire = $this->resolveBeneficiaire();
 
         if (! $beneficiaire) {
-            return $this->legacyAffiliationFromUser();
+            return null;
         }
 
         $affiliations = $beneficiaire->affiliations;
 
         if ($affiliations->isEmpty()) {
-            return $this->legacyAffiliationFromUser();
+            return null;
         }
 
         $sessionAffId = session(self::SESSION_AFFILIATION);
@@ -178,7 +163,11 @@ class ActivePensionContext
 
     public function userCanAccessBeneficiaire(Beneficiaire $beneficiaire): bool
     {
-        return $this->accessibleBeneficiaires()->contains('id', $beneficiaire->id);
+        if (! $this->user) {
+            return false;
+        }
+
+        return $this->user->can('view', $beneficiaire);
     }
 
     public function userCanActOnDemandeType(string $typeDemande): bool
@@ -193,77 +182,22 @@ class ActivePensionContext
             return true;
         }
 
-        $link = UserBeneficiaireLink::query()
-            ->where('user_id', $this->user->id)
-            ->where('beneficiaire_id', $beneficiaire->id)
-            ->first();
-
-        if ($link?->relation === BeneficiaireRelationEnum::SELF) {
-            return true;
-        }
-
-        if ($link && in_array($link->relation, [
-            BeneficiaireRelationEnum::PERE,
-            BeneficiaireRelationEnum::MERE,
-            BeneficiaireRelationEnum::TUTEUR,
-        ], true)) {
-            return true;
-        }
-
-        $mandat = PensionMandat::query()
-            ->where('user_id', $this->user->id)
-            ->where('beneficiaire_id', $beneficiaire->id)
-            ->where('status', PensionMandatStatusEnum::ACTIF->value)
-            ->get()
-            ->first(fn (PensionMandat $m) => $m->isCurrentlyActive() && $m->allowsDemandeType($typeDemande));
-
-        return $mandat !== null;
+        return $this->user->can('createDemande', [$beneficiaire, $typeDemande]);
     }
 
     public function userCanUsePensionCodeForDemande(string $code, string $typeDemande): bool
     {
-        if (! $this->userCanActOnDemandeType($typeDemande)) {
+        if (! $this->user) {
             return false;
         }
 
-        $normalized = AffiliationPension::normalizeCode($code);
         $beneficiaire = $this->resolveBeneficiaire();
 
         if (! $beneficiaire) {
             return true;
         }
 
-        $affiliations = $beneficiaire->relationLoaded('affiliations')
-            ? $beneficiaire->affiliations
-            : $beneficiaire->affiliations()->get();
-
-        $ownsCode = $affiliations->contains(
-            fn (AffiliationPension $affiliation) => AffiliationPension::normalizeCode($affiliation->code_pension) === $normalized
-        );
-
-        if (! $ownsCode) {
-            return false;
-        }
-
-        $link = UserBeneficiaireLink::query()
-            ->where('user_id', $this->user?->id)
-            ->where('beneficiaire_id', $beneficiaire->id)
-            ->first();
-
-        if ($link?->relation === BeneficiaireRelationEnum::MANDATAIRE) {
-            $mandat = PensionMandat::query()
-                ->where('user_id', $this->user?->id)
-                ->where('beneficiaire_id', $beneficiaire->id)
-                ->where('status', PensionMandatStatusEnum::ACTIF->value)
-                ->get()
-                ->first(fn (PensionMandat $m) => $m->isCurrentlyActive()
-                    && $m->allowsDemandeType($typeDemande)
-                    && $m->allowsPensionCode($normalized));
-
-            return $mandat !== null;
-        }
-
-        return true;
+        return $this->user->can('usePensionCodeForDemande', [$beneficiaire, $code, $typeDemande]);
     }
 
     public function ensureDefaults(): void
@@ -316,10 +250,5 @@ class ActivePensionContext
                 session([self::SESSION_AFFILIATION => $primary->id]);
             }
         }
-    }
-
-    private function legacyAffiliationFromUser(): ?AffiliationPension
-    {
-        return null;
     }
 }

@@ -57,6 +57,12 @@ The central concept is a `Demande` (request/application). All request types are 
 
 Documents are attached to demandes via `DemandeDocument` model. Document requirements per demande type (labels, min/max file counts, single vs. multiple) are configured in `config/demandes.php`, not hardcoded. The `disk` key in that config (currently `public`) controls storage location.
 
+### Fichiers / storage
+
+- CMS public : `storage/app/public/cms/` (carousel, publications, médiathèque, …) servi via `/storage/…` — voir `documentation/storage-arborescence.md` et `config/uploads.php`.
+- Pièces sensibles : `storage/app/private/media/` (Spatie Media Library).
+- Commandes : `uploads:ensure-structure`, `uploads:migrate-structure`, `uploads:prune-legacy`.
+
 ### Workflow / Status Tracking
 
 The circuit de traitement is a step-based graph:

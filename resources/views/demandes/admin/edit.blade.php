@@ -478,12 +478,12 @@
                     </div>
                     <div class="flex gap-1 opacity-0 group-hover:opacity-100 transition">
                         @if($isImage)
-                            <a href="{{ $media->getUrl() }}" target="_blank"
+                            <a href="{{ $demande->urlForMedia($media) }}" target="_blank"
                                class="p-1.5 rounded text-gray-400 hover:text-blue-600 hover:bg-blue-50 transition" title="Aperçu">
                                 <i class="fas fa-eye text-xs"></i>
                             </a>
                         @endif
-                        <a href="{{ $media->getUrl() }}" download="{{ $media->file_name }}"
+                        <a href="{{ $demande->urlForMedia($media) }}" download="{{ $media->file_name }}"
                            class="p-1.5 rounded text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 transition" title="Télécharger">
                             <i class="fas fa-download text-xs"></i>
                         </a>

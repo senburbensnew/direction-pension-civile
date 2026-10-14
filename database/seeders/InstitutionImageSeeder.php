@@ -21,9 +21,9 @@ class InstitutionImageSeeder extends Seeder
 
         foreach ($files as $i => $file) {
             InstitutionImage::create([
-                'title'  => null,
-                'image'  => 'images/carousel/' . $file,
-                'order'  => $i + 1,
+                'title' => null,
+                'image' => 'cms/carousel/'.$file,
+                'order' => $i + 1,
                 'active' => true,
             ]);
         }

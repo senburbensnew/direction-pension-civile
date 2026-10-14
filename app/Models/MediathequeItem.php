@@ -3,7 +3,9 @@
 namespace App\Models;
 
 use App\Support\PublicMedia;
+use App\Support\Storage\UploadPaths;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\Storage;
 
 class MediathequeItem extends Model
 {
@@ -37,12 +39,32 @@ class MediathequeItem extends Model
         if (str_starts_with($this->file_path, 'http')) {
             return $this->file_path;
         }
-        // Root-relative URLs work regardless of APP_URL host/port (e.g. :8000).
-        if (str_starts_with($this->file_path, 'media/')) {
-            return '/'.ltrim($this->file_path, '/');
+
+        $path = $this->normalizedFilePath();
+
+        if (str_starts_with($path, 'media/')) {
+            $publicFile = public_path($path);
+            if (is_file($publicFile)) {
+                return '/'.ltrim($path, '/');
+            }
         }
 
-        return '/storage/'.ltrim($this->file_path, '/');
+        if (str_starts_with($path, 'images/') && is_file(public_path($path))) {
+            return asset($path);
+        }
+
+        $disk = Storage::disk('public');
+
+        if ($disk->exists($path)) {
+            return asset('storage/'.$path);
+        }
+
+        $webp = PublicMedia::webpSiblingPath($path);
+        if ($disk->exists($webp)) {
+            return asset('storage/'.$webp);
+        }
+
+        return null;
     }
 
     public function fileComponentSrc(): ?string
@@ -55,12 +77,45 @@ class MediathequeItem extends Model
             return $this->file_path;
         }
 
-        return PublicMedia::componentSrc($this->file_path);
+        $path = $this->normalizedFilePath();
+
+        if (str_starts_with($path, 'images/')) {
+            return $path;
+        }
+
+        return PublicMedia::componentSrc($path);
     }
 
     public function isLegacyPublicFile(): bool
     {
-        return $this->file_path && str_starts_with($this->file_path, 'media/');
+        if (! $this->file_path) {
+            return false;
+        }
+
+        $path = $this->normalizedFilePath();
+
+        return str_starts_with($path, 'media/')
+            || str_starts_with($path, 'images/');
+    }
+
+    /** @return non-empty-string */
+    private function normalizedFilePath(): string
+    {
+        $path = ltrim(str_replace('\\', '/', $this->file_path), '/');
+
+        if (str_starts_with($path, 'cms/')) {
+            return $path;
+        }
+
+        if (str_starts_with($path, 'mediatheque/')) {
+            return 'cms/'.$path;
+        }
+
+        if (str_starts_with($path, 'media/audios/')) {
+            return UploadPaths::mediatheque('audio').'/'.basename($path);
+        }
+
+        return $path;
     }
 
     public function isExternal(): bool

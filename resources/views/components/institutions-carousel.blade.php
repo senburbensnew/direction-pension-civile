@@ -1,10 +1,10 @@
-<section class="fade-in py-4 md:py-6">
+<section class="fade-in pt-2 md:pt-4 pb-0">
     <div class="relative overflow-hidden">
         {{-- Edge fade masks --}}
         <div class="absolute left-0 top-0 bottom-0 w-20 md:w-32 bg-gradient-to-r from-white to-transparent z-10 pointer-events-none"></div>
         <div class="absolute right-0 top-0 bottom-0 w-20 md:w-32 bg-gradient-to-l from-white to-transparent z-10 pointer-events-none"></div>
 
-        <div class="carousel-outer overflow-hidden py-4">
+        <div class="carousel-outer overflow-hidden pt-4 pb-0">
             {{--
                 Use margin-right on each item instead of flex gap.
                 This makes every item occupy exactly (item-width + margin) space,

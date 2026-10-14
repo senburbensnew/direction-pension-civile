@@ -12,7 +12,9 @@ use App\Models\PensionMandat;
 use App\Models\User;
 use App\Models\UserBeneficiaireLink;
 use App\Notifications\PensionMandatApprouveNotification;
+use App\Services\Pension\ActivePensionContext;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Notification;
 use Spatie\Permission\Models\Role;
 use Tests\TestCase;
@@ -54,7 +56,7 @@ class PensionMandatWorkflowTest extends TestCase
         ]);
 
         session([
-            \App\Services\Pension\ActivePensionContext::SESSION_BENEFICIAIRE => $beneficiaire->id,
+            ActivePensionContext::SESSION_BENEFICIAIRE => $beneficiaire->id,
         ]);
 
         $context = $mandataire->pensionContext();
@@ -74,7 +76,7 @@ class PensionMandatWorkflowTest extends TestCase
             'beneficiaire_lastname' => 'Dupont',
             'code_pension' => '8-10002',
             'type' => 'procuration_consulaire',
-            'mandat_document' => \Illuminate\Http\UploadedFile::fake()->create('mandat.pdf', 100, 'application/pdf'),
+            'mandat_document' => UploadedFile::fake()->create('mandat.pdf', 100, 'application/pdf'),
         ])->assertRedirect(route('compte.mandats.index'));
 
         $this->assertDatabaseHas('pension_mandats', [
@@ -125,5 +127,12 @@ class PensionMandatWorkflowTest extends TestCase
         $this->assertSame([TypeDemandeEnum::DEMANDE_ATTESTATION->value], $mandat->allowed_demande_types);
 
         Notification::assertSentTo($mandataire, PensionMandatApprouveNotification::class);
+
+        $this->assertDatabaseHas('user_beneficiaire_links', [
+            'user_id' => $mandataire->id,
+            'beneficiaire_id' => $beneficiaire->id,
+            'relation' => BeneficiaireRelationEnum::MANDATAIRE->value,
+            'status' => 'active',
+        ]);
     }
 }

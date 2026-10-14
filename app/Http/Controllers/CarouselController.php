@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Carousel;
 use App\Services\ImageStorageService;
+use App\Support\Storage\UploadPaths;
 use Illuminate\Http\Request;
 
 class CarouselController extends Controller
@@ -40,7 +41,7 @@ class CarouselController extends Controller
 
         $imagePath = app(ImageStorageService::class)->storeUploadedImage(
             $request->file('image'),
-            'carousel',
+            UploadPaths::cms('carousel'),
             config('media.upload_max_widths.carousel'),
         );
 
@@ -89,7 +90,7 @@ class CarouselController extends Controller
             app(ImageStorageService::class)->deleteWithVariants($carousel->image);
             $carousel->image = app(ImageStorageService::class)->storeUploadedImage(
                 $request->file('image'),
-                'carousel',
+                UploadPaths::cms('carousel'),
                 config('media.upload_max_widths.carousel'),
             );
         }

@@ -25,7 +25,7 @@
             <div class="py-6 pl-5 pr-5">
                 <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
                     {{-- ===================== PENSIONNE ===================== --}}
-                    @can('CAN_VIEW_PENSIONNE_SECTION')
+                    @can('can_view_pensionne_section')
                         <div class="mb-12">
                             <h3 class="text-lg font-semibold mb-4 text-gray-700">Pensionné</h3>
 
@@ -65,7 +65,7 @@
                     @endcan
 
                     {{-- ===================== FONCTIONNAIRE ===================== --}}
-                    @can('CAN_VIEW_FONCTIONNAIRE_SECTION')
+                    @can('can_view_fonctionnaire_section')
                         <div class="mb-12">
                             <h3 class="text-lg font-semibold mb-4 text-gray-700">Fonctionnaire</h3>
 
@@ -105,7 +105,7 @@
                     @endcan
 
                     {{-- ===================== INSTITUTION ===================== --}}
-                    @can('CAN_VIEW_INSTITUTION_SECTION')
+                    @can('can_view_institution_section')
                         <div class="mb-12">
                             <h3 class="text-lg font-semibold mb-4 text-gray-700">Institution</h3>
 

@@ -5,10 +5,11 @@
 @section('content')
 @php
     $allItems = collect()
-        ->merge($images->map(fn ($i) => ['item' => $i, 'kind' => 'image']))
-        ->merge($videos->map(fn ($i) => ['item' => $i, 'kind' => 'video']))
-        ->merge($audios->map(fn ($i) => ['item' => $i, 'kind' => 'audio']))
-        ->merge($documents->map(fn ($i) => ['item' => $i, 'kind' => 'document']));
+        ->concat($images->map(fn ($i) => ['item' => $i, 'kind' => 'image']))
+        ->concat($videos->map(fn ($i) => ['item' => $i, 'kind' => 'video']))
+        ->concat($audios->map(fn ($i) => ['item' => $i, 'kind' => 'audio']))
+        ->concat($documents->map(fn ($i) => ['item' => $i, 'kind' => 'document']))
+        ->values();
 
     $typeMeta = [
         'image'    => ['label' => 'Image',    'icon' => 'fa-image'],
@@ -23,9 +24,55 @@
     .tab-btn.is-active { background: #173052; color: #fff; }
     .media-card[hidden] { display: none !important; }
     [x-cloak] { display: none !important; }
+    #media-tabs { display: flex; flex-wrap: wrap; gap: 0.5rem; }
+    #media-grid {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr);
+        gap: 1.25rem;
+    }
+    @media (min-width: 640px) {
+        #media-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    }
+    @media (min-width: 1024px) {
+        #media-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+    }
+    .media-card {
+        background: #fff;
+        border: 1px solid #e5e7eb;
+        display: flex;
+        flex-direction: column;
+        min-width: 0;
+        overflow: hidden;
+    }
+    .media-card__thumb {
+        height: 13rem;
+        flex-shrink: 0;
+        overflow: hidden;
+        background: #f9fafb;
+    }
+    .media-card__thumb-inner {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 100%;
+        height: 100%;
+        padding: 0.5rem 0.75rem;
+    }
+    .media-card__thumb picture {
+        display: block;
+        width: 100%;
+        height: 100%;
+    }
+    .media-card__thumb img {
+        display: block;
+        width: 100%;
+        height: 100%;
+        object-fit: contain;
+        object-position: center;
+    }
 </style>
 
-<div class="py-10 px-4 sm:px-6 lg:px-8"
+<div class="py-10 px-4 sm:px-6 lg:px-8 min-h-full"
      x-data="{ lbOpen: false, lbSrc: '', lbAlt: '' }"
      @keydown.escape.window="lbOpen = false">
     <div class="max-w-7xl mx-auto space-y-8">
@@ -89,8 +136,8 @@
                     <i class="fa-solid fa-xmark text-xs"></i> Effacer
                 </button>
             </div>
-            <div class="flex flex-wrap gap-2" id="media-tabs">
-                <button type="button" class="tab-btn is-active px-4 py-2 text-sm font-medium bg-gray-100 text-gray-700 transition" data-tab="all">
+            <div class="flex flex-wrap gap-2 gap-y-2 pb-1" id="media-tabs">
+                <button type="button" class="tab-btn px-4 py-2 text-sm font-medium bg-gray-100 text-gray-700 hover:bg-gray-200 transition" data-tab="all">
                     Tous <span class="opacity-70">({{ $allItems->count() }})</span>
                 </button>
                 <button type="button" class="tab-btn px-4 py-2 text-sm font-medium bg-gray-100 text-gray-700 hover:bg-gray-200 transition" data-tab="image">
@@ -99,7 +146,7 @@
                 <button type="button" class="tab-btn px-4 py-2 text-sm font-medium bg-gray-100 text-gray-700 hover:bg-gray-200 transition" data-tab="video">
                     Vidéos <span class="opacity-70">({{ $videos->count() }})</span>
                 </button>
-                <button type="button" class="tab-btn px-4 py-2 text-sm font-medium bg-gray-100 text-gray-700 hover:bg-gray-200 transition" data-tab="audio">
+                <button type="button" class="tab-btn is-active px-4 py-2 text-sm font-medium bg-gray-100 text-gray-700 transition" data-tab="audio">
                     Audios <span class="opacity-70">({{ $audios->count() }})</span>
                 </button>
                 <button type="button" class="tab-btn px-4 py-2 text-sm font-medium bg-gray-100 text-gray-700 hover:bg-gray-200 transition" data-tab="document">
@@ -108,7 +155,7 @@
             </div>
         </section>
 
-        <div id="media-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+        <div id="media-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 mt-2">
             @foreach($allItems as $entry)
                 @php
                     $item = $entry['item'];
@@ -118,18 +165,20 @@
                 @endphp
                 <article class="media-card bg-white border border-gray-200 card-shadow flex flex-col"
                          data-type="{{ $kind }}"
-                         data-searchable="{{ $search }}">
+                         data-searchable="{{ e($search) }}">
 
                     @if($kind === 'image' && $item->fileUrl())
-                        <div class="relative h-44 bg-gray-50 cursor-zoom-in group flex items-center justify-center p-3"
+                        <div class="media-card__thumb relative cursor-zoom-in group"
                              @click="lbOpen = true; lbSrc = '{{ $item->fileUrl() }}'; lbAlt = '{{ addslashes($item->title) }}'">
-                            <x-optimized-image
-                                :src="$item->fileComponentSrc()"
-                                :alt="$item->title"
-                                class="max-w-full max-h-full object-contain transition-transform duration-300 group-hover:scale-105"
-                                sizes="(min-width: 768px) 25vw, 50vw"
-                            ></x-optimized-image>
-                            <div class="absolute inset-0 bg-black/0 group-hover:bg-black/15 transition-colors flex items-center justify-center">
+                            <div class="media-card__thumb-inner">
+                                <x-optimized-image
+                                    :src="$item->fileComponentSrc()"
+                                    :alt="$item->title"
+                                    class="transition-transform duration-300 group-hover:scale-105"
+                                    sizes="(min-width: 1024px) 33vw, (min-width: 640px) 50vw, 100vw"
+                                ></x-optimized-image>
+                            </div>
+                            <div class="pointer-events-none absolute inset-0 bg-black/0 group-hover:bg-black/15 transition-colors flex items-center justify-center">
                                 <i class="fa-solid fa-expand text-white opacity-0 group-hover:opacity-100 text-xl drop-shadow"></i>
                             </div>
                         </div>
@@ -207,7 +256,7 @@
             @endforeach
         </div>
 
-        <div id="media-empty" class="{{ $allItems->isEmpty() ? '' : 'hidden' }} bg-white border border-gray-200 card-shadow p-12 text-center text-gray-500">
+        <div id="media-empty" @class(['bg-white border border-gray-200 card-shadow p-12 text-center text-gray-500', 'hidden' => ! $allItems->isEmpty()])>
             <i class="fa-solid fa-photo-film text-3xl text-navy mb-4 block"></i>
             <p>Aucun média disponible pour le moment.</p>
         </div>
@@ -233,19 +282,28 @@
 
     </div>
 </div>
+@endsection
 
+@push('scripts')
 <script>
     document.addEventListener('DOMContentLoaded', function () {
         const tabs = document.querySelectorAll('.tab-btn');
-        const cards = document.querySelectorAll('#media-grid .media-card');
+        const grid = document.getElementById('media-grid');
+        const cards = grid ? grid.querySelectorAll('.media-card') : [];
         const empty = document.getElementById('media-empty');
         const searchEl = document.getElementById('media-search');
         const clearBtn = document.getElementById('media-search-clear');
-        let activeTab = 'all';
+        let activeTab = 'audio';
 
         function applyFilters() {
+            if (!searchEl || !empty || cards.length === 0) {
+                return;
+            }
+
             const q = (searchEl.value || '').trim().toLowerCase();
-            clearBtn.classList.toggle('hidden', q === '');
+            if (clearBtn) {
+                clearBtn.classList.toggle('hidden', q === '');
+            }
             let visible = 0;
 
             cards.forEach(card => {
@@ -257,6 +315,9 @@
             });
 
             empty.classList.toggle('hidden', visible > 0);
+            if (grid) {
+                grid.classList.toggle('hidden', visible === 0);
+            }
         }
 
         tabs.forEach(tab => {
@@ -268,14 +329,18 @@
             });
         });
 
-        searchEl.addEventListener('input', applyFilters);
-        clearBtn.addEventListener('click', () => {
-            searchEl.value = '';
-            applyFilters();
-            searchEl.focus();
-        });
+        if (searchEl) {
+            searchEl.addEventListener('input', applyFilters);
+        }
+        if (clearBtn && searchEl) {
+            clearBtn.addEventListener('click', () => {
+                searchEl.value = '';
+                applyFilters();
+                searchEl.focus();
+            });
+        }
 
         applyFilters();
     });
 </script>
-@endsection
+@endpush

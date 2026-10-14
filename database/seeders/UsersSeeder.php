@@ -3,11 +3,9 @@
 namespace Database\Seeders;
 
 use App\Enums\AccountStatusEnum;
-use App\Models\User;
 use App\Models\Service;
-use App\Models\Institution;
+use App\Models\User;
 use App\Services\Account\UserCategoryRoleSyncService;
-use App\Services\Pension\BeneficiaireProvisioningService;
 use Illuminate\Database\Seeder;
 
 class UsersSeeder extends Seeder
@@ -15,82 +13,6 @@ class UsersSeeder extends Seeder
     public function run()
     {
         $defaultPassword = bcrypt('password123');
-
-        $roleUsers = [
-            'pensionne' => [
-                'name' => 'Pensionne Test',
-                'email' => 'pensionne@example.com',
-                'username' => 'pensionne',
-                'phone' => '+50938123456',
-                'pension_code' => '8-10000',
-            ],
-            'fonctionnaire' => [
-                'name' => 'Fonctionnaire Test',
-                'email' => 'fonctionnaire@example.com',
-                'username' => 'fonctionnaire',
-            ],
-            'institution' => [
-                'name' => 'Institution Test',
-                'email' => 'institution@example.com',
-                'username' => 'institution',
-            ],
-        ];
-
-        foreach ($roleUsers as $roleName => $data) {
-            $payload = [
-                'name' => $data['name'],
-                'password' => $defaultPassword,
-                'nif' => fake()->unique()->numerify('###-###-###-#'),
-                'account_status' => AccountStatusEnum::ACTIF,
-            ];
-            $pensionCode = $data['pension_code'] ?? null;
-
-            foreach (['email', 'firstname', 'lastname', 'phone', 'username'] as $field) {
-                if (array_key_exists($field, $data)) {
-                    $payload[$field] = $data[$field];
-                }
-            }
-
-            $user = User::updateOrCreate(
-                ['email' => $data['email']],
-                $payload
-            );
-
-            $user->syncRoles([$roleName]);
-
-            if ($roleName === 'institution') {
-                $institution = Institution::query()->firstOrCreate(
-                    ['raison_sociale' => $data['name']],
-                    ['statut' => 'actif', 'nif' => $payload['nif'] ?? null]
-                );
-                $user->forceFill(['institution_id' => $institution->id])->saveQuietly();
-            }
-
-            $this->syncAccountCategories($user->fresh(), $roleName);
-
-            if ($roleName === 'pensionne' && filled($pensionCode)) {
-                app(BeneficiaireProvisioningService::class)->provisionAdultSelf(
-                    $user->fresh(),
-                    null,
-                    (string) $pensionCode
-                );
-            }
-        }
-
-        // Direction
-        // $directionUser = User::updateOrCreate(
-        //     ['email' => 'direction@example.com'],
-        //     [
-        //         'name' => 'Direction',
-        //         'email' => 'direction@example.com',
-        //         'username' => 'direction',
-        //         'password' => $defaultPassword,
-        //         'nif' => fake()->unique()->numerify('###-###-###-#'),
-        //         'user_type_id' => $fonctionnaireType->id,
-        //         'service_id' => Service::where('code', 'direction')->value('id'),
-        //     ]
-        // );
-        // $directionUser->syncRoles(['fonctionnaire', 'direction', User::ROLE_VALIDATEUR_RDV]);
 
         $directeurUser = User::updateOrCreate(
             ['email' => 'esther.mussac@dpc.gouv.ht'],
@@ -106,84 +28,6 @@ class UsersSeeder extends Seeder
         );
         $directeurUser->syncRoles(['fonctionnaire', 'directeur']);
         $this->syncAccountCategories($directeurUser->fresh());
-
-        $assistantDirecteurUser = User::updateOrCreate(
-            ['email' => 'assistant.directeur@example.com'],
-            [
-                'name' => 'Assistant Directeur',
-                'email' => 'assistant.directeur@example.com',
-                'username' => 'assistant.directeur',
-                'password' => $defaultPassword,
-                'nif' => fake()->unique()->numerify('###-###-###-#'),
-                'service_id' => Service::where('code', 'direction')->value('id'),
-                'account_status' => AccountStatusEnum::ACTIF,
-            ]
-        );
-        $assistantDirecteurUser->syncRoles(['fonctionnaire', 'assistant_directeur']);
-        $this->syncAccountCategories($assistantDirecteurUser->fresh());
-
-        // Service liquidation
-        // $liquidationUser = User::updateOrCreate(
-        //     ['email' => 'liquidation@example.com'],
-        //     [
-        //         'name' => 'Service liquidation',
-        //         'email' => 'liquidation@example.com',
-        //         'username' => 'liquidation',
-        //         'password' => $defaultPassword,
-        //         'nif' => fake()->unique()->numerify('###-###-###-#'),
-        //         'user_type_id' => $fonctionnaireType->id,
-        //         'service_id' => Service::where('code', 'service_liquidation')->value('id'),
-        //     ]
-        // );
-        // $liquidationUser->syncRoles(['fonctionnaire', 'service_liquidation']);
-
-
-        // Service contrôle placement
-        // $controlePlacementUser = User::updateOrCreate(
-        //     ['email' => 'controle.placement@example.com'],
-        //     [
-        //         'name' => 'Service contrôle placement',
-        //         'email' => 'controle.placement@example.com',
-        //         'username' => 'controle.placement',
-        //         'password' => $defaultPassword,
-        //         'nif' => fake()->unique()->numerify('###-###-###-#'),
-        //         'user_type_id' => $fonctionnaireType->id,
-        //         'service_id' => Service::where('code', 'service_controle_placement')->value('id'),
-        //     ]
-        // );
-        // $controlePlacementUser->syncRoles(['fonctionnaire', 'service_controle_placement']);
-
-
-        // Service comptabilité
-        // $comptabiliteUser = User::updateOrCreate(
-        //     ['email' => 'comptabilite@example.com'],
-        //     [
-        //         'name' => 'Service comptabilité',
-        //         'email' => 'comptabilite@example.com',
-        //         'username' => 'comptabilite',
-        //         'password' => $defaultPassword,
-        //         'nif' => fake()->unique()->numerify('###-###-###-#'),
-        //         'user_type_id' => $fonctionnaireType->id,
-        //         'service_id' => Service::where('code', 'service_comptabilite')->value('id'),
-        //     ]
-        // );
-        // $comptabiliteUser->syncRoles(['fonctionnaire', 'service_comptabilite']);
-
-
-        // Accueil et Formalités
-        // $formaliteUser = User::updateOrCreate(
-        //     ['email' => 'formalite@example.com'],
-        //     [
-        //         'name' => 'Accueil et Formalités',
-        //         'email' => 'formalite@example.com',
-        //         'username' => 'formalite',
-        //         'password' => $defaultPassword,
-        //         'nif' => fake()->unique()->numerify('###-###-###-#'),
-        //         'user_type_id' => $fonctionnaireType->id,
-        //         'service_id' => Service::where('code', 'service_accueil_formalites')->value('id'),
-        //     ]
-        // );
-        // $formaliteUser->syncRoles(['fonctionnaire', 'service_accueil_formalites']);
 
         $formalitesServiceId = Service::where('code', 'service_accueil_formalites')->value('id');
         foreach ([
@@ -243,50 +87,6 @@ class UsersSeeder extends Seeder
         );
         $suffrin->syncRoles(['fonctionnaire', 'responsable_service_accueil_formalites', User::ROLE_VALIDATEUR_RDV]);
         $this->syncAccountCategories($suffrin->fresh());
-
-        // Service assurance
-        // $assuranceUser = User::updateOrCreate(
-        //     ['email' => 'assurance@example.com'],
-        //     [
-        //         'name' => 'Service assurance',
-        //         'email' => 'assurance@example.com',
-        //         'username' => 'assurance',
-        //         'password' => $defaultPassword,
-        //         'nif' => fake()->unique()->numerify('###-###-###-#'),
-        //         'user_type_id' => $fonctionnaireType->id,
-        //         'service_id' => Service::where('code', 'service_assurance')->value('id'),
-        //     ]
-        // );
-        // $assuranceUser->syncRoles(['fonctionnaire', 'service_assurance']);
-
-
-        // $multiRoleUser = User::updateOrCreate(
-        //     ['email' => 'secretariat@example.com'],
-        //     [
-        //         'name' => 'Secrétariat',
-        //         'email' => 'secretariat@example.com',
-        //         'username' => 'secretariat',
-        //         'password' => $defaultPassword,
-        //         'nif' => fake()->unique()->numerify('###-###-###-#'),
-        //         'user_type_id' => $fonctionnaireType->id,
-        //         'service_id' => Service::where('code', 'secretariat')->value('id'),
-        //     ]
-        // );
-        // $multiRoleUser->syncRoles(['fonctionnaire', 'secretariat']);
-
-        // $dagrinUser = User::updateOrCreate(
-        //     ['email' => 'dagrin@example.com'],
-        //     [
-        //         'name' => 'Secrétaire Dagrin',
-        //         'email' => 'dagrin@example.com',
-        //         'username' => 'dagrin',
-        //         'password' => $defaultPassword,
-        //         'nif' => fake()->unique()->numerify('###-###-###-#'),
-        //         'user_type_id' => $fonctionnaireType->id,
-        //         'service_id' => Service::where('code', 'secretariat')->value('id'),
-        //     ]
-        // );
-        // $dagrinUser->syncRoles(['secretariat']);
     }
 
     private function syncAccountCategories(User $user, ?string $portalCategory = null): void

@@ -4,33 +4,35 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\StoreReportRequest;
 use App\Models\Report;
+use App\Support\Storage\UploadPaths;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
-use Carbon\Carbon;
 
 class ReportController extends Controller
 {
     public function __construct()
     {
-        $this->middleware('auth')->except(['index','show','download']);
+        $this->middleware('auth')->except(['index', 'show', 'download']);
         // pour les actions d'administration, tu peux utiliser middleware role:admin
     }
 
     // page publique listant les rapports publiés
     public function index(Request $request)
     {
-        $query = Report::query()->where('status','published')->orderBy('year','desc')->orderBy('created_at','desc');
+        $query = Report::query()->where('status', 'published')->orderBy('year', 'desc')->orderBy('created_at', 'desc');
 
         if ($request->filled('q')) {
             $q = $request->q;
-            $query->where(function($s) use ($q){
-                $s->where('title','like',"%{$q}%")
-                  ->orWhere('description','like',"%{$q}%")
-                  ->orWhere('year',$q);
+            $query->where(function ($s) use ($q) {
+                $s->where('title', 'like', "%{$q}%")
+                    ->orWhere('description', 'like', "%{$q}%")
+                    ->orWhere('year', $q);
             });
         }
 
         $reports = $query->paginate(12);
+
         return view('reports.index', compact('reports'));
     }
 
@@ -38,25 +40,25 @@ class ReportController extends Controller
     public function adminIndex()
     {
         $this->authorize('viewAny', Report::class);
-        $reports = Report::orderBy('year','desc')->paginate(20);
+        $reports = Report::orderBy('year', 'desc')->paginate(20);
+
         return view('reports.admin.index', compact('reports'));
     }
 
-public function create()
-{
-    return view('reports.create');
-}
+    public function create()
+    {
+        return view('reports.create');
+    }
 
     public function store(StoreReportRequest $request)
     {
-
 
         $this->authorize('create', Report::class);
 
         $file = $request->file('file');
 
-        $filename = time() . '_' . preg_replace('/\s+/', '_', $file->getClientOriginalName());
-        $path = $file->storeAs('reports/' . ($request->year ?? 'unspecified'), $filename, 'public');
+        $filename = time().'_'.preg_replace('/\s+/', '_', $file->getClientOriginalName());
+        $path = $file->storeAs(UploadPaths::reportYear($request->year), $filename, UploadPaths::publicDisk());
 
         $report = Report::create([
             'title' => $request->title,
@@ -71,7 +73,7 @@ public function create()
             'created_by' => auth()->id(),
         ]);
 
-        return redirect()->route('admin.reports.admin.index')->with('success','Rapport créé avec succès.');
+        return redirect()->route('admin.reports.admin.index')->with('success', 'Rapport créé avec succès.');
     }
 
     public function show(Report $report)
@@ -80,17 +82,16 @@ public function create()
         if ($report->status === 'draft') {
             $this->authorize('view', $report);
         }
+
         return view('reports.show', compact('report'));
     }
 
-public function edit(Report $report)
-{
-    $this->authorize('update', $report);
+    public function edit(Report $report)
+    {
+        $this->authorize('update', $report);
 
-    return view('reports.create', ['reportEdit' => $report]);
-}
-
-
+        return view('reports.create', ['reportEdit' => $report]);
+    }
 
     public function update(StoreReportRequest $request, Report $report)
     {
@@ -99,11 +100,11 @@ public function edit(Report $report)
 
         if ($request->hasFile('file')) {
             // delete old
-            Storage::disk('public')->delete($report->file_path);
+            Storage::disk(UploadPaths::publicDisk())->delete($report->file_path);
 
             $file = $request->file('file');
-            $filename = time() . '_' . preg_replace('/\s+/', '_', $file->getClientOriginalName());
-            $path = $file->storeAs('reports/' . ($request->year ?? 'unspecified'), $filename, 'public');
+            $filename = time().'_'.preg_replace('/\s+/', '_', $file->getClientOriginalName());
+            $path = $file->storeAs(UploadPaths::reportYear($request->year), $filename, UploadPaths::publicDisk());
 
             $report->fill([
                 'file_name' => $file->getClientOriginalName(),
@@ -117,20 +118,20 @@ public function edit(Report $report)
         $report->year = $request->year;
         $report->description = $request->description;
         $report->status = $request->status ?? $report->status;
-        $report->published_at = $report->status === 'published' && !$report->published_at ? Carbon::now() : $report->published_at;
+        $report->published_at = $report->status === 'published' && ! $report->published_at ? Carbon::now() : $report->published_at;
         $report->save();
 
-        return redirect()->route('admin.reports.admin.index')->with('success','Rapport mis à jour.');
+        return redirect()->route('admin.reports.admin.index')->with('success', 'Rapport mis à jour.');
     }
 
     public function destroy(Report $report)
     {
         $this->authorize('delete', $report);
 
-        Storage::disk('public')->delete($report->file_path);
+        Storage::disk(UploadPaths::publicDisk())->delete($report->file_path);
         $report->delete();
 
-        return back()->with('success','Rapport supprimé.');
+        return back()->with('success', 'Rapport supprimé.');
     }
 
     // Télécharger (stream)
@@ -140,10 +141,10 @@ public function edit(Report $report)
             $this->authorize('view', $report);
         }
 
-        $disk = Storage::disk('public');
+        $disk = Storage::disk(UploadPaths::publicDisk());
         $path = $report->file_path;
 
-        if (!$disk->exists($path)) {
+        if (! $disk->exists($path)) {
             abort(404);
         }
 
@@ -164,6 +165,6 @@ public function edit(Report $report)
         }
         $report->save();
 
-        return back()->with('success','Statut mis à jour.');
+        return back()->with('success', 'Statut mis à jour.');
     }
 }

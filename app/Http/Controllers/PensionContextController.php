@@ -49,4 +49,20 @@ class PensionContextController extends Controller
 
         return back()->with('success', 'Contexte pension mis à jour.');
     }
+
+    public function activate(Beneficiaire $beneficiaire): RedirectResponse
+    {
+        $user = request()->user();
+        $context = ActivePensionContext::for($user);
+
+        if (! $context->userCanAccessBeneficiaire($beneficiaire)) {
+            abort(403);
+        }
+
+        $context->setContext($beneficiaire->id);
+
+        return redirect()
+            ->route('compte.beneficiaires.index')
+            ->with('success', 'Contexte pension mis à jour.');
+    }
 }

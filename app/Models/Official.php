@@ -22,11 +22,11 @@ class Official extends Model
 
             return "https://ui-avatars.com/api/?name={$name}&background={$bg}&color=fff&size=200";
         }
-        if (str_starts_with($this->photo, 'images/') || str_starts_with($this->photo, 'http')) {
-            return str_starts_with($this->photo, 'http') ? $this->photo : asset($this->photo);
+        if (str_starts_with($this->photo, 'http://') || str_starts_with($this->photo, 'https://')) {
+            return $this->photo;
         }
 
-        return $this->mediaSources()['url'];
+        return PublicMedia::preferredUrl($this->mediaSources());
     }
 
     public function photoComponentSrc(): string

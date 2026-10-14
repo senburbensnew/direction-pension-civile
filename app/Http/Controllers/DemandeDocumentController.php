@@ -13,14 +13,14 @@ class DemandeDocumentController extends Controller
         abort_if($demande->created_by !== auth()->id(), 403);
 
         $request->validate([
-            'files'   => 'required|array|min:1|max:10',
+            'files' => 'required|array|min:1|max:10',
             'files.*' => 'file|mimes:pdf,jpg,jpeg,png,webp|max:5120',
         ]);
 
         foreach ($request->file('files') as $file) {
             $demande->addMedia($file)
                 ->usingFileName($file->getClientOriginalName())
-                ->toMediaCollection('supplemental', 'public');
+                ->toMediaCollection('supplemental', config('demandes.disk', 'public'));
         }
 
         return back()->with('success', 'Document(s) ajouté(s) avec succès.');
@@ -29,7 +29,7 @@ class DemandeDocumentController extends Controller
     public function destroy(Media $media)
     {
         $demande = $media->model;
-        abort_if(!$demande || $demande->created_by !== auth()->id(), 403);
+        abort_if(! $demande || $demande->created_by !== auth()->id(), 403);
 
         $media->delete();
 

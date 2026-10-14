@@ -23,13 +23,14 @@ class ProfileTest extends TestCase
 
     public function test_profile_information_can_be_updated(): void
     {
-        $user = User::factory()->create();
+        $user = User::factory()->create([
+            'phone' => null,
+        ]);
 
         $response = $this
             ->actingAs($user)
             ->patch('/profile', [
-                'name' => 'Test User',
-                'email' => 'test@example.com',
+                'phone' => '+50937001234',
             ]);
 
         $response
@@ -38,9 +39,59 @@ class ProfileTest extends TestCase
 
         $user->refresh();
 
-        $this->assertSame('Test User', $user->name);
-        $this->assertSame('test@example.com', $user->email);
-        $this->assertNull($user->email_verified_at);
+        $this->assertSame('+50937001234', $user->phone);
+    }
+
+    public function test_filled_profile_fields_cannot_be_changed_via_profile_form(): void
+    {
+        $user = User::factory()->create([
+            'email' => 'locked@example.com',
+            'phone' => '+50937009999',
+        ]);
+
+        $response = $this
+            ->actingAs($user)
+            ->patch('/profile', [
+                'email' => 'new@example.com',
+                'phone' => '+50937001111',
+            ]);
+
+        $response
+            ->assertSessionHasNoErrors()
+            ->assertRedirect('/profile');
+
+        $user->refresh();
+
+        $this->assertSame('locked@example.com', $user->email);
+        $this->assertSame('+50937001111', $user->phone);
+    }
+
+    public function test_empty_personal_fields_can_be_completed(): void
+    {
+        $user = User::factory()->create([
+            'firstname' => null,
+            'lastname' => null,
+            'address' => null,
+        ]);
+
+        $response = $this
+            ->actingAs($user)
+            ->patch('/profile', [
+                'firstname' => 'Jean',
+                'lastname' => 'Dupont',
+                'address' => 'Port-au-Prince',
+            ]);
+
+        $response
+            ->assertSessionHasNoErrors()
+            ->assertRedirect('/profile');
+
+        $user->refresh();
+
+        $this->assertSame('Jean', $user->firstname);
+        $this->assertSame('Dupont', $user->lastname);
+        $this->assertSame('Jean Dupont', $user->name);
+        $this->assertSame('Port-au-Prince', $user->address);
     }
 
     public function test_email_verification_status_is_unchanged_when_the_email_address_is_unchanged(): void

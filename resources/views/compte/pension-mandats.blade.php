@@ -21,13 +21,10 @@
 
 <x-portal-page bottom="pb-10" class="space-y-8">
 
-        <div class="text-center">
-            <p class="text-xs font-bold text-orange-500 uppercase tracking-widest">Compte pension</p>
-            <h1 class="text-3xl sm:text-4xl font-bold text-navy mt-2 mb-2">Mes mandats</h1>
-            <p class="text-sm text-gray-500 max-w-2xl mx-auto">
-                Demandez l’autorisation d’agir pour le compte d’un pensionné (procuration, mandat, etc.) et suivez vos demandes.
-            </p>
-        </div>
+        <x-compte-page-intro
+            title="Mes mandats"
+            description="Demandez l’autorisation d’agir pour le compte d’un pensionné (procuration, mandat, etc.) et suivez vos demandes."
+        />
 
         @if($errors->any())
             <div class="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-red-800 text-sm">
@@ -149,8 +146,11 @@
         </section>
 
         <div class="flex flex-wrap items-center justify-between gap-4 text-sm text-gray-600 pt-2">
+            <a href="{{ route('compte.beneficiaires.index') }}" class="text-navy font-medium hover:underline">
+                ← Mes bénéficiaires
+            </a>
             <a href="{{ route('compte.affiliations.index') }}" class="text-navy font-medium hover:underline">
-                ← Mes codes pension
+                Mes codes pension
             </a>
             <a href="{{ route('profile.edit') }}" class="text-indigo-700 font-semibold hover:underline">
                 Mon profil

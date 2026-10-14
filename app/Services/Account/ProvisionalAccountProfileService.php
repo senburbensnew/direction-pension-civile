@@ -17,11 +17,18 @@ class ProvisionalAccountProfileService
         bool $isMinorRepresentativeAccount,
         bool $representativeIsAlsoPensionne = false,
         bool $isMandataireAccount = false,
+        bool $mandataireIsAlsoPensionne = false,
     ): void {
         $sync = app(UserCategoryRoleSyncService::class);
 
         if ($isMandataireAccount) {
-            $sync->assignCategory($user, 'externe', primary: true, syncRoles: false);
+            if ($mandataireIsAlsoPensionne) {
+                Role::findOrCreate('pensionne', 'web');
+                $user->assignRole('pensionne');
+                $sync->syncCategories($user, ['externe', 'pensionne'], 'pensionne');
+            } else {
+                $sync->assignCategory($user, 'externe', primary: true, syncRoles: false);
+            }
 
             return;
         }

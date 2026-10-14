@@ -2,6 +2,7 @@
 
 namespace App\Support;
 
+use App\Support\Storage\CmsPathResolver;
 use Illuminate\Support\Facades\Storage;
 
 class PublicMedia
@@ -23,6 +24,11 @@ class PublicMedia
 
         if (str_starts_with($path, 'images/') || str_starts_with($path, 'storage/') || str_starts_with($path, 'media/')) {
             return $path;
+        }
+
+        $storageRelative = CmsPathResolver::legacyPathToStorage($path);
+        if ($storageRelative !== null && str_starts_with($storageRelative, 'cms/')) {
+            return 'storage/'.$storageRelative;
         }
 
         return 'storage/'.$path;
@@ -93,6 +99,27 @@ class PublicMedia
     public static function forUploadedOrStatic(string $relative): array
     {
         $relative = ltrim(str_replace('\\', '/', $relative), '/');
+
+        $storageRelative = CmsPathResolver::legacyPathToStorage($relative);
+
+        if ($storageRelative !== null
+            && ! str_starts_with($storageRelative, 'images/')
+            && ! str_starts_with($storageRelative, 'http')
+            && Storage::disk('public')->exists($storageRelative)) {
+            return self::forStorageRelative($storageRelative);
+        }
+
+        if (str_starts_with($relative, 'cms/')) {
+            return self::forStorageRelative($relative);
+        }
+
+        if (str_starts_with($relative, 'images/') && ! CmsPathResolver::isStaticPublicPath($relative)) {
+            if ($storageRelative !== null
+                && ! str_starts_with($storageRelative, 'images/')
+                && Storage::disk('public')->exists($storageRelative)) {
+                return self::forStorageRelative($storageRelative);
+            }
+        }
 
         if (str_starts_with($relative, 'images/')) {
             return self::forPublicPath($relative);

@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Http\Controllers\Concerns\StoresOptimizedImages;
 use App\Models\Official;
+use App\Support\Storage\UploadPaths;
 use Illuminate\Http\Request;
 
 class OfficialController extends Controller
@@ -49,7 +50,7 @@ class OfficialController extends Controller
         ]);
 
         if ($request->hasFile('photo')) {
-            $data['photo'] = $this->storeOptimizedImage($request->file('photo'), 'officials', 'official');
+            $data['photo'] = $this->storeOptimizedImage($request->file('photo'), UploadPaths::cms('officials'), 'official');
         }
 
         $data['active'] = $request->boolean('active', true);
@@ -84,7 +85,7 @@ class OfficialController extends Controller
 
         if ($request->hasFile('photo')) {
             $this->deleteOptimizedImage($official->photo);
-            $data['photo'] = $this->storeOptimizedImage($request->file('photo'), 'officials', 'official');
+            $data['photo'] = $this->storeOptimizedImage($request->file('photo'), UploadPaths::cms('officials'), 'official');
         }
 
         $data['active'] = $request->boolean('active', true);

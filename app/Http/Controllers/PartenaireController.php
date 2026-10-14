@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Http\Controllers\Concerns\StoresOptimizedImages;
 use App\Models\Partenaire;
+use App\Support\Storage\UploadPaths;
 use Illuminate\Http\Request;
 
 class PartenaireController extends Controller
@@ -40,7 +41,7 @@ class PartenaireController extends Controller
         ];
 
         if ($request->hasFile('logo')) {
-            $data['logo'] = $this->storeOptimizedImage($request->file('logo'), 'partenaires', 'partenaire');
+            $data['logo'] = $this->storeOptimizedImage($request->file('logo'), UploadPaths::cms('partenaires'), 'partenaire');
         }
 
         Partenaire::create($data);
@@ -66,7 +67,7 @@ class PartenaireController extends Controller
 
         if ($request->hasFile('logo')) {
             $this->deleteOptimizedImage($partenaire->logo);
-            $partenaire->logo = $this->storeOptimizedImage($request->file('logo'), 'partenaires', 'partenaire');
+            $partenaire->logo = $this->storeOptimizedImage($request->file('logo'), UploadPaths::cms('partenaires'), 'partenaire');
         }
 
         $partenaire->update([

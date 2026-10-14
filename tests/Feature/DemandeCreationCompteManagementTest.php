@@ -221,6 +221,7 @@ class DemandeCreationCompteManagementTest extends TestCase
     public function formalites_rdv_realise_allows_account_accept_with_formalites_mandats_motif(): void
     {
         Storage::fake('public');
+        Storage::fake(config('uploads.disks.private', 'private'));
         $demande = $this->makePendingDemande();
         $this->seedStatuses();
 
@@ -250,6 +251,7 @@ class DemandeCreationCompteManagementTest extends TestCase
     public function formalites_agent_can_accept_and_create_a_pensionne_account(): void
     {
         Storage::fake('public');
+        Storage::fake(config('uploads.disks.private', 'private'));
         $demande = $this->makePendingDemande();
         $this->markRendezVousRealise($demande);
         $demande->addMedia(UploadedFile::fake()->image('cin.jpg', 400, 300))
@@ -290,6 +292,7 @@ class DemandeCreationCompteManagementTest extends TestCase
     public function formalites_agent_can_refuse_a_pending_request(): void
     {
         Storage::fake('public');
+        Storage::fake(config('uploads.disks.private', 'private'));
         $demande = $this->makePendingDemande();
         $this->markRendezVousRealise($demande);
         $demande->addMedia(UploadedFile::fake()->image('cin.jpg', 400, 300))
@@ -323,6 +326,7 @@ class DemandeCreationCompteManagementTest extends TestCase
     public function formalites_agent_can_download_submitted_identity_piece(): void
     {
         Storage::fake('public');
+        Storage::fake(config('uploads.disks.private', 'private'));
         $demande = $this->makePendingDemande();
         $demande->addMedia(UploadedFile::fake()->image('cin.jpg', 400, 300))
             ->toMediaCollection('identite_cin', 'public');

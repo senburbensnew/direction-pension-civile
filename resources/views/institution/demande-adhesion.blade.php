@@ -250,7 +250,7 @@
                                         @if($demande)
                                             @foreach ($demande->getMedia('profile_photo') as $document)
                                                     <p class="mb-2 text-sm text-gray-600 flex justify-center items-center">
-                                                        <a href="{{ $document->getUrl() }}" target="_blank" class="text-blue-600 underline">
+                                                        <a href="{{ $demande->urlForMedia($document) }}" target="_blank" class="text-blue-600 underline">
                                                             {{-- {{ $document->file_name }} --}}
                                                             Voir photo
                                                         </a>

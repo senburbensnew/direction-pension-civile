@@ -51,13 +51,13 @@ class DemandeCreationCompte extends Model implements HasMedia
         'pension_code',
         'is_mineur',
         'is_mandataire',
+        'mandataire_est_pensionne',
         'representant_lien',
         'representant_est_pensionne',
         'piece_identite_representant_type',
         'pieces_identite',
         'ocr_fields',
         'ocr_documents',
-        'galipec_snapshot',
         'verification_mismatches',
         'submitted_payload',
         'message',
@@ -74,11 +74,11 @@ class DemandeCreationCompte extends Model implements HasMedia
     protected $casts = [
         'is_mineur' => 'boolean',
         'is_mandataire' => 'boolean',
+        'mandataire_est_pensionne' => 'boolean',
         'representant_est_pensionne' => 'boolean',
         'pieces_identite' => 'array',
         'ocr_fields' => 'array',
         'ocr_documents' => 'array',
-        'galipec_snapshot' => 'array',
         'verification_mismatches' => 'array',
         'submitted_payload' => 'array',
         'accepted_terms_at' => 'datetime',
@@ -89,16 +89,22 @@ class DemandeCreationCompte extends Model implements HasMedia
 
     public function registerMediaCollections(): void
     {
-        $this->addMediaCollection('identite_permis')->singleFile();
-        $this->addMediaCollection('identite_passeport')->singleFile();
-        $this->addMediaCollection('identite_cin')->singleFile();
-        $this->addMediaCollection('acte_naissance')->singleFile();
-        $this->addMediaCollection('identite_representant')->singleFile();
-        $this->addMediaCollection('identite_representant_permis')->singleFile();
-        $this->addMediaCollection('identite_representant_passeport')->singleFile();
-        $this->addMediaCollection('identite_representant_cin')->singleFile();
-        $this->addMediaCollection('matricule_fiscal')->singleFile();
-        $this->addMediaCollection('mandat_designation')->singleFile();
+        $disk = config('uploads.disks.comptes', 'private');
+
+        foreach ([
+            'identite_permis',
+            'identite_passeport',
+            'identite_cin',
+            'acte_naissance',
+            'identite_representant',
+            'identite_representant_permis',
+            'identite_representant_passeport',
+            'identite_representant_cin',
+            'matricule_fiscal',
+            'mandat_designation',
+        ] as $collection) {
+            $this->addMediaCollection($collection)->singleFile()->useDisk($disk);
+        }
     }
 
     public function user(): BelongsTo
@@ -326,7 +332,6 @@ class DemandeCreationCompte extends Model implements HasMedia
             'pieces_identite' => null,
             'ocr_fields' => null,
             'ocr_documents' => null,
-            'galipec_snapshot' => null,
             'verification_mismatches' => null,
             'submitted_payload' => null,
             'message' => null,

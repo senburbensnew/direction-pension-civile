@@ -24,6 +24,7 @@ return [
     'google' => [
         'api_key' => env('OCR_GOOGLE_API_KEY'),
         'access_token' => env('OCR_GOOGLE_ACCESS_TOKEN'),
+        // Chemin absolu ou relatif à storage/app/secrets/ (voir config/uploads.php)
         'credentials' => env('OCR_GOOGLE_CREDENTIALS'),
         'timeout' => (int) env('OCR_TIMEOUT', 60),
         'verify_ssl' => env('OCR_GOOGLE_VERIFY_SSL', true),

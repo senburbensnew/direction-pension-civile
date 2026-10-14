@@ -118,7 +118,7 @@
             </li>
 
             <!-- Pensionaire Dropdown -->
-            <!-- @if (!$isInternalUser && (auth()->guest() || (auth()->user()?->can('CAN_VIEW_PENSIONNE_MENU') && ! $isProvisionnel)))
+            <!-- @if (!$isInternalUser && (auth()->guest() || (auth()->user()?->can('can_view_pensionne_menu') && ! $isProvisionnel)))
                 <li class="relative w-full md:w-auto border-b md:border-none group">
                     <button
                         class="dropdown-toggle flex w-full items-center justify-between px-4 md:px-3 py-3
@@ -203,7 +203,7 @@
             @endif -->
 
             <!-- Fonctionnaire Dropdown -->
-            <!-- @if (!$isInternalUser && (auth()->guest() || auth()->user()?->can('CAN_VIEW_FONCTIONNAIRE_MENU')))
+            <!-- @if (!$isInternalUser && (auth()->guest() || auth()->user()?->can('can_view_fonctionnaire_menu')))
                 <li class="relative w-full md:w-auto border-b md:border-none group">
                     <button
                         class="dropdown-toggle flex w-full items-center justify-between px-4 md:px-3 py-3
@@ -248,7 +248,7 @@
             @endif -->
 
             <!-- Institution Dropdown -->
-            <!-- @if (!$isInternalUser && (auth()->guest() || auth()->user()?->can('CAN_VIEW_INSTITUTION_MENU')))
+            <!-- @if (!$isInternalUser && (auth()->guest() || auth()->user()?->can('can_view_institution_menu')))
                 <li class="relative w-full md:w-auto border-b md:border-none group">
                     <button
                         class="dropdown-toggle flex w-full items-center justify-between px-4 md:px-3 py-3
@@ -360,7 +360,7 @@
             <!-- Simulateur de calcul -->
             @auth
                 @if(! $isProvisionnel)
-                @canany(['CAN_VIEW_PENSIONNE_MENU', 'CAN_VIEW_INSTITUTION_MENU'])
+                @canany(['can_view_pensionne_menu', 'can_view_institution_menu'])
                     <li class="w-full md:w-auto border-b md:border-none">
                         <a href="{{ route('simulateur-calcul') }}"
                         class="block px-4 py-3 text-slate-600 hover:text-blue-600

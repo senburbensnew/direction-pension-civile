@@ -396,14 +396,14 @@ class AdminFeatureTest extends TestCase
 
         $response = $this->actingAs($admin)->post(route('admin.roles.store'), [
             'name' => 'custom_support',
-            'permissions' => ['CAN_VIEW_DASHBOARD'],
+            'permissions' => ['can_view_dashboard'],
         ]);
 
         $response->assertRedirect(route('admin.roles.index'));
         $response->assertSessionHas('success');
 
         $role = Role::findByName('custom_support', 'web');
-        $this->assertTrue($role->hasPermissionTo('CAN_VIEW_DASHBOARD'));
+        $this->assertTrue($role->hasPermissionTo('can_view_dashboard'));
 
         $this->actingAs($admin)->get(route('admin.roles.index'))->assertSee('custom_support');
     }
@@ -416,15 +416,15 @@ class AdminFeatureTest extends TestCase
 
         $response = $this->actingAs($admin)->put(route('admin.roles.update', $role), [
             'name' => 'role_to_edit',
-            'permissions' => ['CAN_VIEW_PENSIONNE_MENU', 'CAN_VIEW_DASHBOARD'],
+            'permissions' => ['can_view_pensionne_menu', 'can_view_dashboard'],
         ]);
 
         $response->assertRedirect(route('admin.roles.index'));
         $response->assertSessionHas('success');
 
         $role->refresh();
-        $this->assertTrue($role->hasPermissionTo('CAN_VIEW_PENSIONNE_MENU'));
-        $this->assertTrue($role->hasPermissionTo('CAN_VIEW_DASHBOARD'));
+        $this->assertTrue($role->hasPermissionTo('can_view_pensionne_menu'));
+        $this->assertTrue($role->hasPermissionTo('can_view_dashboard'));
     }
 
     /** @test */
@@ -478,12 +478,12 @@ class AdminFeatureTest extends TestCase
         $admin = $this->makeAdmin();
 
         $response = $this->actingAs($admin)->post(route('admin.permissions.store'), [
-            'name' => 'CAN_TEST_FEATURE',
+            'name' => 'can_test_feature',
         ]);
 
         $response->assertRedirect(route('admin.permissions.index'));
         $response->assertSessionHas('success');
-        $this->assertDatabaseHas('permissions', ['name' => 'CAN_TEST_FEATURE']);
+        $this->assertDatabaseHas('permissions', ['name' => 'can_test_feature']);
     }
 
     // ─── User search / filtering ─────────────────────────────────────────────

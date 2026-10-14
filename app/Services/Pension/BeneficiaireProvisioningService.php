@@ -2,10 +2,12 @@
 
 namespace App\Services\Pension;
 
+use App\Enums\BeneficiaireLinkPermissionEnum;
+use App\Enums\BeneficiaireLinkStatusEnum;
 use App\Enums\BeneficiaireRelationEnum;
+use App\Enums\PensionMandatStatusEnum;
 use App\Models\AffiliationPension;
 use App\Models\Beneficiaire;
-use App\Enums\PensionMandatStatusEnum;
 use App\Models\DemandeCreationCompte;
 use App\Models\PensionMandat;
 use App\Models\PensionnaireReference;
@@ -38,19 +40,24 @@ class BeneficiaireProvisioningService
         User $user,
         DemandeCreationCompte $demande,
         array $ocrDocuments,
-        bool $isMineur
+        bool $isMineur,
+        ?User $reviewer = null,
     ): Beneficiaire {
-        return DB::transaction(function () use ($user, $demande, $ocrDocuments, $isMineur) {
+        return DB::transaction(function () use ($user, $demande, $ocrDocuments, $isMineur, $reviewer) {
             if ($isMineur) {
-                return $this->provisionMinor($user, $demande, $ocrDocuments);
+                return $this->provisionMinor($user, $demande, $ocrDocuments, $reviewer);
             }
 
-            return $this->provisionAdultSelf($user, $demande);
+            return $this->provisionAdultSelf($user, $demande, null, $reviewer);
         });
     }
 
-    public function provisionAdultSelf(User $user, ?DemandeCreationCompte $demande = null, ?string $pensionCode = null): Beneficiaire
-    {
+    public function provisionAdultSelf(
+        User $user,
+        ?DemandeCreationCompte $demande = null,
+        ?string $pensionCode = null,
+        ?User $reviewer = null,
+    ): Beneficiaire {
         $code = $pensionCode ?? $demande?->pension_code;
 
         $existing = UserBeneficiaireLink::query()
@@ -60,22 +67,31 @@ class BeneficiaireProvisioningService
 
         if ($existing) {
             $beneficiaire = $existing->beneficiaire;
+            $beneficiaire
+                ->mergeInformationsComplementaires($this->buildInformationsComplementaires($user, $demande))
+                ->save();
             $this->syncAffiliation($beneficiaire, $code);
 
             return $beneficiaire;
         }
 
+        $complementaires = $this->buildInformationsComplementaires($user, $demande);
+
         $beneficiaire = Beneficiaire::create([
             'firstname' => $user->firstname ?? $demande?->firstname,
             'lastname' => $user->lastname ?? $demande?->lastname,
-            'nif' => $user->nif ?? $demande?->nif,
+            'nif' => $complementaires['nif'] ?? $user->nif ?? $demande?->nif,
             'is_mineur' => false,
+            'informations_complementaires' => $complementaires,
         ]);
 
         UserBeneficiaireLink::create([
             'user_id' => $user->id,
             'beneficiaire_id' => $beneficiaire->id,
             'relation' => BeneficiaireRelationEnum::SELF,
+            'status' => BeneficiaireLinkStatusEnum::ACTIVE,
+            'verifie_par' => $reviewer?->id,
+            'verifie_le' => $reviewer ? now() : null,
         ]);
 
         $this->syncAffiliation($beneficiaire, $code);
@@ -86,23 +102,36 @@ class BeneficiaireProvisioningService
     /**
      * @param  array<int, array<string, mixed>>  $ocrDocuments
      */
-    private function provisionMinor(User $user, DemandeCreationCompte $demande, array $ocrDocuments): Beneficiaire
-    {
+    private function provisionMinor(
+        User $user,
+        DemandeCreationCompte $demande,
+        array $ocrDocuments,
+        ?User $reviewer = null,
+    ): Beneficiaire {
         $minorFields = $this->fieldsFromDocument($ocrDocuments, 'acte_naissance');
         $relation = BeneficiaireRelationEnum::tryFrom((string) ($demande->representant_lien ?? ''))
             ?? BeneficiaireRelationEnum::TUTEUR;
 
+        $complementaires = $this->buildInformationsComplementaires($user, $demande, $ocrDocuments, $minorFields);
+
         $beneficiaire = Beneficiaire::create([
             'firstname' => $minorFields['prenom'] ?? $demande->firstname,
             'lastname' => $minorFields['nom'] ?? $demande->lastname,
-            'nif' => $demande->nif,
+            'nif' => $complementaires['nif'] ?? $demande->nif,
             'is_mineur' => true,
+            'informations_complementaires' => $complementaires,
         ]);
 
         UserBeneficiaireLink::create([
             'user_id' => $user->id,
             'beneficiaire_id' => $beneficiaire->id,
             'relation' => $relation,
+            'status' => BeneficiaireLinkStatusEnum::ACTIVE,
+            'permissions' => BeneficiaireLinkPermissionEnum::defaultGrant(),
+            'demande_par' => $user->id,
+            'verifie_par' => $reviewer?->id,
+            'verifie_le' => $reviewer ? now() : null,
+            'motif_decision' => $reviewer ? 'Acceptation demande de création de compte '.$demande->code : null,
         ]);
 
         $this->syncAffiliation($beneficiaire, $demande->pension_code, true);
@@ -141,6 +170,42 @@ class BeneficiaireProvisioningService
         }
 
         return $affiliation;
+    }
+
+    /**
+     * @param  array<int, array<string, mixed>>  $ocrDocuments
+     * @param  array<string, string>  $extraDocumentFields
+     * @return array<string, string>
+     */
+    private function buildInformationsComplementaires(
+        User $user,
+        ?DemandeCreationCompte $demande = null,
+        array $ocrDocuments = [],
+        array $extraDocumentFields = [],
+    ): array {
+        if ($ocrDocuments === [] && $demande && is_array($demande->ocr_documents)) {
+            $ocrDocuments = $demande->ocr_documents;
+        }
+
+        $cinFields = $this->fieldsFromDocument($ocrDocuments, 'identite_cin');
+        $documentFields = array_merge($cinFields, $extraDocumentFields);
+
+        $raw = [
+            'nif' => $user->nif ?? $demande?->nif ?? $documentFields['nif'] ?? null,
+            'ninu' => $user->ninu ?? $demande?->ninu
+                ?? $documentFields['ninu']
+                ?? $documentFields['numero_identification_unique']
+                ?? null,
+            'cin' => $documentFields['cin'] ?? $documentFields['numero_cin'] ?? null,
+            'telephone' => $demande?->telephone ?? $user->phone,
+            'email' => $demande?->email ?? $user->email,
+            'adresse' => $documentFields['adresse'] ?? null,
+            'sexe' => $documentFields['sexe'] ?? null,
+            'lieu_naissance' => $documentFields['lieu_naissance'] ?? null,
+            'nationalite' => $documentFields['nationalite'] ?? null,
+        ];
+
+        return Beneficiaire::sanitizeInformationsComplementaires($raw);
     }
 
     /**
@@ -187,10 +252,17 @@ class BeneficiaireProvisioningService
             ->whereRaw('UPPER(TRIM(PENSIONNAIRE_ID)) = ?', [$code])
             ->first();
 
+        $complementaires = Beneficiaire::sanitizeInformationsComplementaires([
+            'nif' => $reference?->NIF,
+            'sexe' => $reference?->SEXE,
+        ]);
+
         $beneficiaire = Beneficiaire::create([
             'firstname' => $reference?->PRENOM,
             'lastname' => $reference?->NOM,
+            'nif' => $complementaires['nif'] ?? null,
             'is_mineur' => false,
+            'informations_complementaires' => $complementaires !== [] ? $complementaires : null,
         ]);
 
         $this->syncAffiliation($beneficiaire, $code, true);
@@ -218,7 +290,6 @@ class BeneficiaireProvisioningService
                 $demande->getFirstMedia('mandat_designation')?->copy(
                     $mandat,
                     'mandat_document',
-                    'public'
                 );
             }
 

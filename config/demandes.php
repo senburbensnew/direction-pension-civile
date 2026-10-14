@@ -6,8 +6,8 @@ return [
             'multiple' => [],
             'single' => [
                 'profile_photo' => [
-                    'label'     => 'Photo',
-                    'multiple'  => false,
+                    'label' => 'Photo',
+                    'multiple' => false,
                     'min_files' => 1,
                     'max_files' => 1,
                 ],
@@ -21,36 +21,36 @@ return [
             'multiple' => [
 
                 'career_certificates' => [
-                    'label'     => 'Certificat de carrière',
-                    'multiple'  => true,
+                    'label' => 'Certificat de carrière',
+                    'multiple' => true,
                     'min_files' => 1,
                     'max_files' => 0,
                 ],
 
                 'marriage_certificates' => [
-                    'label'     => 'Acte de mariage',
-                    'multiple'  => true,
+                    'label' => 'Acte de mariage',
+                    'multiple' => true,
                     'min_files' => 0, // optionnel
                     'max_files' => 2, // 0 = illimité
                 ],
 
                 'birth_certificates' => [
-                    'label'     => 'Acte de naissance',
-                    'multiple'  => true,
+                    'label' => 'Acte de naissance',
+                    'multiple' => true,
                     'min_files' => 2,
                     'max_files' => 2,
                 ],
 
                 'tax_id_numbers' => [
-                    'label'     => 'Numéro d’identification fiscale',
-                    'multiple'  => true,
+                    'label' => 'Numéro d’identification fiscale',
+                    'multiple' => true,
                     'min_files' => 2,
                     'max_files' => 2,
                 ],
 
                 'photos' => [
-                    'label'     => 'Photos d’identité',
-                    'multiple'  => true,
+                    'label' => 'Photos d’identité',
+                    'multiple' => true,
                     'min_files' => 2,
                     'max_files' => 2,
                 ],
@@ -59,29 +59,29 @@ return [
             'single' => [
 
                 'monitor_copy' => [
-                    'label'     => 'Copie du moniteur',
-                    'multiple'  => false,
+                    'label' => 'Copie du moniteur',
+                    'multiple' => false,
                     'min_files' => 0,
                     'max_files' => 1,
                 ],
 
                 'medical_certificate' => [
-                    'label'     => 'Certificat médical',
-                    'multiple'  => false,
+                    'label' => 'Certificat médical',
+                    'multiple' => false,
                     'min_files' => 0,
                     'max_files' => 1,
                 ],
 
                 'check_stub' => [
-                    'label'     => 'Bulletin de paie',
-                    'multiple'  => false,
+                    'label' => 'Bulletin de paie',
+                    'multiple' => false,
                     'min_files' => 1,
                     'max_files' => 1,
                 ],
 
                 'divorce_certificate' => [
-                    'label'     => 'Acte de divorce',
-                    'multiple'  => false,
+                    'label' => 'Acte de divorce',
+                    'multiple' => false,
                     'min_files' => 0,
                     'max_files' => 1,
                 ],
@@ -93,20 +93,20 @@ return [
         'documents' => [
             'multiple' => [
                 'acte_deces' => [
-                    'label'     => 'acte_deces',
-                    'multiple'  => true,
+                    'label' => 'acte_deces',
+                    'multiple' => true,
                     'min_files' => 2,
                     'max_files' => 2,
                 ],
                 'photos_identites' => [
-                    'label'     => 'photos_identites',
-                    'multiple'  => true,
+                    'label' => 'photos_identites',
+                    'multiple' => true,
                     'min_files' => 2,
                     'max_files' => 2,
                 ],
                 'attestations_scolaires' => [
-                    'label'     => 'attestations_scolaires',
-                    'multiple'  => true,
+                    'label' => 'attestations_scolaires',
+                    'multiple' => true,
                     'min_files' => 0,
                     'max_files' => 2,
                 ],
@@ -114,74 +114,74 @@ return [
 
             'single' => [
                 'certificat_carriere' => [
-                    'label'     => 'certificat_carriere',
-                    'multiple'  => false,
+                    'label' => 'certificat_carriere',
+                    'multiple' => false,
                     'min_files' => 1,
                     'max_files' => 1,
                 ],
                 'certificat_non_dissolution' => [
-                    'label'     => 'certificat_non_dissolution',
-                    'multiple'  => false,
+                    'label' => 'certificat_non_dissolution',
+                    'multiple' => false,
                     'min_files' => 1,
                     'max_files' => 1,
                 ],
                 'carte_pension' => [
-                    'label'     => 'carte_pension',
-                    'multiple'  => false,
+                    'label' => 'carte_pension',
+                    'multiple' => false,
                     'min_files' => 1,
                     'max_files' => 1,
                 ],
                 'souche_cheque' => [
-                    'label'     => 'souche_cheque',
-                    'multiple'  => false,
+                    'label' => 'souche_cheque',
+                    'multiple' => false,
                     'min_files' => 1,
                     'max_files' => 1,
                 ],
                 'extrait_acte_mariage' => [
-                    'label'     => 'extrait_acte_mariage',
-                    'multiple'  => false,
+                    'label' => 'extrait_acte_mariage',
+                    'multiple' => false,
                     'min_files' => 1,
                     'max_files' => 1,
                 ],
                 'extrait_acte_naissance' => [
-                    'label'     => 'extrait_acte_naissance',
-                    'multiple'  => false,
+                    'label' => 'extrait_acte_naissance',
+                    'multiple' => false,
                     'min_files' => 1,
                     'max_files' => 1,
                 ],
                 'matricule_fiscal' => [
-                    'label'     => 'matricule_fiscal',
-                    'multiple'  => false,
+                    'label' => 'matricule_fiscal',
+                    'multiple' => false,
                     'min_files' => 1,
                     'max_files' => 1,
                 ],
                 'carte_electorale' => [
-                    'label'     => 'carte_electorale',
-                    'multiple'  => false,
+                    'label' => 'carte_electorale',
+                    'multiple' => false,
                     'min_files' => 1,
                     'max_files' => 1,
                 ],
                 'pv_tutelle' => [
-                    'label'     => 'pv_tutelle',
-                    'multiple'  => false,
+                    'label' => 'pv_tutelle',
+                    'multiple' => false,
                     'min_files' => 0,
                     'max_files' => 1,
                 ],
                 'certificat_medical' => [
-                    'label'     => 'certificat_medical',
-                    'multiple'  => false,
+                    'label' => 'certificat_medical',
+                    'multiple' => false,
                     'min_files' => 0,
                     'max_files' => 1,
                 ],
                 'certificat_medical' => [
-                    'label'     => 'certificat_medical',
-                    'multiple'  => false,
+                    'label' => 'certificat_medical',
+                    'multiple' => false,
                     'min_files' => 0,
                     'max_files' => 1,
                 ],
                 'copie_moniteur' => [
-                    'label'     => 'certificat_medical',
-                    'multiple'  => false,
+                    'label' => 'certificat_medical',
+                    'multiple' => false,
                     'min_files' => 0,
                     'max_files' => 1,
                 ],
@@ -193,14 +193,14 @@ return [
         'documents' => [
             'multiple' => [
                 'bulletins_salaire' => [
-                    'label'     => 'bulletins_salaire',
-                    'multiple'  => true,
+                    'label' => 'bulletins_salaire',
+                    'multiple' => true,
                     'min_files' => 1,
                     'max_files' => 0,
                 ],
                 'documents_carriere' => [
-                    'label'     => 'documents_carriere',
-                    'multiple'  => true,
+                    'label' => 'documents_carriere',
+                    'multiple' => true,
                     'min_files' => 1,
                     'max_files' => 0,
                 ],
@@ -208,14 +208,14 @@ return [
 
             'single' => [
                 'lettre_nomination' => [
-                    'label'     => 'lettre_nomination',
-                    'multiple'  => false,
+                    'label' => 'lettre_nomination',
+                    'multiple' => false,
                     'min_files' => 1,
                     'max_files' => 1,
                 ],
                 'acte_mariage_acte_deces' => [
-                    'label'     => 'acte_mariage_acte_deces',
-                    'multiple'  => false,
+                    'label' => 'acte_mariage_acte_deces',
+                    'multiple' => false,
                     'min_files' => 0,
                     'max_files' => 1,
                 ],
@@ -261,6 +261,6 @@ return [
         ],
     ],
 
-    // Disk to use for file storage
-    'disk' => 'public',
+    // Disk to use for file storage (see config/uploads.php)
+    'disk' => env('UPLOADS_DEMANDES_DISK', env('DEMANDES_DISK', 'private')),
 ];

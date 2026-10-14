@@ -5,6 +5,8 @@ use App\Http\Controllers\Admin\PensionMandatManagementController;
 use App\Http\Controllers\Admin\RdvSettingsController;
 use App\Http\Controllers\AdminController;
 use App\Http\Controllers\AdminDashboardController;
+use App\Http\Controllers\BeneficiaireEspaceController;
+use App\Http\Controllers\BeneficiaireRelationDemandeController;
 use App\Http\Controllers\CarouselController;
 use App\Http\Controllers\CompteProvisoireController;
 use App\Http\Controllers\ContactController;
@@ -15,6 +17,7 @@ use App\Http\Controllers\DemandeCreationCompteController;
 use App\Http\Controllers\DemandeCreationCompteManagementController;
 use App\Http\Controllers\DemandeDocumentController;
 use App\Http\Controllers\DemandeManagementController;
+use App\Http\Controllers\DemandeMediaController;
 use App\Http\Controllers\DemandeMiseAJourController;
 use App\Http\Controllers\DemandePdfController;
 use App\Http\Controllers\DemandeRencontreController;
@@ -22,6 +25,10 @@ use App\Http\Controllers\DirectionDepartementaleController;
 use App\Http\Controllers\DocumentController;
 use App\Http\Controllers\FaqController;
 use App\Http\Controllers\FluxTransitionController;
+use App\Http\Controllers\Formalites\BeneficiaireRelationManagementController;
+use App\Http\Controllers\Formalites\BeneficiaireRepresentationHubController;
+use App\Http\Controllers\Formalites\BeneficiaireRepresentationPieceController;
+use App\Http\Controllers\Formalites\PensionMandatFormalitesController;
 use App\Http\Controllers\GlossaireController;
 use App\Http\Controllers\InstitutionImageController;
 use App\Http\Controllers\LocaleController;
@@ -51,9 +58,11 @@ use App\Models\Actualite;
 use App\Models\Carousel;
 use App\Models\Report;
 use App\Models\User;
+use App\Support\Storage\UploadPaths;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Route;
+use Illuminate\Support\Facades\Storage;
 
 /*
 |--------------------------------------------------------------------------
@@ -479,35 +488,47 @@ Route::get(
 
 Route::get(
     '/documents/{filename}',
-    function ($filename) {
-        $path = storage_path(
-            "app/public/documents/$filename"
-        );
+    function (string $filename) {
+        $filename = basename($filename);
+        $storagePath = UploadPaths::cms('publications').'/'.$filename;
+        $disk = Storage::disk(UploadPaths::publicDisk());
 
-        abort_unless(
-            file_exists($path),
-            404
-        );
+        abort_unless($disk->exists($storagePath), 404);
 
-        return response()->file($path);
+        return response()->file($disk->path($storagePath));
     }
 )->name('documents.view');
 
 Route::get(
     '/documents/download/{filename}',
-    function ($filename) {
-        $path = storage_path(
-            "app/public/documents/$filename"
-        );
+    function (string $filename) {
+        $filename = basename($filename);
+        $storagePath = UploadPaths::cms('publications').'/'.$filename;
+        $disk = Storage::disk(UploadPaths::publicDisk());
 
-        abort_unless(
-            file_exists($path),
-            404
-        );
+        abort_unless($disk->exists($storagePath), 404);
 
-        return response()->download($path);
+        return response()->download($disk->path($storagePath));
     }
 )->name('documents.download');
+
+/*
+|--------------------------------------------------------------------------
+| Demande files (auth — public & private disks)
+|--------------------------------------------------------------------------
+*/
+
+Route::middleware(['auth'])->group(function () {
+    Route::get(
+        '/demandes/{demande}/media/{media}',
+        [DemandeMediaController::class, 'media']
+    )->name('demande.media.show');
+
+    Route::get(
+        '/demandes/{demande}/fichier-integre',
+        [DemandeMediaController::class, 'embedded']
+    )->name('demande.embedded.show');
+});
 
 /*
 |--------------------------------------------------------------------------
@@ -589,6 +610,26 @@ Route::middleware(['auth', 'account.permanent'])->group(function () {
             '/compte/mandats',
             [PensionMandatController::class, 'store']
         )->name('compte.mandats.store');
+
+        Route::get(
+            '/compte/beneficiaires',
+            [BeneficiaireEspaceController::class, 'index']
+        )->name('compte.beneficiaires.index');
+
+        Route::get(
+            '/compte/beneficiaires/{beneficiaire}/contexte',
+            [PensionContextController::class, 'activate']
+        )->name('compte.beneficiaires.context');
+
+        Route::get(
+            '/compte/relations/demander',
+            [BeneficiaireRelationDemandeController::class, 'create']
+        )->name('compte.relations.create');
+
+        Route::post(
+            '/compte/relations/demander',
+            [BeneficiaireRelationDemandeController::class, 'store']
+        )->name('compte.relations.store');
     });
 
     /*
@@ -1078,6 +1119,48 @@ Route::middleware(['auth', 'account.permanent'])->group(function () {
             )->name('refuser');
         });
 
+    Route::get(
+        '/formalites/representations',
+        [BeneficiaireRepresentationHubController::class, 'index']
+    )->name('formalites.representations.index')
+        ->middleware(['role_or_permission:admin|pension_mandats.view|beneficiaire_relations.view']);
+
+    Route::prefix('formalites/pension-mandats')
+        ->name('formalites.pension-mandats.')
+        ->middleware(['role_or_permission:admin|pension_mandats.view'])
+        ->group(function () {
+            Route::get('/{mandat}/pieces/{media}', [BeneficiaireRepresentationPieceController::class, 'mandatPiece'])
+                ->name('piece');
+            Route::get('/', [PensionMandatFormalitesController::class, 'index'])->name('index');
+            Route::post('/{mandat}/approve', [PensionMandatManagementController::class, 'approve'])
+                ->middleware('role_or_permission:admin|pension_mandats.approuver')
+                ->name('approve');
+            Route::post('/{mandat}/refuse', [PensionMandatManagementController::class, 'refuse'])
+                ->middleware('role_or_permission:admin|pension_mandats.approuver')
+                ->name('refuse');
+            Route::post('/{mandat}/revoke', [PensionMandatManagementController::class, 'revoke'])
+                ->middleware('role_or_permission:admin|pension_mandats.revoquer')
+                ->name('revoke');
+        });
+
+    Route::prefix('formalites/beneficiaire-relations')
+        ->name('formalites.beneficiaire-relations.')
+        ->middleware(['role_or_permission:admin|beneficiaire_relations.view'])
+        ->group(function () {
+            Route::get('/demandes/{demande}/pieces/{media}', [BeneficiaireRepresentationPieceController::class, 'relationPiece'])
+                ->name('piece');
+            Route::get('/', [BeneficiaireRelationManagementController::class, 'index'])->name('index');
+            Route::post('/demandes/{demande}/approve', [BeneficiaireRelationManagementController::class, 'approve'])
+                ->middleware('role_or_permission:admin|beneficiaire_relations.approuver')
+                ->name('approve');
+            Route::post('/demandes/{demande}/refuse', [BeneficiaireRelationManagementController::class, 'refuse'])
+                ->middleware('role_or_permission:admin|beneficiaire_relations.approuver')
+                ->name('refuse');
+            Route::post('/links/{link}/revoke', [BeneficiaireRelationManagementController::class, 'revokeLink'])
+                ->middleware('role_or_permission:admin|beneficiaire_relations.revoquer')
+                ->name('revoke-link');
+        });
+
     /*
     |--------------------------------------------------------------------------
     | Pilotage des rendez-vous
@@ -1292,6 +1375,26 @@ Route::middleware(['auth', 'account.permanent'])->group(function () {
 
 Route::prefix('admin')
     ->name('admin.')
+    ->middleware(['auth'])
+    ->group(function () {
+        Route::middleware(['role_or_permission:admin|pension_mandats.view'])->group(function () {
+            Route::get('/pension-mandats/{mandat}/pieces/{media}', [BeneficiaireRepresentationPieceController::class, 'mandatPiece'])
+                ->name('pension-mandats.piece');
+            Route::get('/pension-mandats', [PensionMandatManagementController::class, 'index'])->name('pension-mandats.index');
+            Route::post('/pension-mandats/{mandat}/approve', [PensionMandatManagementController::class, 'approve'])
+                ->middleware('role_or_permission:admin|pension_mandats.approuver')
+                ->name('pension-mandats.approve');
+            Route::post('/pension-mandats/{mandat}/refuse', [PensionMandatManagementController::class, 'refuse'])
+                ->middleware('role_or_permission:admin|pension_mandats.approuver')
+                ->name('pension-mandats.refuse');
+            Route::post('/pension-mandats/{mandat}/revoke', [PensionMandatManagementController::class, 'revoke'])
+                ->middleware('role_or_permission:admin|pension_mandats.revoquer')
+                ->name('pension-mandats.revoke');
+        });
+    });
+
+Route::prefix('admin')
+    ->name('admin.')
     ->middleware([
         'auth',
         'role:admin',
@@ -1308,26 +1411,6 @@ Route::prefix('admin')
             '/dashboard',
             [AdminDashboardController::class, 'index']
         )->name('dashboard.index');
-
-        Route::get(
-            '/pension-mandats',
-            [PensionMandatManagementController::class, 'index']
-        )->name('pension-mandats.index');
-
-        Route::post(
-            '/pension-mandats/{mandat}/approve',
-            [PensionMandatManagementController::class, 'approve']
-        )->name('pension-mandats.approve');
-
-        Route::post(
-            '/pension-mandats/{mandat}/refuse',
-            [PensionMandatManagementController::class, 'refuse']
-        )->name('pension-mandats.refuse');
-
-        Route::post(
-            '/pension-mandats/{mandat}/revoke',
-            [PensionMandatManagementController::class, 'revoke']
-        )->name('pension-mandats.revoke');
 
         /*
         |--------------------------------------------------------------------------

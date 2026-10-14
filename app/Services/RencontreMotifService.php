@@ -4,10 +4,10 @@ namespace App\Services;
 
 use App\Enums\TypeDemandeEnum;
 use App\Models\Demande;
-use App\Models\DemandeCreationCompte;
 use App\Models\Service;
 use App\Models\User;
 use App\Models\WorkflowStep;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Arr;
 use Illuminate\Validation\Rule;
 
@@ -131,9 +131,9 @@ class RencontreMotifService
     /**
      * Rendez-vous éligibles pour une décision sur DCC (ordre : plus récent d’abord).
      *
-     * @return \Illuminate\Database\Eloquent\Builder<Demande>
+     * @return Builder<Demande>
      */
-    public function eligibleAccountDecisionRendezVousQuery(int $userId): \Illuminate\Database\Eloquent\Builder
+    public function eligibleAccountDecisionRendezVousQuery(int $userId): Builder
     {
         $motifKeys = $this->motifKeysEligibleForAccountDecision();
 
@@ -161,7 +161,7 @@ class RencontreMotifService
         $map = [];
 
         foreach (config('rencontre.motifs', []) as $key => $cfg) {
-            if (!empty($cfg['service'])) {
+            if (! empty($cfg['service'])) {
                 $map[$key] = (string) $cfg['service'];
             }
         }
@@ -374,7 +374,7 @@ class RencontreMotifService
 
         foreach ($docs['single'] as $key => $cfg) {
             $field = "doc_{$key}";
-            $mimeRule = 'mimes:' . ($cfg['mimes'] ?? 'pdf,jpg,jpeg,png');
+            $mimeRule = 'mimes:'.($cfg['mimes'] ?? 'pdf,jpg,jpeg,png');
             $maxKb = (int) ($cfg['max_kb'] ?? 5120);
             $required = $cfg['required'] ?? false;
 
@@ -391,21 +391,21 @@ class RencontreMotifService
                     'required',
                     'file',
                     $mimeRule,
-                    'max:' . $maxKb,
+                    'max:'.$maxKb,
                 ];
             } else {
                 $rules[$field] = [
                     'nullable',
                     'file',
                     $mimeRule,
-                    'max:' . $maxKb,
+                    'max:'.$maxKb,
                 ];
             }
         }
 
         foreach ($docs['multiple'] as $key => $cfg) {
             $field = "doc_{$key}";
-            $mimeRule = 'mimes:' . ($cfg['mimes'] ?? 'pdf,jpg,jpeg,png');
+            $mimeRule = 'mimes:'.($cfg['mimes'] ?? 'pdf,jpg,jpeg,png');
             $maxKb = (int) ($cfg['max_kb'] ?? 5120);
             $min = (int) ($cfg['min_files'] ?? 0);
             $max = (int) ($cfg['max_files'] ?? 5);
@@ -424,17 +424,17 @@ class RencontreMotifService
             $rules["{$field}.*"] = [
                 'file',
                 $mimeRule,
-                'max:' . $maxKb,
+                'max:'.$maxKb,
             ];
         }
 
         $sup = config('rencontre.supplement', []);
         $maxSup = (int) ($sup['max_files'] ?? 10);
-        $supMimes = 'mimes:' . ($sup['mimes'] ?? 'pdf,jpg,jpeg,png,doc,docx');
+        $supMimes = 'mimes:'.($sup['mimes'] ?? 'pdf,jpg,jpeg,png,doc,docx');
         $supMaxKb = (int) ($sup['max_kb'] ?? 5120);
 
-        $rules['doc_supplement'] = ['nullable', 'array', 'max:' . $maxSup];
-        $rules['doc_supplement.*'] = ['file', $supMimes, 'max:' . $supMaxKb];
+        $rules['doc_supplement'] = ['nullable', 'array', 'max:'.$maxSup];
+        $rules['doc_supplement.*'] = ['file', $supMimes, 'max:'.$supMaxKb];
 
         return $rules;
     }
@@ -484,10 +484,10 @@ class RencontreMotifService
         foreach ($docs['single'] as $key => $cfg) {
             $field = "doc_{$key}";
 
-            if (!empty($validatedFiles[$field])) {
+            if (! empty($validatedFiles[$field])) {
                 $demande
                     ->addMedia($validatedFiles[$field])
-                    ->toMediaCollection($key, 'public');
+                    ->toMediaCollection($key, config('demandes.disk', 'public'));
             }
         }
 
@@ -499,7 +499,7 @@ class RencontreMotifService
                 if ($file) {
                     $demande
                         ->addMedia($file)
-                        ->toMediaCollection($key, 'public');
+                        ->toMediaCollection($key, config('demandes.disk', 'public'));
                 }
             }
         }
@@ -513,7 +513,7 @@ class RencontreMotifService
             if ($file) {
                 $demande
                     ->addMedia($file)
-                    ->toMediaCollection($supCollection, 'public');
+                    ->toMediaCollection($supCollection, config('demandes.disk', 'public'));
             }
         }
     }
@@ -545,7 +545,7 @@ class RencontreMotifService
 
     private function serviceFromLatestDossier(?User $user): ?Service
     {
-        if (!$user) {
+        if (! $user) {
             return null;
         }
 

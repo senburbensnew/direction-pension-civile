@@ -2,6 +2,8 @@
 
 namespace App\Models;
 
+use App\Support\Storage\CmsPathResolver;
+use App\Support\Storage\UploadPaths;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Storage;
 
@@ -29,22 +31,47 @@ class Publication extends Model
             ?? $this->type;
     }
 
+    public function storageRelativePath(): ?string
+    {
+        if (! $this->file_path) {
+            return null;
+        }
+
+        $resolved = CmsPathResolver::legacyPathToStorage($this->file_path);
+
+        if ($resolved === null || str_starts_with($resolved, 'http')) {
+            return null;
+        }
+
+        return $resolved;
+    }
+
     public function fileUrl(): ?string
     {
-        if (!$this->file_path) return null;
-        if (str_starts_with($this->file_path, 'documents/')) {
-            return asset($this->file_path);
+        $path = $this->storageRelativePath();
+
+        if (! $path) {
+            return null;
         }
-        return Storage::disk('public')->url($this->file_path);
+
+        $disk = Storage::disk(UploadPaths::publicDisk());
+
+        if ($disk->exists($path)) {
+            return asset('storage/'.$path);
+        }
+
+        return null;
     }
 
     public function fileExists(): bool
     {
-        if (!$this->file_path) return false;
-        if (str_starts_with($this->file_path, 'documents/')) {
-            return file_exists(public_path($this->file_path));
+        $path = $this->storageRelativePath();
+
+        if (! $path) {
+            return false;
         }
-        return Storage::disk('public')->exists($this->file_path);
+
+        return Storage::disk(UploadPaths::publicDisk())->exists($path);
     }
 
     public function scopePublished($query)

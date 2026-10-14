@@ -12,6 +12,7 @@ use App\Rules\Nif;
 use App\Services\Account\InstitutionAccountService;
 use App\Services\Account\UserCategoryRoleSyncService;
 use App\Services\Pension\BeneficiaireProvisioningService;
+use App\Support\Storage\UploadPaths;
 use Illuminate\Auth\Events\Registered;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -113,7 +114,10 @@ class RegisteredUserController extends Controller
         $validated = $request->validate($rules, $messages, $attributes);
 
         $profilePhotoPath = $request->hasFile('profile_photo')
-            ? $request->file('profile_photo')->store('profile_photos', 'public')
+            ? $request->file('profile_photo')->store(
+                UploadPaths::userProfilePhoto(),
+                UploadPaths::publicDisk()
+            )
             : null;
 
         $categorySync = app(UserCategoryRoleSyncService::class);

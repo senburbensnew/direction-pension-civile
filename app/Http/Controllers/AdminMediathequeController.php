@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Http\Controllers\Concerns\StoresOptimizedImages;
 use App\Models\MediathequeItem;
+use App\Support\Storage\UploadPaths;
 use Illuminate\Http\Request;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
@@ -103,13 +104,13 @@ class AdminMediathequeController extends Controller
 
     private function storeMediathequeFile(UploadedFile $file, string $type): string
     {
-        $directory = 'mediatheque/'.$type;
+        $directory = UploadPaths::mediatheque($type);
 
         if ($type === 'image') {
             return $this->storeOptimizedImage($file, $directory, 'mediatheque');
         }
 
-        return $file->store($directory, 'public');
+        return $file->store($directory, UploadPaths::publicDisk());
     }
 
     private function deleteMediathequeFile(MediathequeItem $item): void
@@ -124,6 +125,6 @@ class AdminMediathequeController extends Controller
             return;
         }
 
-        Storage::disk('public')->delete($item->file_path);
+        Storage::disk(UploadPaths::publicDisk())->delete($item->file_path);
     }
 }

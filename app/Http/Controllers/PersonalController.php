@@ -160,7 +160,7 @@ class PersonalController extends Controller
                 foreach ($request->file('documents') as $file) {
                     $demande->addMedia($file)
                         ->usingFileName($file->getClientOriginalName())
-                        ->toMediaCollection('complement', 'public');
+                        ->toMediaCollection('complement', config('demandes.disk', 'public'));
                 }
             }
 

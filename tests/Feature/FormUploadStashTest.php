@@ -16,7 +16,7 @@ class FormUploadStashTest extends TestCase
 
     public function test_stash_and_merge_restores_file_on_next_post(): void
     {
-        Storage::fake('local');
+        Storage::fake(config('uploads.disks.private', 'private'));
 
         $service = app(FormUploadStashService::class);
         $session = $this->app['session.store'];
@@ -45,7 +45,8 @@ class FormUploadStashTest extends TestCase
 
         $payload = $session->get('form_upload_stash.demandes.compte.store');
         $storedPath = $payload['fields']['piece_identite'][0]['path'];
-        $this->assertFileIsReadable(Storage::disk('local')->path($storedPath));
+        $disk = config('uploads.disks.private', 'private');
+        $this->assertFileIsReadable(Storage::disk($disk)->path($storedPath));
 
         $rebuild = new \ReflectionMethod($service, 'uploadedFilesFromMeta');
         $rebuild->setAccessible(true);

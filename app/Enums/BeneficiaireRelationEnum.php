@@ -23,6 +23,6 @@ enum BeneficiaireRelationEnum: string
 
     public function isRepresentative(): bool
     {
-        return $this !== self::SELF;
+        return in_array($this, [self::PERE, self::MERE, self::TUTEUR], true);
     }
 }

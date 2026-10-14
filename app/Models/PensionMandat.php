@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Enums\PensionMandatStatusEnum;
+use App\Enums\TypeDemandeEnum;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -101,6 +102,37 @@ class PensionMandat extends Model implements HasMedia
         return false;
     }
 
+    /**
+     * @return list<string>
+     */
+    public function allowedDemandeTypeLabels(): array
+    {
+        $allowed = $this->allowed_demande_types;
+
+        if ($allowed === null || $allowed === []) {
+            return ['Tous les types de demande autorisés'];
+        }
+
+        return array_values(array_filter(array_map(
+            fn (string $type) => TypeDemandeEnum::tryFrom($type)?->label() ?? $type,
+            $allowed,
+        )));
+    }
+
+    /**
+     * @return list<string>
+     */
+    public function allowedPensionCodeLabels(): array
+    {
+        $allowed = $this->allowed_pension_codes;
+
+        if ($allowed === null || $allowed === []) {
+            return ['Tous les codes pension du bénéficiaire'];
+        }
+
+        return array_map(fn ($code) => (string) $code, $allowed);
+    }
+
     public function scopeActive($query)
     {
         return $query->where('status', PensionMandatStatusEnum::ACTIF->value);
@@ -108,6 +140,8 @@ class PensionMandat extends Model implements HasMedia
 
     public function registerMediaCollections(): void
     {
-        $this->addMediaCollection('mandat_document')->singleFile();
+        $this->addMediaCollection('mandat_document')
+            ->singleFile()
+            ->useDisk(config('uploads.disks.private', 'private'));
     }
 }

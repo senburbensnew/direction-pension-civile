@@ -2,12 +2,15 @@
 
 namespace App\Providers;
 
-// use Illuminate\Support\Facades\Gate;
-use Illuminate\Foundation\Support\Providers\AuthServiceProvider as ServiceProvider;
-use App\Policies\DemandePolicy;
-use App\Policies\ReportPolicy;
+use App\Enums\TypeDemandeEnum;
+use App\Models\Beneficiaire;
 use App\Models\Demande;
 use App\Models\Report;
+use App\Models\User;
+use App\Policies\BeneficiairePolicy;
+use App\Policies\DemandePolicy;
+use App\Policies\ReportPolicy;
+use Illuminate\Foundation\Support\Providers\AuthServiceProvider as ServiceProvider;
 use Illuminate\Support\Facades\Gate;
 
 class AuthServiceProvider extends ServiceProvider
@@ -17,8 +20,8 @@ class AuthServiceProvider extends ServiceProvider
      *
      * @var array<class-string, class-string>
      */
-
     protected $policies = [
+        Beneficiaire::class => BeneficiairePolicy::class,
         Demande::class => DemandePolicy::class,
         Report::class => ReportPolicy::class,
     ];
@@ -28,5 +31,8 @@ class AuthServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        Gate::define('createDemandeType', function (User $user, TypeDemandeEnum|string $type) {
+            return app(BeneficiairePolicy::class)->createDemandeType($user, $type);
+        });
     }
 }

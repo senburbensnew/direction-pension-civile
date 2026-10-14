@@ -298,7 +298,7 @@
                                         @if($demande)
                                             @foreach ($demande->getMedia('copie_piece_identite') as $document)
                                                     <p class="mb-2 text-sm text-gray-600">
-                                                        <a href="{{ $document->getUrl() }}" target="_blank" class="text-blue-600 underline">
+                                                        <a href="{{ $demande->urlForMedia($document) }}" target="_blank" class="text-blue-600 underline">
                                                             {{ $document->file_name }}
                                                         </a>
                                                         
@@ -331,7 +331,7 @@
                                         @if($demande)
                                             @foreach ($demande->getMedia('lettre_nomination') as $document)
                                                     <p class="mb-2 text-sm text-gray-600">
-                                                        <a href="{{ $document->getUrl() }}" target="_blank" class="text-blue-600 underline">
+                                                        <a href="{{ $demande->urlForMedia($document) }}" target="_blank" class="text-blue-600 underline">
                                                             {{ $document->file_name }}
                                                         </a>
                                                         
@@ -364,7 +364,7 @@
                                         @if($demande)
                                             @foreach ($demande->getMedia('bulletins_salaire') as $document)
                                                     <p class="mb-2 text-sm text-gray-600">
-                                                        <a href="{{ $document->getUrl() }}" target="_blank" class="text-blue-600 underline">
+                                                        <a href="{{ $demande->urlForMedia($document) }}" target="_blank" class="text-blue-600 underline">
                                                             {{ $document->file_name }}
                                                         </a>
                                                         
@@ -397,7 +397,7 @@
                                         @if($demande)
                                             @foreach ($demande->getMedia('documents_carriere') as $document)
                                                     <p class="mb-2 text-sm text-gray-600">
-                                                        <a href="{{ $document->getUrl() }}" target="_blank" class="text-blue-600 underline">
+                                                        <a href="{{ $demande->urlForMedia($document) }}" target="_blank" class="text-blue-600 underline">
                                                             {{ $document->file_name }}
                                                         </a>
                                                         
@@ -429,7 +429,7 @@
                                         @if($demande)
                                             @foreach ($demande->getMedia('acte_mariage_acte_deces') as $document)
                                                     <p class="mb-2 text-sm text-gray-600">
-                                                        <a href="{{ $document->getUrl() }}" target="_blank" class="text-blue-600 underline">
+                                                        <a href="{{ $demande->urlForMedia($document) }}" target="_blank" class="text-blue-600 underline">
                                                             {{ $document->file_name }}
                                                         </a>
                                                         

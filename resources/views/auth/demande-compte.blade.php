@@ -1,10 +1,19 @@
 <x-guest-layout :wide="true">
     @php
-        // Profils mineur / mandataire temporairement indisponibles à l’inscription en ligne.
-        $isMandataire = false;
-        $isMineur = false;
-        $userType = old('user_type', 'pensionne');
-        $accountProfile = 'titulaire';
+        $isMandataire = (bool) old('is_mandataire');
+        $isMineur = (bool) old('is_mineur') && ! $isMandataire;
+        $representantEstPensionne = (bool) old('representant_est_pensionne');
+        $mandataireEstPensionne = (bool) old('mandataire_est_pensionne');
+        $alsoTitulaire = ($isMineur && $representantEstPensionne)
+            || ($isMandataire && $mandataireEstPensionne);
+        $userType = ($isMineur || $isMandataire) && ! $alsoTitulaire
+            ? 'externe'
+            : 'pensionne';
+        $accountProfile = match (true) {
+            $isMandataire => 'mandataire',
+            $isMineur => 'mineur',
+            default => 'titulaire',
+        };
 
         $types = [
             'pensionne' => [
@@ -98,6 +107,8 @@
             'pieceType' => old('piece_identite_type', ''),
             'representantLien' => old('representant_lien', ''),
             'representantPieceType' => old('piece_identite_representant_type', ''),
+            'representantEstPensionne' => $representantEstPensionne,
+            'mandataireEstPensionne' => $mandataireEstPensionne,
 
             'ocrUrl' => route('demandes.compte.ocr'),
             'availabilityUrl' => route('demandes.compte.disponibilite'),
@@ -593,34 +604,44 @@
                             >
                             <span>{{ __('guest.account_request.profile_titulaire') }}</span>
                         </label>
-                        <!-- <label class="inline-flex items-center gap-2 cursor-not-allowed text-sm text-gray-400" title="Bientôt disponible">
+                        <label class="inline-flex items-center gap-2 cursor-pointer text-sm text-gray-700">
                             <input
                                 type="radio"
-                                class="rounded-full border-gray-200 text-gray-300"
+                                class="rounded-full border-gray-300 text-indigo-600 focus:ring-indigo-400"
                                 value="mineur"
-                                disabled
-                                aria-disabled="true"
+                                x-model="accountProfile"
+                                @change="applyAccountProfile()"
                             >
-                            <span>Représentant d’un mineur <span class="text-xs">(bientôt)</span></span>
+                            <span>{{ __('guest.account_request.profile_mineur') }}</span>
                         </label>
-                        <label class="inline-flex items-center gap-2 cursor-not-allowed text-sm text-gray-400" title="Bientôt disponible">
+                        <label class="inline-flex items-center gap-2 cursor-pointer text-sm text-gray-700">
                             <input
                                 type="radio"
-                                class="rounded-full border-gray-200 text-gray-300"
+                                class="rounded-full border-gray-300 text-indigo-600 focus:ring-indigo-400"
                                 value="mandataire"
-                                disabled
-                                aria-disabled="true"
+                                x-model="accountProfile"
+                                @change="applyAccountProfile()"
                             >
-                            <span>Mandataire <span class="text-xs">(bientôt)</span></span>
-                        </label> -->
+                            <span>{{ __('guest.account_request.profile_mandataire') }}</span>
+                        </label>
                     </div>
                     <p class="text-xs text-gray-500">
                         <span x-show="accountProfile === 'titulaire'" x-text="ui.profile_titulaire_hint"></span>
                         <span x-show="accountProfile === 'mineur'" x-cloak x-text="ui.profile_mineur_hint"></span>
                         <span x-show="accountProfile === 'mandataire'" x-cloak x-text="ui.profile_mandataire_hint"></span>
+                        <span x-show="isMineur || isMandataire" x-cloak role="status">
+                            {{ __('guest.account_request.proxy_existing_account_notice') }}
+                            <a
+                                href="{{ route('login') }}"
+                                class="font-medium text-gray-600 underline underline-offset-2 hover:text-gray-800"
+                            >
+                                {{ __('guest.account_request.proxy_existing_account_login') }}
+                            </a>
+                        </span>
                     </p>
                     <input type="hidden" name="is_mineur" id="is_mineur" :value="isMineur ? '1' : '0'">
                     <input type="hidden" name="is_mandataire" id="is_mandataire" :value="isMandataire ? '1' : '0'">
+                    <input type="hidden" name="user_type" :value="userType">
                 </fieldset>
 
                 {{-- ====================================================
@@ -699,6 +720,26 @@
                             class="text-xs text-red-600 mt-1"
                             x-text="fieldErrors.piece_identite"
                         ></p>
+                    </div>
+
+                    <div
+                        x-show="isMandataire"
+                        x-cloak
+                        class="border-t border-gray-100 pt-4"
+                    >
+                        <label class="inline-flex items-start gap-2 cursor-pointer">
+                            <input
+                                type="checkbox"
+                                name="mandataire_est_pensionne"
+                                value="1"
+                                class="mt-1 rounded border-gray-300 text-indigo-600 focus:ring-indigo-400"
+                                x-model="mandataireEstPensionne"
+                                @change="syncUserTypeFromProfile()"
+                            >
+                            <span class="text-sm text-gray-700">
+                                {{ __('guest.account_request.mandataire_pensionne') }}
+                            </span>
+                        </label>
                     </div>
 
                     <div x-show="isMandataire" x-cloak class="space-y-2 border-t border-gray-100 pt-4">
@@ -814,21 +855,6 @@
                         </div>
 
                         <div>
-                            <label class="inline-flex items-start gap-2 cursor-pointer">
-                                <input
-                                    type="checkbox"
-                                    name="representant_est_pensionne"
-                                    value="1"
-                                    class="mt-1 rounded border-gray-300 text-indigo-600 focus:ring-indigo-400"
-                                    @checked(old('representant_est_pensionne'))
-                                >
-                                <span class="text-sm text-gray-700">
-                                    {{ __('guest.account_request.representant_pensionne') }}
-                                </span>
-                            </label>
-                        </div>
-
-                        <div>
                             <label
                                 for="piece_identite_representant_type"
                                 class="block text-sm font-medium text-gray-700 mb-1"
@@ -886,6 +912,22 @@
                                 class="text-xs text-red-600 mt-1"
                                 x-text="fieldErrors.piece_identite_representant"
                             ></p>
+                        </div>
+
+                        <div class="border-t border-gray-100 pt-4">
+                            <label class="inline-flex items-start gap-2 cursor-pointer">
+                                <input
+                                    type="checkbox"
+                                    name="representant_est_pensionne"
+                                    value="1"
+                                    class="mt-1 rounded border-gray-300 text-indigo-600 focus:ring-indigo-400"
+                                    x-model="representantEstPensionne"
+                                    @change="syncUserTypeFromProfile()"
+                                >
+                                <span class="text-sm text-gray-700">
+                                    {{ __('guest.account_request.representant_pensionne') }}
+                                </span>
+                            </label>
                         </div>
                     </div>
                 </div>
@@ -1110,7 +1152,6 @@
                                     <input
                                         type="radio"
                                         id="user_type_{{ $value }}"
-                                        name="user_type"
                                         value="{{ $value }}"
                                         class="sr-only"
                                         x-model="userType"
@@ -1229,7 +1270,7 @@
                     </div>
 
                     {{-- Code pension (optionnel) --}}
-                    <div x-show="userType === 'pensionne'">
+                    <div x-show="userType === 'pensionne' || isMineur || isMandataire" x-cloak>
                         <div class="flex items-center gap-1.5 mb-1">
                             <label
                                 for="pension_code"
@@ -1447,7 +1488,7 @@
                                 <span x-text="nif || '—'"></span>
                             </p>
 
-                            <p x-show="userType === 'pensionne'">
+                            <p x-show="userType === 'pensionne' || isMineur || isMandataire" x-cloak>
                                 <span class="text-gray-500" x-text="ui.recap_pension_code"></span>
                                 <span x-text="pension_code || '—'"></span>
                             </p>
@@ -1839,6 +1880,8 @@
                 pieceType: initial.pieceType || '',
                 representantLien: initial.representantLien || '',
                 representantPieceType: initial.representantPieceType || '',
+                representantEstPensionne: !!initial.representantEstPensionne,
+                mandataireEstPensionne: !!initial.mandataireEstPensionne,
 
                 acceptTerms: {{ old('accept_terms') ? 'true' : 'false' }},
 
@@ -1920,9 +1963,27 @@
                     mandat_designation: stashedFiles.mandat_designation || '',
                 },
 
+                syncUserTypeFromProfile() {
+                    const alsoTitulaire =
+                        (this.isMineur && this.representantEstPensionne) ||
+                        (this.isMandataire && this.mandataireEstPensionne);
+
+                    this.userType =
+                        (this.isMineur || this.isMandataire) && !alsoTitulaire
+                            ? 'externe'
+                            : 'pensionne';
+                },
+
                 applyAccountProfile() {
                     this.isMineur = this.accountProfile === 'mineur';
                     this.isMandataire = this.accountProfile === 'mandataire';
+                    if (!this.isMineur) {
+                        this.representantEstPensionne = false;
+                    }
+                    if (!this.isMandataire) {
+                        this.mandataireEstPensionne = false;
+                    }
+                    this.syncUserTypeFromProfile();
                     if (this.isMandataire && this.pension_code) {
                         this.scheduleAvailabilityCheck('pension_code');
                     }
@@ -2050,9 +2111,14 @@
                 },
 
                 get userTypeLabel() {
-                    return this.userType === 'pensionne'
-                        ? (i18n.user_type_pensionne || this.userType)
-                        : this.userType;
+                    if (this.userType === 'pensionne') {
+                        return i18n.user_type_pensionne || this.userType;
+                    }
+                    if (this.userType === 'externe') {
+                        return i18n.user_type_externe || this.userType;
+                    }
+
+                    return this.userType;
                 },
 
                 get pieceTypeLabel() {
@@ -2109,7 +2175,9 @@
                     }
 
                     if (
-                        this.userType === 'pensionne' &&
+                        (this.userType === 'pensionne' ||
+                            this.isMineur ||
+                            this.isMandataire) &&
                         (this.pension_code || '').trim()
                     ) {
                         this.scheduleAvailabilityCheck('pension_code');
@@ -2660,7 +2728,9 @@
                     }
 
                     if (
-                        this.userType === 'pensionne' &&
+                        (this.userType === 'pensionne' ||
+                            this.isMineur ||
+                            this.isMandataire) &&
                         (this.pension_code || '').trim()
                     ) {
                         this.scheduleAvailabilityCheck('pension_code');
@@ -2914,9 +2984,7 @@
 
                 syncFromForm() {
                     this.userType =
-                        document.querySelector(
-                            'input[name="user_type"]:checked'
-                        )?.value || this.userType;
+                        fieldValue('user_type') || this.userType;
 
                     this.telephone =
                         fieldValue('telephone');
@@ -2962,6 +3030,22 @@
                         document.getElementById(
                             'piece_identite_representant'
                         )?.files?.[0]?.name || '';
+
+                    const repPensionneInput = document.querySelector(
+                        '[name="representant_est_pensionne"]'
+                    );
+                    if (repPensionneInput) {
+                        this.representantEstPensionne = repPensionneInput.checked;
+                    }
+
+                    const mandPensionneInput = document.querySelector(
+                        '[name="mandataire_est_pensionne"]'
+                    );
+                    if (mandPensionneInput) {
+                        this.mandataireEstPensionne = mandPensionneInput.checked;
+                    }
+
+                    this.syncUserTypeFromProfile();
                 },
 
                 /* ========================================================

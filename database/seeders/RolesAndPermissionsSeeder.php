@@ -25,13 +25,19 @@ class RolesAndPermissionsSeeder extends Seeder
     public static function permissionNames(): array
     {
         return [
-            'CAN_VIEW_PENSIONNE_SECTION',
-            'CAN_VIEW_FONCTIONNAIRE_SECTION',
-            'CAN_VIEW_INSTITUTION_SECTION',
-            'CAN_VIEW_PENSIONNE_MENU',
-            'CAN_VIEW_FONCTIONNAIRE_MENU',
-            'CAN_VIEW_INSTITUTION_MENU',
-            'CAN_VIEW_DASHBOARD',
+            'can_view_pensionne_section',
+            'can_view_fonctionnaire_section',
+            'can_view_institution_section',
+            'can_view_pensionne_menu',
+            'can_view_fonctionnaire_menu',
+            'can_view_institution_menu',
+            'can_view_dashboard',
+            'pension_mandats.view',
+            'pension_mandats.approuver',
+            'pension_mandats.revoquer',
+            'beneficiaire_relations.view',
+            'beneficiaire_relations.approuver',
+            'beneficiaire_relations.revoquer',
         ];
     }
 
@@ -142,22 +148,33 @@ class RolesAndPermissionsSeeder extends Seeder
     {
         $all = self::allPermissionNames();
 
+        $formalites = [
+            'pension_mandats.view',
+            'pension_mandats.approuver',
+            'pension_mandats.revoquer',
+            'beneficiaire_relations.view',
+            'beneficiaire_relations.approuver',
+            'beneficiaire_relations.revoquer',
+        ];
+
         return [
             'admin' => $all,
+            'agent_formalites' => $formalites,
+            'responsable_service_accueil_formalites' => $formalites,
             'pensionne' => [
-                'CAN_VIEW_PENSIONNE_SECTION',
-                'CAN_VIEW_PENSIONNE_MENU',
-                'CAN_VIEW_DASHBOARD',
+                'can_view_pensionne_section',
+                'can_view_pensionne_menu',
+                'can_view_dashboard',
             ],
             'fonctionnaire' => [
-                'CAN_VIEW_FONCTIONNAIRE_SECTION',
-                'CAN_VIEW_FONCTIONNAIRE_MENU',
-                'CAN_VIEW_DASHBOARD',
+                'can_view_fonctionnaire_section',
+                'can_view_fonctionnaire_menu',
+                'can_view_dashboard',
             ],
             'institution' => [
-                'CAN_VIEW_INSTITUTION_SECTION',
-                'CAN_VIEW_INSTITUTION_MENU',
-                'CAN_VIEW_DASHBOARD',
+                'can_view_institution_section',
+                'can_view_institution_menu',
+                'can_view_dashboard',
             ],
         ];
     }

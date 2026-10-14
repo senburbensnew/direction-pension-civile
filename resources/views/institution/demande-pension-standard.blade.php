@@ -85,7 +85,7 @@
                                         @if($demande)
                                             @foreach ($demande->getMedia('career_certificates') as $document)
                                                     <p class="mb-2 text-sm text-gray-600">
-                                                        <a href="{{ $document->getUrl() }}" target="_blank" class="text-blue-600 underline">
+                                                        <a href="{{ $demande->urlForMedia($document) }}" target="_blank" class="text-blue-600 underline">
                                                             {{ $document->file_name }}
                                                         </a>
                                                         
@@ -115,7 +115,7 @@
                                         @if($demande)
                                             @foreach ($demande->getMedia('monitor_copy') as $document)
                                                     <p class="mb-2 text-sm text-gray-600">
-                                                        <a href="{{ $document->getUrl() }}" target="_blank" class="text-blue-600 underline">
+                                                        <a href="{{ $demande->urlForMedia($document) }}" target="_blank" class="text-blue-600 underline">
                                                             {{ $document->file_name }}
                                                         </a>
                                                              
@@ -146,7 +146,7 @@
                                         @if($demande)
                                             @foreach ($demande->getMedia('marriage_certificates') as $document)
                                                     <p class="mb-2 text-sm text-gray-600">
-                                                        <a href="{{ $document->getUrl() }}" target="_blank" class="text-blue-600 underline">
+                                                        <a href="{{ $demande->urlForMedia($document) }}" target="_blank" class="text-blue-600 underline">
                                                             {{ $document->file_name }}
                                                         </a>
                                                            <button type="button"
@@ -180,7 +180,7 @@
                                         @if($demande)
                                             @foreach ($demande->getMedia('birth_certificates') as $document)
                                                     <p class="mb-2 text-sm text-gray-600">
-                                                        <a href="{{ $document->getUrl() }}" target="_blank" class="text-blue-600 underline">
+                                                        <a href="{{ $demande->urlForMedia($document) }}" target="_blank" class="text-blue-600 underline">
                                                             {{ $document->file_name }}
                                                         </a>
                                                         
@@ -214,7 +214,7 @@
                                         @if($demande)
                                             @foreach ($demande->getMedia('divorce_certificate') as $document)
                                                     <p class="mb-2 text-sm text-gray-600">
-                                                        <a href="{{ $document->getUrl() }}" target="_blank" class="text-blue-600 underline">
+                                                        <a href="{{ $demande->urlForMedia($document) }}" target="_blank" class="text-blue-600 underline">
                                                             {{ $document->file_name }}
                                                         </a>
                                                        
@@ -248,7 +248,7 @@
                                         @if($demande)
                                             @foreach ($demande->getMedia('tax_id_numbers') as $document)
                                                     <p class="mb-2 text-sm text-gray-600">
-                                                        <a href="{{ $document->getUrl() }}" target="_blank" class="text-blue-600 underline">
+                                                        <a href="{{ $demande->urlForMedia($document) }}" target="_blank" class="text-blue-600 underline">
                                                             {{ $document->file_name }}
                                                         </a>
                                                            
@@ -282,7 +282,7 @@
                                         @if($demande)
                                             @foreach ($demande->getMedia('photos') as $document)
                                                     <p class="mb-2 text-sm text-gray-600">
-                                                        <a href="{{ $document->getUrl() }}" target="_blank" class="text-blue-600 underline">
+                                                        <a href="{{ $demande->urlForMedia($document) }}" target="_blank" class="text-blue-600 underline">
                                                             {{ $document->file_name }}
                                                         </a>
                                                                                     
@@ -316,7 +316,7 @@
                                         @if($demande)
                                             @foreach ($demande->getMedia('medical_certificate') as $document)
                                                     <p class="mb-2 text-sm text-gray-600">
-                                                        <a href="{{ $document->getUrl() }}" target="_blank" class="text-blue-600 underline">
+                                                        <a href="{{ $demande->urlForMedia($document) }}" target="_blank" class="text-blue-600 underline">
                                                             {{ $document->file_name }}
                                                         </a>
                                                             <button type="button"
@@ -347,7 +347,7 @@
                                         @if($demande)
                                             @foreach ($demande->getMedia('check_stub') as $document)
                                                     <p class="mb-2 text-sm text-gray-600">
-                                                        <a href="{{ $document->getUrl() }}" target="_blank" class="text-blue-600 underline">
+                                                        <a href="{{ $demande->urlForMedia($document) }}" target="_blank" class="text-blue-600 underline">
                                                             {{ $document->file_name }}
                                                         </a>
                                                                 

@@ -4,7 +4,7 @@
 
 @push('meta')
     @php
-        $heroMedia = \App\Support\PublicMedia::forPublicPath('images/pension-hero-couple-salon.png');
+        $heroMedia = \App\Support\PublicMedia::forUploadedOrStatic('cms/institution/pension-hero-couple-salon.png');
     @endphp
     <link rel="preload" as="image" href="{{ $heroMedia['webp'] ?? $heroMedia['url'] }}" type="{{ $heroMedia['webp'] ? 'image/webp' : 'image/png' }}">
 @endpush
@@ -153,7 +153,7 @@
                     </div>
                     <div class="relative hidden md:block h-full">
                         <x-optimized-image
-                            src="images/pension-hero-couple-salon.png"
+                            src="cms/institution/pension-hero-couple-salon.png"
                             :alt="__('home.hero_photo_alt')"
                             class="hero-accueil-photo absolute inset-0"
                             priority
@@ -257,11 +257,11 @@
         $videoItem = \App\Models\MediathequeItem::published()->featured()->where('type', 'video')->first()
             ?? \App\Models\MediathequeItem::published()->where('type', 'video')->ordered()->first();
         $videoTitle = $videoItem?->title ?? 'Jounen enfòmasyon ak oryantasyon';
-        $videoEmbed = $videoItem?->embedUrl();
         $videoSrc = $videoItem?->fileUrl();
         if (! $videoSrc && $videoItem?->url && preg_match('/\.(mp4|webm|ogg)(\?|$)/i', $videoItem->url)) {
             $videoSrc = $videoItem->url;
         }
+        $videoEmbed = ! $videoSrc ? $videoItem?->embedUrl() : null;
     @endphp
     <section class="bg-white">
         <div class="relative z-10 -mt-6 md:-mt-8">
@@ -534,7 +534,7 @@
     {{-- ═══════════════════════════════════════
          NOS PARTENAIRES
     ════════════════════════════════════════ --}}
-    <section class="py-14 bg-white">
+    <section class="pt-14 pb-0 bg-white">
         <div class="container mx-auto px-4">
             <x-home-heading :kicker="__('home.partners_kicker')" :title="__('home.partners_title')" />
             <x-institutions-carousel speed="40" />

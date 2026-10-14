@@ -2,15 +2,19 @@
 
 namespace App\Http\Requests;
 
+use App\Enums\TypeDemandeEnum;
+use App\Http\Requests\Concerns\AuthorizesBeneficiaireDemande;
 use App\Rules\Nif;
 use App\Rules\Telephone;
 use Illuminate\Foundation\Http\FormRequest;
 
 class StoreDemandeMiseAJourRequest extends FormRequest
 {
+    use AuthorizesBeneficiaireDemande;
+
     public function authorize(): bool
     {
-        return $this->user() !== null;
+        return $this->authorizeBeneficiaireDemande(TypeDemandeEnum::DEMANDE_MISE_A_JOUR);
     }
 
     public function rules(): array

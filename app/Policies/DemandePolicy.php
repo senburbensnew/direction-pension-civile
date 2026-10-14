@@ -2,8 +2,10 @@
 
 namespace App\Policies;
 
+use App\Models\AffiliationPension;
 use App\Models\Demande;
 use App\Models\User;
+use App\Services\Pension\BeneficiaireAccessService;
 use Illuminate\Auth\Access\HandlesAuthorization;
 
 class DemandePolicy
@@ -30,8 +32,16 @@ class DemandePolicy
         }
 
         $type = $demande->type?->value ?? (string) $demande->type;
+        $code = filled($demande->data['code_pension'] ?? null)
+            ? AffiliationPension::normalizeCode((string) $demande->data['code_pension'])
+            : null;
 
-        return $user->pensionContext()->userCanActOnDemandeType($type);
+        return app(BeneficiaireAccessService::class)->userCanViewDemande(
+            $user,
+            $type,
+            $demande->beneficiaire_id,
+            $code,
+        );
     }
 
     public function create(User $user): bool
@@ -49,6 +59,12 @@ class DemandePolicy
             return true;
         }
 
-        return $user->pensionContext()->userCanActOnDemandeType($typeDemande);
+        $beneficiaire = $user->pensionContext()->resolveBeneficiaire();
+
+        if (! $beneficiaire) {
+            return $user->canAccessFullServices();
+        }
+
+        return $user->can('createDemande', [$beneficiaire, $typeDemande]);
     }
 }

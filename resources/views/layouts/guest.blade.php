@@ -10,7 +10,7 @@
     @stack('meta')
     @if ($showPhoto)
         @php
-            $guestHeroMedia = \App\Support\PublicMedia::forPublicPath('images/guest-auth-pension-couple.jpg');
+            $guestHeroMedia = \App\Support\PublicMedia::forUploadedOrStatic('cms/institution/guest-auth-pension-couple.jpg');
         @endphp
         <link rel="preload" as="image" href="{{ $guestHeroMedia['webp'] ?? $guestHeroMedia['url'] }}" type="{{ $guestHeroMedia['webp'] ? 'image/webp' : 'image/jpeg' }}">
     @endif
@@ -293,7 +293,7 @@
     @if ($showPhoto)
         <aside class="guest-auth-photo" aria-hidden="true">
             <x-optimized-image
-                src="images/guest-auth-pension-couple.jpg"
+                src="cms/institution/guest-auth-pension-couple.jpg"
                 alt=""
                 priority
             />

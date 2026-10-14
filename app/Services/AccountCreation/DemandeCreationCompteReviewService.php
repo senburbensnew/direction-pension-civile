@@ -3,12 +3,13 @@
 namespace App\Services\AccountCreation;
 
 use App\Enums\AccountStatusEnum;
+use App\Enums\RencontreStatutEnum;
 use App\Models\DemandeCreationCompte;
 use App\Models\DemandeCreationCompteHistory;
 use App\Models\User;
-use App\Services\Pension\BeneficiaireProvisioningService;
 use App\Notifications\DemandeCreationCompteAccepteeNotification;
 use App\Notifications\DemandeCreationCompteRefuseeNotification;
+use App\Services\Pension\BeneficiaireProvisioningService;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Notification;
 use Illuminate\Validation\ValidationException;
@@ -93,10 +94,11 @@ class DemandeCreationCompteReviewService
                     $user->fresh(),
                     $demande,
                     is_array($demande->ocr_documents) ? $demande->ocr_documents : [],
-                    true
+                    true,
+                    $reviewer,
                 );
             } else {
-                $provisioning->provisionAdultSelf($user->fresh(), $demande);
+                $provisioning->provisionAdultSelf($user->fresh(), $demande, null, $reviewer);
             }
         });
 
@@ -184,7 +186,7 @@ class DemandeCreationCompteReviewService
             ]);
         }
 
-        if ($rdv->rencontreStatut() !== \App\Enums\RencontreStatutEnum::REALISE) {
+        if ($rdv->rencontreStatut() !== RencontreStatutEnum::REALISE) {
             throw ValidationException::withMessages([
                 'status' => 'La décision n’est possible qu’après un rendez-vous réalisé.',
             ]);

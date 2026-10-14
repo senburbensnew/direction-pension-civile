@@ -91,9 +91,14 @@
                 <p class="text-sky-900 ml-auto">
                     Contexte actif : <span class="font-mono font-semibold" x-text="displayCode ?? '—'"></span>
                 </p>
-                <a href="{{ route('compte.affiliations.index') }}" class="text-sky-800 font-medium hover:underline w-full sm:w-auto text-right">
-                    Gérer mes codes →
-                </a>
+                <div class="flex flex-wrap gap-4 w-full sm:w-auto sm:ml-auto justify-end text-right">
+                    <a href="{{ route('compte.beneficiaires.index') }}" class="text-sky-800 font-medium hover:underline">
+                        Mes bénéficiaires →
+                    </a>
+                    <a href="{{ route('compte.affiliations.index') }}" class="text-sky-800 font-medium hover:underline">
+                        Gérer mes codes →
+                    </a>
+                </div>
             </div>
         </div>
     @endif

@@ -4,6 +4,7 @@ namespace Database\Factories;
 
 use App\Models\Report;
 use App\Models\User;
+use App\Support\Storage\UploadPaths;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Support\Str;
 
@@ -16,20 +17,20 @@ class ReportFactory extends Factory
         $year = $this->faker->numberBetween(2015, now()->year);
 
         // Fake file info
-        $fileName = Str::slug($this->faker->sentence(3)) . '.pdf';
-        $filePath = "reports/{$year}/{$fileName}";
+        $fileName = Str::slug($this->faker->sentence(3)).'.pdf';
+        $filePath = UploadPaths::reportYear((string) $year).'/'.$fileName;
 
         return [
-            'title'         => $this->faker->sentence(5),
-            'year'          => $year,
-            'description'   => $this->faker->paragraph(3),
-            'file_name'     => $fileName,
-            'file_path'     => $filePath,
-            'mime_type'     => 'application/pdf',
-            'file_size'     => $this->faker->numberBetween(100_000, 5_000_000), // bytes
-            'status'        => $this->faker->randomElement(['draft', 'published', 'archived']),
-            'published_at'  => $this->faker->optional(0.7)->dateTimeBetween('-3 years', 'now'),
-            'created_by'    => User::factory(),
+            'title' => $this->faker->sentence(5),
+            'year' => $year,
+            'description' => $this->faker->paragraph(3),
+            'file_name' => $fileName,
+            'file_path' => $filePath,
+            'mime_type' => 'application/pdf',
+            'file_size' => $this->faker->numberBetween(100_000, 5_000_000), // bytes
+            'status' => $this->faker->randomElement(['draft', 'published', 'archived']),
+            'published_at' => $this->faker->optional(0.7)->dateTimeBetween('-3 years', 'now'),
+            'created_by' => User::factory(),
         ];
     }
 

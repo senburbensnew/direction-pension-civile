@@ -266,6 +266,63 @@ note right of step_docs
 end note
 
 ' ═══════════════════════════════════════════════════════════════
+'  BÉNÉFICIAIRES & REPRÉSENTATION
+' ═══════════════════════════════════════════════════════════════
+entity "**beneficiaires**" as beneficiaires {
+    <b>PK</b>  id          : BIGINT UNSIGNED
+    ---
+        firstname   : VARCHAR NULL
+        lastname    : VARCHAR NULL
+        nif         : VARCHAR NULL
+        is_mineur   : TINYINT(1)
+}
+
+entity "**affiliation_pensions**" as affiliation_pensions {
+    <b>PK</b>  id              : BIGINT UNSIGNED
+    <b>FK</b>  beneficiaire_id : BIGINT UNSIGNED
+    ---
+        code_pension    : VARCHAR UNIQUE
+        is_primary      : TINYINT(1)
+}
+
+entity "**user_beneficiaire_links**" as ubl {
+    <b>PK</b>  id              : BIGINT UNSIGNED
+    <b>FK</b>  user_id         : BIGINT UNSIGNED
+    <b>FK</b>  beneficiaire_id : BIGINT UNSIGNED
+    ---
+        relation        : VARCHAR
+        status          : VARCHAR
+        permissions     : JSON NULL
+        valid_from      : DATE NULL
+        valid_until     : DATE NULL
+}
+
+entity "**pension_mandats**" as pension_mandats {
+    <b>PK</b>  id              : BIGINT UNSIGNED
+    <b>FK</b>  user_id         : BIGINT UNSIGNED
+    <b>FK</b>  beneficiaire_id : BIGINT UNSIGNED
+    ---
+        status                  : VARCHAR
+        allowed_demande_types   : JSON NULL
+        allowed_pension_codes     : JSON NULL
+}
+
+entity "**beneficiaire_relation_events**" as bre {
+    <b>PK</b>  id           : BIGINT UNSIGNED
+    ---
+        subject_type : VARCHAR
+        subject_id   : BIGINT UNSIGNED
+        evenement    : VARCHAR
+}
+
+users ||--o{ ubl : "lien représentant/mandataire"
+beneficiaires ||--o{ ubl : "représenté par"
+beneficiaires ||--o{ affiliation_pensions : "codes pension"
+users ||--o{ pension_mandats : "mandataire"
+beneficiaires ||--o{ pension_mandats : "concerné"
+demandes }o--|| beneficiaires : "beneficiaire_id (portail)"
+
+' ═══════════════════════════════════════════════════════════════
 '  RELATIONS
 ' ═══════════════════════════════════════════════════════════════
 

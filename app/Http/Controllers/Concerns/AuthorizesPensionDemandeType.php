@@ -17,8 +17,9 @@ trait AuthorizesPensionDemandeType
         }
 
         $typeValue = $type instanceof TypeDemandeEnum ? $type->value : $type;
+        $beneficiaire = $user->pensionContext()->resolveBeneficiaire();
 
-        if (! $user->pensionContext()->userCanActOnDemandeType($typeValue)) {
+        if ($beneficiaire && ! $user->can('createDemande', [$beneficiaire, $typeValue])) {
             abort(403, 'Vous n’êtes pas autorisé à déposer cette demande pour le bénéficiaire sélectionné.');
         }
     }
@@ -36,19 +37,19 @@ trait AuthorizesPensionDemandeType
             abort(403);
         }
 
-        $context = $user->pensionContext();
+        $beneficiaire = $user->pensionContext()->resolveBeneficiaire();
 
-        if (! $context->userCanActOnDemandeType($typeValue)) {
+        if ($beneficiaire && ! $user->can('createDemande', [$beneficiaire, $typeValue])) {
             abort(403, 'Vous n’êtes pas autorisé à déposer cette demande pour le bénéficiaire sélectionné.');
         }
 
         $code = PensionCodeResolver::fromRequest($request);
 
         if ($code === null) {
-            $code = $context->displayPensionCode();
+            $code = $user->pensionContext()->displayPensionCode();
         }
 
-        if ($code !== null && ! $context->userCanUsePensionCodeForDemande($code, $typeValue)) {
+        if ($code !== null && $beneficiaire && ! $user->can('usePensionCodeForDemande', [$beneficiaire, $code, $typeValue])) {
             throw ValidationException::withMessages([
                 'code_pension' => 'Ce code pension n’est pas autorisé pour le bénéficiaire ou le mandat actif.',
             ]);

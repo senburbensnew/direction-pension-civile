@@ -38,7 +38,6 @@ return new class extends Migration
             $table->json('pieces_identite')->nullable();
             $table->json('ocr_fields')->nullable();
             $table->json('ocr_documents')->nullable();       // ← AJOUT
-            $table->json('galipec_snapshot')->nullable();
             $table->json('verification_mismatches')->nullable();
             $table->json('submitted_payload')->nullable();   // ← AJOUT
 

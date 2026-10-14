@@ -11,8 +11,7 @@ class MonDemandeCreationCompteController extends Controller
 {
     public function __construct(
         private DemandeCreationCompteOwnerUpdateService $ownerUpdate
-    ) {
-    }
+    ) {}
 
     public function show(Request $request)
     {
@@ -91,6 +90,6 @@ class MonDemandeCreationCompteController extends Controller
 
         $demande
             ->addMediaFromRequest('piece_identite')
-            ->toMediaCollection($collections[$type], 'public');
+            ->toMediaCollection($collections[$type]);
     }
 }

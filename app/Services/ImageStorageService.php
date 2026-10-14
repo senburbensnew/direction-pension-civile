@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Support\PublicMedia;
+use App\Support\Storage\UploadPaths;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
@@ -11,6 +12,11 @@ use Spatie\Image\Image;
 
 class ImageStorageService
 {
+    public function publicDisk(): string
+    {
+        return UploadPaths::publicDisk();
+    }
+
     public function storeUploadedImage(
         UploadedFile $file,
         string $directory,
@@ -19,9 +25,9 @@ class ImageStorageService
     ): string {
         if ($this->shouldStoreAsIs($file)) {
             $directory = trim(str_replace('\\', '/', $directory), '/');
-            Storage::disk('public')->makeDirectory($directory);
+            Storage::disk($this->publicDisk())->makeDirectory($directory);
 
-            return $file->store($directory, 'public');
+            return $file->store($directory, $this->publicDisk());
         }
 
         return $this->storeOptimized($file, $directory, $maxWidth, $quality);
@@ -47,7 +53,7 @@ class ImageStorageService
         $directory = trim(str_replace('\\', '/', $directory), '/');
         $basename = Str::uuid()->toString();
         $relative = $directory.'/'.$basename.'.jpg';
-        $disk = Storage::disk('public');
+        $disk = Storage::disk($this->publicDisk());
         $disk->makeDirectory($directory);
 
         $absolute = $disk->path($relative);
@@ -118,7 +124,7 @@ class ImageStorageService
     public function deleteWithVariants(string $storageRelative): void
     {
         $storageRelative = ltrim(str_replace('\\', '/', $storageRelative), '/');
-        $disk = Storage::disk('public');
+        $disk = Storage::disk($this->publicDisk());
 
         if ($disk->exists($storageRelative)) {
             $absolute = $disk->path($storageRelative);

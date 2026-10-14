@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Http\Controllers\Concerns\StoresOptimizedImages;
 use App\Models\InstitutionImage;
+use App\Support\Storage\UploadPaths;
 use Illuminate\Http\Request;
 
 class InstitutionImageController extends Controller
@@ -31,7 +32,7 @@ class InstitutionImageController extends Controller
             'order' => 'nullable|integer|min:0',
         ]);
 
-        $path = $this->storeOptimizedImage($request->file('image'), 'institution-images', 'institution');
+        $path = $this->storeOptimizedImage($request->file('image'), UploadPaths::cms('institution'), 'institution');
 
         InstitutionImage::create([
             'title' => $request->title,
@@ -60,7 +61,7 @@ class InstitutionImageController extends Controller
 
         if ($request->hasFile('image')) {
             $this->deleteOptimizedImage($institutionImage->image);
-            $institutionImage->image = $this->storeOptimizedImage($request->file('image'), 'institution-images', 'institution');
+            $institutionImage->image = $this->storeOptimizedImage($request->file('image'), UploadPaths::cms('institution'), 'institution');
         }
 
         $institutionImage->update([

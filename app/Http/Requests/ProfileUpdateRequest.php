@@ -22,7 +22,19 @@ class ProfileUpdateRequest extends FormRequest
         $user = $this->user();
 
         $rules = [
-            'name'  => ['required', 'string', 'max:255'],
+            'name' => ['nullable', 'string', 'max:255'],
+            'firstname' => ['nullable', 'string', 'max:255'],
+            'lastname' => ['nullable', 'string', 'max:255'],
+            'birth_date' => ['nullable', 'date', 'before:today'],
+            'gender_id' => ['nullable', 'integer', 'exists:genders,id'],
+            'civil_status_id' => ['nullable', 'integer', 'exists:civil_statuses,id'],
+            'address' => ['nullable', 'string', 'max:500'],
+            'username' => [
+                'nullable',
+                'string',
+                'max:255',
+                Rule::unique(User::class)->ignore($user->id),
+            ],
             'email' => [
                 'nullable',
                 'string',
@@ -32,7 +44,7 @@ class ProfileUpdateRequest extends FormRequest
                 Rule::unique(User::class)->ignore($user->id),
             ],
 
-            'nif'   => ['nullable', new Nif()],
+            'nif' => ['nullable', new Nif()],
             'phone' => ['nullable', new Telephone()],
         ];
 

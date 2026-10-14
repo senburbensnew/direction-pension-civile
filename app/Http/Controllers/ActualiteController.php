@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Actualite;
 use App\Services\ImageStorageService;
+use App\Support\Storage\UploadPaths;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
@@ -85,7 +86,7 @@ class ActualiteController extends Controller
                 foreach ($request->file('images') as $image) {
                     $path = $images->storeUploadedImage(
                         $image,
-                        'actualites',
+                        UploadPaths::cms('actualites'),
                         config('media.upload_max_widths.actualite'),
                     );
 
@@ -182,7 +183,7 @@ class ActualiteController extends Controller
             foreach ($request->file('images') as $image) {
                 $path = $images->storeUploadedImage(
                     $image,
-                    'actualites',
+                    UploadPaths::cms('actualites'),
                     config('media.upload_max_widths.actualite'),
                 );
 

@@ -2,6 +2,7 @@
 
 namespace App\Services\Pension;
 
+use App\Models\AffiliationPension;
 use Illuminate\Http\Request;
 
 class PensionCodeResolver
@@ -9,7 +10,7 @@ class PensionCodeResolver
     /**
      * Extrait un code pension normalisable depuis une requête de demande.
      */
-    public static function fromRequest(Request|object $request): ?string
+    public static function fromRequest(Request $request): ?string
     {
         $candidates = [
             $request->input('code_pension'),

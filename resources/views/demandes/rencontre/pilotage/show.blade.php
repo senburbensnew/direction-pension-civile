@@ -58,7 +58,7 @@
             </dl>
             @if($carte)
                 <p class="mt-4 text-sm">
-                    <a href="{{ $carte->getUrl() }}" target="_blank" class="text-navy font-semibold hover:underline">Voir la carte de pension jointe</a>
+                    <a href="{{ $demande->urlForMedia($carte) }}" target="_blank" class="text-navy font-semibold hover:underline">Voir la carte de pension jointe</a>
                 </p>
             @endif
             @php

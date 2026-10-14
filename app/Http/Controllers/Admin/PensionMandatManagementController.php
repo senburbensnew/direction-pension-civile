@@ -2,15 +2,18 @@
 
 namespace App\Http\Controllers\Admin;
 
+use App\Enums\BeneficiaireLinkStatusEnum;
+use App\Enums\BeneficiaireRelationEnum;
 use App\Enums\PensionMandatStatusEnum;
+use App\Enums\TypeDemandeEnum;
 use App\Http\Controllers\Controller;
+use App\Models\BeneficiaireRelationEvent;
 use App\Models\PensionMandat;
 use App\Models\User;
 use App\Models\UserBeneficiaireLink;
-use App\Enums\BeneficiaireRelationEnum;
-use App\Enums\TypeDemandeEnum;
 use App\Notifications\PensionMandatApprouveNotification;
 use App\Notifications\PensionMandatRefuseNotification;
+use App\Services\Pension\BeneficiaireAccessService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -42,6 +45,8 @@ class PensionMandatManagementController extends Controller
         $reviewer = $request->user();
 
         DB::transaction(function () use ($mandat, $reviewer, $validated) {
+            $before = $mandat->only(['status', 'allowed_demande_types', 'allowed_pension_codes']);
+
             $mandat->update([
                 'status' => PensionMandatStatusEnum::ACTIF,
                 'validated_by' => $reviewer->id,
@@ -55,13 +60,34 @@ class PensionMandatManagementController extends Controller
                     : null,
             ]);
 
-            UserBeneficiaireLink::query()->firstOrCreate(
+            $link = UserBeneficiaireLink::query()->updateOrCreate(
                 [
                     'user_id' => $mandat->user_id,
                     'beneficiaire_id' => $mandat->beneficiaire_id,
                     'relation' => BeneficiaireRelationEnum::MANDATAIRE->value,
                 ],
-                []
+                [
+                    'status' => BeneficiaireLinkStatusEnum::ACTIVE,
+                    'verifie_par' => $reviewer->id,
+                    'verifie_le' => now(),
+                ]
+            );
+
+            BeneficiaireRelationEvent::record(
+                $mandat,
+                'mandat_approuve',
+                $reviewer,
+                $before,
+                $mandat->fresh()->only(['status', 'allowed_demande_types', 'allowed_pension_codes']),
+            );
+
+            BeneficiaireRelationEvent::record(
+                $link,
+                'relation_approuvee',
+                $reviewer,
+                null,
+                $link->toArray(),
+                'Via mandat #'.$mandat->id,
             );
         });
 
@@ -77,23 +103,57 @@ class PensionMandatManagementController extends Controller
             'refusal_reason' => ['required', 'string', 'min:5', 'max:2000'],
         ]);
 
+        /** @var User $reviewer */
+        $reviewer = $request->user();
+
+        $before = $mandat->only(['status']);
+
         $mandat->update([
             'status' => PensionMandatStatusEnum::REFUSE,
             'refusal_reason' => $validated['refusal_reason'],
             'validated_at' => now(),
-            'validated_by' => $request->user()->id,
+            'validated_by' => $reviewer->id,
         ]);
+
+        BeneficiaireRelationEvent::record(
+            $mandat,
+            'mandat_refuse',
+            $reviewer,
+            $before,
+            $mandat->only(['status', 'refusal_reason']),
+            $validated['refusal_reason'],
+        );
 
         $mandat->mandataire?->notify(new PensionMandatRefuseNotification($mandat->fresh(), $validated['refusal_reason']));
 
         return back()->with('success', 'Mandat refusé.');
     }
 
-    public function revoke(PensionMandat $mandat): RedirectResponse
+    public function revoke(Request $request, PensionMandat $mandat): RedirectResponse
     {
-        $mandat->update([
-            'status' => PensionMandatStatusEnum::REVOQUE,
-        ]);
+        /** @var User $reviewer */
+        $reviewer = $request->user();
+
+        DB::transaction(function () use ($mandat, $reviewer) {
+            $before = $mandat->only(['status']);
+            $mandat->update([
+                'status' => PensionMandatStatusEnum::REVOQUE,
+            ]);
+
+            BeneficiaireRelationEvent::record(
+                $mandat,
+                'mandat_revoque',
+                $reviewer,
+                $before,
+                $mandat->only(['status']),
+            );
+
+            app(BeneficiaireAccessService::class)->revokeMandataireLink(
+                $mandat->user_id,
+                $mandat->beneficiaire_id,
+                $reviewer,
+            );
+        });
 
         return back()->with('success', 'Mandat révoqué.');
     }

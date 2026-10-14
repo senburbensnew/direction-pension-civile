@@ -45,7 +45,8 @@
                         <p class="text-sm text-gray-600 mt-0.5">Organisation des services de la DPC</p>
                     </div>
                 </div>
-                <a href="{{ asset('images/dpc_organigram.jpg') }}?v=20260918"
+                @php($organigram = \App\Support\PublicMedia::forUploadedOrStatic('cms/institution/dpc_organigram.jpg'))
+                <a href="{{ $organigram['url'] }}?v=20260918"
                    target="_blank"
                    rel="noopener noreferrer"
                    class="text-sm font-semibold text-navy hover:text-orange-500 inline-flex items-center gap-1.5">
@@ -53,7 +54,7 @@
                 </a>
             </div>
             <div class="p-4 sm:p-6 bg-white">
-                <img src="{{ asset('images/dpc_organigram.jpg') }}?v=20260918"
+                <img src="{{ $organigram['webp'] ?? $organigram['url'] }}?v=20260918"
                      alt="Organigramme de la Direction de la Pension Civile"
                      class="w-full h-auto bg-white">
             </div>

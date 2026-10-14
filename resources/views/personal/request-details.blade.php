@@ -1916,7 +1916,7 @@
                                                     <h3 class="text-lg font-semibold mb-3 text-gray-700">Pièces justificatives</h3>
                                                     <ul class="list-disc list-inside space-y-2">
                                                         @foreach(($request->data['pieces'] ?? '') as $piece)
-                                                            <li><a href="{{ Storage::url($piece) }}" target="_blank" class="text-blue-600 hover:underline">{{ basename($piece) }}</a></li>
+                                                            <li><a href="{{ $request->urlForStoredPath($piece) }}" target="_blank" class="text-blue-600 hover:underline">{{ basename($piece) }}</a></li>
                                                         @endforeach
                                                     </ul>
                                                 </div>
@@ -2211,7 +2211,7 @@
                                                                 <h4 class="text-sm font-semibold text-gray-600 mb-2">{{ ucwords(str_replace('_', ' ', $label)) }}</h4>
                                                                 <ul class="space-y-1">
                                                                     @foreach((array) $files as $file)
-                                                                        <li><a href="{{ Storage::url($file) }}" target="_blank" class="text-blue-600 hover:underline text-sm">📄 {{ basename($file) }}</a></li>
+                                                                        <li><a href="{{ $request->urlForStoredPath($file) }}" target="_blank" class="text-blue-600 hover:underline text-sm">📄 {{ basename($file) }}</a></li>
                                                                     @endforeach
                                                                 </ul>
                                                             </div>
@@ -2246,7 +2246,7 @@
                                                 @if(!empty(($request->data['profile_picture'] ?? '')))
                                                 <div class="p-4 bg-gray-50 rounded-lg text-center">
                                                     <h3 class="text-lg font-semibold mb-3 text-gray-700">Photo de profil</h3>
-                                                    <img src="{{ Storage::url(($request->data['profile_picture'] ?? '')) }}" class="mx-auto w-32 h-32 rounded-full object-cover border" alt="Photo de profil">
+                                                    <img src="{{ $request->urlForStoredPath($request->data['profile_picture'] ?? '') }}" class="mx-auto w-32 h-32 rounded-full object-cover border" alt="Photo de profil">
                                                 </div>
                                                 @endif
                                             </div>
@@ -2440,7 +2440,7 @@
                                                                     @foreach((array) $files as $file)
                                                                         <li class="flex items-center justify-between text-sm">
                                                                             <span class="truncate">{{ basename($file) }}</span>
-                                                                            <a href="{{ \Illuminate\Support\Facades\Storage::url($file) }}" target="_blank" class="text-blue-600 hover:underline">Voir</a>
+                                                                            <a href="{{ $request->urlForStoredPath($file) }}" target="_blank" class="text-blue-600 hover:underline">Voir</a>
                                                                         </li>
                                                                     @endforeach
                                                                 </ul>
@@ -2503,7 +2503,7 @@
                                                 @if($doc = $request->getFirstMedia($collection))
                                                     <div class="md:col-span-2">
                                                         <dt class="text-sm text-gray-500">{{ $docLabel }}</dt>
-                                                        <dd class="font-medium"><a href="{{ $doc->getUrl() }}" target="_blank" class="text-navy hover:underline">{{ $doc->file_name }}</a></dd>
+                                                        <dd class="font-medium"><a href="{{ $request->urlForMedia($doc) }}" target="_blank" class="text-navy hover:underline">{{ $doc->file_name }}</a></dd>
                                                     </div>
                                                 @endif
                                             @endforeach
@@ -2608,7 +2608,7 @@
                                             @endif
                                             <ul class="border border-gray-200 divide-y divide-gray-100">
                                                 @foreach($docs as $doc)
-                                                    @php $docUrl = $doc->getUrl(); @endphp
+                                                    @php $docUrl = $request->urlForMedia($doc); @endphp
                                                     <li class="flex flex-wrap items-center justify-between gap-x-4 gap-y-1 px-3 py-2.5 text-sm bg-white">
                                                         <div class="min-w-0 flex-1">
                                                             <p class="font-medium text-gray-900 truncate">{{ $doc->file_name }}</p>

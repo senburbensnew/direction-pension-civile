@@ -20,15 +20,22 @@
             ? $d->format('d/m/Y')
             : \Illuminate\Support\Carbon::parse($d)->format('d/m/Y');
     };
-    $fmtDateTime = function ($d) use ($empty) {
-        if (blank($d)) {
-            return $empty;
-        }
-        return $d instanceof \DateTimeInterface
-            ? $d->format('d/m/Y H:i')
-            : \Illuminate\Support\Carbon::parse($d)->format('d/m/Y H:i');
-    };
-    $accountStatus = $user->resolvedAccountStatus();
+    $profileFormId = 'profile-update-form';
+    $canComplete = fn (string $attribute) => $profileCompletion->isCompletable($user, $attribute);
+    $canEdit = fn (string $attribute) => $profileCompletion->canEdit($user, $attribute);
+    $personalCompletableAttributes = $isInstitution
+        ? ['name', 'birth_date', 'gender_id', 'civil_status_id', 'address', 'username']
+        : ['firstname', 'lastname', 'birth_date', 'gender_id', 'civil_status_id', 'address', 'username'];
+    $hasPersonalCompletable = collect($personalCompletableAttributes)->contains(
+        fn (string $attribute) => $canEdit($attribute)
+    );
+    $profileStatusMessages = [
+        'profile-updated' => 'Informations mises à jour avec succès.',
+        'profile-photo-updated' => 'Photo mise à jour avec succès.',
+        'password-updated' => 'Mot de passe mis à jour avec succès.',
+    ];
+    $profileStatusMessage = $profileStatusMessages[session('status')] ?? null;
+    $profileFormError = $errors->getBag('default')->first();
 @endphp
 
 <style>
@@ -36,6 +43,14 @@
 </style>
 
 <x-portal-page bottom="pb-10" class="space-y-8">
+        @if ($profileStatusMessage)
+            <x-portal-toast type="success" :message="$profileStatusMessage" />
+        @endif
+
+        @if ($profileFormError)
+            <x-portal-toast type="error" :message="$profileFormError" />
+        @endif
+
         <section class="bg-white border border-gray-200 card-shadow p-6 sm:p-8">
             <div class="flex items-center gap-3 mb-2">
                 <span class="text-3xl text-navy flex items-center justify-center shrink-0">
@@ -44,10 +59,6 @@
                 <h2 class="text-xl font-bold text-navy">Photo de profil</h2>
             </div>
             <p class="text-sm text-gray-500 mb-4">JPEG ou PNG · max. 5 Mo</p>
-
-            @if (session('status') === 'profile-photo-updated')
-                <p class="mb-4 text-sm text-green-700">Photo mise à jour avec succès.</p>
-            @endif
 
             <form method="POST" action="{{ route('profile.profile-photo.update') }}" enctype="multipart/form-data">
                 @csrf
@@ -113,59 +124,127 @@
                 </span>
                 <h2 class="text-xl font-bold text-navy">Informations personnelles</h2>
             </div>
-            <p class="text-sm text-gray-500 mb-6">Données enregistrées sur votre compte (lecture seule).</p>
+            <p class="text-sm text-gray-500 mb-6">
+                État civil et adresse restent modifiables. Les autres champs déjà renseignés sont en lecture seule.
+            </p>
 
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                 @if ($isInstitution)
                     <div class="md:col-span-2">
-                        <label class="block text-sm font-medium text-gray-700 mb-1">Nom</label>
-                        <input type="text" value="{{ $user->name ?: $empty }}" disabled class="{{ $lockedClass }}">
+                        <label for="profile_name" class="block text-sm font-medium text-gray-700 mb-1">Nom</label>
+                        @if ($canComplete('name'))
+                            <input type="text" name="name" id="profile_name" form="{{ $profileFormId }}"
+                                   value="{{ old('name', $user->name) }}"
+                                   autocomplete="organization"
+                                   class="{{ $inputClass }} {{ $errors->has('name') ? 'border-red-500' : '' }}">
+                            @error('name')
+                                <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                            @enderror
+                        @else
+                            <input type="text" value="{{ $user->name ?: $empty }}" disabled class="{{ $lockedClass }}">
+                        @endif
                     </div>
                 @else
                     <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">Prénom</label>
-                        <input type="text" value="{{ $user->firstname ?: $empty }}" disabled class="{{ $lockedClass }}">
+                        <label for="profile_firstname" class="block text-sm font-medium text-gray-700 mb-1">Prénom</label>
+                        @if ($canComplete('firstname'))
+                            <input type="text" name="firstname" id="profile_firstname" form="{{ $profileFormId }}"
+                                   value="{{ old('firstname', $user->firstname) }}"
+                                   autocomplete="given-name"
+                                   class="{{ $inputClass }} {{ $errors->has('firstname') ? 'border-red-500' : '' }}">
+                            @error('firstname')
+                                <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                            @enderror
+                        @else
+                            <input type="text" value="{{ $user->firstname ?: $empty }}" disabled class="{{ $lockedClass }}">
+                        @endif
                     </div>
                     <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">Nom de famille</label>
-                        <input type="text" value="{{ $user->lastname ?: $empty }}" disabled class="{{ $lockedClass }}">
+                        <label for="profile_lastname" class="block text-sm font-medium text-gray-700 mb-1">Nom de famille</label>
+                        @if ($canComplete('lastname'))
+                            <input type="text" name="lastname" id="profile_lastname" form="{{ $profileFormId }}"
+                                   value="{{ old('lastname', $user->lastname) }}"
+                                   autocomplete="family-name"
+                                   class="{{ $inputClass }} {{ $errors->has('lastname') ? 'border-red-500' : '' }}">
+                            @error('lastname')
+                                <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                            @enderror
+                        @else
+                            <input type="text" value="{{ $user->lastname ?: $empty }}" disabled class="{{ $lockedClass }}">
+                        @endif
                     </div>
                 @endif
 
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">Date de naissance</label>
-                    <input type="text" value="{{ $fmtDate($user->birth_date) }}" disabled class="{{ $lockedClass }}">
+                    <label for="profile_birth_date" class="block text-sm font-medium text-gray-700 mb-1">Date de naissance</label>
+                    @if ($canComplete('birth_date'))
+                        <input type="date" name="birth_date" id="profile_birth_date" form="{{ $profileFormId }}"
+                               value="{{ old('birth_date', $user->birth_date?->format('Y-m-d')) }}"
+                               class="{{ $inputClass }} {{ $errors->has('birth_date') ? 'border-red-500' : '' }}">
+                        @error('birth_date')
+                            <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                        @enderror
+                    @else
+                        <input type="text" value="{{ $fmtDate($user->birth_date) }}" disabled class="{{ $lockedClass }}">
+                    @endif
                 </div>
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">Sexe</label>
-                    <input type="text" value="{{ $user->gender?->name ?: $empty }}" disabled class="{{ $lockedClass }}">
+                    <label for="profile_gender_id" class="block text-sm font-medium text-gray-700 mb-1">Sexe</label>
+                    @if ($canComplete('gender_id'))
+                        <select name="gender_id" id="profile_gender_id" form="{{ $profileFormId }}"
+                                class="{{ $inputClass }} {{ $errors->has('gender_id') ? 'border-red-500' : '' }}">
+                            <option value="">— Choisir —</option>
+                            @foreach ($genders as $gender)
+                                <option value="{{ $gender->id }}" @selected((string) old('gender_id', $user->gender_id) === (string) $gender->id)>
+                                    {{ $gender->name }}
+                                </option>
+                            @endforeach
+                        </select>
+                        @error('gender_id')
+                            <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                        @enderror
+                    @else
+                        <input type="text" value="{{ $user->gender?->name ?: $empty }}" disabled class="{{ $lockedClass }}">
+                    @endif
                 </div>
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">État civil</label>
-                    <input type="text" value="{{ $user->civilStatus?->name ?: $empty }}" disabled class="{{ $lockedClass }}">
+                    <label for="profile_civil_status_id" class="block text-sm font-medium text-gray-700 mb-1">État civil</label>
+                    <select name="civil_status_id" id="profile_civil_status_id" form="{{ $profileFormId }}"
+                            class="{{ $inputClass }} {{ $errors->has('civil_status_id') ? 'border-red-500' : '' }}">
+                        <option value="">— Choisir —</option>
+                        @foreach ($civilStatuses as $status)
+                            <option value="{{ $status->id }}" @selected((string) old('civil_status_id', $user->civil_status_id) === (string) $status->id)>
+                                {{ $status->name }}
+                            </option>
+                        @endforeach
+                    </select>
+                    @error('civil_status_id')
+                        <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                    @enderror
                 </div>
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">Statut du compte</label>
-                    <input type="text" value="{{ $accountStatus->label() }}" disabled class="{{ $lockedClass }}">
-                </div>
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">Email</label>
-                    <input type="text" value="{{ $user->email ?: $empty }}" disabled class="{{ $lockedClass }}">
-                </div>
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">Email vérifié le</label>
-                    <input type="text"
-                           value="{{ $user->email_verified_at ? $fmtDateTime($user->email_verified_at) : 'Non vérifié' }}"
-                           disabled
-                           class="{{ $lockedClass }}">
-                </div>
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">Nom d’utilisateur</label>
-                    <input type="text" value="{{ $user->username ?: $empty }}" disabled class="{{ $lockedClass }}">
+                    <label for="profile_username" class="block text-sm font-medium text-gray-700 mb-1">Nom d’utilisateur</label>
+                    @if ($canComplete('username'))
+                        <input type="text" name="username" id="profile_username" form="{{ $profileFormId }}"
+                               value="{{ old('username', $user->username) }}"
+                               autocomplete="username"
+                               class="{{ $inputClass }} {{ $errors->has('username') ? 'border-red-500' : '' }}">
+                        @error('username')
+                            <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                        @enderror
+                    @else
+                        <input type="text" value="{{ $user->username ?: $empty }}" disabled class="{{ $lockedClass }}">
+                    @endif
                 </div>
                 <div class="md:col-span-2">
-                    <label class="block text-sm font-medium text-gray-700 mb-1">Adresse</label>
-                    <input type="text" value="{{ $user->address ?: $empty }}" disabled class="{{ $lockedClass }}">
+                    <label for="profile_address" class="block text-sm font-medium text-gray-700 mb-1">Adresse</label>
+                    <input type="text" name="address" id="profile_address" form="{{ $profileFormId }}"
+                           value="{{ old('address', $user->address) }}"
+                           autocomplete="street-address"
+                           class="{{ $inputClass }} {{ $errors->has('address') ? 'border-red-500' : '' }}">
+                    @error('address')
+                        <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                    @enderror
                 </div>
 
                 @if ($user->service_id)
@@ -193,6 +272,14 @@
                     </div>
                 @endif
             </div>
+
+            @if ($hasPersonalCompletable)
+                <div class="mt-6 flex justify-end">
+                    <button type="submit" form="{{ $profileFormId }}" class="{{ $btnClass }}">
+                        Mettre à jour
+                    </button>
+                </div>
+            @endif
         </section>
 
         <section class="bg-white border border-gray-200 card-shadow p-6 sm:p-8">
@@ -202,51 +289,59 @@
                 </span>
                 <h2 class="text-xl font-bold text-navy">Coordonnées modifiables</h2>
             </div>
-            <p class="text-sm text-gray-500 mb-4">Vous pouvez compléter ou mettre à jour votre adresse e-mail, NIF, NINU et téléphone ci-dessous.</p>
+            <p class="text-sm text-gray-500 mb-4">
+                Le téléphone reste modifiable. Les autres champs déjà renseignés (e-mail, NIF, NINU) sont en lecture seule.
+            </p>
 
-            @if (session('status') === 'profile-updated')
-                <p class="mb-4 text-sm text-green-700">Informations mises à jour avec succès.</p>
-            @endif
-
-            <form method="POST" action="{{ route('profile.update') }}">
+            <form method="POST" action="{{ route('profile.update') }}" id="{{ $profileFormId }}">
                 @csrf
                 @method('PATCH')
-
-                <input type="hidden" name="name" value="{{ old('name', $user->name) }}">
 
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div class="md:col-span-2">
                         <label for="email" class="block text-sm font-medium text-gray-700 mb-1">Adresse e-mail</label>
-                        <input type="email" name="email" id="email"
-                               value="{{ old('email', $user->email) }}"
-                               autocomplete="email"
-                               placeholder="exemple@gmail.com"
-                               class="{{ $inputClass }} {{ $errors->has('email') ? 'border-red-500' : '' }}">
-                        @error('email')
-                            <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
-                        @enderror
+                        @if ($canComplete('email'))
+                            <input type="email" name="email" id="email"
+                                   value="{{ old('email', $user->email) }}"
+                                   autocomplete="email"
+                                   placeholder="exemple@gmail.com"
+                                   class="{{ $inputClass }} {{ $errors->has('email') ? 'border-red-500' : '' }}">
+                            @error('email')
+                                <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                            @enderror
+                        @else
+                            <input type="text" value="{{ $user->email ?: $empty }}" disabled class="{{ $lockedClass }}">
+                        @endif
                     </div>
 
                     <div>
                         <label for="nif" class="block text-sm font-medium text-gray-700 mb-1">NIF</label>
-                        <input type="text" name="nif" id="nif"
-                               value="{{ old('nif', $user->nif) }}"
-                               placeholder="ex: 809-062-525-6"
-                               class="{{ $inputClass }} {{ $errors->has('nif') ? 'border-red-500' : '' }}">
-                        @error('nif')
-                            <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
-                        @enderror
+                        @if ($canComplete('nif'))
+                            <input type="text" name="nif" id="nif"
+                                   value="{{ old('nif', $user->nif) }}"
+                                   placeholder="ex: 809-062-525-6"
+                                   class="{{ $inputClass }} {{ $errors->has('nif') ? 'border-red-500' : '' }}">
+                            @error('nif')
+                                <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                            @enderror
+                        @else
+                            <input type="text" value="{{ $user->nif ?: $empty }}" disabled class="{{ $lockedClass }}">
+                        @endif
                     </div>
 
                     @unless ($isInstitution)
                         <div>
                             <label for="ninu" class="block text-sm font-medium text-gray-700 mb-1">NINU</label>
-                            <input type="text" name="ninu" id="ninu"
-                                   value="{{ old('ninu', $user->ninu) }}"
-                                   class="{{ $inputClass }} {{ $errors->has('ninu') ? 'border-red-500' : '' }}">
-                            @error('ninu')
-                                <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
-                            @enderror
+                            @if ($canComplete('ninu'))
+                                <input type="text" name="ninu" id="ninu"
+                                       value="{{ old('ninu', $user->ninu) }}"
+                                       class="{{ $inputClass }} {{ $errors->has('ninu') ? 'border-red-500' : '' }}">
+                                @error('ninu')
+                                    <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                                @enderror
+                            @else
+                                <input type="text" value="{{ $user->ninu ?: $empty }}" disabled class="{{ $lockedClass }}">
+                            @endif
                         </div>
                     @endunless
 
@@ -278,10 +373,6 @@
                 <h2 class="text-xl font-bold text-navy">Mot de passe</h2>
             </div>
             <p class="text-sm text-gray-500 mb-4">Utilisez un mot de passe long pour sécuriser votre compte.</p>
-
-            @if (session('status') === 'password-updated')
-                <p class="mb-4 text-sm text-green-700">Mot de passe mis à jour avec succès.</p>
-            @endif
 
             <form method="POST" action="{{ route('password.update') }}">
                 @csrf

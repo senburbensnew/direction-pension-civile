@@ -89,11 +89,11 @@
         @php
             $datesImportantes = [
                 ['annee' => '1843', 'texte' => 'Liquidation d’une pension viagère à Claire Heureuse.', 'images' => [
-                    ['src' => 'images/historique/decret-1843-pension-viagere.jpg', 'alt' => 'Décret de 1843 accordant une pension viagère'],
+                    ['src' => 'cms/institution/historique/decret-1843-pension-viagere.jpg', 'alt' => 'Décret de 1843 accordant une pension viagère'],
                 ]],
                 ['annee' => '1864', 'texte' => 'Adoption d’un mode uniforme de liquidation des pensions.', 'images' => [
-                    ['src' => 'images/historique/loi-1864-pensions-civiles.png', 'alt' => 'Loi du 19 novembre 1864 sur les pensions civiles'],
-                    ['src' => 'images/historique/loi-pension-civile-militaire.png', 'alt' => 'Loi de 1864 sur la pension civile et militaire'],
+                    ['src' => 'cms/institution/historique/loi-1864-pensions-civiles.png', 'alt' => 'Loi du 19 novembre 1864 sur les pensions civiles'],
+                    ['src' => 'cms/institution/historique/loi-pension-civile-militaire.png', 'alt' => 'Loi de 1864 sur la pension civile et militaire'],
                 ]],
                 ['annee' => '1884', 'texte' => 'Condition d’éligibilité à la retraite : 60 ans d’âge et 30 années de carrière minimum.'],
                 ['annee' => '1997', 'texte' => 'La DPC fournit un service de guichet (et non de liquidation) aux pensionnés militaires et à ceux de la minoterie et du BNDAI.'],

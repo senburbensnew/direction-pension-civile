@@ -4,11 +4,15 @@ namespace Tests\Feature;
 
 use App\Enums\AccountStatusEnum;
 use App\Enums\TypeDemandeEnum;
+use App\Models\Beneficiaire;
 use App\Models\Demande;
 use App\Models\DemandeCreationCompte;
+use App\Models\DemandeCreationCompteHistory;
 use App\Models\PensionnaireReference;
 use App\Models\User;
+use App\Models\UserBeneficiaireLink;
 use App\Notifications\DemandeCreationCompteSoumise;
+use App\Services\Account\UserCategoryResolver;
 use App\Services\OCR\OcrService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
@@ -46,7 +50,7 @@ class DemandeCreationCompteTest extends TestCase
 
     private function acteNaissanceOcrText(): string
     {
-        return <<<TXT
+        return <<<'TXT'
         REPUBLIQUE D'HAITI
         ACTE DE NAISSANCE
         Numéro d'acte : 12345
@@ -64,7 +68,7 @@ class DemandeCreationCompteTest extends TestCase
 
     private function permisOcrText(): string
     {
-        return <<<TXT
+        return <<<'TXT'
         REPUBLIQUE D'HAITI
         Service de la Circulation
         PERMIS DE CONDUIRE
@@ -95,7 +99,7 @@ class DemandeCreationCompteTest extends TestCase
 
     private function matriculeFiscalOcrText(): string
     {
-        return <<<TXT
+        return <<<'TXT'
         REPUBLIQUE D'HAITI
         DIRECTION GENERALE DES IMPOTS
         MATRICULE FISCAL DU CONTRIBUABLE
@@ -154,6 +158,7 @@ class DemandeCreationCompteTest extends TestCase
     public function guest_can_submit_a_pensionne_account_request(): void
     {
         Storage::fake('public');
+        Storage::fake(config('uploads.disks.private', 'private'));
 
         $response = $this->post(route('demandes.compte.store'), [
             'user_type' => 'pensionne',
@@ -204,14 +209,15 @@ class DemandeCreationCompteTest extends TestCase
         $this->assertIsArray($demande->submitted_payload);
         $this->assertSame('+509 22 00 0000', $demande->submitted_payload['telephone'] ?? null);
         $this->assertArrayNotHasKey('password', $demande->submitted_payload);
-        $this->assertTrue($demande->histories()->where('event', \App\Models\DemandeCreationCompteHistory::EVENT_SOUMISE)->exists());
-        $this->assertTrue($demande->histories()->where('event', \App\Models\DemandeCreationCompteHistory::EVENT_COMPTE_CREE)->exists());
+        $this->assertTrue($demande->histories()->where('event', DemandeCreationCompteHistory::EVENT_SOUMISE)->exists());
+        $this->assertTrue($demande->histories()->where('event', DemandeCreationCompteHistory::EVENT_COMPTE_CREE)->exists());
     }
 
     /** @test */
     public function guest_can_open_rdv_page_after_account_submission(): void
     {
         Storage::fake('public');
+        Storage::fake(config('uploads.disks.private', 'private'));
         $this->seedRoles();
         $this->seedServices();
 
@@ -233,6 +239,7 @@ class DemandeCreationCompteTest extends TestCase
     public function submitting_while_logged_in_as_agent_switches_to_provisional_user(): void
     {
         Storage::fake('public');
+        Storage::fake(config('uploads.disks.private', 'private'));
         $this->seedRoles();
         $this->seedServices();
 
@@ -284,6 +291,7 @@ class DemandeCreationCompteTest extends TestCase
     {
         Notification::fake();
         Storage::fake('public');
+        Storage::fake(config('uploads.disks.private', 'private'));
 
         $this->post(route('demandes.compte.store'), [
             'user_type' => 'pensionne',
@@ -310,6 +318,7 @@ class DemandeCreationCompteTest extends TestCase
     {
         Notification::fake();
         Storage::fake('public');
+        Storage::fake(config('uploads.disks.private', 'private'));
 
         $this->post(route('demandes.compte.store'), [
             'user_type' => 'pensionne',
@@ -330,6 +339,7 @@ class DemandeCreationCompteTest extends TestCase
     public function guest_cannot_submit_without_a_nif(): void
     {
         Storage::fake('public');
+        Storage::fake(config('uploads.disks.private', 'private'));
 
         $this->post(route('demandes.compte.store'), [
             'user_type' => 'pensionne',
@@ -349,6 +359,7 @@ class DemandeCreationCompteTest extends TestCase
     public function pension_code_is_optional_for_a_pensionne(): void
     {
         Storage::fake('public');
+        Storage::fake(config('uploads.disks.private', 'private'));
 
         $this->post(route('demandes.compte.store'), [
             'user_type' => 'pensionne',
@@ -370,6 +381,7 @@ class DemandeCreationCompteTest extends TestCase
     public function ajax_store_returns_json_redirect_url_after_success(): void
     {
         Storage::fake('public');
+        Storage::fake(config('uploads.disks.private', 'private'));
 
         $this->post(route('demandes.compte.store'), [
             'user_type' => 'pensionne',
@@ -395,6 +407,7 @@ class DemandeCreationCompteTest extends TestCase
     public function guest_can_submit_a_minor_pensionne_account_request(): void
     {
         Storage::fake('public');
+        Storage::fake(config('uploads.disks.private', 'private'));
 
         $this->post(route('demandes.compte.store'), [
             'user_type' => 'pensionne',
@@ -412,6 +425,7 @@ class DemandeCreationCompteTest extends TestCase
         ])->assertRedirect(route('demandes.rencontre.create'));
 
         $demande = DemandeCreationCompte::first();
+        $this->assertSame('externe', $demande->user_type);
         $this->assertTrue($demande->is_mineur);
         $this->assertSame('123-456-789-0', $demande->nif);
         $this->assertSame('8-34321', $demande->pension_code);
@@ -422,11 +436,11 @@ class DemandeCreationCompteTest extends TestCase
         $this->assertDatabaseCount('users', 1);
         $this->assertTrue($demande->user->isProvisionnel());
 
-        $beneficiaire = \App\Models\Beneficiaire::query()->where('is_mineur', true)->first();
+        $beneficiaire = Beneficiaire::query()->where('is_mineur', true)->first();
         $this->assertNotNull($beneficiaire);
         $this->assertSame('123-456-789-0', $beneficiaire->nif);
         $this->assertTrue(
-            \App\Models\UserBeneficiaireLink::query()
+            UserBeneficiaireLink::query()
                 ->where('user_id', $demande->user_id)
                 ->where('beneficiaire_id', $beneficiaire->id)
                 ->where('relation', 'mere')
@@ -434,7 +448,7 @@ class DemandeCreationCompteTest extends TestCase
         );
 
         $user = $demande->user->fresh(['roles', 'categoryAssignments']);
-        $resolver = \App\Services\Account\UserCategoryResolver::for($user);
+        $resolver = UserCategoryResolver::for($user);
         $this->assertFalse($user->hasRole('pensionne'));
         $this->assertTrue($resolver->hasCategory('externe'));
         $this->assertTrue($resolver->hasPensionPortalAccess());
@@ -445,6 +459,7 @@ class DemandeCreationCompteTest extends TestCase
     public function minor_representative_can_also_be_pensionne_titulaire_when_declared(): void
     {
         Storage::fake('public');
+        Storage::fake(config('uploads.disks.private', 'private'));
 
         $this->seedPensionReference('8-34322', 'DUPONT', 'MARIE');
 
@@ -465,11 +480,12 @@ class DemandeCreationCompteTest extends TestCase
         ])->assertRedirect(route('demandes.rencontre.create'));
 
         $demande = DemandeCreationCompte::query()->latest('id')->first();
+        $this->assertSame('pensionne', $demande->user_type);
         $this->assertTrue($demande->representant_est_pensionne);
 
         $user = $demande->user->fresh(['roles', 'categoryAssignments']);
         $this->assertTrue($user->hasRole('pensionne'));
-        $resolver = \App\Services\Account\UserCategoryResolver::for($user);
+        $resolver = UserCategoryResolver::for($user);
         $this->assertTrue($resolver->hasCategory('externe'));
         $this->assertTrue($resolver->hasCategory('pensionne'));
     }
@@ -478,6 +494,7 @@ class DemandeCreationCompteTest extends TestCase
     public function guest_can_submit_mandataire_account_request(): void
     {
         Storage::fake('public');
+        Storage::fake(config('uploads.disks.private', 'private'));
 
         $this->seedPensionReference('8-34399', 'LAMOUR', 'ROSE');
 
@@ -495,13 +512,14 @@ class DemandeCreationCompteTest extends TestCase
         ])->assertRedirect(route('demandes.rencontre.create'));
 
         $demande = DemandeCreationCompte::query()->latest('id')->first();
+        $this->assertSame('externe', $demande->user_type);
         $this->assertTrue($demande->is_mandataire);
         $this->assertFalse($demande->is_mineur);
         $this->assertSame('8-34399', $demande->pension_code);
         $this->assertTrue($demande->hasMedia('mandat_designation'));
 
         $user = $demande->user->fresh(['categoryAssignments']);
-        $resolver = \App\Services\Account\UserCategoryResolver::for($user);
+        $resolver = UserCategoryResolver::for($user);
         $this->assertTrue($resolver->hasCategory('externe'));
         $this->assertFalse($user->hasRole('pensionne'));
         $this->assertTrue($resolver->hasPensionPortalAccess());
@@ -512,8 +530,42 @@ class DemandeCreationCompteTest extends TestCase
         ]);
 
         $this->assertFalse(
-            \App\Models\UserBeneficiaireLink::query()->where('user_id', $user->id)->exists()
+            UserBeneficiaireLink::query()->where('user_id', $user->id)->exists()
         );
+    }
+
+    /** @test */
+    public function mandataire_who_is_also_pensionne_titulaire_gets_pensionne_user_type(): void
+    {
+        Storage::fake('public');
+        Storage::fake(config('uploads.disks.private', 'private'));
+
+        $this->seedPensionReference('8-34400', 'LAMOUR', 'ROSE');
+
+        $this->post(route('demandes.compte.store'), [
+            'user_type' => 'pensionne',
+            'telephone' => '+509 38123459',
+            'nif' => '123-456-789-2',
+            'pension_code' => '8-34400',
+            'adresse' => 'Delmas 34',
+            'is_mandataire' => '1',
+            'mandataire_est_pensionne' => '1',
+            'piece_identite_type' => 'passeport',
+            'piece_identite' => UploadedFile::fake()->image('passeport.jpg', 800, 600),
+            'mandat_designation' => UploadedFile::fake()->create('mandat.pdf', 100, 'application/pdf'),
+            'password' => 'password123',
+            'accept_terms' => '1',
+        ])->assertRedirect(route('demandes.rencontre.create'));
+
+        $demande = DemandeCreationCompte::query()->latest('id')->first();
+        $this->assertTrue($demande->mandataire_est_pensionne);
+        $this->assertSame('pensionne', $demande->user_type);
+
+        $user = $demande->user->fresh(['roles', 'categoryAssignments']);
+        $this->assertTrue($user->hasRole('pensionne'));
+        $resolver = UserCategoryResolver::for($user);
+        $this->assertTrue($resolver->hasCategory('externe'));
+        $this->assertTrue($resolver->hasCategory('pensionne'));
     }
 
     /** @test */
@@ -530,13 +582,14 @@ class DemandeCreationCompteTest extends TestCase
     public function guest_cannot_submit_without_accepting_terms(): void
     {
         Storage::fake('public');
+        Storage::fake(config('uploads.disks.private', 'private'));
 
         $this->from(route('demandes.compte.create'))
             ->post(route('demandes.compte.store'), [
                 'user_type' => 'pensionne',
                 'telephone' => '+509 22 00 0000',
                 'nif' => '123-456-789-0',
-            'pension_code' => '8-34321',
+                'pension_code' => '8-34321',
                 'adresse' => '12, rue Capois',
                 'piece_identite_type' => 'cin',
                 'piece_identite' => UploadedFile::fake()->image('cin.jpg', 800, 600),
@@ -551,6 +604,7 @@ class DemandeCreationCompteTest extends TestCase
     public function guest_cannot_use_an_existing_nif_or_pension_code(): void
     {
         Storage::fake('public');
+        Storage::fake(config('uploads.disks.private', 'private'));
         $this->createPensionneUser([
             'nif' => '123-456-789-0',
         ], '8-34321');
@@ -565,7 +619,7 @@ class DemandeCreationCompteTest extends TestCase
                 'piece_identite_type' => 'cin',
                 'piece_identite' => UploadedFile::fake()->image('cin.jpg', 800, 600),
                 'password' => 'password123',
-            'accept_terms' => '1',
+                'accept_terms' => '1',
             ])
             ->assertRedirect(route('demandes.compte.create'))
             ->assertSessionHasErrors('nif');
@@ -580,7 +634,7 @@ class DemandeCreationCompteTest extends TestCase
                 'piece_identite_type' => 'cin',
                 'piece_identite' => UploadedFile::fake()->image('cin.jpg', 800, 600),
                 'password' => 'password123',
-            'accept_terms' => '1',
+                'accept_terms' => '1',
             ])
             ->assertRedirect(route('demandes.compte.create'))
             ->assertSessionHasErrors('pension_code');
@@ -592,6 +646,7 @@ class DemandeCreationCompteTest extends TestCase
     public function guest_cannot_use_an_existing_email(): void
     {
         Storage::fake('public');
+        Storage::fake(config('uploads.disks.private', 'private'));
         User::factory()->create(['email' => 'jean.pierre@example.com']);
 
         $this->from(route('demandes.compte.create'))
@@ -605,7 +660,7 @@ class DemandeCreationCompteTest extends TestCase
                 'piece_identite_type' => 'cin',
                 'piece_identite' => UploadedFile::fake()->image('cin.jpg', 800, 600),
                 'password' => 'password123',
-            'accept_terms' => '1',
+                'accept_terms' => '1',
             ])
             ->assertRedirect(route('demandes.compte.create'))
             ->assertSessionHasErrors('email');
@@ -684,6 +739,7 @@ class DemandeCreationCompteTest extends TestCase
     public function guest_can_extract_ocr_fields_from_identity_document(): void
     {
         Storage::fake('public');
+        Storage::fake(config('uploads.disks.private', 'private'));
 
         $this->post(route('demandes.compte.ocr'), [
             'user_type' => 'pensionne',
@@ -705,6 +761,7 @@ class DemandeCreationCompteTest extends TestCase
     public function guest_ocr_extracts_licence_fields_for_step_two(): void
     {
         Storage::fake('public');
+        Storage::fake(config('uploads.disks.private', 'private'));
 
         $this->mock(OcrService::class, function ($mock) {
             $mock->shouldReceive('extract')->andReturn($this->permisOcrText());
@@ -735,6 +792,7 @@ class DemandeCreationCompteTest extends TestCase
     public function guest_ocr_extracts_matricule_fiscal_fields(): void
     {
         Storage::fake('public');
+        Storage::fake(config('uploads.disks.private', 'private'));
 
         $this->mock(OcrService::class, function ($mock) {
             $mock->shouldReceive('extract')->andReturn($this->matriculeFiscalOcrText());
@@ -759,6 +817,7 @@ class DemandeCreationCompteTest extends TestCase
     public function guest_ocr_extracts_birth_certificate_and_guardian_id_for_a_minor(): void
     {
         Storage::fake('public');
+        Storage::fake(config('uploads.disks.private', 'private'));
 
         $this->mock(OcrService::class, function ($mock) {
             $mock->shouldReceive('extract')
@@ -798,6 +857,7 @@ class DemandeCreationCompteTest extends TestCase
     public function guest_cannot_submit_without_a_password(): void
     {
         Storage::fake('public');
+        Storage::fake(config('uploads.disks.private', 'private'));
 
         $this->from(route('demandes.compte.create'))
             ->post(route('demandes.compte.store'), [

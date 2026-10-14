@@ -64,6 +64,9 @@ class User extends Authenticatable
         'institution_id',
         'account_status',
         'gender_id',
+        'civil_status_id',
+        'birth_date',
+        'address',
         'profile_photo',
         'created_at',
         'updated_at',
@@ -86,6 +89,7 @@ class User extends Authenticatable
      */
     protected $casts = [
         'email_verified_at' => 'datetime',
+        'birth_date' => 'date',
         'password' => 'hashed',
         'account_status' => AccountStatusEnum::class,
     ];

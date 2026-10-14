@@ -863,7 +863,7 @@ package "Domaine pension" {
             nif
             date_naissance
             is_mineur
-            galipec_pensionnaire_id
+            informations_complementaires
             created_at
             updated_at
     }

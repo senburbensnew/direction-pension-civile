@@ -5,12 +5,13 @@ namespace App\Http\Controllers;
 use App\Enums\DemandeStatusEnum;
 use App\Enums\TypeDemandeEnum;
 use App\Helpers\CodeGeneratorService;
+use App\Http\Controllers\Concerns\AuthorizesPensionDemandeType;
 use App\Http\Requests\StoreArretPaiementRequest;
 use App\Http\Requests\StoreDemandeAdhesionRequest;
 use App\Http\Requests\StoreDemandeArretVirementRequest;
 use App\Http\Requests\StoreDemandeAttestationRequest;
-use App\Http\Requests\StoreDemandePensionRequest;
 use App\Http\Requests\StoreDemandePensionPensionneRequest;
+use App\Http\Requests\StoreDemandePensionRequest;
 use App\Http\Requests\StoreDemandePensionReversionRequest;
 use App\Http\Requests\StoreDemandeReinsertionRequest;
 use App\Http\Requests\StoreDemandeVirementBancaireRequest;
@@ -23,13 +24,11 @@ use App\Models\DemandeHistory;
 use App\Models\Gender;
 use App\Models\PensionCategory;
 use App\Models\PensionType;
-use App\Models\Service;
 use App\Models\WorkflowStep;
-use App\Http\Controllers\Concerns\AuthorizesPensionDemandeType;
 use App\Services\DemandeService;
 use App\Services\DemandeWorkflowService;
+use App\Support\Storage\UploadPaths;
 use Exception;
-use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\ValidationException;
@@ -40,6 +39,7 @@ class DemandeController extends Controller
     use AuthorizesPensionDemandeType;
 
     protected DemandeService $demandeService;
+
     protected DemandeWorkflowService $workflowService;
 
     public function __construct(DemandeService $demandeService, DemandeWorkflowService $workflowService)
@@ -62,11 +62,11 @@ class DemandeController extends Controller
             $demande = Demande::findOrFail($demandeId);
             abort_if(
                 $demande->created_by !== auth()->id() ||
-                !$demande->canBeEditedByUser(),
+                ! $demande->canBeEditedByUser(),
                 403,
                 'La demande ne peut pas être modifiée !'
             );
-            $isDemandeReadyForSubmission = !empty($demande->data);
+            $isDemandeReadyForSubmission = ! empty($demande->data);
         }
 
         return view('pensionne.demande-virement-bancaire', compact('genders', 'civilStatuses', 'pensionTypes', 'pensionCategories', 'demande', 'isDemandeReadyForSubmission'));
@@ -82,7 +82,7 @@ class DemandeController extends Controller
                 $demande = Demande::with('currentStep')->findOrFail($request->demande_id);
                 abort_if(
                     $demande->created_by !== auth()->id() ||
-                    !$demande->canBeEditedByUser(),
+                    ! $demande->canBeEditedByUser(),
                     403
                 );
             } else {
@@ -94,20 +94,22 @@ class DemandeController extends Controller
                             'title', 'action', 'demande_id', 'status_id', 'created_by', 'type', 'current_service_id', 'code', 'profile_photo',
                         ])->toArray();
                         $demande = Demande::create([
-                            'code'       => CodeGeneratorService::generateUniqueRequestCode(TypeDemandeEnum::DEMANDE_VIREMENT_BANCAIRE->value, (new Demande())->getTable()),
+                            'code' => CodeGeneratorService::generateUniqueRequestCode(TypeDemandeEnum::DEMANDE_VIREMENT_BANCAIRE->value, (new Demande)->getTable()),
                             'created_by' => auth()->id(),
-                            'type'       => TypeDemandeEnum::DEMANDE_VIREMENT_BANCAIRE->value,
-                            'current_step_id'  => $draftStatusId,
-                            'data'       => $data,
-                            'title'      => $request->title,
+                            'type' => TypeDemandeEnum::DEMANDE_VIREMENT_BANCAIRE->value,
+                            'current_step_id' => $draftStatusId,
+                            'data' => $data,
+                            'title' => $request->title,
                             'expires_at' => now()->addYear(),
                         ]);
                         $this->demandeService->storeFiles($demande, $request->allFiles());
+
                         return $demande;
                     });
                     $demande->load('currentStep');
-                } catch (\Exception $e) {
+                } catch (Exception $e) {
                     Log::error('Erreur lors de la soumission', ['error' => $e->getMessage()]);
+
                     return back()->with('error', 'Une erreur inattendue est survenue.')->withInput();
                 }
             }
@@ -115,10 +117,10 @@ class DemandeController extends Controller
             try {
                 DB::transaction(function () use ($demande, $request) {
                     $demande->update([
-                        'title'        => $request->title,
+                        'title' => $request->title,
                         'submitted_at' => now(),
-                        'expires_at'   => null,
-                        'is_urgent'    => $request->boolean('is_urgent'),
+                        'expires_at' => null,
+                        'is_urgent' => $request->boolean('is_urgent'),
                     ]);
 
                     $this->workflowService->submit($demande, auth()->user());
@@ -128,6 +130,7 @@ class DemandeController extends Controller
 
             } catch (\Throwable $e) {
                 Log::error('Erreur soumission demande virement', ['error' => $e->getMessage()]);
+
                 return back()->with('error', 'Une erreur inattendue est survenue.')->withInput();
             }
         }
@@ -144,13 +147,18 @@ class DemandeController extends Controller
                 $photoPath = $existing?->data['profile_photo'] ?? null;
 
                 if ($request->hasFile('profile_photo')) {
-                    $path = $request->file('profile_photo')->store('demandes/virement-bancaire/' . now()->format('Y/m'), 'public');
+                    $path = $request->file('profile_photo')->store(
+                        UploadPaths::demandeEmbeddedPath('virement-bancaire'),
+                        UploadPaths::demandesDisk()
+                    );
                     $storedFilePaths[] = $path;
                     $photoPath = $path;
                 }
 
                 $data = collect($validated)->except(['title', 'action', 'demande_id', 'consentement', 'profile_photo'])->toArray();
-                if ($photoPath) $data['profile_photo'] = $photoPath;
+                if ($photoPath) {
+                    $data['profile_photo'] = $photoPath;
+                }
 
                 if ($existing) {
                     $updateFields = ['data' => $data, 'title' => $request->title];
@@ -161,16 +169,18 @@ class DemandeController extends Controller
                     $demande = $existing;
                 } else {
                     $demande = Demande::create([
-                        'code'       => CodeGeneratorService::generateUniqueRequestCode(TypeDemandeEnum::DEMANDE_VIREMENT_BANCAIRE->value, (new Demande())->getTable()),
+                        'code' => CodeGeneratorService::generateUniqueRequestCode(TypeDemandeEnum::DEMANDE_VIREMENT_BANCAIRE->value, (new Demande)->getTable()),
                         'created_by' => auth()->id(),
-                        'type'       => TypeDemandeEnum::DEMANDE_VIREMENT_BANCAIRE->value,
-                        'current_step_id'  => $draftStatusId,
-                        'data'       => $data,
-                        'title'      => $request->title,
+                        'type' => TypeDemandeEnum::DEMANDE_VIREMENT_BANCAIRE->value,
+                        'current_step_id' => $draftStatusId,
+                        'data' => $data,
+                        'title' => $request->title,
                     ]);
                 }
 
-                if (! $demande->expires_at) $demande->update(['expires_at' => now()->addYear()]);
+                if (! $demande->expires_at) {
+                    $demande->update(['expires_at' => now()->addYear()]);
+                }
 
                 return $demande;
             });
@@ -178,8 +188,11 @@ class DemandeController extends Controller
             return redirect()->route('demandes.virements.create', $demande->id)->with('success', 'Brouillon sauvegardé.');
 
         } catch (\Throwable $e) {
-            if ($storedFilePaths) Storage::disk('public')->delete($storedFilePaths);
+            if ($storedFilePaths) {
+                Storage::disk(UploadPaths::demandesDisk())->delete($storedFilePaths);
+            }
             Log::error('Erreur brouillon virement bancaire', ['error' => $e->getMessage()]);
+
             return back()->with('error', 'Une erreur inattendue est survenue.')->withInput();
         }
     }
@@ -194,11 +207,11 @@ class DemandeController extends Controller
             $demande = Demande::findOrFail($demandeId);
             abort_if(
                 $demande->created_by !== auth()->id() ||
-                !$demande->canBeEditedByUser(),
+                ! $demande->canBeEditedByUser(),
                 403,
                 'La demande ne peut pas être modifiée !'
             );
-            $isDemandeReadyForSubmission = !empty($demande->data);
+            $isDemandeReadyForSubmission = ! empty($demande->data);
         }
 
         return view('pensionne.demande-attestation', compact('demande', 'isDemandeReadyForSubmission'));
@@ -214,7 +227,7 @@ class DemandeController extends Controller
                 $demande = Demande::with('currentStep')->findOrFail($request->demande_id);
                 abort_if(
                     $demande->created_by !== auth()->id() ||
-                    !$demande->canBeEditedByUser(),
+                    ! $demande->canBeEditedByUser(),
                     403
                 );
             } else {
@@ -226,20 +239,22 @@ class DemandeController extends Controller
                             'title', 'action', 'demande_id', 'status_id', 'created_by', 'type', 'current_service_id', 'code',
                         ])->toArray();
                         $demande = Demande::create([
-                            'code'       => CodeGeneratorService::generateUniqueRequestCode(TypeDemandeEnum::DEMANDE_ATTESTATION->value, (new Demande())->getTable()),
+                            'code' => CodeGeneratorService::generateUniqueRequestCode(TypeDemandeEnum::DEMANDE_ATTESTATION->value, (new Demande)->getTable()),
                             'created_by' => auth()->id(),
-                            'type'       => TypeDemandeEnum::DEMANDE_ATTESTATION->value,
-                            'current_step_id'  => $draftStatusId,
-                            'data'       => $data,
-                            'title'      => $request->title,
+                            'type' => TypeDemandeEnum::DEMANDE_ATTESTATION->value,
+                            'current_step_id' => $draftStatusId,
+                            'data' => $data,
+                            'title' => $request->title,
                             'expires_at' => now()->addYear(),
                         ]);
                         $this->demandeService->storeFiles($demande, $request->allFiles());
+
                         return $demande;
                     });
                     $demande->load('currentStep');
-                } catch (\Exception $e) {
+                } catch (Exception $e) {
                     Log::error('Erreur lors de la soumission', ['error' => $e->getMessage()]);
+
                     return back()->with('error', 'Une erreur inattendue est survenue.')->withInput();
                 }
             }
@@ -247,10 +262,10 @@ class DemandeController extends Controller
             try {
                 DB::transaction(function () use ($demande, $request) {
                     $demande->update([
-                        'title'        => $request->title,
+                        'title' => $request->title,
                         'submitted_at' => now(),
-                        'expires_at'   => null,
-                        'is_urgent'    => $request->boolean('is_urgent'),
+                        'expires_at' => null,
+                        'is_urgent' => $request->boolean('is_urgent'),
                     ]);
 
                     $this->workflowService->submit($demande, auth()->user());
@@ -260,6 +275,7 @@ class DemandeController extends Controller
 
             } catch (\Throwable $e) {
                 Log::error('Erreur soumission attestation', ['error' => $e->getMessage()]);
+
                 return back()->with('error', 'Une erreur inattendue est survenue.')->withInput();
             }
         }
@@ -280,16 +296,18 @@ class DemandeController extends Controller
                     $demande->update($updateFields);
                 } else {
                     $demande = Demande::create([
-                        'code'       => CodeGeneratorService::generateUniqueRequestCode(TypeDemandeEnum::DEMANDE_ATTESTATION->value, (new Demande())->getTable()),
+                        'code' => CodeGeneratorService::generateUniqueRequestCode(TypeDemandeEnum::DEMANDE_ATTESTATION->value, (new Demande)->getTable()),
                         'created_by' => auth()->id(),
-                        'type'       => TypeDemandeEnum::DEMANDE_ATTESTATION->value,
-                        'current_step_id'  => $draftStatusId,
-                        'data'       => $data,
-                        'title'      => $request->title,
+                        'type' => TypeDemandeEnum::DEMANDE_ATTESTATION->value,
+                        'current_step_id' => $draftStatusId,
+                        'data' => $data,
+                        'title' => $request->title,
                     ]);
                 }
 
-                if (! $demande->expires_at) $demande->update(['expires_at' => now()->addYear()]);
+                if (! $demande->expires_at) {
+                    $demande->update(['expires_at' => now()->addYear()]);
+                }
 
                 return $demande;
             });
@@ -298,6 +316,7 @@ class DemandeController extends Controller
 
         } catch (\Throwable $e) {
             Log::error('Erreur brouillon attestation', ['error' => $e->getMessage()]);
+
             return back()->with('error', 'Une erreur inattendue est survenue.')->withInput();
         }
     }
@@ -313,11 +332,11 @@ class DemandeController extends Controller
             $demande = Demande::findOrFail($demandeId);
             abort_if(
                 $demande->created_by !== auth()->id() ||
-                !$demande->canBeEditedByUser(),
+                ! $demande->canBeEditedByUser(),
                 403,
                 'La demande ne peut pas être modifiée !'
             );
-            $isDemandeReadyForSubmission = !empty($demande->data);
+            $isDemandeReadyForSubmission = ! empty($demande->data);
         }
 
         return view('pensionne.demande-transfert-cheque', compact('pensionCategories', 'demande', 'isDemandeReadyForSubmission'));
@@ -333,7 +352,7 @@ class DemandeController extends Controller
                 $demande = Demande::with('currentStep')->findOrFail($request->demande_id);
                 abort_if(
                     $demande->created_by !== auth()->id() ||
-                    !$demande->canBeEditedByUser(),
+                    ! $demande->canBeEditedByUser(),
                     403
                 );
             } else {
@@ -345,20 +364,22 @@ class DemandeController extends Controller
                             'title', 'action', 'demande_id', 'status_id', 'created_by', 'type', 'current_service_id', 'code',
                         ])->toArray();
                         $demande = Demande::create([
-                            'code'       => CodeGeneratorService::generateUniqueRequestCode(TypeDemandeEnum::DEMANDE_TRANSFERT_CHEQUE->value, (new Demande())->getTable()),
+                            'code' => CodeGeneratorService::generateUniqueRequestCode(TypeDemandeEnum::DEMANDE_TRANSFERT_CHEQUE->value, (new Demande)->getTable()),
                             'created_by' => auth()->id(),
-                            'type'       => TypeDemandeEnum::DEMANDE_TRANSFERT_CHEQUE->value,
-                            'current_step_id'  => $draftStatusId,
-                            'data'       => $data,
-                            'title'      => $request->title,
+                            'type' => TypeDemandeEnum::DEMANDE_TRANSFERT_CHEQUE->value,
+                            'current_step_id' => $draftStatusId,
+                            'data' => $data,
+                            'title' => $request->title,
                             'expires_at' => now()->addYear(),
                         ]);
                         $this->demandeService->storeFiles($demande, $request->allFiles());
+
                         return $demande;
                     });
                     $demande->load('currentStep');
-                } catch (\Exception $e) {
+                } catch (Exception $e) {
                     Log::error('Erreur lors de la soumission', ['error' => $e->getMessage()]);
+
                     return back()->with('error', 'Une erreur inattendue est survenue.')->withInput();
                 }
             }
@@ -366,10 +387,10 @@ class DemandeController extends Controller
             try {
                 DB::transaction(function () use ($demande, $request) {
                     $demande->update([
-                        'title'        => $request->title,
+                        'title' => $request->title,
                         'submitted_at' => now(),
-                        'expires_at'   => null,
-                        'is_urgent'    => $request->boolean('is_urgent'),
+                        'expires_at' => null,
+                        'is_urgent' => $request->boolean('is_urgent'),
                     ]);
 
                     $this->workflowService->submit($demande, auth()->user());
@@ -379,6 +400,7 @@ class DemandeController extends Controller
 
             } catch (\Throwable $e) {
                 Log::error('Erreur soumission transfert chèque', ['error' => $e->getMessage()]);
+
                 return back()->with('error', 'Une erreur inattendue est survenue.')->withInput();
             }
         }
@@ -399,16 +421,18 @@ class DemandeController extends Controller
                     $demande->update($updateFields);
                 } else {
                     $demande = Demande::create([
-                        'code'       => CodeGeneratorService::generateUniqueRequestCode(TypeDemandeEnum::DEMANDE_TRANSFERT_CHEQUE->value, (new Demande())->getTable()),
+                        'code' => CodeGeneratorService::generateUniqueRequestCode(TypeDemandeEnum::DEMANDE_TRANSFERT_CHEQUE->value, (new Demande)->getTable()),
                         'created_by' => auth()->id(),
-                        'type'       => TypeDemandeEnum::DEMANDE_TRANSFERT_CHEQUE->value,
-                        'current_step_id'  => $draftStatusId,
-                        'data'       => $data,
-                        'title'      => $request->title,
+                        'type' => TypeDemandeEnum::DEMANDE_TRANSFERT_CHEQUE->value,
+                        'current_step_id' => $draftStatusId,
+                        'data' => $data,
+                        'title' => $request->title,
                     ]);
                 }
 
-                if (! $demande->expires_at) $demande->update(['expires_at' => now()->addYear()]);
+                if (! $demande->expires_at) {
+                    $demande->update(['expires_at' => now()->addYear()]);
+                }
 
                 return $demande;
             });
@@ -417,6 +441,7 @@ class DemandeController extends Controller
 
         } catch (\Throwable $e) {
             Log::error('Erreur brouillon transfert chèque', ['error' => $e->getMessage()]);
+
             return back()->with('error', 'Une erreur inattendue est survenue.')->withInput();
         }
     }
@@ -432,11 +457,11 @@ class DemandeController extends Controller
             $demande = Demande::findOrFail($demandeId);
             abort_if(
                 $demande->created_by !== auth()->id() ||
-                !$demande->canBeEditedByUser(),
+                ! $demande->canBeEditedByUser(),
                 403,
                 'La demande ne peut pas être modifiée !'
             );
-            $isDemandeReadyForSubmission = !empty($demande->data);
+            $isDemandeReadyForSubmission = ! empty($demande->data);
         }
 
         return view('pensionne.demande-arret-paiement', compact('pensionCategories', 'demande', 'isDemandeReadyForSubmission'));
@@ -452,7 +477,7 @@ class DemandeController extends Controller
                 $demande = Demande::with('currentStep')->findOrFail($request->demande_id);
                 abort_if(
                     $demande->created_by !== auth()->id() ||
-                    !$demande->canBeEditedByUser(),
+                    ! $demande->canBeEditedByUser(),
                     403
                 );
             } else {
@@ -464,20 +489,22 @@ class DemandeController extends Controller
                             'title', 'action', 'demande_id', 'status_id', 'created_by', 'type', 'current_service_id', 'code',
                         ])->toArray();
                         $demande = Demande::create([
-                            'code'       => CodeGeneratorService::generateUniqueRequestCode(TypeDemandeEnum::DEMANDE_ARRET_PAIEMENT->value, (new Demande())->getTable()),
+                            'code' => CodeGeneratorService::generateUniqueRequestCode(TypeDemandeEnum::DEMANDE_ARRET_PAIEMENT->value, (new Demande)->getTable()),
                             'created_by' => auth()->id(),
-                            'type'       => TypeDemandeEnum::DEMANDE_ARRET_PAIEMENT->value,
-                            'current_step_id'  => $draftStatusId,
-                            'data'       => $data,
-                            'title'      => $request->title,
+                            'type' => TypeDemandeEnum::DEMANDE_ARRET_PAIEMENT->value,
+                            'current_step_id' => $draftStatusId,
+                            'data' => $data,
+                            'title' => $request->title,
                             'expires_at' => now()->addYear(),
                         ]);
                         $this->demandeService->storeFiles($demande, $request->allFiles());
+
                         return $demande;
                     });
                     $demande->load('currentStep');
-                } catch (\Exception $e) {
+                } catch (Exception $e) {
                     Log::error('Erreur lors de la soumission', ['error' => $e->getMessage()]);
+
                     return back()->with('error', 'Une erreur inattendue est survenue.')->withInput();
                 }
             }
@@ -485,10 +512,10 @@ class DemandeController extends Controller
             try {
                 DB::transaction(function () use ($demande, $request) {
                     $demande->update([
-                        'title'        => $request->title,
+                        'title' => $request->title,
                         'submitted_at' => now(),
-                        'expires_at'   => null,
-                        'is_urgent'    => $request->boolean('is_urgent'),
+                        'expires_at' => null,
+                        'is_urgent' => $request->boolean('is_urgent'),
                     ]);
 
                     $this->workflowService->submit($demande, auth()->user());
@@ -498,6 +525,7 @@ class DemandeController extends Controller
 
             } catch (\Throwable $e) {
                 Log::error('Erreur soumission arrêt paiement', ['error' => $e->getMessage()]);
+
                 return back()->with('error', 'Une erreur inattendue est survenue.')->withInput();
             }
         }
@@ -512,13 +540,13 @@ class DemandeController extends Controller
                 $existing = $request->demande_id ? Demande::with('currentStep')->findOrFail($request->demande_id) : null;
 
                 $existingPieces = $existing?->data['pieces'] ?? [];
-                $uploadedFiles  = $existingPieces;
+                $uploadedFiles = $existingPieces;
 
                 if ($request->hasFile('pieces')) {
-                    $basePath = 'demandes/arret-paiement/' . now()->format('Y/m');
+                    $basePath = UploadPaths::demandeEmbeddedPath('arret-paiement');
                     $uploadedFiles = [];
                     foreach ($request->file('pieces') as $file) {
-                        $path = $file->store($basePath, 'public');
+                        $path = $file->store($basePath, UploadPaths::demandesDisk());
                         $storedFilePaths[] = $path;
                         $uploadedFiles[] = $path;
                     }
@@ -536,16 +564,18 @@ class DemandeController extends Controller
                     $demande = $existing;
                 } else {
                     $demande = Demande::create([
-                        'code'       => CodeGeneratorService::generateUniqueRequestCode(TypeDemandeEnum::DEMANDE_ARRET_PAIEMENT->value, (new Demande())->getTable()),
+                        'code' => CodeGeneratorService::generateUniqueRequestCode(TypeDemandeEnum::DEMANDE_ARRET_PAIEMENT->value, (new Demande)->getTable()),
                         'created_by' => auth()->id(),
-                        'type'       => TypeDemandeEnum::DEMANDE_ARRET_PAIEMENT->value,
-                        'current_step_id'  => $draftStatusId,
-                        'data'       => $data,
-                        'title'      => $request->title,
+                        'type' => TypeDemandeEnum::DEMANDE_ARRET_PAIEMENT->value,
+                        'current_step_id' => $draftStatusId,
+                        'data' => $data,
+                        'title' => $request->title,
                     ]);
                 }
 
-                if (! $demande->expires_at) $demande->update(['expires_at' => now()->addYear()]);
+                if (! $demande->expires_at) {
+                    $demande->update(['expires_at' => now()->addYear()]);
+                }
 
                 return $demande;
             });
@@ -553,13 +583,14 @@ class DemandeController extends Controller
             return redirect()->route('demandes.arret-paiement.create', $demande->id)->with('success', 'Brouillon sauvegardé.');
 
         } catch (\Throwable $e) {
-            if ($storedFilePaths) Storage::disk('public')->delete($storedFilePaths);
+            if ($storedFilePaths) {
+                Storage::disk(UploadPaths::demandesDisk())->delete($storedFilePaths);
+            }
             Log::error('Erreur brouillon arrêt paiement', ['error' => $e->getMessage()]);
+
             return back()->with('error', 'Une erreur inattendue est survenue.')->withInput();
         }
     }
-
-
 
     // DEMANDES DE REINSERTION
     public function createDemandeReinsertion($demandeId = null)
@@ -571,11 +602,11 @@ class DemandeController extends Controller
             $demande = Demande::findOrFail($demandeId);
             abort_if(
                 $demande->created_by !== auth()->id() ||
-                !$demande->canBeEditedByUser(),
+                ! $demande->canBeEditedByUser(),
                 403,
                 'La demande ne peut pas être modifiée !'
             );
-            $isDemandeReadyForSubmission = !empty($demande->data);
+            $isDemandeReadyForSubmission = ! empty($demande->data);
         }
 
         return view('pensionne.demande-reinsertion', compact('demande', 'isDemandeReadyForSubmission'));
@@ -591,7 +622,7 @@ class DemandeController extends Controller
                 $demande = Demande::with('currentStep')->findOrFail($request->demande_id);
                 abort_if(
                     $demande->created_by !== auth()->id() ||
-                    !$demande->canBeEditedByUser(),
+                    ! $demande->canBeEditedByUser(),
                     403
                 );
             } else {
@@ -603,20 +634,22 @@ class DemandeController extends Controller
                             'title', 'action', 'demande_id', 'status_id', 'created_by', 'type', 'current_service_id', 'code',
                         ])->toArray();
                         $demande = Demande::create([
-                            'code'       => CodeGeneratorService::generateUniqueRequestCode(TypeDemandeEnum::DEMANDE_REINSERTION->value, (new Demande())->getTable()),
+                            'code' => CodeGeneratorService::generateUniqueRequestCode(TypeDemandeEnum::DEMANDE_REINSERTION->value, (new Demande)->getTable()),
                             'created_by' => auth()->id(),
-                            'type'       => TypeDemandeEnum::DEMANDE_REINSERTION->value,
-                            'current_step_id'  => $draftStatusId,
-                            'data'       => $data,
-                            'title'      => $request->title,
+                            'type' => TypeDemandeEnum::DEMANDE_REINSERTION->value,
+                            'current_step_id' => $draftStatusId,
+                            'data' => $data,
+                            'title' => $request->title,
                             'expires_at' => now()->addYear(),
                         ]);
                         $this->demandeService->storeFiles($demande, $request->allFiles());
+
                         return $demande;
                     });
                     $demande->load('currentStep');
-                } catch (\Exception $e) {
+                } catch (Exception $e) {
                     Log::error('Erreur lors de la soumission', ['error' => $e->getMessage()]);
+
                     return back()->with('error', 'Une erreur inattendue est survenue.')->withInput();
                 }
             }
@@ -624,10 +657,10 @@ class DemandeController extends Controller
             try {
                 DB::transaction(function () use ($demande, $request) {
                     $demande->update([
-                        'title'        => $request->title,
+                        'title' => $request->title,
                         'submitted_at' => now(),
-                        'expires_at'   => null,
-                        'is_urgent'    => $request->boolean('is_urgent'),
+                        'expires_at' => null,
+                        'is_urgent' => $request->boolean('is_urgent'),
                     ]);
 
                     $this->workflowService->submit($demande, auth()->user());
@@ -637,6 +670,7 @@ class DemandeController extends Controller
 
             } catch (\Throwable $e) {
                 Log::error('Erreur soumission réinsertion', ['error' => $e->getMessage()]);
+
                 return back()->with('error', 'Une erreur inattendue est survenue.')->withInput();
             }
         }
@@ -657,16 +691,18 @@ class DemandeController extends Controller
                     $demande->update($updateFields);
                 } else {
                     $demande = Demande::create([
-                        'code'       => CodeGeneratorService::generateUniqueRequestCode(TypeDemandeEnum::DEMANDE_REINSERTION->value, (new Demande())->getTable()),
+                        'code' => CodeGeneratorService::generateUniqueRequestCode(TypeDemandeEnum::DEMANDE_REINSERTION->value, (new Demande)->getTable()),
                         'created_by' => auth()->id(),
-                        'type'       => TypeDemandeEnum::DEMANDE_REINSERTION->value,
-                        'current_step_id'  => $draftStatusId,
-                        'data'       => $data,
-                        'title'      => $request->title,
+                        'type' => TypeDemandeEnum::DEMANDE_REINSERTION->value,
+                        'current_step_id' => $draftStatusId,
+                        'data' => $data,
+                        'title' => $request->title,
                     ]);
                 }
 
-                if (! $demande->expires_at) $demande->update(['expires_at' => now()->addYear()]);
+                if (! $demande->expires_at) {
+                    $demande->update(['expires_at' => now()->addYear()]);
+                }
 
                 return $demande;
             });
@@ -675,6 +711,7 @@ class DemandeController extends Controller
 
         } catch (\Throwable $e) {
             Log::error('Erreur brouillon réinsertion', ['error' => $e->getMessage()]);
+
             return back()->with('error', 'Une erreur inattendue est survenue.')->withInput();
         }
     }
@@ -689,11 +726,11 @@ class DemandeController extends Controller
             $demande = Demande::findOrFail($demandeId);
             abort_if(
                 $demande->created_by !== auth()->id() ||
-                !$demande->canBeEditedByUser(),
+                ! $demande->canBeEditedByUser(),
                 403,
                 'La demande ne peut pas être modifiée !'
             );
-            $isDemandeReadyForSubmission = !empty($demande->data);
+            $isDemandeReadyForSubmission = ! empty($demande->data);
         }
 
         return view('pensionne.demande-arret-virement', compact('demande', 'isDemandeReadyForSubmission'));
@@ -709,7 +746,7 @@ class DemandeController extends Controller
                 $demande = Demande::with('currentStep')->findOrFail($request->demande_id);
                 abort_if(
                     $demande->created_by !== auth()->id() ||
-                    !$demande->canBeEditedByUser(),
+                    ! $demande->canBeEditedByUser(),
                     403
                 );
             } else {
@@ -721,20 +758,22 @@ class DemandeController extends Controller
                             'title', 'action', 'demande_id', 'status_id', 'created_by', 'type', 'current_service_id', 'code',
                         ])->toArray();
                         $demande = Demande::create([
-                            'code'       => CodeGeneratorService::generateUniqueRequestCode(TypeDemandeEnum::DEMANDE_ARRET_VIREMENT->value, (new Demande())->getTable()),
+                            'code' => CodeGeneratorService::generateUniqueRequestCode(TypeDemandeEnum::DEMANDE_ARRET_VIREMENT->value, (new Demande)->getTable()),
                             'created_by' => auth()->id(),
-                            'type'       => TypeDemandeEnum::DEMANDE_ARRET_VIREMENT->value,
-                            'current_step_id'  => $draftStatusId,
-                            'data'       => $data,
-                            'title'      => $request->title,
+                            'type' => TypeDemandeEnum::DEMANDE_ARRET_VIREMENT->value,
+                            'current_step_id' => $draftStatusId,
+                            'data' => $data,
+                            'title' => $request->title,
                             'expires_at' => now()->addYear(),
                         ]);
                         $this->demandeService->storeFiles($demande, $request->allFiles());
+
                         return $demande;
                     });
                     $demande->load('currentStep');
-                } catch (\Exception $e) {
+                } catch (Exception $e) {
                     Log::error('Erreur lors de la soumission', ['error' => $e->getMessage()]);
+
                     return back()->with('error', 'Une erreur inattendue est survenue.')->withInput();
                 }
             }
@@ -742,10 +781,10 @@ class DemandeController extends Controller
             try {
                 DB::transaction(function () use ($demande, $request) {
                     $demande->update([
-                        'title'        => $request->title,
+                        'title' => $request->title,
                         'submitted_at' => now(),
-                        'expires_at'   => null,
-                        'is_urgent'    => $request->boolean('is_urgent'),
+                        'expires_at' => null,
+                        'is_urgent' => $request->boolean('is_urgent'),
                     ]);
 
                     $this->workflowService->submit($demande, auth()->user());
@@ -755,6 +794,7 @@ class DemandeController extends Controller
 
             } catch (\Throwable $e) {
                 Log::error('Erreur soumission arrêt virement', ['error' => $e->getMessage()]);
+
                 return back()->with('error', 'Une erreur inattendue est survenue.')->withInput();
             }
         }
@@ -775,16 +815,18 @@ class DemandeController extends Controller
                     $demande->update($updateFields);
                 } else {
                     $demande = Demande::create([
-                        'code'       => CodeGeneratorService::generateUniqueRequestCode(TypeDemandeEnum::DEMANDE_ARRET_VIREMENT->value, (new Demande())->getTable()),
+                        'code' => CodeGeneratorService::generateUniqueRequestCode(TypeDemandeEnum::DEMANDE_ARRET_VIREMENT->value, (new Demande)->getTable()),
                         'created_by' => auth()->id(),
-                        'type'       => TypeDemandeEnum::DEMANDE_ARRET_VIREMENT->value,
-                        'current_step_id'  => $draftStatusId,
-                        'data'       => $data,
-                        'title'      => $request->title,
+                        'type' => TypeDemandeEnum::DEMANDE_ARRET_VIREMENT->value,
+                        'current_step_id' => $draftStatusId,
+                        'data' => $data,
+                        'title' => $request->title,
                     ]);
                 }
 
-                if (! $demande->expires_at) $demande->update(['expires_at' => now()->addYear()]);
+                if (! $demande->expires_at) {
+                    $demande->update(['expires_at' => now()->addYear()]);
+                }
 
                 return $demande;
             });
@@ -793,6 +835,7 @@ class DemandeController extends Controller
 
         } catch (\Throwable $e) {
             Log::error('Erreur brouillon arrêt virement', ['error' => $e->getMessage()]);
+
             return back()->with('error', 'Une erreur inattendue est survenue.')->withInput();
         }
     }
@@ -810,11 +853,11 @@ class DemandeController extends Controller
             $demande = Demande::findOrFail($demandeId);
             abort_if(
                 $demande->created_by !== auth()->id() ||
-                !$demande->canBeEditedByUser(),
+                ! $demande->canBeEditedByUser(),
                 403,
                 'La demande ne peut pas être modifiée !'
             );
-            $isDemandeReadyForSubmission = !empty($demande->data);
+            $isDemandeReadyForSubmission = ! empty($demande->data);
         }
 
         return view('pensionne.preuve-existence', compact('genders', 'civilStatuses', 'pensionCategories', 'demande', 'isDemandeReadyForSubmission'));
@@ -830,17 +873,17 @@ class DemandeController extends Controller
 
             abort_if(
                 $demande->created_by !== auth()->id() ||
-                !$demande->canBeEditedByUser(),
+                ! $demande->canBeEditedByUser(),
                 403
             );
 
             try {
                 DB::transaction(function () use ($demande, $request) {
                     $demande->update([
-                        'title'        => $request->title,
+                        'title' => $request->title,
                         'submitted_at' => now(),
-                        'expires_at'   => null,
-                        'is_urgent'    => $request->boolean('is_urgent'),
+                        'expires_at' => null,
+                        'is_urgent' => $request->boolean('is_urgent'),
                     ]);
 
                     $this->workflowService->submit($demande, auth()->user());
@@ -850,6 +893,7 @@ class DemandeController extends Controller
 
             } catch (\Throwable $e) {
                 Log::error('Erreur soumission preuve existence', ['error' => $e->getMessage()]);
+
                 return back()->with('error', 'Une erreur inattendue est survenue.')->withInput();
             }
         }
@@ -866,7 +910,10 @@ class DemandeController extends Controller
                 $photoPath = $existing?->data['documents']['profile_photo'] ?? null;
 
                 if ($request->hasFile('profile_photo')) {
-                    $path = $request->file('profile_photo')->store('demandes/preuve-existence/' . now()->format('Y/m'), 'public');
+                    $path = $request->file('profile_photo')->store(
+                        UploadPaths::demandeEmbeddedPath('preuve-existence'),
+                        UploadPaths::demandesDisk()
+                    );
                     $storedFilePaths[] = $path;
                     $photoPath = $path;
                 }
@@ -883,16 +930,18 @@ class DemandeController extends Controller
                     $demande = $existing;
                 } else {
                     $demande = Demande::create([
-                        'code'       => CodeGeneratorService::generateUniqueRequestCode(TypeDemandeEnum::DEMANDE_PREUVE_EXISTENCE->value, (new Demande())->getTable()),
+                        'code' => CodeGeneratorService::generateUniqueRequestCode(TypeDemandeEnum::DEMANDE_PREUVE_EXISTENCE->value, (new Demande)->getTable()),
                         'created_by' => auth()->id(),
-                        'type'       => TypeDemandeEnum::DEMANDE_PREUVE_EXISTENCE->value,
-                        'current_step_id'  => $draftStatusId,
-                        'data'       => $data,
-                        'title'      => $request->title,
+                        'type' => TypeDemandeEnum::DEMANDE_PREUVE_EXISTENCE->value,
+                        'current_step_id' => $draftStatusId,
+                        'data' => $data,
+                        'title' => $request->title,
                     ]);
                 }
 
-                if (! $demande->expires_at) $demande->update(['expires_at' => now()->addYear()]);
+                if (! $demande->expires_at) {
+                    $demande->update(['expires_at' => now()->addYear()]);
+                }
 
                 return $demande;
             });
@@ -900,24 +949,28 @@ class DemandeController extends Controller
             return redirect()->route('demandes.preuve-existence.create', $demande->id)->with('success', 'Brouillon sauvegardé.');
 
         } catch (\Throwable $e) {
-            if ($storedFilePaths) Storage::disk('public')->delete($storedFilePaths);
+            if ($storedFilePaths) {
+                Storage::disk(UploadPaths::demandesDisk())->delete($storedFilePaths);
+            }
             Log::error('Erreur brouillon preuve existence', ['error' => $e->getMessage()]);
+
             return back()->with('error', 'Une erreur inattendue est survenue.')->withInput();
         }
     }
 
     // DEMANDE ETAT CARRIERE
-    public function createDemandeEtatCarriere($demandeId = null){
+    public function createDemandeEtatCarriere($demandeId = null)
+    {
         $demande = null;
         $isDemandeReadyForSubmission = false;
-        $civilStatuses = CivilStatus::orderBy('name', 'asc')->get();   
+        $civilStatuses = CivilStatus::orderBy('name', 'asc')->get();
 
         if ($demandeId) {
             $demande = Demande::with('documents')->findOrFail($demandeId);
 
             abort_if(
                 $demande->user->id !== auth()->id() ||
-                !$demande->canBeEditedByUser(),
+                ! $demande->canBeEditedByUser(),
                 403,
                 'La demande ne peut pas être modifiée !'
             );
@@ -928,7 +981,8 @@ class DemandeController extends Controller
         return view('fonctionnaire.etat-carriere', compact('civilStatuses', 'demande', 'isDemandeReadyForSubmission'));
     }
 
-    public function storeDemandeEtatCarriere(StoreEtatCarriereRequest $request){
+    public function storeDemandeEtatCarriere(StoreEtatCarriereRequest $request)
+    {
         $validated = $request->validated();
         $this->guardPensionSubmit($request, TypeDemandeEnum::DEMANDE_ETAT_CARRIERE);
 
@@ -939,28 +993,27 @@ class DemandeController extends Controller
         */
         if ($request->action === 'submit') {
             $demande = Demande::with(['documents', 'status'])->findOrFail($request->demande_id);
-            
 
             abort_if(
                 $demande->created_by !== auth()->id() ||
-                !$demande->canBeEditedByUser(),
+                ! $demande->canBeEditedByUser(),
                 403,
                 'Vous n\'êtes pas autorisé à modifier cette demande.'
             );
 
             $validationErrors = $this->demandeService->validateDocumentsForSubmission($demande);
 
-            if (!empty($validationErrors)) {
+            if (! empty($validationErrors)) {
                 return back()->withErrors(['documents' => $validationErrors]);
             }
 
             try {
                 DB::transaction(function () use ($demande, $request) {
                     $demande->update([
-                        'title'        => $request->title,
+                        'title' => $request->title,
                         'submitted_at' => now(),
-                        'expires_at'   => null,
-                        'is_urgent'    => $request->boolean('is_urgent'),
+                        'expires_at' => null,
+                        'is_urgent' => $request->boolean('is_urgent'),
                     ]);
 
                     $this->workflowService->submit($demande, auth()->user());
@@ -970,11 +1023,11 @@ class DemandeController extends Controller
                     ->route('personal.index')
                     ->with('success', 'Demande soumise avec succès.');
 
-            } catch (\Exception $e) {
+            } catch (Exception $e) {
 
                 Log::error('Erreur lors de la soumission', [
                     'demande_id' => $demande->id,
-                    'error'      => $e->getMessage(),
+                    'error' => $e->getMessage(),
                 ]);
 
                 return back()
@@ -1000,7 +1053,7 @@ class DemandeController extends Controller
                 } else {
                     $validated['code'] = CodeGeneratorService::generateUniqueRequestCode(
                         TypeDemandeEnum::DEMANDE_ETAT_CARRIERE->value,
-                        (new Demande())->getTable()
+                        (new Demande)->getTable()
                     );
                 }
 
@@ -1012,26 +1065,24 @@ class DemandeController extends Controller
                     'created_by',
                     'type',
                     'current_service_id',
-                    'code'
+                    'code',
                 ])->toArray();
 
                 $demande = Demande::updateOrCreate(
                     ['id' => $request->demande_id],
                     array_merge($validated, [
                         'created_by' => auth()->id(),
-                        'type'       => TypeDemandeEnum::DEMANDE_ETAT_CARRIERE->value,
-                        'current_step_id'  => $draftStatusId,
-                        'data'       => $data,
+                        'type' => TypeDemandeEnum::DEMANDE_ETAT_CARRIERE->value,
+                        'current_step_id' => $draftStatusId,
+                        'data' => $data,
                     ])
                 );
 
-                if (!$demande->expires_at) {
+                if (! $demande->expires_at) {
                     $demande->update([
                         'expires_at' => now()->addYear(),
                     ]);
                 }
-
-                
 
                 $this->demandeService->storeFiles($demande, $request->allFiles());
 
@@ -1042,7 +1093,7 @@ class DemandeController extends Controller
                 ->route('demandes.demande-etat-carriere.create', $demande->id)
                 ->with('success', 'Demande sauvegardée en brouillon.');
 
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             dd($e);
             Log::error('Erreur lors de la sauvegarde de la demande', [
                 'error' => $e->getMessage(),
@@ -1054,148 +1105,151 @@ class DemandeController extends Controller
         }
     }
 
-/*     public function storeDemandeEtatCarriere(StoreEtatCarriereRequest $request)
-    {
-        // 👉 Tableau pour tracer tous les fichiers stockés
-        $storedFilePaths = [];
+    /*     public function storeDemandeEtatCarriere(StoreEtatCarriereRequest $request)
+        {
+            // 👉 Tableau pour tracer tous les fichiers stockés
+            $storedFilePaths = [];
 
-        try {
-            DB::transaction(function () use ($request, &$storedFilePaths) {
-                $validated = $request->validated();
-    
-                // ----------------------------------
-                // Generate request metadata
-                // ----------------------------------
-                $validated['code'] = CodeGeneratorService::generateUniqueRequestCode(
-                    TypeDemandeEnum::DEMANDE_ETAT_CARRIERE->value,
-                    (new Demande())->getTable()
-                );
-                $validated['current_step_id'] = WorkflowStep::idForCode('BROUILLON');
-                $validated['created_by'] = auth()->id();
-                $validated['type'] = TypeDemandeEnum::DEMANDE_ETAT_CARRIERE->value;
-                // Soumission via workflowService::submit() → Direction / SOUMISE
+            try {
+                DB::transaction(function () use ($request, &$storedFilePaths) {
+                    $validated = $request->validated();
 
-                // ----------------------------------
-                // Handle file uploads
-                // ----------------------------------
-                $uploadedFiles = [];
-                $basePath = 'demandes/etat_carriere/'. now()->format('Y/m');
+                    // ----------------------------------
+                    // Generate request metadata
+                    // ----------------------------------
+                    $validated['code'] = CodeGeneratorService::generateUniqueRequestCode(
+                        TypeDemandeEnum::DEMANDE_ETAT_CARRIERE->value,
+                        (new Demande())->getTable()
+                    );
+                    $validated['current_step_id'] = WorkflowStep::idForCode('BROUILLON');
+                    $validated['created_by'] = auth()->id();
+                    $validated['type'] = TypeDemandeEnum::DEMANDE_ETAT_CARRIERE->value;
+                    // Soumission via workflowService::submit() → Direction / SOUMISE
 
-                // Helper pour fichiers multiples
-                $storeMultiple = function ($files) use ($basePath, &$storedFilePaths) {
-                    if (!$files) {
-                        return [];
-                    }
+                    // ----------------------------------
+                    // Handle file uploads
+                    // ----------------------------------
+                    $uploadedFiles = [];
+                    $basePath = UploadPaths::demandeEmbeddedPath('etat-carriere');
+                    $demandesDisk = UploadPaths::demandesDisk();
 
-                    return collect($files)->map(function ($file) use ($basePath, &$storedFilePaths) {
-                        $path = $file->store($basePath, 'public');
-                        $storedFilePaths[] = $path;
-                        return $path;
-                    })->toArray();
-                };
+                    // Helper pour fichiers multiples
+                    $storeMultiple = function ($files) use ($basePath, $demandesDisk, &$storedFilePaths) {
+                        if (!$files) {
+                            return [];
+                        }
 
-                // ================================
-                // 1️⃣ FICHIERS MULTIPLES
-                // ================================
-                $multipleFields = [
-                    'bulletins_salaire',
-                    'documents_carriere'
-                ];
+                        return collect($files)->map(function ($file) use ($basePath, $demandesDisk, &$storedFilePaths) {
+                            $path = $file->store($basePath, $demandesDisk);
+                            $storedFilePaths[] = $path;
+                            return $path;
+                        })->toArray();
+                    };
 
-                foreach ($multipleFields as $field) {
-                    $uploadedFiles[$field] = $storeMultiple($request->file($field));
-                }
-
-                // ================================
-                // 2️⃣ FICHIERS SIMPLES
-                // ================================
-                $singleFields = [
-                    'copie_piece_identite',
-                    'lettre_nomination',
-                    'acte_mariage_acte_deces'
-                ];
-
-                foreach ($singleFields as $field) {
-                    if ($request->hasFile($field)) {
-                        $path = $request->file($field)->store($basePath, 'public');
-                        $uploadedFiles[$field] = $path;
-                        $storedFilePaths[] = $path;
-                    }
-                }
-
-                // ----------------------------------
-                // Build data payload
-                // ----------------------------------
-                $validated['data'] = array_merge(
-                    collect($validated)->except([
-                        'consentement',
-                        'status_id',
-                        'created_by',
-                        'type',
-                        'current_service_id',
-                        'current_step_id',
-                        'code',
+                    // ================================
+                    // 1️⃣ FICHIERS MULTIPLES
+                    // ================================
+                    $multipleFields = [
                         'bulletins_salaire',
-                        'documents_carriere',
+                        'documents_carriere'
+                    ];
+
+                    foreach ($multipleFields as $field) {
+                        $uploadedFiles[$field] = $storeMultiple($request->file($field));
+                    }
+
+                    // ================================
+                    // 2️⃣ FICHIERS SIMPLES
+                    // ================================
+                    $singleFields = [
                         'copie_piece_identite',
                         'lettre_nomination',
                         'acte_mariage_acte_deces'
-                    ])->toArray(),
-                    ['documents' => $uploadedFiles]
-                );
+                    ];
 
-                // Nettoyage avant création
-                unset(
-                    $validated['bulletins_salaire'],
-                    $validated['documents_carriere'],
-                    $validated['copie_piece_identite'],
-                    $validated['lettre_nomination'],
-                    $validated['acte_mariage_acte_deces'],
-                );
+                    foreach ($singleFields as $field) {
+                        if ($request->hasFile($field)) {
+                            $path = $request->file($field)->store($basePath, $demandesDisk);
+                            $uploadedFiles[$field] = $path;
+                            $storedFilePaths[] = $path;
+                        }
+                    }
 
-                $demande = Demande::create($validated);
+                    // ----------------------------------
+                    // Build data payload
+                    // ----------------------------------
+                    $validated['data'] = array_merge(
+                        collect($validated)->except([
+                            'consentement',
+                            'status_id',
+                            'created_by',
+                            'type',
+                            'current_service_id',
+                            'current_step_id',
+                            'code',
+                            'bulletins_salaire',
+                            'documents_carriere',
+                            'copie_piece_identite',
+                            'lettre_nomination',
+                            'acte_mariage_acte_deces'
+                        ])->toArray(),
+                        ['documents' => $uploadedFiles]
+                    );
 
-                DemandeHistory::create([
-                    'demande_id' => $demande->id,
-                    'statut' => $demande->currentStep?->code,
-                    'commentaire' => 'Demande créée',
-                    'changed_by' => auth()->id(),
-                    'data' => $demande->data
-                ]);
+                    // Nettoyage avant création
+                    unset(
+                        $validated['bulletins_salaire'],
+                        $validated['documents_carriere'],
+                        $validated['copie_piece_identite'],
+                        $validated['lettre_nomination'],
+                        $validated['acte_mariage_acte_deces'],
+                    );
 
-                $this->workflowService->submit($demande, auth()->user());
-            });
+                    $demande = Demande::create($validated);
 
-           return back()->with('success', 'Demande enregistrée avec succès.');
-        } catch (ValidationException $e) {
+                    DemandeHistory::create([
+                        'demande_id' => $demande->id,
+                        'statut' => $demande->currentStep?->code,
+                        'commentaire' => 'Demande créée',
+                        'changed_by' => auth()->id(),
+                        'data' => $demande->data
+                    ]);
 
-            // ❌ Supprimer les fichiers stockés
-            if (!empty($storedFilePaths)) {
-                Storage::disk('public')->delete($storedFilePaths);
+                    $this->workflowService->submit($demande, auth()->user());
+                });
+
+               return back()->with('success', 'Demande enregistrée avec succès.');
+            } catch (ValidationException $e) {
+
+                // ❌ Supprimer les fichiers stockés
+                if (!empty($storedFilePaths)) {
+                    Storage::disk(UploadPaths::demandesDisk())->delete($storedFilePaths);
+                }
+
+                return back()
+                    ->withErrors($e->validator)
+                    ->withInput();
+            } catch (\Exception $e) {
+                // ❌ Supprimer les fichiers stockés
+                if (!empty($storedFilePaths)) {
+                    Storage::disk(UploadPaths::demandesDisk())->delete($storedFilePaths);
+                }
+                Log::error($e);
+
+                return back()
+                    ->with('error', 'Une erreur inattendue est survenue.')
+                    ->withInput();
             }
-
-            return back()
-                ->withErrors($e->validator)
-                ->withInput();
-        } catch (\Exception $e) {
-            // ❌ Supprimer les fichiers stockés
-            if (!empty($storedFilePaths)) {
-                Storage::disk('public')->delete($storedFilePaths);
-            }
-            Log::error($e);
-
-            return back()
-                ->with('error', 'Une erreur inattendue est survenue.')
-                ->withInput();
-        }
-    } */
+        } */
 
     // DEMANDE DE PENSION STANDARD
-    public function showDemandesPensionPage(){
+    public function showDemandesPensionPage()
+    {
         return view('institution.demande-pension');
     }
 
-    public function createDemandePensionStandard($demandeId = null){
+    public function createDemandePensionStandard($demandeId = null)
+    {
         $demande = null;
         $isDemandeReadyForSubmission = false;
 
@@ -1204,7 +1258,7 @@ class DemandeController extends Controller
 
             abort_if(
                 $demande->user->id !== auth()->id() ||
-                !$demande->canBeEditedByUser(),
+                ! $demande->canBeEditedByUser(),
                 403,
                 'La demande ne peut pas être modifiée !'
             );
@@ -1212,7 +1266,7 @@ class DemandeController extends Controller
             $isDemandeReadyForSubmission = $this->demandeService->isDemandeReadyForSubmission($demande);
         }
 
-       return view('institution.demande-pension-standard', compact('demande', 'isDemandeReadyForSubmission'));
+        return view('institution.demande-pension-standard', compact('demande', 'isDemandeReadyForSubmission'));
     }
 
     public function storeDemandePensionStandard(StoreDemandePensionRequest $request)
@@ -1232,7 +1286,7 @@ class DemandeController extends Controller
 
                 abort_if(
                     $demande->created_by !== auth()->id() ||
-                    !$demande->canBeEditedByUser(),
+                    ! $demande->canBeEditedByUser(),
                     403,
                     'Vous n\'êtes pas autorisé à modifier cette demande.'
                 );
@@ -1243,20 +1297,22 @@ class DemandeController extends Controller
                         $draftStatusId = WorkflowStep::idForCode('BROUILLON');
                         $validated['code'] = CodeGeneratorService::generateUniqueRequestCode(
                             TypeDemandeEnum::DEMANDE_PENSION->value,
-                            (new Demande())->getTable()
+                            (new Demande)->getTable()
                         );
                         $demande = Demande::create(array_merge($validated, [
                             'created_by' => auth()->id(),
-                            'type'       => TypeDemandeEnum::DEMANDE_PENSION->value,
-                            'current_step_id'  => $draftStatusId,
+                            'type' => TypeDemandeEnum::DEMANDE_PENSION->value,
+                            'current_step_id' => $draftStatusId,
                             'expires_at' => now()->addYear(),
                         ]));
                         $this->demandeService->storeFiles($demande, $request->allFiles());
+
                         return $demande;
                     });
                     $demande->load(['documents', 'status']);
-                } catch (\Exception $e) {
+                } catch (Exception $e) {
                     Log::error('Erreur lors de la soumission', ['error' => $e->getMessage()]);
+
                     return back()->with('error', 'Une erreur inattendue est survenue.')->withInput();
                 }
             }
@@ -1264,7 +1320,7 @@ class DemandeController extends Controller
             $validationErrors = $this->demandeService
                 ->validateDocumentsForSubmission($demande);
 
-            if (!empty($validationErrors)) {
+            if (! empty($validationErrors)) {
                 return redirect()
                     ->route('demandes.demande-pension-standard.create', $demande->id)
                     ->withErrors(['documents' => $validationErrors]);
@@ -1273,10 +1329,10 @@ class DemandeController extends Controller
             try {
                 DB::transaction(function () use ($demande, $request) {
                     $demande->update([
-                        'title'        => $request->title,
+                        'title' => $request->title,
                         'submitted_at' => now(),
-                        'expires_at'   => null,
-                        'is_urgent'    => $request->boolean('is_urgent'),
+                        'expires_at' => null,
+                        'is_urgent' => $request->boolean('is_urgent'),
                     ]);
 
                     $this->workflowService->submit($demande, auth()->user());
@@ -1286,11 +1342,11 @@ class DemandeController extends Controller
                     ->route('personal.index')
                     ->with('success', 'Demande soumise avec succès.');
 
-            } catch (\Exception $e) {
+            } catch (Exception $e) {
 
                 Log::error('Erreur lors de la soumission', [
                     'demande_id' => $demande->id,
-                    'error'      => $e->getMessage(),
+                    'error' => $e->getMessage(),
                 ]);
 
                 return back()
@@ -1317,7 +1373,7 @@ class DemandeController extends Controller
                 } else {
                     $validated['code'] = CodeGeneratorService::generateUniqueRequestCode(
                         TypeDemandeEnum::DEMANDE_PENSION->value,
-                        (new Demande())->getTable()
+                        (new Demande)->getTable()
                     );
                 }
 
@@ -1325,12 +1381,12 @@ class DemandeController extends Controller
                     ['id' => $request->demande_id],
                     array_merge($validated, [
                         'created_by' => auth()->id(),
-                        'type'       => TypeDemandeEnum::DEMANDE_PENSION->value,
-                        'current_step_id'  => $draftStatusId,
+                        'type' => TypeDemandeEnum::DEMANDE_PENSION->value,
+                        'current_step_id' => $draftStatusId,
                     ])
                 );
 
-                if (!$demande->expires_at) {
+                if (! $demande->expires_at) {
                     $demande->update([
                         'expires_at' => now()->addYear(),
                     ]);
@@ -1346,7 +1402,7 @@ class DemandeController extends Controller
                 ->route('demandes.demande-pension-standard.create', $demande->id)
                 ->with('success', 'Demande sauvegardée en brouillon.');
 
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             Log::error('Erreur lors de la sauvegarde de la demande', [
                 'error' => $e->getMessage(),
             ]);
@@ -1358,7 +1414,8 @@ class DemandeController extends Controller
     }
 
     // DEMANDE DE PENSION DE REVERSION
-    public function createDemandePensionReversion($demandeId = null){
+    public function createDemandePensionReversion($demandeId = null)
+    {
         $demande = null;
         $isDemandeReadyForSubmission = false;
 
@@ -1367,7 +1424,7 @@ class DemandeController extends Controller
 
             abort_if(
                 $demande->user->id !== auth()->id() ||
-                !$demande->canBeEditedByUser(),
+                ! $demande->canBeEditedByUser(),
                 403,
                 'La demande ne peut pas être modifiée !'
             );
@@ -1375,10 +1432,11 @@ class DemandeController extends Controller
             $isDemandeReadyForSubmission = $this->demandeService->isDemandeReadyForSubmission($demande);
         }
 
-       return view('institution.demande-pension-reversion', compact('demande', 'isDemandeReadyForSubmission'));
+        return view('institution.demande-pension-reversion', compact('demande', 'isDemandeReadyForSubmission'));
     }
 
-    public function storeDemandePensionReversion(StoreDemandePensionReversionRequest $request){
+    public function storeDemandePensionReversion(StoreDemandePensionReversionRequest $request)
+    {
 
         $validated = $request->validated();
         $this->guardPensionSubmit($request, TypeDemandeEnum::DEMANDE_PENSION_REVERSION);
@@ -1396,7 +1454,7 @@ class DemandeController extends Controller
 
                 abort_if(
                     $demande->created_by !== auth()->id() ||
-                    !$demande->canBeEditedByUser(),
+                    ! $demande->canBeEditedByUser(),
                     403,
                     'Vous n\'êtes pas autorisé à modifier cette demande.'
                 );
@@ -1407,24 +1465,26 @@ class DemandeController extends Controller
                         $draftStatusId = WorkflowStep::idForCode('BROUILLON');
                         $validated['code'] = CodeGeneratorService::generateUniqueRequestCode(
                             TypeDemandeEnum::DEMANDE_PENSION_REVERSION->value,
-                            (new Demande())->getTable()
+                            (new Demande)->getTable()
                         );
                         $data = collect($validated)->except([
                             'title', 'action', 'demande_id', 'status_id', 'created_by', 'type', 'current_service_id', 'code',
                         ])->toArray();
                         $demande = Demande::create(array_merge($validated, [
                             'created_by' => auth()->id(),
-                            'type'       => TypeDemandeEnum::DEMANDE_PENSION_REVERSION->value,
-                            'current_step_id'  => $draftStatusId,
-                            'data'       => $data,
+                            'type' => TypeDemandeEnum::DEMANDE_PENSION_REVERSION->value,
+                            'current_step_id' => $draftStatusId,
+                            'data' => $data,
                             'expires_at' => now()->addYear(),
                         ]));
                         $this->demandeService->storeFiles($demande, $request->allFiles());
+
                         return $demande;
                     });
                     $demande->load(['documents', 'status']);
-                } catch (\Exception $e) {
+                } catch (Exception $e) {
                     Log::error('Erreur lors de la soumission', ['error' => $e->getMessage()]);
+
                     return back()->with('error', 'Une erreur inattendue est survenue.')->withInput();
                 }
             }
@@ -1432,7 +1492,7 @@ class DemandeController extends Controller
             $validationErrors = $this->demandeService
                 ->validateDocumentsForSubmission($demande);
 
-            if (!empty($validationErrors)) {
+            if (! empty($validationErrors)) {
                 return redirect()
                     ->route('demandes.demande-pension-reversion.create', $demande->id)
                     ->withErrors(['documents' => $validationErrors]);
@@ -1441,10 +1501,10 @@ class DemandeController extends Controller
             try {
                 DB::transaction(function () use ($demande, $request) {
                     $demande->update([
-                        'title'        => $request->title,
+                        'title' => $request->title,
                         'submitted_at' => now(),
-                        'expires_at'   => null,
-                        'is_urgent'    => $request->boolean('is_urgent'),
+                        'expires_at' => null,
+                        'is_urgent' => $request->boolean('is_urgent'),
                     ]);
 
                     $this->workflowService->submit($demande, auth()->user());
@@ -1454,11 +1514,11 @@ class DemandeController extends Controller
                     ->route('personal.index')
                     ->with('success', 'Demande soumise avec succès.');
 
-            } catch (\Exception $e) {
+            } catch (Exception $e) {
 
                 Log::error('Erreur lors de la soumission', [
                     'demande_id' => $demande->id,
-                    'error'      => $e->getMessage(),
+                    'error' => $e->getMessage(),
                 ]);
 
                 return back()
@@ -1485,7 +1545,7 @@ class DemandeController extends Controller
                 } else {
                     $validated['code'] = CodeGeneratorService::generateUniqueRequestCode(
                         TypeDemandeEnum::DEMANDE_PENSION_REVERSION->value,
-                        (new Demande())->getTable()
+                        (new Demande)->getTable()
                     );
                 }
 
@@ -1497,20 +1557,20 @@ class DemandeController extends Controller
                     'created_by',
                     'type',
                     'current_service_id',
-                    'code'
+                    'code',
                 ])->toArray();
 
                 $demande = Demande::updateOrCreate(
                     ['id' => $request->demande_id],
                     array_merge($validated, [
                         'created_by' => auth()->id(),
-                        'type'       => TypeDemandeEnum::DEMANDE_PENSION_REVERSION->value,
-                        'current_step_id'  => $draftStatusId,
-                        'data' => $data
+                        'type' => TypeDemandeEnum::DEMANDE_PENSION_REVERSION->value,
+                        'current_step_id' => $draftStatusId,
+                        'data' => $data,
                     ])
                 );
 
-                if (!$demande->expires_at) {
+                if (! $demande->expires_at) {
                     $demande->update([
                         'expires_at' => now()->addYear(),
                     ]);
@@ -1526,7 +1586,7 @@ class DemandeController extends Controller
                 ->route('demandes.demande-pension-reversion.create', $demande->id)
                 ->with('success', 'Demande sauvegardée en brouillon.');
 
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
 
             Log::error('Erreur lors de la sauvegarde de la demande', [
                 'error' => $e->getMessage(),
@@ -1539,7 +1599,8 @@ class DemandeController extends Controller
     }
 
     // DEMANDE D'ADHESION
-    public function createDemandeAdhesion($demandeId = null){
+    public function createDemandeAdhesion($demandeId = null)
+    {
         $genders = Gender::orderBy('name', 'asc')->get();
         $civilStatuses = CivilStatus::orderBy('name', 'asc')->get();
         $demande = null;
@@ -1550,7 +1611,7 @@ class DemandeController extends Controller
 
             abort_if(
                 $demande->user->id !== auth()->id() ||
-                !$demande->canBeEditedByUser(),
+                ! $demande->canBeEditedByUser(),
                 403,
                 'La demande ne peut pas être modifiée !'
             );
@@ -1561,7 +1622,8 @@ class DemandeController extends Controller
         return view('institution.demande-adhesion', compact('genders', 'civilStatuses', 'demande', 'isDemandeReadyForSubmission'));
     }
 
-    public function storeDemandeAdhesion(StoreDemandeAdhesionRequest $request){
+    public function storeDemandeAdhesion(StoreDemandeAdhesionRequest $request)
+    {
         $validated = $request->validated();
         $this->guardPensionSubmit($request, TypeDemandeEnum::DEMANDE_ADHESION);
 
@@ -1576,7 +1638,7 @@ class DemandeController extends Controller
 
                 abort_if(
                     $demande->created_by !== auth()->id() ||
-                    !$demande->canBeEditedByUser(),
+                    ! $demande->canBeEditedByUser(),
                     403,
                     'Vous n\'êtes pas autorisé à modifier cette demande.'
                 );
@@ -1587,31 +1649,33 @@ class DemandeController extends Controller
                         $draftStatusId = WorkflowStep::idForCode('BROUILLON');
                         $validated['code'] = CodeGeneratorService::generateUniqueRequestCode(
                             TypeDemandeEnum::DEMANDE_ADHESION->value,
-                            (new Demande())->getTable()
+                            (new Demande)->getTable()
                         );
                         $data = collect($validated)->except([
                             'title', 'action', 'demande_id', 'profile_photo', 'status_id', 'created_by', 'type', 'current_service_id', 'code',
                         ])->toArray();
                         $demande = Demande::create(array_merge($validated, [
                             'created_by' => auth()->id(),
-                            'type'       => TypeDemandeEnum::DEMANDE_ADHESION->value,
-                            'current_step_id'  => $draftStatusId,
-                            'data'       => $data,
+                            'type' => TypeDemandeEnum::DEMANDE_ADHESION->value,
+                            'current_step_id' => $draftStatusId,
+                            'data' => $data,
                             'expires_at' => now()->addYear(),
                         ]));
                         $this->demandeService->storeFiles($demande, $request->allFiles());
+
                         return $demande;
                     });
                     $demande->load(['documents', 'status']);
-                } catch (\Exception $e) {
+                } catch (Exception $e) {
                     Log::error('Erreur lors de la soumission', ['error' => $e->getMessage()]);
+
                     return back()->with('error', 'Une erreur inattendue est survenue.')->withInput();
                 }
             }
 
             $validationErrors = $this->demandeService->validateDocumentsForSubmission($demande);
 
-            if (!empty($validationErrors)) {
+            if (! empty($validationErrors)) {
                 return redirect()
                     ->route('demandes.demande-adhesion.create', $demande->id)
                     ->withErrors(['documents' => $validationErrors]);
@@ -1620,10 +1684,10 @@ class DemandeController extends Controller
             try {
                 DB::transaction(function () use ($demande, $request) {
                     $demande->update([
-                        'title'        => $request->title,
+                        'title' => $request->title,
                         'submitted_at' => now(),
-                        'expires_at'   => null,
-                        'is_urgent'    => $request->boolean('is_urgent'),
+                        'expires_at' => null,
+                        'is_urgent' => $request->boolean('is_urgent'),
                     ]);
 
                     $this->workflowService->submit($demande, auth()->user());
@@ -1633,11 +1697,11 @@ class DemandeController extends Controller
                     ->route('personal.index')
                     ->with('success', 'Demande soumise avec succès.');
 
-            } catch (\Exception $e) {
+            } catch (Exception $e) {
 
                 Log::error('Erreur lors de la soumission', [
                     'demande_id' => $demande->id,
-                    'error'      => $e->getMessage(),
+                    'error' => $e->getMessage(),
                 ]);
 
                 return back()
@@ -1663,7 +1727,7 @@ class DemandeController extends Controller
                 } else {
                     $validated['code'] = CodeGeneratorService::generateUniqueRequestCode(
                         TypeDemandeEnum::DEMANDE_ADHESION->value,
-                        (new Demande())->getTable()
+                        (new Demande)->getTable()
                     );
                 }
 
@@ -1676,20 +1740,20 @@ class DemandeController extends Controller
                     'created_by',
                     'type',
                     'current_service_id',
-                    'code'
+                    'code',
                 ])->toArray();
 
                 $demande = Demande::updateOrCreate(
                     ['id' => $request->demande_id],
                     array_merge($validated, [
                         'created_by' => auth()->id(),
-                        'type'       => TypeDemandeEnum::DEMANDE_ADHESION->value,
-                        'current_step_id'  => $draftStatusId,
-                        'data'       => $data,
+                        'type' => TypeDemandeEnum::DEMANDE_ADHESION->value,
+                        'current_step_id' => $draftStatusId,
+                        'data' => $data,
                     ])
                 );
 
-                if (!$demande->expires_at) {
+                if (! $demande->expires_at) {
                     $demande->update([
                         'expires_at' => now()->addYear(),
                     ]);
@@ -1704,7 +1768,7 @@ class DemandeController extends Controller
                 ->route('demandes.demande-adhesion.create', $demande->id)
                 ->with('success', 'Demande sauvegardée en brouillon.');
 
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
 
             Log::error('Erreur lors de la sauvegarde de la demande', [
                 'error' => $e->getMessage(),
@@ -1745,12 +1809,12 @@ class DemandeController extends Controller
 
             abort_if(
                 $demande->created_by !== auth()->id() ||
-                !$demande->canBeEditedByUser(),
+                ! $demande->canBeEditedByUser(),
                 403,
                 'La demande ne peut pas être modifiée !'
             );
 
-            $isDemandeReadyForSubmission = !empty($demande->data);
+            $isDemandeReadyForSubmission = ! empty($demande->data);
         }
 
         return view('pensionne.demande_pension', compact('demande', 'isDemandeReadyForSubmission'));
@@ -1772,34 +1836,36 @@ class DemandeController extends Controller
 
                 abort_if(
                     $demande->created_by !== auth()->id() ||
-                    !$demande->canBeEditedByUser(),
+                    ! $demande->canBeEditedByUser(),
                     403,
                     'Vous n\'êtes pas autorisé à modifier cette demande.'
                 );
             } else {
                 // First submission — create draft then submit in one shot
                 try {
-                    $demande = DB::transaction(function () use ($request, $validated) {
+                    $demande = DB::transaction(function () use ($validated) {
                         $draftStatusId = WorkflowStep::idForCode('BROUILLON');
                         $validated['code'] = CodeGeneratorService::generateUniqueRequestCode(
                             TypeDemandeEnum::DEMANDE_PENSION_REVERSION->value,
-                            (new Demande())->getTable()
+                            (new Demande)->getTable()
                         );
                         $data = collect($validated)->except([
                             'title', 'action', 'demande_id', 'status_id', 'created_by', 'type', 'current_service_id', 'code',
                         ])->toArray();
                         $demande = Demande::create(array_merge($validated, [
                             'created_by' => auth()->id(),
-                            'type'       => TypeDemandeEnum::DEMANDE_PENSION_REVERSION->value,
-                            'current_step_id'  => $draftStatusId,
-                            'data'       => $data,
+                            'type' => TypeDemandeEnum::DEMANDE_PENSION_REVERSION->value,
+                            'current_step_id' => $draftStatusId,
+                            'data' => $data,
                             'expires_at' => now()->addYear(),
                         ]));
+
                         return $demande;
                     });
                     $demande->load('currentStep');
-                } catch (\Exception $e) {
+                } catch (Exception $e) {
                     Log::error('Erreur lors de la soumission', ['error' => $e->getMessage()]);
+
                     return back()->with('error', 'Une erreur inattendue est survenue.')->withInput();
                 }
             }
@@ -1807,10 +1873,10 @@ class DemandeController extends Controller
             try {
                 DB::transaction(function () use ($demande, $request) {
                     $demande->update([
-                        'title'        => $request->title,
+                        'title' => $request->title,
                         'submitted_at' => now(),
-                        'expires_at'   => null,
-                        'is_urgent'    => $request->boolean('is_urgent'),
+                        'expires_at' => null,
+                        'is_urgent' => $request->boolean('is_urgent'),
                     ]);
 
                     $this->workflowService->submit($demande, auth()->user());
@@ -1820,11 +1886,11 @@ class DemandeController extends Controller
                     ->route('personal.index')
                     ->with('success', 'Demande soumise avec succès.');
 
-            } catch (\Exception $e) {
+            } catch (Exception $e) {
 
                 Log::error('Erreur lors de la soumission', [
                     'demande_id' => $demande->id,
-                    'error'      => $e->getMessage(),
+                    'error' => $e->getMessage(),
                 ]);
 
                 return back()
@@ -1851,7 +1917,7 @@ class DemandeController extends Controller
                 } else {
                     $validated['code'] = CodeGeneratorService::generateUniqueRequestCode(
                         TypeDemandeEnum::DEMANDE_PENSION_REVERSION->value,
-                        (new Demande())->getTable()
+                        (new Demande)->getTable()
                     );
                 }
 
@@ -1863,13 +1929,13 @@ class DemandeController extends Controller
                     ['id' => $request->demande_id],
                     array_merge($validated, [
                         'created_by' => auth()->id(),
-                        'type'       => TypeDemandeEnum::DEMANDE_PENSION_REVERSION->value,
-                        'current_step_id'  => $draftStatusId,
-                        'data'       => $data,
+                        'type' => TypeDemandeEnum::DEMANDE_PENSION_REVERSION->value,
+                        'current_step_id' => $draftStatusId,
+                        'data' => $data,
                     ])
                 );
 
-                if (!$demande->expires_at) {
+                if (! $demande->expires_at) {
                     $demande->update(['expires_at' => now()->addYear()]);
                 }
 
@@ -1880,7 +1946,7 @@ class DemandeController extends Controller
                 ->route('demandes.pension-pensionne.create', $demande->id)
                 ->with('success', 'Demande sauvegardée en brouillon.');
 
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
 
             Log::error('Erreur lors de la sauvegarde de la demande', [
                 'error' => $e->getMessage(),

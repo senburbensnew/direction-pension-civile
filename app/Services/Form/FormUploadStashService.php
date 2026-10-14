@@ -2,6 +2,8 @@
 
 namespace App\Services\Form;
 
+use App\Support\Storage\UploadPaths;
+use Illuminate\Contracts\Session\Session;
 use Illuminate\Http\Request;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Arr;
@@ -13,9 +15,15 @@ class FormUploadStashService
 {
     private const SESSION_ROOT = 'form_upload_stash';
 
-    private const DISK = 'local';
+    private function stashDisk(): string
+    {
+        return UploadPaths::privateDisk();
+    }
 
-    private const DIRECTORY = 'form-upload-stash';
+    private function stashDirectoryRoot(): string
+    {
+        return UploadPaths::formStashRoot();
+    }
 
     public function keyForRequest(Request $request): string
     {
@@ -33,7 +41,7 @@ class FormUploadStashService
      */
     public function stashFromRequest(Request $request): void
     {
-        if (!$request->hasSession()) {
+        if (! $request->hasSession()) {
             return;
         }
 
@@ -67,7 +75,7 @@ class FormUploadStashService
      */
     public function mergeIntoRequest(Request $request): bool
     {
-        if (!$request->isMethod('POST') || !$request->hasSession()) {
+        if (! $request->isMethod('POST') || ! $request->hasSession()) {
             return false;
         }
 
@@ -111,7 +119,7 @@ class FormUploadStashService
 
     public function clearForRequest(Request $request): void
     {
-        if (!$request->hasSession()) {
+        if (! $request->hasSession()) {
             return;
         }
 
@@ -132,7 +140,7 @@ class FormUploadStashService
         $session?->forget($this->sessionPath($key));
     }
 
-    private function resolveSession(?Request $request = null): ?\Illuminate\Contracts\Session\Session
+    private function resolveSession(?Request $request = null): ?Session
     {
         if ($request?->hasSession()) {
             return $request->session();
@@ -189,7 +197,7 @@ class FormUploadStashService
     {
         $session = $this->resolveSession($request);
 
-        if (!$session) {
+        if (! $session) {
             return [];
         }
 
@@ -222,14 +230,14 @@ class FormUploadStashService
         $list = $files instanceof UploadedFile ? [$files] : $files;
         $stored = [];
         $sessionId = $request->session()->getId();
-        $dir = self::DIRECTORY.'/'.$sessionId.'/'.Str::slug($field, '_');
+        $dir = $this->stashDirectoryRoot().'/'.$sessionId.'/'.Str::slug($field, '_');
 
         foreach ($list as $file) {
-            if (!$file instanceof UploadedFile || !$file->isValid()) {
+            if (! $file instanceof UploadedFile || ! $file->isValid()) {
                 continue;
             }
 
-            $path = $file->store($dir, self::DISK);
+            $path = $file->store($dir, $this->stashDisk());
             $stored[] = [
                 'path' => $path,
                 'original_name' => $file->getClientOriginalName(),
@@ -301,13 +309,13 @@ class FormUploadStashService
         foreach ($items as $item) {
             $path = $item['path'] ?? null;
 
-            if (!$path) {
+            if (! $path) {
                 continue;
             }
 
-            $fullPath = Storage::disk(self::DISK)->path($path);
+            $fullPath = Storage::disk($this->stashDisk())->path($path);
 
-            if (!is_readable($fullPath)) {
+            if (! is_readable($fullPath)) {
                 continue;
             }
             $uploaded[] = UploadedFile::createFromBase(
@@ -334,7 +342,7 @@ class FormUploadStashService
         $names = [];
 
         foreach ($items as $item) {
-            if (!empty($item['original_name'])) {
+            if (! empty($item['original_name'])) {
                 $names[] = (string) $item['original_name'];
             }
         }
@@ -352,8 +360,8 @@ class FormUploadStashService
         foreach ($items as $item) {
             $path = $item['path'] ?? null;
 
-            if ($path && Storage::disk(self::DISK)->exists($path)) {
-                Storage::disk(self::DISK)->delete($path);
+            if ($path && Storage::disk($this->stashDisk())->exists($path)) {
+                Storage::disk($this->stashDisk())->delete($path);
             }
         }
     }

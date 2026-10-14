@@ -6,14 +6,18 @@ use App\Enums\CategorieDossierEnum;
 use App\Enums\RencontreStatutEnum;
 use App\Enums\TypeDemandeEnum;
 use App\Enums\WorkflowStepTypeEnum;
+use App\Services\RencontreMotifService;
+use App\Support\Storage\UploadPaths;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Support\Facades\Storage;
 use Spatie\Activitylog\LogOptions;
 use Spatie\Activitylog\Traits\LogsActivity;
 use Spatie\MediaLibrary\HasMedia;
 use Spatie\MediaLibrary\InteractsWithMedia;
-use Illuminate\Database\Eloquent\Relations\HasMany;
+use Spatie\MediaLibrary\MediaCollections\Models\Media;
 
 class Demande extends Model implements HasMedia
 {
@@ -37,72 +41,147 @@ class Demande extends Model implements HasMedia
 
     public function registerMediaCollections(): void
     {
+        $disk = (string) config('demandes.disk', 'private');
+
+        $add = function (string $name, bool $single = false) use ($disk) {
+            $collection = $this->addMediaCollection($name)->useDisk($disk);
+
+            if ($single) {
+                $collection->singleFile();
+            }
+        };
+
         foreach (config('demandes') as $key => $typeConfig) {
             if ($key === 'disk') {
                 continue;
             }
 
             foreach (['multiple', 'single'] as $group) {
-                foreach (
-                    $typeConfig['documents'][$group] ?? []
-                    as $collectionName => $cfg
-                ) {
-                    $collection = $this->addMediaCollection(
-                        $collectionName
-                    );
-
-                    if (!($cfg['multiple'] ?? true)) {
-                        $collection->singleFile();
-                    }
+                foreach ($typeConfig['documents'][$group] ?? [] as $collectionName => $cfg) {
+                    $add($collectionName, ! ($cfg['multiple'] ?? true));
                 }
             }
         }
 
-        $this->addMediaCollection('complement');
-        $this->addMediaCollection('supplemental');
-
-        $this->addMediaCollection(
-            'identite_pensionne'
-        )->singleFile();
-
-        $this->addMediaCollection(
-            'identite_permis'
-        )->singleFile();
-
-        $this->addMediaCollection(
-            'identite_passeport'
-        )->singleFile();
-
-        $this->addMediaCollection(
-            'identite_cin'
-        )->singleFile();
-
-        $this->addMediaCollection(
-            'acte_naissance'
-        )->singleFile();
-
-        $this->addMediaCollection(
-            'identite_representant'
-        )->singleFile();
-
-        $this->addMediaCollection(
-            'carte_pension'
-        )->singleFile();
+        $add('complement');
+        $add('supplemental');
+        $add('identite_pensionne', true);
+        $add('identite_permis', true);
+        $add('identite_passeport', true);
+        $add('identite_cin', true);
+        $add('acte_naissance', true);
+        $add('identite_representant', true);
+        $add('carte_pension', true);
 
         foreach (
-            app(\App\Services\RencontreMotifService::class)
+            app(RencontreMotifService::class)
                 ->allDocumentCollections() as $name => $cfg
         ) {
             if (in_array($name, ['carte_pension'], true)) {
                 continue;
             }
 
-            $collection = $this->addMediaCollection($name);
+            $add($name, ! ($cfg['multiple'] ?? true));
+        }
+    }
 
-            if (!($cfg['multiple'] ?? true)) {
-                $collection->singleFile();
+    public function urlForMedia(Media $media, bool $inline = true): string
+    {
+        abort_unless(
+            $media->model_type === static::class
+            && (int) $media->model_id === (int) $this->id,
+            404
+        );
+
+        if ($this->mediaIsPubliclyAccessible($media)) {
+            return $media->getUrl();
+        }
+
+        return route('demande.media.show', array_filter([
+            'demande' => $this,
+            'media' => $media,
+            'inline' => $inline ? 1 : null,
+        ]));
+    }
+
+    public function urlForStoredPath(?string $path, bool $inline = true): ?string
+    {
+        if ($path === null || $path === '') {
+            return null;
+        }
+
+        if (! $this->dataContainsStoragePath($path)) {
+            return null;
+        }
+
+        foreach ([UploadPaths::demandesDisk(), UploadPaths::publicDisk(), 'public'] as $disk) {
+            if (Storage::disk($disk)->exists($path)) {
+                if (in_array($disk, [UploadPaths::publicDisk(), 'public'], true)) {
+                    return Storage::disk($disk)->url($path);
+                }
+
+                break;
             }
         }
+
+        return route('demande.embedded.show', array_filter([
+            'demande' => $this,
+            'path' => strtr(base64_encode($path), '+/', '-_'),
+            'inline' => $inline ? 1 : null,
+        ]));
+    }
+
+    public function dataContainsStoragePath(string $path): bool
+    {
+        return in_array($path, $this->collectEmbeddedStoragePaths(), true);
+    }
+
+    /**
+     * @return list<string>
+     */
+    public function collectEmbeddedStoragePaths(): array
+    {
+        $paths = [];
+
+        $walk = function ($value) use (&$paths, &$walk) {
+            if (is_string($value) && $this->looksLikeStoredPath($value)) {
+                $paths[] = $value;
+            } elseif (is_array($value)) {
+                foreach ($value as $item) {
+                    $walk($item);
+                }
+            }
+        };
+
+        $walk($this->data ?? []);
+
+        return array_values(array_unique($paths));
+    }
+
+    private function mediaIsPubliclyAccessible(Media $media): bool
+    {
+        if (! in_array($media->disk, [UploadPaths::publicDisk(), 'public'], true)) {
+            return false;
+        }
+
+        return Storage::disk($media->disk)->exists($media->getPathRelativeToRoot());
+    }
+
+    private function looksLikeStoredPath(string $value): bool
+    {
+        if (str_starts_with($value, 'http')) {
+            return false;
+        }
+
+        if (preg_match('#^\d+/.+#', $value)) {
+            return true;
+        }
+
+        if (! str_contains($value, '/')) {
+            return false;
+        }
+
+        return (bool) preg_match('#^(demandes/|cms/|users/|media/|profile_photos/)#', $value);
     }
 
     protected $fillable = [
@@ -111,6 +190,7 @@ class Demande extends Model implements HasMedia
         'title',
         'type',
         'created_by',
+        'beneficiaire_id',
         'data',
         'current_service_id',
         'current_step_id',
@@ -143,6 +223,14 @@ class Demande extends Model implements HasMedia
                 $demande->current_step_id =
                     WorkflowStep::forCode('BROUILLON')?->id;
             }
+
+            if ($demande->beneficiaire_id === null && auth()->check()) {
+                $beneficiaire = auth()->user()->pensionContext()->resolveBeneficiaire();
+
+                if ($beneficiaire) {
+                    $demande->beneficiaire_id = $beneficiaire->id;
+                }
+            }
         });
 
         static::saving(function ($demande) {
@@ -170,9 +258,9 @@ class Demande extends Model implements HasMedia
             ) {
                 $prefix =
                     $demande->type
-                    . '-'
-                    . now()->format('Ymd')
-                    . '-';
+                    .'-'
+                    .now()->format('Ymd')
+                    .'-';
 
                 do {
                     $random = str_pad(
@@ -182,7 +270,7 @@ class Demande extends Model implements HasMedia
                         STR_PAD_LEFT
                     );
 
-                    $code = $prefix . $random;
+                    $code = $prefix.$random;
                 } while (
                     static::where(
                         'code',
@@ -328,26 +416,20 @@ class Demande extends Model implements HasMedia
         $commentaire = null
     ): DemandeInteraction {
         return $this->interactions()->create([
-            'type' =>
-                DemandeInteraction::TYPE_TRANSFERT,
+            'type' => DemandeInteraction::TYPE_TRANSFERT,
 
-            'from_service_id' =>
-                $this->getOriginal(
-                    'current_service_id'
-                )
+            'from_service_id' => $this->getOriginal(
+                'current_service_id'
+            )
                 ?? $this->current_service_id,
 
-            'to_service_id' =>
-                $toServiceId,
+            'to_service_id' => $toServiceId,
 
-            'initiated_by' =>
-                auth()->id(),
+            'initiated_by' => auth()->id(),
 
-            'commentaire' =>
-                $commentaire,
+            'commentaire' => $commentaire,
 
-            'statut' =>
-                DemandeInteraction::STATUT_EN_ATTENTE,
+            'statut' => DemandeInteraction::STATUT_EN_ATTENTE,
         ]);
     }
 
@@ -362,7 +444,7 @@ class Demande extends Model implements HasMedia
 
     public function isAnnotated(): bool
     {
-        return !is_null(
+        return ! is_null(
             $this->annotated_at
         );
     }
@@ -493,7 +575,7 @@ class Demande extends Model implements HasMedia
     public function civilStatus(
         $name = 'civil_status_id'
     ) {
-        if (!isset($this->data[$name])) {
+        if (! isset($this->data[$name])) {
             return null;
         }
 
@@ -502,9 +584,9 @@ class Demande extends Model implements HasMedia
         );
     }
 
-    public function formalites(): \Illuminate\Database\Eloquent\Relations\HasMany
+    public function formalites(): HasMany
     {
-        return $this->hasMany(\App\Models\Formalite::class);
+        return $this->hasMany(Formalite::class);
     }
 
     public function gender($sexeId)
@@ -515,7 +597,7 @@ class Demande extends Model implements HasMedia
     public function pensionType(
         $name = 'pension_type_id'
     ) {
-        if (!isset($this->data[$name])) {
+        if (! isset($this->data[$name])) {
             return null;
         }
 
@@ -527,7 +609,7 @@ class Demande extends Model implements HasMedia
     public function pensionCategory(
         $name = 'pension_category_id'
     ) {
-        if (!isset($this->data[$name])) {
+        if (! isset($this->data[$name])) {
             return null;
         }
 
@@ -636,8 +718,8 @@ class Demande extends Model implements HasMedia
         ?string $time
     ): ?string {
         if (
-            !$time
-            || !preg_match(
+            ! $time
+            || ! preg_match(
                 '/^(\d{1,2}):(\d{2})/',
                 $time,
                 $matches
@@ -752,7 +834,7 @@ class Demande extends Model implements HasMedia
         $motifKey = (string) ($data['motif_key'] ?? '');
 
         if ($motifKey !== '') {
-            $label = app(\App\Services\RencontreMotifService::class)
+            $label = app(RencontreMotifService::class)
                 ->motifLabel($motifKey);
 
             if (filled($label)) {
@@ -809,7 +891,7 @@ class Demande extends Model implements HasMedia
         $user ??= auth()->user();
 
         if (
-            !$user
+            ! $user
             || (int) $this->created_by
                 !== (int) $user->id
         ) {
@@ -822,7 +904,7 @@ class Demande extends Model implements HasMedia
     public function isRencontreActif(): bool
     {
         if (
-            !$this->isRencontre()
+            ! $this->isRencontre()
             || $this->rencontreStatut()->isTerminal()
         ) {
             return false;
@@ -839,8 +921,8 @@ class Demande extends Model implements HasMedia
 
         if ($date && $time) {
             try {
-                return !Carbon::parse(
-                    $date . ' ' . $time
+                return ! Carbon::parse(
+                    $date.' '.$time
                 )->isPast();
             } catch (\Throwable) {
                 return true;
@@ -962,7 +1044,7 @@ class Demande extends Model implements HasMedia
         |--------------------------------------------------------------------------
         */
 
-        $agentCount = \App\Models\User::query()
+        $agentCount = User::query()
             ->role(
                 (string) config('rdv.agent_role', 'agent_rdv')
             )
@@ -992,7 +1074,7 @@ class Demande extends Model implements HasMedia
             )
             ->get()
             ->filter(function (self $demande) {
-                return !$demande->rencontreStatut()->isTerminal();
+                return ! $demande->rencontreStatut()->isTerminal();
             })
             ->each(function (self $demande) use (&$agentsBySlot) {
                 $date = $demande->data['date_souhaitee'] ?? null;
@@ -1003,11 +1085,11 @@ class Demande extends Model implements HasMedia
 
                 $agentId = $demande->data['agent_id'] ?? null;
 
-                if (!$date || !$time || !$agentId) {
+                if (! $date || ! $time || ! $agentId) {
                     return;
                 }
 
-                $key = $date . ' ' . $time;
+                $key = $date.' '.$time;
 
                 $agentsBySlot[$key] ??= [];
                 $agentsBySlot[$key][$agentId] = true;
@@ -1031,7 +1113,7 @@ class Demande extends Model implements HasMedia
     public static function activeRencontreForUser(
         ?int $userId
     ): ?self {
-        if (!$userId) {
+        if (! $userId) {
             return null;
         }
 
@@ -1048,8 +1130,7 @@ class Demande extends Model implements HasMedia
             ->latest()
             ->get()
             ->first(
-                fn (self $demande) =>
-                    $demande->isRencontreActif()
+                fn (self $demande) => $demande->isRencontreActif()
             );
     }
 }
