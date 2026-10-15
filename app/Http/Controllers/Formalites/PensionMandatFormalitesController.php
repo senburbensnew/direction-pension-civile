@@ -16,6 +16,7 @@ class PensionMandatFormalitesController extends PensionMandatManagementControlle
                 'approveRoute' => 'formalites.pension-mandats.approve',
                 'refuseRoute' => 'formalites.pension-mandats.refuse',
                 'revokeRoute' => 'formalites.pension-mandats.revoke',
+                'pieceRoute' => 'formalites.pension-mandats.piece',
             ]);
         }
 

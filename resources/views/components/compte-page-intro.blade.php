@@ -2,6 +2,7 @@
     'eyebrow' => 'Compte pension',
     'title',
     'description' => null,
+    'showPensionContext' => true,
 ])
 
 <div class="text-center">
@@ -11,3 +12,9 @@
         <p class="text-sm text-gray-500 max-w-2xl mx-auto">{{ $description }}</p>
     @endif
 </div>
+
+@if($showPensionContext)
+    <div class="mt-6">
+        <x-pension-context-banner />
+    </div>
+@endif

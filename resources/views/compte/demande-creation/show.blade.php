@@ -113,10 +113,11 @@
                             </select>
                         </div>
                         <div>
-                            <label class="block text-sm text-gray-600">Fichier</label>
-                            <input type="file" name="piece_identite" accept=".jpg,.jpeg,.png,.webp,.pdf"
-                                   class="mt-1 w-full text-sm">
-                            @error('piece_identite')<p class="text-red-600 text-xs mt-1">{{ $message }}</p>@enderror
+                            <x-file-input
+                                name="piece_identite"
+                                accept=".jpg,.jpeg,.png,.webp,.pdf"
+                                label="Fichier"
+                            />
                         </div>
                     </div>
                 </div>

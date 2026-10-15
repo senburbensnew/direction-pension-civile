@@ -3,14 +3,19 @@
 namespace Tests\Feature;
 
 use App\Enums\AccountStatusEnum;
+use App\Enums\BeneficiaireLinkStatusEnum;
+use App\Enums\BeneficiaireRelationDemandeStatusEnum;
 use App\Enums\TypeDemandeEnum;
 use App\Models\Beneficiaire;
+use App\Models\BeneficiaireRelationDemande;
 use App\Models\Demande;
 use App\Models\DemandeCreationCompte;
 use App\Models\DemandeCreationCompteHistory;
 use App\Models\PensionnaireReference;
 use App\Models\User;
+use App\Models\PensionMandat;
 use App\Models\UserBeneficiaireLink;
+use App\Enums\PensionMandatStatusEnum;
 use App\Notifications\DemandeCreationCompteSoumise;
 use App\Services\Account\UserCategoryResolver;
 use App\Services\OCR\OcrService;
@@ -35,6 +40,13 @@ class DemandeCreationCompteTest extends TestCase
         });
 
         $this->seedPensionReference();
+    }
+
+    private function redirectAfterDemandeCompteSubmit(): string
+    {
+        return route('demandes.rencontre.create', [
+            'motif' => 'demande_formalites_mandats',
+        ]);
     }
 
     private function seedPensionReference(
@@ -132,7 +144,7 @@ class DemandeCreationCompteTest extends TestCase
             ->assertSee('Pensionné')
             ->assertSee('Numéro de téléphone')
             ->assertSee('NIF')
-            ->assertSee('Code pension')
+            ->assertSee('name="pension_code"', false)
             ->assertSee('JPG, PNG, WEBP ou PDF')
             ->assertSee('Mon profil')
             ->assertDontSee('id="email"', false)
@@ -141,7 +153,7 @@ class DemandeCreationCompteTest extends TestCase
             ->assertDontSee('password_confirmation')
             ->assertDontSee('Nom d’utilisateur')
             ->assertSee('Adresse')
-            ->assertSee('Pensionné mineur')
+            ->assertSee(__('guest.account_request.profile_mineur'))
             ->assertSee('Permis de conduire')
             ->assertSee('Passeport')
             ->assertSee('Choisir un document')
@@ -173,7 +185,7 @@ class DemandeCreationCompteTest extends TestCase
             'accept_terms' => '1',
         ]);
 
-        $response->assertRedirect(route('demandes.rencontre.create'));
+        $response->assertRedirect($this->redirectAfterDemandeCompteSubmit());
         $response->assertSessionMissing('success');
         $this->assertAuthenticated();
 
@@ -222,7 +234,7 @@ class DemandeCreationCompteTest extends TestCase
         $this->seedServices();
 
         $this->post(route('demandes.compte.store'), $this->validAccountStorePayload())
-            ->assertRedirect(route('demandes.rencontre.create'));
+            ->assertRedirect($this->redirectAfterDemandeCompteSubmit());
 
         $provisional = User::query()
             ->where('account_status', AccountStatusEnum::PROVISOIRE)
@@ -230,7 +242,7 @@ class DemandeCreationCompteTest extends TestCase
 
         $this->assertAuthenticatedAs($provisional);
 
-        $this->get(route('demandes.rencontre.create'))
+        $this->get($this->redirectAfterDemandeCompteSubmit())
             ->assertOk()
             ->assertSee('Demande de rendez-vous');
     }
@@ -252,7 +264,7 @@ class DemandeCreationCompteTest extends TestCase
             'telephone' => '+509 22 00 0011',
             'nif' => '123-456-789-1',
             'email' => 'autre.pensionne@example.com',
-        ]))->assertRedirect(route('demandes.rencontre.create'));
+        ]))->assertRedirect($this->redirectAfterDemandeCompteSubmit());
 
         $provisional = User::query()
             ->where('account_status', AccountStatusEnum::PROVISOIRE)
@@ -261,7 +273,7 @@ class DemandeCreationCompteTest extends TestCase
         $this->assertAuthenticatedAs($provisional);
         $this->assertNotSame($agent->id, $provisional->id);
 
-        $this->get(route('demandes.rencontre.create'))
+        $this->get($this->redirectAfterDemandeCompteSubmit())
             ->assertOk()
             ->assertSee('Demande de rendez-vous');
     }
@@ -304,7 +316,7 @@ class DemandeCreationCompteTest extends TestCase
             'piece_identite' => UploadedFile::fake()->image('cin.jpg', 800, 600),
             'password' => 'password123',
             'accept_terms' => '1',
-        ])->assertRedirect(route('demandes.rencontre.create'));
+        ])->assertRedirect($this->redirectAfterDemandeCompteSubmit());
 
         Notification::assertSentTo(
             User::first(),
@@ -330,7 +342,7 @@ class DemandeCreationCompteTest extends TestCase
             'piece_identite' => UploadedFile::fake()->image('cin.jpg', 800, 600),
             'password' => 'password123',
             'accept_terms' => '1',
-        ])->assertRedirect(route('demandes.rencontre.create'));
+        ])->assertRedirect($this->redirectAfterDemandeCompteSubmit());
 
         Notification::assertSentTo(User::first(), DemandeCreationCompteSoumise::class);
     }
@@ -371,7 +383,7 @@ class DemandeCreationCompteTest extends TestCase
             'password' => 'password123',
             'accept_terms' => '1',
         ])
-            ->assertRedirect(route('demandes.rencontre.create'));
+            ->assertRedirect($this->redirectAfterDemandeCompteSubmit());
 
         $demande = DemandeCreationCompte::first();
         $this->assertNull($demande->pension_code);
@@ -384,6 +396,7 @@ class DemandeCreationCompteTest extends TestCase
         Storage::fake(config('uploads.disks.private', 'private'));
 
         $this->post(route('demandes.compte.store'), [
+            'idempotency_key' => 'test-ajax-'.uniqid(),
             'user_type' => 'pensionne',
             'telephone' => '+509 22 00 0000',
             'nif' => '123-456-789-0',
@@ -398,7 +411,7 @@ class DemandeCreationCompteTest extends TestCase
         ])
             ->assertOk()
             ->assertJsonPath('ok', true)
-            ->assertJsonPath('redirect_url', route('demandes.rencontre.create'));
+            ->assertJsonPath('redirect_url', $this->redirectAfterDemandeCompteSubmit());
 
         $this->assertAuthenticated();
     }
@@ -422,7 +435,7 @@ class DemandeCreationCompteTest extends TestCase
             'piece_identite_representant' => UploadedFile::fake()->image('passeport.jpg', 800, 600),
             'password' => 'password123',
             'accept_terms' => '1',
-        ])->assertRedirect(route('demandes.rencontre.create'));
+        ])->assertRedirect($this->redirectAfterDemandeCompteSubmit());
 
         $demande = DemandeCreationCompte::first();
         $this->assertSame('externe', $demande->user_type);
@@ -439,13 +452,23 @@ class DemandeCreationCompteTest extends TestCase
         $beneficiaire = Beneficiaire::query()->where('is_mineur', true)->first();
         $this->assertNotNull($beneficiaire);
         $this->assertSame('123-456-789-0', $beneficiaire->nif);
-        $this->assertTrue(
-            UserBeneficiaireLink::query()
-                ->where('user_id', $demande->user_id)
-                ->where('beneficiaire_id', $beneficiaire->id)
-                ->where('relation', 'mere')
-                ->exists()
-        );
+        $link = UserBeneficiaireLink::query()
+            ->where('user_id', $demande->user_id)
+            ->where('beneficiaire_id', $beneficiaire->id)
+            ->where('relation', 'mere')
+            ->first();
+
+        $this->assertNotNull($link);
+        $this->assertSame(BeneficiaireLinkStatusEnum::EN_ATTENTE, $link->status);
+
+        $relationDemande = BeneficiaireRelationDemande::query()
+            ->where('demande_creation_compte_id', $demande->id)
+            ->first();
+
+        $this->assertNotNull($relationDemande);
+        $this->assertSame(BeneficiaireRelationDemandeStatusEnum::EN_ATTENTE, $relationDemande->status);
+        $this->assertSame($demande->user_id, $relationDemande->user_id);
+        $this->assertFalse($demande->user->pensionContext()->userCanAccessBeneficiaire($beneficiaire));
 
         $user = $demande->user->fresh(['roles', 'categoryAssignments']);
         $resolver = UserCategoryResolver::for($user);
@@ -477,7 +500,7 @@ class DemandeCreationCompteTest extends TestCase
             'piece_identite_representant' => UploadedFile::fake()->image('passeport.jpg', 800, 600),
             'password' => 'password123',
             'accept_terms' => '1',
-        ])->assertRedirect(route('demandes.rencontre.create'));
+        ])->assertRedirect($this->redirectAfterDemandeCompteSubmit());
 
         $demande = DemandeCreationCompte::query()->latest('id')->first();
         $this->assertSame('pensionne', $demande->user_type);
@@ -491,6 +514,35 @@ class DemandeCreationCompteTest extends TestCase
     }
 
     /** @test */
+    public function guest_can_submit_mandataire_account_request_without_pension_code(): void
+    {
+        Storage::fake('public');
+        Storage::fake(config('uploads.disks.private', 'private'));
+
+        $this->post(route('demandes.compte.store'), [
+            'user_type' => 'pensionne',
+            'telephone' => '+509 38123459',
+            'nif' => '123-456-789-4',
+            'adresse' => 'Delmas 33',
+            'is_mandataire' => '1',
+            'piece_identite_type' => 'passeport',
+            'piece_identite' => UploadedFile::fake()->image('passeport.jpg', 800, 600),
+            'mandat_designation' => UploadedFile::fake()->create('mandat.pdf', 100, 'application/pdf'),
+            'password' => 'password123',
+            'accept_terms' => '1',
+        ])->assertRedirect($this->redirectAfterDemandeCompteSubmit());
+
+        $demande = DemandeCreationCompte::query()->latest('id')->first();
+        $this->assertTrue($demande->is_mandataire);
+        $this->assertNull($demande->pension_code);
+
+        $mandat = PensionMandat::query()->where('user_id', $demande->user_id)->first();
+        $this->assertNotNull($mandat);
+        $this->assertNull($mandat->beneficiaire_id);
+        $this->assertSame($demande->id, $mandat->demande_creation_compte_id);
+    }
+
+    /** @test */
     public function guest_can_submit_mandataire_account_request(): void
     {
         Storage::fake('public');
@@ -501,6 +553,7 @@ class DemandeCreationCompteTest extends TestCase
         $this->post(route('demandes.compte.store'), [
             'user_type' => 'pensionne',
             'telephone' => '+509 38123458',
+            'nif' => '123-456-789-3',
             'pension_code' => '8-34399',
             'adresse' => 'Delmas 33',
             'is_mandataire' => '1',
@@ -509,7 +562,7 @@ class DemandeCreationCompteTest extends TestCase
             'mandat_designation' => UploadedFile::fake()->create('mandat.pdf', 100, 'application/pdf'),
             'password' => 'password123',
             'accept_terms' => '1',
-        ])->assertRedirect(route('demandes.rencontre.create'));
+        ])->assertRedirect($this->redirectAfterDemandeCompteSubmit());
 
         $demande = DemandeCreationCompte::query()->latest('id')->first();
         $this->assertSame('externe', $demande->user_type);
@@ -524,10 +577,10 @@ class DemandeCreationCompteTest extends TestCase
         $this->assertFalse($user->hasRole('pensionne'));
         $this->assertTrue($resolver->hasPensionPortalAccess());
 
-        $this->assertDatabaseHas('pension_mandats', [
-            'user_id' => $user->id,
-            'status' => 'en_attente',
-        ]);
+        $mandat = PensionMandat::query()->where('user_id', $user->id)->first();
+        $this->assertNotNull($mandat);
+        $this->assertSame(PensionMandatStatusEnum::EN_ATTENTE, $mandat->status);
+        $this->assertSame($demande->id, $mandat->demande_creation_compte_id);
 
         $this->assertFalse(
             UserBeneficiaireLink::query()->where('user_id', $user->id)->exists()
@@ -555,7 +608,7 @@ class DemandeCreationCompteTest extends TestCase
             'mandat_designation' => UploadedFile::fake()->create('mandat.pdf', 100, 'application/pdf'),
             'password' => 'password123',
             'accept_terms' => '1',
-        ])->assertRedirect(route('demandes.rencontre.create'));
+        ])->assertRedirect($this->redirectAfterDemandeCompteSubmit());
 
         $demande = DemandeCreationCompte::query()->latest('id')->first();
         $this->assertTrue($demande->mandataire_est_pensionne);
@@ -574,8 +627,7 @@ class DemandeCreationCompteTest extends TestCase
         $this->from(route('demandes.compte.create'))
             ->post(route('demandes.compte.store'), [])
             ->assertRedirect(route('demandes.compte.create'))
-            ->assertSessionHasErrors(['user_type', 'telephone', 'adresse', 'password', 'accept_terms'])
-            ->assertSessionDoesntHaveErrors('nif');
+            ->assertSessionHasErrors(['user_type', 'telephone', 'nif', 'adresse', 'password', 'accept_terms']);
     }
 
     /** @test */

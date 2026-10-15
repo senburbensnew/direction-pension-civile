@@ -293,13 +293,14 @@
             $decisionSubtitle = $peutDeciderDossier
                 ? 'Prêt à valider ou refuser'
                 : (! $rdvRealise ? 'En attente du RDV réalisé' : 'Consultation');
+            $decisionCollapsibleClass = 'scroll-mt-24'.($peutDeciderDossier ? ' border-l-4 border-l-emerald-600' : '');
         @endphp
         <x-dossier-collapsible
             id="dcc-decision"
             title="Décision"
             :subtitle="$decisionSubtitle"
             :open="$decisionOpenDefault"
-            class="scroll-mt-24 @if($peutDeciderDossier) border-l-4 border-l-emerald-600 @endif"
+            :class="$decisionCollapsibleClass"
         >
             <div class="px-5 sm:px-6 py-5 space-y-5">
                 @if(! $rdvRealise)

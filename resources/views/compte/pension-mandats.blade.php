@@ -26,6 +26,28 @@
             description="Demandez l’autorisation d’agir pour le compte d’un pensionné (procuration, mandat, etc.) et suivez vos demandes."
         />
 
+        @if(isset($demandesCompteMandataire) && $demandesCompteMandataire->isNotEmpty())
+            <section class="bg-white border border-gray-200 card-shadow p-6 sm:p-8">
+                <div class="flex items-center gap-3 mb-6 border-b border-gray-100 pb-4">
+                    <span class="text-2xl text-navy" aria-hidden="true"><i class="fa-solid fa-user-plus"></i></span>
+                    <h2 class="text-xl font-bold text-navy">Demande de compte mandataire en cours</h2>
+                </div>
+                <ul class="divide-y divide-gray-100">
+                    @foreach($demandesCompteMandataire as $dcc)
+                        <li class="py-4">
+                            <p class="font-semibold text-gray-900">Dossier {{ $dcc->code }}</p>
+                            @if($dcc->pension_code)
+                                <p class="text-sm text-gray-600 mt-1 font-mono">{{ $dcc->pension_code }}</p>
+                            @endif
+                            <p class="text-xs text-gray-500 mt-2 leading-relaxed">
+                                Votre mandat est enregistré avec ce dossier. Finalisez le rendez-vous aux formalités ; après acceptation du compte, un agent devra encore approuver le mandat pour activer l’accès au dossier du pensionné.
+                            </p>
+                        </li>
+                    @endforeach
+                </ul>
+            </section>
+        @endif
+
         @if($errors->any())
             <div class="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-red-800 text-sm">
                 <ul class="list-disc list-inside space-y-1">
@@ -52,7 +74,7 @@
                                 {{ $mandat->beneficiaire?->displayName() ?? '—' }}
                             </p>
                             <p class="text-sm text-gray-600 mt-1">
-                                {{ str_replace('_', ' ', $mandat->type) }}
+                                {{ $mandat->typeLabel() }}
                                 @if($mandat->beneficiaire?->primaryAffiliation()?->code_pension)
                                     · <span class="font-mono">{{ $mandat->beneficiaire->primaryAffiliation()->code_pension }}</span>
                                 @endif
@@ -65,6 +87,11 @@
                                     @if($mandat->date_fin)
                                         au {{ $mandat->date_fin->format('d/m/Y') }}
                                     @endif
+                                </p>
+                            @endif
+                            @if($mandat->isFromDemandeCreationCompte() && $mandat->demandeCreationCompte)
+                                <p class="text-xs text-sky-800 mt-2">
+                                    Via demande de compte <span class="font-mono">{{ $mandat->demandeCreationCompte->code }}</span>
                                 </p>
                             @endif
                             @if($mandat->notes)
@@ -82,6 +109,23 @@
                 @endforelse
             </ul>
         </section>
+
+        @if(auth()->user()?->canAccessFullServices())
+            <div class="rounded-lg border border-gray-200 bg-gray-50 px-4 py-3 text-left text-sm">
+                <p class="text-xs text-gray-700 leading-relaxed">
+                    Ce formulaire s’adresse aux personnes qui ont <span class="font-semibold">déjà un compte actif</span>.
+                    La demande de création de compte (profil mandataire) est réservée à celles qui n’ont pas encore d’accès au portail — pas pour créer un second compte.
+                </p>
+            </div>
+        @elseif(auth()->user()?->isProvisionnel())
+            <div class="rounded-lg border border-amber-100 bg-amber-50/80 px-4 py-3 text-left text-sm">
+                <p class="font-semibold text-navy">Compte provisoire</p>
+                <p class="mt-2 text-xs text-gray-700 leading-relaxed">
+                    Si vous êtes mandataire via une demande de création de compte en cours, le mandat est déjà enregistré avec ce dossier.
+                    Consultez la section ci-dessus et finalisez le rendez-vous aux formalités — ne soumettez pas une nouvelle demande de compte.
+                </p>
+            </div>
+        @endif
 
         <section class="bg-white border border-gray-200 card-shadow p-6 sm:p-8">
             <div class="flex items-center gap-3 mb-6 border-b border-gray-100 pb-4">
@@ -109,30 +153,88 @@
                         <input type="text" id="beneficiaire_nif" name="beneficiaire_nif" value="{{ old('beneficiaire_nif') }}" class="{{ $inputClass }}" autocomplete="off">
                     </div>
                     <div>
-                        <label for="code_pension" class="block text-sm font-medium text-gray-700 mb-1">Code pension concerné</label>
-                        <input type="text" id="code_pension" name="code_pension" value="{{ old('code_pension') }}" class="{{ $inputClass }}" placeholder="8-12345 ou 7-AB123" required autocomplete="off">
+                        <x-pension-code-input
+                            :value="old('code_pension')"
+                            label="Code pension concerné"
+                            :input-class="$inputClass"
+                        />
                     </div>
                 </div>
-                <div>
-                    <label for="type" class="block text-sm font-medium text-gray-700 mb-1">Type de mandat</label>
-                    <input type="text" id="type" name="type" value="{{ old('type', 'procuration_consulaire') }}" class="{{ $inputClass }}" required>
-                    <p class="text-xs text-gray-500 mt-1">Ex. procuration consulaire, mandat spécial, tutelle, etc.</p>
+                @php
+                    $selectedType = old('type_mandat', \App\Enums\PensionMandatTypeEnum::PROCURATION_CONSULAIRE->value);
+                @endphp
+                <div
+                    class="space-y-3"
+                    x-data="{ typeMandat: @js($selectedType) }"
+                >
+                    <div>
+                        <label for="type_mandat" class="block text-sm font-medium text-gray-700 mb-1">
+                            Type de mandat <span class="text-red-500">*</span>
+                        </label>
+                        <select
+                            name="type_mandat"
+                            id="type_mandat"
+                            class="{{ $inputClass }} bg-white"
+                            required
+                            x-model="typeMandat"
+                        >
+                            @foreach($mandatTypeChoices as $choice)
+                                <option value="{{ $choice->value }}" @selected($selectedType === $choice->value)>
+                                    {{ $choice->label() }}
+                                </option>
+                            @endforeach
+                        </select>
+                        @error('type_mandat')
+                            <p class="text-red-600 text-sm mt-1">{{ $message }}</p>
+                        @enderror
+                    </div>
+                    <div x-show="typeMandat === 'autre'" x-cloak>
+                        <label for="type_autre_precision" class="block text-sm font-medium text-gray-700 mb-1">
+                            Précisez le type de mandat <span class="text-red-500">*</span>
+                        </label>
+                        <input
+                            type="text"
+                            id="type_autre_precision"
+                            name="type_autre_precision"
+                            value="{{ old('type_autre_precision') }}"
+                            class="{{ $inputClass }}"
+                            maxlength="120"
+                            placeholder="Ex. procuration bancaire, mandat ad hoc…"
+                            :required="typeMandat === 'autre'"
+                        >
+                        @error('type_autre_precision')
+                            <p class="text-red-600 text-sm mt-1">{{ $message }}</p>
+                        @enderror
+                    </div>
                 </div>
                 <div class="grid sm:grid-cols-2 gap-4">
                     <div>
-                        <label for="date_debut" class="block text-sm font-medium text-gray-700 mb-1">Date début (optionnel)</label>
-                        <input type="date" id="date_debut" name="date_debut" value="{{ old('date_debut') }}" class="{{ $inputClass }}">
+                        <label for="date_debut" class="block text-sm font-medium text-gray-700 mb-1">
+                            Date de début <span class="text-red-500">*</span>
+                        </label>
+                        <input type="date" id="date_debut" name="date_debut" value="{{ old('date_debut') }}" class="{{ $inputClass }}" required>
+                        @error('date_debut')
+                            <p class="text-red-600 text-sm mt-1">{{ $message }}</p>
+                        @enderror
                     </div>
                     <div>
-                        <label for="date_fin" class="block text-sm font-medium text-gray-700 mb-1">Date fin (optionnel)</label>
-                        <input type="date" id="date_fin" name="date_fin" value="{{ old('date_fin') }}" class="{{ $inputClass }}">
+                        <label for="date_fin" class="block text-sm font-medium text-gray-700 mb-1">
+                            Date de fin <span class="text-red-500">*</span>
+                        </label>
+                        <input type="date" id="date_fin" name="date_fin" value="{{ old('date_fin') }}" class="{{ $inputClass }}" required>
+                        @error('date_fin')
+                            <p class="text-red-600 text-sm mt-1">{{ $message }}</p>
+                        @enderror
                     </div>
                 </div>
-                <div>
-                    <label for="mandat_document" class="block text-sm font-medium text-gray-700 mb-1">Pièce justificative</label>
-                    <input type="file" id="mandat_document" name="mandat_document" class="w-full text-sm file:mr-4 file:py-2 file:px-4 file:rounded-none file:border-0 file:bg-navy file:text-white file:font-semibold hover:file:bg-orange-500 file:transition-colors" required accept=".pdf,.jpg,.jpeg,.png">
-                    <p class="text-xs text-gray-500 mt-1">PDF ou image · max. 5 Mo</p>
-                </div>
+                <x-file-input
+                    name="mandat_document"
+                    id="mandat_document"
+                    accept=".pdf,.jpg,.jpeg,.png"
+                    required
+                    label="Pièce justificative"
+                    hint="PDF ou image · max. 5 Mo"
+                />
                 <div>
                     <label for="notes" class="block text-sm font-medium text-gray-700 mb-1">Notes (optionnel)</label>
                     <textarea id="notes" name="notes" rows="3" class="{{ $inputClass }}">{{ old('notes') }}</textarea>

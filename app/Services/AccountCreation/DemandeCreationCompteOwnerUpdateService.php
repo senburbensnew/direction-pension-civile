@@ -6,6 +6,7 @@ use App\Models\DemandeCreationCompte;
 use App\Models\DemandeCreationCompteHistory;
 use App\Models\User;
 use App\Services\Pension\BeneficiaireProvisioningService;
+use App\Services\Pension\PensionMandatService;
 use App\Rules\CodePension;
 use App\Rules\Nif;
 use App\Rules\Ninu;
@@ -80,12 +81,18 @@ class DemandeCreationCompteOwnerUpdateService
                 ['champs' => array_keys($validated)]
             );
 
-            app(BeneficiaireProvisioningService::class)->provisionFromDemandeCreation(
-                $owner->fresh(),
-                $demande->fresh(),
-                is_array($demande->ocr_documents) ? $demande->ocr_documents : [],
-                (bool) $demande->is_mineur
-            );
+            $demande = $demande->fresh();
+
+            if ($demande->is_mandataire) {
+                app(PensionMandatService::class)->syncBeneficiaireFromDemandeCreationCompte($demande);
+            } else {
+                app(BeneficiaireProvisioningService::class)->provisionFromDemandeCreation(
+                    $owner->fresh(),
+                    $demande,
+                    is_array($demande->ocr_documents) ? $demande->ocr_documents : [],
+                    (bool) $demande->is_mineur
+                );
+            }
         });
 
         return $demande->fresh();

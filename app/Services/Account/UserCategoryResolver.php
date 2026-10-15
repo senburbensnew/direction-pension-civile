@@ -69,6 +69,10 @@ class UserCategoryResolver
 
     public function hasPensionPortalAccess(): bool
     {
+        if ($this->user?->canAccessFullServices()) {
+            return true;
+        }
+
         if ($this->hasCategory('pensionne')) {
             return true;
         }

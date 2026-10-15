@@ -73,6 +73,19 @@ class UserCategorySystemTest extends TestCase
         $service->ensureInstitutionLink($other, $user->institution);
     }
 
+    public function test_actif_fonctionnaire_has_pension_portal_without_pensionne_category(): void
+    {
+        $user = User::factory()->create([
+            'account_status' => AccountStatusEnum::ACTIF,
+        ]);
+
+        app(UserCategoryRoleSyncService::class)->assignCategory($user, 'fonctionnaire', primary: true);
+        $user->assignRole('fonctionnaire');
+
+        $this->assertFalse($user->hasCategory('pensionne'));
+        $this->assertTrue($user->fresh()->hasPensionPortalAccess());
+    }
+
     public function test_pension_access_without_category_when_beneficiaire_link_exists(): void
     {
         $user = User::factory()->create([

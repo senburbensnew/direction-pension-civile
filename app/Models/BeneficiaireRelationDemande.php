@@ -26,6 +26,7 @@ class BeneficiaireRelationDemande extends Model implements HasMedia
         'validated_by',
         'validated_at',
         'user_beneficiaire_link_id',
+        'demande_creation_compte_id',
     ];
 
     protected $casts = [
@@ -55,6 +56,16 @@ class BeneficiaireRelationDemande extends Model implements HasMedia
     public function link(): BelongsTo
     {
         return $this->belongsTo(UserBeneficiaireLink::class, 'user_beneficiaire_link_id');
+    }
+
+    public function demandeCreationCompte(): BelongsTo
+    {
+        return $this->belongsTo(DemandeCreationCompte::class, 'demande_creation_compte_id');
+    }
+
+    public function isFromDemandeCreationCompte(): bool
+    {
+        return $this->demande_creation_compte_id !== null;
     }
 
     public function registerMediaCollections(): void

@@ -7,6 +7,7 @@ return [
     | Les valeurs ci-dessous servent de repli si les paramètres sont absents.
     */
 
+    /** Durée d’un créneau RDV ; le lien visio expire à début + slot_minutes. */
     'slot_minutes' => 15,
 
     'start' => '14:00',
@@ -19,6 +20,7 @@ return [
 
     'visio' => [
         'activate_minutes_before' => 15,
+        /** @deprecated Non utilisé : fermeture visio = heure du RDV + slot_minutes. */
         'keep_open_minutes_after' => 15,
 
         // kMeet (moteur Jitsi)

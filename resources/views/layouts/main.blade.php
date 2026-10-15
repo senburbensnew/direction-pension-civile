@@ -38,7 +38,6 @@
 
     <x-contact-info-bar borderType="bottom" />
     <x-header />
-    <x-pension-context-banner />
     <main class="container mx-auto flex-1 w-full min-h-[calc(100dvh-13rem)] bg-[#e6ebf1] pb-0">
         @yield('content')
     </main>

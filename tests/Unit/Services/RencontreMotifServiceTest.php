@@ -2,8 +2,8 @@
 
 namespace Tests\Unit\Services;
 
-use App\Enums\TypeDemandeEnum;
 use App\Enums\AccountStatusEnum;
+use App\Enums\TypeDemandeEnum;
 use App\Models\Demande;
 use App\Models\DemandeCreationCompte;
 use App\Models\Service;
@@ -22,7 +22,7 @@ class RencontreMotifServiceTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
-        $this->seedStatuses();
+        $this->seedWorkflowSteps();
         $this->seedServices();
     }
 

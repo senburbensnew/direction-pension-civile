@@ -91,7 +91,7 @@ class DemandeController extends Controller
                     $demande = DB::transaction(function () use ($request, $validated) {
                         $draftStatusId = WorkflowStep::idForCode('BROUILLON');
                         $data = collect($validated)->except([
-                            'title', 'action', 'demande_id', 'status_id', 'created_by', 'type', 'current_service_id', 'code', 'profile_photo',
+                            'title', 'action', 'demande_id', 'current_step_id', 'created_by', 'type', 'current_service_id', 'code', 'profile_photo',
                         ])->toArray();
                         $demande = Demande::create([
                             'code' => CodeGeneratorService::generateUniqueRequestCode(TypeDemandeEnum::DEMANDE_VIREMENT_BANCAIRE->value, (new Demande)->getTable()),
@@ -236,7 +236,7 @@ class DemandeController extends Controller
                     $demande = DB::transaction(function () use ($request, $validated) {
                         $draftStatusId = WorkflowStep::idForCode('BROUILLON');
                         $data = collect($validated)->except([
-                            'title', 'action', 'demande_id', 'status_id', 'created_by', 'type', 'current_service_id', 'code',
+                            'title', 'action', 'demande_id', 'current_step_id', 'created_by', 'type', 'current_service_id', 'code',
                         ])->toArray();
                         $demande = Demande::create([
                             'code' => CodeGeneratorService::generateUniqueRequestCode(TypeDemandeEnum::DEMANDE_ATTESTATION->value, (new Demande)->getTable()),
@@ -361,7 +361,7 @@ class DemandeController extends Controller
                     $demande = DB::transaction(function () use ($request, $validated) {
                         $draftStatusId = WorkflowStep::idForCode('BROUILLON');
                         $data = collect($validated)->except([
-                            'title', 'action', 'demande_id', 'status_id', 'created_by', 'type', 'current_service_id', 'code',
+                            'title', 'action', 'demande_id', 'current_step_id', 'created_by', 'type', 'current_service_id', 'code',
                         ])->toArray();
                         $demande = Demande::create([
                             'code' => CodeGeneratorService::generateUniqueRequestCode(TypeDemandeEnum::DEMANDE_TRANSFERT_CHEQUE->value, (new Demande)->getTable()),
@@ -486,7 +486,7 @@ class DemandeController extends Controller
                     $demande = DB::transaction(function () use ($request, $validated) {
                         $draftStatusId = WorkflowStep::idForCode('BROUILLON');
                         $data = collect($validated)->except([
-                            'title', 'action', 'demande_id', 'status_id', 'created_by', 'type', 'current_service_id', 'code',
+                            'title', 'action', 'demande_id', 'current_step_id', 'created_by', 'type', 'current_service_id', 'code',
                         ])->toArray();
                         $demande = Demande::create([
                             'code' => CodeGeneratorService::generateUniqueRequestCode(TypeDemandeEnum::DEMANDE_ARRET_PAIEMENT->value, (new Demande)->getTable()),
@@ -631,7 +631,7 @@ class DemandeController extends Controller
                     $demande = DB::transaction(function () use ($request, $validated) {
                         $draftStatusId = WorkflowStep::idForCode('BROUILLON');
                         $data = collect($validated)->except([
-                            'title', 'action', 'demande_id', 'status_id', 'created_by', 'type', 'current_service_id', 'code',
+                            'title', 'action', 'demande_id', 'current_step_id', 'created_by', 'type', 'current_service_id', 'code',
                         ])->toArray();
                         $demande = Demande::create([
                             'code' => CodeGeneratorService::generateUniqueRequestCode(TypeDemandeEnum::DEMANDE_REINSERTION->value, (new Demande)->getTable()),
@@ -755,7 +755,7 @@ class DemandeController extends Controller
                     $demande = DB::transaction(function () use ($request, $validated) {
                         $draftStatusId = WorkflowStep::idForCode('BROUILLON');
                         $data = collect($validated)->except([
-                            'title', 'action', 'demande_id', 'status_id', 'created_by', 'type', 'current_service_id', 'code',
+                            'title', 'action', 'demande_id', 'current_step_id', 'created_by', 'type', 'current_service_id', 'code',
                         ])->toArray();
                         $demande = Demande::create([
                             'code' => CodeGeneratorService::generateUniqueRequestCode(TypeDemandeEnum::DEMANDE_ARRET_VIREMENT->value, (new Demande)->getTable()),
@@ -1061,7 +1061,7 @@ class DemandeController extends Controller
                     'title',
                     'action',
                     'demande_id',
-                    'status_id',
+                    'current_step_id',
                     'created_by',
                     'type',
                     'current_service_id',
@@ -1181,11 +1181,10 @@ class DemandeController extends Controller
                     $validated['data'] = array_merge(
                         collect($validated)->except([
                             'consentement',
-                            'status_id',
+                            'current_step_id',
                             'created_by',
                             'type',
                             'current_service_id',
-                            'current_step_id',
                             'code',
                             'bulletins_salaire',
                             'documents_carriere',
@@ -1468,7 +1467,7 @@ class DemandeController extends Controller
                             (new Demande)->getTable()
                         );
                         $data = collect($validated)->except([
-                            'title', 'action', 'demande_id', 'status_id', 'created_by', 'type', 'current_service_id', 'code',
+                            'title', 'action', 'demande_id', 'current_step_id', 'created_by', 'type', 'current_service_id', 'code',
                         ])->toArray();
                         $demande = Demande::create(array_merge($validated, [
                             'created_by' => auth()->id(),
@@ -1553,7 +1552,7 @@ class DemandeController extends Controller
                     'title',
                     'action',
                     'demande_id',
-                    'status_id',
+                    'current_step_id',
                     'created_by',
                     'type',
                     'current_service_id',
@@ -1652,7 +1651,7 @@ class DemandeController extends Controller
                             (new Demande)->getTable()
                         );
                         $data = collect($validated)->except([
-                            'title', 'action', 'demande_id', 'profile_photo', 'status_id', 'created_by', 'type', 'current_service_id', 'code',
+                            'title', 'action', 'demande_id', 'profile_photo', 'current_step_id', 'created_by', 'type', 'current_service_id', 'code',
                         ])->toArray();
                         $demande = Demande::create(array_merge($validated, [
                             'created_by' => auth()->id(),
@@ -1736,7 +1735,7 @@ class DemandeController extends Controller
                     'action',
                     'demande_id',
                     'profile_photo',
-                    'status_id',
+                    'current_step_id',
                     'created_by',
                     'type',
                     'current_service_id',
@@ -1850,7 +1849,7 @@ class DemandeController extends Controller
                             (new Demande)->getTable()
                         );
                         $data = collect($validated)->except([
-                            'title', 'action', 'demande_id', 'status_id', 'created_by', 'type', 'current_service_id', 'code',
+                            'title', 'action', 'demande_id', 'current_step_id', 'created_by', 'type', 'current_service_id', 'code',
                         ])->toArray();
                         $demande = Demande::create(array_merge($validated, [
                             'created_by' => auth()->id(),
@@ -1922,7 +1921,7 @@ class DemandeController extends Controller
                 }
 
                 $data = collect($validated)->except([
-                    'title', 'action', 'demande_id', 'status_id', 'created_by', 'type', 'current_service_id', 'code',
+                    'title', 'action', 'demande_id', 'current_step_id', 'created_by', 'type', 'current_service_id', 'code',
                 ])->toArray();
 
                 $demande = Demande::updateOrCreate(

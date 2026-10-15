@@ -149,6 +149,78 @@ function buildHolidayBackgroundEvents(
     return events;
 }
 
+const PAST_BG_ID_PREFIX = 'past-bg-';
+
+function isPastBackgroundEventId(id) {
+    return String(id || '').startsWith(PAST_BG_ID_PREFIX);
+}
+
+function bookingWindowEndOnDay(dateStr, maxTime) {
+    if (maxTime.startsWith('24:')) {
+        const end = buildSlotDate(dateStr, '00:00');
+
+        end.setDate(end.getDate() + 1);
+
+        return end;
+    }
+
+    return buildSlotDate(dateStr, maxTime.slice(0, 5));
+}
+
+function buildPastBackgroundEvents(minTime, maxTime, rangeStart, rangeEnd) {
+    const events = [];
+    const now = new Date();
+    const todayStart = startOfLocalDay(now);
+
+    for (
+        let cursor = new Date(rangeStart);
+        cursor <= rangeEnd;
+        cursor = addDays(cursor, 1)
+    ) {
+        const dayStart = startOfLocalDay(cursor);
+
+        if (dayStart > todayStart) {
+            continue;
+        }
+
+        const dateStr = formatDate(dayStart);
+        const windowStart = buildSlotDate(dateStr, minTime.slice(0, 5));
+        const windowEnd = bookingWindowEndOnDay(dateStr, maxTime);
+
+        if (windowEnd <= windowStart) {
+            continue;
+        }
+
+        let endPast = windowEnd;
+
+        if (dayStart.getTime() === todayStart.getTime()) {
+            if (now.getTime() <= windowStart.getTime()) {
+                continue;
+            }
+
+            endPast = new Date(
+                Math.min(now.getTime(), windowEnd.getTime())
+            );
+
+            if (endPast <= windowStart) {
+                continue;
+            }
+        }
+
+        events.push({
+            id: `${PAST_BG_ID_PREFIX}${dateStr}`,
+            start: windowStart,
+            end: endPast,
+            display: 'background',
+            classNames: ['dpc-rdv-past-bg'],
+            editable: false,
+            overlap: true,
+        });
+    }
+
+    return events;
+}
+
 function readHolidayDates(el) {
     try {
         const raw = JSON.parse(el.dataset.holidays || '[]');
@@ -590,6 +662,7 @@ function initOneRdvScheduler(el) {
             .filter(
                 (event) =>
                     event.id !== 'selection' &&
+                    !isPastBackgroundEventId(event.id) &&
                     !String(event.id || '').startsWith('holiday-bg-')
             )
             .forEach(
@@ -927,10 +1000,41 @@ function initOneRdvScheduler(el) {
 
         datesSet: () => {
             refreshHolidayEvents();
+            refreshPastBackground();
         },
 
         events: reservedEvents(),
     });
+
+    const refreshPastBackground = () => {
+        const view = calendar.view;
+
+        if (!view || !view.type.startsWith('timeGrid')) {
+            calendar
+                .getEvents()
+                .filter((event) => isPastBackgroundEventId(event.id))
+                .forEach((event) => event.remove());
+
+            return;
+        }
+
+        calendar
+            .getEvents()
+            .filter((event) => isPastBackgroundEventId(event.id))
+            .forEach((event) => event.remove());
+
+        const rangeStart = view.activeStart;
+        const rangeEnd = addDays(view.activeEnd, -1);
+
+        buildPastBackgroundEvents(
+            minTime,
+            maxTime,
+            rangeStart,
+            rangeEnd
+        ).forEach((event) => {
+            calendar.addEvent(event);
+        });
+    };
 
     const refreshHolidayEvents = () => {
         const view = calendar.view;
@@ -964,8 +1068,18 @@ function initOneRdvScheduler(el) {
 
     el._rdvCalendar = calendar;
 
+    if (el._rdvPastTick) {
+        window.clearInterval(el._rdvPastTick);
+    }
+
+    el._rdvPastTick = window.setInterval(
+        refreshPastBackground,
+        60_000
+    );
+
     requestAnimationFrame(() => {
         calendar.updateSize();
+        refreshPastBackground();
     });
 
     el.dataset.ready = '1';

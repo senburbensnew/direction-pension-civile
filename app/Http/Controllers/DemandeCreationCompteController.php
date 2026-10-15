@@ -8,6 +8,7 @@ use App\Helpers\CodeGeneratorService;
 use App\Models\AffiliationPension;
 use App\Models\DemandeCreationCompte;
 use App\Models\DemandeCreationCompteHistory;
+use App\Models\PensionnaireReference;
 use App\Models\User;
 use App\Notifications\DemandeCreationCompteSoumise;
 use App\Rules\CodePension;
@@ -57,8 +58,8 @@ class DemandeCreationCompteController extends Controller
         }
 
         if ($field === 'pension_code') {
-            if ($request->boolean('is_mandataire')) {
-                return response()->json($this->pensionCodeAvailabilityForMandataire($value));
+            if ($request->boolean('is_mandataire') || $request->boolean('is_mineur')) {
+                return response()->json($this->pensionCodeAvailabilityForRepresentedPensionne($value));
             }
 
             return response()->json($this->pensionCodeAvailability($value));
@@ -122,13 +123,13 @@ class DemandeCreationCompteController extends Controller
         ];
     }
 
-    private function pensionCodeAvailabilityForMandataire(string $value): array
+    private function pensionCodeAvailabilityForRepresentedPensionne(string $value): array
     {
         if ($value === '') {
             return [
-                'available' => false,
+                'available' => true,
                 'empty' => true,
-                'message' => 'Indiquez le code pension du pensionné que vous représentez.',
+                'message' => null,
             ];
         }
 
@@ -153,8 +154,75 @@ class DemandeCreationCompteController extends Controller
             'format_ok' => true,
             'message' => $failed
                 ? 'Ce code pension est introuvable dans la base de référence.'
-                : 'Code pension reconnu.',
+                : 'Code pension du pensionné reconnu.',
         ];
+    }
+
+    /**
+     * Si la personne est aussi pensionné titulaire, le code saisi doit être celui
+     * du pensionné représenté / mandant, pas le sien (concordance ref. ↔ pièce du mandataire/représentant).
+     */
+    private function assertPensionCodeIsNotProxyOwnTitulaireCode(
+        Request $request,
+        string $code,
+        bool $isMineur,
+        bool $isMandataire,
+        \Closure $fail,
+    ): void {
+        $alsoTitulaire = ($isMineur && $request->boolean('representant_est_pensionne'))
+            || ($isMandataire && $request->boolean('mandataire_est_pensionne'));
+
+        if (! $alsoTitulaire) {
+            return;
+        }
+
+        $ref = PensionnaireReference::query()
+            ->whereRaw('UPPER(TRIM(PENSIONNAIRE_ID)) = ?', [strtoupper(trim($code))])
+            ->first();
+
+        if (! $ref) {
+            return;
+        }
+
+        $raw = $request->input('ocr_documents_json');
+        $ocrDocuments = [];
+
+        if (is_string($raw) && trim($raw) !== '') {
+            $decoded = json_decode($raw, true);
+            if (is_array($decoded)) {
+                $ocrDocuments = $decoded;
+            }
+        }
+
+        $provisioning = app(BeneficiaireProvisioningService::class);
+        $matcher = new PensionnaireReferenceExists;
+
+        $proxyKey = $isMineur ? 'piece_identite_representant' : 'piece_identite';
+        $proxyFields = $provisioning->fieldsFromDocument($ocrDocuments, $proxyKey);
+
+        if (! $matcher->rowMatchesIdentity(
+            $ref,
+            $proxyFields['nom'] ?? null,
+            $proxyFields['prenom'] ?? null,
+        )) {
+            return;
+        }
+
+        if ($isMineur) {
+            $minorFields = $provisioning->fieldsFromDocument($ocrDocuments, 'acte_naissance');
+            if ($matcher->rowMatchesIdentity(
+                $ref,
+                $minorFields['nom'] ?? null,
+                $minorFields['prenom'] ?? null,
+            )) {
+                return;
+            }
+        }
+
+        $fail(
+            'Indiquez le code pension du pensionné concerné (mineur ou personne mandante), '
+            .'pas votre code de titulaire.'
+        );
     }
 
     private function pensionCodeAvailability(string $value): array
@@ -719,7 +787,9 @@ class DemandeCreationCompteController extends Controller
 
         $url = $this->postSubmitRedirectUrl($user);
 
-        if ($url !== route('demandes.rencontre.create', absolute: true)) {
+        $rdvCreateUrl = route('demandes.rencontre.create', absolute: true);
+
+        if (! str_starts_with($url, $rdvCreateUrl)) {
             $request->session()->flash(
                 'success',
                 'Votre demande a été enregistrée. Prenez rendez-vous pour finaliser l’ouverture de votre compte.'
@@ -745,7 +815,13 @@ class DemandeCreationCompteController extends Controller
 
         if ($user->hasPensionPortalAccess()
             || $motifs->userHasPendingDemandeCreationCompte($user)) {
-            return route('demandes.rencontre.create', absolute: true);
+            $params = [];
+
+            if ($motifs->userHasPendingDemandeCreationCompte($user)) {
+                $params['motif'] = 'demande_formalites_mandats';
+            }
+
+            return route('demandes.rencontre.create', $params, absolute: true);
         }
 
         return route('compte.provisoire', absolute: true);
@@ -956,17 +1032,26 @@ class DemandeCreationCompteController extends Controller
             ],
 
             'pension_code' => array_merge(
-                $isMandataire ? ['required'] : ['nullable'],
+                ['nullable'],
                 [
                     'string',
                     new CodePension,
                     new PensionnaireReferenceExists,
-                    function (string $attribute, mixed $value, \Closure $fail) use ($isMandataire) {
+                    function (string $attribute, mixed $value, \Closure $fail) use ($isMandataire, $isMineur, $request) {
                         if (blank($value)) {
                             return;
                         }
 
-                        if ($isMandataire) {
+                        // Représentant / mandataire : code du pensionné concerné (pas « déjà pris » comme pour un titulaire).
+                        if ($isMandataire || $isMineur) {
+                            $this->assertPensionCodeIsNotProxyOwnTitulaireCode(
+                                $request,
+                                (string) $value,
+                                $isMineur,
+                                $isMandataire,
+                                $fail
+                            );
+
                             return;
                         }
 

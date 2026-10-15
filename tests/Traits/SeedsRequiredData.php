@@ -12,7 +12,7 @@ use Illuminate\Support\Facades\DB;
 
 trait SeedsRequiredData
 {
-    protected function seedStatuses(): void
+    protected function seedWorkflowSteps(): void
     {
         $steps = [
             ['code' => 'BROUILLON',            'nom' => 'Brouillon',            'type_noeud' => 'initial',    'ordre' => 1],

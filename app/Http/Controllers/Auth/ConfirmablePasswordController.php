@@ -15,9 +15,14 @@ class ConfirmablePasswordController extends Controller
     /**
      * Show the confirm password view.
      */
-    public function show(): View
+    public function show(Request $request): View
     {
-        return view('auth.confirm-password');
+        $timeoutSeconds = (int) config('auth.password_timeout', 900);
+
+        return view('auth.confirm-password', [
+            'reauthRequired' => (bool) $request->session()->get('password_reauth_required', false),
+            'confirmTimeoutMinutes' => max(1, (int) ceil($timeoutSeconds / 60)),
+        ]);
     }
 
     /**
@@ -35,6 +40,7 @@ class ConfirmablePasswordController extends Controller
         }
 
         $request->session()->put('auth.password_confirmed_at', time());
+        $request->session()->forget('password_reauth_required');
 
         return redirect()->intended(RouteServiceProvider::HOME);
     }

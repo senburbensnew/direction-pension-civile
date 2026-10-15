@@ -42,13 +42,28 @@ class CompteProvisoireController extends Controller
         $isRefused = $demande?->status === DemandeCreationCompte::STATUS_REFUSEE
             || $accountStatus === AccountStatusEnum::BLOQUE;
 
+        $openingProfile = 'titulaire';
+
+        if ($demande?->is_mandataire) {
+            $openingProfile = 'mandataire';
+        } elseif ($demande?->is_mineur) {
+            $openingProfile = 'representant';
+        }
+
         return view('compte.provisoire', [
             'user' => $user,
             'demande' => $demande,
+            'openingProfile' => $openingProfile,
             'rdv' => $hasRdvActif ? $rdv : null,
             'rdvStatut' => $rdvStatut,
             'rdvSummary' => $this->rdvSummary($rdv, $rdvData, $rdvStatut),
-            'steps' => $this->journeySteps($demande, $hasRdvActif, $rdvRealise, $isRefused),
+            'steps' => $this->journeySteps(
+                $demande,
+                $hasRdvActif,
+                $rdvRealise,
+                $isRefused,
+                $openingProfile,
+            ),
             'needsRdv' => $needsRdv,
             'rdvRealise' => $rdvRealise,
             'awaitingDecision' => (bool) ($demande?->canBeDecided()),
@@ -110,8 +125,14 @@ class CompteProvisoireController extends Controller
         ?DemandeCreationCompte $demande,
         bool $hasRdvActif,
         bool $rdvRealise,
-        bool $isRefused
+        bool $isRefused,
+        string $openingProfile = 'titulaire',
     ): array {
+        $rdvHintPending = match ($openingProfile) {
+            'mandataire' => 'Prenez rendez-vous au Service Formalités (motif formalités et mandats) pour valider votre compte mandataire.',
+            'representant' => 'Prenez rendez-vous au Service Formalités (motif formalités et mandats) avec vos pièces et l’acte du mineur.',
+            default => 'Prenez rendez-vous au Service Formalités pour finaliser l’ouverture de votre compte.',
+        };
         if ($isRefused) {
             return [
                 [
@@ -146,8 +167,8 @@ class CompteProvisoireController extends Controller
                 'hint' => $rdvRealise
                     ? 'Rendez-vous marqué comme réalisé.'
                     : ($hasRdvActif
-                        ? 'Votre créneau est réservé — présentez-vous avec vos pièces.'
-                        : 'Prenez rendez-vous pour finaliser l’ouverture du compte.'),
+                        ? 'Votre créneau est réservé — présentez-vous au Service Formalités avec vos pièces.'
+                        : $rdvHintPending),
                 'state' => $rdvRealise ? 'done' : ($hasRdvActif ? 'current' : ($submitted ? 'current' : 'upcoming')),
             ],
             [

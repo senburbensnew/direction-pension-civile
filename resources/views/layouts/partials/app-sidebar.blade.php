@@ -110,6 +110,14 @@
         </a>
     @endrole
 
+    @role(['responsable_service_accueil_formalites', \App\Models\User::ROLE_VALIDATEUR_RDV, \App\Models\User::ROLE_AGENT_FORMALITES, 'admin', \App\Models\User::ROLE_DIRECTEUR, \App\Models\User::ROLE_ASSISTANT_DIRECTEUR])
+        <a href="{{ route('formalites.suivi.index') }}" title="Suivi formalités"
+           class="portal-nav-link {{ request()->routeIs('formalites.suivi.*') ? 'active' : '' }}">
+            <i class="fas fa-clipboard-check"></i>
+            <span class="portal-sidebar-label truncate">Suivi formalités</span>
+        </a>
+    @endrole
+
     @if(auth()->user()?->can('pension_mandats.view') || auth()->user()?->can('beneficiaire_relations.view'))
         <a href="{{ route('formalites.representations.index') }}" title="Mandats et relations"
            class="portal-nav-link {{ request()->routeIs('formalites.representations.*', 'formalites.pension-mandats.*', 'formalites.beneficiaire-relations.*') ? 'active' : '' }}">

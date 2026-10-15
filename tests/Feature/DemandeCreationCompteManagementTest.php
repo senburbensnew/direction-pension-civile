@@ -3,13 +3,22 @@
 namespace Tests\Feature;
 
 use App\Enums\AccountStatusEnum;
+use App\Enums\BeneficiaireLinkStatusEnum;
+use App\Enums\BeneficiaireRelationDemandeStatusEnum;
+use App\Enums\PensionMandatStatusEnum;
 use App\Enums\RencontreStatutEnum;
 use App\Enums\TypeDemandeEnum;
+use App\Models\Beneficiaire;
+use App\Models\BeneficiaireRelationDemande;
 use App\Models\Demande;
 use App\Models\DemandeCreationCompte;
 use App\Models\DemandeCreationCompteHistory;
 use App\Models\User;
+use App\Models\PensionMandat;
+use App\Models\UserBeneficiaireLink;
 use App\Services\Account\UserCategoryRoleSyncService;
+use App\Services\Pension\BeneficiaireProvisioningService;
+use App\Services\Pension\PensionMandatService;
 use App\Services\RencontreWorkflowService;
 use Database\Seeders\UserCategoriesSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -77,9 +86,70 @@ class DemandeCreationCompteManagementTest extends TestCase
         ], $attrs));
     }
 
+    private function makeMandataireDemande(): DemandeCreationCompte
+    {
+        $user = User::factory()->create([
+            'username' => 'mandataire.'.uniqid(),
+            'email' => 'mandataire@example.com',
+            'account_status' => AccountStatusEnum::PROVISOIRE,
+        ]);
+        app(UserCategoryRoleSyncService::class)->assignCategory($user, 'externe', primary: true);
+
+        $demande = DemandeCreationCompte::create([
+            'code' => 'DCC-MAND-'.uniqid(),
+            'user_type' => 'externe',
+            'pension_code' => '8-34321',
+            'telephone' => '+50938222222',
+            'adresse' => 'Port-au-Prince',
+            'status' => DemandeCreationCompte::STATUS_EN_ATTENTE,
+            'user_id' => $user->id,
+            'is_mandataire' => true,
+        ]);
+
+        app(PensionMandatService::class)->registerFromDemandeCreationCompte($user, $demande);
+
+        return $demande->fresh();
+    }
+
+    private function makeMinorRepresentativeDemande(): DemandeCreationCompte
+    {
+        $user = User::factory()->create([
+            'username' => 'mere.rep.'.uniqid(),
+            'email' => 'mere.rep@example.com',
+            'account_status' => AccountStatusEnum::PROVISOIRE,
+            'nif' => '123-456-789-9',
+        ]);
+        app(UserCategoryRoleSyncService::class)->assignCategory($user, 'externe', primary: true);
+
+        $demande = DemandeCreationCompte::create([
+            'code' => 'DCC-MIN-'.uniqid(),
+            'user_type' => 'externe',
+            'firstname' => 'Enfant',
+            'lastname' => 'Mineur',
+            'email' => 'mere.rep@example.com',
+            'nif' => '987-654-321-0',
+            'pension_code' => '8-34321',
+            'telephone' => '+50938111111',
+            'adresse' => 'Port-au-Prince',
+            'status' => DemandeCreationCompte::STATUS_EN_ATTENTE,
+            'user_id' => $user->id,
+            'is_mineur' => true,
+            'representant_lien' => 'mere',
+        ]);
+
+        app(BeneficiaireProvisioningService::class)->provisionFromDemandeCreation(
+            $user,
+            $demande,
+            [],
+            true,
+        );
+
+        return $demande->fresh();
+    }
+
     private function markRendezVousRealise(DemandeCreationCompte $demande): void
     {
-        $this->seedStatuses();
+        $this->seedWorkflowSteps();
 
         Demande::create([
             'type' => TypeDemandeEnum::DEMANDE_RENCONTRE->value,
@@ -192,7 +262,7 @@ class DemandeCreationCompteManagementTest extends TestCase
     public function formalites_cannot_accept_when_rdv_realise_but_before_scheduled_time(): void
     {
         $demande = $this->makePendingDemande();
-        $this->seedStatuses();
+        $this->seedWorkflowSteps();
 
         Demande::create([
             'type' => TypeDemandeEnum::DEMANDE_RENCONTRE->value,
@@ -223,7 +293,7 @@ class DemandeCreationCompteManagementTest extends TestCase
         Storage::fake('public');
         Storage::fake(config('uploads.disks.private', 'private'));
         $demande = $this->makePendingDemande();
-        $this->seedStatuses();
+        $this->seedWorkflowSteps();
 
         Demande::create([
             'type' => TypeDemandeEnum::DEMANDE_RENCONTRE->value,
@@ -245,6 +315,123 @@ class DemandeCreationCompteManagementTest extends TestCase
             ->assertRedirect(route('formalites.comptes-demandes.show', $demande));
 
         $this->assertSame(DemandeCreationCompte::STATUS_ACCEPTEE, $demande->fresh()->status);
+    }
+
+    /** @test */
+    public function formalites_accepting_mandataire_dcc_keeps_mandat_pending_until_admin_approval(): void
+    {
+        Storage::fake('public');
+        Storage::fake(config('uploads.disks.private', 'private'));
+
+        $demande = $this->makeMandataireDemande();
+        $user = $demande->user;
+        $mandat = PensionMandat::query()->where('demande_creation_compte_id', $demande->id)->first();
+        $this->assertNotNull($mandat);
+
+        $this->markRendezVousRealise($demande);
+        $demande->addMedia(UploadedFile::fake()->image('cin.jpg', 400, 300))
+            ->toMediaCollection('identite_cin', 'public');
+
+        $this->actingAs($this->makeFormalites())
+            ->post(route('formalites.comptes-demandes.accepter', $demande), [
+                'email' => 'mandataire@example.com',
+            ])
+            ->assertRedirect(route('formalites.comptes-demandes.show', $demande));
+
+        $this->assertSame(DemandeCreationCompte::STATUS_ACCEPTEE, $demande->fresh()->status);
+        $this->assertTrue($user->fresh()->canAccessFullServices());
+
+        $mandat->refresh();
+        $this->assertSame(PensionMandatStatusEnum::EN_ATTENTE, $mandat->status);
+        $this->assertFalse(
+            UserBeneficiaireLink::query()->where('user_id', $user->id)->exists()
+        );
+    }
+
+    /** @test */
+    public function formalites_refusing_mandataire_dcc_refuses_linked_mandat(): void
+    {
+        Storage::fake('public');
+        Storage::fake(config('uploads.disks.private', 'private'));
+
+        $demande = $this->makeMandataireDemande();
+        $this->markRendezVousRealise($demande);
+        $demande->addMedia(UploadedFile::fake()->image('cin.jpg', 400, 300))
+            ->toMediaCollection('identite_cin', 'public');
+
+        $this->actingAs($this->makeFormalites())
+            ->post(route('formalites.comptes-demandes.refuser', $demande), [
+                'refusal_reason' => 'Pièces mandataire non conformes.',
+            ])
+            ->assertRedirect(route('formalites.comptes-demandes.show', $demande));
+
+        $mandat = PensionMandat::query()->where('demande_creation_compte_id', $demande->id)->first();
+        $this->assertSame(PensionMandatStatusEnum::REFUSE, $mandat?->status);
+        $this->assertSame('Pièces mandataire non conformes.', $mandat?->refusal_reason);
+    }
+
+    /** @test */
+    public function formalites_accepting_minor_dcc_activates_linked_relation_demande(): void
+    {
+        Storage::fake('public');
+        Storage::fake(config('uploads.disks.private', 'private'));
+
+        $demande = $this->makeMinorRepresentativeDemande();
+        $user = $demande->user;
+        $beneficiaire = Beneficiaire::query()->where('is_mineur', true)->first();
+        $this->assertNotNull($beneficiaire);
+        $this->assertFalse($user->pensionContext()->userCanAccessBeneficiaire($beneficiaire));
+
+        $relationDemande = BeneficiaireRelationDemande::query()
+            ->where('demande_creation_compte_id', $demande->id)
+            ->first();
+        $this->assertSame(BeneficiaireRelationDemandeStatusEnum::EN_ATTENTE, $relationDemande?->status);
+
+        $this->markRendezVousRealise($demande);
+        $demande->addMedia(UploadedFile::fake()->image('cin.jpg', 400, 300))
+            ->toMediaCollection('identite_cin', 'public');
+
+        $this->actingAs($this->makeFormalites())
+            ->post(route('formalites.comptes-demandes.accepter', $demande), [
+                'email' => 'mere.rep@example.com',
+            ])
+            ->assertRedirect(route('formalites.comptes-demandes.show', $demande));
+
+        $relationDemande->refresh();
+        $this->assertSame(BeneficiaireRelationDemandeStatusEnum::ACCEPTEE, $relationDemande->status);
+
+        $link = UserBeneficiaireLink::query()
+            ->where('user_id', $user->id)
+            ->where('beneficiaire_id', $beneficiaire->id)
+            ->where('relation', 'mere')
+            ->first();
+        $this->assertSame(BeneficiaireLinkStatusEnum::ACTIVE, $link?->status);
+        $this->assertTrue($user->fresh()->pensionContext()->userCanAccessBeneficiaire($beneficiaire));
+    }
+
+    /** @test */
+    public function formalites_refusing_minor_dcc_refuses_linked_relation_demande(): void
+    {
+        Storage::fake('public');
+        Storage::fake(config('uploads.disks.private', 'private'));
+
+        $demande = $this->makeMinorRepresentativeDemande();
+        $this->markRendezVousRealise($demande);
+        $demande->addMedia(UploadedFile::fake()->image('cin.jpg', 400, 300))
+            ->toMediaCollection('identite_cin', 'public');
+
+        $this->actingAs($this->makeFormalites())
+            ->post(route('formalites.comptes-demandes.refuser', $demande), [
+                'refusal_reason' => 'Dossier incomplet pour le mineur.',
+            ])
+            ->assertRedirect(route('formalites.comptes-demandes.show', $demande));
+
+        $relationDemande = BeneficiaireRelationDemande::query()
+            ->where('demande_creation_compte_id', $demande->id)
+            ->first();
+
+        $this->assertSame(BeneficiaireRelationDemandeStatusEnum::REFUSEE, $relationDemande?->status);
+        $this->assertSame('Dossier incomplet pour le mineur.', $relationDemande?->refusal_reason);
     }
 
     /** @test */
@@ -438,7 +625,7 @@ class DemandeCreationCompteManagementTest extends TestCase
             'account_status' => AccountStatusEnum::PROVISOIRE,
         ]);
         $owner->assignRole('pensionne');
-        $this->seedStatuses();
+        $this->seedWorkflowSteps();
         $this->seedServices();
 
         $compte = DemandeCreationCompte::create([
@@ -475,7 +662,7 @@ class DemandeCreationCompteManagementTest extends TestCase
     /** @test */
     public function account_decision_uses_latest_realise_rdv_when_a_newer_active_rdv_exists(): void
     {
-        $this->seedStatuses();
+        $this->seedWorkflowSteps();
         $demande = $this->makePendingDemande();
 
         Demande::create([

@@ -32,6 +32,15 @@ return [
         'email_placeholder' => 'you@email.com',
     ],
 
+    'password_required' => [
+        'title' => 'Password change required',
+        'intro' => 'For security, you must set a new personal password before continuing.',
+        'new_password' => 'New password',
+        'submit' => 'Save password',
+        'logout' => 'Sign out',
+        'notice' => 'Please set a new password to access your account.',
+    ],
+
     'register' => [
         'title' => 'Create an account',
         'intro' => 'Fill in the information below to register.',
@@ -44,8 +53,13 @@ return [
     ],
 
     'confirm_password' => [
+        'title' => 'Confirm your password',
         'intro' => 'This is a secure area. Please confirm your password before continuing.',
-        'submit' => 'Confirm',
+        'reauth_required' => 'For your security, please enter your password again before this action (account changes, sensitive dossier steps, etc.).',
+        'timeout_hint' => 'After confirmation, you can perform sensitive actions for :minutes minutes without entering your password again.',
+        'resume_hint' => 'Once confirmed, you will be returned to the action you started.',
+        'submit' => 'Confirm and continue',
+        'json_required' => 'Password confirmation required.',
     ],
 
     'verify_email' => [
@@ -116,7 +130,10 @@ return [
         'phone_number' => 'Phone number',
         'nif_label' => 'Tax ID (NIF)',
         'pension_code_label' => 'Pension code',
-        'pension_code_optional' => '(if applicable)',
+        'pension_code_label_pensionne' => 'Pensioner’s pension code',
+        'pension_code_hint_pensionne' => 'Code of the pensioner concerned (minor or principal), not yours as representative or agent.',
+        'pension_code_hint_optional' => 'Optional for now. You can add it under “My account creation request” or later in your profile.',
+        'pension_code_optional' => '(optional)',
         'pension_code_placeholder' => '7-XXXXX or 8-XXXXX',
         'profile_later_hint' => 'NINU and email can be completed later in :profile once the account is created.',
         'my_profile' => 'My profile',
@@ -281,6 +298,8 @@ return [
             'nif_required' => 'NIF is required.',
             'nif_unavailable' => 'This NIF is not available.',
             'pension_code_mandataire' => 'Enter the pension code of the pensioner you represent.',
+            'pension_code_mineur' => 'Enter the minor pensioner’s code (birth certificate), not your own.',
+            'pension_code_not_proxy_titulaire' => 'This code matches your own retiree record. Enter the pensioner’s code instead.',
             'pension_code_unrecognized' => 'This pension code was not recognized.',
             'pension_code_unavailable' => 'This pension code is not available.',
             'password_min' => 'Password must be at least 8 characters.',

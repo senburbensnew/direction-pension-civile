@@ -5,8 +5,8 @@ namespace Tests\Unit\Models;
 use App\Enums\CategorieDossierEnum;
 use App\Enums\TypeDemandeEnum;
 use App\Models\Demande;
-use App\Models\WorkflowStep;
 use App\Models\User;
+use App\Models\WorkflowStep;
 use Carbon\Carbon;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
@@ -19,7 +19,7 @@ class DemandeModelTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
-        $this->seedStatuses();
+        $this->seedWorkflowSteps();
     }
 
     private function makeUser(): User
@@ -32,9 +32,9 @@ class DemandeModelTest extends TestCase
     /** @test */
     public function it_auto_sets_brouillon_status_when_none_provided(): void
     {
-        $user    = $this->makeUser();
+        $user = $this->makeUser();
         $demande = Demande::create([
-            'type'       => TypeDemandeEnum::DEMANDE_ATTESTATION->value,
+            'type' => TypeDemandeEnum::DEMANDE_ATTESTATION->value,
             'created_by' => $user->id,
         ]);
 
@@ -44,9 +44,9 @@ class DemandeModelTest extends TestCase
     /** @test */
     public function it_auto_sets_title_from_type_enum(): void
     {
-        $user    = $this->makeUser();
+        $user = $this->makeUser();
         $demande = Demande::create([
-            'type'       => TypeDemandeEnum::DEMANDE_ATTESTATION->value,
+            'type' => TypeDemandeEnum::DEMANDE_ATTESTATION->value,
             'created_by' => $user->id,
         ]);
 
@@ -59,7 +59,7 @@ class DemandeModelTest extends TestCase
         $user = $this->makeUser();
 
         $demande = Demande::create([
-            'type'       => TypeDemandeEnum::DEMANDE_PENSION->value,
+            'type' => TypeDemandeEnum::DEMANDE_PENSION->value,
             'created_by' => $user->id,
         ]);
 
@@ -72,9 +72,9 @@ class DemandeModelTest extends TestCase
         $user = $this->makeUser();
 
         $demande = Demande::create([
-            'type'       => TypeDemandeEnum::DEMANDE_ATTESTATION->value,
+            'type' => TypeDemandeEnum::DEMANDE_ATTESTATION->value,
             'created_by' => $user->id,
-            'is_urgent'  => true,
+            'is_urgent' => true,
         ]);
 
         $this->assertEquals(CategorieDossierEnum::DOSSIERS_URGENTS->value, $demande->categorie);
@@ -83,23 +83,23 @@ class DemandeModelTest extends TestCase
     // ─── Status helpers ──────────────────────────────────────────────────────
 
     /** @test */
-    public function isDraft_returns_true_for_brouillon_status(): void
+    public function is_draft_returns_true_for_brouillon_status(): void
     {
-        $user    = $this->makeUser();
+        $user = $this->makeUser();
         $demande = Demande::create(['type' => TypeDemandeEnum::DEMANDE_ATTESTATION->value, 'created_by' => $user->id]);
 
         $this->assertTrue($demande->isDraft());
     }
 
     /** @test */
-    public function isSubmitted_returns_true_for_soumise_status(): void
+    public function is_submitted_returns_true_for_soumise_status(): void
     {
-        $user      = $this->makeUser();
-        $statusId  = WorkflowStep::idForCode('SOUMISE');
-        $demande   = Demande::create([
-            'type'       => TypeDemandeEnum::DEMANDE_ATTESTATION->value,
+        $user = $this->makeUser();
+        $statusId = WorkflowStep::idForCode('SOUMISE');
+        $demande = Demande::create([
+            'type' => TypeDemandeEnum::DEMANDE_ATTESTATION->value,
             'created_by' => $user->id,
-            'current_step_id'  => $statusId,
+            'current_step_id' => $statusId,
         ]);
 
         $this->assertTrue($demande->isSubmitted());
@@ -107,31 +107,31 @@ class DemandeModelTest extends TestCase
     }
 
     /** @test */
-    public function needsComplement_returns_true_for_complement_requis_status(): void
+    public function needs_complement_returns_true_for_complement_requis_status(): void
     {
-        $user      = $this->makeUser();
-        $statusId  = WorkflowStep::idForCode('COMPLEMENT_REQUIS');
-        $demande   = Demande::create([
-            'type'       => TypeDemandeEnum::DEMANDE_ATTESTATION->value,
+        $user = $this->makeUser();
+        $statusId = WorkflowStep::idForCode('COMPLEMENT_REQUIS');
+        $demande = Demande::create([
+            'type' => TypeDemandeEnum::DEMANDE_ATTESTATION->value,
             'created_by' => $user->id,
-            'current_step_id'  => $statusId,
+            'current_step_id' => $statusId,
         ]);
 
         $this->assertTrue($demande->needsComplement());
     }
 
     /** @test */
-    public function canBeEditedByUser_is_true_for_brouillon_and_complement_requis(): void
+    public function can_be_edited_by_user_is_true_for_brouillon_and_complement_requis(): void
     {
         $user = $this->makeUser();
 
-        $brouillonId    = WorkflowStep::idForCode('BROUILLON');
-        $complementId   = WorkflowStep::idForCode('COMPLEMENT_REQUIS');
-        $soumiseId      = WorkflowStep::idForCode('SOUMISE');
+        $brouillonId = WorkflowStep::idForCode('BROUILLON');
+        $complementId = WorkflowStep::idForCode('COMPLEMENT_REQUIS');
+        $soumiseId = WorkflowStep::idForCode('SOUMISE');
 
-        $draft      = Demande::create(['type' => TypeDemandeEnum::DEMANDE_ATTESTATION->value, 'created_by' => $user->id, 'current_step_id' => $brouillonId]);
+        $draft = Demande::create(['type' => TypeDemandeEnum::DEMANDE_ATTESTATION->value, 'created_by' => $user->id, 'current_step_id' => $brouillonId]);
         $complement = Demande::create(['type' => TypeDemandeEnum::DEMANDE_ATTESTATION->value, 'created_by' => $user->id, 'current_step_id' => $complementId]);
-        $submitted  = Demande::create(['type' => TypeDemandeEnum::DEMANDE_ATTESTATION->value, 'created_by' => $user->id, 'current_step_id' => $soumiseId]);
+        $submitted = Demande::create(['type' => TypeDemandeEnum::DEMANDE_ATTESTATION->value, 'created_by' => $user->id, 'current_step_id' => $soumiseId]);
 
         $this->assertTrue($draft->canBeEditedByUser());
         $this->assertTrue($complement->canBeEditedByUser());
@@ -139,11 +139,11 @@ class DemandeModelTest extends TestCase
     }
 
     /** @test */
-    public function isExpired_returns_true_when_draft_past_expires_at(): void
+    public function is_expired_returns_true_when_draft_past_expires_at(): void
     {
-        $user    = $this->makeUser();
+        $user = $this->makeUser();
         $demande = Demande::create([
-            'type'       => TypeDemandeEnum::DEMANDE_ATTESTATION->value,
+            'type' => TypeDemandeEnum::DEMANDE_ATTESTATION->value,
             'created_by' => $user->id,
             'expires_at' => Carbon::yesterday(),
         ]);
@@ -152,11 +152,11 @@ class DemandeModelTest extends TestCase
     }
 
     /** @test */
-    public function isExpired_returns_false_when_expires_at_is_future(): void
+    public function is_expired_returns_false_when_expires_at_is_future(): void
     {
-        $user    = $this->makeUser();
+        $user = $this->makeUser();
         $demande = Demande::create([
-            'type'       => TypeDemandeEnum::DEMANDE_ATTESTATION->value,
+            'type' => TypeDemandeEnum::DEMANDE_ATTESTATION->value,
             'created_by' => $user->id,
             'expires_at' => Carbon::tomorrow(),
         ]);
@@ -167,25 +167,25 @@ class DemandeModelTest extends TestCase
     // ─── isUrgent ────────────────────────────────────────────────────────────
 
     /** @test */
-    public function isUrgent_returns_true_when_flagged(): void
+    public function is_urgent_returns_true_when_flagged(): void
     {
-        $user    = $this->makeUser();
+        $user = $this->makeUser();
         $demande = Demande::create([
-            'type'       => TypeDemandeEnum::DEMANDE_ATTESTATION->value,
+            'type' => TypeDemandeEnum::DEMANDE_ATTESTATION->value,
             'created_by' => $user->id,
-            'is_urgent'  => true,
+            'is_urgent' => true,
         ]);
 
         $this->assertTrue($demande->isUrgent());
     }
 
     /** @test */
-    public function isUrgent_returns_true_when_submitted_more_than_30_days_ago(): void
+    public function is_urgent_returns_true_when_submitted_more_than_30_days_ago(): void
     {
-        $user    = $this->makeUser();
+        $user = $this->makeUser();
         $demande = Demande::create([
-            'type'         => TypeDemandeEnum::DEMANDE_ATTESTATION->value,
-            'created_by'   => $user->id,
+            'type' => TypeDemandeEnum::DEMANDE_ATTESTATION->value,
+            'created_by' => $user->id,
             'submitted_at' => Carbon::now()->subDays(31),
         ]);
 
@@ -193,13 +193,13 @@ class DemandeModelTest extends TestCase
     }
 
     /** @test */
-    public function isUrgent_returns_false_when_not_flagged_and_recent(): void
+    public function is_urgent_returns_false_when_not_flagged_and_recent(): void
     {
-        $user    = $this->makeUser();
+        $user = $this->makeUser();
         $demande = Demande::create([
-            'type'         => TypeDemandeEnum::DEMANDE_ATTESTATION->value,
-            'created_by'   => $user->id,
-            'is_urgent'    => false,
+            'type' => TypeDemandeEnum::DEMANDE_ATTESTATION->value,
+            'created_by' => $user->id,
+            'is_urgent' => false,
             'submitted_at' => Carbon::now()->subDays(5),
         ]);
 
@@ -209,11 +209,11 @@ class DemandeModelTest extends TestCase
     // ─── categorieEnum / categorieLabel ──────────────────────────────────────
 
     /** @test */
-    public function categorieEnum_returns_correct_enum_instance(): void
+    public function categorie_enum_returns_correct_enum_instance(): void
     {
-        $user    = $this->makeUser();
+        $user = $this->makeUser();
         $demande = Demande::create([
-            'type'       => TypeDemandeEnum::DEMANDE_PENSION->value,
+            'type' => TypeDemandeEnum::DEMANDE_PENSION->value,
             'created_by' => $user->id,
         ]);
 
@@ -221,11 +221,11 @@ class DemandeModelTest extends TestCase
     }
 
     /** @test */
-    public function categorieLabel_returns_french_label_string(): void
+    public function categorie_label_returns_french_label_string(): void
     {
-        $user    = $this->makeUser();
+        $user = $this->makeUser();
         $demande = Demande::create([
-            'type'       => TypeDemandeEnum::DEMANDE_PENSION->value,
+            'type' => TypeDemandeEnum::DEMANDE_PENSION->value,
             'created_by' => $user->id,
         ]);
 
@@ -233,7 +233,7 @@ class DemandeModelTest extends TestCase
     }
 
     /** @test */
-    public function categorieLabel_returns_dash_when_categorie_is_null(): void
+    public function categorie_label_returns_dash_when_categorie_is_null(): void
     {
         $user = $this->makeUser();
         $demande = new Demande(['created_by' => $user->id]);
@@ -245,21 +245,21 @@ class DemandeModelTest extends TestCase
     // ─── isAnnotated ─────────────────────────────────────────────────────────
 
     /** @test */
-    public function isAnnotated_returns_false_when_not_annotated(): void
+    public function is_annotated_returns_false_when_not_annotated(): void
     {
-        $user    = $this->makeUser();
+        $user = $this->makeUser();
         $demande = Demande::create(['type' => TypeDemandeEnum::DEMANDE_ATTESTATION->value, 'created_by' => $user->id]);
 
         $this->assertFalse($demande->isAnnotated());
     }
 
     /** @test */
-    public function isAnnotated_returns_true_after_annotation(): void
+    public function is_annotated_returns_true_after_annotation(): void
     {
-        $user    = $this->makeUser();
+        $user = $this->makeUser();
         $demande = Demande::create(['type' => TypeDemandeEnum::DEMANDE_ATTESTATION->value, 'created_by' => $user->id]);
         $demande->update([
-            'annotation'   => 'Note test',
+            'annotation' => 'Note test',
             'annotated_by' => $user->id,
             'annotated_at' => now(),
         ]);
@@ -275,18 +275,18 @@ class DemandeModelTest extends TestCase
         $user = $this->makeUser();
 
         $soumise = Demande::create([
-            'type'       => TypeDemandeEnum::DEMANDE_ATTESTATION->value,
+            'type' => TypeDemandeEnum::DEMANDE_ATTESTATION->value,
             'created_by' => $user->id,
         ]);
         $soumise->update(['current_step_id' => WorkflowStep::idForCode('SOUMISE')]);
 
         $brouillon = Demande::create([
-            'type'       => TypeDemandeEnum::DEMANDE_ATTESTATION->value,
+            'type' => TypeDemandeEnum::DEMANDE_ATTESTATION->value,
             'created_by' => $user->id,
         ]);
 
         $closed = Demande::create([
-            'type'       => TypeDemandeEnum::DEMANDE_ATTESTATION->value,
+            'type' => TypeDemandeEnum::DEMANDE_ATTESTATION->value,
             'created_by' => $user->id,
         ]);
         $closed->update(['current_step_id' => WorkflowStep::idForCode('APPROUVEE')]);
@@ -299,9 +299,9 @@ class DemandeModelTest extends TestCase
     // ─── hasMedia ─────────────────────────────────────────────────────────
 
     /** @test */
-    public function hasMedia_returns_false_when_no_media_in_collection(): void
+    public function has_media_returns_false_when_no_media_in_collection(): void
     {
-        $user    = $this->makeUser();
+        $user = $this->makeUser();
         $demande = Demande::create(['type' => TypeDemandeEnum::DEMANDE_ATTESTATION->value, 'created_by' => $user->id]);
 
         $this->assertFalse($demande->hasMedia('profile_photo'));

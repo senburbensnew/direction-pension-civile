@@ -247,16 +247,7 @@
                     $rdvPending    = ! $rdvStatut->isTerminal();
                     $rdvAssignment = $request->assignments()->whereNull('ended_at')->with('agent')->first();
 
-                    $rdvDateRaw  = $rdv['date_souhaitee']  ?? null;
-                    $rdvHeureRaw = $rdv['heure_souhaitee'] ?? '00:00';
-                    $rdvDateTime = null;
-                    if (!empty($rdvDateRaw)) {
-                        try {
-                            $rdvDateTime = \Carbon\Carbon::parse($rdvDateRaw . ' ' . $rdvHeureRaw);
-                        } catch (\Throwable $e) {
-                            $rdvDateTime = null;
-                        }
-                    }
+                    $rdvDateTime = $request->rencontreScheduledAt();
                     $rdvPassed = $rdvDateTime && $rdvDateTime->isPast();
 
                     $peutClore   = $rdvPending && in_array($rdvStatut, [
@@ -286,6 +277,8 @@
                     $visioWindowStatus = ($rdv['modalite'] ?? '') === 'visio'
                         ? $visioService->status($request)
                         : null;
+                    $visioSlotEndsAt = ! $isPhysique ? $visioService->slotEndsAt($request) : null;
+                    $visioLienExpire = ! $isPhysique && $visioService->isVisioLinkExpired($request);
                 @endphp
 
                 <div class="p-6 space-y-5">
@@ -315,13 +308,16 @@
                                 @if($isPhysique)
                                     {{ $rdv['lieu_rdv'] ?? '—' }}
                                 @else
-                                    @if($rdvStatut->isTerminal())
+                                    @if($rdvStatut->isTerminal() || ($visioLienExpire ?? false))
                                         <span class="text-xs text-gray-400 italic">
-                                            Rendez-vous {{ mb_strtolower($rdvStatut->label()) }} — lien expiré
-                                        </span>
-                                    @elseif($rdvPassed)
-                                        <span class="text-xs text-gray-400 italic">
-                                            Rendez-vous passé — lien expiré
+                                            @if($rdvStatut->isTerminal())
+                                                Rendez-vous {{ mb_strtolower($rdvStatut->label()) }} — lien expiré
+                                            @else
+                                                Rendez-vous terminé — lien expiré
+                                                @if($visioSlotEndsAt ?? null)
+                                                    (fin du créneau {{ $visioSlotEndsAt->format('d/m/Y à H:i') }})
+                                                @endif
+                                            @endif
                                         </span>
                                     @elseif($visioCanAccess && $visioWindowStatus === 'actif')
                                         <a href="{{ $request->visioPageUrl('dossier') }}"
@@ -334,10 +330,7 @@
                                             {{ $visioService->opensAt($request)?->format('d/m/Y à H:i') ?? '—' }}
                                         </span>
                                     @elseif($visioCanAccess)
-                                        <a href="{{ $request->visioPageUrl('dossier') }}"
-                                           class="text-blue-600 hover:underline text-sm">
-                                            Ouvrir la page visio
-                                        </a>
+                                        <span class="text-xs text-gray-400 italic">Lien de visioconférence expiré</span>
                                     @else
                                         <span class="text-xs text-gray-400 italic">Lien non encore généré</span>
                                     @endif
@@ -395,6 +388,9 @@
                                 @endif
                             </p>
                         </div>
+                        @if($rdvDateTime?->isFuture())
+                            <x-rencontre-scheduled-unlock-refresh :opens-at="$rdvDateTime" />
+                        @endif
                     @endif
 
                     @if($formaliteDejaTraitee ?? false)
@@ -476,6 +472,7 @@
                                 Clôture (réalisé / non honoré) possible à partir du
                                 <strong class="mx-1">{{ $rdvDateTime->format('d/m/Y à H:i') }}</strong>.
                             </div>
+                            <x-rencontre-scheduled-unlock-refresh :opens-at="$rdvDateTime" />
                         @endif
 
                         @if($peutClore)
@@ -646,18 +643,13 @@
 
             $rdvMotif = $rdv['objet'] ?? $rdv['motif'] ?? '—';
 
-            // Date du RDV + flag "passé"
-            $rdvDateTime = null;
-            if ($rdvDateRaw) {
-                try {
-                    $rdvDateTime = \Carbon\Carbon::parse(
-                        $rdvDateRaw . ' ' . ($rdvHeureRaw ?? '00:00')
-                    );
-                } catch (\Throwable $e) {
-                    $rdvDateTime = null;
-                }
-            }
+            $rdvDateTime = $request->rencontreScheduledAt();
             $rdvPassed = $rdvDateTime && $rdvDateTime->isPast();
+
+            $visioServiceSuivi = app(\App\Services\RencontreVisioService::class);
+            $visioLienExpireSuivi = ! $isPhysique && $visioServiceSuivi->isVisioLinkExpired($request);
+            $visioStatusSuivi = ! $isPhysique ? $visioServiceSuivi->status($request) : null;
+            $visioSlotEndsAtSuivi = ! $isPhysique ? $visioServiceSuivi->slotEndsAt($request) : null;
         @endphp
 
         <x-dossier-collapsible
@@ -734,15 +726,15 @@
                                 @if($isPhysique)
                                     {{ $rdv['lieu_rdv'] ?? '—' }}
                                 @else
-                                    @if($rdvStatut->isTerminal())
+                                    @if($rdvStatut->isTerminal() || ($visioLienExpireSuivi ?? false))
                                         <span class="text-xs text-gray-400 italic">
-                                            Rendez-vous {{ mb_strtolower($rdvStatut->label()) }} — lien expiré
+                                            @if($rdvStatut->isTerminal())
+                                                Rendez-vous {{ mb_strtolower($rdvStatut->label()) }} — lien expiré
+                                            @else
+                                                Rendez-vous terminé — lien expiré
+                                            @endif
                                         </span>
-                                    @elseif($rdvPassed)
-                                        <span class="text-xs text-gray-400 italic">
-                                            Rendez-vous passé — lien expiré
-                                        </span>
-                                    @elseif(!empty($request->visio_token))
+                                    @elseif(!empty($request->visio_token) && ($visioStatusSuivi ?? null) === 'actif')
                                         <a href="{{ $request->visioPageUrl('dossier') }}"
                                            class="inline-flex items-center gap-1 text-blue-600 hover:text-blue-700 hover:underline">
                                             Rejoindre la visioconférence
@@ -752,8 +744,15 @@
                                             </svg>
                                         </a>
                                         <p class="text-xs text-gray-400 mt-0.5">
-                                            Lien actif {{ config('rdv.visio.activate_minutes_before') }} min avant le RDV
+                                            Lien actif jusqu’à {{ $visioSlotEndsAtSuivi?->format('H:i') ?? '—' }}
                                         </p>
+                                    @elseif(!empty($request->visio_token) && ($visioStatusSuivi ?? null) === 'en_attente')
+                                        <a href="{{ $request->visioPageUrl('dossier') }}"
+                                           class="inline-flex items-center gap-1 text-blue-600 hover:text-blue-700 hover:underline text-sm">
+                                            Page visio (ouverture {{ config('rdv.visio.activate_minutes_before') }} min avant)
+                                        </a>
+                                    @elseif(!empty($request->visio_token))
+                                        <span class="text-xs text-gray-400 italic">Lien de visioconférence expiré</span>
                                     @else
                                         <span class="text-xs text-gray-400 italic">Lien sécurisé généré à la validation</span>
                                     @endif
@@ -793,6 +792,8 @@
                     <div class="px-6 pb-6 pt-2 border-t border-gray-100">
                         @include('demandes.rencontre._confirmation', [
                             'confirmation' => $rdv['confirmation'],
+                            'demande' => $request,
+                            'visioBack' => 'dossier',
                             'cardClass'    => 'rounded-xl border-0 shadow-none p-0',
                         ])
                     </div>
@@ -893,18 +894,8 @@
                         $rdvStatutSidebar = $request->rencontreStatut();
                         $rdvPending = ! $rdvStatutSidebar->isTerminal();
 
-                        $rdvDateSidebar  = $request->data['date_souhaitee']  ?? null;
-                        $rdvHeureSidebar = $request->data['heure_souhaitee'] ?? '00:00';
-                        $rdvPassedSidebar = false;
-                        if ($rdvDateSidebar) {
-                            try {
-                                $rdvPassedSidebar = \Carbon\Carbon::parse(
-                                    $rdvDateSidebar . ' ' . $rdvHeureSidebar
-                                )->isPast();
-                            } catch (\Throwable $e) {
-                                $rdvPassedSidebar = false;
-                            }
-                        }
+                        $visioSidebar = app(\App\Services\RencontreVisioService::class);
+                        $visioLienExpireSidebar = $visioSidebar->isVisioLinkExpired($request);
                     @endphp
                     <div class="max-w-7xl mx-auto sm:px-6 lg:px-8 mb-5">
                         <div class="bg-white rounded-2xl border border-green-200 shadow-sm p-5 space-y-4">
@@ -932,10 +923,10 @@
                                                 Rendez-vous {{ mb_strtolower($rdvStatutSidebar->label()) }} — lien expiré.
                                             </span>
                                         </div>
-                                    @elseif($rdvPassedSidebar)
+                                    @elseif($visioLienExpireSidebar)
                                         <div class="mt-3">
                                             <span class="text-xs text-gray-400 italic">
-                                                Rendez-vous passé — lien expiré.
+                                                Rendez-vous terminé — lien expiré.
                                             </span>
                                         </div>
                                     @elseif($request->visio_token)
@@ -2808,10 +2799,15 @@
 
     @if($request->isRencontre() && ($request->data['modalite'] ?? '') === 'visio' && filled($request->visio_token))
         @php
-            $visioAutoRefreshStatus = app(\App\Services\RencontreVisioService::class)->status($request);
+            $visioFooterService = app(\App\Services\RencontreVisioService::class);
+            $visioAutoRefreshStatus = $visioFooterService->status($request);
+            $visioSlotEndsAtFooter = $visioFooterService->slotEndsAt($request);
         @endphp
         @if($visioAutoRefreshStatus === 'en_attente')
             <x-rencontre-visio-auto-refresh :token="$request->visio_token" />
+        @endif
+        @if(in_array($visioAutoRefreshStatus, ['en_attente', 'actif'], true) && $visioSlotEndsAtFooter?->isFuture())
+            <x-rencontre-scheduled-unlock-refresh :opens-at="$visioSlotEndsAtFooter" />
         @endif
     @endif
     </x-portal-page>

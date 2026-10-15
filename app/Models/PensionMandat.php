@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Enums\PensionMandatStatusEnum;
+use App\Enums\PensionMandatTypeEnum;
 use App\Enums\TypeDemandeEnum;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Model;
@@ -27,6 +28,7 @@ class PensionMandat extends Model implements HasMedia
         'validated_by',
         'validated_at',
         'refusal_reason',
+        'demande_creation_compte_id',
     ];
 
     protected $casts = [
@@ -51,6 +53,21 @@ class PensionMandat extends Model implements HasMedia
     public function validateur(): BelongsTo
     {
         return $this->belongsTo(User::class, 'validated_by');
+    }
+
+    public function demandeCreationCompte(): BelongsTo
+    {
+        return $this->belongsTo(DemandeCreationCompte::class, 'demande_creation_compte_id');
+    }
+
+    public function isFromDemandeCreationCompte(): bool
+    {
+        return $this->demande_creation_compte_id !== null;
+    }
+
+    public function typeLabel(): string
+    {
+        return PensionMandatTypeEnum::displayLabel((string) ($this->type ?? ''));
     }
 
     public function isCurrentlyActive(): bool

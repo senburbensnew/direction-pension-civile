@@ -12,8 +12,8 @@ use App\Models\PensionMandat;
 use App\Models\User;
 use App\Models\UserBeneficiaireLink;
 use App\Notifications\PensionMandatApprouveNotification;
-use App\Notifications\PensionMandatRefuseNotification;
 use App\Services\Pension\BeneficiaireAccessService;
+use App\Services\Pension\PensionMandatService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -23,7 +23,7 @@ class PensionMandatManagementController extends Controller
     public function index()
     {
         $mandats = PensionMandat::query()
-            ->with(['mandataire', 'beneficiaire.affiliations'])
+            ->with(['mandataire', 'beneficiaire.affiliations', 'demandeCreationCompte'])
             ->latest()
             ->paginate(20);
 
@@ -34,6 +34,19 @@ class PensionMandatManagementController extends Controller
 
     public function approve(Request $request, PensionMandat $mandat): RedirectResponse
     {
+        if (! $mandat->beneficiaire_id && $mandat->demandeCreationCompte) {
+            app(PensionMandatService::class)->syncBeneficiaireFromDemandeCreationCompte(
+                $mandat->demandeCreationCompte->fresh()
+            );
+            $mandat->refresh();
+        }
+
+        if (! $mandat->beneficiaire_id) {
+            return back()->withErrors([
+                'beneficiaire' => 'Le pensionné mandant doit être identifié (code pension) avant d’approuver le mandat.',
+            ]);
+        }
+
         $validated = $request->validate([
             'allowed_demande_types' => ['nullable', 'array'],
             'allowed_demande_types.*' => ['string', 'max:64'],
@@ -106,25 +119,7 @@ class PensionMandatManagementController extends Controller
         /** @var User $reviewer */
         $reviewer = $request->user();
 
-        $before = $mandat->only(['status']);
-
-        $mandat->update([
-            'status' => PensionMandatStatusEnum::REFUSE,
-            'refusal_reason' => $validated['refusal_reason'],
-            'validated_at' => now(),
-            'validated_by' => $reviewer->id,
-        ]);
-
-        BeneficiaireRelationEvent::record(
-            $mandat,
-            'mandat_refuse',
-            $reviewer,
-            $before,
-            $mandat->only(['status', 'refusal_reason']),
-            $validated['refusal_reason'],
-        );
-
-        $mandat->mandataire?->notify(new PensionMandatRefuseNotification($mandat->fresh(), $validated['refusal_reason']));
+        app(PensionMandatService::class)->refuse($mandat, $reviewer, $validated['refusal_reason']);
 
         return back()->with('success', 'Mandat refusé.');
     }

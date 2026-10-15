@@ -159,5 +159,6 @@ class AuthenticationTest extends TestCase
 
         $this->assertGuest();
         $response->assertRedirect('/');
+        $response->assertSessionHas('_token');
     }
 }

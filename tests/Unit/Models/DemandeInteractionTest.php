@@ -2,11 +2,11 @@
 
 namespace Tests\Unit\Models;
 
+use App\Enums\TypeDemandeEnum;
 use App\Models\Demande;
 use App\Models\DemandeInteraction;
 use App\Models\Service;
 use App\Models\User;
-use App\Enums\TypeDemandeEnum;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 use Tests\Traits\SeedsRequiredData;
@@ -18,33 +18,33 @@ class DemandeInteractionTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
-        $this->seedStatuses();
+        $this->seedWorkflowSteps();
         $this->seedServices();
     }
 
     private function makeInteraction(
         string $statut = DemandeInteraction::STATUT_EN_ATTENTE,
-        string $type   = DemandeInteraction::TYPE_TRANSFERT
+        string $type = DemandeInteraction::TYPE_TRANSFERT
     ): DemandeInteraction {
-        $user    = User::factory()->create();
+        $user = User::factory()->create();
         $service = Service::where('code', Service::DIRECTION)->first();
 
         $demande = Demande::create([
-            'type'       => TypeDemandeEnum::DEMANDE_ATTESTATION->value,
+            'type' => TypeDemandeEnum::DEMANDE_ATTESTATION->value,
             'created_by' => $user->id,
         ]);
 
         return DemandeInteraction::create([
-            'demande_id'    => $demande->id,
-            'type'          => $type,
+            'demande_id' => $demande->id,
+            'type' => $type,
             'to_service_id' => $service->id,
-            'initiated_by'  => $user->id,
-            'statut'        => $statut,
+            'initiated_by' => $user->id,
+            'statut' => $statut,
         ]);
     }
 
     /** @test */
-    public function isPending_returns_true_only_when_statut_is_EN_ATTENTE(): void
+    public function is_pending_returns_true_only_when_statut_is_e_n_attente(): void
     {
         $interaction = $this->makeInteraction(DemandeInteraction::STATUT_EN_ATTENTE);
 
@@ -54,7 +54,7 @@ class DemandeInteractionTest extends TestCase
     }
 
     /** @test */
-    public function isAccepted_returns_true_only_when_statut_is_ACCEPTE(): void
+    public function is_accepted_returns_true_only_when_statut_is_accepte(): void
     {
         $interaction = $this->makeInteraction(DemandeInteraction::STATUT_ACCEPTE);
 
@@ -64,7 +64,7 @@ class DemandeInteractionTest extends TestCase
     }
 
     /** @test */
-    public function isRefused_returns_true_only_when_statut_is_REJETE(): void
+    public function is_refused_returns_true_only_when_statut_is_rejete(): void
     {
         $interaction = $this->makeInteraction(DemandeInteraction::STATUT_REJETE);
 
@@ -74,10 +74,10 @@ class DemandeInteractionTest extends TestCase
     }
 
     /** @test */
-    public function isTransfert_and_isAvis_are_mutually_exclusive(): void
+    public function is_transfert_and_is_avis_are_mutually_exclusive(): void
     {
         $transfert = $this->makeInteraction(DemandeInteraction::STATUT_EN_ATTENTE, DemandeInteraction::TYPE_TRANSFERT);
-        $avis      = $this->makeInteraction(DemandeInteraction::STATUT_EN_ATTENTE, DemandeInteraction::TYPE_AVIS);
+        $avis = $this->makeInteraction(DemandeInteraction::STATUT_EN_ATTENTE, DemandeInteraction::TYPE_AVIS);
 
         $this->assertTrue($transfert->isTransfert());
         $this->assertFalse($transfert->isAvis());

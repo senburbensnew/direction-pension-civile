@@ -25,4 +25,9 @@ enum PensionMandatStatusEnum: string
     {
         return $this === self::ACTIF;
     }
+
+    public function isPending(): bool
+    {
+        return $this === self::EN_ATTENTE;
+    }
 }

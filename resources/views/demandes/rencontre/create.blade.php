@@ -266,10 +266,7 @@
                                         {{ $visioServiceActif->opensAt($rdvActif)?->format('d/m/Y à H:i') ?? '—' }}
                                     </span>
                                 @elseif($visioActifCanJoin)
-                                    <a href="{{ $rdvActif->visioPageUrl('create') }}"
-                                    class="text-sm font-semibold text-navy hover:underline">
-                                        Page visioconférence
-                                    </a>
+                                    <span class="text-sm text-gray-500">Lien de visioconférence expiré.</span>
                                 @endif
 
                                 @if(!$rdvActif->rencontreStatut()->isTerminal())

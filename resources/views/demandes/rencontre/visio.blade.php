@@ -116,4 +116,7 @@
     @if($status === 'en_attente')
         <x-rencontre-visio-auto-refresh :token="$demande->visio_token" />
     @endif
+    @if(in_array($status, ['en_attente', 'actif'], true) && ($closesAt ?? null)?->isFuture())
+        <x-rencontre-scheduled-unlock-refresh :opens-at="$closesAt" />
+    @endif
 </x-app-layout>

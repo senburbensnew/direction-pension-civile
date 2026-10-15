@@ -31,11 +31,9 @@ class GoogleCloudAuthenticator
 
     private function serviceAccountAccessToken(): string
     {
-        $path = config('ocr.google.credentials');
-        if (is_string($path) && $path !== '' && ! is_file($path)) {
-            $path = base_path($path);
-        }
-        if (! is_string($path) || $path === '' || ! is_file($path)) {
+        $path = $this->resolveCredentialsPath(config('ocr.google.credentials'));
+
+        if ($path === '') {
             throw new OcrException(
                 'Authentification Google OCR manquante. Définissez OCR_GOOGLE_API_KEY ou OCR_GOOGLE_CREDENTIALS.'
             );
@@ -91,5 +89,37 @@ class GoogleCloudAuthenticator
     private function base64UrlEncode(string $value): string
     {
         return rtrim(strtr(base64_encode($value), '+/', '-_'), '=');
+    }
+
+    private function resolveCredentialsPath(mixed $configured): string
+    {
+        if (! is_string($configured) || trim($configured) === '') {
+            return '';
+        }
+
+        $configured = trim($configured);
+        $normalized = str_replace('\\', '/', $configured);
+        $basename = basename($normalized);
+
+        $candidates = [
+            $configured,
+            base_path($configured),
+        ];
+
+        if (str_starts_with($normalized, 'storage/app/')) {
+            $candidates[] = storage_path(substr($normalized, strlen('storage/app/')));
+        }
+
+        $candidates[] = storage_path('app/'.$normalized);
+        $candidates[] = storage_path('app/secrets/'.$basename);
+        $candidates[] = storage_path('app/secrets/'.$normalized);
+
+        foreach (array_unique($candidates) as $candidate) {
+            if (is_string($candidate) && is_file($candidate)) {
+                return $candidate;
+            }
+        }
+
+        return '';
     }
 }

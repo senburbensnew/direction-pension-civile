@@ -44,6 +44,7 @@
                     <strong>{{ $rdvScheduledAt->format('d/m/Y à H:i') }}</strong>.
                 </p>
             </div>
+            <x-rencontre-scheduled-unlock-refresh :opens-at="$rdvScheduledAt" />
         @endif
 
         <div class="grid grid-cols-1 xl:grid-cols-12 gap-6 items-start">

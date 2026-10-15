@@ -19,7 +19,7 @@ class RencontreVisioTest extends TestCase
     {
         parent::setUp();
         $this->seedRoles();
-        $this->seedStatuses();
+        $this->seedWorkflowSteps();
     }
 
     private function makeVisioDemande(User $owner, User $agent, array $data = []): Demande
@@ -154,5 +154,77 @@ class RencontreVisioTest extends TestCase
                 'status' => 'en_attente',
             ])
             ->assertJsonStructure(['status', 'opens_at', 'closes_at']);
+    }
+
+    public function test_visio_link_expires_at_end_of_slot_not_at_start(): void
+    {
+        $this->travelTo(now()->startOfDay()->setTime(14, 10));
+
+        $owner = User::factory()->create();
+        $agent = User::factory()->create();
+        $demande = $this->makeVisioDemande($owner, $agent, [
+            'date_souhaitee' => now()->toDateString(),
+            'heure_souhaitee' => '14:00',
+            'rdv_statut' => 'actif',
+        ]);
+
+        $visio = app(RencontreVisioService::class);
+
+        $this->assertFalse($visio->isVisioLinkExpired($demande));
+        $this->assertSame('actif', $visio->status($demande));
+        $this->assertTrue(
+            $visio->slotEndsAt($demande)?->equalTo(
+                now()->startOfDay()->setTime(14, 15)
+            ) ?? false
+        );
+
+        $this->travelTo(now()->startOfDay()->setTime(14, 15));
+
+        $this->assertTrue($visio->isVisioLinkExpired($demande->fresh()));
+        $this->assertSame('termine', $visio->status($demande->fresh()));
+
+        $this->travelTo(now()->startOfDay()->setTime(14, 14));
+
+        $this->assertFalse($visio->isVisioLinkExpired($demande->fresh()));
+        $this->assertSame('actif', $visio->status($demande->fresh()));
+    }
+
+    public function test_confirmation_recap_hides_join_link_after_visio_window(): void
+    {
+        $this->travelTo(now()->startOfDay()->setTime(15, 0));
+
+        $owner = User::factory()->create();
+        $agent = User::factory()->create([
+            'service_id' => \App\Models\Service::where('code', \App\Models\Service::FORMALITE)->value('id'),
+        ]);
+        $agent->assignRole(User::ROLE_AGENT_RDV);
+
+        $demande = $this->makeVisioDemande($owner, $agent, [
+            'date_souhaitee' => now()->toDateString(),
+            'heure_souhaitee' => '14:00',
+            'rdv_statut' => 'actif',
+            'confirmation' => [
+                'numero' => 'RDV-TEST',
+                'mode' => 'Visioconférence',
+                'date' => now()->toDateString(),
+                'heure' => '14:00',
+            ],
+        ]);
+
+        $demande->update([
+            'current_service_id' => $agent->service_id,
+        ]);
+
+        $this->actingAsConfirmed($agent)
+            ->get(route('personal.request.show', $demande->id))
+            ->assertOk()
+            ->assertSee('Rendez-vous terminé — lien expiré', false)
+            ->assertDontSee('Rejoindre la visioconférence', false);
+
+        $this->actingAsConfirmed($owner)
+            ->get(route('personal.request.authenticated-user-request.show', $demande->id))
+            ->assertOk()
+            ->assertSee('Lien de visioconférence expiré', false)
+            ->assertDontSee('Rejoindre la visioconférence', false);
     }
 }

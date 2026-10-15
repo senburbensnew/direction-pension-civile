@@ -376,13 +376,13 @@ select option {
     --fc-button-hover-border-color: #0f2138;
     --fc-button-active-bg-color: #ea580c;
     --fc-button-active-border-color: #ea580c;
-    --fc-today-bg-color: #f4f6f9;
+    --fc-today-bg-color: #ffffff;
     --fc-event-bg-color: #173052;
     --fc-event-border-color: #173052;
     --fc-highlight-color: rgba(23, 48, 82, 0.12);
     --fc-now-indicator-color: #ea580c;
     --fc-page-bg-color: #ffffff;
-    --fc-neutral-bg-color: #f8fafc;
+    --fc-neutral-bg-color: #ffffff;
     background: #fff;
 }
 
@@ -434,8 +434,19 @@ select option {
     cursor: not-allowed;
 }
 
-.dpc-rdv-scheduler .fc-timegrid-col.fc-day-past .fc-timegrid-slot:not(.fc-non-business) {
-    opacity: 0.55;
+.dpc-rdv-scheduler .fc-timegrid-col.fc-day-today .fc-timegrid-col-bg {
+    background-color: #ffffff;
+}
+
+/* Créneaux passés (aujourd’hui partiel + jours antérieurs entiers) — événements de fond JS */
+.dpc-rdv-scheduler .fc-bg-event.dpc-rdv-past-bg {
+    background-color: #e5e7eb !important;
+    opacity: 0.78;
+    cursor: not-allowed;
+}
+
+.dpc-rdv-scheduler .fc-col-header-cell.fc-day-today {
+    background: #f4f6f9;
 }
 
 .rdv-legend-swatch {
@@ -549,6 +560,19 @@ select option {
     border-color: #5b21b6 !important;
     color: #fff !important;
     cursor: pointer;
+}
+
+.dpc-agent-availability-scheduler {
+    --fc-today-bg-color: #ffffff;
+}
+
+.dpc-agent-availability-scheduler .fc-timegrid-col.fc-day-today .fc-timegrid-slot:not(.fc-non-business) {
+    background-color: #ffffff;
+    opacity: 1;
+}
+
+.dpc-agent-availability-scheduler .fc-col-header-cell.fc-day-today {
+    background: #f4f6f9;
 }
 
 /* Agent availability — bordure + surbrillance de sélection selon le mode actif */

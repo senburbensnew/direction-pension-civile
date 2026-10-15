@@ -45,7 +45,11 @@ class BeneficiaireProvisioningService
     ): Beneficiaire {
         return DB::transaction(function () use ($user, $demande, $ocrDocuments, $isMineur, $reviewer) {
             if ($isMineur) {
-                return $this->provisionMinor($user, $demande, $ocrDocuments, $reviewer);
+                if ($reviewer) {
+                    return $this->finalizeMinorFromDemandeCreation($user, $demande, $ocrDocuments, $reviewer);
+                }
+
+                return $this->provisionMinor($user, $demande, $ocrDocuments, null);
             }
 
             return $this->provisionAdultSelf($user, $demande, null, $reviewer);
@@ -106,8 +110,14 @@ class BeneficiaireProvisioningService
         User $user,
         DemandeCreationCompte $demande,
         array $ocrDocuments,
-        ?User $reviewer = null,
+        ?User $reviewer,
     ): Beneficiaire {
+        $existing = $this->findMinorRepresentativeContext($user, $demande);
+
+        if ($existing) {
+            return $existing['beneficiaire'];
+        }
+
         $minorFields = $this->fieldsFromDocument($ocrDocuments, 'acte_naissance');
         $relation = BeneficiaireRelationEnum::tryFrom((string) ($demande->representant_lien ?? ''))
             ?? BeneficiaireRelationEnum::TUTEUR;
@@ -122,21 +132,114 @@ class BeneficiaireProvisioningService
             'informations_complementaires' => $complementaires,
         ]);
 
-        UserBeneficiaireLink::create([
+        $link = UserBeneficiaireLink::create([
             'user_id' => $user->id,
             'beneficiaire_id' => $beneficiaire->id,
             'relation' => $relation,
-            'status' => BeneficiaireLinkStatusEnum::ACTIVE,
+            'status' => BeneficiaireLinkStatusEnum::EN_ATTENTE,
             'permissions' => BeneficiaireLinkPermissionEnum::defaultGrant(),
             'demande_par' => $user->id,
-            'verifie_par' => $reviewer?->id,
-            'verifie_le' => $reviewer ? now() : null,
-            'motif_decision' => $reviewer ? 'Acceptation demande de création de compte '.$demande->code : null,
+            'verifie_par' => null,
+            'verifie_le' => null,
         ]);
 
         $this->syncAffiliation($beneficiaire, $demande->pension_code, true);
 
+        app(BeneficiaireRelationService::class)->registerFromDemandeCreationCompte(
+            $demande,
+            $user,
+            $beneficiaire,
+            $relation,
+            $link,
+        );
+
         return $beneficiaire;
+    }
+
+    private function finalizeMinorFromDemandeCreation(
+        User $user,
+        DemandeCreationCompte $demande,
+        array $ocrDocuments,
+        User $reviewer,
+    ): Beneficiaire {
+        $existing = $this->findMinorRepresentativeContext($user, $demande);
+
+        if ($existing) {
+            $link = $existing['link'];
+            $link->update([
+                'status' => BeneficiaireLinkStatusEnum::ACTIVE,
+                'verifie_par' => $reviewer->id,
+                'verifie_le' => now(),
+                'motif_decision' => 'Acceptation demande de création de compte '.$demande->code,
+            ]);
+
+            app(BeneficiaireRelationService::class)->finalizeFromDemandeCreationCompte($demande, $reviewer);
+
+            return $existing['beneficiaire'];
+        }
+
+        $beneficiaire = $this->provisionMinor($user, $demande, $ocrDocuments, null);
+        $link = UserBeneficiaireLink::query()
+            ->where('user_id', $user->id)
+            ->where('beneficiaire_id', $beneficiaire->id)
+            ->first();
+
+        $link?->update([
+            'status' => BeneficiaireLinkStatusEnum::ACTIVE,
+            'verifie_par' => $reviewer->id,
+            'verifie_le' => now(),
+            'motif_decision' => 'Acceptation demande de création de compte '.$demande->code,
+        ]);
+
+        app(BeneficiaireRelationService::class)->finalizeFromDemandeCreationCompte($demande, $reviewer);
+
+        return $beneficiaire;
+    }
+
+    /**
+     * @return array{beneficiaire: Beneficiaire, link: UserBeneficiaireLink}|null
+     */
+    private function findMinorRepresentativeContext(User $user, DemandeCreationCompte $demande): ?array
+    {
+        $relationDemande = \App\Models\BeneficiaireRelationDemande::query()
+            ->where('demande_creation_compte_id', $demande->id)
+            ->with(['beneficiaire', 'link'])
+            ->first();
+
+        if ($relationDemande?->beneficiaire) {
+            $link = UserBeneficiaireLink::query()
+                ->where('user_id', $user->id)
+                ->where('beneficiaire_id', $relationDemande->beneficiaire_id)
+                ->first();
+
+            if ($link) {
+                return ['beneficiaire' => $relationDemande->beneficiaire, 'link' => $link];
+            }
+        }
+
+        $code = AffiliationPension::normalizeCode((string) ($demande->pension_code ?? ''));
+        $affiliation = $code !== '' ? AffiliationPension::findByCode($code) : null;
+        $beneficiaire = $affiliation?->beneficiaire;
+
+        if (! $beneficiaire || ! $beneficiaire->is_mineur) {
+            return null;
+        }
+
+        $link = UserBeneficiaireLink::query()
+            ->where('user_id', $user->id)
+            ->where('beneficiaire_id', $beneficiaire->id)
+            ->whereIn('relation', [
+                BeneficiaireRelationEnum::PERE->value,
+                BeneficiaireRelationEnum::MERE->value,
+                BeneficiaireRelationEnum::TUTEUR->value,
+            ])
+            ->first();
+
+        if (! $link) {
+            return null;
+        }
+
+        return ['beneficiaire' => $beneficiaire, 'link' => $link];
     }
 
     public function syncAffiliation(Beneficiaire $beneficiaire, ?string $code, bool $primary = true): ?AffiliationPension
@@ -274,26 +377,6 @@ class BeneficiaireProvisioningService
         User $user,
         DemandeCreationCompte $demande,
     ): PensionMandat {
-        return DB::transaction(function () use ($user, $demande) {
-            $code = (string) ($demande->pension_code ?? '');
-            $beneficiaire = $this->beneficiaireForPensionCode($code);
-
-            $mandat = PensionMandat::create([
-                'user_id' => $user->id,
-                'beneficiaire_id' => $beneficiaire->id,
-                'type' => 'designation_ouverture_compte',
-                'status' => PensionMandatStatusEnum::EN_ATTENTE,
-                'notes' => 'Créé via demande de compte mandataire '.$demande->code,
-            ]);
-
-            if ($demande->hasMedia('mandat_designation')) {
-                $demande->getFirstMedia('mandat_designation')?->copy(
-                    $mandat,
-                    'mandat_document',
-                );
-            }
-
-            return $mandat;
-        });
+        return app(PensionMandatService::class)->registerFromDemandeCreationCompte($user, $demande);
     }
 }

@@ -50,9 +50,15 @@
                         <p class="mt-2 text-sm text-white/85 leading-relaxed max-w-xl">
                             @if($isRefused)
                                 Votre accès en ligne est limité. Consultez le motif du refus et les coordonnées de la Direction si vous avez des questions.
+                            @elseif(($openingProfile ?? 'titulaire') === 'mandataire')
+                                Votre compte mandataire est <strong class="font-semibold text-white">provisoire</strong>.
+                                Prenez un rendez-vous au <strong class="font-semibold text-white">Service Formalités</strong> (formalités et mandats) pour valider votre dossier.
+                            @elseif(($openingProfile ?? 'titulaire') === 'representant')
+                                Votre compte représentant est <strong class="font-semibold text-white">provisoire</strong>.
+                                Prenez un rendez-vous au <strong class="font-semibold text-white">Service Formalités</strong> (formalités et mandats) pour valider votre dossier.
                             @else
                                 Votre compte est <strong class="font-semibold text-white">provisoire</strong>.
-                                Les services complets seront disponibles après validation par le Service Formalités.
+                                Les services complets seront disponibles après un rendez-vous et la validation par le Service Formalités.
                             @endif
                         </p>
                     </div>
@@ -93,7 +99,15 @@
         {{-- Parcours --}}
         <section class="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
             <h2 class="text-base font-bold text-gray-900">Où en suis-je ?</h2>
-            <p class="mt-1 text-sm text-gray-600">Les étapes de validation de votre compte pensionné en ligne.</p>
+            <p class="mt-1 text-sm text-gray-600">
+                @if(($openingProfile ?? 'titulaire') === 'mandataire')
+                    Les étapes pour activer votre compte mandataire (rendez-vous Formalités obligatoire).
+                @elseif(($openingProfile ?? 'titulaire') === 'representant')
+                    Les étapes pour activer votre compte représentant (rendez-vous Formalités obligatoire).
+                @else
+                    Les étapes de validation de votre compte pensionné en ligne.
+                @endif
+            </p>
 
             <ol class="mt-6 space-y-0">
                 @foreach($steps as $index => $step)

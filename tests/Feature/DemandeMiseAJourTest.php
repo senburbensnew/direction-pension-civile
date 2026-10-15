@@ -18,7 +18,7 @@ class DemandeMiseAJourTest extends TestCase
     {
         parent::setUp();
         $this->seedRoles();
-        $this->seedStatuses();
+        $this->seedWorkflowSteps();
         $this->seedServices();
         Storage::fake('public');
     }

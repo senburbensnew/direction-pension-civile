@@ -22,7 +22,7 @@ class DemandeManagementFeatureTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
-        $this->seedStatuses();
+        $this->seedWorkflowSteps();
         $this->seedServices();
         $this->seedRoles();
         $this->seed(RencontreWorkflowStepSeeder::class);
@@ -118,7 +118,7 @@ class DemandeManagementFeatureTest extends TestCase
         $admin = User::factory()->create();
         $admin->assignRole('admin');
 
-        $response = $this->actingAs($admin)->get(route('admin.demandes.index'));
+        $response = $this->actingAsConfirmed($admin)->get(route('admin.demandes.index'));
 
         $response->assertOk();
     }
@@ -128,7 +128,7 @@ class DemandeManagementFeatureTest extends TestCase
     {
         $user = $this->makeRegularUser();
 
-        $response = $this->actingAs($user)->get(route('admin.demandes.index'));
+        $response = $this->actingAsConfirmed($user)->get(route('admin.demandes.index'));
 
         $response->assertForbidden();
     }
@@ -149,7 +149,7 @@ class DemandeManagementFeatureTest extends TestCase
         $owner = $this->makeRegularUser();
         $demande = $this->makeDemande($owner);
 
-        $response = $this->actingAs($dirUser)
+        $response = $this->actingAsConfirmed($dirUser)
             ->post(route('demande.annotate', $demande), [
                 'annotation' => 'Dossier examiné et validé pour transfert.',
             ]);
@@ -195,7 +195,7 @@ class DemandeManagementFeatureTest extends TestCase
             'current_step_id' => $soumise->id,
         ]);
 
-        $response = $this->actingAs($dirUser)
+        $response = $this->actingAsConfirmed($dirUser)
             ->post(route('demande.annotate', $demande), [
                 'annotation' => 'Prêt pour dispatch.',
             ]);
@@ -217,7 +217,7 @@ class DemandeManagementFeatureTest extends TestCase
         $owner = $this->makeRegularUser();
         $demande = $this->makeDemande($owner);
 
-        $response = $this->actingAs($user)
+        $response = $this->actingAsConfirmed($user)
             ->post(route('demande.annotate', $demande), [
                 'annotation' => 'Tentative.',
             ]);
@@ -235,7 +235,7 @@ class DemandeManagementFeatureTest extends TestCase
         $owner = $this->makeRegularUser();
         $demande = $this->makeDemande($owner);
 
-        $response = $this->actingAs($dirUser)
+        $response = $this->actingAsConfirmed($dirUser)
             ->post(route('demande.annotate', $demande), [
                 'annotation' => '',
             ]);
@@ -257,7 +257,7 @@ class DemandeManagementFeatureTest extends TestCase
         $owner = $this->makeRegularUser();
         $demande = $this->makeDemande($owner);
 
-        $response = $this->actingAs($agent)
+        $response = $this->actingAsConfirmed($agent)
             ->post(route('demande.complement', $demande), [
                 'message' => 'Veuillez fournir une copie de votre pièce d\'identité.',
             ]);
@@ -284,7 +284,7 @@ class DemandeManagementFeatureTest extends TestCase
         $owner = $this->makeRegularUser();
         $demande = $this->makeDemande($owner);
 
-        $response = $this->actingAs($agent)
+        $response = $this->actingAsConfirmed($agent)
             ->post(route('demande.complement', $demande), [
                 'message' => '',
             ]);
@@ -301,7 +301,7 @@ class DemandeManagementFeatureTest extends TestCase
         $owner = $this->makeRegularUser();
         $demande = $this->makeDemandeThatHasBeenProcessed($owner);
 
-        $response = $this->actingAs($dirUser)
+        $response = $this->actingAsConfirmed($dirUser)
             ->post(route('admin.demandes.approuver', $demande));
 
         $response->assertRedirect();
@@ -318,7 +318,7 @@ class DemandeManagementFeatureTest extends TestCase
         $owner = $this->makeRegularUser();
         $demande = $this->makeDemande($owner); // no workflow processed
 
-        $response = $this->actingAs($dirUser)
+        $response = $this->actingAsConfirmed($dirUser)
             ->post(route('admin.demandes.approuver', $demande));
 
         $response->assertForbidden();
@@ -332,7 +332,7 @@ class DemandeManagementFeatureTest extends TestCase
         $owner = $this->makeRegularUser();
         $demande = $this->makeDemandeThatHasBeenProcessed($owner);
 
-        $response = $this->actingAs($admin)
+        $response = $this->actingAsConfirmed($admin)
             ->post(route('admin.demandes.approuver', $demande));
 
         $response->assertForbidden();
@@ -347,7 +347,7 @@ class DemandeManagementFeatureTest extends TestCase
         $owner = $this->makeRegularUser();
         $demande = $this->makeDemandeThatHasBeenProcessed($owner);
 
-        $response = $this->actingAs($dirUser)
+        $response = $this->actingAsConfirmed($dirUser)
             ->post(route('admin.demandes.cloturer', $demande));
 
         $response->assertRedirect();
@@ -366,7 +366,7 @@ class DemandeManagementFeatureTest extends TestCase
         $owner = $this->makeRegularUser();
         $demande = $this->makeDemande($owner);
 
-        $response = $this->actingAs($dirUser)
+        $response = $this->actingAsConfirmed($dirUser)
             ->post(route('admin.demandes.rejeter', $demande), [
                 'motif' => 'Documents insuffisants.',
             ]);
@@ -384,7 +384,7 @@ class DemandeManagementFeatureTest extends TestCase
         $owner = $this->makeRegularUser();
         $demande = $this->makeDemande($owner);
 
-        $response = $this->actingAs($admin)
+        $response = $this->actingAsConfirmed($admin)
             ->post(route('admin.demandes.rejeter', $demande));
 
         $response->assertForbidden();
@@ -399,7 +399,7 @@ class DemandeManagementFeatureTest extends TestCase
         $owner = $this->makeRegularUser();
         $demande = $this->makeDemande($owner);
 
-        $response = $this->actingAs($dirUser)
+        $response = $this->actingAsConfirmed($dirUser)
             ->post(route('admin.demandes.annuler', $demande), [
                 'motif' => 'Retrait volontaire.',
             ]);
@@ -419,7 +419,7 @@ class DemandeManagementFeatureTest extends TestCase
         $owner = $this->makeRegularUser();
         $demande = $this->makeDemande($owner, 'SOUMISE');
 
-        $response = $this->actingAs($admin)
+        $response = $this->actingAsConfirmed($admin)
             ->post(route('admin.demandes.updateStatus', $demande), [
                 'etat' => 'EN_ATTENTE',
                 'commentaire' => 'Mise en attente de vérification.',
@@ -440,7 +440,7 @@ class DemandeManagementFeatureTest extends TestCase
         $owner = $this->makeRegularUser();
         $demande = $this->makeDemande($owner);
 
-        $response = $this->actingAs($admin)
+        $response = $this->actingAsConfirmed($admin)
             ->post(route('admin.demandes.updateStatus', $demande), []);
 
         $response->assertSessionHasErrors('etat');
@@ -458,7 +458,7 @@ class DemandeManagementFeatureTest extends TestCase
         $liq = Service::where('code', Service::LIQUIDATION)->first();
         $sec = Service::where('code', Service::SECRETARIAT)->first();
 
-        $response = $this->actingAs($admin)
+        $response = $this->actingAsConfirmed($admin)
             ->post(route('admin.demandes.affecter', $demande), [
                 'service_ids' => [$liq->id, $sec->id],
             ]);
@@ -486,7 +486,7 @@ class DemandeManagementFeatureTest extends TestCase
         $owner = $this->makeRegularUser();
         $demande = $this->makeDemande($owner);
 
-        $response = $this->actingAs($admin)
+        $response = $this->actingAsConfirmed($admin)
             ->post(route('admin.demandes.affecter', $demande), [
                 'service_ids' => [],
             ]);
@@ -504,7 +504,7 @@ class DemandeManagementFeatureTest extends TestCase
         $demande = $this->makeDemande($owner);
         $demande->update(['current_service_id' => $serviceId]);
 
-        $response = $this->actingAs($admin)
+        $response = $this->actingAsConfirmed($admin)
             ->post(route('admin.demandes.assigner-agent', $demande), [
                 'user_id' => $agent->id,
                 'note' => 'Test affectation',
@@ -530,8 +530,8 @@ class DemandeManagementFeatureTest extends TestCase
         $demande = $this->makeDemande($owner);
         $demande->update(['current_service_id' => $serviceId]);
 
-        $this->actingAs($admin)->post(route('admin.demandes.assigner-agent', $demande), ['user_id' => $agent1->id]);
-        $this->actingAs($admin)->post(route('admin.demandes.assigner-agent', $demande), ['user_id' => $agent2->id]);
+        $this->actingAsConfirmed($admin)->post(route('admin.demandes.assigner-agent', $demande), ['user_id' => $agent1->id]);
+        $this->actingAsConfirmed($admin)->post(route('admin.demandes.assigner-agent', $demande), ['user_id' => $agent2->id]);
 
         // First assignment should now have ended_at set
         $this->assertDatabaseMissing('assignments', ['user_id' => $agent1->id, 'ended_at' => null]);
@@ -550,7 +550,7 @@ class DemandeManagementFeatureTest extends TestCase
         $demande = $this->makeDemande($owner);
         $demande->update(['current_service_id' => $dirServiceId]);
 
-        $response = $this->actingAs($admin)
+        $response = $this->actingAsConfirmed($admin)
             ->post(route('admin.demandes.assigner-agent', $demande), ['user_id' => $agent->id]);
 
         $response->assertStatus(422);
@@ -575,7 +575,7 @@ class DemandeManagementFeatureTest extends TestCase
             ],
         ]);
 
-        $this->actingAs($agent)
+        $this->actingAsConfirmed($agent)
             ->post(route('rencontres.pilotage.accepter', $demande))
             ->assertForbidden();
     }
@@ -607,7 +607,7 @@ class DemandeManagementFeatureTest extends TestCase
         ]);
         $show = route('rencontres.pilotage.show', $demande);
 
-        $this->from($show)->actingAs($admin)
+        $this->from($show)->actingAsConfirmed($admin)
             ->post(route('rencontres.pilotage.accepter', $demande))
             ->assertRedirect($show)
             ->assertSessionHas('success');
@@ -643,7 +643,7 @@ class DemandeManagementFeatureTest extends TestCase
             ],
         ]);
 
-        $this->actingAs($manager)
+        $this->actingAsConfirmed($manager)
             ->get(route('rencontres.pilotage.show', $demande))
             ->assertOk()
             ->assertSee('Coordonnées et compléments')
@@ -681,7 +681,7 @@ class DemandeManagementFeatureTest extends TestCase
         ]);
         $show = route('rencontres.pilotage.show', $demande);
 
-        $this->from($show)->actingAs($admin)
+        $this->from($show)->actingAsConfirmed($admin)
             ->post(route('rencontres.pilotage.refuser', $demande), [
                 'commentaire' => 'Agenda complet.',
             ])

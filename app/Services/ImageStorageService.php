@@ -76,6 +76,22 @@ class ImageStorageService
         $this->writeResponsiveVariants($sourceAbsolute, $quality);
     }
 
+    public function writePngSibling(string $sourceAbsolute): void
+    {
+        if (! preg_match('/\.jpe?g$/i', $sourceAbsolute)) {
+            return;
+        }
+
+        $pngAbsolute = preg_replace('/\.jpe?g$/i', '.png', $sourceAbsolute);
+        if (! $pngAbsolute || $pngAbsolute === $sourceAbsolute || ! is_file($sourceAbsolute)) {
+            return;
+        }
+
+        Image::load($sourceAbsolute)
+            ->format('png')
+            ->save($pngAbsolute);
+    }
+
     public function writeWebpSibling(string $sourceAbsolute, int $quality = 82): void
     {
         if (! function_exists('imagewebp')) {

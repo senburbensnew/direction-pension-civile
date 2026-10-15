@@ -32,6 +32,15 @@ return [
         'email_placeholder' => 'votre@email.com',
     ],
 
+    'password_required' => [
+        'title' => 'Changement de mot de passe requis',
+        'intro' => 'Pour des raisons de sécurité, vous devez définir un nouveau mot de passe personnel avant de continuer.',
+        'new_password' => 'Nouveau mot de passe',
+        'submit' => 'Enregistrer le mot de passe',
+        'logout' => 'Se déconnecter',
+        'notice' => 'Veuillez définir un nouveau mot de passe pour accéder à votre espace.',
+    ],
+
     'register' => [
         'title' => 'Créer un compte',
         'intro' => 'Remplissez les informations ci-dessous pour vous inscrire.',
@@ -44,8 +53,13 @@ return [
     ],
 
     'confirm_password' => [
+        'title' => 'Confirmez votre mot de passe',
         'intro' => 'Il s\'agit d\'une zone sécurisée. Veuillez confirmer votre mot de passe avant de continuer.',
-        'submit' => 'Confirmer',
+        'reauth_required' => 'Pour des raisons de sécurité, vous devez saisir à nouveau votre mot de passe avant cette action (modification du compte, dossier sensible, etc.).',
+        'timeout_hint' => 'Après confirmation, vous pourrez enchaîner les actions sensibles pendant :minutes minutes sans ressaisir votre mot de passe.',
+        'resume_hint' => 'Une fois confirmé, vous serez renvoyé automatiquement vers l’action que vous aviez commencée.',
+        'submit' => 'Confirmer et continuer',
+        'json_required' => 'Confirmation du mot de passe requise.',
     ],
 
     'verify_email' => [
@@ -116,7 +130,10 @@ return [
         'phone_number' => 'Numéro de téléphone',
         'nif_label' => 'Matricule fiscal (NIF)',
         'pension_code_label' => 'Code pension',
-        'pension_code_optional' => '(si code pension)',
+        'pension_code_label_pensionne' => 'Code pension du pensionné',
+        'pension_code_hint_pensionne' => 'Code du pensionné concerné (mineur ou personne mandante), pas le vôtre en tant que représentant ou mandataire.',
+        'pension_code_hint_optional' => 'Facultatif pour l’instant. Vous pourrez le compléter dans « Ma demande de création de compte » ou plus tard dans votre profil.',
+        'pension_code_optional' => '(facultatif)',
         'pension_code_placeholder' => '7-XXXXX ou 8-XXXXX',
         'profile_later_hint' => 'Le NINU et l’adresse e-mail pourront être complétés plus tard dans :profile, une fois le compte créé.',
         'my_profile' => 'Mon profil',
@@ -281,6 +298,8 @@ return [
             'nif_required' => 'Le NIF est obligatoire.',
             'nif_unavailable' => 'Ce NIF n’est pas disponible.',
             'pension_code_mandataire' => 'Indiquez le code pension du pensionné que vous représentez.',
+            'pension_code_mineur' => 'Indiquez le code pension du pensionné mineur (acte de naissance), pas le vôtre.',
+            'pension_code_not_proxy_titulaire' => 'Ce code correspond à votre dossier titulaire. Indiquez le code du pensionné concerné.',
             'pension_code_unrecognized' => 'Ce code pension n’est pas reconnu.',
             'pension_code_unavailable' => 'Ce code pension n’est pas disponible.',
             'password_min' => 'Le mot de passe doit contenir au moins 8 caractères.',

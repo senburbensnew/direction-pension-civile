@@ -13,6 +13,7 @@ use App\Models\WorkflowStep;
 use App\Services\Account\UserCategoryRoleSyncService;
 use App\Services\HaitiHolidayService;
 use App\Services\RencontreAvailabilityService;
+use Carbon\Carbon;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Cache;
@@ -241,7 +242,7 @@ class RencontreBookingRulesTest extends TestCase
         $agentA = $this->makeFormalitesAgent();
         $agentB = $this->makeFormalitesAgent();
         $date = now()->next('Wednesday')->toDateString();
-        $weekday = (int) \Carbon\Carbon::parse($date)->dayOfWeekIso;
+        $weekday = (int) Carbon::parse($date)->dayOfWeekIso;
 
         config([
             'rdv.rotation.enabled' => true,
@@ -269,7 +270,7 @@ class RencontreBookingRulesTest extends TestCase
 
     public function test_find_available_agent_prefers_lower_weekly_load(): void
     {
-        $this->seedStatuses();
+        $this->seedWorkflowSteps();
         $service = Service::where('code', Service::FORMALITE)->firstOrFail();
         $agentA = $this->makeFormalitesAgent();
         $agentB = $this->makeFormalitesAgent();
@@ -315,10 +316,5 @@ class RencontreBookingRulesTest extends TestCase
                 'modalite' => 'visio',
             ],
         ]);
-    }
-
-    private function seedStatuses(): void
-    {
-        $this->seed(\Database\Seeders\WorkflowStepSeeder::class);
     }
 }

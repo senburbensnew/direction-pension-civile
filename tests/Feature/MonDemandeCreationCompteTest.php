@@ -110,14 +110,14 @@ class MonDemandeCreationCompteTest extends TestCase
         $this->actingAs($user)
             ->get(route('personal.request.authenticated-user-request.show', $rdv->id))
             ->assertOk()
-            ->assertSee('RDV-TEST-001')
+            ->assertSee('Demande de formalités de pension et mandats', false)
             ->assertSee('Suivi du rendez-vous');
 
         $this->actingAs($user)
             ->get(route('compte.provisoire'))
             ->assertOk()
             ->assertSee('Mes rendez-vous')
-            ->assertSee('RDV-TEST-001');
+            ->assertSee('Demande de formalités de pension et mandats', false);
     }
 
     /** @test */
@@ -131,6 +131,64 @@ class MonDemandeCreationCompteTest extends TestCase
         $this->assertTrue($user->exposesPensionIdentity());
         $this->assertSame('123-456-789-0', $user->displayNif());
         $this->assertSame('8-34321', $user->displayPensionCode());
+    }
+
+    /** @test */
+    public function provisional_mandataire_can_open_formalites_rencontre_booking(): void
+    {
+        $user = User::factory()->create([
+            'account_status' => AccountStatusEnum::PROVISOIRE,
+        ]);
+        app(\App\Services\Account\UserCategoryRoleSyncService::class)
+            ->assignCategory($user, 'externe', primary: true, syncRoles: false);
+
+        DemandeCreationCompte::create([
+            'code' => 'DCC-MAND-RDV-'.uniqid(),
+            'user_type' => 'externe',
+            'telephone' => '+50938101010',
+            'adresse' => 'Port-au-Prince',
+            'status' => DemandeCreationCompte::STATUS_EN_ATTENTE,
+            'user_id' => $user->id,
+            'is_mandataire' => true,
+            'soumise_at' => now(),
+        ]);
+
+        $this->actingAs($user)
+            ->get(route('demandes.rencontre.create'))
+            ->assertOk()
+            ->assertSee('Demande de formalités de pension et mandats', false);
+
+        $this->actingAs($user)
+            ->get(route('compte.provisoire'))
+            ->assertOk()
+            ->assertSee('Service Formalités')
+            ->assertSee('Prendre rendez-vous');
+    }
+
+    /** @test */
+    public function provisional_representative_can_open_formalites_rencontre_booking(): void
+    {
+        $user = User::factory()->create([
+            'account_status' => AccountStatusEnum::PROVISOIRE,
+        ]);
+        app(\App\Services\Account\UserCategoryRoleSyncService::class)
+            ->assignCategory($user, 'externe', primary: true, syncRoles: false);
+
+        DemandeCreationCompte::create([
+            'code' => 'DCC-REP-RDV-'.uniqid(),
+            'user_type' => 'externe',
+            'telephone' => '+50938102020',
+            'adresse' => 'Port-au-Prince',
+            'status' => DemandeCreationCompte::STATUS_EN_ATTENTE,
+            'user_id' => $user->id,
+            'is_mineur' => true,
+            'soumise_at' => now(),
+        ]);
+
+        $this->actingAs($user)
+            ->get(route('demandes.rencontre.create'))
+            ->assertOk()
+            ->assertSee('Demande de formalités de pension et mandats', false);
     }
 
     /** @test */

@@ -19,7 +19,7 @@ class DemandeMediaAccessTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
-        $this->seedStatuses();
+        $this->seedWorkflowSteps();
     }
 
     public function test_owner_can_stream_private_demande_media(): void

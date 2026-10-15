@@ -90,7 +90,7 @@
             </li>
             <li class="flex items-center gap-2">
                 <span class="rdv-legend-swatch rdv-legend-past" aria-hidden="true"></span>
-                Créneau déjà passé (aujourd’hui)
+                Créneau déjà passé (jour passé ou heure passée aujourd’hui)
             </li>
             <li class="flex items-center gap-2">
                 <span class="rdv-legend-swatch rdv-legend-reserved" aria-hidden="true"></span>

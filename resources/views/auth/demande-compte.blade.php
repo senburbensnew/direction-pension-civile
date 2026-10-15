@@ -90,6 +90,12 @@
             }
         }
 
+        $wizardSteps = __('guest.account_request_js.steps');
+        $initialStepMeta = collect($wizardSteps)->firstWhere('id', $initialStep) ?? ($wizardSteps[0] ?? []);
+        $initialStepNumber = max(1, (int) (collect($wizardSteps)->search(
+            fn (array $step) => (int) ($step['id'] ?? 0) === $initialStep
+        ) + 1));
+
         $formState = [
             'step' => $initialStep,
             'isMineur' => $isMineur,
@@ -109,9 +115,11 @@
             'representantPieceType' => old('piece_identite_representant_type', ''),
             'representantEstPensionne' => $representantEstPensionne,
             'mandataireEstPensionne' => $mandataireEstPensionne,
+            'acceptTerms' => (bool) old('accept_terms'),
 
             'ocrUrl' => route('demandes.compte.ocr'),
             'availabilityUrl' => route('demandes.compte.disponibilite'),
+            'rdvFallbackUrl' => route('demandes.rencontre.create', absolute: true),
 
             'fieldErrors' => $serverErrors,
 
@@ -406,7 +414,10 @@
         }
     </style>
 
-    <div x-data="demandeCompteForm(@js($formState))">
+    <div
+        data-dpc-demande-compte-form
+        x-data="demandeCompteForm(@js($formState))"
+    >
 
         {{-- ============================================================
              EN-TÊTE
@@ -419,13 +430,13 @@
 
             <p class="mt-1 text-sm text-gray-500">
                 {{ __('guest.account_request.step_label') }}
-                <span x-text="currentStepNumber"></span>
+                <span x-text="currentStepNumber">{{ $initialStepNumber }}</span>
                 /
-                <span x-text="totalSteps"></span>
+                <span x-text="totalSteps">{{ count($wizardSteps) }}</span>
 
                 <span class="text-gray-300 mx-1">·</span>
 
-                <span x-text="currentStepCaption"></span>
+                <span x-text="currentStepCaption">{{ $initialStepMeta['caption'] ?? '' }}</span>
             </p>
         </div>
 
@@ -1276,7 +1287,15 @@
                                 for="pension_code"
                                 class="block text-sm font-medium text-gray-700"
                             >
-                                {{ __('guest.account_request.pension_code_label') }}
+                                <span
+                                    x-show="!isMineur && !isMandataire"
+                                    x-text="ui.pension_code_label"
+                                ></span>
+                                <span
+                                    x-show="isMineur || isMandataire"
+                                    x-cloak
+                                    x-text="ui.pension_code_label_pensionne"
+                                ></span>
                                 <span class="text-xs font-normal text-gray-400">{{ __('guest.account_request.pension_code_optional') }}</span>
                             </label>
                             <x-format-hint-icon
@@ -1304,6 +1323,12 @@
                             class="w-full py-2.5 px-3 border rounded-lg text-sm focus:outline-none focus:ring-2"
                             :class="borderClass('pension_code')"
                         >
+
+                        <p
+                            x-show="!fieldErrors.pension_code"
+                            class="text-xs text-gray-500 mt-1"
+                            x-text="ui.pension_code_hint_optional"
+                        ></p>
 
                         <p
                             x-show="!fieldErrors.pension_code"
@@ -2377,6 +2402,9 @@
                                 ...(field === 'pension_code' && this.isMandataire
                                     ? { is_mandataire: '1' }
                                     : {}),
+                                ...(field === 'pension_code' && this.isMineur
+                                    ? { is_mineur: '1' }
+                                    : {}),
                             }).toString();
 
                         const response = await fetch(url, {
@@ -2687,6 +2715,13 @@
                     mappings.forEach(({ ocrKeys, target, format }) => {
                         const current = String(this[target] ?? '').trim();
                         if (current !== '') {
+                            return;
+                        }
+
+                        if (
+                            target === 'pension_code' &&
+                            (this.isMineur || this.isMandataire)
+                        ) {
                             return;
                         }
 
@@ -3498,11 +3533,8 @@
                     *   - 7- suivi de 5 caractères alphanumériques (ex. 7-JM183, 7-l0366)
                     *   - 8- suivi de 5 chiffres (ex. 8-18698, 8-00500)
                     */
-                    if (this.isMandataire) {
-                        if (!this.pension_code) {
-                            nextErrors.pension_code =
-                                validation.pension_code_mandataire;
-                        } else if (
+                    if (this.pension_code) {
+                        if (
                             !/^(7-[A-Z0-9]{5}|8-\d{5})$/i.test(
                                 this.pension_code
                             )
@@ -3514,26 +3546,9 @@
                         ) {
                             nextErrors.pension_code =
                                 this.pension_codeMessage ||
-                                validation.pension_code_unrecognized;
-                        }
-                    } else if (
-                        this.userType === 'pensionne' &&
-                        this.pension_code
-                    ) {
-                        if (
-                            !/^(7-[A-Z0-9]{5}|8-\d{5})$/i.test(
-                                this.pension_code
-                            )
-                        ) {
-                            nextErrors.pension_code =
-                                validation.pension_code_format;
-                        } else if (
-                            this.pension_codeStatus ===
-                            'error'
-                        ) {
-                            nextErrors.pension_code =
-                                this.pension_codeMessage ||
-                                validation.pension_code_unavailable;
+                                (this.isMandataire || this.isMineur
+                                    ? validation.pension_code_unrecognized
+                                    : validation.pension_code_unavailable);
                         }
                     }
 

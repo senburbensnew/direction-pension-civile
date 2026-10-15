@@ -534,7 +534,7 @@
     {{-- ═══════════════════════════════════════
          NOS PARTENAIRES
     ════════════════════════════════════════ --}}
-    <section class="pt-14 pb-0 bg-white">
+    <section class="pt-14 pb-10 md:pb-14 bg-white">
         <div class="container mx-auto px-4">
             <x-home-heading :kicker="__('home.partners_kicker')" :title="__('home.partners_title')" />
             <x-institutions-carousel speed="40" />

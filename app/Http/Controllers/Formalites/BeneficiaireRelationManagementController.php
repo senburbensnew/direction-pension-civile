@@ -18,7 +18,7 @@ class BeneficiaireRelationManagementController extends Controller
     public function index()
     {
         $demandes = BeneficiaireRelationDemande::query()
-            ->with(['user', 'beneficiaire.affiliations'])
+            ->with(['user', 'beneficiaire.affiliations', 'demandeCreationCompte'])
             ->latest()
             ->paginate(20);
 

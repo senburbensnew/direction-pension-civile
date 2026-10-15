@@ -149,7 +149,10 @@ class RencontreVisioService
         );
     }
 
-    public function closesAt(
+    /**
+     * Fin prévue du créneau RDV (durée d’un slot, ex. 15 min après le début).
+     */
+    public function slotEndsAt(
         Demande $demande
     ): ?Carbon {
         $start = $this->startsAt($demande);
@@ -163,14 +166,50 @@ class RencontreVisioService
             15
         );
 
-        $after = (int) config(
-            'rdv.visio.keep_open_minutes_after',
-            15
-        );
+        return $start->copy()->addMinutes($slot);
+    }
 
-        return $start
-            ->copy()
-            ->addMinutes($slot + $after);
+    public function closesAt(
+        Demande $demande
+    ): ?Carbon {
+        return $this->slotEndsAt($demande);
+    }
+
+    public function isVisioLinkExpired(
+        Demande $demande,
+        ?Carbon $now = null
+    ): bool {
+        if (($demande->data['modalite'] ?? '') !== 'visio') {
+            return false;
+        }
+
+        $now ??= now();
+        $rdvStatut = $demande->rencontreStatut();
+
+        if ($rdvStatut->isTerminal()) {
+            if ($rdvStatut === RencontreStatutEnum::REALISE && $this->isActive($demande, $now)) {
+                return false;
+            }
+
+            return true;
+        }
+
+        $ends = $this->slotEndsAt($demande);
+
+        if (! $ends) {
+            return false;
+        }
+
+        return $now->gte($ends);
+    }
+
+    public function canJoinVisio(
+        Demande $demande,
+        ?Carbon $now = null
+    ): bool {
+        return ($demande->data['modalite'] ?? '') === 'visio'
+            && filled($demande->visio_token)
+            && $this->status($demande, $now) === 'actif';
     }
 
     public function isActive(
@@ -184,10 +223,8 @@ class RencontreVisioService
 
         return $opens !== null
             && $closes !== null
-            && $now->betweenIncluded(
-                $opens,
-                $closes
-            );
+            && $now->gte($opens)
+            && $now->lt($closes);
     }
 
     public function status(
@@ -207,7 +244,7 @@ class RencontreVisioService
             return 'en_attente';
         }
 
-        if ($now->gt($closes)) {
+        if ($now->gte($closes)) {
             return 'termine';
         }
 

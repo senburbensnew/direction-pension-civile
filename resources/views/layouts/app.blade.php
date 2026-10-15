@@ -150,8 +150,6 @@
             </div>
         </header>
 
-        <x-pension-context-banner />
-
         @php
             $showGlobalFlash = ! request()->routeIs('demandes.rencontre.create');
             $hasGlobalFlash = $showGlobalFlash && (

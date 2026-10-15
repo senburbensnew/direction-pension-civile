@@ -10,6 +10,8 @@ use App\Models\User;
 use App\Notifications\DemandeCreationCompteAccepteeNotification;
 use App\Notifications\DemandeCreationCompteRefuseeNotification;
 use App\Services\Pension\BeneficiaireProvisioningService;
+use App\Services\Pension\BeneficiaireRelationService;
+use App\Services\Pension\PensionMandatService;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Notification;
 use Illuminate\Validation\ValidationException;
@@ -88,7 +90,8 @@ class DemandeCreationCompteReviewService
             $provisioning = app(BeneficiaireProvisioningService::class);
 
             if ($demande->is_mandataire) {
-                // Le mandat reste en attente d’approbation admin ; pas de lien mandataire avant approbation.
+                app(PensionMandatService::class)->syncBeneficiaireFromDemandeCreationCompte($demande->fresh());
+                app(PensionMandatService::class)->onDemandeCreationCompteAccepted($demande->fresh());
             } elseif ($demande->is_mineur) {
                 $provisioning->provisionFromDemandeCreation(
                     $user->fresh(),
@@ -154,6 +157,22 @@ class DemandeCreationCompteReviewService
                     'account_status' => AccountStatusEnum::BLOQUE->value,
                 ]
             );
+
+            if ($demande->is_mineur) {
+                app(BeneficiaireRelationService::class)->refuseFromDemandeCreationCompte(
+                    $demande->fresh(),
+                    $reviewer,
+                    $reason,
+                );
+            }
+
+            if ($demande->is_mandataire) {
+                app(PensionMandatService::class)->refuseFromDemandeCreationCompte(
+                    $demande->fresh(),
+                    $reviewer,
+                    $reason,
+                );
+            }
         });
 
         $notification = new DemandeCreationCompteRefuseeNotification($demande->fresh(), $reason);

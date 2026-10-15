@@ -58,6 +58,7 @@ class User extends Authenticatable
         'email',
         'phone',
         'password',
+        'must_change_password',
         'nif',
         'ninu',
         'service_id',
@@ -91,6 +92,7 @@ class User extends Authenticatable
         'email_verified_at' => 'datetime',
         'birth_date' => 'date',
         'password' => 'hashed',
+        'must_change_password' => 'boolean',
         'account_status' => AccountStatusEnum::class,
     ];
 
@@ -524,6 +526,11 @@ class User extends Authenticatable
     public function allowsLogin(): bool
     {
         return $this->resolvedAccountStatus()->allowsLogin();
+    }
+
+    public function mustChangePassword(): bool
+    {
+        return (bool) $this->must_change_password;
     }
 
     public function activateAccount(): void

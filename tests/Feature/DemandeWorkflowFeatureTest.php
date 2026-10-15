@@ -20,7 +20,7 @@ class DemandeWorkflowFeatureTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
-        $this->seedStatuses();
+        $this->seedWorkflowSteps();
         $this->seedServices();
         $this->seedRoles();
     }
@@ -57,7 +57,7 @@ class DemandeWorkflowFeatureTest extends TestCase
     {
         $user = $this->makeUser();
 
-        $response = $this->actingAs($user)->get(route('personal.dashboard'));
+        $response = $this->actingAsConfirmed($user)->get(route('personal.dashboard'));
 
         $response->assertOk();
     }
@@ -78,7 +78,7 @@ class DemandeWorkflowFeatureTest extends TestCase
         $user = $this->makeUser();
         $demande = $this->makeDemande($user);
 
-        $response = $this->actingAs($user)
+        $response = $this->actingAsConfirmed($user)
             ->get(route('personal.request.authenticated-user-request.show', $demande->id));
 
         $response->assertOk();
@@ -91,7 +91,7 @@ class DemandeWorkflowFeatureTest extends TestCase
         $visitor = $this->makeUser();
         $demande = $this->makeDemande($owner);
 
-        $response = $this->actingAs($visitor)
+        $response = $this->actingAsConfirmed($visitor)
             ->get(route('personal.request.authenticated-user-request.show', $demande->id));
 
         $response->assertNotFound();
@@ -107,7 +107,7 @@ class DemandeWorkflowFeatureTest extends TestCase
         $demande = $this->makeDemande($user);
         $demande->update(['current_step_id' => $statusId]);
 
-        $response = $this->actingAs($user)
+        $response = $this->actingAsConfirmed($user)
             ->post(route('demande.repondre-complement', $demande), [
                 'message' => 'Voici les documents complémentaires demandés.',
             ]);
@@ -128,7 +128,7 @@ class DemandeWorkflowFeatureTest extends TestCase
         $demande = $this->makeDemande($owner);
         $demande->update(['current_step_id' => $statusId]);
 
-        $response = $this->actingAs($intruder)
+        $response = $this->actingAsConfirmed($intruder)
             ->post(route('demande.repondre-complement', $demande), [
                 'message' => 'Tentative d\'intrusion.',
             ]);
@@ -144,7 +144,7 @@ class DemandeWorkflowFeatureTest extends TestCase
         $demande = $this->makeDemande($user);
         $demande->update(['current_step_id' => $statusId]);
 
-        $response = $this->actingAs($user)
+        $response = $this->actingAsConfirmed($user)
             ->post(route('demande.repondre-complement', $demande), []);
 
         $response->assertSessionHasErrors('message');
@@ -156,7 +156,7 @@ class DemandeWorkflowFeatureTest extends TestCase
         $user = $this->makeUser();
         $demande = $this->makeDemande($user); // BROUILLON by default
 
-        $response = $this->actingAs($user)
+        $response = $this->actingAsConfirmed($user)
             ->post(route('demande.repondre-complement', $demande), [
                 'message' => 'Quelque chose.',
             ]);
@@ -189,7 +189,7 @@ class DemandeWorkflowFeatureTest extends TestCase
             'statut' => DemandeInteraction::STATUT_EN_ATTENTE,
         ]);
 
-        $response = $this->actingAs($liqUser)
+        $response = $this->actingAsConfirmed($liqUser)
             ->post(route('admin.interactions.accepter', $interaction));
 
         $response->assertRedirect();
@@ -222,7 +222,7 @@ class DemandeWorkflowFeatureTest extends TestCase
             'statut' => DemandeInteraction::STATUT_EN_ATTENTE,
         ]);
 
-        $response = $this->actingAs($liqUser)
+        $response = $this->actingAsConfirmed($liqUser)
             ->post(route('admin.interactions.refuser', $interaction), [
                 'motif' => 'Dossier incomplet',
             ]);
@@ -254,7 +254,7 @@ class DemandeWorkflowFeatureTest extends TestCase
             'statut' => DemandeInteraction::STATUT_EN_ATTENTE,
         ]);
 
-        $response = $this->actingAs($wrongUser)
+        $response = $this->actingAsConfirmed($wrongUser)
             ->post(route('admin.interactions.accepter', $interaction));
 
         $response->assertForbidden();
@@ -290,7 +290,7 @@ class DemandeWorkflowFeatureTest extends TestCase
             'current_step_id' => $soumise->id,
         ]);
 
-        $response = $this->actingAs($dirUser)
+        $response = $this->actingAsConfirmed($dirUser)
             ->post(route('demande.transfert'), [
                 'demande_id' => $demande->id,
                 'service_id' => $this->liquidation()->id,
@@ -310,7 +310,7 @@ class DemandeWorkflowFeatureTest extends TestCase
         $demande = $this->makeDemande($dirUser);
         $demande->update(['current_service_id' => $this->direction()->id]);
 
-        $response = $this->actingAs($dirUser)
+        $response = $this->actingAsConfirmed($dirUser)
             ->post(route('demande.transfert'), [
                 'demande_id' => $demande->id,
                 'service_id' => $this->liquidation()->id,

@@ -30,6 +30,10 @@ class AuthenticatedSessionController extends Controller
         $request->session()->regenerate();
         $request->session()->forget('url.intended');
 
+        if ($request->user()?->mustChangePassword()) {
+            return redirect()->route('password.required');
+        }
+
         return redirect()->to(RouteServiceProvider::HOME);
     }
 

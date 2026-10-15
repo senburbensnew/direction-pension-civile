@@ -17,6 +17,26 @@ class PasswordConfirmationTest extends TestCase
         $response = $this->actingAs($user)->get('/confirm-password');
 
         $response->assertStatus(200);
+        $response->assertSee(__('guest.confirm_password.title'), false);
+    }
+
+    public function test_sensitive_action_redirects_to_confirm_password_with_reauth_message(): void
+    {
+        $user = User::factory()->create([
+            'phone' => null,
+        ]);
+
+        $response = $this
+            ->actingAs($user)
+            ->patch('/profile', [
+                'phone' => '+50937001234',
+            ]);
+
+        $response->assertRedirect(route('password.confirm'));
+        $response->assertSessionHas('password_reauth_required', true);
+
+        $followUp = $this->get(route('password.confirm'));
+        $followUp->assertSee(__('guest.confirm_password.reauth_required'), false);
     }
 
     public function test_password_can_be_confirmed(): void

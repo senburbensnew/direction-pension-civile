@@ -32,6 +32,15 @@ return [
         'email_placeholder' => 'imel@ou.com',
     ],
 
+    'password_required' => [
+        'title' => 'Ou dwe chanje modpas ou',
+        'intro' => 'Pou sekirite, ou dwe mete yon nouvo modpas pèsonèl anvan ou kontinye.',
+        'new_password' => 'Nouvo modpas',
+        'submit' => 'Anrejistre modpas la',
+        'logout' => 'Dekonekte',
+        'notice' => 'Tanpri mete yon nouvo modpas pou aksede nan espas ou.',
+    ],
+
     'register' => [
         'title' => 'Kreye yon kont',
         'intro' => 'Ranpli enfòmasyon ki anba yo pou enskri.',
@@ -44,8 +53,13 @@ return [
     ],
 
     'confirm_password' => [
+        'title' => 'Konfime modpas ou',
         'intro' => 'Sa se yon zòn sekirize. Tanpri konfime modpas ou anvan ou kontinye.',
-        'submit' => 'Konfime',
+        'reauth_required' => 'Pou sekirite ou, ou dwe antre modpas ou ankò anvan aksyon sa a ( chanjman kont, etap sansib sou dosye, elatriye ).',
+        'timeout_hint' => 'Apre konfirmasyon an, ou ka fè aksyon sansib yo pandan :minutes minit san ou pa bezwen antre modpas ou ankò.',
+        'resume_hint' => 'Yon fwa ou konfime, n ap retounen ou sou aksyon ou te kòmanse a.',
+        'submit' => 'Konfime epi kontinye',
+        'json_required' => 'Konfirmasyon modpas obligatwa.',
     ],
 
     'verify_email' => [
@@ -116,7 +130,10 @@ return [
         'phone_number' => 'Nimewo telefòn',
         'nif_label' => 'Matrikil fiskal (NIF)',
         'pension_code_label' => 'Kòd pansyon',
-        'pension_code_optional' => '(si gen kòd pansyon)',
+        'pension_code_label_pensionne' => 'Kòd pansyon pansyone a',
+        'pension_code_hint_pensionne' => 'Kòd pansyone ki konsène a (minè oswa moun ou reprezante a), pa pa ou kòm reprezantan oswa mandataire.',
+        'pension_code_hint_optional' => 'Pa obligatwa pou kounye a. Ou ka konplete l nan « Demann kreyasyon kont mwen an » oswa pita nan pwofil ou.',
+        'pension_code_optional' => '(opsyonèl)',
         'pension_code_placeholder' => '7-XXXXX oswa 8-XXXXX',
         'profile_later_hint' => 'NINU ak imel ou ka konplete pita nan :profile, apre yo kreye kont lan.',
         'my_profile' => 'Pwofil mwen',
@@ -281,6 +298,8 @@ return [
             'nif_required' => 'NIF obligatwa.',
             'nif_unavailable' => 'NIF sa a pa disponib.',
             'pension_code_mandataire' => 'Endike kòd pansyon pansyone ou reprezante a.',
+            'pension_code_mineur' => 'Endike kòd pansyon minè a (sou acte nesans), pa pa ou.',
+            'pension_code_not_proxy_titulaire' => 'Kòd sa a se pou dosye titilè ou. Endike kòd pansyone ki konsène a.',
             'pension_code_unrecognized' => 'Yo pa rekonèt kòd pansyon sa a.',
             'pension_code_unavailable' => 'Kòd pansyon sa a pa disponib.',
             'password_min' => 'Modpas la dwe gen omwen 8 karaktè.',

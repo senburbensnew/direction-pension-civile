@@ -100,6 +100,8 @@ class UserController extends Controller
 
         $this->validateRoleServiceRequirement($role, $validated['service_id'] ?? null);
 
+        $validated['must_change_password'] = true;
+
         $user = User::create($validated);
 
         if ($role) {
@@ -189,6 +191,8 @@ class UserController extends Controller
 
         if (empty($validated['password'])) {
             unset($validated['password']);
+        } else {
+            $validated['must_change_password'] = true;
         }
 
         if (empty($validated['username'])) {

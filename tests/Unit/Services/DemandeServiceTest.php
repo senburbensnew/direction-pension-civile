@@ -4,7 +4,6 @@ namespace Tests\Unit\Services;
 
 use App\Enums\TypeDemandeEnum;
 use App\Models\Demande;
-use App\Models\WorkflowStep;
 use App\Models\User;
 use App\Services\DemandeService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -22,21 +21,22 @@ class DemandeServiceTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
-        $this->seedStatuses();
-        $this->service = new DemandeService();
+        $this->seedWorkflowSteps();
+        $this->service = new DemandeService;
         Storage::fake('public');
     }
 
     private function makeDemande(string $type = TypeDemandeEnum::DEMANDE_ATTESTATION->value): Demande
     {
         $user = User::factory()->create();
+
         return Demande::create(['type' => $type, 'created_by' => $user->id]);
     }
 
     // ─── validateDocumentsForSubmission ──────────────────────────────────────
 
     /** @test */
-    public function validateDocuments_returns_empty_for_types_with_no_doc_config(): void
+    public function validate_documents_returns_empty_for_types_with_no_doc_config(): void
     {
         $demande = $this->makeDemande(TypeDemandeEnum::DEMANDE_ATTESTATION->value);
 
@@ -46,7 +46,7 @@ class DemandeServiceTest extends TestCase
     }
 
     /** @test */
-    public function validateDocuments_returns_error_when_required_doc_missing(): void
+    public function validate_documents_returns_error_when_required_doc_missing(): void
     {
         $demande = $this->makeDemande(TypeDemandeEnum::DEMANDE_ADHESION->value);
 
@@ -57,7 +57,7 @@ class DemandeServiceTest extends TestCase
     }
 
     /** @test */
-    public function validateDocuments_passes_when_required_doc_present(): void
+    public function validate_documents_passes_when_required_doc_present(): void
     {
         $demande = $this->makeDemande(TypeDemandeEnum::DEMANDE_ADHESION->value);
 
@@ -70,7 +70,7 @@ class DemandeServiceTest extends TestCase
     }
 
     /** @test */
-    public function isDemandeReadyForSubmission_returns_true_when_no_errors(): void
+    public function is_demande_ready_for_submission_returns_true_when_no_errors(): void
     {
         $demande = $this->makeDemande(TypeDemandeEnum::DEMANDE_ATTESTATION->value);
 
@@ -78,7 +78,7 @@ class DemandeServiceTest extends TestCase
     }
 
     /** @test */
-    public function isDemandeReadyForSubmission_returns_false_when_documents_missing(): void
+    public function is_demande_ready_for_submission_returns_false_when_documents_missing(): void
     {
         $demande = $this->makeDemande(TypeDemandeEnum::DEMANDE_ADHESION->value);
 
@@ -88,13 +88,13 @@ class DemandeServiceTest extends TestCase
     // ─── storeFiles ──────────────────────────────────────────────────────────
 
     /** @test */
-    public function storeFiles_persists_uploaded_file_as_media(): void
+    public function store_files_persists_uploaded_file_as_media(): void
     {
         config(['demandes.disk' => 'public']);
-        $service = new DemandeService();
+        $service = new DemandeService;
 
         $demande = $this->makeDemande(TypeDemandeEnum::DEMANDE_ADHESION->value);
-        $file    = UploadedFile::fake()->image('photo.jpg');
+        $file = UploadedFile::fake()->image('photo.jpg');
 
         $service->storeFiles($demande, ['profile_photo' => $file]);
 
@@ -102,13 +102,13 @@ class DemandeServiceTest extends TestCase
     }
 
     /** @test */
-    public function storeFiles_handles_array_of_files_for_same_field(): void
+    public function store_files_handles_array_of_files_for_same_field(): void
     {
         config(['demandes.disk' => 'public']);
-        $service = new DemandeService();
+        $service = new DemandeService;
 
         $demande = $this->makeDemande(TypeDemandeEnum::DEMANDE_ADHESION->value);
-        $files   = [
+        $files = [
             UploadedFile::fake()->image('photo1.jpg'),
             UploadedFile::fake()->image('photo2.jpg'),
         ];

@@ -6,6 +6,7 @@ use App\Enums\AccountStatusEnum;
 use App\Models\Service;
 use App\Models\User;
 use App\Services\Account\UserCategoryRoleSyncService;
+use App\Services\Pension\BeneficiaireProvisioningService;
 use Illuminate\Database\Seeder;
 
 class UsersSeeder extends Seeder
@@ -87,6 +88,27 @@ class UsersSeeder extends Seeder
         );
         $suffrin->syncRoles(['fonctionnaire', 'responsable_service_accueil_formalites', User::ROLE_VALIDATEUR_RDV]);
         $this->syncAccountCategories($suffrin->fresh());
+
+        $pensionne = User::updateOrCreate(
+            ['email' => 'pensionne.test@example.com'],
+            [
+                'name' => 'Jean Dupont',
+                'email' => 'pensionne.test@example.com',
+                'username' => 'jean.dupont',
+                'firstname' => 'Jean',
+                'lastname' => 'Dupont',
+                'password' => $defaultPassword,
+                'nif' => '400-500-600-7',
+                'phone' => '+50937000000',
+                'account_status' => AccountStatusEnum::ACTIF,
+                'service_id' => null,
+            ]
+        );
+        $pensionne->syncRoles(['pensionne']);
+        app(UserCategoryRoleSyncService::class)
+            ->assignCategory($pensionne->fresh(), 'pensionne', primary: true, syncRoles: false);
+        app(BeneficiaireProvisioningService::class)
+            ->provisionAdultSelf($pensionne->fresh(), null, '8-34321');
     }
 
     private function syncAccountCategories(User $user, ?string $portalCategory = null): void

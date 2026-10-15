@@ -20,7 +20,7 @@ class RencontreFormalitesWorkflowTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
-        $this->seedStatuses();
+        $this->seedWorkflowSteps();
         $this->seedServices();
         $this->seedRoles();
         $this->seed(RencontreWorkflowStepSeeder::class);

@@ -2,9 +2,8 @@
 
 namespace Database\Seeders;
 
-use Illuminate\Database\Seeder;
 use Database\Seeders\WorkflowSteps\RencontreWorkflowStepSeeder;
-use Illuminate\Database\Console\Seeds\WithoutModelEvents;
+use Illuminate\Database\Seeder;
 
 class DatabaseSeeder extends Seeder
 {
@@ -33,7 +32,6 @@ class DatabaseSeeder extends Seeder
         $this->call(RequiredCircuitSeeder::class);
         $this->call(RencontreWorkflowStepSeeder::class);
 
-        $this->call(StatusesSeeder::class);
         $this->call(CivilStatusesSeeder::class);
         $this->call(PensionTypesSeeder::class);
         $this->call(PensionCategoriesSeeder::class);

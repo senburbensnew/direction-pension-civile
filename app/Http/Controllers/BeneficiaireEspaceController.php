@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Enums\BeneficiaireRelationDemandeStatusEnum;
 use App\Enums\BeneficiaireRelationEnum;
 use App\Models\BeneficiaireRelationDemande;
+use App\Models\DemandeCreationCompte;
 use App\Models\PensionMandat;
 use App\Services\Pension\BeneficiaireAccessService;
 use Illuminate\Http\Request;
@@ -21,16 +22,27 @@ class BeneficiaireEspaceController extends Controller
 
         $mandats = PensionMandat::query()
             ->where('user_id', $user->id)
-            ->with('beneficiaire.affiliations')
+            ->with(['beneficiaire.affiliations', 'demandeCreationCompte'])
             ->latest()
             ->get();
 
-        $pendingRelations = BeneficiaireRelationDemande::query()
+        $relationDemandes = BeneficiaireRelationDemande::query()
             ->where('user_id', $user->id)
-            ->where('status', BeneficiaireRelationDemandeStatusEnum::EN_ATTENTE->value)
-            ->with('beneficiaire')
+            ->with(['beneficiaire.affiliations', 'demandeCreationCompte'])
             ->latest()
+            ->limit(20)
             ->get();
+
+        $demandesCompteRepresentant = DemandeCreationCompte::query()
+            ->where('user_id', $user->id)
+            ->where('is_mineur', true)
+            ->latest()
+            ->limit(5)
+            ->get();
+
+        $pendingRelations = $relationDemandes->filter(
+            fn ($demande) => $demande->status === BeneficiaireRelationDemandeStatusEnum::EN_ATTENTE
+        )->values();
 
         $relationChoices = array_filter(
             BeneficiaireRelationEnum::cases(),
@@ -44,6 +56,8 @@ class BeneficiaireEspaceController extends Controller
             'links',
             'mandats',
             'pendingRelations',
+            'relationDemandes',
+            'demandesCompteRepresentant',
             'relationChoices',
         ));
     }

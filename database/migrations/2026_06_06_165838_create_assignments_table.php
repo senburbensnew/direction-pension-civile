@@ -15,7 +15,6 @@ return new class extends Migration
             $table->id();
             $table->foreignId('demande_id')->constrained()->cascadeOnDelete();
             $table->foreignId('user_id')->constrained('users')->cascadeOnDelete();
-            $table->foreignId('service_id')->constrained('services')->cascadeOnDelete();
             $table->foreignId('assigned_by')->constrained('users')->cascadeOnDelete();
             $table->text('note')->nullable();
             $table->timestamp('ended_at')->nullable();

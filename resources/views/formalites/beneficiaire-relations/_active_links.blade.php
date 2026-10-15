@@ -3,32 +3,37 @@
 @endphp
 
 @if(isset($activeLinks) && $activeLinks->isNotEmpty())
-    <section class="bg-white border rounded-xl shadow-sm p-5 space-y-4">
-        <div>
-            <h3 class="font-semibold text-gray-900">Liens représentant actifs</h3>
-            <p class="text-sm text-gray-500 mt-1">Révoquer un lien coupe immédiatement l’accès au dossier pour le représentant.</p>
+    <section class="dossier-card overflow-hidden">
+        <div class="dossier-card-head">
+            <div>
+                <h3>Liens représentant actifs</h3>
+                <p class="text-xs font-normal text-gray-500 mt-0.5">Révoquer un lien coupe immédiatement l’accès au dossier pour le représentant.</p>
+            </div>
+            <span class="text-xs font-medium text-gray-500 tabular-nums">{{ $activeLinks->count() }}</span>
         </div>
-        @foreach($activeLinks as $link)
-            <article class="flex flex-wrap justify-between gap-3 border-t first:border-t-0 pt-4 first:pt-0">
-                <div>
-                    <p class="font-medium text-gray-900">{{ $link->beneficiaire?->displayName() }}</p>
-                    <p class="text-sm text-gray-600">
-                        {{ $link->user?->displayName() }} · {{ $link->relation?->label() }}
-                    </p>
-                    @if($link->beneficiaire?->primaryAffiliation()?->code_pension)
-                        <p class="text-sm font-mono text-gray-700 mt-1">{{ $link->beneficiaire->primaryAffiliation()->code_pension }}</p>
-                    @endif
-                    <p class="text-xs text-gray-500 mt-1">
-                        Actions : {{ implode(' · ', $link->grantedPermissionLabels()) }}
-                    </p>
-                </div>
-                @can('beneficiaire_relations.revoquer')
-                    <form method="POST" action="{{ route($revokeRoute, $link) }}" onsubmit="return confirm('Révoquer ce lien ?');">
-                        @csrf
-                        <button type="submit" class="btn btn-sm btn-outline btn-error">Révoquer le lien</button>
-                    </form>
-                @endcan
-            </article>
-        @endforeach
+        <div class="divide-y divide-gray-100">
+            @foreach($activeLinks as $link)
+                <article class="px-5 py-4 flex flex-wrap justify-between gap-3 items-start">
+                    <div class="min-w-0">
+                        <p class="font-semibold text-[#173052]">{{ $link->beneficiaire?->displayName() }}</p>
+                        <p class="text-sm text-gray-600 mt-0.5">
+                            {{ $link->user?->displayName() }} · {{ $link->relation?->label() }}
+                        </p>
+                        @if($link->beneficiaire?->primaryAffiliation()?->code_pension)
+                            <p class="text-sm font-mono text-gray-700 mt-1">{{ $link->beneficiaire->primaryAffiliation()->code_pension }}</p>
+                        @endif
+                        <p class="text-xs text-gray-500 mt-1">
+                            Actions : {{ implode(' · ', $link->grantedPermissionLabels()) }}
+                        </p>
+                    </div>
+                    @can('beneficiaire_relations.revoquer')
+                        <form method="POST" action="{{ route($revokeRoute, $link) }}" onsubmit="return confirm('Révoquer ce lien ?');">
+                            @csrf
+                            <button type="submit" class="dossier-btn-danger-outline text-xs px-3 py-1.5">Révoquer le lien</button>
+                        </form>
+                    @endcan
+                </article>
+            @endforeach
+        </div>
     </section>
 @endif

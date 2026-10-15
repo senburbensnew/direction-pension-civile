@@ -85,7 +85,7 @@
             </div>
 
             {{-- Utilisateurs & Accès --}}
-            <div x-data="{ open: {{ request()->routeIs('admin.users.*', 'admin.roles.*', 'admin.permissions.*', 'admin.pension-mandats.*') ? 'true' : 'false' }} }">
+            <div x-data="{ open: {{ request()->routeIs('admin.users.*', 'admin.roles.*', 'admin.permissions.*') ? 'true' : 'false' }} }">
                 <button @click="open = !open"
                     class="nav-section mt-2 w-full flex items-center justify-between cursor-pointer hover:text-slate-300 transition-colors">
                     <span>Utilisateurs &amp; Accès</span>
@@ -105,16 +105,12 @@
                        class="nav-link {{ request()->routeIs('admin.permissions.*') ? 'active' : '' }}">
                        <i class="fas fa-key"></i> Permissions
                     </a>
-                    @can('pension_mandats.view')
-                        <a href="{{ route('admin.pension-mandats.index') }}"
-                           class="nav-link {{ request()->routeIs('admin.pension-mandats.*') ? 'active' : '' }}">
-                           <i class="fas fa-file-signature"></i> Mandats pension
-                        </a>
+                    @canany(['pension_mandats.view', 'beneficiaire_relations.view'])
                         <a href="{{ route('formalites.representations.index') }}"
-                           class="nav-link {{ request()->routeIs('formalites.representations.*') ? 'active' : '' }}">
-                           <i class="fas fa-people-arrows"></i> Hub mandats &amp; relations
+                           class="nav-link {{ request()->routeIs('formalites.representations.*', 'formalites.pension-mandats.*', 'formalites.beneficiaire-relations.*') ? 'active' : '' }}">
+                           <i class="fas fa-people-arrows"></i> Mandats &amp; relations (formalités)
                         </a>
-                    @endcan
+                    @endcanany
                 </div>
             </div>
 

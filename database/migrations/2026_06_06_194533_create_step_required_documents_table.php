@@ -13,14 +13,15 @@ return new class extends Migration
     {
         Schema::create('step_required_documents', function (Blueprint $table) {
             $table->id();
-            // The service that requires this document before it can transmit the dossier further
-            $table->foreignId('service_id')->constrained()->cascadeOnDelete();
+            $table->foreignId('workflow_step_id')
+                ->constrained('workflow_steps')
+                ->cascadeOnDelete();
             $table->string('type_demande', 100)->nullable();
-            $table->string('label'); // human-readable document label
-            $table->string('document_type'); // matches DemandeDocument.type
+            $table->string('label');
+            $table->string('document_type');
             $table->timestamps();
 
-            $table->index(['service_id', 'type_demande']);
+            $table->index(['workflow_step_id', 'type_demande']);
         });
     }
 

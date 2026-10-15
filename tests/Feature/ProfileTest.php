@@ -15,7 +15,7 @@ class ProfileTest extends TestCase
         $user = User::factory()->create();
 
         $response = $this
-            ->actingAs($user)
+            ->actingAsConfirmed($user)
             ->get('/profile');
 
         $response->assertOk();
@@ -28,7 +28,7 @@ class ProfileTest extends TestCase
         ]);
 
         $response = $this
-            ->actingAs($user)
+            ->actingAsConfirmed($user)
             ->patch('/profile', [
                 'phone' => '+50937001234',
             ]);
@@ -50,7 +50,7 @@ class ProfileTest extends TestCase
         ]);
 
         $response = $this
-            ->actingAs($user)
+            ->actingAsConfirmed($user)
             ->patch('/profile', [
                 'email' => 'new@example.com',
                 'phone' => '+50937001111',
@@ -75,7 +75,7 @@ class ProfileTest extends TestCase
         ]);
 
         $response = $this
-            ->actingAs($user)
+            ->actingAsConfirmed($user)
             ->patch('/profile', [
                 'firstname' => 'Jean',
                 'lastname' => 'Dupont',
@@ -99,7 +99,7 @@ class ProfileTest extends TestCase
         $user = User::factory()->create();
 
         $response = $this
-            ->actingAs($user)
+            ->actingAsConfirmed($user)
             ->patch('/profile', [
                 'name' => 'Test User',
                 'email' => $user->email,
@@ -117,7 +117,7 @@ class ProfileTest extends TestCase
         $user = User::factory()->create();
 
         $response = $this
-            ->actingAs($user)
+            ->actingAsConfirmed($user)
             ->delete('/profile', [
                 'password' => 'password',
             ]);
@@ -135,7 +135,7 @@ class ProfileTest extends TestCase
         $user = User::factory()->create();
 
         $response = $this
-            ->actingAs($user)
+            ->actingAsConfirmed($user)
             ->from('/profile')
             ->delete('/profile', [
                 'password' => 'wrong-password',

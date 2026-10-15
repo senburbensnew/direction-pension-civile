@@ -8,7 +8,7 @@ use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response;
 
 /**
- * Accès portail pensionné : titulaire, mandataire ou représentant d'un bénéficiaire.
+ * Accès portail pension : compte actif, titulaire, mandataire, représentant ou demande en cours.
  */
 class EnsurePensionPortalAccess
 {

@@ -20,7 +20,7 @@ class RappelRencontreTest extends TestCase
     {
         parent::setUp();
         $this->seedRoles();
-        $this->seedStatuses();
+        $this->seedWorkflowSteps();
     }
 
     public function test_command_notifies_formalites_agents_the_day_before(): void

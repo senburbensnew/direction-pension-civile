@@ -157,6 +157,17 @@ class DemandeRencontreController extends Controller
     {
         $motifs = $this->motifsService->motifsForUser($user);
 
+        if ($this->motifsService->userHasPendingDemandeCreationCompte($user)
+            && isset($motifs['demande_formalites_mandats'])) {
+            return 'demande_formalites_mandats';
+        }
+
+        $requested = (string) request()->query('motif', '');
+
+        if ($requested !== '' && isset($motifs[$requested])) {
+            return $requested;
+        }
+
         return array_key_first($motifs) ?? '';
     }
 
@@ -582,13 +593,15 @@ class DemandeRencontreController extends Controller
         $data = $demande->data ?? [];
         $backUrl = $this->resolveVisioReturnUrl($request, $demande);
 
+        $status = $this->visio->status($demande);
+
         return view(
             'demandes.rencontre.visio',
             [
                 'demande' => $demande,
                 'backUrl' => $backUrl,
 
-                'status' => $this->visio->status($demande),
+                'status' => $status,
 
                 'date' => $data['date_souhaitee'] ?? null,
 
@@ -602,7 +615,9 @@ class DemandeRencontreController extends Controller
 
                 'closesAt' => $this->visio->closesAt($demande),
 
-                'embedUrl' => $this->visio->embedUrl($demande, $user), // 👈 $user
+                'embedUrl' => $status === 'actif'
+                    ? $this->visio->embedUrl($demande, $user)
+                    : null,
             ]
         );
     }

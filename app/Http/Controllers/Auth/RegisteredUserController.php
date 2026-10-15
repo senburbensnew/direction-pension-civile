@@ -135,6 +135,7 @@ class RegisteredUserController extends Controller
                     'email' => $validated['email'],
                     'username' => $validated['username'] ?? null,
                     'password' => Hash::make($validated['password']),
+                    'must_change_password' => true,
                     'nif' => $validated['nif'],
                     'profile_photo' => $profilePhotoPath,
                 ]
@@ -147,6 +148,7 @@ class RegisteredUserController extends Controller
                 'email' => $validated['email'],
                 'username' => $validated['username'] ?? null,
                 'password' => Hash::make($validated['password']),
+                'must_change_password' => true,
                 'nif' => $validated['nif'],
                 'profile_photo' => $profilePhotoPath,
             ]);

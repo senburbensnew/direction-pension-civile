@@ -157,7 +157,7 @@ class DemandeRencontreSchedulerTest extends TestCase
 
     public function test_scheduler_exposes_reserved_slots_but_not_rejected_ones(): void
     {
-        $this->seedStatuses();
+        $this->seedWorkflowSteps();
         $user = $this->makePensionne();
         $other = $this->makePensionne();
         $agent = $this->makeFormalitesAgent();
@@ -195,7 +195,7 @@ class DemandeRencontreSchedulerTest extends TestCase
 
     public function test_store_rejects_an_already_reserved_slot_for_the_same_agent(): void
     {
-        $this->seedStatuses();
+        $this->seedWorkflowSteps();
         $user = $this->makePensionne();
         $other = $this->makePensionne();
         $agent = $this->makeFormalitesAgent();
@@ -220,7 +220,7 @@ class DemandeRencontreSchedulerTest extends TestCase
 
     public function test_same_slot_can_be_booked_by_another_formalites_agent(): void
     {
-        $this->seedStatuses();
+        $this->seedWorkflowSteps();
         $userA = $this->makePensionne();
         $userB = $this->makePensionne();
         $agentA = $this->makeFormalitesAgent();
@@ -254,7 +254,7 @@ class DemandeRencontreSchedulerTest extends TestCase
 
     public function test_store_sends_a_single_submission_notification_to_the_owner(): void
     {
-        $this->seedStatuses();
+        $this->seedWorkflowSteps();
         Notification::fake();
 
         $user = $this->makePensionne();
@@ -271,7 +271,7 @@ class DemandeRencontreSchedulerTest extends TestCase
 
     public function test_appointment_does_not_enter_the_direction_circuit(): void
     {
-        $this->seedStatuses();
+        $this->seedWorkflowSteps();
         Notification::fake();
 
         $user = $this->makePensionne();
@@ -310,7 +310,7 @@ class DemandeRencontreSchedulerTest extends TestCase
 
     public function test_store_rejects_a_slot_outside_the_afternoon_window(): void
     {
-        $this->seedStatuses();
+        $this->seedWorkflowSteps();
         $user = $this->makePensionne();
         $agent = $this->makeFormalitesAgent();
 
@@ -354,7 +354,7 @@ class DemandeRencontreSchedulerTest extends TestCase
 
     public function test_user_can_cancel_a_visio_appointment_and_free_the_slot(): void
     {
-        $this->seedStatuses();
+        $this->seedWorkflowSteps();
         $user = $this->makePensionne();
         $agent = $this->makeFormalitesAgent();
         $date = now()->next('Wednesday')->toDateString();
@@ -390,7 +390,7 @@ class DemandeRencontreSchedulerTest extends TestCase
 
     public function test_user_can_cancel_a_physical_appointment(): void
     {
-        $this->seedStatuses();
+        $this->seedWorkflowSteps();
         $user = $this->makePensionne();
         $date = now()->next('Thursday')->toDateString();
 
@@ -415,7 +415,7 @@ class DemandeRencontreSchedulerTest extends TestCase
 
     public function test_pensionne_cannot_book_a_second_active_appointment(): void
     {
-        $this->seedStatuses();
+        $this->seedWorkflowSteps();
         $user = $this->makePensionne();
         $agent = $this->makeFormalitesAgent();
 
@@ -445,7 +445,7 @@ class DemandeRencontreSchedulerTest extends TestCase
 
     public function test_pensionne_can_book_again_after_cancelling_the_active_appointment(): void
     {
-        $this->seedStatuses();
+        $this->seedWorkflowSteps();
         $user = $this->makePensionne();
         $agent = $this->makeFormalitesAgent();
         $date = now()->next('Wednesday')->toDateString();
@@ -475,7 +475,7 @@ class DemandeRencontreSchedulerTest extends TestCase
 
     public function test_user_cannot_cancel_someone_elses_appointment(): void
     {
-        $this->seedStatuses();
+        $this->seedWorkflowSteps();
         $owner = $this->makePensionne();
         $other = $this->makePensionne();
 
@@ -492,7 +492,7 @@ class DemandeRencontreSchedulerTest extends TestCase
 
     public function test_provisionnel_pensionne_books_formalites_motif_only(): void
     {
-        $this->seedStatuses();
+        $this->seedWorkflowSteps();
         $agent = $this->makeFormalitesAgent();
         $user = $this->makePensionne([
             'account_status' => AccountStatusEnum::PROVISOIRE,

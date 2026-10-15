@@ -10,7 +10,7 @@ Guide opérationnel pour les agents (formalités, admin) et référence techniqu
 | Représentant d’un mineur | `pere`, `mere`, `tuteur` | Le représentant (pas le mineur) |
 | Mandataire | `mandataire` | La personne mandatée, rattachée au dossier du pensionné |
 
-L’accès au portail pension (`User::hasPensionPortalAccess()`) est accordé si l’usager a la catégorie `pensionne`, **ou** un lien bénéficiaire, **ou** au moins une demande de mandat (`pension_mandats`).
+L’accès au portail pension (`User::hasPensionPortalAccess()`) est accordé si le compte est **actif** (`account_status = actif`, toute catégorie : pensionné, fonctionnaire, institution, externe, etc.), **ou** la catégorie `pensionne` (y compris provisoire), **ou** un lien bénéficiaire, **ou** au moins une demande de mandat (`pension_mandats`).
 
 ---
 
@@ -21,7 +21,9 @@ L’accès au portail pension (`User::hasPensionPortalAccess()`) est accordé si
 1. **`GET /demande-compte`** — à l’étape documents, choisir le profil **« Représentant d’un pensionné mineur »**.
 2. Fournir **acte de naissance** du mineur et **pièce d’identité du représentant**.
 3. Indiquer le lien (`père`, `mère`, `tuteur`) et, si besoin, cocher **« Je suis aussi pensionné titulaire »**.
-4. Soumission → **compte provisoire** (identité = représentant) → **prise de RDV** formalités.
+4. Le **code pension** est **facultatif** à l’inscription (complément possible avant le RDV). S’il est saisi, il doit être celui du **pensionné mineur** (concordance avec l’acte de naissance), jamais celui du représentant.
+5. Soumission → **compte provisoire** (identité = représentant) → **prise de RDV** au Service Formalités (motif **« formalités et mandats »**, en ligne ou présentiel).
+6. Sans RDV **réalisé**, le dossier ne peut pas être accepté par les agents formalités.
 
 ### Système
 
@@ -43,26 +45,27 @@ Pour une personne qui **n’est pas** titulaire mais agit avec **procuration / d
 
 1. **`GET /demande-compte`** — profil **« Mandataire d’un pensionné »**.
 2. Pièce d’identité du **mandataire** + **formulaire de désignation signé** (PDF ou image).
-3. **Code pension du pensionné concerné** (obligatoire, vérifié dans la base de référence).
-4. Même enchaînement que les autres demandes : compte **provisoire** → RDV formalités → acceptation.
+3. **Code pension du pensionné mandant** (facultatif pour l’instant ; vérifié dans la base de référence s’il est saisi — pas le code du mandataire, même s’il est aussi titulaire).
+4. Même enchaînement : compte **provisoire** → **RDV Service Formalités** (motif **« formalités et mandats »**) → acceptation du compte par les agents formalités.
+5. Sans RDV **réalisé**, le dossier de compte ne peut pas être accepté.
 
-À la soumission, un enregistrement **`pension_mandats`** est créé en statut **`en_attente`** (sans lien bénéficiaire actif tant que le mandat n’est pas approuvé).
+À la soumission, un enregistrement **`pension_mandats`** est créé en statut **`en_attente`**, lié au dossier DCC via **`demande_creation_compte_id`** (sans lien bénéficiaire actif tant que le mandat n’est pas approuvé). Une demande parallèle via **`/compte/mandats`** pour le même code est bloquée tant que ce dossier est en cours.
 
 ### Agent formalités
 
 1. RDV réalisé + contrôle des pièces (identité mandataire, désignation, adéquation code pension).
 2. Accepter la **demande de création de compte** → compte **ACTIF**.
-3. Valider le **mandat** dans **`admin/pension-mandats`** (approbation, périmètre des demandes et codes autorisés).
+3. Approuver le **mandat** dans **`formalites/pension-mandats`** (ou hub **Mandats & relations**) — périmètre des demandes et codes autorisés.
 
 ---
 
 ## 3. Mandataire — compte déjà actif
 
-Si le mandataire a déjà un compte **ACTIF** (pensionné ou externe) :
+Si le mandataire a déjà un compte **ACTIF** (toute catégorie : pensionné, fonctionnaire, institution, externe, etc.) :
 
 1. **`GET /compte/mandats`** (menu utilisateur lorsque `hasPensionPortalAccess()`).
 2. Soumettre une **nouvelle demande de mandat** (identité du pensionné, code, pièce justificative).
-3. Admin : **`admin/pension-mandats`** — approuver / refuser / révoquer.
+3. Agent formalités : **`formalites/pension-mandats`** — approuver / refuser / révoquer.
 
 Le lien **`mandataire`** sur le bénéficiaire est créé **à l’approbation** du mandat (pas à la simple soumission).
 
@@ -73,7 +76,7 @@ Le lien **`mandataire`** sur le bénéficiaire est créé **à l’approbation**
 | Écran | Route | Rôle |
 |-------|-------|------|
 | Demandes création compte | `admin/comptes-demandes/*` ou `formalites/comptes-demandes/*` | Consultation ; **décision** réservée aux agents formalités |
-| Validation mandats | `admin/pension-mandats` | Approbation, périmètre, refus, révocation |
+| Validation mandats | `formalites/pension-mandats` (hub **Mandats & relations**) | Approbation, périmètre, refus, révocation — **agents formalités** uniquement |
 | Utilisateur → liens pension | `admin/users/{user}/edit` | Ajout / retrait manuel de lien bénéficiaire (cas exceptionnels) |
 
 ---
@@ -82,7 +85,8 @@ Le lien **`mandataire`** sur le bénéficiaire est créé **à l’approbation**
 
 - `tests/Feature/DemandeCreationCompteTest.php` — titulaire, mineur, mandataire (DCC).
 - `tests/Feature/DemandeCreationCompteManagementTest.php` — décision après RDV.
-- `tests/Feature/PensionMandatWorkflowTest.php` — périmètre mandat, approbation admin.
+- `tests/Feature/PensionMandatWorkflowTest.php` — périmètre mandat, approbation formalités, blocage doublon DCC.
+- `tests/Unit/Services/PensionMandatServiceTest.php` — enregistrement mandat lié DCC, refus, idempotence.
 
 ---
 
@@ -90,5 +94,5 @@ Le lien **`mandataire`** sur le bénéficiaire est créé **à l’approbation**
 
 - **Mineur** : un seul parcours DCC ; le compte est celui du **représentant**.
 - **Mandataire sans compte** : parcours DCC profil mandataire + RDV + acceptation DCC + approbation mandat.
-- **Mandataire avec compte** : `/compte/mandats` puis validation admin.
+- **Mandataire avec compte** : `/compte/mandats` puis validation par les **agents formalités**.
 - **Navigation** : menus pension visibles dès que `hasPensionPortalAccess()` (pas seulement le rôle Spatie `pensionne`).

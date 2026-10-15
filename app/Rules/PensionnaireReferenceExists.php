@@ -50,6 +50,16 @@ class PensionnaireReferenceExists implements ValidationRule, DataAwareRule
             return;
         }
 
+        $isMandataire = filter_var(
+            $this->data['is_mandataire'] ?? false,
+            FILTER_VALIDATE_BOOLEAN
+        );
+
+        // Mandataire : le code est celui du pensionné mandant (pas le mandataire) — pas de concordance OCR sur la pièce du mandataire.
+        if ($isMandataire) {
+            return;
+        }
+
         // ── 2) Si aucun nom/prénom exploitable → code seul suffit
         $expectedTokens = $this->tokenize($nom, $prenom);
 
@@ -147,16 +157,13 @@ class PensionnaireReferenceExists implements ValidationRule, DataAwareRule
         );
 
         /*
-         * Pour un mineur, le compte est créé au nom du mineur :
-         *   → l'acte de naissance prime sur la pièce du représentant.
-         * Pour un majeur :
-         *   → la pièce d'identité prime.
+         * Représentant d’un mineur : le code pension est celui du mineur
+         * → concordance uniquement avec l’acte de naissance (pas la pièce du représentant).
+         * Titulaire adulte : pièce d’identité du demandeur.
          */
         $priority = $isMineur
             ? [
-                'acte_naissance'              => 1,
-                'piece_identite_representant' => 2,
-                'piece_identite'              => 3,
+                'acte_naissance' => 1,
             ]
             : [
                 'piece_identite'              => 1,
@@ -267,6 +274,14 @@ class PensionnaireReferenceExists implements ValidationRule, DataAwareRule
      *   OCR = [JEAN]                 | Ref = [JEAN, DUPONT]          → ✅ (1 commun)
      *   OCR = [MARIE]                | Ref = [JEAN, DUPONT]          → ❌
      */
+    public function rowMatchesIdentity(PensionnaireReference $row, ?string $nom, ?string $prenom): bool
+    {
+        return $this->tokensMatch(
+            $this->tokenize($nom, $prenom),
+            $this->tokenize($row->NOM ?? null, $row->PRENOM ?? null),
+        );
+    }
+
     protected function tokensMatch(array $ocrTokens, array $refTokens): bool
     {
         if ($ocrTokens === [] || $refTokens === []) {

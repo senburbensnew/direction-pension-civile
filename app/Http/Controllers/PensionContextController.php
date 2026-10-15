@@ -5,12 +5,13 @@ namespace App\Http\Controllers;
 use App\Models\AffiliationPension;
 use App\Models\Beneficiaire;
 use App\Services\Pension\ActivePensionContext;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 
 class PensionContextController extends Controller
 {
-    public function update(Request $request): RedirectResponse
+    public function update(Request $request): JsonResponse|RedirectResponse
     {
         $validated = $request->validate([
             'beneficiaire_id' => ['required', 'integer', 'exists:beneficiaires,id'],
