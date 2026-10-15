@@ -32,12 +32,17 @@ class FormaliteSuiviController extends Controller
             'en_attente' => 'En attente d’enregistrement',
             'a_cloturer' => 'RDV à clôturer',
             'rdv_planifies' => 'RDV à venir',
+            'rdv_realises' => 'RDV réalisés',
+            'rdv_non_honores' => 'RDV non honorés',
+            'rdv_annules' => 'RDV annulés / refusés',
         ];
 
         $formalites = null;
         $demandesAttente = null;
         $demandesCloture = null;
         $demandesPlanifies = null;
+        $demandesCloturesStatut = null;
+        $clotureStatutLabel = null;
 
         if ($filtre === 'remplies') {
             $formalites = $this->suivi
@@ -51,19 +56,25 @@ class FormaliteSuiviController extends Controller
                 ->withQueryString();
         } elseif ($filtre === 'a_cloturer') {
             $demandesCloture = $this->suivi->demandesACloturerFiltered();
-        } else {
-            $demandesPlanifies = $this->suivi
-                ->formaliteRencontreQuery()
-                ->with(['user'])
-                ->whereIn('data->rdv_statut', [
-                    RencontreStatutEnum::ACTIF->value,
-                    RencontreStatutEnum::ATTRIBUE->value,
-                    RencontreStatutEnum::REPORTE->value,
-                ])
-                ->orderBy('updated_at')
-                ->get()
-                ->filter(fn ($d) => ! $d->rencontreHeureEstPassee())
+        } elseif ($filtre === 'rdv_realises') {
+            $demandesCloturesStatut = $this->suivi->demandesParStatutCloture(
+                RencontreStatutEnum::REALISE
+            );
+            $clotureStatutLabel = RencontreStatutEnum::REALISE->label();
+        } elseif ($filtre === 'rdv_non_honores') {
+            $demandesCloturesStatut = $this->suivi->demandesParStatutCloture(
+                RencontreStatutEnum::NON_HONORE
+            );
+            $clotureStatutLabel = RencontreStatutEnum::NON_HONORE->label();
+        } elseif ($filtre === 'rdv_annules') {
+            $demandesCloturesStatut = $this->suivi
+                ->demandesParStatutCloture(RencontreStatutEnum::ANNULE)
+                ->merge($this->suivi->demandesParStatutCloture(RencontreStatutEnum::REFUSE))
+                ->unique('id')
                 ->values();
+            $clotureStatutLabel = 'Annulés et refusés';
+        } else {
+            $demandesPlanifies = $this->suivi->demandesPlanifiesFiltered();
         }
 
         return view('formalites.suivi.index', compact(
@@ -77,6 +88,8 @@ class FormaliteSuiviController extends Controller
             'demandesAttente',
             'demandesCloture',
             'demandesPlanifies',
+            'demandesCloturesStatut',
+            'clotureStatutLabel',
         ));
     }
 

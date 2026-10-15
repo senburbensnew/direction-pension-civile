@@ -60,6 +60,24 @@
             </a>
         </div>
 
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <a href="{{ route('formalites.suivi.index', ['filtre' => 'rdv_realises', 'annee_fiscale_id' => $anneeFiscaleId]) }}"
+               class="dossier-stat border-l-4 border-l-green-600 hover:border-green-700 transition-colors {{ $filtre === 'rdv_realises' ? 'ring-2 ring-green-600/30' : '' }}">
+                <p class="dossier-stat__label">RDV réalisés (honorés)</p>
+                <p class="dossier-stat__value text-2xl">{{ $stats['rdv_realises'] ?? 0 }}</p>
+            </a>
+            <a href="{{ route('formalites.suivi.index', ['filtre' => 'rdv_non_honores', 'annee_fiscale_id' => $anneeFiscaleId]) }}"
+               class="dossier-stat border-l-4 border-l-slate-500 hover:border-slate-600 transition-colors {{ $filtre === 'rdv_non_honores' ? 'ring-2 ring-slate-500/30' : '' }}">
+                <p class="dossier-stat__label">RDV non honorés</p>
+                <p class="dossier-stat__value text-2xl">{{ $stats['rdv_non_honores'] ?? 0 }}</p>
+            </a>
+            <a href="{{ route('formalites.suivi.index', ['filtre' => 'rdv_annules', 'annee_fiscale_id' => $anneeFiscaleId]) }}"
+               class="dossier-stat border-l-4 border-l-red-600 hover:border-red-700 transition-colors {{ $filtre === 'rdv_annules' ? 'ring-2 ring-red-600/30' : '' }}">
+                <p class="dossier-stat__label">Annulés / refusés</p>
+                <p class="dossier-stat__value text-2xl">{{ $stats['rdv_annules'] ?? 0 }}</p>
+            </a>
+        </div>
+
         <div class="flex flex-wrap gap-2">
             @foreach($filtreLabels as $key => $label)
                 <a href="{{ route('formalites.suivi.index', array_filter([
@@ -149,14 +167,17 @@
                                     <td class="text-gray-600 whitespace-nowrap">
                                         {{ $at?->format('d/m/Y H:i') ?? '—' }}
                                     </td>
+                                    @php $statutAttente = $d->rencontreStatutMetier(); @endphp
                                     <td>
-                                        <span class="inline-flex px-2 py-0.5 text-xs font-medium ring-1 ring-inset {{ $d->rencontreStatut()->badgeClass() }}">
-                                            {{ $d->rencontreStatut()->label() }}
+                                        <span class="inline-flex px-2 py-0.5 text-xs font-medium ring-1 ring-inset {{ $statutAttente->badgeClass() }}">
+                                            {{ $statutAttente->label() }}
                                         </span>
                                     </td>
                                     <td class="text-right space-x-2 whitespace-nowrap">
                                         <a href="{{ route('personal.request.show', $d->id) }}" class="dossier-btn-secondary text-xs px-2.5 py-1.5">Dossier</a>
-                                        <a href="{{ route('demandes.rencontre.formalite', $d) }}" class="dossier-btn-primary text-xs px-2.5 py-1.5">Enregistrer</a>
+                                        @if($statutAttente->permetEnregistrementFormalite())
+                                            <a href="{{ route('demandes.rencontre.formalite', $d) }}" class="dossier-btn-primary text-xs px-2.5 py-1.5">Enregistrer</a>
+                                        @endif
                                     </td>
                                 </tr>
                             @empty
@@ -204,6 +225,48 @@
                             @empty
                                 <tr>
                                     <td colspan="4" class="px-5 py-12 text-center text-gray-500">Aucun rendez-vous en attente de clôture.</td>
+                                </tr>
+                            @endforelse
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+        @elseif(isset($demandesCloturesStatut))
+            <section class="dossier-card overflow-hidden">
+                <div class="dossier-card-head">
+                    <h3>Rendez-vous — {{ $clotureStatutLabel ?? 'clôturés' }}</h3>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="dossier-table w-full min-w-[720px] text-sm">
+                        <thead>
+                            <tr>
+                                <th>Pensionné</th>
+                                <th>Créneau</th>
+                                <th>Statut RDV</th>
+                                <th class="text-right">Dossier</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-gray-100">
+                            @forelse($demandesCloturesStatut as $d)
+                                @php
+                                    $owner = $d->user ?? \App\Models\User::find($d->created_by);
+                                    $statutCloture = $d->rencontreStatutMetier();
+                                @endphp
+                                <tr class="hover:bg-gray-50/80">
+                                    <td>{{ $owner?->displayName() ?? '—' }}</td>
+                                    <td class="whitespace-nowrap">{{ $d->rencontreScheduledAt()?->format('d/m/Y H:i') ?? '—' }}</td>
+                                    <td>
+                                        <span class="inline-flex px-2 py-0.5 text-xs font-medium ring-1 ring-inset {{ $statutCloture->badgeClass() }}">
+                                            {{ $statutCloture->label() }}
+                                        </span>
+                                    </td>
+                                    <td class="text-right">
+                                        <a href="{{ route('personal.request.show', $d->id) }}" class="dossier-btn-secondary text-xs px-2.5 py-1.5">Ouvrir</a>
+                                    </td>
+                                </tr>
+                            @empty
+                                <tr>
+                                    <td colspan="4" class="px-5 py-12 text-center text-gray-500">Aucun rendez-vous dans cette catégorie.</td>
                                 </tr>
                             @endforelse
                         </tbody>

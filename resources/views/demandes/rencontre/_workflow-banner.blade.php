@@ -16,10 +16,13 @@
             ->latest()
             ->first();
     }
-    $rdvRealise = $rdvStatut === \App\Enums\RencontreStatutEnum::REALISE;
+    $rdvStatutMetier = $demande->rencontreStatutMetier();
+    $rdvRealise = $rdvStatutMetier->isRdvHonore();
+    $rdvNonHonore = $rdvStatutMetier->isRdvNonHonore();
+    $rdvAnnule = $rdvStatutMetier->isRdvAnnule();
     $rdvTraitable = $demande->peutProposerTraitementFormaliteApresRdv();
     $formaliteRdvFaite = $demande->formaliteRdvEnregistree();
-    $rdvTerminal = $rdvStatut->isTerminal();
+    $rdvTerminal = $rdvStatut->isTerminal() || $rdvStatutMetier->isTerminal();
     $postTreatmentLabel = $decisionComptePossible
         ? 'Décision création de compte (si applicable)'
         : ($isFormaliteMotif ? 'Enregistrement formalité' : 'Suite du dossier');
@@ -33,7 +36,7 @@
     $steps = [
         ['key' => 'soumis', 'label' => 'Demande soumise', 'done' => true],
         ['key' => 'planifie', 'label' => 'Planifié / accepté', 'done' => ! in_array($rdvStatut, [\App\Enums\RencontreStatutEnum::DEMANDE], true)],
-        ['key' => 'rdv', 'label' => 'Rendez-vous', 'done' => $rdvRealise || in_array($rdvStatut, [\App\Enums\RencontreStatutEnum::NON_HONORE], true)],
+        ['key' => 'rdv', 'label' => 'Rendez-vous', 'done' => $rdvRealise || $rdvNonHonore || $rdvAnnule],
         ['key' => 'post', 'label' => $postTreatmentLabel, 'done' => $postTreatmentDone],
     ];
     $compteShowRoute = null;
@@ -64,6 +67,12 @@
             </li>
         @endforeach
     </ol>
+    @if($rdvNonHonore)
+        <p class="text-sm text-slate-700">Rendez-vous clos : <strong>non honoré</strong> par le demandeur.</p>
+    @elseif($rdvAnnule)
+        <p class="text-sm text-slate-700">Rendez-vous <strong>{{ mb_strtolower($rdvStatutMetier->label()) }}</strong>.</p>
+    @endif
+
     <div class="flex flex-wrap gap-3 text-sm">
         @if($compteShowRoute)
             <a href="{{ $compteShowRoute }}" class="text-indigo-700 font-semibold hover:underline">

@@ -3,7 +3,16 @@
         $data = $demande->data ?? [];
         $carte = $demande->getFirstMedia('carte_pension');
         $rdvStatut = $rdvStatut ?? $demande->rencontreStatut();
-        $pending = ! $rdvStatut->isTerminal();
+        $rdvReservable = $rdvStatut->reservesSlot();
+        $aCloturer = $demande->doitApparaitreCommeACloturer();
+        $isPhysique = ($data['modalite'] ?? '') === 'physique';
+        $visioPilotage = app(\App\Services\RencontreVisioService::class);
+        $visioPilotageOk = ! $isPhysique
+            && filled($demande->visio_token)
+            && $visioPilotage->canAccess(auth()->user(), $demande);
+        $visioPilotageStatus = $visioPilotageOk ? $visioPilotage->status($demande) : null;
+        $visioLienExpire = ! $isPhysique && $visioPilotage->isVisioLinkExpired($demande);
+        $visioSlotEndsAt = ! $isPhysique ? $visioPilotage->slotEndsAt($demande) : null;
         $serviceLabel = $data['service_responsable'] ?? $demande->service?->nom ?? '—';
         $agentLabel = $data['agent_nom'] ?? $demande->assignments->first()?->agent?->displayName() ?? '—';
         $motifLabel = $demande->rencontreMotifLabel();
@@ -43,6 +52,23 @@
             </div>
         </header>
 
+        @include('demandes.rencontre._workflow-banner', [
+            'demande' => $demande,
+            'rdvStatut' => $rdvStatut,
+            'compteCreation' => $compteCreation ?? null,
+        ])
+
+        @if($aCloturer)
+            <div class="dossier-notice dossier-notice--amber">
+                <p class="dossier-notice__head bg-amber-50/80 text-amber-900">Clôture en attente</p>
+                <div class="p-4 text-sm text-gray-700">
+                    Le créneau est passé. Marquez le rendez-vous comme <strong>réalisé</strong> ou <strong>non honoré</strong> depuis le dossier agent.
+                    <a href="{{ $dossierShowRoute ?? route('personal.request.show', $demande) }}"
+                       class="ml-1 font-semibold text-navy hover:underline">Ouvrir le dossier</a>
+                </div>
+            </div>
+        @endif
+
         <section class="dossier-card p-5 sm:p-6">
             <h3 class="text-base font-bold text-gray-800 mb-4">Coordonnées et compléments</h3>
             <dl class="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
@@ -61,22 +87,24 @@
                     <a href="{{ $demande->urlForMedia($carte) }}" target="_blank" class="text-navy font-semibold hover:underline">Voir la carte de pension jointe</a>
                 </p>
             @endif
-            @php
-                $visioPilotage = app(\App\Services\RencontreVisioService::class);
-                $visioPilotageOk = ($data['modalite'] ?? '') === 'visio'
-                    && filled($demande->visio_token)
-                    && $visioPilotage->canAccess(auth()->user(), $demande);
-                $visioPilotageStatus = $visioPilotageOk
-                    ? $visioPilotage->status($demande)
-                    : null;
-            @endphp
             @if($visioPilotageOk)
                 <p class="mt-4">
-                    @if($visioPilotageStatus === 'actif')
+                    @if($visioLienExpire)
+                        <span class="text-sm text-gray-500 italic">
+                            @if($rdvStatut->isTerminal())
+                                Rendez-vous {{ mb_strtolower($rdvStatut->label()) }} — lien de visio indisponible.
+                            @else
+                                Fenêtre visio terminée (fin de créneau {{ $visioSlotEndsAt?->format('H:i') ?? '—' }}).
+                            @endif
+                        </span>
+                    @elseif($visioPilotageStatus === 'actif')
                         <a href="{{ $demande->visioPageUrl('pilotage') }}"
                            class="inline-flex items-center gap-2 px-4 py-2 bg-navy text-white text-sm font-semibold rounded-lg hover:bg-orange-600">
                             Rejoindre la visioconférence
                         </a>
+                        <span class="block text-xs text-gray-500 mt-1">
+                            Lien actif jusqu’à {{ $visioSlotEndsAt?->format('d/m/Y à H:i') ?? '—' }}
+                        </span>
                     @elseif($visioPilotageStatus === 'en_attente')
                         <span class="text-sm text-amber-800">
                             Salle disponible à partir du
@@ -88,7 +116,7 @@
                             Page visio
                         </a>
                     @else
-                        <span class="text-sm text-gray-500">Lien de visioconférence expiré.</span>
+                        <span class="text-sm text-gray-500">Lien de visioconférence indisponible.</span>
                     @endif
                 </p>
             @endif
@@ -101,7 +129,7 @@
             ])
         @endif
 
-        @if(($canReassignAgent ?? false) && $pending)
+        @if(($canReassignAgent ?? false) && $rdvReservable)
             <section class="bg-white border border-gray-200 p-6 space-y-1">
                 <h3 class="text-base font-bold text-gray-800 mb-1">Réattribuer à un autre agent</h3>
                 <p class="text-sm text-gray-500 mb-4">
@@ -111,7 +139,7 @@
                     'demande' => $demande,
                     'bookingAgents' => $bookingAgents ?? collect(),
                     'canReassignAgent' => true,
-                    'rdvPending' => $pending,
+                    'rdvPending' => $rdvReservable,
                     'reattribuerRoute' => $reattribuerRoute ?? null,
                     'reassignStandalone' => true,
                 ])

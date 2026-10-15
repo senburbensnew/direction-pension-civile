@@ -20,13 +20,12 @@ use App\Services\PersonalDemandeCatalog;
 use App\Services\RencontreAvailabilityService;
 use App\Services\RencontreMotifService;
 use App\Services\RencontreReminderService;
+use App\Services\RencontreStatutAlignmentService;
 use Database\Seeders\RolesAndPermissionsSeeder;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
-use Spatie\Activitylog\Models\Activity;
-
 class PersonalController extends Controller
 {
     public function __construct(
@@ -124,7 +123,6 @@ class PersonalController extends Controller
             'from' => 'dashboard',
             'request' => $demande,
             'requestHistories' => $requestHistories,
-            'activityLogs' => collect(),
             'messages' => $messages,
             'isClosed' => $isClosed,
             'rdvAgentMode' => false,
@@ -326,6 +324,11 @@ class PersonalController extends Controller
             'user',
         ])->findOrFail($id);
 
+        if ($requestModel->isRencontre() && $user) {
+            $requestModel = app(RencontreStatutAlignmentService::class)
+                ->alignAfterFormalite($requestModel, $user);
+        }
+
         if ($user && (int) $requestModel->created_by === (int) $user->id) {
             $viewAsAgent = $user->service_id
                 && (int) $requestModel->current_service_id === (int) $user->service_id
@@ -383,12 +386,6 @@ class PersonalController extends Controller
         $requestHistories = DemandeHistory::where('demande_id', $requestModel->id)
             ->orderBy('id', 'desc')
             ->paginate(10);
-
-        $activityLogs = Activity::forSubject($requestModel)
-            ->with('causer')
-            ->latest()
-            ->take(20)
-            ->get();
 
         $messages = $requestModel->messages()->with('sender')->get();
 
@@ -500,7 +497,6 @@ class PersonalController extends Controller
             'transferOptions' => $transferOptions,
             'circuitLocked' => $circuitLocked,
             'affectations' => $affectations,
-            'activityLogs' => $activityLogs,
             'messages' => $messages,
             'pendingWorkflow' => $pendingWorkflow,
             'pendingAffectation' => $pendingAffectation,

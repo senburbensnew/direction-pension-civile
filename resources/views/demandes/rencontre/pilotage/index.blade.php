@@ -143,9 +143,8 @@
                 @forelse($demandes as $d)
                     @php
                         $data   = $d->data ?? [];
-                        $code   = $d->currentStep?->code;
-                        $rdvStatut = $d->rencontreStatut();
-                        $isPending = ! $rdvStatut->isTerminal();
+                        $rdvStatut = $d->rencontreStatutMetier();
+                        $aCloturer = $d->doitApparaitreCommeACloturer();
                     @endphp
                     <tr class="hover:bg-gray-50 transition-colors">
                         <td class="px-2 sm:px-3 py-3 text-[11px] sm:text-xs text-gray-600 align-top leading-snug">
@@ -196,6 +195,11 @@
                             <span class="inline-block max-w-full truncate text-[10px] sm:text-xs px-1.5 sm:px-2 py-0.5 rounded-full font-medium {{ $rdvStatut->badgeClass() }}" title="{{ $rdvStatut->label() }}">
                                 {{ $rdvStatut->label() }}
                             </span>
+                            @if($aCloturer)
+                                <span class="mt-1 inline-block max-w-full truncate text-[10px] px-1.5 py-0.5 rounded-full font-medium bg-amber-100 text-amber-900" title="Créneau passé — clôture à effectuer dans le dossier">
+                                    À clôturer
+                                </span>
+                            @endif
                         </td>
                         <td class="px-2 sm:px-3 py-3 text-right align-top">
                             <a href="{{ route('rencontres.pilotage.show', $d) }}"

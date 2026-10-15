@@ -13,7 +13,15 @@ use Illuminate\Support\Collection;
 class FormaliteSuiviService
 {
     /**
-     * @return array{remplies: int, en_attente: int, a_cloturer: int, rdv_planifies: int}
+     * @return array{
+     *     remplies: int,
+     *     en_attente: int,
+     *     a_cloturer: int,
+     *     rdv_planifies: int,
+     *     rdv_realises: int,
+     *     rdv_non_honores: int,
+     *     rdv_annules: int
+     * }
      */
     public function stats(?int $anneeFiscaleId = null): array
     {
@@ -28,11 +36,16 @@ class FormaliteSuiviService
         $enAttente = 0;
         $aCloturer = 0;
         $planifies = 0;
+        $realises = 0;
+        $nonHonores = 0;
+        $annules = 0;
 
         foreach ($demandes as $demande) {
-            $statut = $demande->rencontreStatut();
+            $statut = $demande->rencontreStatutMetier();
 
-            if ($statut === RencontreStatutEnum::REALISE) {
+            if ($statut->isRdvHonore()) {
+                $realises++;
+
                 if ($anneeFiscaleId && ! $this->ownerHasFormaliteForYear($demande, $anneeFiscaleId)) {
                     $enAttente++;
                 } elseif (! $anneeFiscaleId && ! $this->ownerHasAnyFormalite($demande)) {
@@ -42,13 +55,25 @@ class FormaliteSuiviService
                 continue;
             }
 
+            if ($statut->isRdvNonHonore()) {
+                $nonHonores++;
+
+                continue;
+            }
+
+            if ($statut->isRdvAnnule()) {
+                $annules++;
+
+                continue;
+            }
+
             if ($statut->isTerminal()) {
                 continue;
             }
 
-            if ($demande->rencontreHeureEstPassee()) {
+            if ($demande->doitApparaitreCommeACloturer()) {
                 $aCloturer++;
-            } else {
+            } elseif (! $demande->rencontreHeureEstPassee()) {
                 $planifies++;
             }
         }
@@ -58,6 +83,9 @@ class FormaliteSuiviService
             'en_attente' => $enAttente,
             'a_cloturer' => $aCloturer,
             'rdv_planifies' => $planifies,
+            'rdv_realises' => $realises,
+            'rdv_non_honores' => $nonHonores,
+            'rdv_annules' => $annules,
         ];
     }
 
@@ -98,7 +126,7 @@ class FormaliteSuiviService
 
         return $this->formaliteRencontreQuery()
             ->with(['user'])
-            ->where('data->rdv_statut', RencontreStatutEnum::REALISE->value)
+            ->whereEffectiveRencontreStatut(RencontreStatutEnum::REALISE)
             ->when($anneeFiscaleId, function (Builder $q) use ($anneeFiscaleId) {
                 $q->whereNotExists(function ($sub) use ($anneeFiscaleId) {
                     $sub->selectRaw('1')
@@ -114,11 +142,7 @@ class FormaliteSuiviService
     {
         return $this->formaliteRencontreQuery()
             ->with(['user'])
-            ->whereIn('data->rdv_statut', [
-                RencontreStatutEnum::ACTIF->value,
-                RencontreStatutEnum::ATTRIBUE->value,
-                RencontreStatutEnum::REPORTE->value,
-            ])
+            ->whereEffectiveRencontreStatutOpen()
             ->orderByDesc('updated_at');
     }
 
@@ -127,8 +151,43 @@ class FormaliteSuiviService
     {
         return $this->demandesACloturerQuery()
             ->get()
-            ->filter(fn (Demande $d) => $d->rencontreHeureEstPassee())
+            ->filter(fn (Demande $d) => $d->doitApparaitreCommeACloturer())
             ->values();
+    }
+
+    /** @return Collection<int, Demande> */
+    public function demandesPlanifiesFiltered(): Collection
+    {
+        return $this->formaliteRencontreQuery()
+            ->with(['user'])
+            ->whereEffectiveRencontreStatutOpen()
+            ->orderBy('data->date_souhaitee')
+            ->get()
+            ->filter(fn (Demande $d) => ! $d->rencontreHeureEstPassee())
+            ->values();
+    }
+
+    /**
+     * @return Collection<int, Demande>
+     */
+    public function demandesParStatutCloture(RencontreStatutEnum $statut): Collection
+    {
+        $demandes = $this->formaliteRencontreQuery()
+            ->with(['user'])
+            ->orderByDesc('updated_at')
+            ->get();
+
+        return $demandes->filter(function (Demande $demande) use ($statut) {
+            $metier = $demande->rencontreStatutMetier();
+
+            return match ($statut) {
+                RencontreStatutEnum::REALISE => $metier->isRdvHonore(),
+                RencontreStatutEnum::NON_HONORE => $metier->isRdvNonHonore(),
+                RencontreStatutEnum::ANNULE => $demande->rencontreStatut() === RencontreStatutEnum::ANNULE,
+                RencontreStatutEnum::REFUSE => $demande->rencontreStatut() === RencontreStatutEnum::REFUSE,
+                default => false,
+            };
+        })->values();
     }
 
     public function ownerHasFormaliteForYear(Demande $demande, int $anneeFiscaleId): bool

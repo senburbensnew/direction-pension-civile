@@ -62,15 +62,17 @@
                             @if(auth()->user()?->hasAnyRole(\Database\Seeders\RolesAndPermissionsSeeder::internalRoles()))
 
                                 @if(isset($isClosed) && $isClosed)
-                                    <div class="flex items-center gap-2 bg-gray-50 border border-gray-300 rounded-xl px-3 py-2">
-                                        <svg class="w-4 h-4 text-gray-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
-                                        </svg>
-                                        <div>
-                                            <p class="text-xs font-bold text-gray-700 leading-none">Dossier clôturé</p>
-                                            <p class="text-xs text-gray-500 mt-0.5">Aucune action disponible</p>
+                                    @unless($request->isRencontre())
+                                        <div class="flex items-center gap-2 bg-gray-50 border border-gray-300 rounded-xl px-3 py-2">
+                                            <svg class="w-4 h-4 text-gray-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
+                                            </svg>
+                                            <div>
+                                                <p class="text-xs font-bold text-gray-700 leading-none">Dossier clôturé</p>
+                                                <p class="text-xs text-gray-500 mt-0.5">Aucune action disponible</p>
+                                            </div>
                                         </div>
-                                    </div>
+                                    @endunless
                                     @if($request->isAnnotated())
                                         <a href="{{ route('demande.print', $request->id) }}" target="_blank" class="dossier-btn-secondary">
                                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/></svg>
@@ -242,7 +244,7 @@
         >
                 @php
                     $rdv           = $request->data ?? [];
-                    $rdvStatut     = $request->rencontreStatut();
+                    $rdvStatut     = $request->rencontreStatutMetier();
                     $isPhysique    = ($rdv['modalite'] ?? '') === 'physique';
                     $rdvPending    = ! $rdvStatut->isTerminal();
                     $rdvAssignment = $request->assignments()->whereNull('ended_at')->with('agent')->first();
@@ -605,8 +607,16 @@
 
                     @else
                         <div class="border-t border-gray-100 pt-5">
-                            <p class="text-sm text-gray-500">
-                                Ce rendez-vous est clôturé ({{ $rdvStatut->label() }}). Aucune action disponible.
+                            <p class="text-sm text-gray-600">
+                                @if($rdvStatut->isRdvHonore())
+                                    Rendez-vous <strong>réalisé</strong> — clôture enregistrée. Consultez la formalité ou le suivi ci-dessous si besoin.
+                                @elseif($rdvStatut->isRdvNonHonore())
+                                    Rendez-vous <strong>non honoré</strong> — aucune autre action de clôture n’est possible.
+                                @elseif($rdvStatut->isRdvAnnule())
+                                    Rendez-vous <strong>{{ mb_strtolower($rdvStatut->label()) }}</strong> — le créneau n’est plus actif.
+                                @else
+                                    Ce rendez-vous est clôturé ({{ $rdvStatut->label() }}).
+                                @endif
                             </p>
                         </div>
                     @endif
@@ -620,7 +630,7 @@
     @if($request->isRencontre() && !($rdvAgentMode ?? false))
         @php
             $rdv        = $request->data ?? [];
-            $rdvStatut  = $request->rencontreStatut();
+            $rdvStatut  = $request->rencontreStatutMetier();
             $isPhysique = ($rdv['modalite'] ?? '') === 'physique';
 
             $rdvDateRaw  = $rdv['date_souhaitee']  ?? null;
@@ -1439,8 +1449,8 @@
                 </div>
             @endif
 
-            {{-- ── Affectations pour avis (sidebar) ── --}}
-            @unless(($isAgentRdvOnly ?? false) || ($rdvAgentMode ?? false))
+            {{-- ── Affectations pour avis (sidebar, dossiers administratifs uniquement) ── --}}
+            @unless(($isAgentRdvOnly ?? false) || ($rdvAgentMode ?? false) || $request->isRencontre())
                 @if($from === 'cart')
                     <div class="bg-white border border-indigo-200 rounded-2xl overflow-hidden">
                         <div class="bg-indigo-50 px-4 py-3 flex items-center justify-between border-b border-indigo-100">
@@ -2628,57 +2638,6 @@
                             @else
                                 <p class="text-sm text-gray-500">Aucun document supplémentaire ajouté pour le moment.</p>
                             @endif
-                        </div>
-                    </div>
-                @endif
-
-                {{-- ====================== JOURNAL D'ACTIVITÉ ====================== --}}
-                @if($from === 'cart' && isset($activityLogs) && $activityLogs->isNotEmpty() && !($rdvAgentMode ?? false))
-                    <div class="bg-white rounded-2xl border border-gray-200 shadow-sm" x-data="{ open: false }">
-                        <div class="px-6">
-                            <button type="button" @click="open = !open" class="w-full flex items-center justify-between py-4">
-                                <h3 class="text-base font-semibold text-gray-800">{{ __('messages.activity_log') }}</h3>
-                                <svg class="w-4 h-4 text-gray-400 transition-transform duration-200" :class="open ? 'rotate-180' : ''" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
-                                </svg>
-                            </button>
-                            <div x-show="open" x-transition>
-                                <div class="rounded-xl border border-gray-100 divide-y divide-gray-100 mb-4">
-                                    @php
-                                        $actionLabels = [
-                                            'viewed'               => ['label' => 'Consulté',           'class' => 'bg-blue-100 text-blue-700'],
-                                            'transferred'          => ['label' => 'Transféré',          'class' => 'bg-purple-100 text-purple-700'],
-                                            'printed'              => ['label' => 'Imprimé',            'class' => 'bg-yellow-100 text-yellow-700'],
-                                            'downloaded'           => ['label' => 'Téléchargé',         'class' => 'bg-green-100 text-green-700'],
-                                            'reception_accepted'   => ['label' => 'Réception confirmée','class' => 'bg-teal-100 text-teal-700'],
-                                            'reception_refused'    => ['label' => 'Réception refusée',  'class' => 'bg-red-100 text-red-700'],
-                                            'affectation_created'  => ['label' => 'Affecté pour avis',  'class' => 'bg-indigo-100 text-indigo-700'],
-                                            'affectation_responded'=> ['label' => 'Avis soumis',        'class' => 'bg-indigo-100 text-indigo-700'],
-                                            'updated'              => ['label' => 'Modifié',            'class' => 'bg-gray-100 text-gray-700'],
-                                            'created'              => ['label' => 'Créé',               'class' => 'bg-gray-100 text-gray-700'],
-                                        ];
-                                    @endphp
-                                    @foreach($activityLogs as $log)
-                                        @php $al = $actionLabels[$log->description] ?? ['label' => $log->description, 'class' => 'bg-gray-100 text-gray-700']; @endphp
-                                        <div class="p-3 flex justify-between items-center">
-                                            <div class="flex items-center gap-2 flex-wrap">
-                                                <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium {{ $al['class'] }}">{{ $al['label'] }}</span>
-                                                @if($log->properties->isNotEmpty())
-                                                    @foreach($log->properties as $key => $val)
-                                                        @if($val && is_string($val) && $key !== 'attributes' && $key !== 'old')
-                                                            <span class="text-xs text-gray-500">{{ $val }}</span>
-                                                        @endif
-                                                    @endforeach
-                                                @endif
-                                            </div>
-                                            <div class="text-right text-xs text-gray-500 flex-shrink-0">
-                                                <p>{{ $log->causer?->name ?? 'Système' }}</p>
-                                                <p>{{ $log->created_at->format('d/m/Y H:i') }}</p>
-                                            </div>
-                                        </div>
-                                    @endforeach
-                                </div>
-                            </div>
                         </div>
                     </div>
                 @endif

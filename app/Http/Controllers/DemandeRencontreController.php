@@ -681,7 +681,8 @@ class DemandeRencontreController extends Controller
             'owner' => $owner,
             'rdvStatut' => $this->rdvWorkflow->statut($demande),
             'rdvScheduledAt' => $demande->rencontreScheduledAt(),
-            'peutEnregistrer' => $demande->peutEtreTraiteApresRendezVous(),
+            'peutEnregistrer' => $demande->peutEtreTraiteApresRendezVous()
+                || ($demande->peutEtreCloture() && ! $demande->formaliteRdvEnregistree()),
             'formalites' => $formalites,
             'anneesDispo' => $anneesDispo,
             'anneeActive' => $anneeActive,
@@ -696,6 +697,22 @@ class DemandeRencontreController extends Controller
         Demande $demande
     ) {
         $this->assertFormaliteAccessible($demande, $request->user());
+
+        $user = $request->user();
+
+        if (
+            $this->rdvWorkflow->statut($demande) !== RencontreStatutEnum::REALISE
+            && $demande->peutEtreCloture()
+        ) {
+            $this->rdvWorkflow->clore(
+                $demande,
+                $user,
+                RencontreStatutEnum::REALISE,
+                'Clôture automatique lors de l’enregistrement de la formalité.'
+            );
+            $demande = $demande->fresh();
+        }
+
         $this->assertFormaliteEnregistrable($demande);
 
         $validated = $request->validate([
@@ -804,20 +821,13 @@ class DemandeRencontreController extends Controller
             ->latest();
 
         if ($request->filled('statut')) {
-            $query->where(
-                'data->rdv_statut',
-                $request->string('statut')
+            $query->whereEffectiveRencontreStatut(
+                $request->string('statut')->toString()
             );
         } elseif ($filtre === 'programmes') {
-            $query->whereNotIn(
-                'data->rdv_statut',
-                RencontreStatutEnum::terminalValues()
-            );
+            $query->whereEffectiveRencontreStatutOpen();
         } elseif ($filtre === 'historique') {
-            $query->whereIn(
-                'data->rdv_statut',
-                RencontreStatutEnum::terminalValues()
-            );
+            $query->whereEffectiveRencontreStatutClosed();
         }
 
         if ($request->filled('modalite')) {
@@ -861,6 +871,13 @@ class DemandeRencontreController extends Controller
         $demandes = $query
             ->paginate(20)
             ->withQueryString();
+
+        $align = app(\App\Services\RencontreStatutAlignmentService::class);
+        $demandes->setCollection(
+            $demandes->getCollection()->map(
+                fn (Demande $demande) => $align->alignAfterFormalite($demande, $user)
+            )
+        );
 
         $appelsVeille = collect();
         if ($user?->hasRole(User::ROLE_AGENT_RDV)) {
@@ -917,6 +934,9 @@ class DemandeRencontreController extends Controller
             'histories.changer',
         ]);
 
+        $demande = app(\App\Services\RencontreStatutAlignmentService::class)
+            ->alignAfterFormalite($demande, $user);
+
         $rdvStatut = $this->rdvWorkflow->statut($demande);
 
         $compteCreation = null;
@@ -966,6 +986,10 @@ class DemandeRencontreController extends Controller
                     $demande
                 ),
                 'eventLabel' => fn (string $event) => $this->rdvWorkflow->eventLabel($event),
+                'dossierShowRoute' => route(
+                    'personal.request.show',
+                    $demande
+                ),
             ]
         );
     }
@@ -1871,11 +1895,13 @@ class DemandeRencontreController extends Controller
 
         $this->authorizeRdvAgent($demande, $user);
 
+        $statut = $this->rdvWorkflow->statut($demande);
+
         abort_unless(
-            $this->rdvWorkflow->statut($demande)
-                === RencontreStatutEnum::REALISE,
+            $statut === RencontreStatutEnum::REALISE
+            || $demande->peutEtreCloture(),
             422,
-            'Le rendez-vous doit d’abord être marqué comme réalisé.'
+            'Le rendez-vous doit d’abord être marqué comme réalisé, ou le créneau doit être passé.'
         );
 
         $motifKey = (string) ($demande->data['motif_key'] ?? '');
@@ -1900,7 +1926,8 @@ class DemandeRencontreController extends Controller
     private function assertFormaliteEnregistrable(Demande $demande): void
     {
         abort_unless(
-            $demande->peutEtreTraiteApresRendezVous(),
+            $demande->peutEtreTraiteApresRendezVous()
+            || $demande->peutEtreCloture(),
             422,
             $demande->rencontreScheduledAt()
                 ? 'L’enregistrement n’est possible qu’après l’heure prévue du rendez-vous ('

@@ -93,6 +93,50 @@ enum RencontreStatutEnum: string
         ];
     }
 
+    /**
+     * Clôtures posées par l’agent après le créneau (dossier / pilotage).
+     *
+     * @return list<self>
+     */
+    public static function agentClosureOutcomes(): array
+    {
+        return [
+            self::REALISE,
+            self::NON_HONORE,
+        ];
+    }
+
+    /**
+     * @return list<self>
+     */
+    public static function cancelledOutcomes(): array
+    {
+        return [
+            self::ANNULE,
+            self::REFUSE,
+        ];
+    }
+
+    public function isRdvHonore(): bool
+    {
+        return $this === self::REALISE;
+    }
+
+    public function isRdvNonHonore(): bool
+    {
+        return $this === self::NON_HONORE;
+    }
+
+    public function isRdvAnnule(): bool
+    {
+        return in_array($this, [self::ANNULE, self::REFUSE], true);
+    }
+
+    public function permetEnregistrementFormalite(): bool
+    {
+        return $this === self::REALISE;
+    }
+
     public static function fromWorkflow(?string $code): self
     {
         return match ($code) {
@@ -105,6 +149,26 @@ enum RencontreStatutEnum: string
             'REPORTE' => self::REPORTE,
             'NON_HONORE' => self::NON_HONORE,
             default => self::DEMANDE,
+        };
+    }
+
+    /**
+     * Codes d’étape workflow équivalents à ce statut (repli si data.rdv_statut absent).
+     *
+     * @return list<string>
+     */
+    public function matchingWorkflowStepCodes(): array
+    {
+        return match ($this) {
+            self::DEMANDE => ['SOUMISE'],
+            self::EN_COURS => ['EN_COURS'],
+            self::ATTRIBUE => ['ATTRIBUE', 'EN_ATTENTE'],
+            self::ACTIF => ['ACTIF'],
+            self::REFUSE => ['REFUSE', 'REJETEE'],
+            self::REALISE => ['REALISE', 'FINALISEE'],
+            self::ANNULE => ['ANNULE', 'ANNULEE'],
+            self::REPORTE => ['REPORTE'],
+            self::NON_HONORE => ['NON_HONORE'],
         };
     }
 }

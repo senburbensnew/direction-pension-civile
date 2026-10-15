@@ -90,4 +90,40 @@ class FormaliteSuiviTest extends TestCase
             ->assertSee($pendingOwner->displayName(), false)
             ->assertSee('Enregistrer', false);
     }
+
+    public function test_rdv_with_formalite_enregistree_not_listed_as_a_cloturer(): void
+    {
+        $annee = AnneeFiscale::active();
+        $this->assertNotNull($annee);
+
+        $pensionne = User::factory()->create();
+        $agent = User::factory()->create();
+        $agent->assignRole(User::ROLE_AGENT_FORMALITES);
+
+        $demande = Demande::create([
+            'type' => TypeDemandeEnum::DEMANDE_RENCONTRE->value,
+            'created_by' => $pensionne->id,
+            'current_service_id' => Service::where('code', Service::FORMALITE)->value('id'),
+            'current_step_id' => WorkflowStep::idForCode('ACTIF', TypeDemandeEnum::DEMANDE_RENCONTRE->value),
+            'data' => [
+                'motif_key' => 'demande_formalites_mandats',
+                'rdv_statut' => RencontreStatutEnum::ACTIF->value,
+                'date_souhaitee' => now()->subDay()->toDateString(),
+                'heure_souhaitee' => '10:00',
+            ],
+        ]);
+
+        Formalite::create([
+            'user_id' => $pensionne->id,
+            'annee_fiscale_id' => $annee->id,
+            'realisee_at' => now(),
+            'realisee_par' => $agent->id,
+            'demande_id' => $demande->id,
+        ]);
+
+        $this->actingAsConfirmed($this->responsable())
+            ->get(route('formalites.suivi.index', ['filtre' => 'a_cloturer']))
+            ->assertOk()
+            ->assertDontSee($pensionne->displayName(), false);
+    }
 }

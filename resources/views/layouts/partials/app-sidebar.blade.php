@@ -74,7 +74,7 @@
             <i class="fas fa-id-card"></i>
             <span class="portal-sidebar-label truncate">Codes pension</span>
         </a>
-        <a href="{{ route('compte.beneficiaires.index') }}" title="Mes bénéficiaires"
+        <!-- <a href="{{ route('compte.beneficiaires.index') }}" title="Mes bénéficiaires"
            class="portal-nav-link {{ request()->routeIs('compte.beneficiaires.*', 'compte.relations.*') ? 'active' : '' }}">
             <i class="fas fa-users"></i>
             <span class="portal-sidebar-label truncate">Bénéficiaires</span>
@@ -83,7 +83,7 @@
            class="portal-nav-link {{ request()->routeIs('compte.mandats.*') ? 'active' : '' }}">
             <i class="fas fa-file-signature"></i>
             <span class="portal-sidebar-label truncate">Mandats</span>
-        </a>
+        </a> -->
     @endif
 
     @role(['validateur_rdv', 'responsable_service_accueil_formalites', 'directeur', 'assistant_directeur'])
@@ -118,13 +118,13 @@
         </a>
     @endrole
 
-    @if(auth()->user()?->can('pension_mandats.view') || auth()->user()?->can('beneficiaire_relations.view'))
+    <!-- @if(auth()->user()?->can('pension_mandats.view') || auth()->user()?->can('beneficiaire_relations.view'))
         <a href="{{ route('formalites.representations.index') }}" title="Mandats et relations"
            class="portal-nav-link {{ request()->routeIs('formalites.representations.*', 'formalites.pension-mandats.*', 'formalites.beneficiaire-relations.*') ? 'active' : '' }}">
             <i class="fas fa-people-arrows"></i>
             <span class="portal-sidebar-label truncate">Mandats &amp; rel.</span>
         </a>
-    @endif
+    @endif -->
 
     <div class="portal-sidebar-label portal-nav-divider my-2 border-t border-white/10"></div>
 

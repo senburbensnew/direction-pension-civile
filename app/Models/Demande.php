@@ -775,6 +775,132 @@ class Demande extends Model implements HasMedia
             );
     }
 
+    /**
+     * Statut RDV persisté dans data (sans repli workflow).
+     */
+    public function rencontreStatutStocke(): ?RencontreStatutEnum
+    {
+        return RencontreStatutEnum::tryFrom(
+            (string) ($this->data['rdv_statut'] ?? '')
+        );
+    }
+
+    /**
+     * @param  \Illuminate\Database\Eloquent\Builder<Demande>  $query
+     */
+    public function scopeWhereEffectiveRencontreStatut($query, RencontreStatutEnum|string $statut): void
+    {
+        if (is_string($statut)) {
+            $statut = RencontreStatutEnum::from($statut);
+        }
+
+        $query->where(function ($outer) use ($statut) {
+            static::applyEffectiveRencontreStatutConstraint($outer, $statut);
+        });
+    }
+
+    /**
+     * RDV non clos (statut métier non terminal).
+     *
+     * @param  \Illuminate\Database\Eloquent\Builder<Demande>  $query
+     */
+    public function scopeWhereEffectiveRencontreStatutOpen($query): void
+    {
+        $query->where(function ($outer) {
+            $first = true;
+            foreach (RencontreStatutEnum::cases() as $case) {
+                if ($case->isTerminal()) {
+                    continue;
+                }
+                if ($first) {
+                    $outer->where(function ($q) use ($case) {
+                        static::applyEffectiveRencontreStatutConstraint($q, $case);
+                    });
+                    $first = false;
+                } else {
+                    $outer->orWhere(function ($q) use ($case) {
+                        static::applyEffectiveRencontreStatutConstraint($q, $case);
+                    });
+                }
+            }
+        });
+    }
+
+    /**
+     * RDV clos (réalisé, refusé, annulé, non honoré).
+     *
+     * @param  \Illuminate\Database\Eloquent\Builder<Demande>  $query
+     */
+    public function scopeWhereEffectiveRencontreStatutClosed($query): void
+    {
+        $query->where(function ($outer) {
+            $first = true;
+            foreach (RencontreStatutEnum::cases() as $case) {
+                if (! $case->isTerminal()) {
+                    continue;
+                }
+                if ($first) {
+                    $outer->where(function ($q) use ($case) {
+                        static::applyEffectiveRencontreStatutConstraint($q, $case);
+                    });
+                    $first = false;
+                } else {
+                    $outer->orWhere(function ($q) use ($case) {
+                        static::applyEffectiveRencontreStatutConstraint($q, $case);
+                    });
+                }
+            }
+        });
+    }
+
+    /**
+     * @param  list<RencontreStatutEnum|string>  $statuts
+     * @param  \Illuminate\Database\Eloquent\Builder<Demande>  $query
+     */
+    public function scopeWhereEffectiveRencontreStatutIn($query, array $statuts): void
+    {
+        $cases = array_map(
+            fn ($statut) => is_string($statut)
+                ? RencontreStatutEnum::from($statut)
+                : $statut,
+            $statuts
+        );
+
+        $query->where(function ($outer) use ($cases) {
+            $first = true;
+            foreach ($cases as $case) {
+                if ($first) {
+                    $outer->where(function ($q) use ($case) {
+                        static::applyEffectiveRencontreStatutConstraint($q, $case);
+                    });
+                    $first = false;
+                } else {
+                    $outer->orWhere(function ($q) use ($case) {
+                        static::applyEffectiveRencontreStatutConstraint($q, $case);
+                    });
+                }
+            }
+        });
+    }
+
+    /**
+     * @param  \Illuminate\Database\Eloquent\Builder<Demande>  $query
+     */
+    protected static function applyEffectiveRencontreStatutConstraint($query, RencontreStatutEnum $statut): void
+    {
+        $codes = $statut->matchingWorkflowStepCodes();
+
+        $query->where('data->rdv_statut', $statut->value)
+            ->orWhere(function ($q) use ($codes) {
+                $q->where(function ($missing) {
+                    $missing->whereNull('data->rdv_statut')
+                        ->orWhere('data->rdv_statut', '');
+                })->whereHas('currentStep', function ($step) use ($codes) {
+                    $step->whereIn('code', $codes);
+                });
+            });
+    }
+
     public function rencontreDemandeurNom(): string
     {
         $data = $this->data ?? [];
@@ -848,7 +974,7 @@ class Demande extends Model implements HasMedia
     public function statutAffiche(): string
     {
         if ($this->isRencontre()) {
-            return $this->rencontreStatut()->label();
+            return $this->rencontreStatutMetier()->label();
         }
 
         return $this->currentStep?->nom ?? '—';
@@ -875,7 +1001,7 @@ class Demande extends Model implements HasMedia
     public function statutBadgeClass(): string
     {
         if ($this->isRencontre()) {
-            return $this->rencontreStatut()->badgeClass();
+            return $this->rencontreStatutMetier()->badgeClass();
         }
 
         return WorkflowStep::getStatusStyle(
@@ -1019,6 +1145,42 @@ class Demande extends Model implements HasMedia
         }
 
         return $this->rencontreHeureEstPassee();
+    }
+
+    /**
+     * Créneau passé, RDV non clos, et aucune formalité déjà enregistrée pour ce dossier / exercice.
+     */
+    public function doitApparaitreCommeACloturer(): bool
+    {
+        return $this->peutEtreCloture()
+            && ! $this->formaliteRdvEnregistree();
+    }
+
+    /**
+     * Statut métier pour listes / stats (clôtures explicites conservées ; Actif + formalité → Réalisé).
+     */
+    public function rencontreStatutAffiche(): RencontreStatutEnum
+    {
+        return $this->rencontreStatutMetier();
+    }
+
+    public function rencontreStatutMetier(): RencontreStatutEnum
+    {
+        $statut = $this->rencontreStatut();
+
+        if ($statut->isTerminal()) {
+            return $statut;
+        }
+
+        if (
+            $statut === RencontreStatutEnum::ACTIF
+            && $this->formaliteRdvEnregistree()
+            && $this->rencontreHeureEstPassee()
+        ) {
+            return RencontreStatutEnum::REALISE;
+        }
+
+        return $statut;
     }
 
     /**
