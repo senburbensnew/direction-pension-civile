@@ -3,7 +3,7 @@
 @section('title', 'Rédiger une newsletter')
 
 @section('content')
-<div class="max-w-4xl" x-data="{ subject: '', body: '', tab: 'editor' }">
+<div class="w-full" x-data="{ subject: '', body: '', tab: 'editor' }">
 
     {{-- Header --}}
     <div class="flex items-center gap-3 mb-6">

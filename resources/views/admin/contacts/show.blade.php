@@ -11,7 +11,7 @@
 @php
     $subjectLabel = $contact->subjectLabel();
 @endphp
-<div class="max-w-2xl space-y-4">
+<div class="w-full space-y-4">
 
     <div class="flex items-center gap-3">
         <a href="{{ route('admin.contacts.index') }}"

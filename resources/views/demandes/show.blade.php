@@ -1,7 +1,7 @@
 @extends('layouts.main')
 
 @section('content')
-<div class="max-w-5xl mx-auto py-8 px-4">
+<div class="site-gutter py-8">
 
     <h1 class="text-3xl font-bold mb-6">Suivi de la demande</h1>
 

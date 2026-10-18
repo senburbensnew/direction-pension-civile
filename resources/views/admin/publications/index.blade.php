@@ -24,9 +24,17 @@
         'fa-paperclip', 'fa-file', 'fa-book', 'fa-balance-scale', 'fa-stamp',
         'fa-landmark', 'fa-clipboard-list', 'fa-folder-open',
     ];
+    $pubAdminConfig = [
+        'defaultType' => array_key_first($types) ?: 'document',
+        'typesOpen' => (bool) (session('error') || old('label')),
+        'typeOrderDefault' => (int) (($publicationTypes->max('order_column') ?? 0) + 1),
+    ];
 @endphp
 
-<div class="space-y-4" x-data="pubAdmin()">
+<div
+    class="space-y-4"
+    x-data="pubAdmin"
+    data-pub-admin-config='@json($pubAdminConfig)'>
 
     <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <div>
@@ -349,40 +357,3 @@
     </div>
 </div>
 @endsection
-
-@push('scripts')
-<script>
-function pubAdmin() {
-    const defaultType = @json(array_key_first($types) ?: 'document');
-    return {
-        open: false,
-        editing: false,
-        typesOpen: {{ session('error') || old('label') ? 'true' : 'false' }},
-        typeOpen: false,
-        typeEditing: false,
-        form: { id: null, title: '', type: defaultType, description: '', url: '', file_path: null, published: true },
-        typeForm: { id: null, label: '', code: '', icon: 'fa-file', badge_class: 'bg-gray-100 text-gray-700', order_column: 0 },
-        openCreate() {
-            this.editing = false;
-            this.form = { id: null, title: '', type: defaultType, description: '', url: '', file_path: null, published: true };
-            this.open = true;
-        },
-        openEdit(item) {
-            this.editing = true;
-            this.form = { ...item, published: !!item.published };
-            this.open = true;
-        },
-        openTypeCreate() {
-            this.typeEditing = false;
-            this.typeForm = { id: null, label: '', code: '', icon: 'fa-file', badge_class: 'bg-gray-100 text-gray-700', order_column: {{ (int) ($publicationTypes->max('order_column') ?? 0) + 1 }} };
-            this.typeOpen = true;
-        },
-        openTypeEdit(item) {
-            this.typeEditing = true;
-            this.typeForm = { ...item };
-            this.typeOpen = true;
-        }
-    };
-}
-</script>
-@endpush

@@ -32,13 +32,13 @@
     }
 </style>
 
-<div class="py-10 px-4 sm:px-6 lg:px-8">
-    <div class="max-w-7xl mx-auto space-y-8">
+<div class="py-10">
+    <div class="site-gutter space-y-8">
 
         <div class="text-center">
             <span class="text-xs font-bold text-blue-600 uppercase tracking-widest">Qui sommes-nous</span>
             <h1 class="text-4xl font-bold gradient-text mt-2 mb-3">Financement de la Pension Civile</h1>
-            <p class="text-gray-600 text-lg max-w-3xl mx-auto">
+            <p class="text-gray-600 text-lg">
                 Le financement de la Direction de la Pension Civile repose sur plusieurs sources,
                 garantissant la pérennité et l’équilibre du système de retraite des fonctionnaires.
             </p>
@@ -111,7 +111,7 @@
             <h2 class="text-xl font-bold text-gray-900 mb-4">Répartition budgétaire</h2>
             <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                 <div class="bg-white rounded-xl border border-gray-200 card-shadow p-5 text-center">
-                    <div class="w-12 h-12 mx-auto mb-3 rounded-lg bg-emerald-50 flex items-center justify-center">
+                    <div class="w-12 h-12 mb-3 rounded-lg bg-emerald-50 flex items-center justify-center">
                         <i class="fas fa-money-check-alt text-emerald-600"></i>
                     </div>
                     <h3 class="font-semibold text-gray-900 mb-1">Paiement des pensions</h3>
@@ -119,7 +119,7 @@
                 </div>
 
                 <div class="bg-white rounded-xl border border-gray-200 card-shadow p-5 text-center">
-                    <div class="w-12 h-12 mx-auto mb-3 rounded-lg bg-amber-50 flex items-center justify-center">
+                    <div class="w-12 h-12 mb-3 rounded-lg bg-amber-50 flex items-center justify-center">
                         <i class="fas fa-building text-amber-600"></i>
                     </div>
                     <h3 class="font-semibold text-gray-900 mb-1">Gestion administrative</h3>
@@ -127,7 +127,7 @@
                 </div>
 
                 <div class="bg-white rounded-xl border border-gray-200 card-shadow p-5 text-center">
-                    <div class="w-12 h-12 mx-auto mb-3 rounded-lg bg-indigo-50 flex items-center justify-center">
+                    <div class="w-12 h-12 mb-3 rounded-lg bg-indigo-50 flex items-center justify-center">
                         <i class="fas fa-piggy-bank text-indigo-600"></i>
                     </div>
                     <h3 class="font-semibold text-gray-900 mb-1">Fonds de réserve</h3>
@@ -135,7 +135,7 @@
                 </div>
 
                 <div class="bg-white rounded-xl border border-gray-200 card-shadow p-5 text-center">
-                    <div class="w-12 h-12 mx-auto mb-3 rounded-lg bg-sky-50 flex items-center justify-center">
+                    <div class="w-12 h-12 mb-3 rounded-lg bg-sky-50 flex items-center justify-center">
                         <i class="fas fa-cogs text-sky-600"></i>
                     </div>
                     <h3 class="font-semibold text-gray-900 mb-1">Modernisation</h3>

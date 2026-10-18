@@ -3,6 +3,7 @@
 @section('title', 'Glossaire')
 
 @section('content')
+<x-push-vite :js="['resources/js/pages/glossaire-public.js']" />
 @php
     $categories = $terms->pluck('category')->unique()->sort()->values();
 @endphp
@@ -13,13 +14,13 @@
     .tab-btn.active { background: #173052; color: #fff; }
 </style>
 
-<div class="py-10 px-4 sm:px-6 lg:px-8">
-    <div class="max-w-7xl mx-auto space-y-8">
+<div class="py-10">
+    <div class="site-gutter space-y-8">
 
         <div class="text-center">
             <span class="text-xs font-bold text-orange-500 uppercase tracking-widest">Ressources</span>
             <h1 class="text-4xl font-bold text-navy mt-2 mb-3">Glossaire de la Pension Civile</h1>
-            <p class="text-gray-600 max-w-2xl mx-auto">
+            <p class="text-gray-600">
                 Retrouvez la définition des termes essentiels utilisés dans le domaine de la pension civile.
             </p>
         </div>
@@ -79,34 +80,4 @@
     </div>
 </div>
 
-<script>
-document.addEventListener('DOMContentLoaded', function () {
-    const search = document.getElementById('search-terms');
-    const cards = document.querySelectorAll('.term-card');
-    const empty = document.getElementById('gloss-empty');
-    const tabs = document.querySelectorAll('#gloss-tabs .tab-btn');
-    let cat = 'all';
-
-    function apply() {
-        const q = (search?.value || '').trim().toLowerCase();
-        let visible = 0;
-        cards.forEach(card => {
-            const matchCat = cat === 'all' || card.dataset.category === cat;
-            const matchQ = !q || (card.dataset.search || '').includes(q);
-            const show = matchCat && matchQ;
-            card.hidden = !show;
-            if (show) visible++;
-        });
-        if (empty) empty.classList.toggle('hidden', visible > 0 || cards.length === 0);
-    }
-
-    tabs.forEach(tab => tab.addEventListener('click', function () {
-        tabs.forEach(t => t.classList.remove('active'));
-        this.classList.add('active');
-        cat = this.dataset.cat;
-        apply();
-    }));
-    search?.addEventListener('input', apply);
-});
-</script>
 @endsection

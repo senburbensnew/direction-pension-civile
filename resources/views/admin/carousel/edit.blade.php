@@ -8,7 +8,7 @@
 @endsection
 
 @section('content')
-<div class="max-w-2xl mx-auto space-y-6">
+<div class="w-full space-y-6">
 
     {{-- Header --}}
     <div class="flex items-center gap-3">
@@ -101,9 +101,7 @@
                             <input type="radio" name="overlay_position" value="{{ $value }}"
                                    class="sr-only peer"
                                    {{ old('overlay_position', $carousel->overlay_position ?? 'bottom-left') === $value ? 'checked' : '' }}>
-                            <div class="border-2 rounded-lg p-2 text-center text-xs transition-colors
-                                        peer-checked:border-blue-500 peer-checked:bg-blue-50 peer-checked:text-blue-700
-                                        border-gray-200 text-gray-500 hover:border-gray-300">
+                            <div class="border-2 rounded-lg p-2 text-center text-xs transition-colors peer-checked:border-blue-500 peer-checked:bg-blue-50 peer-checked:text-blue-700 border-gray-200 text-gray-500 hover:border-gray-300">
                                 {{ $label }}
                             </div>
                         </label>
@@ -120,9 +118,7 @@
                             <input type="radio" name="text_size" value="{{ $value }}"
                                    class="sr-only peer"
                                    {{ old('text_size', $carousel->text_size ?? 'md') === $value ? 'checked' : '' }}>
-                            <div class="border-2 rounded-lg py-2 text-center text-xs transition-colors
-                                        peer-checked:border-blue-500 peer-checked:bg-blue-50 peer-checked:text-blue-700
-                                        border-gray-200 text-gray-500 hover:border-gray-300">
+                            <div class="border-2 rounded-lg py-2 text-center text-xs transition-colors peer-checked:border-blue-500 peer-checked:bg-blue-50 peer-checked:text-blue-700 border-gray-200 text-gray-500 hover:border-gray-300">
                                 {{ $label }}
                             </div>
                         </label>
@@ -161,13 +157,7 @@
                             <input type="checkbox" name="text_styles[]" value="{{ $value }}"
                                    x-model="textStyles"
                                    class="sr-only peer">
-                            <div class="border-2 rounded-lg px-3 py-1.5 text-xs transition-colors select-none
-                                        peer-checked:border-blue-500 peer-checked:bg-blue-50 peer-checked:text-blue-700
-                                        border-gray-200 text-gray-500 hover:border-gray-300
-                                        {{ $value === 'bold' ? 'font-bold' : '' }}
-                                        {{ $value === 'italic' ? 'italic' : '' }}
-                                        {{ $value === 'underline' ? 'underline' : '' }}
-                                        {{ $value === 'uppercase' ? 'uppercase tracking-wide' : '' }}">
+                            <div class="border-2 rounded-lg px-3 py-1.5 text-xs transition-colors select-none peer-checked:border-blue-500 peer-checked:bg-blue-50 peer-checked:text-blue-700 border-gray-200 text-gray-500 hover:border-gray-300 {{ $value === 'bold' ? 'font-bold' : '' }} {{ $value === 'italic' ? 'italic' : '' }} {{ $value === 'underline' ? 'underline' : '' }} {{ $value === 'uppercase' ? 'uppercase tracking-wide' : '' }}">
                                 {{ $label }}
                             </div>
                         </label>
@@ -184,9 +174,7 @@
                             <input type="radio" name="font_family" value="{{ $key }}"
                                    class="sr-only peer"
                                    {{ old('font_family', $carousel->font_family ?? 'sans') === $key ? 'checked' : '' }}>
-                            <div class="border-2 rounded-lg py-2 px-3 text-center text-sm transition-colors
-                                        peer-checked:border-blue-500 peer-checked:bg-blue-50 peer-checked:text-blue-700
-                                        border-gray-200 text-gray-500 hover:border-gray-300"
+                            <div class="border-2 rounded-lg py-2 px-3 text-center text-sm transition-colors peer-checked:border-blue-500 peer-checked:bg-blue-50 peer-checked:text-blue-700 border-gray-200 text-gray-500 hover:border-gray-300"
                                  style="font-family: inherit">
                                 {{ $name }}
                             </div>

@@ -48,7 +48,7 @@
                     ← Retour au pilotage
                 </a>
                 <h1 class="text-2xl font-bold text-navy">Mes disponibilités</h1>
-                <p class="text-sm text-gray-600 mt-1 max-w-3xl leading-relaxed">
+                <p class="text-sm text-gray-600 mt-1 leading-relaxed">
                     Définissez quand vous acceptez des rendez-vous (créneaux de {{ $slotMinutes }} min,
                     plage {{ $globalStart }}–{{ $globalEnd }}).
                     Le calendrier est le moyen le plus rapide ; les listes permettent des ajustements précis.
@@ -69,12 +69,6 @@
                 </span>
             </div>
         </div>
-
-        @if(session('success'))
-            <div class="dossier-notice border-l-emerald-600 bg-emerald-50 px-4 py-3 text-sm text-emerald-900" role="status">
-                {{ session('success') }}
-            </div>
-        @endif
 
         @if($errors->any())
             <div class="p-4 bg-red-50 border border-red-200 text-red-800 text-sm space-y-1" role="alert">
@@ -206,9 +200,7 @@
                             ] as $mode => $cfg)
                                 <button type="button" @click="paintMode = '{{ $mode }}'"
                                     class="w-full px-3 py-2 text-sm font-semibold border text-left transition-colors"
-                                    :class="paintMode === '{{ $mode }}'
-                                        ? '{{ $cfg['active'] }}'
-                                        : 'bg-white text-gray-800 border-gray-200 hover:bg-gray-50'">
+                                    :class="paintMode === '{{ $mode }}' ? '{{ $cfg['active'] }}' : 'bg-white text-gray-800 border-gray-200 hover:bg-gray-50'">
                                     {{ $cfg['label'] }}
                                 </button>
                             @endforeach
@@ -484,8 +476,8 @@
             </section>
 
             {{-- Barre d'enregistrement fixe --}}
-            <div class="portal-fixed-bottom border-t border-gray-200 bg-white/95 backdrop-blur-sm shadow-[0_-4px_20px_rgba(0,0,0,0.06)]">
-                <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 min-w-0">
+            <div class="fixed bottom-0 right-0 left-0 z-30 border-t border-gray-200 bg-white/95 backdrop-blur-sm shadow-[0_-4px_20px_rgba(0,0,0,0.06)] transition-[left] duration-200 lg:left-60 group-data-[collapsed=true]/body:lg:left-[4.25rem]">
+                <div class="site-gutter py-3 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 min-w-0">
                     <p class="text-sm text-gray-600 min-w-0">
                         <span x-show="dirty" class="font-medium text-amber-700">Modifications non enregistrées — </span>
                         L’enregistrement remplace l’ensemble de vos règles de disponibilité.

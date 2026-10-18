@@ -1,14 +1,7 @@
 @extends('layouts.admin')
 
 @section('content')
-<div class="container mx-auto p-6">
-
-    @if(session('success'))
-        <div class="mb-4 flex items-center gap-2 bg-green-50 border border-green-300 text-green-800 rounded-lg px-4 py-3 text-sm">
-            <i class="fas fa-check-circle text-green-500"></i>
-            {{ session('success') }}
-        </div>
-    @endif
+<div class="p-6">
 
     <div class="mb-6 flex flex-col md:flex-row md:items-center md:justify-between gap-3">
         <h1 class="text-2xl font-bold text-gray-800">Rapports</h1>
@@ -75,8 +68,7 @@
                             @endif
                         </td>
                         <td class="px-4 py-3 text-center">
-                            <span class="px-2 py-1 rounded-full text-xs font-medium
-                                {{ $report->status === 'published' ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-600' }}">
+                            <span class="px-2 py-1 rounded-full text-xs font-medium {{ $report->status === 'published' ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-600' }}">
                                 {{ $report->status === 'published' ? 'Publié' : 'Brouillon' }}
                             </span>
                         </td>
@@ -90,10 +82,7 @@
                                     @csrf
                                     <button type="submit"
                                         title="{{ $report->status === 'published' ? 'Dépublier' : 'Publier' }}"
-                                        class="px-2 py-1 rounded text-xs font-medium
-                                            {{ $report->status === 'published'
-                                                ? 'bg-yellow-100 text-yellow-700 hover:bg-yellow-200'
-                                                : 'bg-green-100 text-green-700 hover:bg-green-200' }}">
+                                        class="px-2 py-1 rounded text-xs font-medium {{ $report->status === 'published' ? 'bg-yellow-100 text-yellow-700 hover:bg-yellow-200' : 'bg-green-100 text-green-700 hover:bg-green-200' }}">
                                         <i class="fas {{ $report->status === 'published' ? 'fa-eye-slash' : 'fa-eye' }}"></i>
                                         {{ $report->status === 'published' ? 'Dépublier' : 'Publier' }}
                                     </button>

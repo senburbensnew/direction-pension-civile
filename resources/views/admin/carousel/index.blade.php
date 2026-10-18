@@ -4,6 +4,7 @@
 @section('breadcrumb') Carrousel @endsection
 
 @section('content')
+<x-push-vite :js="['resources/js/admin/drag-reorder-grid.js']" />
 <div class="space-y-6">
 
     {{-- Header --}}
@@ -18,14 +19,6 @@
             Ajouter une diapositive
         </a>
     </div>
-
-    {{-- Flash message --}}
-    @if(session('success'))
-        <div class="flex items-center gap-2 px-4 py-3 bg-green-50 border border-green-200 text-green-700 rounded-lg text-sm">
-            <i class="fas fa-check-circle"></i>
-            {{ session('success') }}
-        </div>
-    @endif
 
     {{-- Status banners --}}
     @if($carousels->count() > 1)
@@ -54,7 +47,7 @@
                class="text-sm text-blue-600 hover:underline">Ajouter la première diapositive</a>
         </div>
     @else
-        <div id="carousel-grid" class="flex flex-wrap gap-5">
+        <div id="carousel-grid" class="flex flex-wrap gap-5" data-dpc-drag-reorder data-card-selector=".carousel-card" data-reorder-url="{{ route('admin.carousels.reorder') }}" data-reorder-flip="1">
             @foreach($carousels as $carousel)
             <div class="carousel-card bg-white rounded-xl border-2 border-gray-200 overflow-hidden shadow-sm transition-all flex flex-col select-none"
                  style="width: calc((100% - 40px) / 3);"
@@ -69,8 +62,7 @@
                     <span class="order-badge absolute top-2 left-2 bg-black/50 text-white text-xs font-bold px-2 py-0.5 rounded-full backdrop-blur-sm">
                         #{{ $carousel->order }}
                     </span>
-                    <span class="absolute top-2 right-2 text-xs font-semibold px-2 py-0.5 rounded-full
-                        {{ $carousel->status ? 'bg-green-500 text-white' : 'bg-gray-400 text-white' }}">
+                    <span class="absolute top-2 right-2 text-xs font-semibold px-2 py-0.5 rounded-full {{ $carousel->status ? 'bg-green-500 text-white' : 'bg-gray-400 text-white' }}">
                         {{ $carousel->status ? 'Actif' : 'Inactif' }}
                     </span>
                 </div>
@@ -118,142 +110,5 @@
 
 </div>
 
-<style>
-.carousel-card { cursor: grab; }
-.carousel-card:active { cursor: grabbing; }
-.carousel-card.dragging { opacity: 0.35; border-color: #93c5fd !important; }
-.carousel-card.drop-before { border-left-color: #2563eb !important; border-left-width: 4px !important; }
-.carousel-card.drop-after  { border-right-color: #2563eb !important; border-right-width: 4px !important; }
-</style>
 
-<script>
-(function () {
-    const grid = document.getElementById('carousel-grid');
-    if (!grid) return;
-
-    const bannerHint   = document.getElementById('banner-hint');
-    const bannerSaving = document.getElementById('banner-saving');
-    const bannerSaved  = document.getElementById('banner-saved');
-
-    function showBanner(el, autohide = 0) {
-        [bannerHint, bannerSaving, bannerSaved].forEach(b => {
-            if (!b) return;
-            b.classList.add('hidden');
-            b.classList.remove('flex');
-        });
-        if (!el) return;
-        el.classList.remove('hidden');
-        el.classList.add('flex');
-        if (autohide) {
-            setTimeout(() => {
-                el.classList.add('hidden');
-                el.classList.remove('flex');
-                if (bannerHint) { bannerHint.classList.remove('hidden'); bannerHint.classList.add('flex'); }
-            }, autohide);
-        }
-    }
-
-    let dragged = null;
-
-    function cards() { return [...grid.querySelectorAll('.carousel-card')]; }
-
-    function clearDropClasses() {
-        cards().forEach(c => c.classList.remove('drop-before', 'drop-after'));
-    }
-
-    // FLIP: snapshot positions → move in DOM → animate from old to new positions
-    function flipMove(moveFn) {
-        const all = cards();
-        // First: record positions before move
-        const first = new Map(all.map(c => [c, c.getBoundingClientRect()]));
-
-        moveFn();
-
-        // Last: positions after move
-        const last = new Map(cards().map(c => [c, c.getBoundingClientRect()]));
-
-        // Invert + Play
-        cards().forEach(c => {
-            const f = first.get(c);
-            const l = last.get(c);
-            if (!f || !l) return;
-            const dx = f.left - l.left;
-            const dy = f.top  - l.top;
-            if (dx === 0 && dy === 0) return;
-            // Jump to old position instantly, then transition to new
-            c.style.transition = 'none';
-            c.style.transform  = `translate(${dx}px, ${dy}px)`;
-            requestAnimationFrame(() => {
-                requestAnimationFrame(() => {
-                    c.style.transition = 'transform 300ms cubic-bezier(0.25, 0.46, 0.45, 0.94)';
-                    c.style.transform  = '';
-                });
-            });
-        });
-    }
-
-    function saveOrder() {
-        showBanner(bannerSaving);
-
-        const ids = cards().map(c => c.dataset.id);
-        cards().forEach((c, i) => {
-            const badge = c.querySelector('.order-badge');
-            if (badge) badge.textContent = '#' + (i + 1);
-        });
-
-        fetch('{{ route('admin.carousels.reorder') }}', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
-            },
-            body: JSON.stringify({ order: ids }),
-        })
-        .then(r => r.json())
-        .then(data => showBanner(data.success ? bannerSaved : bannerHint, data.success ? 2500 : 0))
-        .catch(() => showBanner(bannerHint, 0));
-    }
-
-    cards().forEach(card => {
-        card.addEventListener('dragstart', e => {
-            dragged = card;
-            e.dataTransfer.effectAllowed = 'move';
-            e.dataTransfer.setData('text/plain', card.dataset.id);
-            requestAnimationFrame(() => card.classList.add('dragging'));
-        });
-
-        card.addEventListener('dragend', () => {
-            if (dragged) dragged.classList.remove('dragging');
-            clearDropClasses();
-            dragged = null;
-            saveOrder();
-        });
-
-        card.addEventListener('dragover', e => {
-            e.preventDefault();
-            if (!dragged || card === dragged) return;
-            clearDropClasses();
-            const { left, width } = card.getBoundingClientRect();
-            card.classList.add(e.clientX < left + width / 2 ? 'drop-before' : 'drop-after');
-        });
-
-        card.addEventListener('dragleave', () => clearDropClasses());
-
-        card.addEventListener('drop', e => {
-            e.preventDefault();
-            if (!dragged || card === dragged) return;
-            clearDropClasses();
-            const { left, width } = card.getBoundingClientRect();
-            const before = e.clientX < left + width / 2;
-            flipMove(() => {
-                if (before) {
-                    grid.insertBefore(dragged, card);
-                } else {
-                    grid.insertBefore(dragged, card.nextSibling);
-                }
-            });
-        });
-    });
-})();
-</script>
 @endsection

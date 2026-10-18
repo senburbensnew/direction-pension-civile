@@ -34,6 +34,10 @@ class AuthenticatedSessionController extends Controller
             return redirect()->route('password.required');
         }
 
+        if ($request->user()?->hasRole('admin')) {
+            return redirect()->route('admin.dashboard.index');
+        }
+
         return redirect()->to(RouteServiceProvider::HOME);
     }
 

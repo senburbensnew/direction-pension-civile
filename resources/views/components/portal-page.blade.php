@@ -4,7 +4,7 @@
 ])
 
 <div {{ $attributes->merge([
-    'class' => "dossier-page max-w-7xl mx-auto w-full px-4 sm:px-6 lg:px-8 pt-4 {$bottom}",
+    'class' => "dossier-page site-gutter pt-4 {$bottom}",
 ]) }}>
     {{ $slot }}
 </div>

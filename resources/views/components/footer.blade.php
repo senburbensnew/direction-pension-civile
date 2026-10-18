@@ -1,10 +1,10 @@
 <!-- Main Footer Section -->
-<div class="container mx-auto bg-[#173052] bg-motif-dots py-6 px-4 sm:px-6 lg:px-8 text-white border-t-[3px] border-orange-500">
+<div class="bg-[#173052] bg-motif-dots py-6 text-white border-t-[3px] border-orange-500">
     @php
         $footerServices = \App\Models\Service::publicOrdered();
         $footerDirections = \App\Models\DirectionDepartementale::ordered()->get();
     @endphp
-    <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-8 lg:gap-10 items-start">
+    <div class="site-gutter grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-8 lg:gap-10 items-start">
         <div>
             <h3 class="font-bold text-lg md:text-xl mb-3 border-b-2 border-white pb-2">Services</h3>
             <ul class="space-y-2">
@@ -113,38 +113,25 @@
                 </p>
                 <form method="POST" action="{{ route('newsletter.souscription') }}" class="space-y-2">
                     @csrf
+                    <input type="hidden" name="locale" value="{{ app()->getLocale() }}">
                     <input type="email" name="email" required value="{{ old('email') }}"
-                           placeholder="votre@email.com"
+                           placeholder="{{ __('home.newsletter_placeholder') }}"
                            aria-label="Adresse e-mail"
                            class="w-full px-3 py-2.5 rounded-lg bg-white text-gray-800 text-base placeholder-gray-500 border border-transparent focus:outline-none focus:ring-2 focus:ring-orange-400">
                     <button type="submit"
                             class="w-full px-6 py-3 bg-orange-500 hover:bg-orange-600 text-white font-semibold text-base rounded-lg transition-colors">
-                        S'abonner
+                        {{ __('home.newsletter_submit') }}
                     </button>
                 </form>
-                @if(session('success'))
-                    <p class="text-green-300 text-base mt-2 flex items-start gap-2">
-                        <i class="fas fa-check-circle mt-0.5"></i>
-                        <span>{{ session('success') }}</span>
-                    </p>
-                @endif
-                @if(session('error'))
-                    <p class="text-red-300 text-base mt-2 flex items-start gap-2">
-                        <i class="fas fa-exclamation-circle mt-0.5"></i>
-                        <span>{{ session('error') }}</span>
-                    </p>
-                @endif
-                @error('email')
-                    <p class="text-red-300 text-base mt-2">{{ $message }}</p>
-                @enderror
+                <x-newsletter-form-feedback />
             </div>
         </div>
     </div>
 </div>
 
 <!-- Copyright Section -->
-<div class="container mx-auto py-6 px-4 sm:px-6 lg:px-8 text-white border-t-2 border-white bg-[#173052] bg-motif-dots">
-    <div class="flex flex-col md:flex-row justify-between items-center space-y-4 md:space-y-0">
+<div class="py-6 text-white border-t-2 border-white bg-[#173052] bg-motif-dots">
+    <div class="site-gutter flex flex-col md:flex-row justify-between items-center space-y-4 md:space-y-0">
         <div class="w-full md:w-1/3 text-center md:text-left">
             <p class="text-base">&copy;{{ date('Y') }} {{ __('messages.direction') }}. Tous droits réservés.</p>
             <p class="text-base mt-2 text-white/90" aria-label="{{ __('messages.visit_counter') }}">
@@ -165,7 +152,7 @@
             <x-optimized-image
                 src="images/setting-logo-1-M13oPLiYoM.png"
                 alt="Logo"
-                class="mx-auto md:mx-0 md:ml-auto"
+                class="md:mx-0 md:ml-auto"
                 style="max-width: 80px;"
                 width="80"
                 height="80"

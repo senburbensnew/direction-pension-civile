@@ -1,0 +1,172 @@
+.home-page .hero-carousel {
+    height: 340px;
+}
+@media (min-width: 768px) {
+    .home-page .hero-carousel {
+        height: 440px;
+    }
+}
+@media (min-width: 1024px) {
+    .home-page .hero-carousel {
+        height: 560px;
+    }
+}
+
+.hero-accueil {
+    background:
+        radial-gradient(1200px 420px at 15% 10%, rgba(255, 255, 255, 0.45), transparent 55%),
+        linear-gradient(135deg, #f4f8fc 0%, #d5e4f2 42%, #173052 100%);
+}
+
+.hero-carousel .swiper-slide img.hero-accueil-photo {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: center 38%;
+    -webkit-mask-image: linear-gradient(to right, transparent 0%, #000 22%, #000 100%);
+    mask-image: linear-gradient(to right, transparent 0%, #000 22%, #000 100%);
+}
+
+.home-card {
+    background: #fff;
+    border: 1px solid rgba(23, 48, 82, 0.08);
+    box-shadow: 0 10px 30px -16px rgba(23, 48, 82, 0.28);
+    border-radius: 1.25rem;
+}
+
+.home-card-hover {
+    transition: transform 0.25s ease, box-shadow 0.25s ease, border-color 0.25s ease;
+}
+.home-card-hover:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 22px 40px -18px rgba(23, 48, 82, 0.35);
+    border-color: rgba(249, 115, 22, 0.35);
+}
+
+#guide-pensionne .guide-pensionne-content .home-card,
+#guide-pensionne .guide-pensionne-content article {
+    border-radius: 0;
+}
+
+.home-tabs {
+    scrollbar-width: none;
+}
+.home-tabs::-webkit-scrollbar {
+    display: none;
+}
+
+.home-page .hero-dots {
+    bottom: 5.5rem;
+}
+@media (min-width: 768px) {
+    .home-page .hero-dots {
+        bottom: 6.5rem;
+    }
+}
+
+.home-service-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 1.25rem;
+}
+
+@media (min-width: 640px) {
+    .home-service-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+
+@media (min-width: 1280px) {
+    .home-service-grid {
+        gap: 1.5rem;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+    }
+}
+
+.home-service-card {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    text-align: left;
+    min-height: 13.5rem;
+    padding: 1.35rem 1.35rem 1.25rem;
+    background: #fff;
+    border: 1px solid rgba(23, 48, 82, 0.08);
+    border-radius: 0.65rem;
+    box-shadow: 0 12px 28px -18px rgba(23, 48, 82, 0.35);
+    text-decoration: none;
+    overflow: hidden;
+    transition: transform 0.25s ease, box-shadow 0.25s ease, border-color 0.25s ease;
+}
+a.home-service-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 22px 40px -18px rgba(23, 48, 82, 0.38);
+    border-color: rgba(249, 115, 22, 0.28);
+}
+.home-service-card__swoosh {
+    position: absolute;
+    top: -0.35rem;
+    right: -0.15rem;
+    width: 58%;
+    height: 3.25rem;
+    pointer-events: none;
+    opacity: 0.55;
+    background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 48' fill='none'%3E%3Cpath d='M0 38 C 45 8, 95 42, 200 18' stroke='%23a8c4e0' stroke-width='10' stroke-linecap='round'/%3E%3C/svg%3E")
+        no-repeat right top / 100% auto;
+}
+.home-service-card__icon {
+    position: relative;
+    z-index: 1;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 2.65rem;
+    height: 2.65rem;
+    margin-bottom: 0.85rem;
+    border-radius: 0.45rem;
+    border-left: 4px solid #f97316;
+    background: #173052;
+    color: #fff;
+    font-size: 1.15rem;
+    box-shadow: 0 8px 18px -12px rgba(23, 48, 82, 0.65);
+}
+.home-service-card__title {
+    position: relative;
+    z-index: 1;
+    margin: 0;
+    font-size: 0.98rem;
+    font-weight: 700;
+    line-height: 1.35;
+    color: #173052;
+}
+.home-service-card__desc {
+    position: relative;
+    z-index: 1;
+    margin: 0.45rem 0 0;
+    padding-right: 2rem;
+    font-size: 0.84rem;
+    line-height: 1.55;
+    color: #64748b;
+}
+.home-service-card__cta {
+    position: absolute;
+    right: 1.1rem;
+    bottom: 1rem;
+    z-index: 1;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 1.85rem;
+    height: 1.85rem;
+    border-radius: 9999px;
+    background: #f97316;
+    color: #fff;
+    font-size: 0.65rem;
+    box-shadow: 0 6px 14px -6px rgba(249, 115, 22, 0.75);
+    transition: transform 0.2s ease, background-color 0.2s ease;
+}
+a.home-service-card:hover .home-service-card__cta {
+    transform: translateX(2px);
+    background: #ea580c;
+}

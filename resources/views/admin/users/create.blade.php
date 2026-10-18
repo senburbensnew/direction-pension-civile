@@ -13,7 +13,7 @@
 @endphp
 
 @section('content')
-<div class="max-w-3xl mx-auto space-y-5">
+<div class="site-gutter space-y-5">
 
     {{-- Page header --}}
     <div class="flex items-center justify-between">
@@ -107,10 +107,15 @@
                     @error('username')<p class="text-red-500 text-xs mt-1">{{ $message }}</p>@enderror
                 </div>
                 <div>
-                    <label class="block text-xs font-medium text-gray-600 mb-1">Téléphone</label>
-                    <input type="text" name="phone" value="{{ old('phone') }}"
-                        class="{{ $field('phone') }}" placeholder="+509 3600-0000">
-                    @error('phone')<p class="text-red-500 text-xs mt-1">{{ $message }}</p>@enderror
+                    <x-telephone-input
+                        name="phone"
+                        label="Téléphone"
+                        label-class="block text-xs font-medium text-gray-600 mb-1"
+                        hint-class="text-xs text-gray-500 mt-1"
+                        error-class="text-red-500 text-xs mt-1"
+                        client-error-class="text-red-500 text-xs mt-1"
+                        :input-class="$field('phone')"
+                    />
                 </div>
                 <div></div>
                 <div>

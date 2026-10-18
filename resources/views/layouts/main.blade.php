@@ -4,12 +4,12 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="csrf-token" content="{{ csrf_token() }}">
+    <x-telephone-validation-meta />
     @stack('meta')
-    <title>@yield('title', 'Direction de la Pension Civile')</title>
+    <title>@yield('title') | {{ config('app.name') }}</title>
+    <x-site-head-meta />
     <x-fonts />
     @vite(['resources/css/app.css', 'resources/js/app.js'])
-    <!-- <link href="{{ asset('build/assets/app-DH4eVY7K.css') }}" rel="stylesheet"> -->
-    @stack('styles')
 </head>
 
 <body class="site-public w-full min-h-dvh flex flex-col bg-[#e6ebf1] text-gray-800 overflow-x-hidden font-sans antialiased">
@@ -38,12 +38,14 @@
 
     <x-contact-info-bar borderType="bottom" />
     <x-header />
-    <main class="container mx-auto flex-1 w-full min-h-[calc(100dvh-13rem)] bg-[#e6ebf1] pb-0">
+    <main class="flex-1 w-full min-w-0 min-h-[calc(100dvh-13rem)] bg-[#e6ebf1] pb-0">
         @yield('content')
     </main>
     <x-footer />
     <x-contact-info-bar borderType="top"  />
+
+    <x-flash-messages position="top-28" />
+
     @stack('scripts')
-    <!-- <script src="{{ asset('build/assets/app-CKnLtXCO.js') }}"></script> -->
 </body>
 </html>

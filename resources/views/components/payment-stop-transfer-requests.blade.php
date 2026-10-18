@@ -11,24 +11,18 @@
         }
     </style>
 
-    <div class="max-w-6xl mx-auto p-6 m-2">
+    <div class="site-gutter p-6 m-2">
 {{--         <nav class="text-sm text-gray-600 mb-4">
             <span class="text-gray-800">Adhésion Auto-Assurance</span>
             <span class="mx-2">></span>
             <span class="text-gray-800">Formulaire</span>
         </nav> --}}
 
-        <div id="form-section" class="max-w-7xl mx-auto bg-white p-6 shadow-md rounded-lg relative m-2">
+        <div id="form-section" class="w-full bg-white p-6 shadow-md rounded-lg relative m-2">
             <div class="text-center mb-6">
                 <h1 class="text-2xl font-bold mb-4">Formulaire d'adhésion au Programme d'Auto-Assurance</h1>
                 <p class="text-gray-600">Direction de la Pension Civile</p>
             </div>
-
-            @if (session('success'))
-                <div class="mb-4 p-4 bg-green-50 border border-green-200 text-green-700 rounded">
-                    {{ session('success') }}
-                </div>
-            @endif
 
             <form action="{{ route('demandes.arret-paiement.store') }}" method="POST" class="space-y-6">
                 @csrf

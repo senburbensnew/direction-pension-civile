@@ -2,7 +2,7 @@
 
 @section('content')
 
-<div id="bank-transfer-request" class="max-w-6xl mx-auto p-6 m-2 bg-white">
+<div id="bank-transfer-request" class="site-gutter p-6 m-2 bg-white">
 
     <!-- Breadcrumb -->
     <nav class="text-base text-gray-600 mb-4">
@@ -19,7 +19,7 @@
 
         <!-- TAB CONTENT (VISIBLE) -->
         <div id="bank_transfer_request_form"
-             class="tab-content max-w-7xl mx-auto bg-white p-6 shadow-md rounded-lg relative m-2">
+             class="tab-content w-full bg-white p-6 shadow-md rounded-lg relative m-2">
 
             <!-- HEADER -->
             <div class="flex flex-col md:flex-row justify-between items-center mb-12 gap-8">
@@ -40,19 +40,6 @@
 
                 <x-profile-picture />
             </div>
-
-            <!-- FLASH MESSAGES -->
-            @if (session('success'))
-                <div class="mb-4 p-4 bg-green-50 border border-green-200 text-green-700 rounded">
-                    {{ session('success') }}
-                </div>
-            @endif
-
-            @if (session('error'))
-                <div class="mb-4 p-4 bg-red-50 border border-red-200 text-red-700 rounded">
-                    {{ session('error') }}
-                </div>
-            @endif
 
             <!-- ERRORS -->
             @if ($errors->any())

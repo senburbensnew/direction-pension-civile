@@ -1,15 +1,15 @@
 @extends('layouts.main')
 
 @section('content')
-    <div class="mx-auto my-5 px-5">
+    <div class="my-5 px-5">
         <!-- Main Content -->
-        <main class="mx-auto bg-white p-6 shadow-md rounded-lg relative">
+        <main class="bg-white p-6 shadow-md rounded-lg relative">
             <!-- Header Section -->
             <div class="flex flex-col md:flex-row justify-between items-center mb-12 gap-8">
                 <div class="text-center mb-6 flex flex-col md:flex-row items-center justify-center w-full gap-4 md:gap-8">
                     <x-dpc-logo class="w-16 h-16 md:w-24 md:h-24 object-cover shrink-0" />
 
-                    <div class="px-4">
+                    <div class="site-gutter">
                         <h1 class="text-lg md:text-xl font-bold mb-1">Demande de Pension</h1>
                         <p class="text-base md:text-lg font-semibold mb-2">Pièces à soumettre pour demande de pension</p>
                         <p class="text-sm text-gray-600">Direction de la Pension Civile (DPC)</p>

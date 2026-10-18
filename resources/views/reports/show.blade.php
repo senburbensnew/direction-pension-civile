@@ -7,8 +7,8 @@
     .card-shadow { box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1); }
 </style>
 
-<div class="py-10 px-4 sm:px-6 lg:px-8">
-    <div class="max-w-7xl mx-auto space-y-8">
+<div class="py-10">
+    <div class="site-gutter space-y-8">
 
         <nav class="text-sm text-gray-500">
             <a href="{{ url('/') }}" class="hover:text-navy">Accueil</a>

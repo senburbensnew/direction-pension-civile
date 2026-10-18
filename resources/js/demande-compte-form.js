@@ -1,3 +1,8 @@
+import {
+    isValidTelephone,
+    normalizeTelephone as normalizeTelephoneValue,
+} from './validation/telephone.js';
+
 /**
  * Wizard demande de creation de compte (/demande-compte).
  */
@@ -480,8 +485,7 @@ function demandeCompteForm(initial) {
          * ======================================================== */
 
         normalizeTelephone() {
-            this.telephone =
-                (this.telephone || '').replace(/\s+/g, '');
+            this.telephone = normalizeTelephoneValue(this.telephone);
         },
 
         /* ========================================================
@@ -692,12 +696,12 @@ function demandeCompteForm(initial) {
                 return this._pdfJs;
             }
 
-            const pdfjs = await import(
-                'https://cdn.jsdelivr.net/npm/pdfjs-dist@4.4.168/build/pdf.min.mjs'
-            );
+            const pdfjs = await import('pdfjs-dist/build/pdf.min.mjs');
 
-            pdfjs.GlobalWorkerOptions.workerSrc =
-                'https://cdn.jsdelivr.net/npm/pdfjs-dist@4.4.168/build/pdf.worker.min.mjs';
+            pdfjs.GlobalWorkerOptions.workerSrc = new URL(
+                'pdfjs-dist/build/pdf.worker.min.mjs',
+                import.meta.url,
+            ).toString();
 
             this._pdfJs = pdfjs;
 
@@ -1639,9 +1643,7 @@ function demandeCompteForm(initial) {
                 nextErrors.telephone =
                     validation.telephone_required;
             } else if (
-                !/^\+[1-9]\d{7,14}$/.test(
-                    this.telephone
-                )
+                ! isValidTelephone(this.telephone, { required: true })
             ) {
                 nextErrors.telephone =
                     validation.telephone_format;

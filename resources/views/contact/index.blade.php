@@ -23,13 +23,13 @@
     ];
 @endphp
 
-<div class="py-10 px-4 sm:px-6 lg:px-8">
-    <div class="max-w-7xl mx-auto space-y-8">
+<div class="py-10">
+    <div class="site-gutter space-y-8">
 
         <div class="text-center">
             <span class="text-xs font-bold text-orange-500 uppercase tracking-widest">Nous joindre</span>
             <h1 class="text-4xl font-bold text-navy mt-2 mb-3">Contact</h1>
-            <p class="text-gray-700 max-w-2xl mx-auto">
+            <p class="text-gray-700">
                 Notre équipe est à votre disposition pour vous accompagner.
             </p>
         </div>
@@ -95,13 +95,6 @@
                     <h2 class="text-xl font-bold text-navy">Envoyer un message</h2>
                 </div>
                 <p class="text-gray-700 text-base mb-6">Remplissez le formulaire ci-dessous et nous vous répondrons dans les plus brefs délais.</p>
-
-                @if(session('success'))
-                    <div class="mb-6 flex items-start gap-3 bg-green-50 border border-green-300 text-green-800 p-4">
-                        <i class="fa-solid fa-check-circle text-green-500 mt-0.5 flex-shrink-0"></i>
-                        <p class="text-sm">{{ session('success') }}</p>
-                    </div>
-                @endif
 
                 @if($errors->any())
                     <div class="mb-6 flex items-start gap-3 bg-red-50 border border-red-300 text-red-800 p-4">
@@ -170,6 +163,7 @@
                                     <i class="fa-solid fa-phone text-sm" aria-hidden="true"></i>
                                 </div>
                             </div>
+                            <p class="mt-1 text-xs text-gray-500">{{ __('messages.format_hint_telephone') }}</p>
                         </div>
                     </div>
 

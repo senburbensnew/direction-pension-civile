@@ -7,7 +7,7 @@
 @endsection
 
 @section('content')
-<div class="space-y-4" x-data="glossaireAdmin()">
+<div class="space-y-4" data-glossaire-admin x-data="glossaireAdmin">
 
     <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <div>
@@ -175,25 +175,3 @@
     </div>
 </div>
 @endsection
-
-@push('scripts')
-<script>
-function glossaireAdmin() {
-    return {
-        open: false,
-        editing: false,
-        form: { id: null, term: '', definition: '', category: 'Général', icon: 'fa-book', order_column: 0, published: true },
-        openCreate() {
-            this.editing = false;
-            this.form = { id: null, term: '', definition: '', category: 'Général', icon: 'fa-book', order_column: 0, published: true };
-            this.open = true;
-        },
-        openEdit(item) {
-            this.editing = true;
-            this.form = { ...item, published: !!item.published, order_column: item.order_column ?? 0 };
-            this.open = true;
-        }
-    };
-}
-</script>
-@endpush

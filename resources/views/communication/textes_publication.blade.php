@@ -8,13 +8,13 @@
     [x-cloak] { display: none !important; }
 </style>
 
-<div class="py-10 px-4 sm:px-6 lg:px-8">
-    <div class="max-w-7xl mx-auto space-y-8">
+<div class="py-10">
+    <div class="site-gutter space-y-8">
 
         <div class="text-center">
             <span class="text-xs font-bold text-orange-500 uppercase tracking-widest">Communications</span>
             <h1 class="text-4xl font-bold text-navy mt-2 mb-3">Textes & Publications légales</h1>
-            <p class="text-gray-600 max-w-2xl mx-auto">
+            <p class="text-gray-600">
                 Lois, décrets, circulaires et documents officiels publiés par la Direction de la Pension Civile.
             </p>
         </div>

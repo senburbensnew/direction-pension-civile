@@ -8,17 +8,6 @@
 @section('content')
 <div class="space-y-4">
 
-    @if(session('success'))
-        <div class="flex items-center gap-2 bg-green-50 border border-green-200 text-green-700 rounded-lg px-4 py-3 text-sm">
-            <i class="fas fa-check-circle text-green-500"></i> {{ session('success') }}
-        </div>
-    @endif
-    @if(session('error'))
-        <div class="flex items-center gap-2 bg-red-50 border border-red-200 text-red-700 rounded-lg px-4 py-3 text-sm">
-            <i class="fas fa-exclamation-circle text-red-400"></i> {{ session('error') }}
-        </div>
-    @endif
-
     <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <h1 class="text-xl font-bold text-gray-800">Utilisateurs</h1>
         <a href="{{ route('admin.users.create') }}"
@@ -65,11 +54,20 @@
                     <th class="px-4 py-3 text-left font-semibold text-gray-600">Service</th>
                     <th class="px-4 py-3 text-left font-semibold text-gray-600">Rôles</th>
                     <th class="px-4 py-3 text-center font-semibold text-gray-600">Statut</th>
+                    @if($sessionsManageable)
+                        <th class="px-4 py-3 text-center font-semibold text-gray-600 w-14">
+                            <span class="sr-only">{{ __('messages.admin_sessions.col_online') }}</span>
+                            <i class="fa-solid fa-signal text-gray-500 text-sm" title="{{ __('messages.admin_sessions.col_online') }}" aria-hidden="true"></i>
+                        </th>
+                    @endif
                     <th class="px-4 py-3 text-center font-semibold text-gray-600">Actions</th>
                 </tr>
             </thead>
             <tbody class="divide-y divide-gray-100">
                 @forelse($users as $user)
+                    @php
+                        $onlineCount = (int) ($sessionCounts[$user->id] ?? 0);
+                    @endphp
                     <tr class="hover:bg-gray-50">
                         <td class="px-4 py-3">
                             <div class="flex items-center gap-3">
@@ -98,8 +96,7 @@
                         <td class="px-4 py-3">
                             <div class="flex flex-wrap gap-1">
                                 @forelse($user->roles as $role)
-                                    <span class="px-2 py-0.5 rounded-full text-xs font-medium
-                                        {{ $role->name === 'admin' ? 'bg-red-100 text-red-700' : 'bg-blue-100 text-blue-700' }}">
+                                    <span class="px-2 py-0.5 rounded-full text-xs font-medium {{ $role->name === 'admin' ? 'bg-red-100 text-red-700' : 'bg-blue-100 text-blue-700' }}">
                                         {{ $role->name }}
                                     </span>
                                 @empty
@@ -108,7 +105,9 @@
                             </div>
                         </td>
                         <td class="px-4 py-3 text-center">
-                            @php($status = $user->resolvedAccountStatus())
+                            @php
+                                $status = $user->resolvedAccountStatus();
+                            @endphp
                             <span @class([
                                 'inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium',
                                 'bg-green-100 text-green-700' => $status->isActif(),
@@ -119,12 +118,56 @@
                                 {{ $status->label() }}
                             </span>
                         </td>
+                        @if($sessionsManageable)
+                            <td class="px-4 py-3 text-center">
+                                @if($onlineCount > 0)
+                                    @php
+                                        $onlineLabel = trans_choice(
+                                            'messages.admin_sessions.session_count_badge',
+                                            $onlineCount,
+                                            ['count' => $onlineCount]
+                                        );
+                                    @endphp
+                                    <a href="{{ route('admin.sessions.index', ['user_id' => $user->id]) }}"
+                                        class="relative inline-flex items-center justify-center w-9 h-9 rounded-full bg-green-100 text-green-600 hover:bg-green-200 transition-colors"
+                                        title="{{ $onlineLabel }} — {{ __('messages.admin_sessions.view_sessions') }}"
+                                        aria-label="{{ $onlineLabel }}">
+                                        <i class="fa-solid fa-circle-check text-base" aria-hidden="true"></i>
+                                        @if($onlineCount > 1)
+                                            <span class="absolute -top-0.5 -right-0.5 min-w-[1rem] h-4 px-1 rounded-full bg-green-600 text-white text-[10px] font-bold leading-4 tabular-nums">
+                                                {{ $onlineCount }}
+                                            </span>
+                                        @endif
+                                    </a>
+                                @else
+                                    <span
+                                        class="inline-flex items-center justify-center w-9 h-9 rounded-full text-gray-300"
+                                        title="{{ __('messages.admin_sessions.offline') }}"
+                                        aria-label="{{ __('messages.admin_sessions.offline') }}">
+                                        <i class="fa-solid fa-circle-minus text-base" aria-hidden="true"></i>
+                                    </span>
+                                @endif
+                            </td>
+                        @endif
                         <td class="px-4 py-3">
                             <div class="flex items-center justify-center gap-2">
                                 <a href="{{ route('admin.users.edit', $user) }}"
                                     class="px-2 py-1 bg-blue-100 text-blue-700 hover:bg-blue-200 rounded text-xs font-medium">
                                     <i class="fas fa-pencil-alt"></i>
                                 </a>
+                                @if($sessionsManageable && $onlineCount > 0 && $user->id !== auth()->id())
+                                    <form action="{{ route('admin.sessions.destroy-user', $user) }}" method="POST"
+                                        onsubmit="return confirm(@json(__('messages.admin_sessions.confirm_revoke_user')))">
+                                        @csrf
+                                        @method('DELETE')
+                                        <input type="hidden" name="redirect_to" value="{{ url()->current() }}">
+                                        <button type="submit"
+                                            class="px-2 py-1 bg-red-100 text-red-700 hover:bg-red-200 rounded text-xs font-medium"
+                                            title="{{ __('messages.admin_sessions.disconnect_user') }}">
+                                            <i class="fas fa-sign-out-alt"></i>
+                                        </button>
+                                    </form>
+                                @endif
                                 @if($user->id !== auth()->id())
                                     <form action="{{ route('admin.users.toggle-active', $user) }}" method="POST">
                                         @csrf
@@ -150,7 +193,7 @@
                     </tr>
                 @empty
                     <tr>
-                        <td colspan="5" class="px-4 py-10 text-center text-gray-400">
+                        <td colspan="{{ $sessionsManageable ? 7 : 6 }}" class="px-4 py-10 text-center text-gray-400">
                             <i class="fas fa-users text-3xl mb-2 block"></i>
                             Aucun utilisateur trouvé.
                         </td>

@@ -326,8 +326,7 @@
                             <p class="text-sm font-medium text-gray-800 truncate">{{ $actu->title }}</p>
                             <p class="text-xs text-gray-400">{{ $actu->created_at->format('d/m/Y') }}</p>
                         </div>
-                        <span class="text-xs px-2 py-0.5 rounded-full
-                            {{ $actu->published ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500' }}">
+                        <span class="text-xs px-2 py-0.5 rounded-full {{ $actu->published ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500' }}">
                             {{ $actu->published ? 'Publié' : 'Brouillon' }}
                         </span>
                     </div>

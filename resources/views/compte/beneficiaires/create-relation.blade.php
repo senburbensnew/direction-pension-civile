@@ -12,18 +12,12 @@
     .card-shadow { box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1); }
 </style>
 
-<x-portal-page bottom="pb-10" class="max-w-2xl space-y-8">
+<x-portal-page bottom="pb-10" class="w-full space-y-8">
         <x-compte-page-intro
             title="Demander une relation"
             description="Vous êtes père, mère ou tuteur d’un pensionné mineur ? Soumettez une demande pour accéder à son dossier après validation par un agent."
             :show-pension-context="false"
         />
-
-        @if(session('success'))
-            <div class="rounded-lg border border-green-200 bg-green-50 px-4 py-3 text-green-800 text-sm">
-                {{ session('success') }}
-            </div>
-        @endif
 
         @if($errors->any())
             <div class="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-red-800 text-sm">

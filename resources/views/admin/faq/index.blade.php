@@ -7,7 +7,7 @@
 @endsection
 
 @section('content')
-<div class="space-y-4" x-data="faqAdmin()">
+<div class="space-y-4" data-faq-admin x-data="faqAdmin">
 
     <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <div>
@@ -169,25 +169,3 @@
     </div>
 </div>
 @endsection
-
-@push('scripts')
-<script>
-function faqAdmin() {
-    return {
-        open: false,
-        editing: false,
-        form: { id: null, question: '', answer: '', category: 'Général', order_column: 0, published: true },
-        openCreate() {
-            this.editing = false;
-            this.form = { id: null, question: '', answer: '', category: 'Général', order_column: 0, published: true };
-            this.open = true;
-        },
-        openEdit(item) {
-            this.editing = true;
-            this.form = { ...item, published: !!item.published };
-            this.open = true;
-        }
-    };
-}
-</script>
-@endpush

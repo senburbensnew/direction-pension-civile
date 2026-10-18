@@ -3,7 +3,7 @@
 @section('title', 'Nouvelle diapositive')
 
 @section('content')
-<div class="max-w-6xl mx-auto"
+<div class="w-full"
      x-data="{
         preview: null,
         fileName: null,
@@ -184,9 +184,7 @@
                                            x-model="overlayPosition"
                                            class="sr-only peer"
                                            {{ old('overlay_position', 'bottom-left') === $value ? 'checked' : '' }}>
-                                    <div class="border-2 rounded-lg p-2 text-center text-xs transition-colors
-                                                peer-checked:border-blue-500 peer-checked:bg-blue-50 peer-checked:text-blue-700
-                                                border-gray-200 text-gray-500 hover:border-gray-300">
+                                    <div class="border-2 rounded-lg p-2 text-center text-xs transition-colors peer-checked:border-blue-500 peer-checked:bg-blue-50 peer-checked:text-blue-700 border-gray-200 text-gray-500 hover:border-gray-300">
                                         {{ $label }}
                                     </div>
                                 </label>
@@ -203,9 +201,7 @@
                                            x-model="textSize"
                                            class="sr-only peer"
                                            {{ old('text_size', 'md') === $value ? 'checked' : '' }}>
-                                    <div class="border-2 rounded-lg py-2 text-center text-xs transition-colors
-                                                peer-checked:border-blue-500 peer-checked:bg-blue-50 peer-checked:text-blue-700
-                                                border-gray-200 text-gray-500 hover:border-gray-300">
+                                    <div class="border-2 rounded-lg py-2 text-center text-xs transition-colors peer-checked:border-blue-500 peer-checked:bg-blue-50 peer-checked:text-blue-700 border-gray-200 text-gray-500 hover:border-gray-300">
                                         {{ $label }}
                                     </div>
                                 </label>
@@ -245,13 +241,7 @@
                                            x-model="textStyles"
                                            class="sr-only peer"
                                            {{ in_array($value, old('text_styles', [])) ? 'checked' : '' }}>
-                                    <div class="border-2 rounded-lg px-3 py-1.5 text-xs transition-colors select-none
-                                                peer-checked:border-blue-500 peer-checked:bg-blue-50 peer-checked:text-blue-700
-                                                border-gray-200 text-gray-500 hover:border-gray-300
-                                                {{ $value === 'bold' ? 'font-bold' : '' }}
-                                                {{ $value === 'italic' ? 'italic' : '' }}
-                                                {{ $value === 'underline' ? 'underline' : '' }}
-                                                {{ $value === 'uppercase' ? 'uppercase tracking-wide' : '' }}">
+                                    <div class="border-2 rounded-lg px-3 py-1.5 text-xs transition-colors select-none peer-checked:border-blue-500 peer-checked:bg-blue-50 peer-checked:text-blue-700 border-gray-200 text-gray-500 hover:border-gray-300 {{ $value === 'bold' ? 'font-bold' : '' }} {{ $value === 'italic' ? 'italic' : '' }} {{ $value === 'underline' ? 'underline' : '' }} {{ $value === 'uppercase' ? 'uppercase tracking-wide' : '' }}">
                                         {{ $label }}
                                     </div>
                                 </label>
@@ -269,9 +259,7 @@
                                            x-model="fontFamily"
                                            class="sr-only peer"
                                            {{ old('font_family', 'sans') === $key ? 'checked' : '' }}>
-                                    <div class="border-2 rounded-lg py-2 px-3 text-center text-sm transition-colors
-                                                peer-checked:border-blue-500 peer-checked:bg-blue-50 peer-checked:text-blue-700
-                                                border-gray-200 text-gray-500 hover:border-gray-300"
+                                    <div class="border-2 rounded-lg py-2 px-3 text-center text-sm transition-colors peer-checked:border-blue-500 peer-checked:bg-blue-50 peer-checked:text-blue-700 border-gray-200 text-gray-500 hover:border-gray-300"
                                          style="font-family: inherit">
                                         {{ $name }}
                                     </div>
@@ -347,57 +335,24 @@
 
                         {{-- Overlay gradient adapté à la position --}}
                         <div class="absolute inset-0 pointer-events-none"
-                             :class="{
-                                 'bg-gradient-to-t from-black/70 via-black/20 to-transparent': overlayPosition.startsWith('bottom'),
-                                 'bg-gradient-to-b from-black/70 via-black/20 to-transparent': overlayPosition.startsWith('top'),
-                                 'bg-black/40': overlayPosition === 'center',
-                             }"></div>
+                             :class="{ 'bg-gradient-to-t from-black/70 via-black/20 to-transparent': overlayPosition.startsWith('bottom'), 'bg-gradient-to-b from-black/70 via-black/20 to-transparent': overlayPosition.startsWith('top'), 'bg-black/40': overlayPosition === 'center', }"></div>
 
                         {{-- Contenu overlay positionné --}}
                         <div class="absolute inset-0 p-4 flex"
-                             :class="{
-                                 'items-end justify-start':  overlayPosition === 'bottom-left',
-                                 'items-end justify-center': overlayPosition === 'bottom-center',
-                                 'items-end justify-end':    overlayPosition === 'bottom-right',
-                                 'items-center justify-center': overlayPosition === 'center',
-                                 'items-start justify-start':  overlayPosition === 'top-left',
-                                 'items-start justify-center':  overlayPosition === 'top-center',
-                             }">
+                             :class="{ 'items-end justify-start': overlayPosition === 'bottom-left', 'items-end justify-center': overlayPosition === 'bottom-center', 'items-end justify-end': overlayPosition === 'bottom-right', 'items-center justify-center': overlayPosition === 'center', 'items-start justify-start': overlayPosition === 'top-left', 'items-start justify-center': overlayPosition === 'top-center', }">
                             <template x-if="title || description || ctaLabel">
                                 <div :class="(overlayPosition === 'bottom-center' || overlayPosition === 'top-center' || overlayPosition === 'center') ? 'text-center' : 'text-left'">
                                     <p x-show="title" x-text="title"
                                        class="leading-tight drop-shadow-lg mb-1"
                                        :style="`color: ${textColor};`"
-                                       :class="{
-                                           'text-xs':   textSize === 'sm',
-                                           'text-sm':   textSize === 'md',
-                                           'text-base': textSize === 'lg',
-                                           'text-xl':   textSize === 'xl',
-                                           'font-bold':     textStyles.includes('bold'),
-                                           'italic':        textStyles.includes('italic'),
-                                           'underline':     textStyles.includes('underline'),
-                                           'uppercase':     textStyles.includes('uppercase'),
-                                           'tracking-wide': textStyles.includes('uppercase'),
-                                       }"></p>
+                                       :class="{ 'text-xs': textSize === 'sm', 'text-sm': textSize === 'md', 'text-base': textSize === 'lg', 'text-xl': textSize === 'xl', 'font-bold': textStyles.includes('bold'), 'italic': textStyles.includes('italic'), 'underline': textStyles.includes('underline'), 'uppercase': textStyles.includes('uppercase'), 'tracking-wide': textStyles.includes('uppercase'), }"></p>
                                     <p x-show="description" x-text="description"
                                        class="leading-snug drop-shadow mb-2"
                                        :style="`color: ${textColor}; opacity: 0.85;`"
-                                       :class="{
-                                           'text-[10px]': textSize === 'sm',
-                                           'text-xs':     textSize === 'md',
-                                           'text-sm':     textSize === 'lg',
-                                           'text-base':   textSize === 'xl',
-                                           'italic':    textStyles.includes('italic'),
-                                           'uppercase': textStyles.includes('uppercase'),
-                                           'tracking-wide': textStyles.includes('uppercase'),
-                                       }"></p>
+                                       :class="{ 'text-[10px]': textSize === 'sm', 'text-xs': textSize === 'md', 'text-sm': textSize === 'lg', 'text-base': textSize === 'xl', 'italic': textStyles.includes('italic'), 'uppercase': textStyles.includes('uppercase'), 'tracking-wide': textStyles.includes('uppercase'), }"></p>
                                     <template x-if="ctaLabel">
                                         <span class="inline-block bg-white text-gray-900 font-semibold px-3 py-1 rounded-full shadow"
-                                              :class="{
-                                                  'text-[10px]': textSize === 'sm',
-                                                  'text-xs':     textSize === 'md',
-                                                  'text-sm':     textSize === 'lg' || textSize === 'xl',
-                                              }">
+                                              :class="{ 'text-[10px]': textSize === 'sm', 'text-xs': textSize === 'md', 'text-sm': textSize === 'lg' || textSize === 'xl', }">
                                             <span x-text="ctaLabel"></span>
                                             <i class="fas fa-arrow-right ml-1 text-[9px]"></i>
                                         </span>

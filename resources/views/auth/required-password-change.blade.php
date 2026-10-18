@@ -10,15 +10,6 @@
         {{ __('guest.password_required.intro') }}
     </p>
 
-    @if (session('warning'))
-        <div
-            class="mb-4 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-950"
-            role="status"
-        >
-            {{ session('warning') }}
-        </div>
-    @endif
-
     <form method="POST" action="{{ route('password.required.update') }}" class="space-y-4">
         @csrf
         @method('PUT')

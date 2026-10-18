@@ -3,6 +3,7 @@
 @import '@fortawesome/fontawesome-free/css/solid.min.css';
 @import '@fortawesome/fontawesome-free/css/regular.min.css';
 @import '@fortawesome/fontawesome-free/css/brands.min.css';
+@import './pages/home.css';
 
 @tailwind base;
 @tailwind components;
@@ -26,9 +27,36 @@ html.site-public-root {
     font-size: 106.25%;
 }
 
+.card-shadow {
+    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1);
+}
+
 .site-public {
     line-height: 1.65;
     color: #1f2937;
+}
+
+/* Gouttières responsive pleine largeur (sans colonne centrée) */
+.site-gutter {
+    box-sizing: border-box;
+    width: 100%;
+    min-width: 0;
+    padding-left: max(1rem, env(safe-area-inset-left, 0px));
+    padding-right: max(1rem, env(safe-area-inset-right, 0px));
+}
+
+@media (min-width: 640px) {
+    .site-gutter {
+        padding-left: max(1.5rem, env(safe-area-inset-left, 0px));
+        padding-right: max(1.5rem, env(safe-area-inset-right, 0px));
+    }
+}
+
+@media (min-width: 1024px) {
+    .site-gutter {
+        padding-left: max(2rem, env(safe-area-inset-left, 0px));
+        padding-right: max(2rem, env(safe-area-inset-right, 0px));
+    }
 }
 
 .site-public main p,
@@ -184,6 +212,39 @@ select option {
 .dpc-file-field.is-dragging {
     border-color: #93c5fd;
     background: #f8fafc;
+}
+
+.carousel-card,
+.part-card,
+.img-card {
+    cursor: grab;
+}
+
+.carousel-card:active,
+.part-card:active,
+.img-card:active {
+    cursor: grabbing;
+}
+
+.carousel-card.dragging,
+.part-card.dragging,
+.img-card.dragging {
+    opacity: 0.35;
+    border-color: #93c5fd !important;
+}
+
+.carousel-card.drop-before,
+.part-card.drop-before,
+.img-card.drop-before {
+    border-left-color: #2563eb !important;
+    border-left-width: 4px !important;
+}
+
+.carousel-card.drop-after,
+.part-card.drop-after,
+.img-card.drop-after {
+    border-right-color: #2563eb !important;
+    border-right-width: 4px !important;
 }
 
 .dpc-file-field.is-filled .dpc-file-field-icon {

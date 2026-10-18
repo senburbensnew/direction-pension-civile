@@ -6,7 +6,7 @@
 @endsection
 
 @section('content')
-    <div class="max-w-3xl">
+    <div class="site-gutter">
         <h1 class="text-xl font-semibold text-gray-800 mb-1">Test OCR (Document AI)</h1>
         <p class="text-sm text-gray-500 mb-6">
             Envoyez une image ou un PDF pour vérifier la lecture. Rien n’est enregistré en base.

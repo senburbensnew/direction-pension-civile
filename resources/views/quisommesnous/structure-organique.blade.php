@@ -11,8 +11,8 @@
     $servicesDpc = config('dpc_services');
 @endphp
 
-<div class="py-10 px-4 sm:px-6 lg:px-8">
-    <div class="max-w-7xl mx-auto space-y-8">
+<div class="py-10">
+    <div class="site-gutter space-y-8">
 
         <div class="text-center">
             <span class="text-xs font-bold text-orange-500 uppercase tracking-widest">Qui sommes-nous</span>

@@ -14,13 +14,6 @@
 
     <x-portal-page class="space-y-6">
 
-        @if (session('warning'))
-            <div class="flex gap-3 rounded-xl border border-amber-300 bg-amber-50 px-4 py-3 text-sm text-amber-950 shadow-sm">
-                <i class="fas fa-exclamation-triangle mt-0.5 text-amber-600 shrink-0" aria-hidden="true"></i>
-                <p>{{ session('warning') }}</p>
-            </div>
-        @endif
-
         {{-- En-tête --}}
         <section class="relative overflow-hidden rounded-2xl bg-gradient-to-br from-[#173052] via-[#1e3d6b] to-[#2a5085] text-white shadow-md">
             <div class="absolute inset-0 opacity-[0.07] pointer-events-none" aria-hidden="true">

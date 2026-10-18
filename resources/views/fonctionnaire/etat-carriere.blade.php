@@ -3,7 +3,7 @@
 @section('title', 'Demande d\'état de carrière')
 
 @section('content')
-<div class="m-5 max-w-6xl mx-auto p-6 bg-white rounded-lg shadow-md my-5">
+<div class="m-5 site-gutter p-6 bg-white rounded-lg shadow-md my-5">
     <div class="mb-8">
         <!-- En-tête avec logos -->
         <div class="flex flex-col md:flex-row justify-around items-center mb-6 gap-4">
@@ -18,12 +18,6 @@
             <x-dpc-logo class="w-16 h-16 md:w-20 md:h-20 object-contain hidden md:block" />
         </div>
     </div>
-
-            @if (session('success'))
-                <div class="mb-4 p-4 bg-green-50 border border-green-200 text-green-700 rounded">
-                    {{ session('success') }}
-                </div>
-            @endif
 
     @if ($errors->any())
         <div class="mb-4 rounded-md bg-red-100 p-4 text-sm text-red-700">
@@ -63,7 +57,7 @@
 
         {{-- ================= INFORMATIONS PERSONNELLES ================= --}}
         <div class="mb-8 p-4 border border-gray-200 rounded-lg">
-            <h3 class="text-lg font-semibold mb-4  flex items-center">
+            <h3 class="text-lg font-semibold mb-4 flex items-center">
                 Informations personnelles
             </h3>
             
@@ -132,7 +126,7 @@
 
         {{-- ================= IDENTIFICATION ================= --}}
         <div class="mb-8 p-4 border border-gray-200 rounded-lg">
-            <h3 class="text-lg font-semibold mb-4  flex items-center">
+            <h3 class="text-lg font-semibold mb-4 flex items-center">
                 Informations d'identification
             </h3>
             
@@ -162,7 +156,7 @@
 
         {{-- ================= INFORMATIONS PROFESSIONNELLES ================= --}}
         <div class="mb-8 p-4 border border-gray-200 rounded-lg">
-            <h3 class="text-lg font-semibold mb-4  flex items-center">
+            <h3 class="text-lg font-semibold mb-4 flex items-center">
                 Informations professionnelles
             </h3>
             
@@ -231,7 +225,7 @@
 
         {{-- ================= COORDONNÉES ================= --}}
         <div class="mb-8 p-4 border border-gray-200 rounded-lg">
-            <h3 class="text-lg font-semibold mb-4  flex items-center">
+            <h3 class="text-lg font-semibold mb-4 flex items-center">
                 Coordonnées du demandeur
             </h3>
             
@@ -268,7 +262,7 @@
 
         {{-- ================= PIÈCES JOINTES ================= --}}
         <div class="mb-8 p-4 border border-gray-200 rounded-lg">
-            <h3 class="text-lg font-semibold mb-4  flex items-center">
+            <h3 class="text-lg font-semibold mb-4 flex items-center">
                 Pièces jointes
             </h3>
             <p class="text-sm text-gray-600 mb-4">Format accepté : PDF, JPG, PNG. Taille max : 5Mo par fichier.</p>
@@ -454,7 +448,7 @@
 
         {{-- ================= OBJET & MOTIF ================= --}}
         <div class="mb-8 p-4 border border-gray-200 rounded-lg">
-            <h3 class="text-lg font-semibold mb-4  flex items-center">
+            <h3 class="text-lg font-semibold mb-4 flex items-center">
                 Objet de la demande
             </h3>
             
@@ -470,9 +464,7 @@
                     <textarea 
                         name="raison" 
                         rows="5" 
-                        class="mt-1 block w-full rounded-md border border-gray-300 shadow-sm
-                            focus:border-blue-500 focus:ring focus:ring-blue-500 focus:ring-opacity-50
-                            h-40 resize-y @error('raison') border-red-500 @enderror"
+                        class="mt-1 block w-full rounded-md border border-gray-300 shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-500 focus:ring-opacity-50 h-40 resize-y @error('raison') border-red-500 @enderror"
                         placeholder="Précisez le motif de votre demande...">{{ old('raison', data_get($demande, 'data.raison', '')) }}</textarea>
                     @error('raison')
                         <span class="mt-1 text-sm text-red-600">{{ $message }}</span>

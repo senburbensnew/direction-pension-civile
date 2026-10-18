@@ -1,7 +1,7 @@
 @extends('layouts.main')
 
 @section('content')
-<div class="max-w-5xl mx-auto px-4 py-8">
+<div class="px-4 py-8 w-full">
 
     <!-- Title -->
     <h1 class="text-3xl font-bold text-gray-800 mb-6">
@@ -33,14 +33,7 @@
                     <p class="text-sm mt-2">
                         <span class="font-semibold text-gray-700">Statut :</span>
                         <span
-                            class="
-                                px-2 py-1 text-xs font-medium rounded
-                                @if($d->status === 'soumis') bg-blue-100 text-blue-700
-                                @elseif($d->status === 'en_cours') bg-yellow-100 text-yellow-700
-                                @elseif($d->status === 'complet') bg-green-100 text-green-700
-                                @elseif($d->status === 'rejete') bg-red-100 text-red-700
-                                @endif
-                            "
+                            class="px-2 py-1 text-xs font-medium rounded @if($d->status === 'soumis') bg-blue-100 text-blue-700 @elseif($d->status === 'en_cours') bg-yellow-100 text-yellow-700 @elseif($d->status === 'complet') bg-green-100 text-green-700 @elseif($d->status === 'rejete') bg-red-100 text-red-700 @endif"
                         >
                             {{ ucfirst(str_replace('_',' ', $d->status)) }}
                         </span>

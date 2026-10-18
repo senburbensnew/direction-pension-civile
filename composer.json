@@ -60,6 +60,9 @@
         ],
         "db:sqlite": [
             "@php scripts/switch-database.php sqlite"
+        ],
+        "brand:icons": [
+            "@php scripts/generate-brand-icons.php"
         ]
     },
     "extra": {

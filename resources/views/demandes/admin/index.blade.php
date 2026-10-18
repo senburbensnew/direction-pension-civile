@@ -12,12 +12,6 @@
         </div>
     </div>
 
-    @if(session('success'))
-        <div class="bg-green-50 border border-green-200 text-green-800 rounded-lg px-4 py-3 text-sm">
-            {{ session('success') }}
-        </div>
-    @endif
-
     {{-- ── Transferts en cours (monitoring, lecture seule) ──────────────────── --}}
     @php
         $pendingWorkflows = \App\Models\DemandeInteraction::with(['demande', 'fromService', 'toService', 'initiatedBy'])
@@ -105,8 +99,7 @@
                         </td>
                         <td class="px-4 py-3">
                             @if($demande->status)
-                                <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium
-                                    {{ \App\Models\WorkflowStep::getStatusStyle($demande->currentStep?->code) }}">
+                                <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium {{ \App\Models\WorkflowStep::getStatusStyle($demande->currentStep?->code) }}">
                                     {{ $demande->currentStep?->nom }}
                                 </span>
                             @else

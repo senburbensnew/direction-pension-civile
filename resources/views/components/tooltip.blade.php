@@ -1,50 +1,8 @@
-@push('styles')
-    <style>
-        .tooltip-container {
-            position: relative;
-            display: inline-block;
-            cursor: help;
-        }
-
-        .tooltip-text {
-            visibility: hidden;
-            width: 120px;
-            background-color: black;
-            color: white;
-            text-align: center;
-            border-radius: 5px;
-            padding: 5px;
-            position: absolute;
-            z-index: 1;
-            bottom: 100%;
-            left: 50%;
-            margin-left: -60px;
-            /* Half of the width for centering */
-            opacity: 0;
-            transition: opacity 0.3s;
-            font-size: 0.875rem;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-        }
-
-        .tooltip-container:hover .tooltip-text {
-            visibility: visible;
-            opacity: 1;
-        }
-
-        .tooltip-text::after {
-            content: '';
-            position: absolute;
-            top: 100%;
-            left: 50%;
-            margin-left: -5px;
-            border-width: 5px;
-            border-style: solid;
-            border-color: black transparent transparent transparent;
-        }
-    </style>
-@endpush
-
-<span class="tooltip-container" {{ $attributes->merge(['class' => 'cursor-help']) }}>
+<span {{ $attributes->class(['relative inline-flex cursor-help group/tooltip']) }}>
     {{ $slot }}
-    <span class="tooltip-text">{{ $text }}</span>
+    <span
+        role="tooltip"
+        class="pointer-events-none invisible absolute bottom-full left-1/2 z-10 mb-1 w-[7.5rem] -translate-x-1/2 rounded-md bg-black px-1.5 py-1 text-center text-sm text-white opacity-0 shadow-md transition-opacity group-hover/tooltip:visible group-hover/tooltip:opacity-100 after:absolute after:left-1/2 after:top-full after:-ml-1 after:border-[5px] after:border-transparent after:border-t-black after:content-['']">
+        {{ $text }}
+    </span>
 </span>

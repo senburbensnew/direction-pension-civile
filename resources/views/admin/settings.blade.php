@@ -7,7 +7,7 @@
 @endsection
 
 @section('content')
-<div class="space-y-6 max-w-3xl">
+<div class="space-y-6 w-full">
 
     <div>
         <h1 class="text-xl font-bold text-gray-800">Paramètres</h1>

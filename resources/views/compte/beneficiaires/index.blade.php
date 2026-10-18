@@ -17,15 +17,11 @@
     .card-shadow { box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1); }
 </style>
 
-<x-portal-page bottom="pb-10" class="max-w-4xl space-y-8">
+<x-portal-page bottom="pb-10" class="w-full space-y-8">
         <x-compte-page-intro
             title="Mes bénéficiaires"
             description="Consultez les personnes pour lesquelles vous avez un accès (propre dossier, représentant légal ou mandataire) et basculez le contexte de vos demandes."
         />
-
-        @if(session('success'))
-            <div class="rounded-lg bg-green-50 border border-green-200 text-green-800 px-4 py-3 text-sm">{{ session('success') }}</div>
-        @endif
 
         <section class="bg-white border border-gray-200 card-shadow p-6 sm:p-8">
             <div class="flex flex-col gap-4 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between border-b border-gray-100 pb-4 mb-6">

@@ -14,7 +14,7 @@
     <div class="flex items-center justify-center h-screen">
         <div class="text-center px-4">
             <!-- SVG Icon -->
-            <div class="mx-auto w-24 h-24 md:w-32 md:h-32 lg:w-48 lg:h-48 text-[#FFD700] animate-bounce">
+            <div class="w-24 h-24 md:w-32 md:h-32 lg:w-48 lg:h-48 text-[#FFD700] animate-bounce">
                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-full h-full">
                     <path fill-rule="evenodd"
                         d="M12 2a10 10 0 100 20 10 10 0 000-20zm-1 5a1 1 0 012 0v6a1 1 0 01-2 0V7zm1 10a1.5 1.5 0 100-3 1.5 1.5 0 000 3z"

@@ -9,12 +9,6 @@
             </p>
         </header>
 
-        @if (session('success'))
-            <div class="text-sm text-green-800 bg-green-50 border border-green-200 px-4 py-3">
-                {{ session('success') }}
-            </div>
-        @endif
-
         <section class="dossier-card p-5 sm:p-6 space-y-4">
             <div class="flex flex-wrap items-center justify-between gap-3">
                 <div>
@@ -69,10 +63,12 @@
                         @error('email')<p class="text-red-600 text-xs mt-1">{{ $message }}</p>@enderror
                     </div>
                     <div>
-                        <label class="block text-sm font-medium text-gray-700">Téléphone</label>
-                        <input type="text" name="telephone" value="{{ old('telephone', $demande->telephone) }}"
-                               class="mt-1 w-full border border-gray-300 rounded-lg px-3 py-2 text-sm" required>
-                        @error('telephone')<p class="text-red-600 text-xs mt-1">{{ $message }}</p>@enderror
+                        <x-telephone-input
+                            name="telephone"
+                            :value="$demande->telephone"
+                            :required="true"
+                            input-class="mt-1 w-full border border-gray-300 rounded-lg px-3 py-2 text-sm"
+                        />
                     </div>
                     <div class="sm:col-span-2">
                         <label class="block text-sm font-medium text-gray-700">Adresse</label>

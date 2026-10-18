@@ -19,18 +19,6 @@
             description="Gérez les codes rattachés à votre dossier ou à ceux des bénéficiaires auxquels vous avez accès."
         />
 
-        @if(session('success'))
-            <div class="rounded-lg border border-green-200 bg-green-50 px-4 py-3 text-green-800 text-sm">
-                {{ session('success') }}
-            </div>
-        @endif
-
-        @if(session('info'))
-            <div class="rounded-lg border border-sky-200 bg-sky-50 px-4 py-3 text-sky-900 text-sm">
-                {{ session('info') }}
-            </div>
-        @endif
-
         @if($errors->any())
             <div class="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-red-800 text-sm">
                 <ul class="list-disc list-inside space-y-1">
@@ -248,7 +236,7 @@
         @empty
             <section class="bg-white border border-gray-200 card-shadow p-8 text-center text-gray-600">
                 <p class="font-medium text-navy">Aucun bénéficiaire accessible</p>
-                <p class="text-sm mt-2 max-w-md mx-auto">
+                <p class="text-sm mt-2 max-w-md">
                     Votre compte n’a pas encore de dossier pension rattaché. Contactez la DPC ou complétez votre demande de compte.
                 </p>
                 <a href="{{ route('profile.edit') }}" class="inline-block mt-4 text-sm font-semibold text-indigo-700 hover:underline">

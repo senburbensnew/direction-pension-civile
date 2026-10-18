@@ -1,7 +1,7 @@
 @extends('layouts.main')
 
 @section('content')
-    <div class="max-w-6xl mx-auto p-6">
+    <div class="site-gutter p-6">
         <!-- Main Content -->
         <div class="bg-white shadow-md rounded-xl p-6 border border-gray-200">
             <x-breadcrumb :items="[
@@ -13,7 +13,7 @@
                 <div class="text-center mb-6 flex flex-col md:flex-row items-center justify-center w-full gap-4 md:gap-8">
                     <x-dpc-logo class="w-16 h-16 md:w-24 md:h-24 object-cover shrink-0" />
 
-                    <div class="px-4">
+                    <div class="site-gutter">
                         <h1 class="text-lg md:text-xl font-bold mb-1">Demande de Pension par Réversion</h1>
                         <p class="text-sm text-gray-600">Direction de la Pension Civile (DPC)</p>
                     </div>
@@ -22,12 +22,6 @@
                 </div>
             </div>
             
-            @if (session('success'))
-                <div class="mb-4 p-4 bg-green-50 border border-green-200 text-green-700 rounded">
-                    {{ session('success') }}
-                </div>
-            @endif
-
             @if ($errors->any())
                 <div class="mb-4 rounded-md bg-red-100 p-4 text-sm text-red-700">
                     <ul class="list-disc list-inside">
@@ -78,9 +72,7 @@
                                         type="text"
                                         name="nom_complet_defunt"
                                         value="{{ old('nom_complet_defunt', data_get($demande, 'data.nom_complet_defunt', '')) }}"
-                                        class="mt-1 block w-full rounded-md border-gray-300 shadow-sm
-                                            focus:border-blue-500 focus:ring-blue-500
-                                            @error('nom_complet_defunt') border-red-500 @enderror"
+                                        class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 @error('nom_complet_defunt') border-red-500 @enderror"
                                     >
 
                                     @error('nom_complet_defunt')
@@ -96,9 +88,7 @@
                                         type="text"
                                         name="numero_pension"
                                         value="{{ old('numero_pension', data_get($demande, 'data.numero_pension', '')) }}"
-                                        class="mt-1 block w-full rounded-md border-gray-300 shadow-sm
-                                            focus:border-blue-500 focus:ring-blue-500
-                                            @error('numero_pension') border-red-500 @enderror"
+                                        class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 @error('numero_pension') border-red-500 @enderror"
                                     >
 
                                     @error('numero_pension')
@@ -303,9 +293,7 @@
                                         type="text"
                                         name="nom_beneficiaire"
                                         value="{{ old('nom_beneficiaire', data_get($demande, 'data.nom_beneficiaire', '')) }}"
-                                        class="mt-1 block w-full rounded-md border-gray-300 shadow-sm
-                                            focus:border-blue-500 focus:ring-blue-500
-                                            @error('nom_beneficiaire') border-red-500 @enderror"
+                                        class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 @error('nom_beneficiaire') border-red-500 @enderror"
                                         
                                     >
 
@@ -322,9 +310,7 @@
 
                                     <select
                                         name="relation_defunt"
-                                        class="mt-1 block w-full rounded-md border-gray-300 shadow-sm
-                                            focus:border-blue-500 focus:ring-blue-500
-                                            @error('relation_defunt') border-red-500 @enderror"
+                                        class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 @error('relation_defunt') border-red-500 @enderror"
                                         
                                     >
                                         <option value="">-- Sélectionner --</option>
@@ -693,14 +679,5 @@
             </form>
         </div>
     </div>
+    <x-push-vite :js="['resources/js/pages/institution-pension-reversion.js']" />
 @endsection
-
-<script>
-        function deleteDocument(documentId) {
-            if (!confirm('Are you sure you want to delete this file?')) return;
-
-            const form = document.getElementById('delete-document-form');
-            form.action = `/demandedocument/${documentId}`;
-            form.submit();
-        }
-</script>

@@ -8,103 +8,10 @@
     <span class="text-gray-700 text-sm">{{ isset($official->id) ? 'Modifier' : 'Ajouter' }}</span>
 @endsection
 
-@push('styles')
-<link href="https://cdn.quilljs.com/1.3.7/quill.snow.css" rel="stylesheet">
-<style>
-    .ql-container, .ql-editor { font-family: inherit !important; font-size: 0.875rem; border-bottom-left-radius: 0.5rem; border-bottom-right-radius: 0.5rem; }
-    .ql-toolbar { border-top-left-radius: 0.5rem; border-top-right-radius: 0.5rem; background: #f9fafb; border-color: #d1d5db !important; }
-    .ql-container { border-color: #d1d5db !important; }
-    .ql-editor { min-height: 220px; line-height: 1.75; color: #374151; }
-    .ql-editor.ql-blank::before { color: #9ca3af; font-style: normal; }
-    .ql-toolbar button:hover, .ql-toolbar button.ql-active { color: #2563eb !important; }
-    .ql-toolbar .ql-stroke { stroke: #6b7280; }
-    .ql-toolbar button:hover .ql-stroke, .ql-toolbar button.ql-active .ql-stroke { stroke: #2563eb !important; }
-    .ql-toolbar .ql-fill { fill: #6b7280; }
-    .ql-toolbar button:hover .ql-fill, .ql-toolbar button.ql-active .ql-fill { fill: #2563eb !important; }
-    .ql-snow .ql-picker { color: #6b7280; font-size: 0.8125rem; }
-    /* discours editor taller */
-    #editor-discours .ql-editor { min-height: 280px; }
-</style>
-@endpush
-
-@push('scripts')
-<script src="https://cdn.quilljs.com/1.3.7/quill.min.js"></script>
-<script>
-document.addEventListener('DOMContentLoaded', function () {
-
-    const toolbarOptions = [
-        [{ 'header': [2, 3, false] }],
-        ['bold', 'italic', 'underline', 'strike'],
-        [{ 'list': 'ordered' }, { 'list': 'bullet' }],
-        ['blockquote', 'link'],
-        ['clean'],
-    ];
-
-    function initEditor(editorId, inputId, initialContent) {
-        const quill = new Quill('#' + editorId, {
-            theme: 'snow',
-            placeholder: editorId === 'editor-biographie'
-                ? 'Rédigez la biographie ici…'
-                : 'Rédigez le discours ici…',
-            modules: { toolbar: toolbarOptions },
-        });
-
-        // Load initial content
-        if (initialContent && initialContent.trim()) {
-            const isHtml = /<[a-z][\s\S]*>/i.test(initialContent);
-            if (isHtml) {
-                quill.clipboard.dangerouslyPasteHTML(initialContent);
-            } else {
-                // Plain text from old seeder — convert paragraphs
-                const html = initialContent.trim().split(/\n\n+/)
-                    .map(p => '<p>' + p.replace(/\n/g, '<br>') + '</p>')
-                    .join('');
-                quill.clipboard.dangerouslyPasteHTML(html);
-            }
-        }
-
-        // Sync to hidden textarea on any change
-        quill.on('text-change', function () {
-            document.getElementById(inputId).value = quill.root.innerHTML === '<p><br></p>'
-                ? ''
-                : quill.root.innerHTML;
-        });
-
-        // Also sync on form submit (safety)
-        document.querySelector('form').addEventListener('submit', function () {
-            document.getElementById(inputId).value = quill.root.innerHTML === '<p><br></p>'
-                ? ''
-                : quill.root.innerHTML;
-        });
-
-        return quill;
-    }
-
-    initEditor(
-        'editor-biographie',
-        'input-biographie',
-        @json(old('biographie', $official->biographie ?? ''))
-    );
-
-    initEditor(
-        'editor-discours',
-        'input-discours',
-        @json(old('discours', $official->discours ?? ''))
-    );
-
-    // Deep-link from admin list (#profil / #discours)
-    if (window.location.hash) {
-        const target = document.querySelector(window.location.hash);
-        if (target) {
-            setTimeout(() => target.scrollIntoView({ behavior: 'smooth', block: 'start' }), 150);
-        }
-    }
-});
-</script>
-@endpush
+<x-push-vite :js="['resources/js/admin/officials-form.js']" />
 
 @section('content')
-<div class="max-w-3xl mx-auto space-y-6">
+<div class="site-gutter space-y-6">
 
     <div class="flex items-center gap-3">
         <a href="{{ route('admin.officials.index') }}"

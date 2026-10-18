@@ -29,12 +29,6 @@
     $hasPersonalCompletable = collect($personalCompletableAttributes)->contains(
         fn (string $attribute) => $canEdit($attribute)
     );
-    $profileStatusMessages = [
-        'profile-updated' => 'Informations mises à jour avec succès.',
-        'profile-photo-updated' => 'Photo mise à jour avec succès.',
-        'password-updated' => 'Mot de passe mis à jour avec succès.',
-    ];
-    $profileStatusMessage = $profileStatusMessages[session('status')] ?? null;
     $profileFormError = $errors->getBag('default')->first();
 @endphp
 
@@ -43,10 +37,6 @@
 </style>
 
 <x-portal-page bottom="pb-10" class="space-y-8">
-        @if ($profileStatusMessage)
-            <x-portal-toast type="success" :message="$profileStatusMessage" />
-        @endif
-
         @if ($profileFormError)
             <x-portal-toast type="error" :message="$profileFormError" />
         @endif
@@ -96,26 +86,7 @@
             </form>
         </section>
 
-        <script>
-            document.getElementById('profile_photo')?.addEventListener('change', function (e) {
-                const file = e.target.files?.[0];
-                const preview = document.getElementById('photo-preview');
-                const placeholder = document.getElementById('photo-placeholder');
-                if (!file || !preview) return;
-                if (file.size > 5 * 1024 * 1024) {
-                    alert('Le fichier dépasse 5 Mo. Choisissez une image plus légère.');
-                    e.target.value = '';
-                    return;
-                }
-                const reader = new FileReader();
-                reader.onload = (ev) => {
-                    preview.src = ev.target.result;
-                    preview.classList.remove('hidden');
-                    placeholder?.classList.add('hidden');
-                };
-                reader.readAsDataURL(file);
-            });
-        </script>
+        <x-push-vite :js="['resources/js/pages/auth-profile-photo.js']" />
 
         <section class="bg-white border border-gray-200 card-shadow p-6 sm:p-8">
             <div class="flex items-center gap-3 mb-2">
@@ -346,14 +317,12 @@
                     @endunless
 
                     <div>
-                        <label for="phone" class="block text-sm font-medium text-gray-700 mb-1">Téléphone</label>
-                        <input type="text" name="phone" id="phone"
-                               value="{{ old('phone', $user->phone) }}"
-                               placeholder="+509XXXXXXXX"
-                               class="{{ $inputClass }} {{ $errors->has('phone') ? 'border-red-500' : '' }}">
-                        @error('phone')
-                            <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
-                        @enderror
+                        <x-telephone-input
+                            name="phone"
+                            id="phone"
+                            :value="$user->phone"
+                            :input-class="$inputClass.($errors->has('phone') ? ' border-red-500' : '')"
+                        />
                     </div>
                 </div>
 

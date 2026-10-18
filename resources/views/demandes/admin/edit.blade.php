@@ -3,7 +3,7 @@
 @section('title', $demande->libellePublic())
 
 @section('content')
-<div class="space-y-6 max-w-4xl">
+<div class="space-y-6 w-full">
 
     {{-- Breadcrumb --}}
     <nav class="text-sm text-gray-500 flex items-center gap-1">
@@ -11,18 +11,6 @@
         <span>/</span>
         <span class="text-gray-700 font-medium">{{ $demande->libellePublic() }}</span>
     </nav>
-
-    @if(session('success'))
-        <div class="bg-green-50 border border-green-200 text-green-800 rounded-lg px-4 py-3 text-sm">
-            {{ session('success') }}
-        </div>
-    @endif
-
-    @if(session('error'))
-        <div class="bg-red-50 border border-red-200 text-red-800 rounded-lg px-4 py-3 text-sm">
-            {{ session('error') }}
-        </div>
-    @endif
 
     {{-- ── Provenance du dossier (visible Direction) ──────────────────────── --}}
     @role('directeur|assistant_directeur')
@@ -108,8 +96,7 @@
                     </span>
                 @endif
                 @if($demande->currentStep)
-                    <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold
-                        {{ \App\Models\WorkflowStep::getStatusStyle($demande->currentStep->code) }}">
+                    <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold {{ \App\Models\WorkflowStep::getStatusStyle($demande->currentStep->code) }}">
                         {{ $demande->currentStep->nom }}
                     </span>
                 @endif
@@ -468,8 +455,7 @@
                     $sizeMo  = number_format($media->size / 1048576, 2);
                 @endphp
                 <div class="flex items-center gap-3 p-3 rounded-lg border border-gray-100 hover:bg-gray-50 group">
-                    <div class="w-9 h-9 rounded flex items-center justify-center flex-shrink-0
-                        {{ $isImage ? 'bg-blue-50' : ($isPdf ? 'bg-red-50' : 'bg-gray-100') }}">
+                    <div class="w-9 h-9 rounded flex items-center justify-center flex-shrink-0 {{ $isImage ? 'bg-blue-50' : ($isPdf ? 'bg-red-50' : 'bg-gray-100') }}">
                         <i class="fas {{ $isImage ? 'fa-image text-blue-400' : ($isPdf ? 'fa-file-pdf text-red-400' : 'fa-file text-gray-400') }} text-sm"></i>
                     </div>
                     <div class="flex-1 min-w-0">

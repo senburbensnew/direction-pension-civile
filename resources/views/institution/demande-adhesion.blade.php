@@ -1,8 +1,8 @@
 @extends('layouts.main')
 
 @section('content')
-    <div class="max-w-6xl mx-auto p-6">
-        <div id="form-section" class="mx-auto bg-white p-6 shadow-md rounded-lg relative m-2">
+    <div class="site-gutter p-6">
+        <div id="form-section" class="bg-white p-6 shadow-md rounded-lg relative m-2">
             <div class="flex justify-center gap-5">
                     <x-dpc-logo class="w-16 h-16 md:w-20 md:h-20 object-contain" />
 
@@ -14,12 +14,6 @@
 
                     <x-dpc-logo class="w-16 h-16 md:w-20 md:h-20 object-contain" />
             </div>
-
-            @if (session('success'))
-                <div class="mb-4 p-4 bg-green-50 border border-green-200 text-green-700 rounded">
-                    {{ session('success') }}
-                </div>
-            @endif
 
             @if ($errors->any())
                 <div class="mb-4 rounded-md bg-red-100 p-4 text-sm text-red-700">
@@ -328,8 +322,7 @@
 
                             <!-- No dependents message -->
                             <div id="no-dependents-message"
-                                class="p-4 text-center text-gray-500
-                                {{ count(old('dependents', [])) || count($dbDependents) ? 'hidden' : '' }}">
+                                class="p-4 text-center text-gray-500 {{ count(old('dependents', [])) || count($dbDependents) ? 'hidden' : '' }}">
                                 Aucun enfant enregistré.
                             </div>
 
@@ -513,8 +506,7 @@
 
                             <!-- No jobs message -->
                             <div id="no-jobs-message"
-                                class="p-4 text-center text-gray-500
-                                {{ count(old('previous_jobs', [])) || count($dbPreviousJobs) ? 'hidden' : '' }}">
+                                class="p-4 text-center text-gray-500 {{ count(old('previous_jobs', [])) || count($dbPreviousJobs) ? 'hidden' : '' }}">
                                 Aucun emploi antérieur enregistré.
                             </div>
 
@@ -660,7 +652,7 @@
                                     Augmentation (Gdes)
                                 </label>
                                 <input disabled type="number" name="augmentation_amount" step="0.01"
-                                    class="bg-gray-100  w-full rounded-md border-gray-300 @error('augmentation_amount') input-error @enderror"
+                                    class="bg-gray-100 w-full rounded-md border-gray-300 @error('augmentation_amount') input-error @enderror"
                                     value="{{ old('augmentation_amount') }}">
                                 @error('augmentation_amount')
                                     <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
@@ -671,7 +663,7 @@
                                     Date de l'augmentation (jj/mm/aaaa)
                                 </label>
                                 <input disabled type="date" name="augmentation_date"
-                                    class="bg-gray-100  w-full rounded-md border-gray-300 @error('augmentation_date') input-error @enderror"
+                                    class="bg-gray-100 w-full rounded-md border-gray-300 @error('augmentation_date') input-error @enderror"
                                     value="{{ old('augmentation_date') }}">
                                 @error('augmentation_date')
                                     <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
@@ -682,7 +674,7 @@
                                     Date de cessation (jj/mm/aaaa)
                                 </label>
                                 <input disabled type="date" name="cessation_date"
-                                    class="bg-gray-100  w-full rounded-md border-gray-300 @error('cessation_date') input-error @enderror"
+                                    class="bg-gray-100 w-full rounded-md border-gray-300 @error('cessation_date') input-error @enderror"
                                     value="{{ old('cessation_date') }}">
                                 @error('cessation_date')
                                     <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
@@ -693,7 +685,7 @@
                                     Date de réintégration (jj/mm/aaaa)
                                 </label>
                                 <input disabled type="date" name="reintegration_date"
-                                    class="bg-gray-100  w-full rounded-md border-gray-300 @error('reintegration_date') input-error @enderror"
+                                    class="bg-gray-100 w-full rounded-md border-gray-300 @error('reintegration_date') input-error @enderror"
                                     value="{{ old('reintegration_date') }}">
                                 @error('reintegration_date')
                                     <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
@@ -704,7 +696,7 @@
                                     Nouveau salaire (Gdes)
                                 </label>
                                 <input disabled type="number" name="new_salary" step="0.01"
-                                    class="bg-gray-100  w-full rounded-md border-gray-300 @error('new_salary') input-error @enderror"
+                                    class="bg-gray-100 w-full rounded-md border-gray-300 @error('new_salary') input-error @enderror"
                                     value="{{ old('new_salary') }}">
                                 @error('new_salary')
                                     <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
@@ -738,123 +730,6 @@
             </form>
         </div>
     </div>
+    <x-push-vite :js="['resources/js/pages/institution-demande-adhesion.js']" />
 @endsection
 
-<script>
-        function deleteDocument(documentId) {
-            if (!confirm('Are you sure you want to delete this file?')) return;
-
-            const form = document.getElementById('delete-document-form');
-            form.action = `/demandedocument/${documentId}`;
-            form.submit();
-        }
-    // Dependents Section Script
-    document.addEventListener('DOMContentLoaded', function () {
-
-        const container = document.getElementById('dependents-container');
-        const messageDiv = document.getElementById('no-dependents-message');
-
-        // ✅ FIX: count what already exists in DOM
-        let dependentCount = container.querySelectorAll('.dependent-entry').length;
-
-        // Event delegation for delete
-        container.addEventListener('click', function (e) {
-            const deleteBtn = e.target.closest('[data-action="delete-dependent"]');
-            if (deleteBtn) {
-                deleteDependent(deleteBtn);
-            }
-        });
-
-        function addDependent() {
-            const template = document.getElementById('dependentTemplate');
-            const newIndex = dependentCount;
-
-            const newEntry = document.importNode(template.content, true);
-
-            newEntry.querySelectorAll('[name]').forEach(el => {
-                el.name = el.name.replace(/__index__/g, newIndex);
-            });
-
-            container.insertBefore(newEntry, messageDiv);
-            dependentCount++;
-            messageDiv.classList.add('hidden');
-        }
-
-        function deleteDependent(button) {
-            const entry = button.closest('.dependent-entry');
-            if (!entry) return;
-
-            entry.remove();
-
-            // Reindex remaining entries
-            const entries = container.querySelectorAll('.dependent-entry');
-            entries.forEach((entry, index) => {
-                entry.querySelectorAll('[name]').forEach(el => {
-                    el.name = el.name.replace(/dependents\[\d+]/g, `dependents[${index}]`);
-                });
-            });
-
-            dependentCount = entries.length;
-            messageDiv.classList.toggle('hidden', dependentCount > 0);
-        }
-
-        document.getElementById('add-dependent')
-            .addEventListener('click', addDependent);
-    });
-
-    // Previous Jobs Section Script
-    document.addEventListener('DOMContentLoaded', function () {
-
-        const container = document.getElementById('previous-jobs-container');
-        const messageDiv = document.getElementById('no-jobs-message');
-        const addBtn = document.getElementById('add-job');
-
-        // ✅ FIX: count existing jobs in DOM (old + DB)
-        let jobIndex = container.querySelectorAll('.previous-job').length;
-
-        // Event delegation for delete
-        container.addEventListener('click', function (e) {
-            const deleteBtn = e.target.closest('[data-action="delete-job"]');
-            if (deleteBtn) {
-                deleteJob(deleteBtn);
-            }
-        });
-
-        function addJob() {
-            const template = document.getElementById('jobTemplate');
-
-            const newEntry = document.importNode(template.content, true);
-
-            newEntry.querySelectorAll('[name]').forEach(el => {
-                el.name = el.name.replace(/__index__/g, jobIndex);
-            });
-
-            container.insertBefore(newEntry, messageDiv);
-            jobIndex++;
-            messageDiv.classList.add('hidden');
-        }
-
-        function deleteJob(button) {
-            const entry = button.closest('.previous-job');
-            if (!entry) return;
-
-            entry.remove();
-
-            // Reindex remaining jobs
-            const entries = container.querySelectorAll('.previous-job');
-            entries.forEach((entry, index) => {
-                entry.querySelectorAll('[name]').forEach(el => {
-                    el.name = el.name.replace(
-                        /previous_jobs\[\d+]/g,
-                        `previous_jobs[${index}]`
-                    );
-                });
-            });
-
-            jobIndex = entries.length;
-            messageDiv.classList.toggle('hidden', jobIndex > 0);
-        }
-
-        addBtn.addEventListener('click', addJob);
-    });
-</script>

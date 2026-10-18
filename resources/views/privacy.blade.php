@@ -3,10 +3,6 @@
 @section('title', 'Politique de Confidentialité et de la Protection des Données')
 
 @section('content')
-<style>
-    .card-shadow { box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1); }
-</style>
-
 @php
     $sections = [
         [
@@ -48,13 +44,13 @@
     ];
 @endphp
 
-<div class="py-10 px-4 sm:px-6 lg:px-8">
-    <div class="max-w-7xl mx-auto space-y-8">
+<div class="py-10">
+    <div class="site-gutter space-y-8">
 
         <div class="text-center">
             <span class="text-xs font-bold text-orange-500 uppercase tracking-widest">Informations légales</span>
             <h1 class="text-4xl font-bold text-navy mt-2 mb-3">Politique de confidentialité</h1>
-            <p class="text-gray-600 max-w-2xl mx-auto">
+            <p class="text-gray-600">
                 Protection des données personnelles des utilisateurs de la Direction de la Pension Civile.
             </p>
         </div>

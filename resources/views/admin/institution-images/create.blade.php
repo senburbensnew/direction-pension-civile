@@ -7,7 +7,7 @@
 @endsection
 
 @section('content')
-<div class="max-w-2xl mx-auto"
+<div class="site-gutter"
      x-data="{
         preview: null,
         fileName: null,
@@ -74,7 +74,7 @@
                 </template>
                 <template x-if="preview">
                     <div>
-                        <img :src="preview" class="max-h-48 mx-auto rounded-lg object-contain">
+                        <img :src="preview" class="max-h-48 rounded-lg object-contain">
                         <p class="text-xs text-gray-500 mt-2" x-text="fileName"></p>
                     </div>
                 </template>

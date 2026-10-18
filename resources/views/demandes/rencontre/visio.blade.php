@@ -25,14 +25,14 @@
         </header>
 
         @if($status === 'indisponible')
-            <section class="dossier-card p-5 sm:p-8 max-w-3xl">
+            <section class="dossier-card p-5 sm:p-8 w-full">
                 <h2 class="text-base font-semibold text-[#173052]">Lien indisponible</h2>
                 <p class="text-sm text-gray-600 mt-2">
                     La date ou l’heure du rendez-vous n’est pas enregistrée correctement. Contactez la Direction ou consultez votre dossier.
                 </p>
             </section>
         @elseif($status === 'en_attente')
-            <section class="dossier-card p-5 sm:p-8 max-w-3xl"
+            <section class="dossier-card p-5 sm:p-8 w-full"
                      x-data="{
                          opensAt: @js($opensAt?->toIso8601String()),
                          label: '',
@@ -65,7 +65,7 @@
                 <p class="mt-4 text-xs text-gray-500">Cette page se met à jour automatiquement dès l’ouverture de la salle.</p>
             </section>
         @elseif($status === 'termine')
-            <section class="dossier-card p-5 sm:p-8 max-w-3xl">
+            <section class="dossier-card p-5 sm:p-8 w-full">
                 <h2 class="text-base font-semibold text-[#173052]">Rendez-vous terminé</h2>
                 <p class="text-sm text-gray-600 mt-2">
                     Le lien sécurisé n’est plus actif

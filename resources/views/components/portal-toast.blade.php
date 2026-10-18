@@ -2,6 +2,7 @@
     'message',
     'type' => 'success',
     'duration' => 6000,
+    'position' => 'top-20',
 ])
 
 @php
@@ -32,7 +33,10 @@
     x-transition:leave-start="opacity-100"
     x-transition:leave-end="opacity-0"
     x-init="window.setTimeout(() => { show = false }, {{ (int) $duration }})"
-    class="fixed top-20 right-4 left-4 sm:left-auto z-[100] max-w-md sm:max-w-sm pointer-events-none"
+    @class([
+        'fixed right-4 left-4 sm:left-auto z-[100] max-w-md sm:max-w-sm pointer-events-none',
+        $position,
+    ])
     role="alert"
     aria-live="polite"
 >
@@ -41,7 +45,12 @@
         $styles['wrap'],
     ])>
         <i @class(['fa-solid flex-shrink-0 mt-0.5', $styles['icon']]) aria-hidden="true"></i>
-        <p class="flex-1 min-w-0 leading-snug">{{ $message }}</p>
+        <div class="flex-1 min-w-0 leading-snug">
+            <p>{{ $message }}</p>
+            @if(trim($slot) !== '')
+                <div class="mt-1.5 space-y-0.5">{{ $slot }}</div>
+            @endif
+        </div>
         <button
             type="button"
             class="flex-shrink-0 text-current opacity-60 hover:opacity-100 transition-opacity -mr-1 p-1"

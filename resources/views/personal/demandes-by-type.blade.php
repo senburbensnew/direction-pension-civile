@@ -32,20 +32,7 @@
                                     <td class="px-6 py-4">{{ $request->created_at->format('d/m/Y H:i') }}</td>
                                     <td class="px-6 py-4">
                                         <span
-                                            class="px-2 py-1 text-sm rounded-full 
-                                    @switch($request->status->name)
-                                        @case('pending')
-                                            bg-yellow-100 text-yellow-800
-                                            @break
-                                        @case('in_progress')
-                                            bg-blue-100 text-blue-800
-                                            @break
-                                            @case('completed')
-                                                 bg-green-100 text-green-800
-                                                 @break
-                                             @default
-                                                 bg-gray-100 text-gray-800
-                                         @endswitch">
+                                            class="px-2 py-1 text-sm rounded-full @switch($request->status->name) @case('pending') bg-yellow-100 text-yellow-800 @break @case('in_progress') bg-blue-100 text-blue-800 @break @case('completed') bg-green-100 text-green-800 @break @default bg-gray-100 text-gray-800 @endswitch">
                                             {{ ucfirst(str_replace('_', ' ', $request->status->code)) }}
                                         </span>
                                     </td>
@@ -67,7 +54,7 @@
                                 <tr>
                                     <td colspan="5" class="px-6 py-4 text-center text-gray-500">
                                         <div class="py-8">
-                                            <svg class="mx-auto h-12 w-12 text-gray-400" fill="none"
+                                            <svg class="h-12 w-12 text-gray-400" fill="none"
                                                 stroke="currentColor" viewBox="0 0 24 24">
                                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                                     d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z">

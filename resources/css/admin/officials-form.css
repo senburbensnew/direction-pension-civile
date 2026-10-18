@@ -1,0 +1,63 @@
+@import 'quill/dist/quill.snow.css';
+
+.ql-container,
+.ql-editor {
+    font-family: inherit !important;
+    font-size: 0.875rem;
+    border-bottom-left-radius: 0.5rem;
+    border-bottom-right-radius: 0.5rem;
+}
+
+.ql-toolbar {
+    border-top-left-radius: 0.5rem;
+    border-top-right-radius: 0.5rem;
+    background: #f9fafb;
+    border-color: #d1d5db !important;
+}
+
+.ql-container {
+    border-color: #d1d5db !important;
+}
+
+.ql-editor {
+    min-height: 220px;
+    line-height: 1.75;
+    color: #374151;
+}
+
+.ql-editor.ql-blank::before {
+    color: #9ca3af;
+    font-style: normal;
+}
+
+.ql-toolbar button:hover,
+.ql-toolbar button.ql-active {
+    color: #2563eb !important;
+}
+
+.ql-toolbar .ql-stroke {
+    stroke: #6b7280;
+}
+
+.ql-toolbar button:hover .ql-stroke,
+.ql-toolbar button.ql-active .ql-stroke {
+    stroke: #2563eb !important;
+}
+
+.ql-toolbar .ql-fill {
+    fill: #6b7280;
+}
+
+.ql-toolbar button:hover .ql-fill,
+.ql-toolbar button.ql-active .ql-fill {
+    fill: #2563eb !important;
+}
+
+.ql-snow .ql-picker {
+    color: #6b7280;
+    font-size: 0.8125rem;
+}
+
+#editor-discours .ql-editor {
+    min-height: 280px;
+}

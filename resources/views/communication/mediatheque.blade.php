@@ -2,6 +2,8 @@
 
 @section('title', 'Médiathèque')
 
+<x-push-vite :js="['resources/js/pages/mediatheque-public.js']" />
+
 @section('content')
 @php
     $allItems = collect()
@@ -72,15 +74,15 @@
     }
 </style>
 
-<div class="py-10 px-4 sm:px-6 lg:px-8 min-h-full"
+<div class="py-10 min-h-full"
      x-data="{ lbOpen: false, lbSrc: '', lbAlt: '' }"
      @keydown.escape.window="lbOpen = false">
-    <div class="max-w-7xl mx-auto space-y-8">
+    <div class="site-gutter space-y-8">
 
         <div class="text-center">
             <span class="text-xs font-bold text-orange-500 uppercase tracking-widest">Communications</span>
             <h1 class="text-4xl font-bold text-navy mt-2 mb-3">Médiathèque</h1>
-            <p class="text-gray-600 max-w-2xl mx-auto">
+            <p class="text-gray-600">
                 Ressources multimédias de la Direction de la Pension Civile : images, vidéos, audios et documents.
             </p>
         </div>
@@ -96,7 +98,7 @@
                         <p class="text-sm text-gray-500">{{ $featured->title }}</p>
                     </div>
                 </div>
-                <div class="max-w-4xl mx-auto border border-gray-200 overflow-hidden bg-black">
+                <div class="border border-gray-200 overflow-hidden bg-black w-full">
                     @if($featured->embedUrl())
                         <iframe
                             class="w-full aspect-video"
@@ -270,7 +272,7 @@
              x-transition:leave-end="opacity-0"
              @click.self="lbOpen = false"
              class="fixed inset-0 z-[9999] flex items-center justify-center bg-black/80 p-4">
-            <div class="relative max-w-4xl w-full">
+            <div class="relative w-full">
                 <button type="button" @click="lbOpen = false"
                         class="absolute -top-3 -right-3 z-10 bg-white w-8 h-8 flex items-center justify-center shadow-lg hover:bg-gray-100">
                     <i class="fa-solid fa-xmark text-navy text-sm"></i>
@@ -283,64 +285,3 @@
     </div>
 </div>
 @endsection
-
-@push('scripts')
-<script>
-    document.addEventListener('DOMContentLoaded', function () {
-        const tabs = document.querySelectorAll('.tab-btn');
-        const grid = document.getElementById('media-grid');
-        const cards = grid ? grid.querySelectorAll('.media-card') : [];
-        const empty = document.getElementById('media-empty');
-        const searchEl = document.getElementById('media-search');
-        const clearBtn = document.getElementById('media-search-clear');
-        let activeTab = 'audio';
-
-        function applyFilters() {
-            if (!searchEl || !empty || cards.length === 0) {
-                return;
-            }
-
-            const q = (searchEl.value || '').trim().toLowerCase();
-            if (clearBtn) {
-                clearBtn.classList.toggle('hidden', q === '');
-            }
-            let visible = 0;
-
-            cards.forEach(card => {
-                const type = card.getAttribute('data-type');
-                const text = card.getAttribute('data-searchable') || '';
-                const show = (activeTab === 'all' || type === activeTab) && (q === '' || text.includes(q));
-                card.hidden = !show;
-                if (show) visible++;
-            });
-
-            empty.classList.toggle('hidden', visible > 0);
-            if (grid) {
-                grid.classList.toggle('hidden', visible === 0);
-            }
-        }
-
-        tabs.forEach(tab => {
-            tab.addEventListener('click', function () {
-                tabs.forEach(t => t.classList.remove('is-active'));
-                this.classList.add('is-active');
-                activeTab = this.getAttribute('data-tab');
-                applyFilters();
-            });
-        });
-
-        if (searchEl) {
-            searchEl.addEventListener('input', applyFilters);
-        }
-        if (clearBtn && searchEl) {
-            clearBtn.addEventListener('click', () => {
-                searchEl.value = '';
-                applyFilters();
-                searchEl.focus();
-            });
-        }
-
-        applyFilters();
-    });
-</script>
-@endpush

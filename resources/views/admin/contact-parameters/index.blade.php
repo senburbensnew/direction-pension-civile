@@ -30,12 +30,7 @@
         </a>
     </div>
 
-    {{-- Alerts --}}
-    @if(session('success'))
-        <div class="flex items-center gap-2 bg-green-50 border border-green-300 text-green-800 rounded-lg px-4 py-3 text-sm">
-            <i class="fas fa-check-circle text-green-500 flex-shrink-0"></i> {{ session('success') }}
-        </div>
-    @endif
+    {{-- Validation errors (flash success/error: layouts.admin) --}}
     @if($errors->any())
         <div class="flex items-start gap-2 bg-red-50 border border-red-300 text-red-800 rounded-lg px-4 py-3 text-sm">
             <i class="fas fa-exclamation-circle text-red-500 mt-0.5 flex-shrink-0"></i>
@@ -261,7 +256,10 @@
     </form>
 
     {{-- Sujets du formulaire --}}
-    <div class="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden" x-data="contactSubjectsAdmin()">
+    <div
+        class="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden"
+        x-data="contactSubjectsAdmin"
+        data-contact-subjects-config='@json(['defaultPosition' => (int) (($subjects->max('position') ?? 0) + 1)])'>
         <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 px-5 py-4 border-b border-gray-100 bg-gray-50">
             <div class="flex items-center gap-3">
                 <div class="w-8 h-8 bg-orange-100 rounded-lg flex items-center justify-center">
@@ -374,32 +372,3 @@
     </div>
 </div>
 @endsection
-
-@push('scripts')
-<script>
-    function contactSubjectsAdmin() {
-        return {
-            open: false,
-            editing: false,
-            form: { id: null, label: '', position: 0, is_active: true, allows_custom: false },
-            openCreate() {
-                this.editing = false;
-                this.form = { id: null, label: '', position: {{ (int) ($subjects->max('position') ?? 0) + 1 }}, is_active: true, allows_custom: false };
-                this.open = true;
-            },
-            openEdit(item) {
-                this.editing = true;
-                this.form = {
-                    id: item.id,
-                    label: item.label,
-                    position: item.position,
-                    is_active: !!item.is_active,
-                    allows_custom: !!item.allows_custom,
-                };
-                this.open = true;
-            },
-        };
-    }
-</script>
-@endpush
-

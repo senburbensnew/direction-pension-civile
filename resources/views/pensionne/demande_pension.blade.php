@@ -19,10 +19,10 @@
     }
 </style>
 
-<div class="max-w-6xl mx-auto p-6 m-2 ">
+<div class="site-gutter p-6 m-2">
 
     <!-- ✅ Main Card -->
-    <main class="max-w-7xl mx-auto bg-white p-6 shadow-md rounded-lg relative m-2">
+    <main class="w-full bg-white p-6 shadow-md rounded-lg relative m-2">
 
         <!-- ✅ Header -->
         <div class="flex flex-col md:flex-row justify-between items-center mb-12 gap-8">
@@ -30,7 +30,7 @@
 
                 <x-dpc-logo class="w-16 h-16 md:w-24 md:h-24 object-cover shrink-0" />
 
-                <div class="px-4">
+                <div class="site-gutter">
                     <h1 class="text-lg md:text-xl font-bold mb-1">Formalité administrative</h1>
                     <p class="text-base md:text-lg font-semibold mb-2">Formulaire d'enregistrement</p>
                     <p class="text-sm text-gray-600">Remplissez soigneusement les informations demandées</p>
@@ -39,12 +39,6 @@
                 <x-dpc-logo class="w-16 h-16 md:w-24 md:h-24 object-cover shrink-0 hidden md:block" />
             </div>
         </div>
-
-        @if (session('success'))
-            <div class="mb-4 p-4 bg-green-50 border border-green-200 text-green-700 rounded">
-                {{ session('success') }}
-            </div>
-        @endif
 
         @if ($errors->any())
             <div class="mb-4 rounded bg-red-100 p-4 text-red-700">

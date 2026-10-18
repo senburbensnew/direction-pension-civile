@@ -5,9 +5,11 @@ namespace App\Http\Controllers\Auth;
 use App\Http\Controllers\Controller;
 use App\Models\User;
 use App\Rules\Telephone;
+use App\Services\PasswordResetSmsService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Password;
+use Illuminate\Validation\ValidationException;
 use Illuminate\View\View;
 
 class PasswordResetLinkController extends Controller
@@ -23,9 +25,9 @@ class PasswordResetLinkController extends Controller
     /**
      * Handle an incoming password reset link request.
      *
-     * @throws \Illuminate\Validation\ValidationException
+     * @throws ValidationException
      */
-    public function store(Request $request): RedirectResponse
+    public function store(Request $request, PasswordResetSmsService $smsReset): RedirectResponse
     {
         if (! $request->filled('login') && $request->filled('email')) {
             $request->merge(['login' => $request->input('email')]);
@@ -44,19 +46,111 @@ class PasswordResetLinkController extends Controller
             ],
         ]);
 
-        $user = User::findForLogin((string) $request->input('login'));
+        $login = trim((string) $request->input('login'));
+        $user = User::findForLogin($login);
 
-        if (! $user || blank($user->email)) {
+        if (! $user) {
             return back()
                 ->withInput($request->only('login'))
                 ->withErrors(['login' => __(Password::INVALID_USER)]);
         }
 
-        $status = Password::sendResetLink(['email' => $user->email]);
+        $canEmail = filled($user->email);
+        $canSms = $this->smsChannelAvailable($user);
 
-        return $status == Password::RESET_LINK_SENT
-            ? back()->with('status', __($status))
-            : back()->withInput($request->only('login'))
-                ->withErrors(['login' => __($status)]);
+        if (! $canEmail && ! $canSms) {
+            return back()
+                ->withInput($request->only('login'))
+                ->withErrors(['login' => __(Password::INVALID_USER)]);
+        }
+
+        $emailSent = false;
+        $smsSent = false;
+        $throttled = false;
+
+        if ($canEmail) {
+            $emailStatus = Password::sendResetLink(['email' => $user->email]);
+
+            if ($emailStatus === Password::RESET_LINK_SENT) {
+                $emailSent = true;
+            } elseif ($emailStatus === Password::RESET_THROTTLED) {
+                $throttled = true;
+            } elseif (! $canSms) {
+                return back()
+                    ->withInput($request->only('login'))
+                    ->withErrors(['login' => __($emailStatus)]);
+            }
+        }
+
+        if ($canSms) {
+            $smsStatus = $smsReset->sendResetCode($user);
+
+            if ($smsStatus === 'sent') {
+                $smsSent = true;
+            } elseif ($smsStatus === 'throttled') {
+                $throttled = true;
+            }
+        }
+
+        if ($emailSent || $smsSent) {
+            $notice = $this->successNotice($emailSent, $smsSent, $user);
+
+            if ($notice !== null) {
+                return back()->with('password_reset_notice', $notice);
+            }
+
+            return back()->with('status', __(Password::RESET_LINK_SENT));
+        }
+
+        if ($throttled) {
+            return back()
+                ->withInput($request->only('login'))
+                ->withErrors(['login' => __(Password::RESET_THROTTLED)]);
+        }
+
+        return back()
+            ->withInput($request->only('login'))
+            ->withErrors(['login' => __(Password::INVALID_USER)]);
+    }
+
+    private function smsChannelAvailable(User $user): bool
+    {
+        return config('notifications.sms_enabled')
+            && filled($user->routeNotificationForTwilio());
+    }
+
+    /**
+     * @return array{kind: string, email?: string, phone?: string}|null
+     */
+    private function successNotice(bool $emailSent, bool $smsSent, User $user): ?array
+    {
+        $maskedEmail = filled($user->email) ? User::maskEmailForDisplay($user->email) : null;
+        $maskedPhone = filled($user->routeNotificationForTwilio())
+            ? User::maskPhoneForDisplay($user->routeNotificationForTwilio())
+            : null;
+
+        if ($emailSent && $smsSent && $maskedEmail && $maskedPhone) {
+            return [
+                'kind' => 'both',
+                'email' => $maskedEmail,
+                'phone' => $maskedPhone,
+            ];
+        }
+
+        if ($smsSent && $maskedPhone) {
+            return [
+                'kind' => 'sms',
+                'phone' => $maskedPhone,
+            ];
+        }
+
+        if ($emailSent && $maskedEmail) {
+            return [
+                'kind' => 'email',
+                'email' => $maskedEmail,
+            ];
+        }
+
+        return null;
     }
 }

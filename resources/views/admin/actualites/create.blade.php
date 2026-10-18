@@ -9,7 +9,7 @@
 @endsection
 
 @section('content')
-<div class="max-w-3xl space-y-4">
+<div class="w-full space-y-4">
 
     <div class="flex items-center justify-between">
         <div>

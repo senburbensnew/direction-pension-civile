@@ -56,7 +56,7 @@
             x-transition:leave="transition ease-in duration-150"
             x-transition:leave-start="opacity-100 scale-100"
             x-transition:leave-end="opacity-0 scale-95"
-            class="relative max-w-3xl w-full"
+            class="relative w-full"
         >
             <button
                 @click="lbOpen = false"

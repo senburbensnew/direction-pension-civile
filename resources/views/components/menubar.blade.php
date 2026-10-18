@@ -53,12 +53,13 @@
         $isProvisionnel = auth()->user()?->isProvisionnel();
     @endphp
 
-    <nav id="menu" class="container mx-auto bg-white relative z-[1000] shadow-sm border-b nav-container"
+    <nav id="menu" class="bg-white relative z-[1000] shadow-sm border-b nav-container"
         aria-label="Navigation Principale">
+        <div class="site-gutter">
         <!-- Mobile Menu Toggle -->
         <div class="flex items-center justify-between md:hidden">
             <button id="mobile-menu-toggle" aria-expanded="false" aria-controls="mobile-menu"
-                class="px-4 py-3 text-slate-600 cursor-pointer hover:bg-gray-50 transition-colors focus:outline-none focus:ring-2 ">
+                class="px-4 py-3 text-slate-600 cursor-pointer hover:bg-gray-50 transition-colors focus:outline-none focus:ring-2">
                 <span class="sr-only">Toggle mobile menu</span>
                 <svg class="w-6 h-6 transform transition-transform duration-300" fill="none" stroke="currentColor"
                     viewBox="0 0 24 24">
@@ -70,16 +71,12 @@
 
         <!-- Main Navigation Menu -->
         <ul id="mobile-menu"
-            class="hidden md:flex md:justify-center md:items-center md:space-x-0 lg:space-x-1 p-0 m-0
-                    overflow-y-auto md:max-h-none md:overflow-visible
-                   transition-all duration-300 w-full"
+            class="hidden md:flex md:justify-center md:items-center md:space-x-0 lg:space-x-1 p-0 m-0 overflow-y-auto md:max-h-none md:overflow-visible transition-all duration-300 w-full"
             aria-label="Menu de Navigation">
             <!-- Qui sommes nous? Dropdown -->
             <li class="relative w-full md:w-auto border-b md:border-none group">
                 <button
-                    class="dropdown-toggle flex w-full items-center justify-between px-4 md:px-3 py-3
-                           text-slate-700 hover:text-orange-500 text-base font-medium
-                           focus:outline-none focus:ring-2 ">
+                    class="dropdown-toggle flex w-full items-center justify-between px-4 md:px-3 py-3 text-slate-700 hover:text-orange-500 text-base font-medium focus:outline-none focus:ring-2">
                     <span class="truncate-text">{{ __('messages.who_are_we') }}</span>
                     <svg class="dropdown-icon ml-2 w-4 h-4 transform transition-transform duration-300" fill="none"
                         stroke="currentColor" viewBox="0 0 24 24">
@@ -92,25 +89,19 @@
                     aria-label="Sous-menu Qui sommes nous">
                     <li>
                         <a href="{{ route('quisommesnous.missions') }}"
-                            class="text-slate-600 block px-4 py-3 hover:bg-gray-100
-                                   transition-colors text-base
-                                   focus:outline-none focus:ring-2 ">
+                            class="text-slate-600 block px-4 py-3 hover:bg-gray-100 transition-colors text-base focus:outline-none focus:ring-2">
                             {{ __('messages.mission_and_responsibilities') }}
                         </a>
                     </li>
                     <li>
                         <a href="{{ route('quisommesnous.structure-organique') }}"
-                            class="text-slate-600 block px-4 py-3 hover:bg-gray-100
-                                   transition-colors text-base truncate-text
-                                   focus:outline-none focus:ring-2 ">
+                            class="text-slate-600 block px-4 py-3 hover:bg-gray-100 transition-colors text-base truncate-text focus:outline-none focus:ring-2">
                             {{ __('messages.organizational_structure') }}
                         </a>
                     </li>
                     <li>
                         <a href="{{ route('quisommesnous.mots', ['role' => 'ministre']) }}"
-                            class="text-slate-600 block px-4 py-3 hover:bg-gray-100
-                                   transition-colors text-base truncate-text
-                                   focus:outline-none focus:ring-2 ">
+                            class="text-slate-600 block px-4 py-3 hover:bg-gray-100 transition-colors text-base truncate-text focus:outline-none focus:ring-2">
                             Mots du Ministre
                         </a>
                     </li>
@@ -121,9 +112,7 @@
             <!-- @if (!$isInternalUser && (auth()->guest() || (auth()->user()?->can('can_view_pensionne_menu') && ! $isProvisionnel)))
                 <li class="relative w-full md:w-auto border-b md:border-none group">
                     <button
-                        class="dropdown-toggle flex w-full items-center justify-between px-4 md:px-3 py-3
-                           text-slate-700 hover:text-orange-500 text-base font-medium
-                           focus:outline-none focus:ring-2 ">
+                        class="dropdown-toggle flex w-full items-center justify-between px-4 md:px-3 py-3 text-slate-700 hover:text-orange-500 text-base font-medium focus:outline-none focus:ring-2">
                         <span class="truncate-text">{{ __('messages.pensioner') }}</span>
                         <svg class="dropdown-icon ml-2 w-4 h-4 transform transition-transform duration-300"
                             fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -136,65 +125,49 @@
                         aria-label="Sous-menu Pensionaire">
                         <li>
                             <a href="{{ route('demandes.virements.create') }}"
-                                class="text-slate-600 block px-4 py-3 hover:bg-gray-100
-                                   transition-colors text-base truncate-text
-                                   focus:outline-none focus:ring-2 ">
+                                class="text-slate-600 block px-4 py-3 hover:bg-gray-100 transition-colors text-base truncate-text focus:outline-none focus:ring-2">
                                 {{ __('messages.transfer_request') }}
                             </a>
                         </li>
                         <li>
                             <a href="{{ route('demandes.attestations.create') }}"
-                                class="text-slate-600 block px-4 py-3 hover:bg-gray-100
-                                   transition-colors text-base truncate-text
-                                   focus:outline-none focus:ring-2 ">
+                                class="text-slate-600 block px-4 py-3 hover:bg-gray-100 transition-colors text-base truncate-text focus:outline-none focus:ring-2">
                                 {{ __('messages.certificate_request') }}
                             </a>
                         </li>
                         <li>
                             <a href="{{ route('demandes.transfert-cheque.create') }}"
-                                class="text-slate-600 block px-4 py-3 hover:bg-gray-100
-                                   transition-colors text-base truncate-text
-                                   focus:outline-none focus:ring-2 ">
+                                class="text-slate-600 block px-4 py-3 hover:bg-gray-100 transition-colors text-base truncate-text focus:outline-none focus:ring-2">
                                 {{ __('messages.check_transfer_request') }}
                             </a>
                         </li>
                         <li>
                             <a href="{{ route('demandes.arret-paiement.create') }}"
-                                class="text-slate-600 block px-4 py-3 hover:bg-gray-100
-                                   transition-colors text-base truncate-text
-                                   focus:outline-none focus:ring-2 ">
+                                class="text-slate-600 block px-4 py-3 hover:bg-gray-100 transition-colors text-base truncate-text focus:outline-none focus:ring-2">
                                 {{ __('messages.payment_stop_request') }}
                             </a>
                         </li>
                         <li>
                             <a href="{{ route('demandes.demande-reinsertion.create') }}"
-                                class="text-slate-600 block px-4 py-3 hover:bg-gray-100
-                                   transition-colors text-base truncate-text
-                                   focus:outline-none focus:ring-2 ">
+                                class="text-slate-600 block px-4 py-3 hover:bg-gray-100 transition-colors text-base truncate-text focus:outline-none focus:ring-2">
                                 {{ __('messages.reinstatement_request') }}
                             </a>
                         </li>
                         <li>
                             <a href="{{ route('demandes.demande-arret-virement.create') }}"
-                                class="text-slate-600 block px-4 py-3 hover:bg-gray-100
-                                   transition-colors text-base truncate-text
-                                   focus:outline-none focus:ring-2 ">
+                                class="text-slate-600 block px-4 py-3 hover:bg-gray-100 transition-colors text-base truncate-text focus:outline-none focus:ring-2">
                                 {{ __('messages.transfer_stop_request') }}
                             </a>
                         </li>
                         <li>
                             <a href="{{ route('demandes.preuve-existence.create') }}"
-                                class="text-slate-600 block px-4 py-3 hover:bg-gray-100
-                                   transition-colors text-base truncate-text
-                                   focus:outline-none focus:ring-2 ">
+                                class="text-slate-600 block px-4 py-3 hover:bg-gray-100 transition-colors text-base truncate-text focus:outline-none focus:ring-2">
                                 {{ __('messages.proof_of_existence') }}
                             </a>
                         </li>
                         <li>
                             <a href="{{ route('demandes.mise-a-jour.create') }}"
-                                class="text-slate-600 block px-4 py-3 hover:bg-gray-100
-                                   transition-colors text-base truncate-text
-                                   focus:outline-none focus:ring-2 ">
+                                class="text-slate-600 block px-4 py-3 hover:bg-gray-100 transition-colors text-base truncate-text focus:outline-none focus:ring-2">
                                 {{ __('messages.information_update') }}
                             </a>
                         </li>
@@ -206,9 +179,7 @@
             <!-- @if (!$isInternalUser && (auth()->guest() || auth()->user()?->can('can_view_fonctionnaire_menu')))
                 <li class="relative w-full md:w-auto border-b md:border-none group">
                     <button
-                        class="dropdown-toggle flex w-full items-center justify-between px-4 md:px-3 py-3
-                                       text-slate-700 hover:text-orange-500 text-base font-medium
-                                       focus:outline-none focus:ring-2 ">
+                        class="dropdown-toggle flex w-full items-center justify-between px-4 md:px-3 py-3 text-slate-700 hover:text-orange-500 text-base font-medium focus:outline-none focus:ring-2">
                         <span class="truncate-text">{{ __('messages.civil_servant') }}</span>
                         <svg class="dropdown-icon ml-2 w-4 h-4 transform transition-transform duration-300"
                             fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -221,25 +192,19 @@
                         aria-label="Sous-menu Pensionaire">
                         <li>
                             <a href="{{ route('demandes.demande-etat-carriere.create') }}"
-                                class="text-slate-600 block px-4 py-3 hover:bg-gray-100
-                                               transition-colors text-base truncate-text
-                                               focus:outline-none focus:ring-2 ">
+                                class="text-slate-600 block px-4 py-3 hover:bg-gray-100 transition-colors text-base truncate-text focus:outline-none focus:ring-2">
                                 {{ __('messages.career_status_request') }}
                             </a>
                         </li>
                         <li>
                             <a href="{{ route('simulateur-calcul') }}"
-                                class="text-slate-600 block px-4 py-3 hover:bg-gray-100
-                                               transition-colors text-base truncate-text
-                                               focus:outline-none focus:ring-2 ">
+                                class="text-slate-600 block px-4 py-3 hover:bg-gray-100 transition-colors text-base truncate-text focus:outline-none focus:ring-2">
                                 {{ __('messages.simulateur-calcul') }}
                             </a>
                         </li>
                         <li>
                             <a href="{{ route('demandes.demande-pension.index') }}"
-                                class="text-slate-600 block px-4 py-3 hover:bg-gray-100
-                                               transition-colors text-base truncate-text
-                                               focus:outline-none focus:ring-2 ">
+                                class="text-slate-600 block px-4 py-3 hover:bg-gray-100 transition-colors text-base truncate-text focus:outline-none focus:ring-2">
                                 {{ __('messages.pension_request') }}
                             </a>
                         </li>
@@ -251,9 +216,7 @@
             <!-- @if (!$isInternalUser && (auth()->guest() || auth()->user()?->can('can_view_institution_menu')))
                 <li class="relative w-full md:w-auto border-b md:border-none group">
                     <button
-                        class="dropdown-toggle flex w-full items-center justify-between px-4 md:px-3 py-3
-                           text-slate-700 hover:text-orange-500 text-base font-medium
-                           focus:outline-none focus:ring-2 ">
+                        class="dropdown-toggle flex w-full items-center justify-between px-4 md:px-3 py-3 text-slate-700 hover:text-orange-500 text-base font-medium focus:outline-none focus:ring-2">
                         <span class="truncate-text">{{ __('messages.institutions') }}</span>
                         <svg class="dropdown-icon ml-2 w-4 h-4 transform transition-transform duration-300"
                             fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -266,25 +229,19 @@
                         aria-label="Sous-menu Pensionaire">
                     {{-- <li>
                             <a href="#"
-                                class="text-slate-600 block px-4 py-3 hover:bg-gray-100
-                                   transition-colors text-base truncate-text
-                                   focus:outline-none focus:ring-2 ">
+                                class="text-slate-600 block px-4 py-3 hover:bg-gray-100 transition-colors text-base truncate-text focus:outline-none focus:ring-2">
                                 {{ __('messages.pension_request_transmission') }}
                             </a>
                         </li> --}}
                         <li>
                             <a href="{{ route('demandes.demande-adhesion.create') }}"
-                                class="text-slate-600 block px-4 py-3 hover:bg-gray-100
-                                   transition-colors text-base truncate-text
-                                   focus:outline-none focus:ring-2 ">
+                                class="text-slate-600 block px-4 py-3 hover:bg-gray-100 transition-colors text-base truncate-text focus:outline-none focus:ring-2">
                                 {{ __('messages.membership_request') }}
                             </a>
                         </li>
                         <li>
                             <a href="{{ route('demandes.demande-pension.index') }}"
-                                class="text-slate-600 block px-4 py-3 hover:bg-gray-100
-                                               transition-colors text-base truncate-text
-                                               focus:outline-none focus:ring-2 ">
+                                class="text-slate-600 block px-4 py-3 hover:bg-gray-100 transition-colors text-base truncate-text focus:outline-none focus:ring-2">
                                 {{ __('messages.pension_request') }}
                             </a>
                         </li>
@@ -294,9 +251,7 @@
 
             <li class="relative w-full md:w-auto border-b md:border-none group">
                 <button
-                    class="dropdown-toggle flex w-full items-center justify-between px-4 md:px-3 py-3
-                                       text-slate-700 hover:text-orange-500 text-base font-medium
-                                       focus:outline-none focus:ring-2 ">
+                    class="dropdown-toggle flex w-full items-center justify-between px-4 md:px-3 py-3 text-slate-700 hover:text-orange-500 text-base font-medium focus:outline-none focus:ring-2">
                     <span class="truncate-text">{{ __('messages.communications') }}</span>
                     <svg class="dropdown-icon ml-2 w-4 h-4 transform transition-transform duration-300" fill="none"
                         stroke="currentColor" viewBox="0 0 24 24">
@@ -309,17 +264,13 @@
                     aria-label="Sous-menu Pensionaire">
                     <li>
                         <a href="{{ route('textes_documents_legaux') }}"
-                            class="text-slate-600 block px-4 py-3 hover:bg-gray-100
-                                               transition-colors text-base truncate-text
-                                               focus:outline-none focus:ring-2 ">
+                            class="text-slate-600 block px-4 py-3 hover:bg-gray-100 transition-colors text-base truncate-text focus:outline-none focus:ring-2">
                             {{ __('messages.texts_and_publications') }}
                         </a>
                     </li>
                     <li>
                         <a href="{{ route("mediatheque") }}"
-                            class="text-slate-600 block px-4 py-3 hover:bg-gray-100
-                                               transition-colors text-base truncate-text
-                                               focus:outline-none focus:ring-2 ">
+                            class="text-slate-600 block px-4 py-3 hover:bg-gray-100 transition-colors text-base truncate-text focus:outline-none focus:ring-2">
                             {{ __('messages.media_libraries') }}
                         </a>
                     </li>
@@ -327,9 +278,7 @@
                         @if(app(\App\Services\RencontreMotifService::class)->motifsForUser(auth()->user()) !== [])
                     <li>
                         <a href="{{ route('demandes.rencontre.create') }}"
-                            class="text-slate-600 block px-4 py-3 hover:bg-gray-100
-                                               transition-colors text-base truncate-text
-                                               focus:outline-none focus:ring-2 ">
+                            class="text-slate-600 block px-4 py-3 hover:bg-gray-100 transition-colors text-base truncate-text focus:outline-none focus:ring-2">
                             {{ __('messages.appointment_request') }}
                         </a>
                     </li>
@@ -363,9 +312,7 @@
                 @canany(['can_view_pensionne_menu', 'can_view_institution_menu'])
                     <li class="w-full md:w-auto border-b md:border-none">
                         <a href="{{ route('simulateur-calcul') }}"
-                        class="block px-4 py-3 text-slate-600 hover:text-blue-600
-                                text-base font-medium truncate-text
-                                focus:outline-none focus:ring-2">
+                        class="block px-4 py-3 text-slate-600 hover:text-blue-600 text-base font-medium truncate-text focus:outline-none focus:ring-2">
                             {{ __('messages.simulateur-calcul') }}
                         </a>
                     </li>
@@ -373,85 +320,6 @@
                 @endif
             @endauth
         </ul>
+        </div>
     </nav>
 
-    {{-- @push('scripts') --}}
-    <script defer>
-        document.addEventListener('DOMContentLoaded', () => {
-            const mobileMenuToggle = document.getElementById('mobile-menu-toggle');
-            const mobileMenu = document.getElementById('mobile-menu');
-            const dropdownToggles = document.querySelectorAll('.dropdown-toggle');
-
-            // Mobile menu toggle
-            mobileMenuToggle.addEventListener('click', () => {
-                const isExpanded = mobileMenuToggle.getAttribute('aria-expanded') === 'true';
-                mobileMenuToggle.setAttribute('aria-expanded', !isExpanded);
-                mobileMenu.classList.toggle('hidden');
-            });
-
-            // Dropdown toggle for mobile
-            dropdownToggles.forEach(toggle => {
-                toggle.addEventListener('click', (event) => {
-                    // Close other open dropdowns
-                    dropdownToggles.forEach(otherToggle => {
-                        if (otherToggle !== toggle) {
-                            otherToggle.nextElementSibling.style.display = 'none';
-                            otherToggle.querySelector('.dropdown-icon').classList.remove(
-                                'rotate-180');
-                        }
-                    });
-
-                    // Toggle current dropdown
-                    const dropdownContent = toggle.nextElementSibling;
-                    const dropdownIcon = toggle.querySelector('.dropdown-icon');
-
-                    if (dropdownContent.style.display === 'block') {
-                        dropdownContent.style.display = 'none';
-                        dropdownIcon.classList.remove('rotate-180');
-                    } else {
-                        dropdownContent.style.display = 'block';
-                        dropdownIcon.classList.add('rotate-180');
-                    }
-                });
-            });
-
-            // Close dropdowns when clicking outside
-            document.addEventListener('click', (event) => {
-                dropdownToggles.forEach(toggle => {
-                    const dropdownContent = toggle.nextElementSibling;
-                    const dropdownIcon = toggle.querySelector('.dropdown-icon');
-
-                    if (!toggle.contains(event.target) && !dropdownContent.contains(event.target)) {
-                        dropdownContent.style.display = 'none';
-                        dropdownIcon.classList.remove('rotate-180');
-                    }
-                });
-
-                // Close mobile menu when clicking outside
-                if (!mobileMenu.contains(event.target) && !mobileMenuToggle.contains(event.target)) {
-                    mobileMenu.classList.add('hidden');
-                    mobileMenuToggle.setAttribute('aria-expanded', 'false');
-                }
-            });
-
-            // Handle window resize
-            window.addEventListener('resize', () => {
-                if (window.innerWidth >= 768) {
-                    // Desktop view
-                    mobileMenu.classList.remove('hidden');
-                    dropdownToggles.forEach(toggle => {
-                        toggle.nextElementSibling.style.display = '';
-                        toggle.querySelector('.dropdown-icon').classList.remove('rotate-180');
-                    });
-                } else {
-                    // Mobile view
-                    mobileMenu.classList.add('hidden');
-                    dropdownToggles.forEach(toggle => {
-                        toggle.nextElementSibling.style.display = 'none';
-                        toggle.querySelector('.dropdown-icon').classList.remove('rotate-180');
-                    });
-                }
-            });
-        });
-    </script>
-    {{-- @endpush --}}

@@ -11,11 +11,10 @@
         crossorigin="anonymous" referrerpolicy="no-referrer" />
     {{-- @vite(['resources/css/app.css']) --}}
     <link href="{{ asset('build/assets/app-DXVLtzn-.css') }}" rel="stylesheet">
-    @stack('styles')
 </head>
 
 <body>
-    <main class="container mx-auto">
+    <main>
         <x-header></x-header>
         @yield('content')
         <x-footer></x-footer>

@@ -1,4 +1,8 @@
 import './bootstrap';
+import { initDomEnhancements } from './dom-enhancements';
+import { registerAlpinePageComponents } from './boot/register-alpine-pages.js';
+import { loadPageFeatures } from './boot/load-page-features.js';
+import { initMenubar } from './components/menubar.js';
 
 import Alpine from 'alpinejs';
 import flatpickr from 'flatpickr';
@@ -57,8 +61,6 @@ document.addEventListener('alpine:init', () => {
         },
     }));
 });
-
-Alpine.start();
 
 // Locale → { flatpickr locale, display format shown to user }
 // The hidden input always submits Y-m-d (what Laravel expects).
@@ -194,24 +196,25 @@ function initRdvBookingTimePickers() {
 }
 
 // Run on initial load and after Livewire/Turbo navigations if present
-document.addEventListener('DOMContentLoaded', initDatepickers);
-document.addEventListener('DOMContentLoaded', initRdvBookingTimePickers);
-document.addEventListener('livewire:navigated', initDatepickers);
-document.addEventListener('livewire:navigated', initRdvBookingTimePickers);
+function initUiWidgets() {
+    initDomEnhancements();
+    initDatepickers();
+    initRdvBookingTimePickers();
+    initMenubar();
+}
 
-document.addEventListener('DOMContentLoaded', () => {
-    if (document.getElementById('dpc-chronogramme')) {
-        import('./chronogramme.js').then(({ initDpcChronogramme }) => initDpcChronogramme());
-    }
-    const agentAvailCal = document.getElementById('dpc-agent-availability-calendar');
-    if (agentAvailCal) {
-        import('./rdv-agent-availability.js').then(({ initAgentAvailabilityCalendar }) =>
-            initAgentAvailabilityCalendar()
-        );
-    }
-    if (document.querySelector('.dpc-rdv-scheduler')) {
-        import('./rdv-scheduler.js').then(({ initRdvScheduler }) => initRdvScheduler());
-    }
+async function boot() {
+    await registerAlpinePageComponents();
+    Alpine.start();
+    initUiWidgets();
+    await loadPageFeatures();
+}
+
+boot();
+
+document.addEventListener('livewire:navigated', () => {
+    initDatepickers();
+    initRdvBookingTimePickers();
 });
 
 

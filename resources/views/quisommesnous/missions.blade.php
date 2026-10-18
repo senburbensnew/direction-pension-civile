@@ -7,8 +7,8 @@
     .card-shadow { box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1); }
 </style>
 
-<div class="py-10 px-4 sm:px-6 lg:px-8">
-    <div class="max-w-7xl mx-auto space-y-8">
+<div class="py-10">
+    <div class="site-gutter space-y-8">
 
         <div class="text-center">
             <span class="text-xs font-bold text-orange-500 uppercase tracking-widest">Qui sommes-nous</span>
@@ -147,7 +147,7 @@
                                             <x-optimized-image
                                                 :src="$image['src']"
                                                 :alt="$image['alt']"
-                                                class="w-full max-w-2xl bg-white"
+                                                class="w-full w-full bg-white"
                                                 sizes="(min-width: 768px) 672px, 100vw"
                                             ></x-optimized-image>
                                             <figcaption class="mt-2 text-sm text-gray-600">{{ $image['alt'] }}</figcaption>

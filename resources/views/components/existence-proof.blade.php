@@ -1,12 +1,13 @@
 @props(['pensionCategories', 'genders', 'civilStatuses', 'demande' => null, 'isDemandeReadyForSubmission' => false])
-<div class="max-w-6xl mx-auto p-4 md:p-6 m-2 ">
+<div class="w-full p-4 md:p-6 m-2">
     @if ($demande)
         <div class="mb-4 p-3 bg-yellow-50 border border-yellow-200 text-yellow-800 rounded text-sm">
             Brouillon en cours — dernière sauvegarde {{ $demande->updated_at->diffForHumans() }}
         </div>
     @endif
     <form method="POST" action="{{ route('demandes.preuve-existence.store') }}"
-        class="p-4 md:p-5 bg-white shadow-md rounded-lg border" enctype="multipart/form-data" id="preuve-existence-form">
+        class="p-4 md:p-5 bg-white shadow-md rounded-lg border" enctype="multipart/form-data" id="preuve-existence-form"
+        data-dpc-existence-proof data-initial-row-count="{{ count((array) old('dependants', [])) }}">
         @csrf
         <input type="hidden" name="demande_id" value="{{ $demande?->id }}">
         <input type="hidden" name="action" id="action-input" value="draft">
@@ -52,11 +53,7 @@
                         value="{{ old('numero_identite', $demande?->data['numero_identite'] ?? '') }}"
                         placeholder="003-456-789-0"
                         aria-label="Numéro d'identité"
-                        class="
-                            w-full h-12 py-2 text-lg
-                            border-b-2 focus:outline-none
-                            @error('numero_identite') border-red-500 @else border-gray-300 @enderror
-                        "
+                        class="w-full h-12 py-2 text-lg border-b-2 focus:outline-none @error('numero_identite') border-red-500 @else border-gray-300 @enderror"
                     />
                     <label
                         for="numero_identite"
@@ -83,12 +80,6 @@
 
 
         <!-- Alerts Section -->
-        @if (session('success'))
-            <div class="mb-4 p-3 bg-green-50 border border-green-200 text-green-700 rounded text-sm">
-                {{ session('success') }}
-            </div>
-        @endif
-
         <div class="space-y-6 mt-5">
             <!-- Fiscal Year -->
             <div class="w-full md:w-1/2">
@@ -108,7 +99,7 @@
                         <label for="nif" class="block text-base font-medium text-gray-700">NIF *</label>
                         <input type="text" name="nif" id="nif" value="{{ auth()->user()->displayNif() }}"
                         placeholder="000-000-000-0"
-                            class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 "
+                            class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
                             >
                         @error('nif')
                             <p class="mt-1 text-base text-red-600">{{ $message }}</p>
@@ -121,7 +112,7 @@
 
                         <input value="{{ old('nom') }}" type="text" name="nom"
                             id="nom"
-                            class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 ">
+                            class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
                         @error('nom')
                             <p class="mt-1 text-base text-red-600">{{ $message }}</p>
                         @enderror
@@ -131,7 +122,7 @@
                         <label for="prenom" class="block text-base font-medium text-gray-700">PRENOM *</label>
                         <input value="{{ old('prenom') }}" type="text" name="prenom"
                             id="prenom"
-                            class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 ">
+                            class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
                         @error('prenom')
                             <p class="mt-1 text-base text-red-600">{{ $message }}</p>
                         @enderror
@@ -521,126 +512,4 @@
     </select>
 </div>
 
-<script>
-    let rowCount = {{ count((array) old('dependants', [])) }};
-    count(old('dependants', []))
 
-    function addDependantRow() {
-        const tbody = document.querySelector('#dependants-table tbody');
-        const hiddenInput = tbody.querySelector('input[name="dependants"]');
-        const messageDiv = document.getElementById('no-dependants-message');
-        const table = document.getElementById('dependants-table');
-
-        // Supprimer le champ caché si existant
-        if (hiddenInput) hiddenInput.remove();
-
-        const newIndex = rowCount;
-        const newRow = document.createElement('tr');
-        newRow.className = 'hover:bg-gray-50';
-        newRow.innerHTML = `
-            <td class="px-4 py-2 text-sm text-gray-700 align-center">${newIndex + 1}</td>
-
-            <!-- Nom -->
-            <td class="px-4 py-2 text-sm text-gray-900 align-top">
-            <input type="text" 
-            name="dependants[${newIndex}][nom]"
-            class="w-full border rounded px-2 py-1">
-            <div class="validation-message"></div>
-            </td>
-
-            <!-- Relation -->
-            <td class="px-4 py-2 text-sm text-gray-700 align-top">
-            <input type="text" 
-            name="dependants[${newIndex}][relation]"
-            class="w-full border rounded px-2 py-1">
-            <div class="validation-message"></div>
-            </td>
-
-            <!-- Date de naissance -->
-            <td class="px-4 py-2 text-sm text-gray-700 align-top">
-            <input type="date"
-            name="dependants[${newIndex}][date_naissance]"
-            class="w-full border rounded px-2 py-1">
-            <div class="validation-message"></div>
-            </td>
-
-            <!-- Sexe -->
-            <td class="px-4 py-2 text-sm text-gray-700 align-top">
-            <select name="dependants[${newIndex}][sexe_id]"
-                class="w-full border rounded px-2 py-1">
-            <option value="">Sélectionner</option>
-            ${document.getElementById('genderOptionsTemplate').innerHTML}
-            </select>
-            <div class="validation-message"></div>
-            </td>
-
-            <!-- Actions -->
-            <td class="px-4 py-2 text-sm text-right space-x-2 align-center">
-            </button>
-                <button type="button" onclick="deleteRow(this)" 
-                    class="text-red-600 hover:text-red-900">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
-                            d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
-                    </svg>
-                </button>
-            </td>
-            `;
-
-        tbody.appendChild(newRow);
-        rowCount++;
-
-        // Apply flatpickr to the new date input
-        const newDateInput = newRow.querySelector('input[type="date"]');
-        if (newDateInput && window.flatpickr) {
-            flatpickr(newDateInput, {
-                locale:     document.documentElement.lang === 'en' ? 'default' : window.French,
-                dateFormat: 'Y-m-d',
-                altInput:   true,
-                altFormat:  document.documentElement.lang === 'en' ? 'm/d/Y' : 'd/m/Y',
-                allowInput: true,
-            });
-        }
-
-        // Afficher le tableau
-        table.hidden = false;
-        messageDiv.hidden = true;
-    }
-
-    function deleteRow(button) {
-        const row = button.closest('tr');
-        const tbody = row.parentElement;
-        row.remove();
-
-        // Réindexer les lignes
-        const rows = tbody.querySelectorAll('tr');
-        rows.forEach((row, index) => {
-            // Mise à jour des noms de champs
-            const inputs = row.querySelectorAll('input, select');
-            inputs.forEach(input => {
-                const fieldName = input.name.split('][')[1].replace(']', '');
-                input.name = `dependants[${index}][${fieldName}]`;
-            });
-
-            // Mise à jour du numéro de ligne
-            row.querySelector('td:first-child').textContent = index + 1;
-        });
-
-        rowCount = rows.length;
-
-        // Gérer l'affichage quand il n'y a plus de dépendants
-        if (rowCount === 0) {
-            document.getElementById('dependants-table').hidden = true;
-            document.getElementById('no-dependants-message').hidden = false;
-        }
-    }
-
-    // Validation avant soumission
-    document.querySelector('form').addEventListener('submit', function(e) {
-        const dependants = document.querySelectorAll('[name^="dependants["]');
-        if (dependants.length === 0) {
-            e.preventDefault();
-            alert('Veuillez ajouter au moins un dépendant.');
-        }
-    });
-</script>

@@ -216,8 +216,8 @@
                         @empty
                             <tr>
                                 <td colspan="7" class="px-5 py-16 text-center">
-                                    <div class="max-w-sm mx-auto">
-                                        <div class="w-14 h-14 mx-auto mb-3 bg-gray-100 border border-gray-200 flex items-center justify-center">
+                                    <div class="max-w-sm">
+                                        <div class="w-14 h-14 mb-3 bg-gray-100 border border-gray-200 flex items-center justify-center">
                                             <i class="fas fa-inbox text-xl text-gray-300"></i>
                                         </div>
                                         <p class="font-semibold text-gray-700">Aucune demande</p>

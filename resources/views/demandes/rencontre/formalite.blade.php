@@ -19,7 +19,7 @@
                 <h1 class="text-xl font-semibold text-[#173052] tracking-tight">Traitement de la formalité</h1>
                 <span class="inline-flex items-center px-2.5 py-0.5 text-xs font-medium ring-1 ring-inset {{ $rdvStatut->badgeClass() }}">{{ $rdvStatut->label() }}</span>
             </div>
-            <p class="text-sm text-gray-600 mt-2 max-w-3xl">
+            <p class="text-sm text-gray-600 mt-2">
                 Enregistrez la formalité fiscale liée à ce rendez-vous. Vérifiez l’identité du pensionné et l’exercice concerné avant validation.
             </p>
         </header>

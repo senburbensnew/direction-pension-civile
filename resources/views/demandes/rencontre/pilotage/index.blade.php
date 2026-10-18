@@ -180,13 +180,7 @@
                             @if(($data['modalite'] ?? 'visio') === 'physique')
                                 <span class="inline-block text-[10px] sm:text-xs px-1.5 sm:px-2 py-0.5 rounded-full font-medium bg-orange-100 text-orange-700 whitespace-nowrap">Présentiel</span>
                             @else
-                                <span class="inline-block text-[10px] sm:text-xs px-1.5 sm:px-2 py-0.5 rounded-full font-medium whitespace-nowrap
-                                    {{ match($data['plateforme'] ?? '') {
-                                        'zoom'  => 'bg-blue-100 text-blue-700',
-                                        'teams' => 'bg-purple-100 text-purple-700',
-                                        'meet'  => 'bg-green-100 text-green-700',
-                                        default => 'bg-gray-100 text-gray-600',
-                                    } }}">
+                                <span class="inline-block text-[10px] sm:text-xs px-1.5 sm:px-2 py-0.5 rounded-full font-medium whitespace-nowrap {{ match($data['plateforme'] ?? '') { 'zoom' => 'bg-blue-100 text-blue-700', 'teams' => 'bg-purple-100 text-purple-700', 'meet' => 'bg-green-100 text-green-700', default => 'bg-gray-100 text-gray-600', } }}">
                                     {{ ucfirst($data['plateforme'] ?? 'Visio') }}
                                 </span>
                             @endif

@@ -3,8 +3,8 @@
 @section('title', $service->nom)
 
 @section('content')
-<div class="py-10 px-4 sm:px-6 lg:px-8">
-    <div class="max-w-5xl mx-auto">
+<div class="py-10">
+    <div class="site-gutter">
         <nav class="text-sm text-gray-500 mb-8">
             <a href="{{ route('home') }}" class="hover:text-navy">Accueil</a>
             <span class="mx-2">/</span>

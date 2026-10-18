@@ -21,12 +21,7 @@
 
     <x-fonts />
 
-    @vite(['resources/css/app.css', 'resources/js/app.js'])
-
-    <link
-        rel="stylesheet"
-        href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css"
-    >
+    @vite(['resources/css/app.css'])
 </head>
 
 <body class="site-public min-h-screen bg-gray-50 font-sans antialiased">
@@ -117,6 +112,16 @@
                         </div>
 
                     </div>
+
+                    <p class="mt-6 text-center">
+                        <a
+                            href="{{ route('login') }}"
+                            class="inline-flex items-center gap-2 text-xs font-medium text-[#0a4f86] transition-colors hover:text-[#083d66]"
+                        >
+                            <i class="fa-solid fa-user-shield" aria-hidden="true"></i>
+                            Connexion administration
+                        </a>
+                    </p>
 
                 </div>
 

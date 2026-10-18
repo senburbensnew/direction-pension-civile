@@ -31,6 +31,8 @@ class Kernel extends ConsoleKernel
 
         $schedule->command('beneficiaire-relations:expire')->daily();
 
+        $schedule->command('newsletter:dispatch-scheduled')->everyMinute();
+
         // Générer automatiquement les jours fériés haïtiens
         // de l'année courante et de l'année suivante.
         $schedule->call(function () {

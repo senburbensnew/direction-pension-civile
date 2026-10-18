@@ -10,8 +10,10 @@ use App\Models\Service;
 use App\Models\User;
 use App\Models\UserBeneficiaireLink;
 use App\Models\UserCategory;
+use App\Rules\Telephone;
 use App\Services\Account\InstitutionAccountService;
 use App\Services\Account\UserCategoryRoleSyncService;
+use App\Services\Admin\ActiveSessionService;
 use App\Services\Pension\BeneficiaireProvisioningService;
 use App\Services\Pension\UserBeneficiaireLinkService;
 use Database\Seeders\RolesAndPermissionsSeeder;
@@ -40,8 +42,10 @@ class UserController extends Controller
 
         $users = $query->paginate(15);
         $roles = Role::orderBy('name')->get();
+        $sessionCounts = app(ActiveSessionService::class)->authenticatedCountsByUserId();
+        $sessionsManageable = app(ActiveSessionService::class)->isManageable();
 
-        return view('admin.users.index', compact('users', 'roles'));
+        return view('admin.users.index', compact('users', 'roles', 'sessionCounts', 'sessionsManageable'));
     }
 
     public function create()
@@ -68,7 +72,7 @@ class UserController extends Controller
             'lastname' => 'nullable|string|max:255',
             'email' => 'required|string|email|max:255|unique:users',
             'username' => 'nullable|string|min:3|max:50|regex:/^[A-Za-z0-9._-]+$/|unique:users,username',
-            'phone' => 'nullable|string|max:30',
+            'phone' => ['nullable', 'string', 'max:20', new Telephone],
             'password' => 'required|string|min:8|confirmed',
             'role' => 'nullable|string|exists:roles,name',
             'service_id' => 'nullable|integer|exists:services,id',
@@ -149,7 +153,21 @@ class UserController extends Controller
             ->limit(200)
             ->get();
 
-        return view('admin.users.edit', compact('user', 'roles', 'services', 'genders', 'categories', 'institutions', 'beneficiaires'));
+        $activeSessionService = app(ActiveSessionService::class);
+        $userActiveSessions = $activeSessionService->list(userId: $user->id, authenticatedOnly: true);
+        $sessionsManageable = $activeSessionService->isManageable();
+
+        return view('admin.users.edit', compact(
+            'user',
+            'roles',
+            'services',
+            'genders',
+            'categories',
+            'institutions',
+            'beneficiaires',
+            'userActiveSessions',
+            'sessionsManageable',
+        ));
     }
 
     public function update(Request $request, User $user)
@@ -162,7 +180,7 @@ class UserController extends Controller
             'lastname' => 'nullable|string|max:255',
             'email' => 'required|string|email|max:255|unique:users,email,'.$user->id,
             'username' => 'nullable|string|min:3|max:50|regex:/^[A-Za-z0-9._-]+$/|unique:users,username,'.$user->id,
-            'phone' => 'nullable|string|max:30',
+            'phone' => ['nullable', 'string', 'max:20', new Telephone],
             'password' => 'nullable|string|min:8|confirmed',
             'role' => 'nullable|string|exists:roles,name',
             'service_id' => 'nullable|integer|exists:services,id',

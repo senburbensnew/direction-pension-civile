@@ -1,308 +1,96 @@
 <!DOCTYPE html>
 <html lang="{{ str_replace('_', '-', app()->getLocale()) }}"
-      @class(['site-public-root', 'guest-auth-page', 'guest-auth-locked' => ! $wide])
+      @class([
+          'site-public-root text-base bg-gray-50',
+          'h-dvh max-h-dvh overflow-hidden' => ! $wide,
+          'min-h-full h-auto overflow-x-hidden overflow-y-auto' => $wide,
+      ])
       data-theme="light">
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="csrf-token" content="{{ csrf_token() }}">
+    <x-telephone-validation-meta />
     <title>{{ config('app.name', 'Laravel') }}</title>
+    <x-site-head-meta />
     @stack('meta')
     @if ($showPhoto)
         @php
             $guestHeroMedia = \App\Support\PublicMedia::forUploadedOrStatic('cms/institution/guest-auth-pension-couple.jpg');
+            $guestHeroPreloadHref = $guestHeroMedia['webp'] ?? $guestHeroMedia['url'];
+            $guestHeroPreloadSrcset = $guestHeroMedia['webp_srcset'] ?? $guestHeroMedia['srcset'] ?? null;
+            $guestHeroSizes = '(min-width: 768px) 50vw, 1px';
         @endphp
-        <link rel="preload" as="image" href="{{ $guestHeroMedia['webp'] ?? $guestHeroMedia['url'] }}" type="{{ $guestHeroMedia['webp'] ? 'image/webp' : 'image/jpeg' }}">
+        <link
+            rel="preload"
+            as="image"
+            media="(min-width: 768px)"
+            href="{{ $guestHeroPreloadHref }}"
+            @if ($guestHeroPreloadSrcset)
+                imagesrcset="{{ $guestHeroPreloadSrcset }}"
+                imagesizes="{{ $guestHeroSizes }}"
+            @endif
+            type="{{ $guestHeroMedia['webp'] ? 'image/webp' : 'image/jpeg' }}"
+        >
     @endif
 
     <x-fonts />
     @vite(['resources/css/app.css', 'resources/js/app.js'])
-    <!-- <link href="{{ asset('build/assets/app-DH4eVY7K.css') }}" rel="stylesheet"> -->
-    <style>
-        html.guest-auth-page {
-            font-size: 100%;
-        }
-
-        /* Login / register : viewport fixe, scroll interne si besoin */
-        html.guest-auth-locked,
-        html.guest-auth-locked body.guest-auth {
-            margin: 0;
-            height: 100dvh;
-            min-height: 100dvh;
-            max-height: 100dvh;
-            overflow: hidden;
-            background: #f9fafb;
-        }
-
-        .guest-auth-shell {
-            display: flex;
-            align-items: stretch;
-            width: 100%;
-            min-height: 0;
-            background: #f9fafb;
-        }
-
-        html.guest-auth-locked .guest-auth-shell {
-            position: fixed;
-            inset: 0;
-            height: 100dvh;
-            max-height: 100dvh;
-            overflow: hidden;
-        }
-
-        html.guest-auth-page:not(.guest-auth-locked) .guest-auth-shell {
-            position: relative;
-            min-height: 100dvh;
-            overflow: visible;
-        }
-
-        .guest-auth-photo {
-            display: none;
-            flex: 0 0 50%;
-            width: 50%;
-            min-height: 0;
-            align-self: stretch;
-            position: relative;
-            overflow: hidden;
-            flex-direction: column;
-            justify-content: flex-end;
-            align-items: center;
-            padding: 2.5rem 2rem;
-            background: #1e3a8a;
-        }
-
-        html.guest-auth-page:not(.guest-auth-locked) .guest-auth-photo {
-            align-self: flex-start;
-        }
-
-        .guest-auth-photo picture,
-        .guest-auth-photo img {
-            position: absolute;
-            inset: 0;
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-            object-position: center center;
-        }
-
-        .guest-auth-photo picture img {
-            position: static;
-        }
-
-        .guest-auth-photo::before {
-            content: '';
-            position: absolute;
-            inset: 0;
-            background: linear-gradient(180deg, rgba(30, 64, 175, 0.58) 0%, rgba(37, 99, 235, 0.42) 46%, rgba(23, 48, 82, 0.72) 100%);
-            z-index: 1;
-        }
-
-        .guest-auth-photo p {
-            position: relative;
-            z-index: 2;
-            margin: 0;
-            max-width: 18rem;
-            color: #ffffff;
-            font-size: 0.8rem;
-            font-weight: 500;
-            line-height: 1.45;
-            text-align: center;
-            text-shadow: 0 1px 3px rgba(15, 23, 42, 0.45);
-        }
-
-        @media (min-width: 1024px) {
-            .guest-auth-photo p {
-                font-size: 0.875rem;
-            }
-        }
-
-        .guest-auth-form {
-            flex: 1 1 0;
-            min-width: 0;
-            min-height: 0;
-            max-height: 100%;
-            overflow-x: hidden;
-            overflow-y: auto;
-            overscroll-behavior: contain;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            background: #f9fafb;
-            position: relative;
-        }
-
-        html.guest-auth-page:not(.guest-auth-locked) .guest-auth-form {
-            max-height: none;
-            overflow-y: visible;
-            overscroll-behavior: auto;
-        }
-
-        .guest-auth-form::before,
-        .guest-auth-form::after {
-            content: "";
-            flex: 1 1 0;
-            min-height: 0;
-        }
-
-        html.guest-auth-page:not(.guest-auth-locked) .guest-auth-form::before,
-        html.guest-auth-page:not(.guest-auth-locked) .guest-auth-form::after {
-            display: none;
-        }
-
-        .guest-auth-form-inner {
-            box-sizing: border-box;
-            flex: 0 0 auto;
-            width: 100%;
-            max-width: 100%;
-            min-width: 0;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: flex-start;
-            padding: 1.5rem 1.5rem 0.75rem;
-        }
-
-        .guest-auth-form-inner.is-wide {
-            width: 100%;
-            max-width: min(80rem, calc(100vw - 2rem));
-        }
-
-        .guest-auth-copy {
-            margin: 0;
-            padding: 0.75rem 0 0.15rem;
-            flex-shrink: 0;
-        }
-
-        .guest-lang-pill {
-            display: inline-flex;
-            align-items: center;
-            gap: 0.375rem;
-            padding: 0.35rem 0.85rem;
-            border-radius: 9999px;
-            font-size: 0.75rem;
-            font-weight: 600;
-            line-height: 1.25;
-            border: 1px solid #e5e7eb;
-            color: #374151;
-            background: #fff;
-            transition: border-color 0.15s ease, background-color 0.15s ease;
-        }
-
-        a.guest-lang-pill:hover {
-            border-color: #173052;
-            background: #f9fafb;
-        }
-
-        .guest-lang-pill--active {
-            border-color: #173052;
-            background: #eef2f7;
-            color: #173052;
-            cursor: default;
-        }
-
-        .guest-lang-pill img {
-            width: 1rem;
-            height: 1rem;
-            border-radius: 2px;
-            object-fit: cover;
-            flex-shrink: 0;
-        }
-
-        .guest-auth-form--no-scroll {
-            overflow-y: hidden;
-            justify-content: center;
-        }
-
-        .guest-auth-form--no-scroll::before,
-        .guest-auth-form--no-scroll::after {
-            display: none;
-        }
-
-        .guest-auth-form--no-scroll .guest-auth-form-inner {
-            padding-top: 0.75rem;
-            padding-bottom: 0.25rem;
-        }
-
-        .guest-auth-form--no-scroll .guest-auth-copy {
-            padding-top: 0.5rem;
-        }
-
-        @media (min-width: 768px) {
-            .guest-auth-photo {
-                display: flex;
-            }
-        }
-
-        @media (min-width: 1024px) {
-            html.guest-auth-page:not(.guest-auth-locked) .guest-auth-photo {
-                position: sticky;
-                top: 0;
-                height: 100dvh;
-            }
-
-            /*
-             * Demande de compte (wide) : le shell défile (trackpad / deux doigts
-             * sur toute la page) ; la photo reste sticky à gauche.
-             */
-            html.guest-auth-page:not(.guest-auth-locked) .guest-auth-shell {
-                height: 100dvh;
-                max-height: 100dvh;
-                overflow-x: hidden;
-                overflow-y: auto;
-                overscroll-behavior: auto;
-                -webkit-overflow-scrolling: touch;
-            }
-
-            html.guest-auth-page:not(.guest-auth-locked) .guest-auth-form {
-                max-height: none;
-                overflow-y: visible;
-            }
-        }
-
-        /* Demande de compte : page fluide (mobile / tablette) */
-        html.guest-auth-page:not(.guest-auth-locked),
-        html.guest-auth-page:not(.guest-auth-locked) body.guest-auth {
-            margin: 0;
-            min-height: 100%;
-            height: auto;
-            overflow-x: hidden;
-            overflow-y: auto;
-            background: #f9fafb;
-        }
-
-        @media (max-width: 1023px) {
-            html.guest-auth-page:not(.guest-auth-locked) .guest-auth-shell {
-                min-height: 100dvh;
-                height: auto;
-                overflow: visible;
-            }
-
-            html.guest-auth-page:not(.guest-auth-locked) .guest-auth-form {
-                max-height: none;
-                overflow-y: visible;
-            }
-        }
-    </style>
 </head>
 
-<body class="site-public guest-auth font-sans antialiased">
+<body @class([
+    'site-public guest-auth m-0 font-sans antialiased bg-gray-50',
+    'h-dvh max-h-dvh overflow-hidden' => ! $wide,
+    'min-h-full h-auto overflow-x-hidden overflow-y-auto' => $wide,
+])>
 
 @php($guestCopyrightLine = __('guest.layout.copyright', ['year' => date('Y')]))
 
-<div class="guest-auth-shell">
+<div @class([
+    'flex w-full min-h-0 items-stretch bg-gray-50',
+    'fixed inset-0 h-dvh max-h-dvh overflow-hidden' => ! $wide,
+    'relative min-h-dvh overflow-visible max-lg:min-h-dvh max-lg:h-auto max-lg:overflow-visible' => $wide,
+    'lg:h-dvh lg:max-h-dvh lg:overflow-x-hidden lg:overflow-y-auto lg:overscroll-auto lg:[-webkit-overflow-scrolling:touch]' => $wide,
+])>
     @if ($showPhoto)
-        <aside class="guest-auth-photo" aria-hidden="true">
-            <x-optimized-image
-                src="cms/institution/guest-auth-pension-couple.jpg"
-                alt=""
-                priority
-            />
-            <p>{{ $guestCopyrightLine }}</p>
+        <aside
+            aria-hidden="true"
+            @class([
+                'relative hidden min-h-0 w-1/2 flex-[0_0_50%] flex-col items-center justify-end overflow-hidden self-stretch bg-blue-800 p-8 px-8 md:flex',
+                'self-start' => $wide,
+                'lg:sticky lg:top-0 lg:h-dvh' => $wide,
+            ])>
+            <div class="absolute inset-0 z-0 [&_picture]:absolute [&_picture]:inset-0 [&_picture]:h-full [&_picture]:w-full [&_img]:h-full [&_img]:w-full [&_img]:object-cover [&_img]:object-center">
+                <x-optimized-image
+                    src="cms/institution/guest-auth-pension-couple.jpg"
+                    alt=""
+                    sizes="{{ $guestHeroSizes ?? '(min-width: 768px) 50vw, 1px' }}"
+                    :width="$guestHeroMedia['width'] ?? null"
+                    :height="$guestHeroMedia['height'] ?? null"
+                    loading="lazy"
+                />
+            </div>
+            <div class="pointer-events-none absolute inset-0 z-[1] bg-gradient-to-b from-blue-800/60 via-blue-600/45 to-slate-900/70"></div>
+            <p class="relative z-[2] m-0 max-w-[18rem] text-center text-sm font-medium leading-snug text-white drop-shadow-md lg:text-[0.875rem]">
+                {{ $guestCopyrightLine }}
+            </p>
         </aside>
     @endif
 
-    <div @class(['guest-auth-form', 'guest-auth-form--no-scroll' => $noScroll])>
-        <div class="guest-auth-form-inner {{ $wide ? 'is-wide' : '' }}">
+    <div @class([
+        'relative flex min-h-0 min-w-0 flex-1 flex-col items-center overflow-x-hidden bg-gray-50',
+        'max-h-full overflow-y-auto overscroll-contain' => ! $wide && ! $noScroll,
+        'max-h-none overflow-y-visible overscroll-auto' => $wide,
+        'justify-center overflow-y-hidden' => $noScroll,
+        'before:min-h-0 before:flex-1 before:basis-0 before:content-[""] after:min-h-0 after:flex-1 after:basis-0 after:content-[""]' => ! $wide && ! $noScroll,
+        'before:hidden after:hidden' => $wide || $noScroll,
+    ])>
+        <div @class([
+            'box-border flex w-full min-w-0 max-w-full flex-none flex-col items-center justify-start px-6',
+            'max-w-[min(80rem,calc(100vw-2rem))]' => $wide,
+            'pb-3 pt-6' => ! $noScroll,
+            'pb-1 pt-3' => $noScroll,
+        ])>
             <div @class([
                 'relative w-full min-w-0 overflow-x-hidden bg-white rounded-2xl shadow-sm border border-gray-100 px-8',
                 'max-w-[44rem]' => $wide,
@@ -339,25 +127,25 @@
 
                     <div class="flex flex-wrap items-center justify-end gap-2" aria-label="{{ __('guest.layout.language') }}">
                         @if ($locale === 'fr')
-                            <span class="guest-lang-pill guest-lang-pill--active">
-                                <img src="{{ asset('images/france-flag-icon.svg') }}" alt="" aria-hidden="true">
+                            <span class="inline-flex cursor-default items-center gap-1.5 rounded-full border border-[#173052] bg-[#eef2f7] px-3.5 py-1.5 text-xs font-semibold leading-tight text-[#173052]">
+                                <img src="{{ asset('images/france-flag-icon.svg') }}" alt="" aria-hidden="true" class="h-4 w-4 shrink-0 rounded-sm object-cover">
                                 {{ __('guest.layout.french') }}
                             </span>
                         @else
-                            <a href="{{ route('locale', 'fr') }}" class="guest-lang-pill" title="{{ __('guest.layout.french') }}">
-                                <img src="{{ asset('images/france-flag-icon.svg') }}" alt="" aria-hidden="true">
+                            <a href="{{ route('locale', 'fr') }}" title="{{ __('guest.layout.french') }}" class="inline-flex items-center gap-1.5 rounded-full border border-gray-200 bg-white px-3.5 py-1.5 text-xs font-semibold leading-tight text-gray-700 transition-colors hover:border-[#173052] hover:bg-gray-50">
+                                <img src="{{ asset('images/france-flag-icon.svg') }}" alt="" aria-hidden="true" class="h-4 w-4 shrink-0 rounded-sm object-cover">
                                 {{ __('guest.layout.french') }}
                             </a>
                         @endif
 
                         @if ($locale === 'ht')
-                            <span class="guest-lang-pill guest-lang-pill--active">
-                                <img src="{{ asset('images/ht-flag.PNG') }}" alt="" aria-hidden="true">
+                            <span class="inline-flex cursor-default items-center gap-1.5 rounded-full border border-[#173052] bg-[#eef2f7] px-3.5 py-1.5 text-xs font-semibold leading-tight text-[#173052]">
+                                <img src="{{ asset('images/ht-flag.PNG') }}" alt="" aria-hidden="true" class="h-4 w-4 shrink-0 rounded-sm object-cover">
                                 {{ __('guest.layout.creole') }}
                             </span>
                         @else
-                            <a href="{{ route('locale', 'ht') }}" class="guest-lang-pill" title="{{ __('guest.layout.creole') }}">
-                                <img src="{{ asset('images/ht-flag.PNG') }}" alt="" aria-hidden="true">
+                            <a href="{{ route('locale', 'ht') }}" title="{{ __('guest.layout.creole') }}" class="inline-flex items-center gap-1.5 rounded-full border border-gray-200 bg-white px-3.5 py-1.5 text-xs font-semibold leading-tight text-gray-700 transition-colors hover:border-[#173052] hover:bg-gray-50">
+                                <img src="{{ asset('images/ht-flag.PNG') }}" alt="" aria-hidden="true" class="h-4 w-4 shrink-0 rounded-sm object-cover">
                                 {{ __('guest.layout.creole') }}
                             </a>
                         @endif
@@ -366,14 +154,20 @@
             </div>
 
             @if ($showCopyright)
-                <p class="guest-auth-copy text-xs sm:text-sm text-gray-500 text-center">
+                <p @class([
+                    'm-0 shrink-0 text-center text-xs text-gray-500 sm:text-sm',
+                    'pt-3 pb-0.5' => ! $noScroll,
+                    'pt-2' => $noScroll,
+                ])>
                     {{ $guestCopyrightLine }}
                 </p>
             @endif
         </div>
     </div>
 </div>
+
+<x-flash-messages position="top-6" />
+
 @stack('scripts')
-<!-- <script src="{{ asset('build/assets/app-CKnLtXCO.js') }}"></script> -->
 </body>
 </html>

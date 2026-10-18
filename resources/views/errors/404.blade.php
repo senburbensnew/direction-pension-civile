@@ -14,7 +14,7 @@
     <div class="flex items-center justify-center h-screen">
         <div class="text-center px-4">
             <!-- SVG Icon -->
-            <div class="mx-auto w-24 h-24 md:w-32 md:h-32 lg:w-48 lg:h-48 text-[#FFD700] animate-bounce">
+            <div class="w-24 h-24 md:w-32 md:h-32 lg:w-48 lg:h-48 text-[#FFD700] animate-bounce">
                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"
                     class="w-full h-full">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"

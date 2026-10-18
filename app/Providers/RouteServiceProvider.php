@@ -28,6 +28,12 @@ class RouteServiceProvider extends ServiceProvider
             return Limit::perMinute(60)->by($request->user()?->id ?: $request->ip());
         });
 
+        RateLimiter::for('newsletter-subscribe', function (Request $request) {
+            $max = (int) config('newsletter.subscribe_rate_limit', 5);
+
+            return Limit::perMinute($max)->by($request->ip());
+        });
+
         $this->routes(function () {
             Route::middleware('api')
                 ->prefix('api')

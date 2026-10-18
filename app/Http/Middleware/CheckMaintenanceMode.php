@@ -58,14 +58,23 @@ class CheckMaintenanceMode
      */
     private function shouldBypassMaintenance(Request $request): bool
     {
+        if ($request->user()?->hasRole('admin')) {
+            return true;
+        }
+
         return
-            // Administration
+            // Administration (accès direct sans session, ex. lien favori)
             $request->is('admin')
             || $request->is('admin/*')
 
-            // Authentification
+            // Authentification (connexion admin pendant la maintenance)
             || $request->is('login')
             || $request->is('logout')
+            || $request->is('register')
+            || $request->is('forgot-password')
+            || $request->is('reset-password')
+            || $request->is('reset-password/*')
+            || $request->is('reset-password-code')
             || $request->is('password/*')
 
             // Assets Vite

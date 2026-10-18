@@ -367,6 +367,55 @@ class User extends Authenticatable
         return str_starts_with($phone, '+') ? $phone : null;
     }
 
+    public static function maskEmailForDisplay(string $email): string
+    {
+        $email = trim($email);
+
+        if ($email === '' || ! str_contains($email, '@')) {
+            return '***';
+        }
+
+        [$local, $domain] = explode('@', $email, 2);
+        $localLength = mb_strlen($local);
+
+        if ($localLength <= 1) {
+            $maskedLocal = '*';
+        } else {
+            $visible = mb_substr($local, 0, 1);
+            $hiddenCount = min(3, max(1, $localLength - 1));
+            $maskedLocal = $visible.str_repeat('*', $hiddenCount);
+        }
+
+        return $maskedLocal.'@'.$domain;
+    }
+
+    public static function maskPhoneForDisplay(string $phone): string
+    {
+        $phone = preg_replace('/\s+/', '', trim($phone)) ?? '';
+
+        if ($phone === '') {
+            return '***';
+        }
+
+        $digits = self::normalizeDigits($phone);
+
+        if (strlen($digits) <= 4) {
+            return str_repeat('*', strlen($phone));
+        }
+
+        $suffix = substr($digits, -4);
+        $prefix = str_starts_with($phone, '+') ? '+' : '';
+
+        if (str_starts_with($phone, '+') && strlen($digits) > 4) {
+            $countryAndRest = substr($digits, 0, -4);
+            $countryVisible = substr($countryAndRest, 0, min(3, strlen($countryAndRest)));
+
+            return $prefix.$countryVisible.'***'.$suffix;
+        }
+
+        return str_repeat('*', max(0, strlen($phone) - 4)).$suffix;
+    }
+
     public static function digitsComparisonSql(string $column): string
     {
         return self::digitsSql($column);

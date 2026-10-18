@@ -17,7 +17,7 @@
     ])>{{ $title }}</h2>
     @if($intro)
         <p @class([
-            'max-w-2xl mx-auto mt-3 leading-relaxed text-base',
+            'mt-3 w-full leading-relaxed text-base',
             'text-gray-600' => $tone !== 'light',
             'text-blue-100' => $tone === 'light',
         ])>{{ $intro }}</p>

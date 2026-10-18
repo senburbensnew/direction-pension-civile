@@ -1,4 +1,4 @@
-<div x-data="{ open: false }" x-show="open" @keydown.escape="open = false" class="fixed inset-0 z-50 overflow-y-auto" style="display: none;">
+<div data-dpc-jitsi-modal x-data="{ open: false }" x-show="open" @keydown.escape="open = false" class="fixed inset-0 z-50 overflow-y-auto" style="display: none;">
     <!-- Overlay -->
     <div class="fixed inset-0 bg-black opacity-50"></div>
 
@@ -21,21 +21,3 @@
     </div>
 </div>
 
-<script>
-    function openJitsiModal(roomName) {
-        const modal = document.querySelector('[x-data]').__x.$data;
-        modal.open = true;
-
-        // Initialiser Jitsi une fois le modal ouvert
-        if (typeof JitsiMeetExternalAPI === 'function') {
-            const domain = "meet.jit.si";
-            const options = {
-                roomName: roomName,
-                parentNode: document.querySelector('#jitsi-container')
-            };
-            const api = new JitsiMeetExternalAPI(domain, options);
-        } else {
-            console.error('Jitsi Meet External API not loaded.');
-        }
-    }
-</script>

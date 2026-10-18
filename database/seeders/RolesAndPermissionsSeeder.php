@@ -38,6 +38,10 @@ class RolesAndPermissionsSeeder extends Seeder
             'beneficiaire_relations.view',
             'beneficiaire_relations.approuver',
             'beneficiaire_relations.revoquer',
+            'newsletter.view',
+            'newsletter.manage_subscribers',
+            'newsletter.manage_campaigns',
+            'newsletter.send',
         ];
     }
 

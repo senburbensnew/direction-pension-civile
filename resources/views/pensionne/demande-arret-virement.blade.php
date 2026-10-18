@@ -1,9 +1,9 @@
 @extends('layouts.main')
 
 @section('content')
-    <div class="max-w-6xl mx-auto p-6 m-2 ">
+    <div class="site-gutter p-6 m-2">
         <!-- Form Section -->
-        <div id="form-section" class="max-w-7xl mx-auto bg-white p-6 shadow-md rounded-lg relative m-2">
+        <div id="form-section" class="w-full bg-white p-6 shadow-md rounded-lg relative m-2">
 
             @if ($demande)
                 <div class="mb-4 p-3 bg-yellow-50 border border-yellow-200 text-yellow-800 rounded text-sm">
@@ -22,12 +22,6 @@
                     <h2 class="text-xl font-bold uppercase mt-2">Formulaire de Doléances</h2>
                     <h3 class="text-lg font-semibold uppercase mt-2">Service de Comptabilité</h3>
                 </div>
-
-                @if (session('success'))
-                    <div class="mb-4 p-4 bg-green-50 border border-green-200 text-green-700 rounded">
-                        {{ session('success') }}
-                    </div>
-                @endif
 
                 {{-- Titre personnalisé --}}
                 <div class="mb-4">

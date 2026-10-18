@@ -37,12 +37,6 @@
         </div>
     </div>
 
-    @if(session('success'))
-        <div class="flex items-center gap-2 bg-green-50 border border-green-300 text-green-800 rounded-lg px-4 py-3 text-sm">
-            <i class="fas fa-check-circle text-green-500"></i> {{ session('success') }}
-        </div>
-    @endif
-
     <div class="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
         <table class="w-full text-sm">
             <thead class="bg-gray-50 border-b border-gray-200">
@@ -74,8 +68,7 @@
                             {{ $actualite->created_at->format('d/m/Y') }}
                         </td>
                         <td class="px-4 py-3 text-center">
-                            <span class="text-xs font-medium px-2 py-0.5 rounded-full
-                                {{ $actualite->published ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-600' }}">
+                            <span class="text-xs font-medium px-2 py-0.5 rounded-full {{ $actualite->published ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-600' }}">
                                 {{ $actualite->published ? 'Publié' : 'Brouillon' }}
                             </span>
                         </td>
@@ -87,10 +80,7 @@
                                     @csrf
                                     <button type="submit"
                                         title="{{ $actualite->published ? 'Dépublier' : 'Publier' }}"
-                                        class="px-2 py-1 rounded text-xs font-medium transition-colors
-                                            {{ $actualite->published
-                                                ? 'bg-yellow-100 text-yellow-700 hover:bg-yellow-200'
-                                                : 'bg-green-100 text-green-700 hover:bg-green-200' }}">
+                                        class="px-2 py-1 rounded text-xs font-medium transition-colors {{ $actualite->published ? 'bg-yellow-100 text-yellow-700 hover:bg-yellow-200' : 'bg-green-100 text-green-700 hover:bg-green-200' }}">
                                         <i class="fas {{ $actualite->published ? 'fa-eye-slash' : 'fa-eye' }}"></i>
                                         {{ $actualite->published ? 'Dépublier' : 'Publier' }}
                                     </button>

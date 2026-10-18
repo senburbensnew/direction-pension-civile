@@ -8,8 +8,8 @@
         . ($errors->has($field) ? 'border-red-400 bg-red-50' : 'border-gray-200 rounded-lg');
 @endphp
 
-<div class="py-10 px-4 sm:px-6 lg:px-8">
-    <div class="max-w-3xl mx-auto space-y-6">
+<div class="py-10">
+    <div class="site-gutter space-y-6">
         <div class="text-center">
             <span class="text-xs font-bold text-orange-500 uppercase tracking-widest">Pensionné</span>
             <h1 class="text-3xl font-bold text-navy mt-2 mb-2">Mise à jour des informations</h1>
@@ -18,9 +18,6 @@
             </p>
         </div>
 
-        @if(session('success'))
-            <div class="p-4 bg-green-50 border border-green-200 text-green-800 rounded-xl text-sm">{{ session('success') }}</div>
-        @endif
         @if($errors->any())
             <div class="p-4 bg-red-50 border border-red-200 text-red-800 rounded-xl text-sm">
                 <ul class="list-disc list-inside space-y-1">

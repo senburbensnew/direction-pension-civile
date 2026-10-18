@@ -7,18 +7,12 @@
 @endsection
 
 @section('content')
-<div class="mx-auto w-full max-w-5xl space-y-5">
+<div class="site-gutter space-y-5">
 
     <div>
         <h1 class="text-xl font-bold text-gray-800">Paramètres des rendez-vous</h1>
         <p class="text-sm text-gray-500 mt-0.5">Règles communes aux calendriers de réservation (portail) et aux disponibilités agents.</p>
     </div>
-
-    @if(session('success'))
-        <div class="flex items-center gap-2 bg-green-50 border border-green-300 text-green-800 rounded-lg px-4 py-3 text-sm">
-            <i class="fas fa-check-circle text-green-500 flex-shrink-0"></i> {{ session('success') }}
-        </div>
-    @endif
 
     <form
         method="POST"

@@ -9,12 +9,6 @@
 @section('content')
 <div class="space-y-4">
 
-    @if(session('success'))
-        <div class="flex items-center gap-2 bg-green-50 border border-green-300 text-green-800 rounded-lg px-4 py-3 text-sm">
-            <i class="fas fa-check-circle text-green-500"></i> {{ session('success') }}
-        </div>
-    @endif
-
     {{-- ── Header ────────────────────────────────────────────────────── --}}
     <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <div>

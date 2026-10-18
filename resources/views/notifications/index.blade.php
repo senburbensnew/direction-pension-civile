@@ -93,9 +93,7 @@
                          x-init="$watch('read', v => { if (v) window.dispatchEvent(new Event('notification-read')) })"
                          @notification-deleted.window="if ($event.detail.id === '{{ $notification->id }}') gone = true"
                          class="group relative flex items-start gap-4 px-5 sm:px-6 py-5 transition-colors border-l-4"
-                         :class="read
-                            ? 'bg-white hover:bg-gray-50/80 border-l-transparent'
-                            : 'bg-sky-50/60 hover:bg-sky-50 border-l-[#173052]'">
+                         :class="read ? 'bg-white hover:bg-gray-50/80 border-l-transparent' : 'bg-sky-50/60 hover:bg-sky-50 border-l-[#173052]'">
 
                         <div class="flex-shrink-0 w-11 h-11 rounded-xl flex items-center justify-center {{ $iconColor }}">
                             @switch($icon)
@@ -182,11 +180,11 @@
             <div x-show="pageVisible === 0"
                  x-cloak
                  class="py-16 sm:py-20 px-6 text-center">
-                <div class="w-16 h-16 mx-auto mb-4 bg-gray-100 border border-gray-200 flex items-center justify-center">
+                <div class="w-16 h-16 mb-4 bg-gray-100 border border-gray-200 flex items-center justify-center">
                     <i class="fas fa-bell-slash text-2xl text-gray-300"></i>
                 </div>
                 <p class="text-gray-700 font-semibold text-lg">Aucune notification</p>
-                <p class="text-gray-500 text-sm mt-2 max-w-sm mx-auto">
+                <p class="text-gray-500 text-sm mt-2 max-w-sm">
                     Lorsqu'un événement concerne vos dossiers, il apparaîtra ici.
                 </p>
             </div>

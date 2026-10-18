@@ -48,7 +48,7 @@
         <header class="dossier-header px-5 py-5 sm:px-6 border-l-4 border-l-[#173052] bg-gradient-to-r from-slate-50 to-white">
             <p class="dossier-kicker">Espace agent</p>
             <h1 class="mt-1 text-xl font-semibold text-[#173052] tracking-tight">Corbeille de traitement</h1>
-            <p class="mt-2 text-sm text-gray-600 max-w-2xl">
+            <p class="mt-2 text-sm text-gray-600">
                 Rendez-vous en cours, dossiers clôturés et création de compte pour votre service.
             </p>
             @if(auth()->user()?->service)

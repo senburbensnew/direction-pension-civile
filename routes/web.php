@@ -1,6 +1,9 @@
 <?php
 
 use App\Http\Controllers\ActualiteController;
+use App\Http\Controllers\Admin\ActiveSessionController;
+use App\Http\Controllers\Admin\NewsletterCampaignController;
+use App\Http\Controllers\Admin\NewsletterSubscriberController;
 use App\Http\Controllers\Admin\RdvSettingsController;
 use App\Http\Controllers\AdminController;
 use App\Http\Controllers\AdminDashboardController;
@@ -16,12 +19,13 @@ use App\Http\Controllers\DirectionDepartementaleController;
 use App\Http\Controllers\DocumentController;
 use App\Http\Controllers\FaqController;
 use App\Http\Controllers\FluxTransitionController;
-use App\Http\Controllers\Formalites\BeneficiaireRepresentationPieceController;
 use App\Http\Controllers\GlossaireController;
 use App\Http\Controllers\InstitutionImageController;
 use App\Http\Controllers\LocaleController;
 use App\Http\Controllers\MediathequeController;
 use App\Http\Controllers\NewsletterController;
+use App\Http\Controllers\NewsletterTrackingController;
+use App\Http\Controllers\NewsletterWebhookController;
 use App\Http\Controllers\OcrTestController;
 use App\Http\Controllers\OfficialController;
 use App\Http\Controllers\PartenaireController;
@@ -441,12 +445,32 @@ Route::middleware(['auth', 'account.permanent'])->group(function () {
 Route::post(
     '/newsletter/souscription',
     [NewsletterController::class, 'souscription']
-)->name('newsletter.souscription');
+)->middleware('throttle:newsletter-subscribe')
+    ->name('newsletter.souscription');
+
+Route::get(
+    '/newsletter/confirm/{token}',
+    [NewsletterController::class, 'confirm']
+)->name('newsletter.confirm');
 
 Route::get(
     '/newsletter/unsubscribe/{token}',
     [NewsletterController::class, 'unsubscribe']
 )->name('newsletter.unsubscribe');
+
+Route::get('/newsletter/resubscribe', [NewsletterController::class, 'showResubscribe'])
+    ->name('newsletter.resubscribe');
+Route::post('/newsletter/resubscribe', [NewsletterController::class, 'resubscribe'])
+    ->middleware('throttle:newsletter-subscribe')
+    ->name('newsletter.resubscribe.store');
+
+Route::get('/newsletter/o/{token}.gif', [NewsletterTrackingController::class, 'open'])
+    ->name('newsletter.track.open');
+Route::get('/newsletter/r/{token}', [NewsletterTrackingController::class, 'click'])
+    ->name('newsletter.track.click');
+
+Route::post('/webhooks/newsletter', [NewsletterWebhookController::class, 'handle'])
+    ->name('newsletter.webhook');
 
 /*
 |--------------------------------------------------------------------------
@@ -622,6 +646,21 @@ Route::prefix('admin')
                 'toggleActive',
             ]
         )->name('users.toggle-active');
+
+        Route::get(
+            'sessions',
+            [ActiveSessionController::class, 'index']
+        )->name('sessions.index');
+
+        Route::delete(
+            'sessions/{session}',
+            [ActiveSessionController::class, 'destroy']
+        )->name('sessions.destroy');
+
+        Route::delete(
+            'sessions/user/{user}',
+            [ActiveSessionController::class, 'destroyUser']
+        )->name('sessions.destroy-user');
 
         Route::post(
             'users/{user}/beneficiaire-links',
@@ -962,6 +1001,33 @@ Route::prefix('admin')
             [NewsletterController::class, 'adminIndex']
         )->name('newsletter.admin.index');
 
+        Route::get('newsletter/import', [NewsletterSubscriberController::class, 'importForm'])
+            ->name('newsletter.import');
+        Route::post('newsletter/import', [NewsletterSubscriberController::class, 'import'])
+            ->name('newsletter.import.store');
+
+        Route::get(
+            'newsletter/export',
+            [NewsletterController::class, 'export']
+        )->name('newsletter.export');
+
+        Route::get('newsletter/campaigns/create', [NewsletterCampaignController::class, 'create'])
+            ->name('newsletter.campaigns.create');
+        Route::post('newsletter/campaigns', [NewsletterCampaignController::class, 'store'])
+            ->name('newsletter.campaigns.store');
+        Route::get('newsletter/campaigns/{campaign}', [NewsletterCampaignController::class, 'show'])
+            ->name('newsletter.campaigns.show');
+        Route::get('newsletter/campaigns/{campaign}/edit', [NewsletterCampaignController::class, 'edit'])
+            ->name('newsletter.campaigns.edit');
+        Route::put('newsletter/campaigns/{campaign}', [NewsletterCampaignController::class, 'update'])
+            ->name('newsletter.campaigns.update');
+        Route::post('newsletter/campaigns/{campaign}/duplicate', [NewsletterCampaignController::class, 'duplicate'])
+            ->name('newsletter.campaigns.duplicate');
+        Route::post('newsletter/campaigns/{campaign}/test', [NewsletterCampaignController::class, 'test'])
+            ->name('newsletter.campaigns.test');
+        Route::post('newsletter/campaigns/{campaign}/cancel', [NewsletterCampaignController::class, 'cancel'])
+            ->name('newsletter.campaigns.cancel');
+
         Route::get(
             'newsletter/compose',
             [NewsletterController::class, 'compose']
@@ -972,20 +1038,15 @@ Route::prefix('admin')
             [NewsletterController::class, 'send']
         )->name('newsletter.send');
 
-        Route::get(
-            'newsletter/export',
-            [NewsletterController::class, 'export']
-        )->name('newsletter.export');
+        Route::delete(
+            'newsletter/campaigns/{campaign}',
+            [NewsletterCampaignController::class, 'destroy']
+        )->name('newsletter.campaigns.destroy');
 
         Route::delete(
             'newsletter/{newsletter}',
             [NewsletterController::class, 'destroy']
         )->name('newsletter.destroy');
-
-        Route::delete(
-            'newsletter/campaigns/{campaign}',
-            [NewsletterController::class, 'destroyCampaign']
-        )->name('newsletter.campaigns.destroy');
 
         /*
         |--------------------------------------------------------------------------

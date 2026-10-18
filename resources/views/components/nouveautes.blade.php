@@ -34,7 +34,7 @@
         @foreach ($nouveautes as $nouveaute)
             <div class="bg-white rounded-2xl shadow-lg hover:shadow-xl transition duration-300 flex flex-col w-72">
 
-                <div class="flex items-center justify-center h-16 w-16 rounded-full mx-auto mt-4 {{ $nouveaute['color'] }}">
+                <div class="flex items-center justify-center h-16 w-16 rounded-full mt-4 {{ $nouveaute['color'] }}">
                     <i class="{{ $nouveaute['icon'] }} text-2xl"></i>
                 </div>
 

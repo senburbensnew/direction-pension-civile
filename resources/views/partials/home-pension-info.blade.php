@@ -82,7 +82,7 @@
 <section class="relative overflow-hidden">
     <div class="absolute inset-y-0 left-0 w-1.5 bg-orange-500"></div>
     <div class="bg-navy py-6 md:py-7">
-    <div class="container mx-auto px-4">
+    <div class="site-gutter">
         <div class="flex flex-col md:flex-row md:items-center gap-4 md:gap-8 pl-2">
             <div class="flex items-center gap-3 shrink-0">
                 <span class="w-12 h-12 rounded-full bg-orange-500 text-white flex items-center justify-center shadow-lg shadow-orange-500/30">
@@ -106,7 +106,7 @@
 </section>
 
 <section class="py-16 md:py-20 bg-[#eef2f7] bg-motif">
-    <div class="container mx-auto px-4">
+    <div class="site-gutter">
         <x-home-heading :kicker="__('home.comm_kicker')" :title="__('home.comm_title')" :intro="__('home.comm_audience')" />
 
         <div class="grid md:grid-cols-3 gap-4 items-stretch mb-8">
@@ -145,7 +145,7 @@
 </section>
 
 <section id="guide-pensionne" class="py-16 md:py-20 bg-white bg-motif scroll-mt-24">
-    <div class="container mx-auto px-4">
+    <div class="site-gutter">
         <x-home-heading :kicker="__('home.hub_kicker')" :title="__('home.hub_title')" :intro="__('home.hub_intro')" />
 
         <div class="home-tabs bg-[#eef2f7] rounded-2xl p-2 mb-8 overflow-x-auto" role="tablist" aria-label="{{ __('home.hub_title') }}">
@@ -164,7 +164,7 @@
             </div>
         </div>
 
-        <div x-ref="panel" class="guide-pensionne-content max-w-5xl mx-auto scroll-mt-28">
+        <div x-ref="panel" class="guide-pensionne-content scroll-mt-28 w-full">
             <div x-show="tab === 'accueil'" x-cloak role="tabpanel">
                 <article class="home-card p-6 md:p-8 space-y-6">
                     <div class="flex items-start gap-4">

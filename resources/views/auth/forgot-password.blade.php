@@ -1,7 +1,10 @@
 <x-guest-layout>
 
-    {{-- Session status --}}
-    <x-auth-session-status class="mb-5" :status="session('status')" />
+    @if (session('password_reset_notice'))
+        <x-password-reset-notice class="mb-5" :notice="session('password_reset_notice')" />
+    @else
+        <x-auth-session-status class="mb-5" :status="session('status')" />
+    @endif
 
     {{-- Heading --}}
     <div class="mb-6 text-center">
@@ -9,7 +12,7 @@
             {{ __('guest.password.forgot_title') }}
         </h2>
 
-        <p class="text-base text-gray-700 mt-1">
+        <p class="mt-2 max-w-md mx-auto text-xs sm:text-sm text-gray-500 leading-relaxed">
             {{ __('messages.forgot_password_instructions') }}
         </p>
     </div>
@@ -42,7 +45,6 @@
                 >
             </div>
 
-            <p class="mt-1.5 text-sm text-gray-500">{{ __('messages.login_phone_format_hint') }}</p>
             <x-input-error :messages="$errors->get('login')" class="mt-1.5" />
         </div>
 
@@ -54,6 +56,16 @@
             <i class="fas fa-paper-plane mr-2"></i>
             {{ __('messages.send_reset_link') }}
         </button>
+
+        <p class="text-center text-sm text-gray-500 pt-1">
+            <a
+                href="{{ route('password.reset.code') }}"
+                class="text-[#173052] hover:text-orange-500 font-medium transition-colors"
+            >
+                <i class="fas fa-sms text-xs mr-1"></i>
+                {{ __('guest.password.reset_code_link') }}
+            </a>
+        </p>
 
         {{-- Retour à la connexion --}}
         <p class="text-center text-sm text-gray-500 pt-1">

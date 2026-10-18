@@ -1,0 +1,96 @@
+.signature-container {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    width: 100%;
+}
+
+.signature-container canvas {
+    width: 100%;
+    height: 200px;
+    border: 2px dotted #d3d3d3;
+    background-color: transparent;
+    background-image: linear-gradient(45deg, #f0f0f0 25%, transparent 25%),
+        linear-gradient(-45deg, #f0f0f0 25%, transparent 25%),
+        linear-gradient(45deg, transparent 75%, #f0f0f0 75%),
+        linear-gradient(-45deg, transparent 75%, #f0f0f0 75%);
+    background-size: 20px 20px;
+    background-position: 0 0, 0 10px, 10px -10px, -10px 0px;
+    cursor: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"><path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/></svg>')
+            0 16,
+        auto;
+}
+
+.signature-container .button-container {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 15px;
+}
+
+.signature-container .left-buttons {
+    display: flex;
+    gap: 10px;
+}
+
+.signature-container .color-options {
+    display: flex;
+    gap: 10px;
+}
+
+.signature-container .color-option {
+    cursor: pointer;
+    padding: 3px;
+    border: 2px solid transparent;
+    border-radius: 50%;
+    transition: border-color 0.2s;
+}
+
+.signature-container .color-option.active {
+    border-color: #666;
+}
+
+.signature-container .color-circle {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    border: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+.signature-container .color-option[data-color='#070707'] .color-circle {
+    background-color: #070707;
+}
+
+.signature-container .color-option[data-color='#1a0080'] .color-circle {
+    background-color: #1a0080;
+}
+
+.signature-container .clear-btn,
+.signature-container .confirm-btn {
+    padding: 8px 12px;
+    border-radius: 5px;
+    transition: all 0.3s;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.signature-container .clear-btn {
+    color: #e74c3c;
+}
+
+.signature-container .confirm-btn {
+    color: #2ecc71;
+}
+
+.signature-container .clear-btn:hover:not(:disabled),
+.signature-container .confirm-btn:hover:not(:disabled) {
+    transform: translateY(-1px);
+}
+
+.signature-container .clear-btn:disabled,
+.signature-container .confirm-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}

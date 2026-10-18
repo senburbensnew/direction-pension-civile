@@ -3,9 +3,10 @@
 namespace Database\Seeders;
 
 use App\Enums\AccountStatusEnum;
-use Illuminate\Database\Seeder;
 use App\Models\Gender;
 use App\Models\User;
+use App\Services\Account\UserCategoryRoleSyncService;
+use Illuminate\Database\Seeder;
 
 class DefaultUserSeeder extends Seeder
 {
@@ -14,15 +15,17 @@ class DefaultUserSeeder extends Seeder
         $gender = Gender::firstOrCreate(['name' => 'Masculin']);
 
         $adminUser = User::updateOrCreate(
-            ['email' => 'admin@example.com'],
+            ['email' => 'pierrerubens.milorme@mef.gouv.ht'],
             [
                 'name' => 'Pierre Rubens MILORME',
-                'username' => 'admin',
+                'username' => 'pierrerubens.milorme',
+                'phone' => '+50931686393',
                 'lastname' => 'MILORME',
                 'firstname' => 'Pierre Rubens',
-                'email' => 'admin@example.com',
+                'email' => 'pierrerubens.milorme@mef.gouv.ht',
                 'password' => bcrypt(config('app.default_admin_password', 'password123')),
-                'nif' => '123-456-789-0',
+                'nif' => '004-521-636-4',
+                'ninu' => '1148519577',
                 'gender_id' => $gender->id,
                 'account_status' => AccountStatusEnum::ACTIF,
             ]
@@ -30,7 +33,7 @@ class DefaultUserSeeder extends Seeder
 
         $adminUser->assignRole('admin');
 
-        app(\App\Services\Account\UserCategoryRoleSyncService::class)
+        app(UserCategoryRoleSyncService::class)
             ->assignCategory($adminUser, 'externe', primary: true);
     }
 }

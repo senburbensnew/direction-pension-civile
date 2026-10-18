@@ -14,16 +14,10 @@
         <header class="dossier-header px-5 py-5 sm:px-6 border-l-4 border-l-indigo-600">
             <p class="dossier-kicker">Formalités</p>
             <h1 class="mt-1 text-xl font-semibold text-[#173052] tracking-tight">Mandats et relations</h1>
-            <p class="mt-2 text-sm text-gray-600 max-w-2xl">
+            <p class="mt-2 text-sm text-gray-600">
                 Validation des mandataires pension et des liens représentant (tuteur, curateur, etc.).
             </p>
         </header>
-
-        @if(session('success'))
-            <div class="dossier-notice border-l-emerald-600 bg-emerald-50/80 px-4 py-3 text-sm text-emerald-900">
-                {{ session('success') }}
-            </div>
-        @endif
 
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div class="dossier-stat">

@@ -9,7 +9,7 @@
 @endsection
 
 @section('content')
-<div class="max-w-3xl space-y-4">
+<div class="w-full space-y-4">
 
     <div class="flex items-center justify-between">
         <div>
@@ -21,12 +21,6 @@
             <i class="fas fa-arrow-left text-xs"></i> Retour
         </a>
     </div>
-
-    @if(session('success'))
-        <div class="flex items-center gap-2 bg-green-50 border border-green-300 text-green-800 rounded-lg px-4 py-3 text-sm">
-            <i class="fas fa-check-circle text-green-500"></i> {{ session('success') }}
-        </div>
-    @endif
 
     @if($errors->any())
         <div class="flex items-start gap-2 bg-red-50 border border-red-300 text-red-800 rounded-lg px-4 py-3 text-sm">
@@ -113,12 +107,10 @@
                         <div class="relative group w-36 h-28 flex-shrink-0 rounded-lg overflow-hidden border border-gray-200">
                             <img src="{{ $image->url() }}" alt="Image"
                                 class="w-full h-full object-cover">
-                            <label class="absolute inset-0 flex items-center justify-center cursor-pointer
-                                bg-transparent group-hover:bg-black/10 transition-colors">
+                            <label class="absolute inset-0 flex items-center justify-center cursor-pointer bg-transparent group-hover:bg-black/10 transition-colors">
                                 <input type="checkbox" name="delete_images[]" value="{{ $image->id }}"
                                     class="sr-only peer">
-                                <span class="absolute top-1.5 right-1.5 w-5 h-5 rounded border-2 border-white bg-white/80
-                                    peer-checked:bg-red-500 peer-checked:border-red-500 transition-colors flex items-center justify-center">
+                                <span class="absolute top-1.5 right-1.5 w-5 h-5 rounded border-2 border-white bg-white/80 peer-checked:bg-red-500 peer-checked:border-red-500 transition-colors flex items-center justify-center">
                                     <i class="fas fa-times text-white text-xs peer-checked:block hidden"></i>
                                 </span>
                             </label>
@@ -166,10 +158,7 @@
                 <form action="{{ route('admin.actualites.toggle', $actualiteEdit->id) }}" method="POST">
                     @csrf
                     <button type="submit"
-                        class="px-3 py-2 text-xs font-medium rounded-lg transition-colors
-                            {{ $actualiteEdit->published
-                                ? 'bg-yellow-100 text-yellow-700 hover:bg-yellow-200'
-                                : 'bg-green-100 text-green-700 hover:bg-green-200' }}">
+                        class="px-3 py-2 text-xs font-medium rounded-lg transition-colors {{ $actualiteEdit->published ? 'bg-yellow-100 text-yellow-700 hover:bg-yellow-200' : 'bg-green-100 text-green-700 hover:bg-green-200' }}">
                         <i class="fas {{ $actualiteEdit->published ? 'fa-eye-slash' : 'fa-eye' }} mr-1"></i>
                         {{ $actualiteEdit->published ? 'Dépublier' : 'Publier' }}
                     </button>

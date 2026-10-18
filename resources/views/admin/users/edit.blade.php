@@ -13,7 +13,7 @@
 @endphp
 
 @section('content')
-<div class="max-w-3xl mx-auto space-y-5">
+<div class="site-gutter space-y-5">
 
     {{-- Page header --}}
     <div class="flex items-center justify-between">
@@ -37,11 +37,11 @@
     </div>
 
     {{-- Flash success --}}
-    @if(session('success'))
-        <div class="flex items-center gap-2 bg-green-50 border border-green-200 text-green-700 rounded-lg px-4 py-3 text-sm">
-            <i class="fas fa-check-circle text-green-500"></i> {{ session('success') }}
-        </div>
-    @endif
+    @include('admin.sessions._user-panel', [
+        'user' => $user,
+        'sessions' => $userActiveSessions,
+        'manageable' => $sessionsManageable,
+    ])
 
     {{-- Validation errors --}}
     @if($errors->any())
@@ -124,10 +124,16 @@
                     @error('username')<p class="text-red-500 text-xs mt-1">{{ $message }}</p>@enderror
                 </div>
                 <div>
-                    <label class="block text-xs font-medium text-gray-600 mb-1">Téléphone</label>
-                    <input type="text" name="phone" value="{{ old('phone', $user->phone) }}"
-                        class="{{ $field('phone') }}" placeholder="+509 3600-0000">
-                    @error('phone')<p class="text-red-500 text-xs mt-1">{{ $message }}</p>@enderror
+                    <x-telephone-input
+                        name="phone"
+                        :value="$user->phone"
+                        label="Téléphone"
+                        label-class="block text-xs font-medium text-gray-600 mb-1"
+                        hint-class="text-xs text-gray-500 mt-1"
+                        error-class="text-red-500 text-xs mt-1"
+                        client-error-class="text-red-500 text-xs mt-1"
+                        :input-class="$field('phone')"
+                    />
                 </div>
                 <div></div>
                 <div>

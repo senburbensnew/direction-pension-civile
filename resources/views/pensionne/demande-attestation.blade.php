@@ -1,7 +1,7 @@
 @extends('layouts.main')
 
 @section('content')
-    <div class="m-5 max-w-4xl mx-auto p-6 bg-white rounded-lg shadow-md">
+    <div class="m-5 w-full p-6 bg-white rounded-lg shadow-md">
             <!-- HEADER -->
             <div class="flex flex-col md:flex-row justify-around items-center mb-12 gap-8">
                 <x-dpc-logo class="w-24 h-24 object-cover" />
@@ -12,12 +12,6 @@
                 </h1>
                 <x-dpc-logo class="w-24 h-24 object-cover" />
             </div>
-
-            @if (session('success'))
-                <div class="mb-4 p-4 bg-green-50 border border-green-200 text-green-700 rounded">
-                    {{ session('success') }}
-                </div>
-            @endif
 
         @if ($demande)
             <div class="mb-4 p-3 bg-yellow-50 border border-yellow-200 text-yellow-800 rounded text-sm">
@@ -53,8 +47,7 @@
                     name="code_pension"
                     data-active-pension-code
                     value="{{ old('code_pension', $demande?->data['code_pension'] ?? auth()->user()->displayPensionCode()) }}"
-                    class="mt-1 block w-full rounded-md border
-                        @error('code_pension') border-red-500 @else border-gray-300 @enderror"
+                    class="mt-1 block w-full rounded-md border @error('code_pension') border-red-500 @else border-gray-300 @enderror"
                 >
                 @error('code_pension')
                     <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
@@ -69,8 +62,7 @@
                     name="nif"
                     value="{{ old('nif', $demande?->data['nif'] ?? auth()->user()->nif) }}"
                     placeholder="998-369-226-3"
-                    class="mt-1 block w-full rounded-md border
-                        @error('nif') border-red-500 @else border-gray-300 @enderror"
+                    class="mt-1 block w-full rounded-md border @error('nif') border-red-500 @else border-gray-300 @enderror"
                 >
                 @error('nif')
                     <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
@@ -85,9 +77,7 @@
                     id="nom"
                     name="nom"
                     value="{{ old('nom', $demande?->data['nom'] ?? auth()->user()->lastname ?? auth()->user()->name) }}"
-                    class="mt-1 block w-full px-4 py-2 rounded-md shadow-sm border
-                        @error('nom') border-red-500 @else border-gray-300 @enderror
-                        focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    class="mt-1 block w-full px-4 py-2 rounded-md shadow-sm border @error('nom') border-red-500 @else border-gray-300 @enderror focus:outline-none focus:ring-2 focus:ring-blue-500"
                 >
                 @error('nom')
                     <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
@@ -102,9 +92,7 @@
                     id="prenom"
                     name="prenom"
                     value="{{ old('prenom', $demande?->data['prenom'] ?? auth()->user()->firstname ?? auth()->user()->name) }}"
-                    class="mt-1 block w-full px-4 py-2 rounded-md shadow-sm border
-                        @error('prenom') border-red-500 @else border-gray-300 @enderror
-                        focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    class="mt-1 block w-full px-4 py-2 rounded-md shadow-sm border @error('prenom') border-red-500 @else border-gray-300 @enderror focus:outline-none focus:ring-2 focus:ring-blue-500"
                 >
                 @error('prenom')
                     <p class="mt-1 text-sm text-red-600">{{ $message }}</p>

@@ -2,140 +2,102 @@
 
 namespace App\Http\Controllers;
 
-use App\Notifications\NewsletterCampaignNotification;
+use App\Http\Requests\NewsletterResubscribeRequest;
+use App\Http\Requests\NewsletterSubscribeRequest;
 use App\Models\Newsletter;
 use App\Models\NewsletterCampaign;
+use App\Services\Newsletter\NewsletterSubscribeResultType;
+use App\Services\Newsletter\NewsletterSubscriptionService;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Notification;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class NewsletterController extends Controller
 {
-    public function souscription(Request $request)
-    {
-        $request->validate(['email' => 'required|email|max:255']);
+    public function souscription(
+        NewsletterSubscribeRequest $request,
+        NewsletterSubscriptionService $subscriptions,
+    ) {
+        $preferences = array_values(array_filter($request->input('preferences', [])));
 
-        if (Newsletter::where('email', $request->email)->exists()) {
-            return back()->with('error', 'Cette adresse email est déjà inscrite.');
-        }
+        $result = $subscriptions->subscribe(
+            $request->validated('email'),
+            $request,
+            locale: $request->input('locale', app()->getLocale()),
+            audienceGroup: $request->input('audience_group', 'externe'),
+            preferences: $preferences,
+            userId: $request->user()?->id,
+        );
 
-        Newsletter::create([
-            'email'             => $request->email,
-            'unsubscribe_token' => Newsletter::generateToken(),
-        ]);
-
-        return back()->with('success', 'Merci ! Vous êtes maintenant abonné à la newsletter.');
+        return back()->with($result->flashKey(), $result->message);
     }
 
-    public function unsubscribe(string $token)
+    public function confirm(string $token, NewsletterSubscriptionService $subscriptions)
     {
-        $subscriber = Newsletter::where('unsubscribe_token', $token)->first();
+        $result = $subscriptions->confirm($token);
 
-        if (!$subscriber) {
+        return view('newsletter.confirm', [
+            'status' => $result->status,
+            'message' => $result->message,
+        ]);
+    }
+
+    public function unsubscribe(string $token, NewsletterSubscriptionService $subscriptions)
+    {
+        if (! $subscriptions->unsubscribe($token)) {
             return view('newsletter.unsubscribe', ['status' => 'invalid']);
         }
-
-        $subscriber->delete();
 
         return view('newsletter.unsubscribe', ['status' => 'success']);
     }
 
-    // ── Admin ─────────────────────────────────────────────────────────────────
+    public function showResubscribe()
+    {
+        return view('newsletter.resubscribe');
+    }
+
+    public function resubscribe(
+        NewsletterResubscribeRequest $request,
+        NewsletterSubscriptionService $subscriptions,
+    ) {
+        $result = $subscriptions->resubscribe($request->validated('email'), $request);
+
+        if ($result->type === NewsletterSubscribeResultType::ResubscribeRequired) {
+            return back()->with('error', $result->message);
+        }
+
+        return back()->with($result->flashKey(), $result->message);
+    }
+
+    // ── Admin (legacy entry points — see Admin\Newsletter* controllers) ───────
 
     public function adminIndex(Request $request)
     {
-        $query = Newsletter::query();
-
-        if ($request->filled('q')) {
-            $query->where('email', 'like', '%' . $request->q . '%');
-        }
-
-        $subscribers = $query->latest()->paginate(25);
-        $total       = Newsletter::count();
-        $campaigns   = NewsletterCampaign::with('sender')->latest('sent_at')->take(10)->get();
-
-        return view('admin.newsletter.index', compact('subscribers', 'total', 'campaigns'));
+        return app(Admin\NewsletterSubscriberController::class)->index($request);
     }
 
     public function compose()
     {
-        $total = Newsletter::count();
-        return view('admin.newsletter.compose', compact('total'));
+        return redirect()->route('admin.newsletter.campaigns.create');
     }
 
     public function send(Request $request)
     {
-        $request->validate([
-            'subject' => 'required|string|max:255',
-            'body'    => 'required|string',
-        ]);
-
-        $subscribers = Newsletter::all();
-
-        if ($subscribers->isEmpty()) {
-            return back()->with('error', 'Aucun abonné à qui envoyer la newsletter.');
-        }
-
-        $campaign = NewsletterCampaign::create([
-            'subject'          => $request->subject,
-            'body'             => $request->body,
-            'recipients_count' => $subscribers->count(),
-            'sent_by'          => auth()->id(),
-            'sent_at'          => now(),
-        ]);
-
-        $sent = 0;
-        foreach ($subscribers as $subscriber) {
-            try {
-                Notification::route('mail', $subscriber->email)
-                    ->notify(new NewsletterCampaignNotification($campaign, $subscriber));
-                $sent++;
-            } catch (\Throwable $e) {
-                Log::error('NewsletterMail failed', [
-                    'email' => $subscriber->email,
-                    'error' => $e->getMessage(),
-                ]);
-            }
-        }
-
-        return redirect()->route('admin.newsletter.admin.index')
-            ->with('success', "Newsletter envoyée à {$sent} abonné(s) sur {$subscribers->count()}.");
-    }
-
-    public function destroyCampaign(NewsletterCampaign $campaign)
-    {
-        $campaign->delete();
-        return back()->with('success', 'Campagne supprimée de l\'historique.');
+        return redirect()->route('admin.newsletter.campaigns.create')
+            ->with('info', 'Utilisez l’éditeur de campagne pour enregistrer un brouillon ou envoyer.');
     }
 
     public function destroy(Newsletter $newsletter)
     {
-        $newsletter->delete();
-        return back()->with('success', 'Abonné supprimé.');
+        return app(Admin\NewsletterSubscriberController::class)->destroy($newsletter);
     }
 
     public function export(): StreamedResponse
     {
-        $headers = [
-            'Content-Type'        => 'text/csv; charset=UTF-8',
-            'Content-Disposition' => 'attachment; filename="abonnes-newsletter-' . date('Y-m-d') . '.csv"',
-        ];
+        return app(Admin\NewsletterSubscriberController::class)->export();
+    }
 
-        $callback = function () {
-            $handle = fopen('php://output', 'w');
-            fprintf($handle, chr(0xEF) . chr(0xBB) . chr(0xBF));
-            fputcsv($handle, ['Email', 'Date d\'inscription'], ';');
-
-            Newsletter::orderBy('created_at')->chunk(200, function ($rows) use ($handle) {
-                foreach ($rows as $row) {
-                    fputcsv($handle, [$row->email, $row->created_at->format('d/m/Y H:i')], ';');
-                }
-            });
-
-            fclose($handle);
-        };
-
-        return response()->stream($callback, 200, $headers);
+    public function destroyCampaign(NewsletterCampaign $campaign)
+    {
+        return app(Admin\NewsletterCampaignController::class)->destroy($campaign);
     }
 }

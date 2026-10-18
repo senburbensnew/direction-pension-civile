@@ -1,7 +1,8 @@
 @extends('layouts.admin')
 
 @section('content')
-    <div class="max-w-7xl mx-auto p-6 bg-white rounded-lg shadow-md">
+    <x-push-vite :js="['resources/js/admin/documents-upload.js']" />
+    <div class="w-full p-6 bg-white rounded-lg shadow-md">
         <!-- Breadcrumb -->
         <nav class="text-sm text-gray-600 mb-4">
             <span class="text-gray-800">Documents</span>
@@ -96,13 +97,6 @@
         @enderror
     </div>
 
-    <!-- Flash Messages -->
-    @if (session('success'))
-        <div id="toast-success" class="fixed top-4 px-4 py-2 bg-green-500 text-white rounded shadow-lg">
-            {{ session('success') }}
-        </div>
-    @endif
-
     <!-- Loading Indicator -->
     <div id="loading-spinner"
         class="hidden fixed top-4 bg-blue-600 text-white px-4 py-2 rounded-lg shadow-lg flex items-center gap-2">
@@ -113,51 +107,4 @@
         <span class="text-sm">Téléversement en cours...</span>
     </div>
 
-    <!-- JavaScript -->
-    <script>
-        window.onload = function() {
-            // Hide success message after 5 seconds
-            setTimeout(function() {
-                var successToast = document.getElementById('toast-success');
-                if (successToast) {
-                    successToast.style.display = 'none';
-                }
-            }, 5000);
-        };
-
-        document.getElementById('pdf_file').addEventListener('change', function() {
-            var uploadButton = document.getElementById('upload-button');
-            if (this.files.length > 0) {
-                uploadButton.disabled = false;
-                uploadButton.classList.remove('bg-gray-400', 'cursor-not-allowed');
-                uploadButton.classList.add('bg-green-600', 'hover:bg-green-700');
-            } else {
-                uploadButton.disabled = true;
-                uploadButton.classList.remove('bg-green-600', 'hover:bg-green-700');
-                uploadButton.classList.add('bg-gray-400', 'cursor-not-allowed');
-            }
-        });
-
-        document.getElementById('upload-form').addEventListener('submit', function() {
-            // Show the loading spinner
-            document.getElementById('loading-spinner').classList.remove('hidden');
-
-            // Disable the submit button
-            var uploadButton = document.getElementById('upload-button');
-            uploadButton.disabled = true;
-            uploadButton.innerText = 'Téléchargement...';
-        });
-
-        document.getElementById('pdf_file').addEventListener('change', function() {
-            var fileName = this.files.length > 0 ? this.files[0].name : 'Aucun fichier sélectionné';
-            document.getElementById('file-name').textContent = fileName;
-        });
-
-        /* function validateSize(input) {
-            if (input.files[0].size > 2048 * 1024) {
-                alert('Le fichier est trop volumineux (max 2 Mo)');
-                input.value = '';
-            }
-        } */
-    </script>
 @endsection

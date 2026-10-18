@@ -48,9 +48,7 @@
     {{-- Créneau choisi (visible dans le formulaire Alpine) --}}
     <div
         class="mb-4 rounded-xl border-2 px-4 py-3 transition-colors"
-        :class="dateSouhaitee && heureSouhaitee
-            ? 'border-navy bg-[#f4f6f9]'
-            : 'border-dashed border-gray-300 bg-gray-50'"
+        :class="dateSouhaitee && heureSouhaitee ? 'border-navy bg-[#f4f6f9]' : 'border-dashed border-gray-300 bg-gray-50'"
     >
         <template x-if="dateSouhaitee && heureSouhaitee">
             <div class="flex items-start gap-3">
@@ -121,8 +119,7 @@
 
     <div
         id="dpc-rdv-scheduler"
-        class="dpc-rdv-scheduler border rounded-xl overflow-hidden
-            {{ $schedulerInvalid ? 'border-red-400' : 'border-gray-200' }}"
+        class="dpc-rdv-scheduler border rounded-xl overflow-hidden {{ $schedulerInvalid ? 'border-red-400' : 'border-gray-200' }}"
         data-date="{{ $oldDate }}"
         data-time="{{ $oldTime }}"
         data-slot-minutes="{{ $slotMinutes }}"

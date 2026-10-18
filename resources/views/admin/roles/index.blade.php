@@ -21,18 +21,6 @@
         </button>
     </div>
 
-    @if(session('success'))
-        <div class="flex items-center gap-2 bg-green-50 border border-green-300 text-green-800 rounded-lg px-4 py-3 text-sm">
-            <i class="fas fa-check-circle text-green-500"></i> {{ session('success') }}
-        </div>
-    @endif
-
-    @if(session('error'))
-        <div class="flex items-center gap-2 bg-red-50 border border-red-300 text-red-800 rounded-lg px-4 py-3 text-sm">
-            <i class="fas fa-exclamation-circle text-red-500"></i> {{ session('error') }}
-        </div>
-    @endif
-
     <div class="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
         <table class="w-full text-sm">
             <thead class="bg-gray-50 border-b border-gray-200">
@@ -51,8 +39,7 @@
                             {{ ($roles->currentPage() - 1) * $roles->perPage() + $index + 1 }}
                         </td>
                         <td class="px-4 py-3">
-                            <span class="text-xs font-medium px-2 py-0.5 rounded-full
-                                {{ $role->name === 'admin' ? 'bg-red-100 text-red-700' : 'bg-blue-100 text-blue-700' }}">
+                            <span class="text-xs font-medium px-2 py-0.5 rounded-full {{ $role->name === 'admin' ? 'bg-red-100 text-red-700' : 'bg-blue-100 text-blue-700' }}">
                                 {{ $role->name }}
                             </span>
                         </td>

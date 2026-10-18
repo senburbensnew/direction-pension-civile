@@ -1,14 +1,7 @@
 @extends('layouts.admin')
 
 @section('content')
-<div class="container mx-auto p-6 max-w-2xl">
-
-    @if(session('success'))
-        <div class="mb-4 flex items-center gap-2 bg-green-50 border border-green-300 text-green-800 rounded-lg px-4 py-3 text-sm">
-            <i class="fas fa-check-circle text-green-500"></i>
-            {{ session('success') }}
-        </div>
-    @endif
+<div class="site-gutter p-6">
 
     @if($errors->any())
         <div class="mb-4 bg-red-50 border border-red-300 text-red-700 rounded-lg px-4 py-3 text-sm">

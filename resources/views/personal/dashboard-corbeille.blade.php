@@ -93,8 +93,8 @@
                         @empty
                             <tr>
                                 <td colspan="{{ in_array($folder, ['rencontre', 'clotures'], true) ? 6 : 5 }}" class="px-5 py-16 text-center">
-                                    <div class="mx-auto max-w-sm">
-                                        <span class="mx-auto flex h-14 w-14 items-center justify-center bg-gray-100 border border-gray-200 text-gray-400">
+                                    <div class="max-w-sm">
+                                        <span class="flex h-14 w-14 items-center justify-center bg-gray-100 border border-gray-200 text-gray-400">
                                             <i class="fas fa-folder-open text-xl" aria-hidden="true"></i>
                                         </span>
                                         <h3 class="mt-4 text-base font-semibold text-gray-900">Répertoire vide</h3>

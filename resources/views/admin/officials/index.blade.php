@@ -22,12 +22,6 @@
         </a>
     </div>
 
-    @if(session('success'))
-        <div class="flex items-center gap-2 px-4 py-3 bg-green-50 border border-green-200 text-green-700 rounded-lg text-sm">
-            <i class="fas fa-check-circle"></i> {{ session('success') }}
-        </div>
-    @endif
-
     @if($officials->isEmpty())
         <div class="bg-white rounded-xl border border-gray-200 py-16 flex flex-col items-center text-center gap-3">
             <div class="w-14 h-14 rounded-full bg-gray-100 flex items-center justify-center">
@@ -49,8 +43,7 @@
                              onerror="this.onerror=null;this.src='https://ui-avatars.com/api/?name={{ urlencode($official->nom) }}&background=cbd5e1&color=475569&size=64';">
                         <div class="flex-1 min-w-0">
                             <div class="flex items-center gap-2 mb-0.5">
-                                <span class="text-xs font-semibold px-2 py-0.5 rounded-full
-                                    {{ $official->active ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500' }}">
+                                <span class="text-xs font-semibold px-2 py-0.5 rounded-full {{ $official->active ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500' }}">
                                     {{ $official->active ? 'Actif' : 'Inactif' }}
                                 </span>
                                 <span class="text-xs text-gray-400 font-mono">{{ $official->slug }}</span>

@@ -23,7 +23,7 @@
             </legend>
 
             <div class="py-6 pl-5 pr-5">
-                <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
+                <div class="site-gutter">
                     {{-- ===================== PENSIONNE ===================== --}}
                     @can('can_view_pensionne_section')
                         <div class="mb-12">
