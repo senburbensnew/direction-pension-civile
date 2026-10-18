@@ -7,24 +7,26 @@
 
 @section('content')
 @php
-    $parseUserAgent = function (?string $ua): string {
-        if ($ua === null || $ua === '') {
-            return '—';
+    $activeSessionService = app(\App\Services\Admin\ActiveSessionService::class);
+    $deviceIcon = function (?string $userAgent) use ($activeSessionService): string {
+        $label = $activeSessionService->deviceLabel($userAgent);
+        if ($label === '—') {
+            return 'fa-circle-question';
         }
-        if (str_contains($ua, 'Mobile')) {
-            return 'Mobile';
+        if ($label === 'Mobile') {
+            return 'fa-mobile-screen';
         }
-        if (str_contains($ua, 'Windows')) {
-            return 'Windows';
+        if ($label === 'Windows') {
+            return 'fa-brands fa-windows';
         }
-        if (str_contains($ua, 'Mac OS') || str_contains($ua, 'Macintosh')) {
-            return 'macOS';
+        if ($label === 'macOS') {
+            return 'fa-brands fa-apple';
         }
-        if (str_contains($ua, 'Linux')) {
-            return 'Linux';
+        if ($label === 'Linux') {
+            return 'fa-brands fa-linux';
         }
 
-        return \Illuminate\Support\Str::limit($ua, 40);
+        return 'fa-desktop';
     };
 @endphp
 
@@ -133,6 +135,7 @@
                         <tr>
                             <th class="px-4 py-3 text-left font-semibold text-gray-600">{{ __('messages.admin_sessions.col_user') }}</th>
                             <th class="px-4 py-3 text-left font-semibold text-gray-600">{{ __('messages.admin_sessions.col_ip') }}</th>
+                            <th class="px-4 py-3 text-left font-semibold text-gray-600" title="{{ __('messages.admin_sessions.location_hint') }}">{{ __('messages.admin_sessions.col_location') }}</th>
                             <th class="px-4 py-3 text-left font-semibold text-gray-600">{{ __('messages.admin_sessions.col_device') }}</th>
                             <th class="px-4 py-3 text-left font-semibold text-gray-600">{{ __('messages.admin_sessions.col_last_activity') }}</th>
                             <th class="px-4 py-3 text-center font-semibold text-gray-600">{{ __('messages.admin_sessions.col_actions') }}</th>
@@ -157,9 +160,20 @@
                                         </span>
                                     @endif
                                 </td>
-                                <td class="px-4 py-3 text-gray-600 font-mono text-xs">{{ $session['ip_address'] ?? '—' }}</td>
-                                <td class="px-4 py-3 text-gray-600" title="{{ $session['user_agent'] }}">
-                                    {{ $parseUserAgent($session['user_agent']) }}
+                                <td class="px-4 py-3 text-gray-600 font-mono text-xs">
+                                    {{ filled($session['ip_address'] ?? null) ? $session['ip_address'] : '—' }}
+                                </td>
+                                <td class="px-4 py-3 text-gray-600 text-xs">
+                                    <span class="inline-flex items-center gap-1.5">
+                                        <i class="fa-solid fa-location-dot text-gray-400 text-[0.7rem]" aria-hidden="true"></i>
+                                        {{ $session['location_label'] ?? '—' }}
+                                    </span>
+                                </td>
+                                <td class="px-4 py-3 text-gray-600" title="{{ $session['user_agent'] ?? '' }}">
+                                    <span class="inline-flex items-center gap-2">
+                                        <i @class(['fa-solid text-gray-400', $deviceIcon($session['user_agent'] ?? null)]) aria-hidden="true"></i>
+                                        <span>{{ $activeSessionService->deviceLabel($session['user_agent'] ?? null) }}</span>
+                                    </span>
                                 </td>
                                 <td class="px-4 py-3 text-gray-600">
                                     {{ \Carbon\Carbon::createFromTimestamp($session['last_activity'])->diffForHumans() }}
@@ -190,7 +204,7 @@
                             </tr>
                         @empty
                             <tr>
-                                <td colspan="5" class="px-4 py-10 text-center text-gray-500">
+                                <td colspan="6" class="px-4 py-10 text-center text-gray-500">
                                     <i class="fas fa-user-clock text-2xl text-gray-300 mb-2"></i>
                                     <p>{{ __('messages.admin_sessions.empty') }}</p>
                                 </td>
@@ -201,5 +215,142 @@
             </div>
         </div>
     @endif
+
+    <div class="pt-2 border-t border-gray-200 space-y-4">
+        <div>
+            <h2 class="text-sm font-semibold text-gray-600 uppercase tracking-wide">{{ __('messages.admin_sessions.login_stats_title') }}</h2>
+            <p class="text-sm text-gray-500 mt-0.5">{{ __('messages.admin_sessions.login_stats_subtitle') }}</p>
+        </div>
+
+        @if(! $loginStatsAvailable)
+            <div class="flex items-start gap-2 bg-amber-50 border border-amber-200 text-amber-900 rounded-lg px-4 py-3 text-sm">
+                <i class="fas fa-database text-amber-500 mt-0.5"></i>
+                <p>{{ __('messages.admin_sessions.login_stats_unavailable') }}</p>
+            </div>
+        @else
+            <div class="grid grid-cols-2 lg:grid-cols-5 gap-3">
+                <div class="bg-white rounded-xl border border-gray-200 shadow-sm p-4">
+                    <p class="text-xs font-semibold text-gray-500 uppercase tracking-wide">{{ __('messages.admin_sessions.login_stats_today') }}</p>
+                    <p class="text-2xl font-bold text-gray-800 mt-1">{{ number_format($loginStats['today'], 0, ',', ' ') }}</p>
+                </div>
+                <div class="bg-white rounded-xl border border-gray-200 shadow-sm p-4">
+                    <p class="text-xs font-semibold text-gray-500 uppercase tracking-wide">{{ __('messages.admin_sessions.login_stats_7_days') }}</p>
+                    <p class="text-2xl font-bold text-gray-800 mt-1">{{ number_format($loginStats['last_7_days'], 0, ',', ' ') }}</p>
+                </div>
+                <div class="bg-white rounded-xl border border-gray-200 shadow-sm p-4">
+                    <p class="text-xs font-semibold text-gray-500 uppercase tracking-wide">{{ __('messages.admin_sessions.login_stats_30_days') }}</p>
+                    <p class="text-2xl font-bold text-gray-800 mt-1">{{ number_format($loginStats['last_30_days'], 0, ',', ' ') }}</p>
+                </div>
+                <div class="bg-white rounded-xl border border-gray-200 shadow-sm p-4">
+                    <p class="text-xs font-semibold text-gray-500 uppercase tracking-wide">{{ __('messages.admin_sessions.login_stats_unique_users') }}</p>
+                    <p class="text-2xl font-bold text-gray-800 mt-1">{{ number_format($loginStats['unique_users_30_days'], 0, ',', ' ') }}</p>
+                </div>
+                <div class="bg-white rounded-xl border border-gray-200 shadow-sm p-4 col-span-2 lg:col-span-1">
+                    <p class="text-xs font-semibold text-gray-500 uppercase tracking-wide">{{ __('messages.admin_sessions.login_stats_total') }}</p>
+                    <p class="text-2xl font-bold text-gray-800 mt-1">{{ number_format($loginStats['total'], 0, ',', ' ') }}</p>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 xl:grid-cols-3 gap-4">
+                <div class="xl:col-span-2 bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
+                    <div class="px-5 py-3 border-b border-gray-100">
+                        <h3 class="font-semibold text-gray-700 text-sm">{{ __('messages.admin_sessions.login_stats_daily_title') }}</h3>
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table class="min-w-full text-sm">
+                            <thead class="bg-gray-50 text-gray-500">
+                                <tr>
+                                    <th class="text-left font-medium px-5 py-2">{{ __('messages.admin_sessions.login_stats_col_day') }}</th>
+                                    <th class="text-right font-medium px-5 py-2">{{ __('messages.admin_sessions.login_stats_col_count') }}</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-gray-50">
+                                @foreach($loginDailySeries as $day)
+                                    <tr @class(['bg-indigo-50/40' => $day['date'] === now()->toDateString()])>
+                                        <td class="px-5 py-2 text-gray-700">{{ \Illuminate\Support\Carbon::parse($day['date'])->translatedFormat('D d M Y') }}</td>
+                                        <td class="px-5 py-2 text-right font-medium text-gray-800">{{ number_format($day['count'], 0, ',', ' ') }}</td>
+                                    </tr>
+                                @endforeach
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div class="space-y-4">
+                    @if($isManageable && count($activeDeviceBreakdown) > 0)
+                        <div class="bg-white rounded-xl border border-gray-200 shadow-sm p-4">
+                            <h3 class="font-semibold text-gray-700 text-sm mb-3">{{ __('messages.admin_sessions.login_stats_active_devices_title') }}</h3>
+                            <ul class="space-y-2 text-sm">
+                                @foreach($activeDeviceBreakdown as $label => $count)
+                                    <li class="flex items-center justify-between gap-2">
+                                        <span class="text-gray-700">{{ $label }}</span>
+                                        <span class="font-semibold text-gray-900 tabular-nums">{{ $count }}</span>
+                                    </li>
+                                @endforeach
+                            </ul>
+                        </div>
+                    @endif
+
+                    @if(count($loginDeviceBreakdown) > 0)
+                        <div class="bg-white rounded-xl border border-gray-200 shadow-sm p-4">
+                            <h3 class="font-semibold text-gray-700 text-sm mb-3">{{ __('messages.admin_sessions.login_stats_devices_title') }}</h3>
+                            <ul class="space-y-2 text-sm">
+                                @foreach($loginDeviceBreakdown as $label => $count)
+                                    <li class="flex items-center justify-between gap-2">
+                                        <span class="text-gray-700">{{ $label }}</span>
+                                        <span class="font-semibold text-gray-900 tabular-nums">{{ $count }}</span>
+                                    </li>
+                                @endforeach
+                            </ul>
+                        </div>
+                    @endif
+                </div>
+            </div>
+
+            <div class="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
+                <div class="px-5 py-3 border-b border-gray-100">
+                    <h3 class="font-semibold text-gray-700 text-sm">{{ __('messages.admin_sessions.login_stats_recent_title') }}</h3>
+                </div>
+                @if($recentLogins->isEmpty())
+                    <p class="px-5 py-8 text-sm text-gray-500 text-center">{{ __('messages.admin_sessions.login_stats_no_data') }}</p>
+                @else
+                    <div class="overflow-x-auto">
+                        <table class="min-w-full text-sm">
+                            <thead class="bg-gray-50 text-gray-500">
+                                <tr>
+                                    <th class="text-left font-medium px-5 py-2">{{ __('messages.admin_sessions.login_stats_col_user') }}</th>
+                                    <th class="text-left font-medium px-5 py-2">{{ __('messages.admin_sessions.col_ip') }}</th>
+                                    <th class="text-left font-medium px-5 py-2">{{ __('messages.admin_sessions.col_location') }}</th>
+                                    <th class="text-left font-medium px-5 py-2">{{ __('messages.admin_sessions.col_device') }}</th>
+                                    <th class="text-right font-medium px-5 py-2">{{ __('messages.admin_sessions.login_stats_col_when') }}</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-gray-50">
+                                @foreach($recentLogins as $login)
+                                    <tr class="hover:bg-gray-50">
+                                        <td class="px-5 py-2">
+                                            @if($login->user)
+                                                <p class="font-medium text-gray-800">{{ $login->user->name }}</p>
+                                                <p class="text-xs text-gray-400">{{ $login->user->email }}</p>
+                                            @else
+                                                <span class="text-gray-400">—</span>
+                                            @endif
+                                        </td>
+                                        <td class="px-5 py-2 font-mono text-xs text-gray-600">{{ filled($login->ip_address) ? $login->ip_address : '—' }}</td>
+                                        <td class="px-5 py-2 text-gray-600 text-xs">{{ app(\App\Services\Admin\UserLoginStatisticsService::class)->locationLabelForLoginEvent($login) }}</td>
+                                        <td class="px-5 py-2 text-gray-600">{{ $activeSessionService->deviceLabel($login->user_agent) }}</td>
+                                        <td class="px-5 py-2 text-right text-gray-600 whitespace-nowrap">
+                                            {{ $login->logged_in_at->translatedFormat('d/m/Y H:i') }}
+                                            <span class="block text-xs text-gray-400">{{ $login->logged_in_at->diffForHumans() }}</span>
+                                        </td>
+                                    </tr>
+                                @endforeach
+                            </tbody>
+                        </table>
+                    </div>
+                @endif
+            </div>
+        @endif
+    </div>
 </div>
 @endsection

@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Auth;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Auth\LoginRequest;
 use App\Providers\RouteServiceProvider;
+use App\Services\Admin\UserLoginStatisticsService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -23,12 +24,16 @@ class AuthenticatedSessionController extends Controller
     /**
      * Handle an incoming authentication request.
      */
-    public function store(LoginRequest $request): RedirectResponse
+    public function store(LoginRequest $request, UserLoginStatisticsService $loginStats): RedirectResponse
     {
         $request->authenticate();
 
         $request->session()->regenerate();
         $request->session()->forget('url.intended');
+
+        if ($request->user()) {
+            $loginStats->recordFromRequest($request->user()->id, $request);
+        }
 
         if ($request->user()?->mustChangePassword()) {
             return redirect()->route('password.required');

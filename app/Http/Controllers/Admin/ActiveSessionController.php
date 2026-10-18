@@ -5,14 +5,18 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\User;
 use App\Services\Admin\ActiveSessionService;
+use App\Services\Admin\UserLoginStatisticsService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
 
 class ActiveSessionController extends Controller
 {
-    public function index(Request $request, ActiveSessionService $sessions): View
-    {
+    public function index(
+        Request $request,
+        ActiveSessionService $sessions,
+        UserLoginStatisticsService $loginStatistics,
+    ): View {
         $authenticatedOnly = ! $request->boolean('include_guests');
         $search = $request->string('q')->trim()->toString();
         $userId = $request->filled('user_id') ? (int) $request->input('user_id') : null;
@@ -29,6 +33,12 @@ class ActiveSessionController extends Controller
             ->unique()
             ->count();
 
+        $activeSessions = $activeSessions->map(function (array $session) use ($loginStatistics) {
+            $session['location_label'] = $loginStatistics->locationLabelForIp($session['ip_address'] ?? null);
+
+            return $session;
+        });
+
         return view('admin.sessions.index', [
             'sessions' => $activeSessions,
             'driver' => $sessions->driver(),
@@ -39,6 +49,12 @@ class ActiveSessionController extends Controller
                 'session_count' => $activeSessions->count(),
                 'user_count' => $uniqueUserCount,
             ],
+            'loginStatsAvailable' => $loginStatistics->isAvailable(),
+            'loginStats' => $loginStatistics->summary(),
+            'loginDailySeries' => $loginStatistics->dailySeries(14),
+            'loginDeviceBreakdown' => $loginStatistics->deviceBreakdown(30),
+            'activeDeviceBreakdown' => $loginStatistics->activeSessionDeviceBreakdown($activeSessions),
+            'recentLogins' => $loginStatistics->recent(12),
             'users' => User::query()
                 ->orderBy('name')
                 ->get(['id', 'name', 'email']),

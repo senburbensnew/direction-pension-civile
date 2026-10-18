@@ -4,6 +4,7 @@ namespace App\Http;
 
 use App\Http\Middleware\Authenticate;
 use App\Http\Middleware\CheckMaintenanceMode;
+use App\Http\Middleware\PersistSessionRequestMetadata;
 use App\Http\Middleware\CorbeilleAccess;
 use App\Http\Middleware\EncryptCookies;
 use App\Http\Middleware\EnsureAccountFullyActive;
@@ -72,6 +73,7 @@ class Kernel extends HttpKernel
             EncryptCookies::class,
             AddQueuedCookiesToResponse::class,
             StartSession::class,
+            PersistSessionRequestMetadata::class,
             ShareErrorsFromSession::class,
             VerifyCsrfToken::class,
             SubstituteBindings::class,

@@ -177,15 +177,16 @@ class ActiveSessionService
         $users = User::query()->whereIn('id', $userIds)->get()->keyBy('id');
 
         return $rows->map(function ($row) use ($users) {
-            $payloadUserId = $this->userIdFromEncodedPayload($row->payload);
+            $payloadAttributes = $this->attributesFromEncodedPayload((string) $row->payload);
+            $payloadUserId = $this->userIdFromSessionAttributes($payloadAttributes);
             $userId = $row->user_id ?? $payloadUserId;
             $userId = $userId !== null ? (int) $userId : null;
 
             return $this->normalizeSessionRow(
                 id: (string) $row->id,
                 userId: $userId,
-                ipAddress: $row->ip_address,
-                userAgent: $row->user_agent,
+                ipAddress: $this->resolveIpAddress($row->ip_address ?? null, $payloadAttributes),
+                userAgent: $this->resolveUserAgent($row->user_agent ?? null, $payloadAttributes),
                 lastActivity: (int) $row->last_activity,
                 users: $users,
             );
@@ -243,8 +244,8 @@ class ActiveSessionService
             $sessions->push([
                 'id' => $sessionId,
                 'user_id' => $userId,
-                'ip_address' => $attributes['_ip_address'] ?? null,
-                'user_agent' => $attributes['_user_agent'] ?? null,
+                'ip_address' => $this->resolveIpAddress(null, $attributes),
+                'user_agent' => $this->resolveUserAgent(null, $attributes),
                 'last_activity' => $lastActivity,
                 'is_guest' => $userId === null,
                 'user' => null,
@@ -312,12 +313,83 @@ class ActiveSessionService
 
     protected function userIdFromEncodedPayload(string $payload): ?int
     {
+        return $this->userIdFromSessionAttributes($this->attributesFromEncodedPayload($payload));
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    protected function attributesFromEncodedPayload(string $payload): array
+    {
         $decoded = base64_decode($payload, true);
         if ($decoded === false) {
-            return null;
+            return [];
         }
 
-        return $this->userIdFromSerializedPayload($decoded);
+        $attributes = @unserialize($decoded);
+
+        return is_array($attributes) ? $attributes : [];
+    }
+
+    /**
+     * @param  array<string, mixed>  $attributes
+     */
+    protected function resolveIpAddress(?string $columnValue, array $attributes): ?string
+    {
+        if (is_string($columnValue) && trim($columnValue) !== '') {
+            return trim($columnValue);
+        }
+
+        foreach (['_ip_address', '_session_ip'] as $key) {
+            $value = $attributes[$key] ?? null;
+            if (is_string($value) && trim($value) !== '') {
+                return trim($value);
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * @param  array<string, mixed>  $attributes
+     */
+    protected function resolveUserAgent(?string $columnValue, array $attributes): ?string
+    {
+        if (is_string($columnValue) && trim($columnValue) !== '') {
+            return trim($columnValue);
+        }
+
+        foreach (['_user_agent', '_session_user_agent'] as $key) {
+            $value = $attributes[$key] ?? null;
+            if (is_string($value) && trim($value) !== '') {
+                return trim($value);
+            }
+        }
+
+        return null;
+    }
+
+    public function deviceLabel(?string $userAgent): string
+    {
+        if ($userAgent === null || trim($userAgent) === '') {
+            return '—';
+        }
+
+        $ua = $userAgent;
+        if (str_contains($ua, 'Mobile') || str_contains($ua, 'Android') || str_contains($ua, 'iPhone')) {
+            return 'Mobile';
+        }
+        if (str_contains($ua, 'Windows')) {
+            return 'Windows';
+        }
+        if (str_contains($ua, 'Mac OS') || str_contains($ua, 'Macintosh')) {
+            return 'macOS';
+        }
+        if (str_contains($ua, 'Linux')) {
+            return 'Linux';
+        }
+
+        return Str::limit($ua, 40);
     }
 
     /**
@@ -336,16 +408,6 @@ class ActiveSessionService
         }
 
         return (int) $userId;
-    }
-
-    protected function userIdFromSerializedPayload(string $payload): ?int
-    {
-        $attributes = @unserialize($payload);
-        if (! is_array($attributes)) {
-            return null;
-        }
-
-        return $this->userIdFromSessionAttributes($attributes);
     }
 
     /**

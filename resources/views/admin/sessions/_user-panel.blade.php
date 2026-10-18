@@ -2,25 +2,8 @@
     $manageable = $manageable ?? true;
     $sessions = $sessions ?? collect();
     $currentSessionId = session()->getId();
-    $parseUserAgent = function (?string $ua): string {
-        if ($ua === null || $ua === '') {
-            return '—';
-        }
-        if (str_contains($ua, 'Mobile')) {
-            return 'Mobile';
-        }
-        if (str_contains($ua, 'Windows')) {
-            return 'Windows';
-        }
-        if (str_contains($ua, 'Mac OS') || str_contains($ua, 'Macintosh')) {
-            return 'macOS';
-        }
-        if (str_contains($ua, 'Linux')) {
-            return 'Linux';
-        }
-
-        return \Illuminate\Support\Str::limit($ua, 36);
-    };
+    $activeSessionService = app(\App\Services\Admin\ActiveSessionService::class);
+    $loginStatistics = app(\App\Services\Admin\UserLoginStatisticsService::class);
 @endphp
 
 <div class="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
@@ -64,9 +47,13 @@
                     <li class="py-3 first:pt-0 last:pb-0 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
                         <div class="min-w-0">
                             <p class="text-sm text-gray-800">
-                                {{ $parseUserAgent($session['user_agent']) }}
+                                {{ $activeSessionService->deviceLabel($session['user_agent'] ?? null) }}
                                 <span class="text-gray-400">·</span>
-                                <span class="font-mono text-xs text-gray-500">{{ $session['ip_address'] ?? '—' }}</span>
+                                <span class="font-mono text-xs text-gray-500">{{ filled($session['ip_address'] ?? null) ? $session['ip_address'] : '—' }}</span>
+                            </p>
+                            <p class="text-xs text-gray-500 mt-0.5">
+                                <i class="fa-solid fa-location-dot text-gray-400 mr-1" aria-hidden="true"></i>
+                                {{ $session['location_label'] ?? $loginStatistics->locationLabelForIp($session['ip_address'] ?? null) }}
                             </p>
                             <p class="text-xs text-gray-500 mt-0.5">
                                 {{ __('messages.admin_sessions.last_seen') }}

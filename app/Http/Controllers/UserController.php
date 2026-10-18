@@ -14,6 +14,7 @@ use App\Rules\Telephone;
 use App\Services\Account\InstitutionAccountService;
 use App\Services\Account\UserCategoryRoleSyncService;
 use App\Services\Admin\ActiveSessionService;
+use App\Services\Admin\UserLoginStatisticsService;
 use App\Services\Pension\BeneficiaireProvisioningService;
 use App\Services\Pension\UserBeneficiaireLinkService;
 use Database\Seeders\RolesAndPermissionsSeeder;
@@ -154,7 +155,13 @@ class UserController extends Controller
             ->get();
 
         $activeSessionService = app(ActiveSessionService::class);
-        $userActiveSessions = $activeSessionService->list(userId: $user->id, authenticatedOnly: true);
+        $loginStatistics = app(UserLoginStatisticsService::class);
+        $userActiveSessions = $activeSessionService->list(userId: $user->id, authenticatedOnly: true)
+            ->map(function (array $session) use ($loginStatistics) {
+                $session['location_label'] = $loginStatistics->locationLabelForIp($session['ip_address'] ?? null);
+
+                return $session;
+            });
         $sessionsManageable = $activeSessionService->isManageable();
 
         return view('admin.users.edit', compact(
