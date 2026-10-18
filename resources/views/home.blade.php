@@ -192,7 +192,7 @@
             </div>
             <div class="site-gutter pt-10 pb-16 md:pt-12 md:pb-20">
                 <div class="grid lg:grid-cols-12 gap-8 items-start">
-                    <aside class="lg:col-span-3 max-w-sm lg:max-w-none lg:mx-0">
+                    <aside class="mx-auto w-full max-w-sm lg:col-span-3 lg:mx-0 lg:max-w-none">
                         <div class="home-card overflow-hidden">
                             <x-presentation slug="ministre" variant="card" />
                         </div>

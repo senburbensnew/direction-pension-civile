@@ -1,8 +1,8 @@
     <div class="relative text-white z-[1001] bg-[#173052] bg-motif-dots">
         <div class="site-gutter py-4 relative z-10">
-            <div class="flex flex-wrap items-center gap-x-4 gap-y-3 lg:flex-nowrap lg:justify-between lg:gap-6">
+            <div class="grid w-full grid-cols-[minmax(0,1fr)_auto] items-center gap-x-4 gap-y-3 lg:flex lg:items-center lg:justify-between lg:gap-6">
                 <!-- Logo -->
-                <div class="flex items-center flex-shrink-0">
+                <div class="col-start-1 row-start-1 flex min-w-0 items-center lg:shrink-0">
                     <a href="{{ route('home') }}" class="flex items-center gap-3 group">
                         <x-optimized-image
                             src="images/setting-logo-1-M13oPLiYoM.png"
@@ -23,9 +23,8 @@
                     </a>
                 </div>
 
-                <!-- Navigation + utilisateur (alignés à droite sur grand écran) -->
-                <div class="ml-auto flex w-full flex-col gap-3 lg:w-auto lg:flex-row lg:items-center lg:gap-6">
-                <nav class="order-last flex w-full flex-wrap justify-start gap-x-4 gap-y-2 border-t border-white/20 pt-3 text-base font-medium lg:order-none lg:w-auto lg:border-0 lg:pt-0 lg:justify-end">
+                <div class="contents lg:flex lg:items-center lg:gap-6 lg:shrink-0">
+                <nav class="col-span-2 row-start-2 flex w-full flex-wrap justify-center gap-x-4 gap-y-2 border-t border-white/20 pt-3 text-base font-medium lg:w-auto lg:border-0 lg:pt-0 lg:justify-end">
                     <a href="{{ route('home') }}"
                        class="hover:text-orange-500 transition-colors py-1 border-b-2 border-transparent hover:border-orange-500">
                         {{ __('messages.home') }}
@@ -43,7 +42,8 @@
                         {{ __('messages.contact') }}
                     </a>
                 </nav>
-                <div class="flex flex-shrink-0 items-center justify-end gap-3 sm:gap-4">
+
+                <div class="col-start-2 row-start-1 flex shrink-0 items-center justify-end gap-3 sm:gap-4">
                         @auth
                             @php $unreadCount = auth()->user()->unreadNotifications()->count(); @endphp
                             <div x-data="{ open: false, unreadCount: {{ $unreadCount }} }"

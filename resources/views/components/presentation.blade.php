@@ -42,8 +42,8 @@
     </p>
 
     <div @class([
-        'text-[#657786] space-y-0',
-        'mt-3 text-base' => $isCard,
+        'flex w-full flex-col items-center text-center text-[#657786]',
+        'mt-3 text-base space-y-0' => $isCard,
         'mt-3 text-base space-y-1' => ! $isCard,
     ])>
         @if($showProfileLink && $lienProfil)
@@ -54,7 +54,7 @@
         @endif
 
         @if($showProfileLink && $showSpeechLink && $lienProfil && $lienDiscours)
-            <hr class="w-1/2 border-gray-200">
+            <hr class="w-1/2 mx-auto border-gray-200">
         @endif
 
         @if($showSpeechLink && $lienDiscours)
