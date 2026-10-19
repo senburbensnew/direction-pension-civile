@@ -7,14 +7,17 @@
     $demandeCompte = $user?->demandeCreationCompte;
 
     $corbeilleRoles = \Database\Seeders\RolesAndPermissionsSeeder::internalRoles();
-    $showCorbeille = $user && $user->hasAnyRole($corbeilleRoles);
-    $showPersonal = $hasPortal || $user?->hasAnyRole(['fonctionnaire', 'institution']);
+    $showCorbeille = $user?->canSeePortalNavCorbeille() ?? false;
+    $showPersonal = ($user?->canSeePortalNavMesDemandes() ?? false) && ! $isProvisionnel;
+    $showCodesPension = $user
+        && ! $isProvisionnel
+        && ($user->hasCategory('pensionne') || $user->hasRole('pensionne'));
     $rencontreMotifs = $user
         ? app(\App\Services\RencontreMotifService::class)->motifsForUser($user)
         : [];
     $showRencontreCreate = $rencontreMotifs !== [];
 
-    $sidebarHome = ($showPersonal && ! $isProvisionnel)
+    $sidebarHome = $showPersonal
         ? route('personal.dashboard')
         : ($showCorbeille ? route('personal.cart') : route('home'));
 @endphp
@@ -45,7 +48,7 @@
 </div>
 
 <nav class="flex-1 overflow-y-auto overflow-x-hidden py-2 px-1.5 space-y-0.5">
-    @if($showPersonal && ! $isProvisionnel)
+    @if($showPersonal)
         <a href="{{ route('personal.dashboard') }}" title="Mes demandes"
            class="{{ $portalNavLink(request()->routeIs('personal.dashboard', 'personal.requests-dashboard', 'personal.index') ? 'active' : '') }}">
             <i class="fas fa-folder-open"></i>
@@ -77,22 +80,12 @@
         </a>
     @endif
 
-    @if($hasPortal && ! $isProvisionnel)
+    @if($showCodesPension)
         <a href="{{ route('compte.affiliations.index') }}" title="Mes codes pension"
            class="{{ $portalNavLink(request()->routeIs('compte.affiliations.*') ? 'active' : '') }}">
             <i class="fas fa-id-card"></i>
             <span class="{{ $portalNavLabel }}">Codes pension</span>
         </a>
-        <!-- <a href="{{ route('compte.beneficiaires.index') }}" title="Mes bénéficiaires"
-           class="{{ $portalNavLink(request()->routeIs('compte.beneficiaires.*', 'compte.relations.*') ? 'active' : '') }}">
-            <i class="fas fa-users"></i>
-            <span class="{{ $portalNavLabel }}">Bénéficiaires</span>
-        </a>
-        <a href="{{ route('compte.mandats.index') }}" title="Mes mandats"
-           class="{{ $portalNavLink(request()->routeIs('compte.mandats.*') ? 'active' : '') }}">
-            <i class="fas fa-file-signature"></i>
-            <span class="{{ $portalNavLabel }}">Mandats</span>
-        </a> -->
     @endif
 
     @role(['validateur_rdv', 'responsable_service_accueil_formalites', 'directeur', 'assistant_directeur'])
@@ -111,21 +104,21 @@
         </a>
     @endrole
 
-    @role(\App\Models\User::ROLE_AGENT_FORMALITES)
+    @if($user?->canSeePortalNavFormalitesComptes())
         <a href="{{ route('formalites.comptes-demandes.index') }}" title="Demandes de compte"
            class="{{ $portalNavLink(request()->routeIs('formalites.comptes-demandes.*') ? 'active' : '') }}">
             <i class="fas fa-user-check"></i>
             <span class="{{ $portalNavLabel }}">Comptes (form.)</span>
         </a>
-    @endrole
+    @endif
 
-    @role(['responsable_service_accueil_formalites', \App\Models\User::ROLE_VALIDATEUR_RDV, \App\Models\User::ROLE_AGENT_FORMALITES, 'admin', \App\Models\User::ROLE_DIRECTEUR, \App\Models\User::ROLE_ASSISTANT_DIRECTEUR])
+    @if($user?->canSeePortalNavFormalitesSuivi())
         <a href="{{ route('formalites.suivi.index') }}" title="Suivi formalités"
            class="{{ $portalNavLink(request()->routeIs('formalites.suivi.*') ? 'active' : '') }}">
             <i class="fas fa-clipboard-check"></i>
             <span class="{{ $portalNavLabel }}">Suivi formalités</span>
         </a>
-    @endrole
+    @endif
 
     <!-- @if(auth()->user()?->can('pension_mandats.view') || auth()->user()?->can('beneficiaire_relations.view'))
         <a href="{{ route('formalites.representations.index') }}" title="Mandats et relations"

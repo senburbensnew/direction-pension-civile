@@ -36,12 +36,44 @@
         </a>
     </div>
 
-    {{-- Flash success --}}
     @include('admin.sessions._user-panel', [
         'user' => $user,
         'sessions' => $userActiveSessions,
         'manageable' => $sessionsManageable,
     ])
+
+    @include('admin.sessions._connection-trace', [
+        'user' => $user,
+        'timeline' => $connectionTimeline,
+    ])
+
+    @if(auth()->id() !== $user->id && filled($user->email))
+        <div class="bg-white rounded-xl border border-amber-200 shadow-sm overflow-hidden">
+            <div class="px-5 py-3 border-b border-amber-100 flex items-center gap-2 bg-amber-50">
+                <i class="fas fa-key text-amber-600 text-sm w-4 text-center"></i>
+                <span class="text-xs font-semibold text-amber-900 uppercase tracking-wider">Mot de passe oublié</span>
+            </div>
+            <div class="p-5 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                <p class="text-sm text-gray-600 max-w-2xl">
+                    Générer un mot de passe temporaire, l’envoyer à <span class="font-medium text-gray-800">{{ $user->email }}</span>
+                    et obliger l’utilisateur à le changer à la prochaine connexion. Ses sessions actives seront fermées.
+                </p>
+                <form
+                    action="{{ route('admin.users.reset-password', $user) }}"
+                    method="POST"
+                    onsubmit="return confirm('Confirmer la réinitialisation et l’envoi du mot de passe par e-mail ?');"
+                    class="flex-shrink-0"
+                >
+                    @csrf
+                    <button type="submit"
+                        class="inline-flex items-center gap-2 px-4 py-2 bg-amber-600 hover:bg-amber-700 text-white text-sm font-medium rounded-lg transition-colors">
+                        <i class="fas fa-envelope text-xs"></i>
+                        Réinitialiser et envoyer par e-mail
+                    </button>
+                </form>
+            </div>
+        </div>
+    @endif
 
     {{-- Validation errors --}}
     @if($errors->any())
@@ -65,41 +97,8 @@
                 <i class="fas fa-user text-indigo-500 text-sm w-4 text-center"></i>
                 <span class="text-xs font-semibold text-gray-600 uppercase tracking-wider">Identité</span>
             </div>
-            <div class="p-5 grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div>
-                    <label class="block text-xs font-medium text-gray-600 mb-1">Prénom</label>
-                    <input type="text" name="firstname" value="{{ old('firstname', $user->firstname) }}"
-                        class="{{ $field('firstname') }}" placeholder="Jean">
-                    @error('firstname')<p class="text-red-500 text-xs mt-1">{{ $message }}</p>@enderror
-                </div>
-                <div>
-                    <label class="block text-xs font-medium text-gray-600 mb-1">Nom de famille</label>
-                    <input type="text" name="lastname" value="{{ old('lastname', $user->lastname) }}"
-                        class="{{ $field('lastname') }}" placeholder="Dupont">
-                    @error('lastname')<p class="text-red-500 text-xs mt-1">{{ $message }}</p>@enderror
-                </div>
-                <div>
-                    <label class="block text-xs font-medium text-gray-600 mb-1">
-                        Nom d'affichage <span class="text-red-500">*</span>
-                    </label>
-                    <input type="text" name="name" value="{{ old('name', $user->name) }}" required
-                        class="{{ $field('name') }}">
-                    @error('name')<p class="text-red-500 text-xs mt-1">{{ $message }}</p>@enderror
-                </div>
-                <div>
-                    <label class="block text-xs font-medium text-gray-600 mb-1">Sexe</label>
-                    <select name="gender_id" class="{{ $field('gender_id') }}">
-                        <option value="">— Sélectionner —</option>
-                        @foreach($genders as $gender)
-                            <option value="{{ $gender->id }}"
-                                {{ (string) old('gender_id', $user->gender_id) === (string) $gender->id ? 'selected' : '' }}>
-                                {{ $gender->name }}
-                            </option>
-                        @endforeach
-                    </select>
-                    @error('gender_id')<p class="text-red-500 text-xs mt-1">{{ $message }}</p>@enderror
-                </div>
-            </div>
+            @php($identityUser = $user)
+            @include('admin.users._identity-grid')
         </div>
 
         {{-- Contact & Accès --}}
@@ -128,6 +127,7 @@
                         name="phone"
                         :value="$user->phone"
                         label="Téléphone"
+                        :required="true"
                         label-class="block text-xs font-medium text-gray-600 mb-1"
                         hint-class="text-xs text-gray-500 mt-1"
                         error-class="text-red-500 text-xs mt-1"
@@ -160,52 +160,51 @@
                 <i class="fas fa-sliders-h text-indigo-500 text-sm w-4 text-center"></i>
                 <span class="text-xs font-semibold text-gray-600 uppercase tracking-wider">Profil système</span>
             </div>
-            <div class="p-5 grid grid-cols-1 sm:grid-cols-2 gap-4">
-                @php
-                    $assignedCategories = old('category_codes', $user->categoryAssignments->pluck('user_category_code')->all());
-                    $primaryCategory = old('primary_category', $user->categoryAssignments->firstWhere('is_primary', true)?->user_category_code);
-                @endphp
-                <div class="sm:col-span-2">
-                    <label class="block text-xs font-medium text-gray-600 mb-2">Catégories de compte</label>
-                    <div class="flex flex-wrap gap-3">
-                        @foreach($categories as $category)
-                            <label class="inline-flex items-center gap-2 text-sm text-gray-700">
-                                <input type="checkbox" name="category_codes[]" value="{{ $category->code }}"
-                                    {{ in_array($category->code, $assignedCategories, true) ? 'checked' : '' }}
-                                    class="rounded border-gray-300 text-indigo-600 focus:ring-indigo-400">
-                                {{ $category->label }}
-                            </label>
-                        @endforeach
-                    </div>
-                    @error('category_codes')<p class="text-red-500 text-xs mt-1">{{ $message }}</p>@enderror
-                </div>
+            <div
+                class="p-5 grid grid-cols-1 sm:grid-cols-2 gap-4"
+                x-data="{ accountType: @js($accountCategory ?? '') }"
+            >
                 <div>
-                    <label class="block text-xs font-medium text-gray-600 mb-1">Catégorie principale</label>
-                    <select name="primary_category" class="{{ $field('primary_category') }}">
-                        <option value="">— Automatique —</option>
+                    <label class="block text-xs font-medium text-gray-600 mb-1">Type de compte</label>
+                    <select name="primary_category" x-model="accountType" class="{{ $field('primary_category') }}">
+                        <option value="">— Déduire des rôles et du service —</option>
                         @foreach($categories as $category)
-                            <option value="{{ $category->code }}" {{ $primaryCategory === $category->code ? 'selected' : '' }}>
+                            <option value="{{ $category->code }}" {{ $accountCategory === $category->code ? 'selected' : '' }}>
                                 {{ $category->label }}
                             </option>
                         @endforeach
                     </select>
+                    <p class="text-xs text-gray-500 mt-1">Un seul type parmi Pensionné, Fonctionnaire, etc. Les droits viennent des rôles (plusieurs possibles).</p>
                     @error('primary_category')<p class="text-red-500 text-xs mt-1">{{ $message }}</p>@enderror
                 </div>
-                <div>
-                    <label class="block text-xs font-medium text-gray-600 mb-1">Institution (compte unique)</label>
-                    <select name="institution_id" class="{{ $field('institution_id') }}">
-                        <option value="">— Aucune —</option>
+                <div x-show="accountType === 'institution'" x-cloak x-transition>
+                    <label class="block text-xs font-medium text-gray-600 mb-1">
+                        Institution rattachée <span class="text-red-500">*</span>
+                    </label>
+                    <select
+                        name="institution_id"
+                        x-ref="institutionSelect"
+                        :disabled="accountType !== 'institution'"
+                        :required="accountType === 'institution'"
+                        class="{{ $field('institution_id') }}"
+                    >
+                        <option value="">— Choisir une institution —</option>
                         @foreach($institutions as $institution)
                             <option value="{{ $institution->id }}" {{ (string) old('institution_id', $user->institution_id) === (string) $institution->id ? 'selected' : '' }}>
                                 {{ $institution->raison_sociale }}
                             </option>
                         @endforeach
                     </select>
+                    <p class="text-xs text-gray-500 mt-1">Un compte institution est lié à une seule institution.</p>
                     @error('institution_id')<p class="text-red-500 text-xs mt-1">{{ $message }}</p>@enderror
                 </div>
-                <div>
+                <div x-show="accountType === 'personnel_dpc' || accountType === ''" x-cloak x-transition>
                     <label class="block text-xs font-medium text-gray-600 mb-1">Service</label>
-                    <select name="service_id" class="{{ $field('service_id') }}">
+                    <select
+                        name="service_id"
+                        :disabled="accountType !== 'personnel_dpc' && accountType !== ''"
+                        class="{{ $field('service_id') }}"
+                    >
                         <option value="">— Aucun service —</option>
                         @foreach(\App\Models\Service::orderBy('nom')->get() as $service)
                             <option value="{{ $service->id }}" {{ old('service_id', $user->service_id) == $service->id ? 'selected' : '' }}>
@@ -215,57 +214,36 @@
                     </select>
                     @error('service_id')<p class="text-red-500 text-xs mt-1">{{ $message }}</p>@enderror
                 </div>
-                <div>
-                    <label class="block text-xs font-medium text-gray-600 mb-1">Rôle</label>
-                    <select name="role" class="{{ $field('role') }}">
-                        <option value="">— Aucun rôle —</option>
-                        @foreach(\Spatie\Permission\Models\Role::orderBy('name')->get() as $role)
-                            <option value="{{ $role->name }}"
-                                {{ old('role', $user->roles->first()?->name) === $role->name ? 'selected' : '' }}>
-                                {{ ucfirst(str_replace('_', ' ', $role->name)) }}
-                            </option>
-                        @endforeach
-                    </select>
-                    @error('role')<p class="text-red-500 text-xs mt-1">{{ $message }}</p>@enderror
-                </div>
-                <div>
-                    <label class="block text-xs font-medium text-gray-600 mb-1">Code pension</label>
-                    <input type="text" name="pension_code" value="{{ old('pension_code', $user->displayPensionCode()) }}"
-                        class="{{ $field('pension_code') }}" placeholder="Ex : PEN-00001">
-                    @error('pension_code')<p class="text-red-500 text-xs mt-1">{{ $message }}</p>@enderror
-                </div>
+                <x-form.dual-listbox
+                    name="roles[]"
+                    label="Rôles"
+                    available-title="Rôles disponibles"
+                    selected-title="Rôles attribués à l'utilisateur"
+                    hint="Sélectionnez un ou plusieurs rôles à gauche, puis utilisez les flèches pour les attribuer."
+                    :options="$roleOptions"
+                    :selected="$assignedRoles"
+                />
                 <div>
                     <label class="block text-xs font-medium text-gray-600 mb-1">NIF</label>
                     <input type="text" name="nif" value="{{ old('nif', $user->nif) }}"
-                        class="{{ $field('nif') }}" placeholder="Numéro d'identification fiscale">
+                        class="{{ $field('nif') }}" placeholder="123-456-789-0"
+                        pattern="\d{3}-\d{3}-\d{3}-\d{1}" title="Format 000-000-000-0">
+                    <p class="text-xs text-gray-400 mt-1">Format : 000-000-000-0</p>
                     @error('nif')<p class="text-red-500 text-xs mt-1">{{ $message }}</p>@enderror
                 </div>
                 <div>
                     <label class="block text-xs font-medium text-gray-600 mb-1">NINU</label>
                     <input type="text" name="ninu" value="{{ old('ninu', $user->ninu) }}"
-                        class="{{ $field('ninu') }}" placeholder="Numéro d'identification nationale unique">
+                        class="{{ $field('ninu') }}" placeholder="1148519577"
+                        pattern="\d{10}" inputmode="numeric" title="10 chiffres, sans tiret">
+                    <p class="text-xs text-gray-400 mt-1">10 chiffres, sans tiret.</p>
                     @error('ninu')<p class="text-red-500 text-xs mt-1">{{ $message }}</p>@enderror
                 </div>
             </div>
         </div>
 
         {{-- Actions --}}
-        <div class="flex items-center justify-between">
-            {{-- Delete button --}}
-            @if($user->id !== auth()->id())
-                <form action="{{ route('admin.users.destroy', $user) }}" method="POST"
-                    onsubmit="return confirm('Supprimer {{ addslashes($user->name) }} ? Cette action est irréversible.')">
-                    @csrf
-                    @method('DELETE')
-                    <button type="submit"
-                        class="inline-flex items-center gap-1.5 px-4 py-2 text-sm text-red-600 bg-red-50 border border-red-200 rounded-lg hover:bg-red-100 transition-colors">
-                        <i class="fas fa-trash text-xs"></i> Supprimer ce compte
-                    </button>
-                </form>
-            @else
-                <div></div>
-            @endif
-
+        <div class="flex items-center justify-end">
             <div class="flex items-center gap-3">
                 <a href="{{ route('admin.users.index') }}"
                     class="px-4 py-2 text-sm text-gray-600 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors">
@@ -279,82 +257,5 @@
         </div>
 
     </form>
-
-    {{-- Liens bénéficiaire (représentant / mandataire) --}}
-    <div class="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
-        <div class="px-5 py-3 border-b border-gray-100 flex items-center gap-2 bg-gray-50">
-            <i class="fas fa-link text-indigo-500 text-sm w-4 text-center"></i>
-            <span class="text-xs font-semibold text-gray-600 uppercase tracking-wider">Liens pension (bénéficiaires)</span>
-        </div>
-        <div class="p-5 space-y-4">
-            <p class="text-xs text-gray-500">
-                Accès au portail pension sans catégorie « pensionné » : représentant légal ou mandataire rattaché à un dossier.
-            </p>
-
-            @if($user->beneficiaireLinks->isNotEmpty())
-                <ul class="divide-y divide-gray-100 border border-gray-100 rounded-lg">
-                    @foreach($user->beneficiaireLinks as $link)
-                        @php
-                            $codes = $link->beneficiaire?->affiliations?->pluck('code_pension')->filter()->unique()->join(', ') ?: '—';
-                        @endphp
-                        <li class="flex items-center justify-between gap-3 px-4 py-3 text-sm">
-                            <div>
-                                <span class="font-medium text-gray-800">
-                                    {{ $link->relation?->label() ?? '—' }}
-                                </span>
-                                <span class="text-gray-500"> — Bénéficiaire #{{ $link->beneficiaire_id }}</span>
-                                <span class="block text-xs text-gray-400">Codes : {{ $codes }}</span>
-                            </div>
-                            <form action="{{ route('admin.users.beneficiaire-links.destroy', [$user, $link]) }}" method="POST"
-                                onsubmit="return confirm('Retirer ce lien ?')">
-                                @csrf
-                                @method('DELETE')
-                                <button type="submit" class="text-xs text-red-600 hover:text-red-800">Retirer</button>
-                            </form>
-                        </li>
-                    @endforeach
-                </ul>
-            @else
-                <p class="text-sm text-gray-400 italic">Aucun lien enregistré.</p>
-            @endif
-
-            <form action="{{ route('admin.users.beneficiaire-links.store', $user) }}" method="POST" class="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2 border-t border-gray-100">
-                @csrf
-                <div class="sm:col-span-2">
-                    <label class="block text-xs font-medium text-gray-600 mb-1">Bénéficiaire</label>
-                    <select name="beneficiaire_id" class="{{ $field('beneficiaire_id') }}" required>
-                        <option value="">— Choisir —</option>
-                        @foreach($beneficiaires as $b)
-                            @php
-                                $labelCodes = $b->affiliations->pluck('code_pension')->filter()->unique()->join(', ') ?: 'sans code';
-                                $labelName = $b->displayName() ?: 'Sans nom';
-                            @endphp
-                            <option value="{{ $b->id }}" @selected(old('beneficiaire_id') == $b->id)>
-                                #{{ $b->id }} — {{ $labelName }} ({{ $labelCodes }})
-                            </option>
-                        @endforeach
-                    </select>
-                    @error('beneficiaire_id')<p class="text-red-500 text-xs mt-1">{{ $message }}</p>@enderror
-                </div>
-                <div>
-                    <label class="block text-xs font-medium text-gray-600 mb-1">Relation</label>
-                    <select name="relation" class="{{ $field('relation') }}" required>
-                        @foreach(\App\Enums\BeneficiaireRelationEnum::cases() as $rel)
-                            @if($rel !== \App\Enums\BeneficiaireRelationEnum::SELF)
-                                <option value="{{ $rel->value }}" @selected(old('relation') === $rel->value)>{{ $rel->label() }}</option>
-                            @endif
-                        @endforeach
-                    </select>
-                    @error('relation')<p class="text-red-500 text-xs mt-1">{{ $message }}</p>@enderror
-                </div>
-                <div class="flex items-end">
-                    <button type="submit"
-                        class="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium rounded-lg transition-colors">
-                        <i class="fas fa-plus text-xs"></i> Ajouter le lien
-                    </button>
-                </div>
-            </form>
-        </div>
-    </div>
 </div>
 @endsection

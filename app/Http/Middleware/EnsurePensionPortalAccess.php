@@ -18,9 +18,8 @@ class EnsurePensionPortalAccess
 
         $motifs = app(RencontreMotifService::class);
 
-        if (! $user?->hasPensionPortalAccess()
-            && ! $motifs->userHasPendingDemandeCreationCompte($user)) {
-            abort(403, 'Accès réservé aux usagers du portail pension.');
+        if (! $motifs->userCanBookPortalRencontre($user)) {
+            abort(403, 'Accès réservé aux pensionnés, mandataires et représentants légaux.');
         }
 
         return $next($request);

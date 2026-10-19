@@ -11,14 +11,15 @@ return new class extends Migration
      */
     public function up()
     {
+        if (! Schema::hasColumn('users', 'user_type')) {
+            return;
+        }
+
         Schema::table('users', function (Blueprint $table) {
-            // Supprimer la colonne `user_type` existante
             $table->dropColumn('user_type');
-            
-            // Ajouter la colonne `user_type_id` comme clé étrangère
+
             $table->unsignedBigInteger('user_type_id')->nullable();
 
-            // Ajouter la contrainte de clé étrangère pointant vers `user_types`
             $table->foreign('user_type_id')->references('id')->on('user_types')->onDelete('restrict');
         });
     }
@@ -28,8 +29,11 @@ return new class extends Migration
      */
     public function down()
     {
+        if (! Schema::hasColumn('users', 'user_type_id')) {
+            return;
+        }
+
         Schema::table('users', function (Blueprint $table) {
-            // Revert the changes if needed
             $table->dropForeign(['user_type_id']);
             $table->dropColumn('user_type_id');
         });

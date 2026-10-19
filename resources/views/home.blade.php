@@ -26,32 +26,37 @@
             <x-carousel>
                 <div class="swiper-slide">
                     <div class="hero-accueil w-full h-full grid grid-cols-1 md:grid-cols-2 items-center">
-                        <div class="px-14 sm:px-16 lg:px-20 py-8">
-                            <p class="text-xs font-bold uppercase tracking-[0.18em] text-navy/70">Direction de la Pension Civile</p>
-                            <h1 class="mt-2 text-4xl md:text-5xl font-bold text-navy tracking-tight">
+                        <div class="hero-accueil-copy w-full px-4 pr-12 sm:px-10 sm:pr-10 md:px-14 lg:px-20 py-6 sm:py-8">
+                            <p class="text-xs font-bold uppercase tracking-[0.18em] text-navy/80">Direction de la Pension Civile</p>
+                            <h1 class="mt-2 text-3xl sm:text-4xl md:text-5xl font-bold text-navy tracking-tight">
                                 {{ __('home.hero_title') }}
                             </h1>
-                            <p class="mt-3 text-xl md:text-2xl font-semibold text-orange-500">
+                            <p class="mt-2 sm:mt-3 text-lg sm:text-xl md:text-2xl font-semibold text-orange-600">
                                 {{ __('home.hero_tagline') }}
                             </p>
-                            <p class="mt-4 text-navy/80 text-base md:text-lg max-w-md leading-relaxed">
+                            <p class="mt-3 sm:mt-4 text-navy/90 text-base md:text-lg max-w-md leading-relaxed">
                                 {{ __('home.hero_body') }}
                             </p>
-                            <div class="mt-6 flex flex-wrap gap-3">
+                            <div class="mt-5 sm:mt-6 flex flex-col sm:flex-row flex-wrap gap-3 max-w-md">
                                 <a href="{{ route('simulateur-calcul') }}"
-                                class="inline-flex items-center justify-center px-6 py-3 bg-orange-500 hover:bg-orange-600 text-white font-semibold text-base rounded-full shadow-lg shadow-orange-500/25 transition-colors">
+                                class="inline-flex w-full sm:w-auto items-center justify-center px-6 py-3.5 bg-orange-500 hover:bg-orange-600 text-white font-semibold text-base rounded-full shadow-lg shadow-orange-500/30 transition-colors">
                                     {{ __('home.hero_cta_calcul') }}
                                 </a>
 
-                                {{-- NOUVEAU : bouton Prendre rendez-vous --}}
-                                <a href="{{ route('demandes.rencontre.create') }}"
-                                class="inline-flex items-center gap-2 px-6 py-3 bg-navy hover:bg-navy/90 text-white font-semibold text-base rounded-full shadow-lg shadow-navy/25 transition-colors">
-                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                            d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
-                                    </svg>
-                                    Prendre rendez-vous
-                                </a>
+                                @php
+                                    $canBookRencontre = ! auth()->check()
+                                        || app(\App\Services\RencontreMotifService::class)->userCanBookPortalRencontre(auth()->user());
+                                @endphp
+                                @if($canBookRencontre)
+                                    <a href="{{ route('demandes.rencontre.create') }}"
+                                    class="inline-flex w-full sm:w-auto items-center justify-center gap-2 px-6 py-3.5 bg-navy hover:bg-navy/90 text-white font-semibold text-base rounded-full shadow-lg shadow-navy/30 transition-colors">
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                                        </svg>
+                                        Prendre rendez-vous
+                                    </a>
+                                @endif
                             </div>
                         </div>
                         <div class="relative hidden md:block h-full">
@@ -167,23 +172,23 @@
             $videoEmbed = ! $videoSrc ? $videoItem?->embedUrl() : null;
         @endphp
         <section class="bg-white">
-            <div class="relative z-10 -mt-6 md:-mt-8">
+            <div class="relative z-20 -mt-2 sm:-mt-6 md:-mt-8">
                 <div class="site-gutter">
                     <p class="sr-only">{{ __('home.essentials_title') }}</p>
-                    <div class="grid sm:grid-cols-2 xl:grid-cols-4 gap-4">
+                    <div class="grid grid-cols-1 min-[480px]:grid-cols-2 xl:grid-cols-4 gap-3 sm:gap-4">
                         @foreach([
                             ['href' => route('simulateur-calcul'), 'icon' => 'fa-calculator', 'title' => 'home.quick_sim_title', 'desc' => 'home.quick_sim_desc'],
                             ['href' => '#guide-pensionne', 'icon' => 'fa-book-open', 'title' => 'home.quick_guide_title', 'desc' => 'home.quick_guide_desc'],
                             ['href' => route('contact'), 'icon' => 'fa-envelope', 'title' => 'home.quick_contact_title', 'desc' => 'home.quick_contact_desc'],
                             ['href' => '#nos-services', 'icon' => 'fa-building-columns', 'title' => 'home.quick_services_title', 'desc' => 'home.quick_services_desc'],
                         ] as $quick)
-                            <a href="{{ $quick['href'] }}" class="home-card home-card-hover p-5 md:p-6 flex items-start gap-4">
-                                <span class="w-12 h-12 rounded-xl bg-navy text-white flex items-center justify-center shrink-0 text-lg">
+                            <a href="{{ $quick['href'] }}" class="home-card home-card-hover home-quick-card p-4 sm:p-5 md:p-6 flex items-start gap-3 sm:gap-4 bg-white">
+                                <span class="w-11 h-11 sm:w-12 sm:h-12 rounded-xl bg-navy text-white flex items-center justify-center shrink-0 text-base sm:text-lg">
                                     <i class="fas {{ $quick['icon'] }}"></i>
                                 </span>
-                                <span>
-                                    <span class="block font-bold text-navy text-lg leading-snug">{{ __($quick['title']) }}</span>
-                                    <span class="block text-base text-gray-600 mt-1 leading-relaxed">{{ __($quick['desc']) }}</span>
+                                <span class="min-w-0">
+                                    <span class="block font-bold text-navy text-base sm:text-lg leading-snug">{{ __($quick['title']) }}</span>
+                                    <span class="block text-sm sm:text-base text-gray-700 mt-0.5 sm:mt-1 leading-relaxed">{{ __($quick['desc']) }}</span>
                                 </span>
                             </a>
                         @endforeach

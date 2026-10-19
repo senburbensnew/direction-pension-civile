@@ -25,9 +25,9 @@ class ProvisionalAccountProfileService
             if ($mandataireIsAlsoPensionne) {
                 Role::findOrCreate('pensionne', 'web');
                 $user->assignRole('pensionne');
-                $sync->syncCategories($user, ['externe', 'pensionne'], 'pensionne');
+                $sync->syncSingleCategory($user, 'pensionne', syncRoles: false);
             } else {
-                $sync->assignCategory($user, 'externe', primary: true, syncRoles: false);
+                $sync->syncSingleCategory($user, 'externe', syncRoles: false);
             }
 
             return;
@@ -36,7 +36,7 @@ class ProvisionalAccountProfileService
         if (! $isMinorRepresentativeAccount) {
             Role::findOrCreate('pensionne', 'web');
             $user->assignRole('pensionne');
-            $sync->assignCategory($user, 'pensionne', primary: true, syncRoles: false);
+            $sync->syncSingleCategory($user, 'pensionne', syncRoles: false);
 
             return;
         }
@@ -44,11 +44,11 @@ class ProvisionalAccountProfileService
         if ($representativeIsAlsoPensionne) {
             Role::findOrCreate('pensionne', 'web');
             $user->assignRole('pensionne');
-            $sync->syncCategories($user, ['externe', 'pensionne'], 'pensionne');
+            $sync->syncSingleCategory($user, 'pensionne', syncRoles: false);
 
             return;
         }
 
-        $sync->assignCategory($user, 'externe', primary: true, syncRoles: false);
+        $sync->syncSingleCategory($user, 'externe', syncRoles: false);
     }
 }

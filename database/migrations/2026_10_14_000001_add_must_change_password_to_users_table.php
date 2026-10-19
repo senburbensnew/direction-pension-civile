@@ -8,6 +8,10 @@ return new class extends Migration
 {
     public function up(): void
     {
+        if (Schema::hasColumn('users', 'must_change_password')) {
+            return;
+        }
+
         Schema::table('users', function (Blueprint $table) {
             $table->boolean('must_change_password')->default(false)->after('password');
         });

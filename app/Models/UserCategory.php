@@ -7,6 +7,28 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class UserCategory extends Model
 {
+    /** @return list<string> */
+    public static function configuredCodes(): array
+    {
+        return array_keys(config('account_categories.categories', []));
+    }
+
+    public static function isConfiguredCode(string $code): bool
+    {
+        return array_key_exists($code, config('account_categories.categories', []));
+    }
+
+    /**
+     * Catégories métier (référentiel config), pour formulaires admin.
+     */
+    public static function orderedForAdmin(): \Illuminate\Database\Eloquent\Collection
+    {
+        return static::query()
+            ->whereIn('code', static::configuredCodes())
+            ->orderBy('label')
+            ->get();
+    }
+
     public $incrementing = false;
 
     protected $primaryKey = 'code';

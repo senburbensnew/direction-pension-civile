@@ -2,6 +2,9 @@
     $manageable = $manageable ?? true;
     $sessions = $sessions ?? collect();
     $currentSessionId = session()->getId();
+    $sessionCount = $sessions->count();
+    $showDisconnectAll = $manageable && $sessionCount > 0 && ! $user->is(auth()->user());
+    $showPerSessionTerminate = $showDisconnectAll && $sessionCount > 1;
     $activeSessionService = app(\App\Services\Admin\ActiveSessionService::class);
     $loginStatistics = app(\App\Services\Admin\UserLoginStatisticsService::class);
 @endphp
@@ -19,7 +22,7 @@
                 </span>
             @endif
         </div>
-        @if($manageable && $sessions->count() > 0 && ! $user->is(auth()->user()))
+        @if($showDisconnectAll)
             <form method="POST"
                 action="{{ route('admin.sessions.destroy-user', $user) }}"
                 onsubmit="return confirm(@json(__('messages.admin_sessions.confirm_revoke_user')))">
@@ -65,7 +68,7 @@
                                 </span>
                             @endif
                         </div>
-                        @if(! $isCurrent)
+                        @if($showPerSessionTerminate && ! $isCurrent)
                             <form method="POST"
                                 action="{{ route('admin.sessions.destroy', $session['id']) }}"
                                 onsubmit="return confirm(@json(__('messages.admin_sessions.confirm_revoke_one')))">

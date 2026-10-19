@@ -56,7 +56,7 @@
     {{-- Prev button --}}
     <button
         @click="prev(); restartAuto()"
-        class="absolute left-3 top-1/2 -translate-y-1/2 z-20 bg-black/30 hover:bg-black/50 text-white rounded-full w-10 h-10 flex items-center justify-center transition-colors backdrop-blur-sm"
+        class="absolute left-2 sm:left-3 top-1/2 -translate-y-1/2 z-20 bg-navy/75 hover:bg-navy text-white rounded-full w-9 h-9 sm:w-10 sm:h-10 flex items-center justify-center transition-colors backdrop-blur-sm shadow-md"
         aria-label="Précédent"
     >
         <i class="fas fa-chevron-left text-sm"></i>
@@ -65,7 +65,7 @@
     {{-- Next button --}}
     <button
         @click="next(); restartAuto()"
-        class="absolute right-3 top-1/2 -translate-y-1/2 z-20 bg-black/30 hover:bg-black/50 text-white rounded-full w-10 h-10 flex items-center justify-center transition-colors backdrop-blur-sm"
+        class="absolute right-2 sm:right-3 top-1/2 -translate-y-1/2 z-20 bg-navy/75 hover:bg-navy text-white rounded-full w-9 h-9 sm:w-10 sm:h-10 flex items-center justify-center transition-colors backdrop-blur-sm shadow-md"
         aria-label="Suivant"
     >
         <i class="fas fa-chevron-right text-sm"></i>

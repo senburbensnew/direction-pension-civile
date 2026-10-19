@@ -350,6 +350,58 @@
                     </div>
                 @endif
             </div>
+
+            @if($sessionEndsAvailable ?? false)
+                <div class="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden mt-6">
+                    <div class="px-5 py-3 border-b border-gray-100">
+                        <h3 class="font-semibold text-gray-700 text-sm">{{ __('messages.admin_sessions.session_end_recent_title') }}</h3>
+                        <p class="text-xs text-gray-500 mt-0.5">{{ __('messages.admin_sessions.session_end_subtitle') }}</p>
+                    </div>
+                    @if(($recentSessionEnds ?? collect())->isEmpty())
+                        <p class="px-5 py-8 text-sm text-gray-500 text-center">{{ __('messages.admin_sessions.session_end_no_data') }}</p>
+                    @else
+                        <div class="overflow-x-auto">
+                            <table class="min-w-full text-sm">
+                                <thead class="bg-gray-50 text-gray-500">
+                                    <tr>
+                                        <th class="text-left font-medium px-5 py-2">{{ __('messages.admin_sessions.login_stats_col_user') }}</th>
+                                        <th class="text-left font-medium px-5 py-2">{{ __('messages.admin_sessions.connection_trace_col_event') }}</th>
+                                        <th class="text-left font-medium px-5 py-2">{{ __('messages.admin_sessions.col_ip') }}</th>
+                                        <th class="text-left font-medium px-5 py-2">{{ __('messages.admin_sessions.col_device') }}</th>
+                                        <th class="text-right font-medium px-5 py-2">{{ __('messages.admin_sessions.login_stats_col_when') }}</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="divide-y divide-gray-50">
+                                    @foreach($recentSessionEnds as $end)
+                                        <tr class="hover:bg-gray-50">
+                                            <td class="px-5 py-2">
+                                                @if($end->user)
+                                                    <p class="font-medium text-gray-800">{{ $end->user->name }}</p>
+                                                    <p class="text-xs text-gray-400">{{ $end->user->email }}</p>
+                                                @else
+                                                    <span class="text-gray-400">—</span>
+                                                @endif
+                                            </td>
+                                            <td class="px-5 py-2 text-gray-700 text-xs">
+                                                {{ $end->reason->label() }}
+                                                @if($end->initiatedBy)
+                                                    <span class="block text-gray-400">{{ __('messages.admin_sessions.connection_trace_by', ['name' => $end->initiatedBy->name]) }}</span>
+                                                @endif
+                                            </td>
+                                            <td class="px-5 py-2 font-mono text-xs text-gray-600">{{ filled($end->ip_address) ? $end->ip_address : '—' }}</td>
+                                            <td class="px-5 py-2 text-gray-600">{{ $activeSessionService->deviceLabel($end->user_agent) }}</td>
+                                            <td class="px-5 py-2 text-right text-gray-600 whitespace-nowrap">
+                                                {{ $end->ended_at->translatedFormat('d/m/Y H:i') }}
+                                                <span class="block text-xs text-gray-400">{{ $end->ended_at->diffForHumans() }}</span>
+                                            </td>
+                                        </tr>
+                                    @endforeach
+                                </tbody>
+                            </table>
+                        </div>
+                    @endif
+                </div>
+            @endif
         @endif
     </div>
 </div>

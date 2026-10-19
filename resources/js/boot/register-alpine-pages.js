@@ -36,6 +36,11 @@ export async function registerAlpinePageComponents() {
         registerPubAdmin(Alpine);
     }
 
+    if (document.querySelector('[data-dual-listbox]')) {
+        const { registerDualListbox } = await import('../admin/dual-listbox.js');
+        registerDualListbox(Alpine);
+    }
+
     if (document.querySelector('[data-contact-subjects-config]')) {
         const { registerContactSubjectsAdmin } = await import('../admin/contact-parameters-index.js');
         registerContactSubjectsAdmin(Alpine);

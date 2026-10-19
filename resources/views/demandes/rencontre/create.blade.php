@@ -239,6 +239,26 @@
 
                             </div>
 
+                            @php
+                                $rdvActifData = $rdvActif->data ?? [];
+                                $rdvActifDocs = $rdvActifData['documents_a_preparer'] ?? [];
+                                if ($rdvActifDocs === [] && ! empty($rdvActifData['motif_key'])) {
+                                    $rdvActifDocs = app(\App\Services\RencontreMotifService::class)->prepareHints(
+                                        (string) $rdvActifData['motif_key'],
+                                        (string) ($rdvActifData['modalite'] ?? 'visio')
+                                    );
+                                }
+                                $rdvActifPhysique = ($rdvActifData['modalite'] ?? 'visio') === 'physique';
+                            @endphp
+
+                            <div class="mt-4">
+                                @include('demandes.rencontre._documents-preparer-panel', [
+                                    'documents' => $rdvActifDocs,
+                                    'modeLabel' => $rdvActifPhysique ? 'présentiel' : 'visioconférence',
+                                    'panelId' => 'actif',
+                                ])
+                            </div>
+
 
                             {{-- Actions --}}
 

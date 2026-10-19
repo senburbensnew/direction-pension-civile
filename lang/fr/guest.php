@@ -40,6 +40,7 @@ return [
     'password_required' => [
         'title' => 'Changement de mot de passe requis',
         'intro' => 'Pour des raisons de sécurité, vous devez définir un nouveau mot de passe personnel avant de continuer.',
+        'current_password' => 'Mot de passe actuel',
         'new_password' => 'Nouveau mot de passe',
         'submit' => 'Enregistrer le mot de passe',
         'logout' => 'Se déconnecter',

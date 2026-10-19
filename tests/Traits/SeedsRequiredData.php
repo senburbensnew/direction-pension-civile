@@ -7,6 +7,7 @@ use App\Models\Demande;
 use App\Models\Service;
 use App\Models\User;
 use App\Models\WorkflowStep;
+use Database\Seeders\GendersSeeder;
 use Database\Seeders\RolesAndPermissionsSeeder;
 use Illuminate\Support\Facades\DB;
 
@@ -59,6 +60,16 @@ trait SeedsRequiredData
     protected function seedRoles(): void
     {
         $this->seed(RolesAndPermissionsSeeder::class);
+    }
+
+    protected function seedGenders(): void
+    {
+        $this->seed(GendersSeeder::class);
+    }
+
+    protected function defaultGenderId(): int
+    {
+        return (int) DB::table('genders')->orderBy('id')->value('id');
     }
 
     protected function createDemande(array $attributes = []): Demande

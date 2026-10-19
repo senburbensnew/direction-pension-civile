@@ -3,6 +3,7 @@
 namespace Database\Seeders;
 
 use App\Models\User;
+use App\Services\PortalNavService;
 use Illuminate\Database\Seeder;
 use Spatie\Permission\Models\Permission;
 use Spatie\Permission\Models\Role;
@@ -42,6 +43,7 @@ class RolesAndPermissionsSeeder extends Seeder
             'newsletter.manage_subscribers',
             'newsletter.manage_campaigns',
             'newsletter.send',
+            ...PortalNavService::permissionNames(),
         ];
     }
 
@@ -161,25 +163,58 @@ class RolesAndPermissionsSeeder extends Seeder
             'beneficiaire_relations.revoquer',
         ];
 
+        $nav = PortalNavService::defaultNavPermissionsByRole();
+
+        $adminNavHidden = [
+            'nav.mes_demandes',
+            'nav.corbeille',
+            'nav.beneficiaires_mandats',
+        ];
+
         return [
-            'admin' => $all,
-            'agent_formalites' => $formalites,
-            'responsable_service_accueil_formalites' => $formalites,
-            'pensionne' => [
-                'can_view_pensionne_section',
-                'can_view_pensionne_menu',
-                'can_view_dashboard',
-            ],
-            'fonctionnaire' => [
-                'can_view_fonctionnaire_section',
-                'can_view_fonctionnaire_menu',
-                'can_view_dashboard',
-            ],
-            'institution' => [
-                'can_view_institution_section',
-                'can_view_institution_menu',
-                'can_view_dashboard',
-            ],
+            'admin' => array_values(array_diff($all, $adminNavHidden)),
+            'agent_formalites' => array_values(array_unique(array_merge(
+                $formalites,
+                $nav['agent_formalites'] ?? []
+            ))),
+            'agent_rdv' => $nav['agent_rdv'] ?? [],
+            'responsable_service_accueil_formalites' => array_values(array_unique(array_merge(
+                $formalites,
+                $nav['responsable_service_accueil_formalites'] ?? []
+            ))),
+            'validateur_rdv' => $nav['validateur_rdv'] ?? [],
+            'directeur' => array_values(array_unique(array_merge(
+                $formalites,
+                $nav['directeur'] ?? []
+            ))),
+            'assistant_directeur' => array_values(array_unique(array_merge(
+                $formalites,
+                $nav['assistant_directeur'] ?? []
+            ))),
+            'pensionne' => array_values(array_unique(array_merge(
+                [
+                    'can_view_pensionne_section',
+                    'can_view_pensionne_menu',
+                    'can_view_dashboard',
+                ],
+                $nav['pensionne'] ?? []
+            ))),
+            'fonctionnaire' => array_values(array_unique(array_merge(
+                [
+                    'can_view_fonctionnaire_section',
+                    'can_view_fonctionnaire_menu',
+                    'can_view_dashboard',
+                ],
+                $nav['fonctionnaire'] ?? []
+            ))),
+            'institution' => array_values(array_unique(array_merge(
+                [
+                    'can_view_institution_section',
+                    'can_view_institution_menu',
+                    'can_view_dashboard',
+                ],
+                $nav['institution'] ?? []
+            ))),
         ];
     }
 

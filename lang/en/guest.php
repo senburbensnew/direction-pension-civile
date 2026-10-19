@@ -40,6 +40,7 @@ return [
     'password_required' => [
         'title' => 'Password change required',
         'intro' => 'For security, you must set a new personal password before continuing.',
+        'current_password' => 'Current password',
         'new_password' => 'New password',
         'submit' => 'Save password',
         'logout' => 'Sign out',

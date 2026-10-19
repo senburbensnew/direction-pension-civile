@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\ActualiteController;
 use App\Http\Controllers\Admin\ActiveSessionController;
+use App\Http\Controllers\Admin\EmailTestController;
 use App\Http\Controllers\Admin\NewsletterCampaignController;
 use App\Http\Controllers\Admin\NewsletterSubscriberController;
 use App\Http\Controllers\Admin\RdvSettingsController;
@@ -582,6 +583,16 @@ Route::prefix('admin')
             [OcrTestController::class, 'store']
         )->name('ocr.test.store');
 
+        Route::get(
+            '/email-test',
+            [EmailTestController::class, 'create']
+        )->name('email.test');
+
+        Route::post(
+            '/email-test',
+            [EmailTestController::class, 'store']
+        )->name('email.test.store');
+
         Route::post(
             '/toggle-maintenance',
             function () {
@@ -637,7 +648,7 @@ Route::prefix('admin')
         Route::resource(
             'users',
             UserController::class
-        );
+        )->except(['destroy']);
 
         Route::patch(
             'users/{user}/toggle-active',
@@ -646,6 +657,11 @@ Route::prefix('admin')
                 'toggleActive',
             ]
         )->name('users.toggle-active');
+
+        Route::post(
+            'users/{user}/reset-password',
+            [UserController::class, 'resetPassword']
+        )->name('users.reset-password');
 
         Route::get(
             'sessions',
@@ -661,16 +677,6 @@ Route::prefix('admin')
             'sessions/user/{user}',
             [ActiveSessionController::class, 'destroyUser']
         )->name('sessions.destroy-user');
-
-        Route::post(
-            'users/{user}/beneficiaire-links',
-            [UserController::class, 'storeBeneficiaireLink']
-        )->name('users.beneficiaire-links.store');
-
-        Route::delete(
-            'users/{user}/beneficiaire-links/{beneficiaireLink}',
-            [UserController::class, 'destroyBeneficiaireLink']
-        )->name('users.beneficiaire-links.destroy');
 
         /*
         |--------------------------------------------------------------------------

@@ -1,36 +1,25 @@
 <?php
 
 use Illuminate\Database\Migrations\Migration;
-use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
 class AddUserTypeAndNifToUsersTable extends Migration
 {
     /**
-     * Run the migrations.
+     * Legacy migration: user_type and nif are added elsewhere in the current schema.
      *
      * @return void
      */
     public function up()
     {
-        Schema::table('users', function (Blueprint $table) {
-            // Add user_type as an enum with the new values
-            $table->enum('user_type', ['institution', 'fonctionnaire', 'pensionne'])->default('pensionne');
-            // Add NIF as non-nullable
-            $table->string('nif')->nullable()->unique();
-        });
+        // No-op for fresh installs (nif is added in 2025_03_30; user_type was removed).
     }
 
     /**
-     * Reverse the migrations.
-     *
      * @return void
      */
     public function down()
     {
-        Schema::table('users', function (Blueprint $table) {
-            // Drop the columns if rolling back
-            $table->dropColumn(['user_type', 'nif']);
-        });
+        // No-op.
     }
 }

@@ -37,45 +37,30 @@
             </button>
         </form>
 
-        <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
-            <a href="{{ route('formalites.suivi.index', ['filtre' => 'remplies', 'annee_fiscale_id' => $anneeFiscaleId]) }}"
-               class="dossier-stat border-l-4 border-l-emerald-600 hover:border-emerald-700 transition-colors {{ $filtre === 'remplies' ? 'ring-2 ring-emerald-600/30' : '' }}">
-                <p class="dossier-stat__label">Remplies ({{ $anneeLabel }})</p>
-                <p class="dossier-stat__value text-2xl">{{ $stats['remplies'] }}</p>
-            </a>
-            <a href="{{ route('formalites.suivi.index', ['filtre' => 'en_attente', 'annee_fiscale_id' => $anneeFiscaleId]) }}"
-               class="dossier-stat border-l-4 border-l-amber-500 hover:border-amber-600 transition-colors {{ $filtre === 'en_attente' ? 'ring-2 ring-amber-500/30' : '' }}">
-                <p class="dossier-stat__label">En attente d’enregistrement</p>
-                <p class="dossier-stat__value text-2xl">{{ $stats['en_attente'] }}</p>
-            </a>
-            <a href="{{ route('formalites.suivi.index', ['filtre' => 'a_cloturer', 'annee_fiscale_id' => $anneeFiscaleId]) }}"
-               class="dossier-stat border-l-4 border-l-red-500 hover:border-red-600 transition-colors {{ $filtre === 'a_cloturer' ? 'ring-2 ring-red-500/30' : '' }}">
-                <p class="dossier-stat__label">RDV à clôturer</p>
-                <p class="dossier-stat__value text-2xl">{{ $stats['a_cloturer'] }}</p>
-            </a>
-            <a href="{{ route('formalites.suivi.index', ['filtre' => 'rdv_planifies', 'annee_fiscale_id' => $anneeFiscaleId]) }}"
-               class="dossier-stat border-l-4 border-l-[#173052] hover:border-[#1e3d6b] transition-colors {{ $filtre === 'rdv_planifies' ? 'ring-2 ring-[#173052]/20' : '' }}">
-                <p class="dossier-stat__label">RDV planifiés</p>
-                <p class="dossier-stat__value text-2xl">{{ $stats['rdv_planifies'] }}</p>
-            </a>
-        </div>
+        @php
+            $suiviStatCards = [
+                ['key' => 'remplies', 'label' => 'remplies ('.$anneeLabel.')', 'value' => $stats['remplies'], 'border' => 'border-l-emerald-600 hover:border-emerald-700', 'ring' => 'ring-emerald-600/30'],
+                ['key' => 'en_attente', 'label' => 'en attente d’enregistrement', 'value' => $stats['en_attente'], 'border' => 'border-l-amber-500 hover:border-amber-600', 'ring' => 'ring-amber-500/30'],
+                ['key' => 'a_cloturer', 'label' => 'rdv à clôturer', 'value' => $stats['a_cloturer'], 'border' => 'border-l-red-500 hover:border-red-600', 'ring' => 'ring-red-500/30'],
+                ['key' => 'rdv_planifies', 'label' => 'rdv planifiés', 'value' => $stats['rdv_planifies'], 'border' => 'border-l-[#173052] hover:border-[#1e3d6b]', 'ring' => 'ring-[#173052]/20'],
+                ['key' => 'rdv_realises', 'label' => 'rdv réalisés (honorés)', 'value' => $stats['rdv_realises'] ?? 0, 'border' => 'border-l-green-600 hover:border-green-700', 'ring' => 'ring-green-600/30'],
+                ['key' => 'rdv_non_honores', 'label' => 'rdv non honorés', 'value' => $stats['rdv_non_honores'] ?? 0, 'border' => 'border-l-slate-500 hover:border-slate-600', 'ring' => 'ring-slate-500/30'],
+                ['key' => 'rdv_annules', 'label' => 'annulés / refusés', 'value' => $stats['rdv_annules'] ?? 0, 'border' => 'border-l-red-600 hover:border-red-700', 'ring' => 'ring-red-600/30'],
+            ];
+        @endphp
 
-        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
-            <a href="{{ route('formalites.suivi.index', ['filtre' => 'rdv_realises', 'annee_fiscale_id' => $anneeFiscaleId]) }}"
-               class="dossier-stat border-l-4 border-l-green-600 hover:border-green-700 transition-colors {{ $filtre === 'rdv_realises' ? 'ring-2 ring-green-600/30' : '' }}">
-                <p class="dossier-stat__label">RDV réalisés (honorés)</p>
-                <p class="dossier-stat__value text-2xl">{{ $stats['rdv_realises'] ?? 0 }}</p>
-            </a>
-            <a href="{{ route('formalites.suivi.index', ['filtre' => 'rdv_non_honores', 'annee_fiscale_id' => $anneeFiscaleId]) }}"
-               class="dossier-stat border-l-4 border-l-slate-500 hover:border-slate-600 transition-colors {{ $filtre === 'rdv_non_honores' ? 'ring-2 ring-slate-500/30' : '' }}">
-                <p class="dossier-stat__label">RDV non honorés</p>
-                <p class="dossier-stat__value text-2xl">{{ $stats['rdv_non_honores'] ?? 0 }}</p>
-            </a>
-            <a href="{{ route('formalites.suivi.index', ['filtre' => 'rdv_annules', 'annee_fiscale_id' => $anneeFiscaleId]) }}"
-               class="dossier-stat border-l-4 border-l-red-600 hover:border-red-700 transition-colors {{ $filtre === 'rdv_annules' ? 'ring-2 ring-red-600/30' : '' }}">
-                <p class="dossier-stat__label">Annulés / refusés</p>
-                <p class="dossier-stat__value text-2xl">{{ $stats['rdv_annules'] ?? 0 }}</p>
-            </a>
+        <div class="grid gap-3 sm:gap-4 grid-cols-[repeat(auto-fill,minmax(11.25rem,1fr))]">
+            @foreach($suiviStatCards as $card)
+                <a href="{{ route('formalites.suivi.index', ['filtre' => $card['key'], 'annee_fiscale_id' => $anneeFiscaleId]) }}"
+                   @class([
+                       'dossier-stat border-l-4 flex flex-col justify-center min-h-[5.25rem] transition-colors',
+                       $card['border'],
+                       'ring-2 '.$card['ring'] => $filtre === $card['key'],
+                   ])>
+                    <p class="dossier-stat__label normal-case tracking-normal leading-snug">{{ $card['label'] }}</p>
+                    <p class="dossier-stat__value text-2xl">{{ $card['value'] }}</p>
+                </a>
+            @endforeach
         </div>
 
         <div class="flex flex-wrap gap-2">
@@ -134,10 +119,8 @@
                         </tbody>
                     </table>
                 </div>
+                @include('formalites.suivi._pagination', ['paginator' => $formalites])
             </section>
-            @if($formalites?->hasPages())
-                <div class="mt-4">{{ $formalites->links() }}</div>
-            @endif
         @elseif($filtre === 'en_attente')
             <section class="dossier-card overflow-hidden">
                 <div class="dossier-card-head">
@@ -188,10 +171,8 @@
                         </tbody>
                     </table>
                 </div>
+                @include('formalites.suivi._pagination', ['paginator' => $demandesAttente])
             </section>
-            @if($demandesAttente?->hasPages())
-                <div class="mt-4">{{ $demandesAttente->links() }}</div>
-            @endif
         @elseif($filtre === 'a_cloturer')
             <section class="dossier-card overflow-hidden">
                 <div class="dossier-card-head">
@@ -230,6 +211,7 @@
                         </tbody>
                     </table>
                 </div>
+                @include('formalites.suivi._pagination', ['paginator' => $demandesCloture])
             </section>
         @elseif(isset($demandesCloturesStatut))
             <section class="dossier-card overflow-hidden">
@@ -272,6 +254,7 @@
                         </tbody>
                     </table>
                 </div>
+                @include('formalites.suivi._pagination', ['paginator' => $demandesCloturesStatut])
             </section>
         @else
             <section class="dossier-card overflow-hidden">
@@ -311,6 +294,7 @@
                         </tbody>
                     </table>
                 </div>
+                @include('formalites.suivi._pagination', ['paginator' => $demandesPlanifies])
             </section>
         @endif
     </x-portal-page>

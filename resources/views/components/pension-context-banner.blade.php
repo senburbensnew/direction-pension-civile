@@ -144,12 +144,16 @@
                     <span class="font-mono font-semibold text-[#173052]" x-text="displayCode ?? '—'"></span>
                 </p>
                 <div class="flex flex-wrap gap-x-4 gap-y-1">
-                    <a href="{{ route('compte.beneficiaires.index') }}" class="dossier-link">
-                        Mes bénéficiaires →
-                    </a>
-                    <a href="{{ route('compte.affiliations.index') }}" class="dossier-link">
-                        Gérer mes codes →
-                    </a>
+                    @if($user->canSeePortalNavBeneficiairesMandats())
+                        <a href="{{ route('compte.beneficiaires.index') }}" class="dossier-link">
+                            Mes bénéficiaires →
+                        </a>
+                    @endif
+                    @if($user->hasCategory('pensionne') || $user->hasRole('pensionne'))
+                        <a href="{{ route('compte.affiliations.index') }}" class="dossier-link">
+                            Gérer mes codes →
+                        </a>
+                    @endif
                 </div>
             </div>
         </div>

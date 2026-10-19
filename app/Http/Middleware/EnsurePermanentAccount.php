@@ -95,8 +95,7 @@ class EnsurePermanentAccount
             return 'Votre compte est désactivé. Veuillez contacter la Direction.';
         }
 
-        $canRdv = $user->hasPensionPortalAccess()
-            || app(RencontreMotifService::class)->userHasPendingDemandeCreationCompte($user);
+        $canRdv = app(RencontreMotifService::class)->userCanBookPortalRencontre($user);
 
         return 'Votre compte est en attente de validation. Seules la consultation de vos demandes'
             .($canRdv ? ', les notifications et la prise de rendez-vous' : ' et les notifications')
@@ -119,7 +118,6 @@ class EnsurePermanentAccount
             return false;
         }
 
-        return $user->hasPensionPortalAccess()
-            || app(RencontreMotifService::class)->userHasPendingDemandeCreationCompte($user);
+        return app(RencontreMotifService::class)->userCanBookPortalRencontre($user);
     }
 }

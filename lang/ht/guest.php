@@ -40,6 +40,7 @@ return [
     'password_required' => [
         'title' => 'Ou dwe chanje modpas ou',
         'intro' => 'Pou sekirite, ou dwe mete yon nouvo modpas pèsonèl anvan ou kontinye.',
+        'current_password' => 'Modpas aktyèl',
         'new_password' => 'Nouvo modpas',
         'submit' => 'Anrejistre modpas la',
         'logout' => 'Dekonekte',

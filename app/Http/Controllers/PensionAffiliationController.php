@@ -15,6 +15,18 @@ use Illuminate\Validation\ValidationException;
 
 class PensionAffiliationController extends Controller
 {
+    public function __construct()
+    {
+        $this->middleware(function ($request, $next) {
+            $user = $request->user();
+            if (! $user || (! $user->hasCategory('pensionne') && ! $user->hasRole('pensionne'))) {
+                abort(403, 'Accès réservé aux pensionnés.');
+            }
+
+            return $next($request);
+        });
+    }
+
     public function index(Request $request)
     {
         $user = $request->user();

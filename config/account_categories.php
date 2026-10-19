@@ -4,7 +4,7 @@ return [
 
     /*
     |--------------------------------------------------------------------------
-    | Catégories de compte (segments portail, cumulables)
+    | Catégories de compte (un type par compte ; segments portail)
     |--------------------------------------------------------------------------
     |
     | Source de vérité pour user_categories + UserCategoriesSeeder.

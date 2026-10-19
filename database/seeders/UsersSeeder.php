@@ -6,7 +6,6 @@ use App\Enums\AccountStatusEnum;
 use App\Models\Service;
 use App\Models\User;
 use App\Services\Account\UserCategoryRoleSyncService;
-use App\Services\Pension\BeneficiaireProvisioningService;
 use Illuminate\Database\Seeder;
 
 class UsersSeeder extends Seeder
@@ -27,7 +26,7 @@ class UsersSeeder extends Seeder
                 'account_status' => AccountStatusEnum::ACTIF,
             ]
         );
-        $directeurUser->syncRoles(['fonctionnaire', 'directeur']);
+        $directeurUser->syncRoles(['directeur']);
         $this->syncAccountCategories($directeurUser->fresh());
 
         $formalitesServiceId = Service::where('code', 'service_accueil_formalites')->value('id');
@@ -68,7 +67,7 @@ class UsersSeeder extends Seeder
                     'account_status' => AccountStatusEnum::ACTIF,
                 ]
             );
-            $agent->syncRoles(['fonctionnaire', User::ROLE_AGENT_FORMALITES, User::ROLE_AGENT_RDV]);
+            $agent->syncRoles([User::ROLE_AGENT_FORMALITES, User::ROLE_AGENT_RDV]);
             $this->syncAccountCategories($agent->fresh());
         }
 
@@ -86,48 +85,18 @@ class UsersSeeder extends Seeder
                 'account_status' => AccountStatusEnum::ACTIF,
             ]
         );
-        $suffrin->syncRoles(['fonctionnaire', 'responsable_service_accueil_formalites', User::ROLE_VALIDATEUR_RDV]);
+        $suffrin->syncRoles(['responsable_service_accueil_formalites', User::ROLE_VALIDATEUR_RDV]);
         $this->syncAccountCategories($suffrin->fresh());
-
-        $pensionne = User::updateOrCreate(
-            ['email' => 'pensionne.test@example.com'],
-            [
-                'name' => 'Jean Dupont',
-                'email' => 'pensionne.test@example.com',
-                'username' => 'jean.dupont',
-                'firstname' => 'Jean',
-                'lastname' => 'Dupont',
-                'password' => $defaultPassword,
-                'nif' => '400-500-600-7',
-                'phone' => '+50937000000',
-                'account_status' => AccountStatusEnum::ACTIF,
-                'service_id' => null,
-            ]
-        );
-        $pensionne->syncRoles(['pensionne']);
-        app(UserCategoryRoleSyncService::class)
-            ->assignCategory($pensionne->fresh(), 'pensionne', primary: true, syncRoles: false);
-        app(BeneficiaireProvisioningService::class)
-            ->provisionAdultSelf($pensionne->fresh(), null, '8-34321');
     }
 
     private function syncAccountCategories(User $user, ?string $portalCategory = null): void
     {
-        $sync = app(UserCategoryRoleSyncService::class);
+        $code = $portalCategory ?? (filled($user->service_id) ? 'personnel_dpc' : null);
 
-        $codes = array_values(array_filter([
-            $portalCategory,
-            filled($user->service_id) ? 'personnel_dpc' : null,
-        ]));
-
-        $codes = array_values(array_unique($codes));
-
-        if ($codes === []) {
+        if ($code === null) {
             return;
         }
 
-        $primary = filled($user->service_id) ? 'personnel_dpc' : $codes[0];
-
-        $sync->syncCategories($user, $codes, $primary);
+        app(UserCategoryRoleSyncService::class)->syncSingleCategory($user, $code, syncRoles: false);
     }
 }

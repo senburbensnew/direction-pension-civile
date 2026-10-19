@@ -144,6 +144,22 @@ class RencontreMotifServiceTest extends TestCase
         );
     }
 
+    public function test_personnel_dpc_without_pension_profile_cannot_book_portal_rencontre(): void
+    {
+        $this->seedRoles();
+        $user = User::factory()->create([
+            'account_status' => AccountStatusEnum::ACTIF,
+            'service_id' => Service::where('code', Service::FORMALITE)->value('id'),
+        ]);
+        $user->assignRole('responsable_service_accueil_formalites');
+        app(UserCategoryRoleSyncService::class)->assignCategory($user, 'personnel_dpc', primary: true, syncRoles: false);
+
+        $service = app(RencontreMotifService::class);
+
+        $this->assertFalse($service->userCanBookPortalRencontre($user));
+        $this->assertSame([], $service->motifsForUser($user));
+    }
+
     public function test_opening_compte_rdv_requires_matricule_not_carte(): void
     {
         $this->seedRoles();

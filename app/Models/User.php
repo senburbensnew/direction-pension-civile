@@ -5,6 +5,7 @@ namespace App\Models;
 use App\Enums\AccountStatusEnum;
 use App\Enums\BeneficiaireRelationEnum;
 use App\Services\Account\UserCategoryResolver;
+use App\Services\PortalNavService;
 use App\Services\Pension\ActivePensionContext;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -545,6 +546,72 @@ class User extends Authenticatable
     public function isProvisionnel(): bool
     {
         return $this->resolvedAccountStatus()->isProvisionnel();
+    }
+
+    /** Agent Formalités sans rôle responsable / validateur / direction. */
+    public function isFormalitesFieldAgent(): bool
+    {
+        if (! $this->hasRole(self::ROLE_AGENT_FORMALITES)) {
+            return false;
+        }
+
+        return ! $this->hasAnyRole(array_merge(
+            ['admin', 'responsable_service_accueil_formalites', self::ROLE_VALIDATEUR_RDV],
+            self::DIRECTION_ROLES,
+        ));
+    }
+
+    public function isResponsableServiceFormalites(): bool
+    {
+        return $this->hasRole('responsable_service_accueil_formalites');
+    }
+
+    public function portalNav(): PortalNavService
+    {
+        return app(PortalNavService::class);
+    }
+
+    public function canSeePortalNavMesDemandes(): bool
+    {
+        return $this->portalNav()->userCanSeeMesDemandes($this);
+    }
+
+    public function canSeePortalNavCorbeille(): bool
+    {
+        return $this->portalNav()->userCanSeeCorbeille($this);
+    }
+
+    public function canSeePortalNavBeneficiairesMandats(): bool
+    {
+        return $this->portalNav()->userCanSeeBeneficiairesMandats($this);
+    }
+
+    public function canSeePortalNavFormalitesComptes(): bool
+    {
+        return $this->portalNav()->userCanSeeFormalitesComptes($this);
+    }
+
+    public function canSeePortalNavFormalitesSuivi(): bool
+    {
+        return $this->portalNav()->userCanSeeFormalitesSuivi($this);
+    }
+
+    /** @deprecated Use canSeePortalNavMesDemandes() */
+    public function hidesPersonalPortalNavInMenus(): bool
+    {
+        return ! $this->canSeePortalNavMesDemandes();
+    }
+
+    /** @deprecated Use canSeePortalNavCorbeille() */
+    public function showsCorbeilleInAccountDropdown(): bool
+    {
+        return $this->canSeePortalNavCorbeille();
+    }
+
+    /** @deprecated Use canSeePortalNavBeneficiairesMandats() */
+    public function showsBeneficiairesMandatsInNav(): bool
+    {
+        return $this->canSeePortalNavBeneficiairesMandats();
     }
 
     public function canAccessFullServices(): bool

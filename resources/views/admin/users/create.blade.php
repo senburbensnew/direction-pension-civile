@@ -48,40 +48,8 @@
                 <i class="fas fa-user text-indigo-500 text-sm w-4 text-center"></i>
                 <span class="text-xs font-semibold text-gray-600 uppercase tracking-wider">Identité</span>
             </div>
-            <div class="p-5 grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div>
-                    <label class="block text-xs font-medium text-gray-600 mb-1">Prénom</label>
-                    <input type="text" name="firstname" value="{{ old('firstname') }}"
-                        class="{{ $field('firstname') }}" placeholder="Jean">
-                    @error('firstname')<p class="text-red-500 text-xs mt-1">{{ $message }}</p>@enderror
-                </div>
-                <div>
-                    <label class="block text-xs font-medium text-gray-600 mb-1">Nom de famille</label>
-                    <input type="text" name="lastname" value="{{ old('lastname') }}"
-                        class="{{ $field('lastname') }}" placeholder="Dupont">
-                    @error('lastname')<p class="text-red-500 text-xs mt-1">{{ $message }}</p>@enderror
-                </div>
-                <div>
-                    <label class="block text-xs font-medium text-gray-600 mb-1">
-                        Nom d'affichage <span class="text-red-500">*</span>
-                    </label>
-                    <input type="text" name="name" value="{{ old('name') }}" required
-                        class="{{ $field('name') }}" placeholder="Jean Dupont">
-                    @error('name')<p class="text-red-500 text-xs mt-1">{{ $message }}</p>@enderror
-                </div>
-                <div>
-                    <label class="block text-xs font-medium text-gray-600 mb-1">Sexe</label>
-                    <select name="gender_id" class="{{ $field('gender_id') }}">
-                        <option value="">— Sélectionner —</option>
-                        @foreach($genders as $gender)
-                            <option value="{{ $gender->id }}" {{ (string) old('gender_id') === (string) $gender->id ? 'selected' : '' }}>
-                                {{ $gender->name }}
-                            </option>
-                        @endforeach
-                    </select>
-                    @error('gender_id')<p class="text-red-500 text-xs mt-1">{{ $message }}</p>@enderror
-                </div>
-            </div>
+            @php($identityUser = null)
+            @include('admin.users._identity-grid')
         </div>
 
         {{-- Contact & Accès --}}
@@ -110,6 +78,7 @@
                     <x-telephone-input
                         name="phone"
                         label="Téléphone"
+                        :required="true"
                         label-class="block text-xs font-medium text-gray-600 mb-1"
                         hint-class="text-xs text-gray-500 mt-1"
                         error-class="text-red-500 text-xs mt-1"
@@ -143,49 +112,51 @@
                 <i class="fas fa-sliders-h text-indigo-500 text-sm w-4 text-center"></i>
                 <span class="text-xs font-semibold text-gray-600 uppercase tracking-wider">Profil système</span>
             </div>
-            <div class="p-5 grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div class="sm:col-span-2">
-                    <label class="block text-xs font-medium text-gray-600 mb-2">Catégories de compte</label>
-                    <div class="flex flex-wrap gap-3">
-                        @foreach($categories as $category)
-                            <label class="inline-flex items-center gap-2 text-sm text-gray-700">
-                                <input type="checkbox" name="category_codes[]" value="{{ $category->code }}"
-                                    {{ in_array($category->code, old('category_codes', []), true) ? 'checked' : '' }}
-                                    class="rounded border-gray-300 text-indigo-600 focus:ring-indigo-400">
-                                {{ $category->label }}
-                            </label>
-                        @endforeach
-                    </div>
-                    @error('category_codes')<p class="text-red-500 text-xs mt-1">{{ $message }}</p>@enderror
-                    @error('category_codes.*')<p class="text-red-500 text-xs mt-1">{{ $message }}</p>@enderror
-                </div>
+            <div
+                class="p-5 grid grid-cols-1 sm:grid-cols-2 gap-4"
+                x-data="{ accountType: @js(old('primary_category', '')) }"
+            >
                 <div>
-                    <label class="block text-xs font-medium text-gray-600 mb-1">Catégorie principale</label>
-                    <select name="primary_category" class="{{ $field('primary_category') }}">
-                        <option value="">— Automatique —</option>
+                    <label class="block text-xs font-medium text-gray-600 mb-1">Type de compte</label>
+                    <select name="primary_category" x-model="accountType" class="{{ $field('primary_category') }}">
+                        <option value="">— Déduire des rôles et du service —</option>
                         @foreach($categories as $category)
-                            <option value="{{ $category->code }}" {{ old('primary_category') === $category->code ? 'selected' : '' }}>
+                            <option value="{{ $category->code }}" {{ (string) old('primary_category', '') === (string) $category->code ? 'selected' : '' }}>
                                 {{ $category->label }}
                             </option>
                         @endforeach
                     </select>
+                    <p class="text-xs text-gray-500 mt-1">Un seul type parmi Pensionné, Fonctionnaire, etc. Les droits viennent des rôles (plusieurs possibles).</p>
                     @error('primary_category')<p class="text-red-500 text-xs mt-1">{{ $message }}</p>@enderror
                 </div>
-                <div>
-                    <label class="block text-xs font-medium text-gray-600 mb-1">Institution (compte unique)</label>
-                    <select name="institution_id" class="{{ $field('institution_id') }}">
-                        <option value="">— Aucune —</option>
+                <div x-show="accountType === 'institution'" x-cloak x-transition>
+                    <label class="block text-xs font-medium text-gray-600 mb-1">
+                        Institution rattachée <span class="text-red-500">*</span>
+                    </label>
+                    <select
+                        name="institution_id"
+                        x-ref="institutionSelect"
+                        :disabled="accountType !== 'institution'"
+                        :required="accountType === 'institution'"
+                        class="{{ $field('institution_id') }}"
+                    >
+                        <option value="">— Choisir une institution —</option>
                         @foreach($institutions as $institution)
                             <option value="{{ $institution->id }}" {{ (string) old('institution_id') === (string) $institution->id ? 'selected' : '' }}>
                                 {{ $institution->raison_sociale }}
                             </option>
                         @endforeach
                     </select>
+                    <p class="text-xs text-gray-500 mt-1">Un compte institution est lié à une seule institution.</p>
                     @error('institution_id')<p class="text-red-500 text-xs mt-1">{{ $message }}</p>@enderror
                 </div>
-                <div>
+                <div x-show="accountType === 'personnel_dpc' || accountType === ''" x-cloak x-transition>
                     <label class="block text-xs font-medium text-gray-600 mb-1">Service</label>
-                    <select name="service_id" class="{{ $field('service_id') }}">
+                    <select
+                        name="service_id"
+                        :disabled="accountType !== 'personnel_dpc' && accountType !== ''"
+                        class="{{ $field('service_id') }}"
+                    >
                         <option value="">— Aucun service —</option>
                         @foreach(\App\Models\Service::orderBy('nom')->get() as $service)
                             <option value="{{ $service->id }}" {{ old('service_id') == $service->id ? 'selected' : '' }}>
@@ -195,34 +166,29 @@
                     </select>
                     @error('service_id')<p class="text-red-500 text-xs mt-1">{{ $message }}</p>@enderror
                 </div>
-                <div>
-                    <label class="block text-xs font-medium text-gray-600 mb-1">Rôle</label>
-                    <select name="role" class="{{ $field('role') }}">
-                        <option value="">— Aucun rôle —</option>
-                        @foreach(\Spatie\Permission\Models\Role::orderBy('name')->get() as $role)
-                            <option value="{{ $role->name }}" {{ old('role') === $role->name ? 'selected' : '' }}>
-                                {{ ucfirst(str_replace('_', ' ', $role->name)) }}
-                            </option>
-                        @endforeach
-                    </select>
-                    @error('role')<p class="text-red-500 text-xs mt-1">{{ $message }}</p>@enderror
-                </div>
-                <div>
-                    <label class="block text-xs font-medium text-gray-600 mb-1">Code pension</label>
-                    <input type="text" name="pension_code" value="{{ old('pension_code') }}"
-                        class="{{ $field('pension_code') }}" placeholder="Ex : PEN-00001">
-                    @error('pension_code')<p class="text-red-500 text-xs mt-1">{{ $message }}</p>@enderror
-                </div>
+                <x-form.dual-listbox
+                    name="roles[]"
+                    label="Rôles"
+                    available-title="Rôles disponibles"
+                    selected-title="Rôles attribués à l'utilisateur"
+                    hint="Sélectionnez un ou plusieurs rôles à gauche, puis utilisez les flèches pour les attribuer."
+                    :options="$roleOptions"
+                    :selected="$assignedRoles"
+                />
                 <div>
                     <label class="block text-xs font-medium text-gray-600 mb-1">NIF</label>
                     <input type="text" name="nif" value="{{ old('nif') }}"
-                        class="{{ $field('nif') }}" placeholder="Numéro d'identification fiscale">
+                        class="{{ $field('nif') }}" placeholder="123-456-789-0"
+                        pattern="\d{3}-\d{3}-\d{3}-\d{1}" title="Format 000-000-000-0">
+                    <p class="text-xs text-gray-400 mt-1">Format : 000-000-000-0</p>
                     @error('nif')<p class="text-red-500 text-xs mt-1">{{ $message }}</p>@enderror
                 </div>
                 <div>
                     <label class="block text-xs font-medium text-gray-600 mb-1">NINU</label>
                     <input type="text" name="ninu" value="{{ old('ninu') }}"
-                        class="{{ $field('ninu') }}" placeholder="Numéro d'identification nationale unique">
+                        class="{{ $field('ninu') }}" placeholder="1148519577"
+                        pattern="\d{10}" inputmode="numeric" title="10 chiffres, sans tiret">
+                    <p class="text-xs text-gray-400 mt-1">10 chiffres, sans tiret.</p>
                     @error('ninu')<p class="text-red-500 text-xs mt-1">{{ $message }}</p>@enderror
                 </div>
             </div>

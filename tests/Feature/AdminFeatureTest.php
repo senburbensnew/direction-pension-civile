@@ -7,8 +7,11 @@ use App\Enums\TypeDemandeEnum;
 use App\Models\Service;
 use App\Models\User;
 use App\Models\WorkflowStep;
+use Database\Seeders\UserCategoriesSeeder;
 use App\Models\WorkflowStepTransition;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use App\Mail\AdminEmailTestMail;
+use Illuminate\Support\Facades\Mail;
 use Spatie\Permission\Models\Role;
 use Tests\TestCase;
 use Tests\Traits\SeedsRequiredData;
@@ -23,6 +26,18 @@ class AdminFeatureTest extends TestCase
         $this->seedWorkflowSteps();
         $this->seedServices();
         $this->seedRoles();
+        $this->seedGenders();
+        $this->seed(UserCategoriesSeeder::class);
+    }
+
+    /** @return array<string, mixed> */
+    private function identityFields(array $overrides = []): array
+    {
+        return array_merge([
+            'firstname' => 'Jean',
+            'lastname' => 'Dupont',
+            'gender_id' => $this->defaultGenderId(),
+        ], $overrides);
     }
 
     private function makeAdmin(): User
@@ -39,6 +54,38 @@ class AdminFeatureTest extends TestCase
     }
 
     // ─── Admin dashboard ─────────────────────────────────────────────────────
+
+    /** @test */
+    public function admin_can_access_email_test_page(): void
+    {
+        $admin = $this->makeAdmin();
+
+        $this->actingAs($admin)
+            ->get(route('admin.email.test'))
+            ->assertOk()
+            ->assertSee('Test d’envoi d’e-mail', false);
+    }
+
+    /** @test */
+    public function admin_can_send_email_test(): void
+    {
+        Mail::fake();
+
+        $admin = $this->makeAdmin();
+
+        $this->actingAs($admin)
+            ->post(route('admin.email.test.store'), [
+                'to' => 'test@example.com',
+                'subject' => 'Test SMTP',
+                'body' => 'Corps du message.',
+            ])
+            ->assertRedirect(route('admin.email.test'))
+            ->assertSessionHas('success');
+
+        Mail::assertSent(AdminEmailTestMail::class, function (AdminEmailTestMail $mail) {
+            return $mail->hasTo('test@example.com');
+        });
+    }
 
     /** @test */
     public function admin_can_access_dashboard(): void
@@ -81,21 +128,70 @@ class AdminFeatureTest extends TestCase
     }
 
     /** @test */
+    public function creating_agent_rdv_without_categories_does_not_add_agent_rdv_user_category(): void
+    {
+        $this->seed(UserCategoriesSeeder::class);
+
+        $admin = $this->makeAdmin();
+        $service = Service::first();
+
+        \App\Models\UserCategory::query()->create([
+            'code' => 'agent_rdv',
+            'label' => 'agent_rdv',
+            'is_system' => false,
+        ]);
+
+        $createView = $this->actingAs($admin)->get(route('admin.users.create'));
+        $createView->assertOk();
+        $this->assertStringNotContainsString('Catégories cumulables', $createView->getContent());
+
+        $response = $this->actingAs($admin)->post(route('admin.users.store'), $this->identityFields([
+            'name' => 'Agent RDV Test',
+            'firstname' => 'Agent',
+            'lastname' => 'RDV',
+            'email' => 'agent-rdv@example.com',
+            'phone' => '+50938123456',
+            'password' => 'Password1!',
+            'password_confirmation' => 'Password1!',
+            'roles' => [User::ROLE_AGENT_RDV],
+            'service_id' => $service->id,
+        ]));
+
+        $response->assertRedirect(route('admin.users.index'));
+
+        $this->assertSame(
+            1,
+            \App\Models\UserCategory::query()->where('code', 'agent_rdv')->count(),
+            'La création ne doit pas ajouter une catégorie agent_rdv.'
+        );
+
+        $created = User::query()->where('email', 'agent-rdv@example.com')->first();
+        $this->assertNotNull($created);
+        $this->assertTrue($created->hasRole(User::ROLE_AGENT_RDV));
+        $this->assertTrue($created->hasCategory('personnel_dpc'));
+        $this->assertDatabaseMissing('user_category_assignments', [
+            'user_id' => $created->id,
+            'user_category_code' => 'agent_rdv',
+        ]);
+    }
+
+    /** @test */
     public function admin_can_create_user(): void
     {
         $admin = $this->makeAdmin();
         $service = Service::first();
 
-        $response = $this->actingAs($admin)->post(route('admin.users.store'), [
+        $response = $this->actingAs($admin)->post(route('admin.users.store'), $this->identityFields([
             'name' => 'Nouveau Agent',
             'firstname' => 'Nouveau',
             'lastname' => 'Agent',
             'email' => 'agent@example.com',
+            'phone' => '+50938123456',
             'password' => 'Password1!',
             'password_confirmation' => 'Password1!',
-            'role' => 'admin',
+            'roles' => ['admin'],
             'service_id' => $service->id,
-        ]);
+        ]));
 
         $response->assertRedirect(route('admin.users.index'));
         $response->assertSessionHas('success');
@@ -112,12 +208,13 @@ class AdminFeatureTest extends TestCase
         $admin = $this->makeAdmin();
         User::factory()->create(['email' => 'existing@example.com']);
 
-        $response = $this->actingAs($admin)->post(route('admin.users.store'), [
+        $response = $this->actingAs($admin)->post(route('admin.users.store'), $this->identityFields([
             'name' => 'Dupliqué',
             'email' => 'existing@example.com',
+            'phone' => '+50938123456',
             'password' => 'Password1!',
             'password_confirmation' => 'Password1!',
-        ]);
+        ]));
 
         $response->assertSessionHasErrors('email');
     }
@@ -128,14 +225,96 @@ class AdminFeatureTest extends TestCase
         $admin = $this->makeAdmin();
         $target = User::factory()->create(['name' => 'Ancien Nom']);
 
-        $response = $this->actingAs($admin)->put(route('admin.users.update', $target), [
+        $response = $this->actingAs($admin)->put(route('admin.users.update', $target), $this->identityFields([
             'name' => 'Nouveau Nom',
             'email' => $target->email,
-        ]);
+            'phone' => '+50938123456',
+        ]));
 
         $response->assertRedirect(route('admin.users.edit', $target));
         $target->refresh();
         $this->assertEquals('Nouveau Nom', $target->name);
+    }
+
+    /** @test */
+    public function admin_user_forms_expose_dual_listbox_for_roles(): void
+    {
+        $admin = $this->makeAdmin();
+        $target = User::factory()->create();
+
+        $this->actingAs($admin)
+            ->get(route('admin.users.create'))
+            ->assertOk()
+            ->assertSee('data-dual-listbox', false)
+            ->assertSee('Rôles disponibles', false);
+
+        $this->actingAs($admin)
+            ->get(route('admin.users.edit', $target))
+            ->assertOk()
+            ->assertSee('data-dual-listbox', false)
+            ->assertSee('Rôles attribués', false);
+    }
+
+    /** @test */
+    public function admin_can_create_user_with_multiple_roles_via_roles_array(): void
+    {
+        $admin = $this->makeAdmin();
+        $service = Service::where('code', 'service_accueil_formalites')->first()
+            ?? Service::first();
+
+        $response = $this->actingAs($admin)->post(route('admin.users.store'), $this->identityFields([
+            'name' => 'Agent Formalités',
+            'firstname' => 'Agent',
+            'lastname' => 'Formalités',
+            'email' => 'multi-roles@example.com',
+            'phone' => '+50938123456',
+            'password' => 'Password1!',
+            'password_confirmation' => 'Password1!',
+            'roles' => [User::ROLE_AGENT_FORMALITES, User::ROLE_AGENT_RDV],
+            'service_id' => $service->id,
+            'primary_category' => 'personnel_dpc',
+        ]));
+
+        $response->assertRedirect(route('admin.users.index'));
+        $response->assertSessionHasNoErrors();
+
+        $created = User::query()->where('email', 'multi-roles@example.com')->first();
+        $this->assertNotNull($created);
+        $this->assertTrue($created->hasCategory('personnel_dpc'));
+        $this->assertFalse($created->hasRole('fonctionnaire'));
+        $this->assertTrue($created->hasRole(User::ROLE_AGENT_FORMALITES));
+        $this->assertTrue($created->hasRole(User::ROLE_AGENT_RDV));
+    }
+
+    /** @test */
+    public function admin_can_update_user_roles_via_roles_array(): void
+    {
+        $admin = $this->makeAdmin();
+        $service = Service::where('code', 'service_accueil_formalites')->first()
+            ?? Service::first();
+
+        $target = User::factory()->create([
+            'service_id' => $service->id,
+        ]);
+        $target->syncRoles([User::ROLE_AGENT_RDV]);
+        app(\App\Services\Account\UserCategoryRoleSyncService::class)->syncSingleCategory($target, 'personnel_dpc', syncRoles: false);
+
+        $response = $this->actingAs($admin)->put(route('admin.users.update', $target), $this->identityFields([
+            'name' => $target->name,
+            'email' => $target->email,
+            'phone' => '+50938123456',
+            'service_id' => $service->id,
+            'primary_category' => 'personnel_dpc',
+            'roles' => [User::ROLE_AGENT_FORMALITES],
+        ]));
+
+        $response->assertRedirect(route('admin.users.edit', $target));
+        $response->assertSessionHasNoErrors();
+
+        $target->refresh();
+        $this->assertFalse($target->hasRole('fonctionnaire'));
+        $this->assertTrue($target->hasRole(User::ROLE_AGENT_FORMALITES));
+        $this->assertFalse($target->hasRole(User::ROLE_AGENT_RDV));
     }
 
     /** @test */
@@ -173,16 +352,16 @@ class AdminFeatureTest extends TestCase
     }
 
     /** @test */
-    public function admin_can_delete_user(): void
+    public function admin_cannot_delete_user(): void
     {
         $admin = $this->makeAdmin();
         $target = User::factory()->create();
 
         $response = $this->actingAs($admin)
-            ->delete(route('admin.users.destroy', $target));
+            ->delete("/admin/users/{$target->id}");
 
-        $response->assertRedirect(route('admin.users.index'));
-        $this->assertModelMissing($target);
+        $response->assertMethodNotAllowed();
+        $this->assertModelExists($target);
     }
 
     /** @test */
@@ -192,9 +371,9 @@ class AdminFeatureTest extends TestCase
         $target = User::factory()->create();
 
         $response = $this->actingAs($user)
-            ->delete(route('admin.users.destroy', $target));
+            ->delete("/admin/users/{$target->id}");
 
-        $response->assertForbidden();
+        $response->assertMethodNotAllowed();
         $this->assertModelExists($target);
     }
 

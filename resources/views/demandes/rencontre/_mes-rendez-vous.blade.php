@@ -1,4 +1,7 @@
-@if(($mesRendezVous ?? collect())->isNotEmpty())
+@php
+    $mesRendezVous = ($mesRendezVous ?? null) ?? ($appointments ?? collect());
+@endphp
+@if($mesRendezVous->isNotEmpty())
     <section class="bg-white border border-gray-200 card-shadow p-6 sm:p-8">
         <div class="flex items-center gap-3 mb-5">
             <span class="text-2xl text-navy flex items-center justify-center shrink-0">
@@ -22,8 +25,16 @@
                     $isPhysique = ($data['modalite'] ?? 'visio') === 'physique';
                     $visio = app(\App\Services\RencontreVisioService::class);
                     $visioStatus = (! $isPhysique && $rdv->visio_token) ? $visio->status($rdv) : null;
+                    $documentsPreparer = $data['documents_a_preparer'] ?? [];
+                    if ($documentsPreparer === [] && ! empty($data['motif_key'])) {
+                        $documentsPreparer = app(\App\Services\RencontreMotifService::class)->prepareHints(
+                            (string) $data['motif_key'],
+                            (string) ($data['modalite'] ?? 'visio')
+                        );
+                    }
                 @endphp
-                <li class="py-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                <li class="py-4 flex flex-col gap-3">
+                    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
                     <div class="min-w-0">
                         <p class="font-semibold text-gray-800">
                             {{ $data['objet'] ?? $rdv->libellePublic() }}
@@ -90,6 +101,15 @@
                         </form>
                     @endif
                     </div>
+                    </div>
+
+                    @if(! $rdvStatut->isTerminal())
+                        @include('demandes.rencontre._documents-preparer-panel', [
+                            'documents' => $documentsPreparer,
+                            'modeLabel' => $isPhysique ? 'présentiel' : 'visioconférence',
+                            'panelId' => 'rdv-' . $rdv->id,
+                        ])
+                    @endif
                 </li>
             @endforeach
         </ul>

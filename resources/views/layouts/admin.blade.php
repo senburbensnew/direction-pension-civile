@@ -229,7 +229,7 @@
             </div>
 
             {{-- Paramètres --}}
-            <div x-data="{ open: {{ request()->routeIs('admin.settings', 'admin.contact-parameters.*', 'admin.rdv-settings.*', 'admin.ocr.test*') ? 'true' : 'false' }} }">
+            <div x-data="{ open: {{ request()->routeIs('admin.settings', 'admin.contact-parameters.*', 'admin.rdv-settings.*', 'admin.ocr.test*', 'admin.email.test*') ? 'true' : 'false' }} }">
                 <button @click="open = !open"
                     class="{{ $adminNavSection }} mt-2 w-full flex items-center justify-between cursor-pointer hover:text-slate-300 transition-colors">
                     <span>Paramètres</span>
@@ -244,6 +244,10 @@
                     <a href="{{ route('admin.ocr.test') }}"
                        class="{{ $adminNavLink(request()->routeIs('admin.ocr.test*')) }}">
                        <i class="fas fa-eye"></i> Test OCR
+                    </a>
+                    <a href="{{ route('admin.email.test') }}"
+                       class="{{ $adminNavLink(request()->routeIs('admin.email.test*')) }}">
+                       <i class="fas fa-envelope"></i> Test e-mail
                     </a>
                     <a href="{{ route('admin.contact-parameters.index') }}"
                        class="{{ $adminNavLink(request()->routeIs('admin.contact-parameters.*')) }}">

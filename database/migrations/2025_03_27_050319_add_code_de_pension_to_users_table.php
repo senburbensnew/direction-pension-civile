@@ -1,8 +1,6 @@
 <?php
 
 use Illuminate\Database\Migrations\Migration;
-use Illuminate\Database\Schema\Blueprint;
-use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
@@ -11,15 +9,11 @@ return new class extends Migration
      */
     public function up()
     {
-        Schema::table('users', function (Blueprint $table) {
-            $table->string('pension_code')->unique()->nullable();
-        });
+        // Legacy column removed in 2026_10_07_000020_drop_pension_code_from_users_table.
     }
-    
+
     public function down()
     {
-        Schema::table('users', function (Blueprint $table) {
-            $table->dropColumn('pension_code');
-        });
+        // No-op.
     }
 };

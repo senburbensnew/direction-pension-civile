@@ -256,7 +256,7 @@ class DemandeCreationCompteTest extends TestCase
         $this->seedServices();
 
         $agent = User::factory()->create();
-        $agent->assignRole('fonctionnaire');
+        $agent->assignRole(User::ROLE_AGENT_FORMALITES);
 
         $this->actingAs($agent);
 
@@ -509,8 +509,9 @@ class DemandeCreationCompteTest extends TestCase
         $user = $demande->user->fresh(['roles', 'categoryAssignments']);
         $this->assertTrue($user->hasRole('pensionne'));
         $resolver = UserCategoryResolver::for($user);
-        $this->assertTrue($resolver->hasCategory('externe'));
         $this->assertTrue($resolver->hasCategory('pensionne'));
+        $this->assertFalse($resolver->hasCategory('externe'));
+        $this->assertCount(1, $user->categoryAssignments);
     }
 
     /** @test */
@@ -617,8 +618,9 @@ class DemandeCreationCompteTest extends TestCase
         $user = $demande->user->fresh(['roles', 'categoryAssignments']);
         $this->assertTrue($user->hasRole('pensionne'));
         $resolver = UserCategoryResolver::for($user);
-        $this->assertTrue($resolver->hasCategory('externe'));
         $this->assertTrue($resolver->hasCategory('pensionne'));
+        $this->assertFalse($resolver->hasCategory('externe'));
+        $this->assertCount(1, $user->categoryAssignments);
     }
 
     /** @test */

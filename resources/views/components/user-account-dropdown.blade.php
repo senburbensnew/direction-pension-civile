@@ -44,11 +44,13 @@
                     <i class="fas fa-user-circle mr-2 text-gray-400"></i>
                     {{ __('Profile') }}
                 </x-dropdown-link>
-                @if(auth()->user()?->hasPensionPortalAccess())
+                @if(auth()->user()?->hasCategory('pensionne') || auth()->user()?->hasRole('pensionne'))
                     <x-dropdown-link :href="route('compte.affiliations.index')">
                         <i class="fas fa-id-card mr-2 text-gray-400"></i>
                         Mes codes pension
                     </x-dropdown-link>
+                @endif
+                @if(auth()->user()?->canSeePortalNavBeneficiairesMandats())
                     <x-dropdown-link :href="route('compte.beneficiaires.index')">
                         <i class="fas fa-users mr-2 text-gray-400"></i>
                         Mes bénéficiaires
@@ -65,18 +67,18 @@
                     {{ __('messages.admin_panel') }}
                 </x-dropdown-link>
             @endrole
-            @if(auth()->user()?->hasPensionPortalAccess() || auth()->user()?->hasAnyRole(['fonctionnaire', 'institution']))
+            @if(auth()->user()?->canSeePortalNavMesDemandes())
                 <x-dropdown-link :href="route('personal.dashboard')">
                     <i class="fas fa-folder-open mr-2 text-gray-400"></i>
                     {{ __('messages.my_requests') }}
                 </x-dropdown-link>
             @endif
-            @role(\Database\Seeders\RolesAndPermissionsSeeder::internalRoles())
+            @if(auth()->user()?->canSeePortalNavCorbeille())
                 <x-dropdown-link :href="route('personal.cart')">
                     <i class="fas fa-shopping-cart mr-2 text-gray-400"></i>
                     {{ __('messages.basket') }}
                 </x-dropdown-link>
-            @endrole
+            @endif
 
             <hr class="my-1 border-gray-200">
 

@@ -7,6 +7,10 @@
 @endsection
 
 @section('content')
+@php
+    $navLabels = config('portal_nav.permissions', []);
+    $navPermissionNames = array_keys($navLabels);
+@endphp
 <div class="space-y-4" x-data="{ showCreate: false, editRole: null, editName: '', editPermissions: [] }">
 
     <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
@@ -121,8 +125,21 @@
                 </div>
                 <div class="mb-4">
                     <p class="block text-sm font-medium text-gray-700 mb-2">Permissions</p>
+                    @if($navPermissionNames !== [])
+                        <p class="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">Menu portail</p>
+                        <div class="space-y-2 mb-3 max-h-36 overflow-y-auto border border-indigo-100 bg-indigo-50/40 rounded-lg p-3">
+                            @foreach($permissions->whereIn('name', $navPermissionNames) as $permission)
+                                <label class="flex items-center gap-2 text-sm text-gray-700 cursor-pointer">
+                                    <input type="checkbox" name="permissions[]" value="{{ $permission->name }}"
+                                        class="rounded border-gray-300 text-blue-600 focus:ring-blue-500">
+                                    <span class="text-xs">{{ $navLabels[$permission->name] ?? $permission->name }}</span>
+                                </label>
+                            @endforeach
+                        </div>
+                    @endif
+                    <p class="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">Autres permissions</p>
                     <div class="space-y-2 max-h-48 overflow-y-auto border border-gray-200 rounded-lg p-3">
-                        @forelse($permissions as $permission)
+                        @forelse($permissions->whereNotIn('name', $navPermissionNames) as $permission)
                             <label class="flex items-center gap-2 text-sm text-gray-700 cursor-pointer">
                                 <input type="checkbox" name="permissions[]" value="{{ $permission->name }}"
                                     class="rounded border-gray-300 text-blue-600 focus:ring-blue-500">
@@ -167,8 +184,22 @@
                     </div>
                     <div class="mb-4">
                         <p class="block text-sm font-medium text-gray-700 mb-2">Permissions</p>
+                        @if($navPermissionNames !== [])
+                            <p class="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">Menu portail</p>
+                            <div class="space-y-2 mb-3 max-h-36 overflow-y-auto border border-indigo-100 bg-indigo-50/40 rounded-lg p-3">
+                                @foreach($permissions->whereIn('name', $navPermissionNames) as $permission)
+                                    <label class="flex items-center gap-2 text-sm text-gray-700 cursor-pointer">
+                                        <input type="checkbox" name="permissions[]" value="{{ $permission->name }}"
+                                            x-model="editPermissions"
+                                            class="rounded border-gray-300 text-blue-600 focus:ring-blue-500">
+                                        <span class="text-xs">{{ $navLabels[$permission->name] ?? $permission->name }}</span>
+                                    </label>
+                                @endforeach
+                            </div>
+                        @endif
+                        <p class="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">Autres permissions</p>
                         <div class="space-y-2 max-h-48 overflow-y-auto border border-gray-200 rounded-lg p-3">
-                            @foreach($permissions as $permission)
+                            @foreach($permissions->whereNotIn('name', $navPermissionNames) as $permission)
                                 <label class="flex items-center gap-2 text-sm text-gray-700 cursor-pointer">
                                     <input type="checkbox" name="permissions[]" value="{{ $permission->name }}"
                                         x-model="editPermissions"

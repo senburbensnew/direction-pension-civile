@@ -11,9 +11,18 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::table('users', function (Blueprint $table) {
+        if (Schema::hasColumn('users', 'service_id')) {
+            return;
+        }
+
+        $after = Schema::hasColumn('users', 'signature')
+            ? 'signature'
+            : (Schema::hasColumn('users', 'address') ? 'address' : 'remember_token');
+
+        Schema::table('users', function (Blueprint $table) use ($after) {
             $table->foreignId('service_id')
                 ->nullable()
+                ->after($after)
                 ->constrained()
                 ->nullOnDelete();
         });
@@ -24,6 +33,10 @@ return new class extends Migration
      */
     public function down(): void
     {
+        if (! Schema::hasColumn('users', 'service_id')) {
+            return;
+        }
+
         Schema::table('users', function (Blueprint $table) {
             $table->dropForeign(['service_id']);
             $table->dropColumn('service_id');

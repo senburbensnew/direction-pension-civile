@@ -99,6 +99,28 @@ class ActiveSessionService
             ->values();
     }
 
+    /**
+     * @return array{
+     *     id: string,
+     *     user_id: int|null,
+     *     ip_address: string|null,
+     *     user_agent: string|null,
+     *     last_activity: int,
+     *     is_guest: bool,
+     *     user: User|null
+     * }|null
+     */
+    public function findById(string $sessionId): ?array
+    {
+        if (! $this->isValidSessionId($sessionId)) {
+            return null;
+        }
+
+        return $this->list(authenticatedOnly: false)->first(
+            fn (array $session): bool => $session['id'] === $sessionId
+        );
+    }
+
     public function destroy(string $sessionId): bool
     {
         if (! $this->isValidSessionId($sessionId)) {
@@ -133,10 +155,15 @@ class ActiveSessionService
         return $this->list(userId: $userId, authenticatedOnly: true)->count();
     }
 
-    public function destroyForUser(int $userId, ?string $exceptSessionId = null): int
-    {
+    public function destroyForUser(
+        int $userId,
+        ?string $exceptSessionId = null,
+        ?\App\Enums\UserSessionEndReasonEnum $endReason = null,
+        ?int $initiatedByUserId = null,
+    ): int {
         $sessions = $this->list(userId: $userId, authenticatedOnly: true);
         $removed = 0;
+        $sessionEnds = $endReason !== null ? app(UserSessionEndService::class) : null;
 
         foreach ($sessions as $session) {
             if ($exceptSessionId !== null && $session['id'] === $exceptSessionId) {
@@ -144,6 +171,7 @@ class ActiveSessionService
             }
 
             if ($this->destroy($session['id'])) {
+                $sessionEnds?->recordFromSession($session, $endReason, $initiatedByUserId);
                 $removed++;
             }
         }

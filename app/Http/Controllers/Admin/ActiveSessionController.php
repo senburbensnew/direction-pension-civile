@@ -4,8 +4,10 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\User;
+use App\Enums\UserSessionEndReasonEnum;
 use App\Services\Admin\ActiveSessionService;
 use App\Services\Admin\UserLoginStatisticsService;
+use App\Services\Admin\UserSessionEndService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
@@ -16,6 +18,7 @@ class ActiveSessionController extends Controller
         Request $request,
         ActiveSessionService $sessions,
         UserLoginStatisticsService $loginStatistics,
+        UserSessionEndService $sessionEnds,
     ): View {
         $authenticatedOnly = ! $request->boolean('include_guests');
         $search = $request->string('q')->trim()->toString();
@@ -55,22 +58,38 @@ class ActiveSessionController extends Controller
             'loginDeviceBreakdown' => $loginStatistics->deviceBreakdown(30),
             'activeDeviceBreakdown' => $loginStatistics->activeSessionDeviceBreakdown($activeSessions),
             'recentLogins' => $loginStatistics->recent(12),
+            'sessionEndsAvailable' => $sessionEnds->isAvailable(),
+            'recentSessionEnds' => $sessionEnds->recent(12),
             'users' => User::query()
                 ->orderBy('name')
                 ->get(['id', 'name', 'email']),
         ]);
     }
 
-    public function destroy(Request $request, string $session, ActiveSessionService $sessions): RedirectResponse
-    {
+    public function destroy(
+        Request $request,
+        string $session,
+        ActiveSessionService $sessions,
+        UserSessionEndService $sessionEnds,
+    ): RedirectResponse {
         if ($session === $request->session()->getId()) {
             return $this->redirectAfterAction($request)
                 ->with('error', __('messages.admin_sessions.cannot_revoke_current'));
         }
 
+        $activeSession = $sessions->findById($session);
+
         if (! $sessions->destroy($session)) {
             return $this->redirectAfterAction($request)
                 ->with('error', __('messages.admin_sessions.revoke_failed'));
+        }
+
+        if ($activeSession !== null) {
+            $sessionEnds->recordFromSession(
+                $activeSession,
+                UserSessionEndReasonEnum::AdminRevokeOne,
+                $request->user()?->id,
+            );
         }
 
         return $this->redirectAfterAction($request)
@@ -83,7 +102,12 @@ class ActiveSessionController extends Controller
             ? $request->session()->getId()
             : null;
 
-        $removed = $sessions->destroyForUser($user->id, $exceptCurrent);
+        $removed = $sessions->destroyForUser(
+            $user->id,
+            $exceptCurrent,
+            UserSessionEndReasonEnum::AdminRevokeAll,
+            $request->user()?->id,
+        );
 
         if ($removed === 0) {
             return $this->redirectAfterAction($request, [

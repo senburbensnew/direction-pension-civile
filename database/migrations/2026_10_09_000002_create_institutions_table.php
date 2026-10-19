@@ -22,15 +22,19 @@ return new class extends Migration
             $table->index('statut');
         });
 
-        Schema::table('users', function (Blueprint $table) {
-            $table->foreignId('institution_id')
-                ->nullable()
-                ->after('service_id')
-                ->constrained('institutions')
-                ->nullOnDelete();
+        if (! Schema::hasColumn('users', 'institution_id')) {
+            Schema::table('users', function (Blueprint $table) {
+                $after = Schema::hasColumn('users', 'service_id') ? 'service_id' : 'address';
 
-            $table->unique('institution_id');
-        });
+                $table->foreignId('institution_id')
+                    ->nullable()
+                    ->after($after)
+                    ->constrained('institutions')
+                    ->nullOnDelete();
+
+                $table->unique('institution_id');
+            });
+        }
 
         $this->backfillInstitutionsFromUsers();
     }

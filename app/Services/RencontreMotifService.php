@@ -2,6 +2,8 @@
 
 namespace App\Services;
 
+use App\Enums\BeneficiaireRelationEnum;
+use App\Enums\PensionMandatStatusEnum;
 use App\Enums\TypeDemandeEnum;
 use App\Models\Demande;
 use App\Models\Service;
@@ -36,12 +38,7 @@ class RencontreMotifService
      */
     public function motifsForUser(?User $user): array
     {
-        if (! $user) {
-            return [];
-        }
-
-        if (! $user->hasPensionPortalAccess()
-            && ! $this->userHasPendingDemandeCreationCompte($user)) {
+        if (! $user || ! $this->userCanBookPortalRencontre($user)) {
             return [];
         }
 
@@ -49,6 +46,65 @@ class RencontreMotifService
             $this->motifs(),
             array_flip($this->motifKeysBookableForPortal())
         );
+    }
+
+    /**
+     * Prise de rendez-vous en ligne : pensionnés, mandataires, représentants légaux
+     * (et demandeurs provisoires en cours de création de compte).
+     */
+    public function userCanBookPortalRencontre(?User $user): bool
+    {
+        if (! $user) {
+            return false;
+        }
+
+        if ($this->userIsPensionne($user)) {
+            return true;
+        }
+
+        if ($this->userIsMandataire($user)) {
+            return true;
+        }
+
+        if ($this->userIsRepresentantLegal($user)) {
+            return true;
+        }
+
+        return $this->userHasPendingDemandeCreationCompte($user);
+    }
+
+    private function userIsPensionne(User $user): bool
+    {
+        return $user->hasCategory('pensionne') || $user->hasRole('pensionne');
+    }
+
+    private function userIsMandataire(User $user): bool
+    {
+        if ($user->beneficiaireLinks()
+            ->where('relation', BeneficiaireRelationEnum::MANDATAIRE->value)
+            ->exists()) {
+            return true;
+        }
+
+        return $user->pensionMandats()
+            ->whereIn('status', [
+                PensionMandatStatusEnum::ACTIF->value,
+                PensionMandatStatusEnum::EN_ATTENTE->value,
+            ])
+            ->exists();
+    }
+
+    private function userIsRepresentantLegal(User $user): bool
+    {
+        $relations = array_map(
+            fn (BeneficiaireRelationEnum $relation) => $relation->value,
+            array_filter(
+                BeneficiaireRelationEnum::cases(),
+                fn (BeneficiaireRelationEnum $relation) => $relation->isRepresentative()
+            )
+        );
+
+        return $user->beneficiaireLinks()->whereIn('relation', $relations)->exists();
     }
 
     /**

@@ -8,6 +8,9 @@ use App\Models\AnneeFiscale;
 use App\Models\User;
 use App\Services\Formalites\FormaliteSuiviService;
 use Illuminate\Http\Request;
+use Illuminate\Pagination\LengthAwarePaginator;
+use Illuminate\Pagination\Paginator;
+use Illuminate\Support\Collection;
 use Illuminate\View\View;
 
 class FormaliteSuiviController extends Controller
@@ -44,37 +47,55 @@ class FormaliteSuiviController extends Controller
         $demandesCloturesStatut = null;
         $clotureStatutLabel = null;
 
+        $perPage = 15;
+
         if ($filtre === 'remplies') {
             $formalites = $this->suivi
                 ->formalitesRempliesQuery($anneeFiscaleId, $search ?: null)
-                ->paginate(20)
+                ->paginate($perPage, pageName: 'remplies_page')
                 ->withQueryString();
         } elseif ($filtre === 'en_attente') {
             $demandesAttente = $this->suivi
                 ->demandesEnAttenteFormaliteQuery($anneeFiscaleId)
-                ->paginate(20, pageName: 'attente_page')
+                ->paginate($perPage, pageName: 'attente_page')
                 ->withQueryString();
         } elseif ($filtre === 'a_cloturer') {
-            $demandesCloture = $this->suivi->demandesACloturerFiltered();
+            $demandesCloture = $this->paginateCollection(
+                $this->suivi->demandesACloturerFiltered(),
+                $perPage,
+                'cloture_page'
+            );
         } elseif ($filtre === 'rdv_realises') {
-            $demandesCloturesStatut = $this->suivi->demandesParStatutCloture(
-                RencontreStatutEnum::REALISE
+            $demandesCloturesStatut = $this->paginateCollection(
+                $this->suivi->demandesParStatutCloture(RencontreStatutEnum::REALISE),
+                $perPage,
+                'rdv_page'
             );
             $clotureStatutLabel = RencontreStatutEnum::REALISE->label();
         } elseif ($filtre === 'rdv_non_honores') {
-            $demandesCloturesStatut = $this->suivi->demandesParStatutCloture(
-                RencontreStatutEnum::NON_HONORE
+            $demandesCloturesStatut = $this->paginateCollection(
+                $this->suivi->demandesParStatutCloture(RencontreStatutEnum::NON_HONORE),
+                $perPage,
+                'rdv_page'
             );
             $clotureStatutLabel = RencontreStatutEnum::NON_HONORE->label();
         } elseif ($filtre === 'rdv_annules') {
-            $demandesCloturesStatut = $this->suivi
-                ->demandesParStatutCloture(RencontreStatutEnum::ANNULE)
-                ->merge($this->suivi->demandesParStatutCloture(RencontreStatutEnum::REFUSE))
-                ->unique('id')
-                ->values();
+            $demandesCloturesStatut = $this->paginateCollection(
+                $this->suivi
+                    ->demandesParStatutCloture(RencontreStatutEnum::ANNULE)
+                    ->merge($this->suivi->demandesParStatutCloture(RencontreStatutEnum::REFUSE))
+                    ->unique('id')
+                    ->values(),
+                $perPage,
+                'rdv_page'
+            );
             $clotureStatutLabel = 'Annulés et refusés';
         } else {
-            $demandesPlanifies = $this->suivi->demandesPlanifiesFiltered();
+            $demandesPlanifies = $this->paginateCollection(
+                $this->suivi->demandesPlanifiesFiltered(),
+                $perPage,
+                'planif_page'
+            );
         }
 
         return view('formalites.suivi.index', compact(
@@ -103,5 +124,25 @@ class FormaliteSuiviController extends Controller
             User::ROLE_DIRECTEUR,
             User::ROLE_ASSISTANT_DIRECTEUR,
         ];
+    }
+
+    /**
+     * @param  Collection<int, mixed>  $items
+     */
+    private function paginateCollection(Collection $items, int $perPage, string $pageName): LengthAwarePaginator
+    {
+        $page = Paginator::resolveCurrentPage($pageName);
+
+        return new LengthAwarePaginator(
+            $items->forPage($page, $perPage)->values(),
+            $items->count(),
+            $perPage,
+            $page,
+            [
+                'path' => request()->url(),
+                'pageName' => $pageName,
+                'query' => request()->query(),
+            ]
+        );
     }
 }

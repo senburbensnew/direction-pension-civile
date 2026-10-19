@@ -12,10 +12,8 @@ return new class extends Migration
             return;
         }
 
-        $after = Schema::hasColumn('users', 'is_active') ? 'is_active' : 'password';
-
-        Schema::table('users', function (Blueprint $table) use ($after) {
-            $table->string('account_status')->default('actif')->after($after);
+        Schema::table('users', function (Blueprint $table) {
+            $table->string('account_status')->default('actif')->after('remember_token');
             $table->index('account_status');
         });
     }

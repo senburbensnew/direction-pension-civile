@@ -249,12 +249,14 @@
             <a href="{{ route('profile.edit') }}" class="text-navy font-medium hover:underline">
                 ← Mon profil
             </a>
-            <p>
-                <a href="{{ route('compte.mandats.index') }}" class="text-indigo-700 font-semibold hover:underline">
-                    Demander un mandat
-                </a>
-                pour agir au nom d’un autre pensionné.
-            </p>
+            @if(auth()->user()?->canSeePortalNavBeneficiairesMandats())
+                <p>
+                    <a href="{{ route('compte.mandats.index') }}" class="text-indigo-700 font-semibold hover:underline">
+                        Demander un mandat
+                    </a>
+                    pour agir au nom d’un autre pensionné.
+                </p>
+            @endif
         </div>
 </x-portal-page>
 </x-app-layout>

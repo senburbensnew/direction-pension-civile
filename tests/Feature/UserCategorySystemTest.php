@@ -26,7 +26,7 @@ class UserCategorySystemTest extends TestCase
         $this->seed(RolesAndPermissionsSeeder::class);
     }
 
-    public function test_user_can_hold_multiple_categories_with_primary(): void
+    public function test_user_has_single_category_personnel_dpc_with_service(): void
     {
         $service = Service::query()->create([
             'code' => 'service_test_'.uniqid(),
@@ -38,15 +38,13 @@ class UserCategorySystemTest extends TestCase
             'service_id' => $service->id,
         ]);
 
-        $sync = app(UserCategoryRoleSyncService::class);
-        $sync->syncCategories($user, ['pensionne', 'personnel_dpc'], 'personnel_dpc');
+        app(UserCategoryRoleSyncService::class)->syncSingleCategory($user, 'personnel_dpc');
 
         $user->refresh();
 
-        $this->assertTrue($user->hasCategory('pensionne'));
-        $this->assertTrue($user->hasCategory('personnel_dpc'));
         $this->assertSame('personnel_dpc', $user->primaryCategoryCode());
-        $this->assertTrue($user->hasPensionPortalAccess());
+        $this->assertCount(1, $user->categoryAssignments);
+        $this->assertFalse($user->hasCategory('pensionne'));
         $this->assertTrue($user->hasAgentPortalAccess());
     }
 

@@ -37,6 +37,17 @@
             </div>
         </a>
 
+        <a href="{{ route('admin.email.test') }}"
+           class="flex items-start gap-4 bg-white border border-gray-200 rounded-lg p-4 hover:border-emerald-300 hover:shadow-sm transition-all group">
+            <div class="w-10 h-10 rounded-lg bg-emerald-50 flex items-center justify-center flex-shrink-0 group-hover:bg-emerald-100 transition-colors">
+                <i class="fas fa-envelope text-emerald-600"></i>
+            </div>
+            <div>
+                <p class="font-semibold text-gray-800 text-sm">Test e-mail</p>
+                <p class="text-xs text-gray-500 mt-0.5">Vérifier l’envoi SMTP / la configuration mail de l’application.</p>
+            </div>
+        </a>
+
         @php
             $maintenanceOn = \Illuminate\Support\Facades\Cache::remember('is_maintenance_mode', 60, fn() =>
                 \Illuminate\Support\Facades\DB::table('parameters')

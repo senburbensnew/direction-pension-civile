@@ -28,12 +28,7 @@
                             <td class="px-6 py-4 whitespace-nowrap">{{ $user->role }}</td>
                             <td class="px-6 py-4 whitespace-nowrap">
                                 <a href="{{ route('admin.users.edit', $user->id) }}"
-                                    class="text-indigo-600 hover:text-indigo-900 mr-4">Edit</a>
-                                <form action="{{ route('admin.users.destroy', $user->id) }}" method="POST" class="inline">
-                                    @csrf
-                                    @method('DELETE')
-                                    <button type="submit" class="text-red-600 hover:text-red-900">Delete</button>
-                                </form>
+                                    class="text-indigo-600 hover:text-indigo-900">Edit</a>
                             </td>
                         </tr>
                     @endforeach

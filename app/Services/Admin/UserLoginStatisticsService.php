@@ -13,6 +13,7 @@ class UserLoginStatisticsService
     public function __construct(
         private ActiveSessionService $activeSessions,
         private IpGeolocationService $geolocation,
+        private UserSessionEndService $sessionEnds,
     ) {}
 
     public function isAvailable(): bool
@@ -167,6 +168,55 @@ class UserLoginStatisticsService
             ->orderByDesc('logged_in_at')
             ->limit($limit)
             ->get();
+    }
+
+    /**
+     * @return Collection<int, array{
+     *     type: string,
+     *     at: \Illuminate\Support\Carbon,
+     *     ip_address: string|null,
+     *     user_agent: string|null,
+     *     location_label: string,
+     *     detail_label: string|null,
+     *     actor_name: string|null
+     * }>
+     */
+    public function connectionTimelineForUser(int $userId, int $limit = 25): Collection
+    {
+        $entries = collect();
+
+        if ($this->isAvailable()) {
+            foreach (UserLoginEvent::query()->where('user_id', $userId)->orderByDesc('logged_in_at')->limit($limit)->get() as $login) {
+                $entries->push([
+                    'type' => 'login',
+                    'at' => $login->logged_in_at,
+                    'ip_address' => $login->ip_address,
+                    'user_agent' => $login->user_agent,
+                    'location_label' => $this->locationLabelForLoginEvent($login),
+                    'detail_label' => __('messages.admin_sessions.trace_login'),
+                    'actor_name' => null,
+                ]);
+            }
+        }
+
+        if ($this->sessionEnds->isAvailable()) {
+            foreach ($this->sessionEnds->forUser($userId, $limit) as $end) {
+                $entries->push([
+                    'type' => 'logout',
+                    'at' => $end->ended_at,
+                    'ip_address' => $end->ip_address,
+                    'user_agent' => $end->user_agent,
+                    'location_label' => $this->sessionEnds->locationLabelForEvent($end),
+                    'detail_label' => $end->reason->label(),
+                    'actor_name' => $end->initiatedBy?->name,
+                ]);
+            }
+        }
+
+        return $entries
+            ->sortByDesc(fn (array $row) => $row['at']->timestamp)
+            ->take($limit)
+            ->values();
     }
 
     /**

@@ -24,10 +24,10 @@
 
         <select name="role" onchange="this.form.submit()"
             class="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
-            <option value="">Tous les rôles</option>
+            <option value="">tous les rôles</option>
             @foreach($roles as $role)
                 <option value="{{ $role->name }}" {{ request('role') === $role->name ? 'selected' : '' }}>
-                    {{ ucfirst($role->name) }}
+                    {{ strtolower($role->name) }}
                 </option>
             @endforeach
         </select>
@@ -176,15 +176,6 @@
                                             class="px-2 py-1 rounded text-xs font-medium {{ $user->allowsLogin() ? 'bg-orange-100 text-orange-700 hover:bg-orange-200' : 'bg-green-100 text-green-700 hover:bg-green-200' }}"
                                             title="{{ $user->allowsLogin() ? 'Désactiver' : 'Activer' }}">
                                             <i class="fas {{ $user->allowsLogin() ? 'fa-ban' : 'fa-check' }}"></i>
-                                        </button>
-                                    </form>
-                                    <form action="{{ route('admin.users.destroy', $user) }}" method="POST"
-                                        onsubmit="return confirm('Supprimer {{ addslashes($user->name) }} ?')">
-                                        @csrf
-                                        @method('DELETE')
-                                        <button type="submit"
-                                            class="px-2 py-1 bg-red-100 text-red-700 hover:bg-red-200 rounded text-xs font-medium">
-                                            <i class="fas fa-trash"></i>
                                         </button>
                                     </form>
                                 @endif

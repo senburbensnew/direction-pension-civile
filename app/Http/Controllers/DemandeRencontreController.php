@@ -48,6 +48,12 @@ class DemandeRencontreController extends Controller
 
         abort_unless($user, 401);
 
+        abort_unless(
+            $this->motifsService->userCanBookPortalRencontre($user),
+            403,
+            'Accès réservé aux pensionnés, mandataires et représentants légaux.'
+        );
+
         return view(
             'demandes.rencontre.create',
             $this->bookingViewData($request)
@@ -85,7 +91,7 @@ class DemandeRencontreController extends Controller
 
             'rdvActif' => $this->activeAppointment($user),
 
-            'appointments' => Demande::query()
+            'mesRendezVous' => Demande::query()
                 ->where('created_by', $user->id)
                 ->where(
                     'type',
@@ -240,6 +246,12 @@ class DemandeRencontreController extends Controller
         $user = $request->user();
 
         abort_unless($user, 401);
+
+        abort_unless(
+            $this->motifsService->userCanBookPortalRencontre($user),
+            403,
+            'Accès réservé aux pensionnés, mandataires et représentants légaux.'
+        );
 
         if ($this->activeAppointment($user)) {
             throw ValidationException::withMessages([

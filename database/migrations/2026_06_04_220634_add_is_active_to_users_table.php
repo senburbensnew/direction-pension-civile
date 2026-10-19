@@ -1,26 +1,16 @@
 <?php
 
 use Illuminate\Database\Migrations\Migration;
-use Illuminate\Database\Schema\Blueprint;
-use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
     public function up(): void
     {
-        if (Schema::hasColumn('users', 'is_active')) {
-            return;
-        }
-
-        Schema::table('users', function (Blueprint $table) {
-            $table->boolean('is_active')->default(true)->after('password');
-        });
+        // Legacy column removed in 2026_10_06_000002_drop_is_active_from_users_table.
     }
 
     public function down(): void
     {
-        Schema::table('users', function (Blueprint $table) {
-            $table->dropColumn('is_active');
-        });
+        // No-op.
     }
 };

@@ -27,21 +27,19 @@
                 <dt class="text-sm font-medium text-gray-500">Lieu ou lien</dt>
                 <dd class="sm:col-span-2 text-base text-gray-800">{{ $recap['lieu_ou_lien'] ?? '—' }}</dd>
             </div>
-            <div class="grid grid-cols-1 sm:grid-cols-3 gap-1 px-4 py-3">
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-1 px-4 py-3 bg-gray-50">
                 <dt class="text-sm font-medium text-gray-500">Motif</dt>
                 <dd class="sm:col-span-2 text-base text-gray-800">{{ $recap['motif'] ?? '—' }}</dd>
             </div>
-            <div class="grid grid-cols-1 sm:grid-cols-3 gap-1 px-4 py-3 bg-gray-50">
-                <dt class="text-sm font-medium text-gray-500">Documents à préparer</dt>
-                <dd class="sm:col-span-2">
-                    <ul class="list-disc list-inside text-base text-gray-800 space-y-1">
-                        @foreach(($recap['documents'] ?? []) as $document)
-                            <li>{{ $document }}</li>
-                        @endforeach
-                    </ul>
-                </dd>
-            </div>
         </dl>
+
+        <div class="mt-5">
+            @include('demandes.rencontre._documents-preparer-panel', [
+                'documents' => $recap['documents'] ?? [],
+                'modeLabel' => $recap['type'] ?? null,
+                'panelId' => 'success',
+            ])
+        </div>
         </div>
     </section>
 @endif
