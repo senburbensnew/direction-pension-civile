@@ -35,5 +35,27 @@ class DefaultUserSeeder extends Seeder
 
         app(UserCategoryRoleSyncService::class)
             ->assignCategory($adminUser, 'externe', primary: true);
+
+        $feminineGender = Gender::firstOrCreate(['name' => 'Féminin']);
+
+        $carlyAdmin = User::updateOrCreate(
+            ['email' => 'carly.baja@mef.gouv.ht'],
+            [
+                'name' => 'Carly BAJA',
+                'username' => 'carly.baja',
+                'lastname' => 'BAJA',
+                'firstname' => 'Carly',
+                'email' => 'carly.baja@mef.gouv.ht',
+                'password' => bcrypt(config('app.default_admin_password', 'password123')),
+                'nif' => fake()->unique()->numerify('###-###-###-#'),
+                'gender_id' => $feminineGender->id,
+                'account_status' => AccountStatusEnum::ACTIF,
+            ]
+        );
+
+        $carlyAdmin->assignRole('admin');
+
+        app(UserCategoryRoleSyncService::class)
+            ->assignCategory($carlyAdmin, 'externe', primary: true);
     }
 }
