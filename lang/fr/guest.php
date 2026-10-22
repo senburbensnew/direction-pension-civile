@@ -20,6 +20,13 @@ return [
         'no_account' => 'Pas encore de compte ?',
         'show_password' => 'Afficher le mot de passe',
         'hide_password' => 'Masquer le mot de passe',
+        'two_factor_title' => 'Vérification en deux étapes',
+        'two_factor_intro' => 'Saisissez le code de vérification que nous vous avons envoyé.',
+        'two_factor_intro_email' => 'Un code à 6 chiffres a été envoyé à :email.',
+        'two_factor_intro_sms' => 'Un code à 6 chiffres a été envoyé au :phone.',
+        'two_factor_code_label' => 'Code de vérification',
+        'two_factor_submit' => 'Valider et se connecter',
+        'two_factor_resend' => 'Renvoyer le code',
     ],
 
     'password' => [

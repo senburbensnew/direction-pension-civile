@@ -17,6 +17,16 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Job retries (mail, SMS, notifications, …)
+    |--------------------------------------------------------------------------
+    */
+    'max_tries' => (int) env('QUEUE_MAX_TRIES', 5),
+
+    /** @var list<int> Seconds to wait before each retry after the first failure. */
+    'backoff' => [30, 60, 120, 300, 600],
+
+    /*
+    |--------------------------------------------------------------------------
     | Queue Connections
     |--------------------------------------------------------------------------
     |
@@ -39,7 +49,7 @@ return [
             'table' => 'jobs',
             'queue' => 'default',
             'retry_after' => 90,
-            'after_commit' => false,
+            'after_commit' => env('QUEUE_AFTER_COMMIT', true),
         ],
 
         'beanstalkd' => [

@@ -1,13 +1,6 @@
 @if(session('rdv_recap'))
     @php $recap = session('rdv_recap'); @endphp
     <section class="bg-white border border-gray-200 card-shadow p-6 sm:p-8 space-y-5">
-        @if(session('success'))
-            <div class="flex items-start gap-3 rounded-lg border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-800">
-                <i class="fa-solid fa-check-circle text-green-500 mt-0.5 shrink-0" aria-hidden="true"></i>
-                <p class="font-medium">{{ session('success') }}</p>
-            </div>
-        @endif
-
         <div>
         <h2 class="text-xl font-bold text-navy mb-1">Récapitulatif de votre rendez-vous</h2>
         <p class="text-sm text-gray-500 mb-5">Référence {{ $recap['code'] ?? '' }}</p>
@@ -33,12 +26,22 @@
             </div>
         </dl>
 
-        <div class="mt-5">
+        <div class="mt-5 space-y-4">
             @include('demandes.rencontre._documents-preparer-panel', [
                 'documents' => $recap['documents'] ?? [],
                 'modeLabel' => $recap['type'] ?? null,
                 'panelId' => 'success',
+                'showEnvoiHint' => true,
             ])
+            @if(session('demande_creee_id'))
+                @php $demandeRecap = \App\Models\Demande::find(session('demande_creee_id')); @endphp
+                @if($demandeRecap)
+                    @include('demandes.rencontre._documents-envoi-panel', [
+                        'demande' => $demandeRecap,
+                        'panelId' => 'success-envoi',
+                    ])
+                @endif
+            @endif
         </div>
         </div>
     </section>

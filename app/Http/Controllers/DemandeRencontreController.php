@@ -18,6 +18,7 @@ use App\Services\DemandeWorkflowService;
 use App\Services\RencontreAvailabilityService;
 use App\Services\RencontreMotifService;
 use App\Services\RencontreReminderService;
+use App\Services\RencontreStatutAlignmentService;
 use App\Services\RencontreVisioService;
 use App\Services\RencontreWorkflowService;
 use Database\Seeders\RolesAndPermissionsSeeder;
@@ -503,6 +504,66 @@ class DemandeRencontreController extends Controller
 
     /*
     |--------------------------------------------------------------------------
+    | PIÈCES JOINTES APRÈS SOUMISSION
+    |--------------------------------------------------------------------------
+    */
+
+    public function uploadDocuments(
+        Request $request,
+        Demande $demande
+    ) {
+        abort_unless($demande->isRencontre(), 404);
+
+        $user = $request->user();
+
+        abort_unless(
+            $demande->canUploadRencontreDocuments($user),
+            403
+        );
+
+        $motifKey = (string) ($demande->data['motif_key'] ?? '');
+
+        abort_if($motifKey === '', 422, 'Motif du rendez-vous introuvable.');
+
+        $validated = $request->validate(
+            $this->motifsService->postSubmissionDocumentValidationRules($demande)
+        );
+
+        $uploadedDocs = [];
+
+        foreach ($request->allFiles() as $key => $file) {
+            if (str_starts_with($key, 'doc_')) {
+                $uploadedDocs[$key] = $file;
+            }
+        }
+
+        if ($uploadedDocs === []) {
+            throw ValidationException::withMessages([
+                'documents' => 'Sélectionnez au moins un fichier à envoyer.',
+            ]);
+        }
+
+        $this->motifsService->attachUploadedDocuments(
+            $demande,
+            $motifKey,
+            $uploadedDocs
+        );
+
+        DemandeHistory::create([
+            'demande_id' => $demande->id,
+            'statut' => (string) ($demande->data['rdv_statut'] ?? $demande->currentStep?->code ?? 'ACTIF'),
+            'commentaire' => 'Pièces complémentaires téléversées par le demandeur.',
+            'changed_by' => $user?->id,
+        ]);
+
+        return back()->with(
+            'success',
+            'Vos documents ont été enregistrés dans le dossier du rendez-vous.'
+        );
+    }
+
+    /*
+    |--------------------------------------------------------------------------
     | ANNULATION
     |--------------------------------------------------------------------------
     */
@@ -884,7 +945,7 @@ class DemandeRencontreController extends Controller
             ->paginate(20)
             ->withQueryString();
 
-        $align = app(\App\Services\RencontreStatutAlignmentService::class);
+        $align = app(RencontreStatutAlignmentService::class);
         $demandes->setCollection(
             $demandes->getCollection()->map(
                 fn (Demande $demande) => $align->alignAfterFormalite($demande, $user)
@@ -946,7 +1007,7 @@ class DemandeRencontreController extends Controller
             'histories.changer',
         ]);
 
-        $demande = app(\App\Services\RencontreStatutAlignmentService::class)
+        $demande = app(RencontreStatutAlignmentService::class)
             ->alignAfterFormalite($demande, $user);
 
         $rdvStatut = $this->rdvWorkflow->statut($demande);

@@ -20,6 +20,13 @@ return [
         'no_account' => 'Don\'t have an account yet?',
         'show_password' => 'Show password',
         'hide_password' => 'Hide password',
+        'two_factor_title' => 'Two-step verification',
+        'two_factor_intro' => 'Enter the verification code we sent you.',
+        'two_factor_intro_email' => 'A 6-digit code was sent to :email.',
+        'two_factor_intro_sms' => 'A 6-digit code was sent to :phone.',
+        'two_factor_code_label' => 'Verification code',
+        'two_factor_submit' => 'Verify and sign in',
+        'two_factor_resend' => 'Resend code',
     ],
 
     'password' => [

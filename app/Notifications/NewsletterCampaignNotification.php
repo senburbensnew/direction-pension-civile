@@ -6,6 +6,7 @@ use App\Models\Newsletter;
 use App\Models\NewsletterCampaign;
 use App\Models\NewsletterDelivery;
 use App\Notifications\Concerns\UsesStandardChannels;
+use App\Queue\ConfiguresQueueRetries;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Messages\MailMessage;
@@ -13,6 +14,7 @@ use Illuminate\Notifications\Notification;
 
 class NewsletterCampaignNotification extends Notification implements ShouldQueue
 {
+    use ConfiguresQueueRetries;
     use Queueable;
     use UsesStandardChannels;
 
@@ -20,7 +22,9 @@ class NewsletterCampaignNotification extends Notification implements ShouldQueue
         public readonly NewsletterCampaign $campaign,
         public readonly Newsletter $subscriber,
         public readonly ?NewsletterDelivery $delivery = null,
-    ) {}
+    ) {
+        $this->configureQueueRetries();
+    }
 
     public function via(object $notifiable): array
     {

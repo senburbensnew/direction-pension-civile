@@ -36,4 +36,10 @@ return [
         'auth_token' => env('TWILIO_AUTH_TOKEN'),
         'from' => env('TWILIO_FROM'),
     ],
+
+    'vonage' => [
+        'key' => env('VONAGE_KEY', env('NEXMO_KEY')),
+        'secret' => env('VONAGE_SECRET', env('NEXMO_SECRET')),
+        'sms_from' => env('VONAGE_SMS_FROM', env('NEXMO_FROM')),
+    ],
 ];

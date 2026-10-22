@@ -12,10 +12,18 @@
     $showCodesPension = $user
         && ! $isProvisionnel
         && ($user->hasCategory('pensionne') || $user->hasRole('pensionne'));
-    $rencontreMotifs = $user
-        ? app(\App\Services\RencontreMotifService::class)->motifsForUser($user)
-        : [];
-    $showRencontreCreate = $rencontreMotifs !== [];
+    $isInternalDpcUser = $user?->hasAnyRole($corbeilleRoles) ?? false;
+    $showRencontreCreate = $user && ! $isInternalDpcUser;
+
+    $hasUpperPortalNav = $showPersonal
+        || $showCorbeille
+        || $isProvisionnel
+        || (bool) $demandeCompte
+        || $showCodesPension
+        || ($user?->hasAnyRole(['validateur_rdv', 'responsable_service_accueil_formalites', 'directeur', 'assistant_directeur']) ?? false)
+        || ($user?->hasRole(\App\Models\User::ROLE_AGENT_RDV) ?? false)
+        || ($user?->canSeePortalNavFormalitesComptes() ?? false)
+        || ($user?->canSeePortalNavFormalitesSuivi() ?? false);
 
     $sidebarHome = $showPersonal
         ? route('personal.dashboard')
@@ -32,9 +40,9 @@
 @endphp
 
 <div class="flex items-center gap-2 px-3 py-3 border-b border-white/10 group-data-[collapsed=true]/body:justify-center group-data-[collapsed=true]/body:px-2">
-    <a href="{{ $sidebarHome }}" class="flex items-center gap-2 min-w-0 flex-1 group group-data-[collapsed=true]/body:flex-none" title="Mon espace">
+    <a href="{{ $sidebarHome }}" class="flex items-center gap-2 min-w-0 flex-1 group group-data-[collapsed=true]/body:hidden" title="Mon espace">
         <x-optimized-image src="images/setting-logo-1-M13oPLiYoM.png" alt="DPC" class="w-8 h-8 rounded flex-shrink-0" width="32" height="32" loading="eager"></x-optimized-image>
-        <div class="leading-tight min-w-0 overflow-hidden truncate group-data-[collapsed=true]/body:hidden">
+        <div class="leading-tight min-w-0 overflow-hidden truncate">
             <p class="text-white text-xs font-semibold leading-snug truncate">Pension Civile</p>
             <p class="text-slate-400 text-[10px]">Mon espace</p>
         </div>
@@ -128,17 +136,24 @@
         </a>
     @endif -->
 
-    <div class="my-2 border-t border-white/10 mx-1.5 group-data-[collapsed=true]/body:mx-2"></div>
+    @if($hasUpperPortalNav)
+        <div class="my-2 border-t border-white/10 mx-1.5 group-data-[collapsed=true]/body:mx-2"></div>
+    @endif
 
     <a href="{{ route('home') }}" title="Accueil public" class="{{ $portalNavLink(false) }}">
         <i class="fas fa-home"></i>
         <span class="{{ $portalNavLabel }}">Accueil</span>
     </a>
+    <a href="{{ route('simulateur-calcul') }}" title="{{ __('messages.simulateur-calcul') }}"
+       class="{{ $portalNavLink(request()->routeIs('simulateur-calcul') ? 'active' : '') }}">
+        <i class="fas fa-calculator"></i>
+        <span class="{{ $portalNavLabel }}">{{ __('messages.simulateur-calcul') }}</span>
+    </a>
     @if($showRencontreCreate)
-        <a href="{{ route('demandes.rencontre.create') }}" title="Demande de rendez-vous"
+        <a href="{{ route('demandes.rencontre.create') }}" title="{{ __('messages.appointment_request') }}"
            class="{{ $portalNavLink(request()->routeIs('demandes.rencontre.create', 'demandes.rencontre.store') ? 'active' : '') }}">
             <i class="fas fa-video"></i>
-            <span class="{{ $portalNavLabel }}">Rendez-vous</span>
+            <span class="{{ $portalNavLabel }}">{{ __('messages.appointment_request') }}</span>
         </a>
     @endif
 </nav>

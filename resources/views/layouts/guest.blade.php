@@ -71,9 +71,9 @@
                 />
             </div>
             <div class="pointer-events-none absolute inset-0 z-[1] bg-gradient-to-b from-blue-800/60 via-blue-600/45 to-slate-900/70"></div>
-            <p class="relative z-[2] m-0 max-w-[18rem] text-center text-sm font-medium leading-snug text-white drop-shadow-md lg:text-[0.875rem]">
+            {{-- <p class="relative z-[2] m-0 max-w-[18rem] text-center text-sm font-medium leading-snug text-white drop-shadow-md lg:text-[0.875rem]">
                 {{ $guestCopyrightLine }}
-            </p>
+            </p> --}}
         </aside>
     @endif
 
@@ -125,27 +125,27 @@
                         <span>{{ __('guest.layout.back_home') }}</span>
                     </a>
 
-                    <div class="flex flex-wrap items-center justify-end gap-2" aria-label="{{ __('guest.layout.language') }}">
+                    <div class="flex flex-wrap items-center justify-end gap-1" aria-label="{{ __('guest.layout.language') }}">
                         @if ($locale === 'fr')
-                            <span class="inline-flex cursor-default items-center gap-1.5 rounded-full border border-[#173052] bg-[#eef2f7] px-3.5 py-1.5 text-xs font-semibold leading-tight text-[#173052]">
-                                <img src="{{ asset('images/france-flag-icon.svg') }}" alt="" aria-hidden="true" class="h-4 w-4 shrink-0 rounded-sm object-cover">
+                            <span class="inline-flex cursor-default items-center gap-1 rounded-md bg-gray-100/90 px-1.5 py-0.5 text-[10px] font-medium leading-none text-gray-600 ring-1 ring-inset ring-gray-200/80">
+                                <img src="{{ asset('images/france-flag-icon.svg') }}" alt="" aria-hidden="true" class="h-3 w-3 shrink-0 rounded-sm object-cover opacity-90">
                                 {{ __('guest.layout.french') }}
                             </span>
                         @else
-                            <a href="{{ route('locale', 'fr') }}" title="{{ __('guest.layout.french') }}" class="inline-flex items-center gap-1.5 rounded-full border border-gray-200 bg-white px-3.5 py-1.5 text-xs font-semibold leading-tight text-gray-700 transition-colors hover:border-[#173052] hover:bg-gray-50">
-                                <img src="{{ asset('images/france-flag-icon.svg') }}" alt="" aria-hidden="true" class="h-4 w-4 shrink-0 rounded-sm object-cover">
+                            <a href="{{ route('locale', 'fr') }}" title="{{ __('guest.layout.french') }}" class="inline-flex items-center gap-1 rounded-md px-1.5 py-0.5 text-[10px] font-normal leading-none text-gray-400 transition-colors hover:bg-gray-50 hover:text-gray-600">
+                                <img src="{{ asset('images/france-flag-icon.svg') }}" alt="" aria-hidden="true" class="h-3 w-3 shrink-0 rounded-sm object-cover opacity-70">
                                 {{ __('guest.layout.french') }}
                             </a>
                         @endif
 
                         @if ($locale === 'ht')
-                            <span class="inline-flex cursor-default items-center gap-1.5 rounded-full border border-[#173052] bg-[#eef2f7] px-3.5 py-1.5 text-xs font-semibold leading-tight text-[#173052]">
-                                <img src="{{ asset('images/ht-flag.PNG') }}" alt="" aria-hidden="true" class="h-4 w-4 shrink-0 rounded-sm object-cover">
+                            <span class="inline-flex cursor-default items-center gap-1 rounded-md bg-gray-100/90 px-1.5 py-0.5 text-[10px] font-medium leading-none text-gray-600 ring-1 ring-inset ring-gray-200/80">
+                                <img src="{{ asset('images/ht-flag.PNG') }}" alt="" aria-hidden="true" class="h-3 w-3 shrink-0 rounded-sm object-cover opacity-90">
                                 {{ __('guest.layout.creole') }}
                             </span>
                         @else
-                            <a href="{{ route('locale', 'ht') }}" title="{{ __('guest.layout.creole') }}" class="inline-flex items-center gap-1.5 rounded-full border border-gray-200 bg-white px-3.5 py-1.5 text-xs font-semibold leading-tight text-gray-700 transition-colors hover:border-[#173052] hover:bg-gray-50">
-                                <img src="{{ asset('images/ht-flag.PNG') }}" alt="" aria-hidden="true" class="h-4 w-4 shrink-0 rounded-sm object-cover">
+                            <a href="{{ route('locale', 'ht') }}" title="{{ __('guest.layout.creole') }}" class="inline-flex items-center gap-1 rounded-md px-1.5 py-0.5 text-[10px] font-normal leading-none text-gray-400 transition-colors hover:bg-gray-50 hover:text-gray-600">
+                                <img src="{{ asset('images/ht-flag.PNG') }}" alt="" aria-hidden="true" class="h-3 w-3 shrink-0 rounded-sm object-cover opacity-70">
                                 {{ __('guest.layout.creole') }}
                             </a>
                         @endif

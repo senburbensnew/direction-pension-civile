@@ -151,6 +151,33 @@ class AuthenticationTest extends TestCase
         $this->assertGuest();
     }
 
+    public function test_login_with_remember_me_sets_remember_token(): void
+    {
+        $user = User::factory()->create(['remember_token' => null]);
+
+        $this->post('/login', [
+            'login' => $user->email,
+            'password' => 'password',
+            'remember' => '1',
+        ]);
+
+        $this->assertAuthenticatedAs($user);
+        $this->assertNotNull($user->fresh()->remember_token);
+    }
+
+    public function test_login_without_remember_me_does_not_set_remember_token(): void
+    {
+        $user = User::factory()->create(['remember_token' => null]);
+
+        $this->post('/login', [
+            'login' => $user->email,
+            'password' => 'password',
+        ]);
+
+        $this->assertAuthenticatedAs($user);
+        $this->assertNull($user->fresh()->remember_token);
+    }
+
     public function test_users_can_logout(): void
     {
         $user = User::factory()->create();
@@ -158,7 +185,7 @@ class AuthenticationTest extends TestCase
         $response = $this->actingAs($user)->post('/logout');
 
         $this->assertGuest();
-        $response->assertRedirect('/');
+        $response->assertRedirect(route('login'));
         $response->assertSessionHas('_token');
     }
 }

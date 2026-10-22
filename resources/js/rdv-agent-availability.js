@@ -96,7 +96,7 @@ function buildSlotDate(dateStr, timeStr) {
     return new Date(year, month - 1, day, hour, minute, 0, 0);
 }
 
-function expandRecurringEvents(recurring, rangeStart, rangeEnd) {
+function expandRecurringEvents(recurring, rangeStart, rangeEnd, holidays = null) {
     const events = [];
 
     recurring.forEach((row, index) => {
@@ -110,6 +110,10 @@ function expandRecurringEvents(recurring, rangeStart, rangeEnd) {
             }
 
             const dateStr = formatDate(cursor);
+
+            if (holidays?.has(dateStr)) {
+                continue;
+            }
             const start = buildSlotDate(dateStr, row.start_time);
             const end = buildSlotDate(dateStr, row.end_time);
 
@@ -180,10 +184,10 @@ function buildHolidayBackgroundEvents(
     return events;
 }
 
-function buildEventsFromState(state, rangeStart, rangeEnd) {
+function buildEventsFromState(state, rangeStart, rangeEnd, holidays = null) {
     const events = [];
 
-    expandRecurringEvents(state.recurring || [], rangeStart, rangeEnd).forEach((event) => {
+    expandRecurringEvents(state.recurring || [], rangeStart, rangeEnd, holidays).forEach((event) => {
         events.push(event);
     });
 
@@ -406,6 +410,12 @@ export function initAgentAvailabilityCalendar() {
 
     const isHoliday = (start) => holidays.has(formatDate(start));
 
+    const holidayLabel = (start) =>
+        holidays.get(formatDate(start)) || 'Jour férié';
+
+    const isPositiveAvailabilityMode = (mode) =>
+        mode === 'date' || mode === 'recurring';
+
     const holidayCellClassNames = (arg) =>
         holidays.has(formatDate(arg.date)) ? ['dpc-rdv-holiday'] : [];
 
@@ -452,7 +462,7 @@ export function initAgentAvailabilityCalendar() {
             return;
         }
 
-        buildEventsFromState(state, rangeStart, rangeEnd).forEach((event) => {
+        buildEventsFromState(state, rangeStart, rangeEnd, holidays).forEach((event) => {
             calendar.addEvent(event);
         });
     };
@@ -468,9 +478,20 @@ export function initAgentAvailabilityCalendar() {
         return start;
     };
 
-    const canPlaceSlot = (start, end) => {
-        if (isBlockedWeekend(start, allowWeekends) || isHoliday(start)) {
-            setHint('Créneau non autorisé (week-end ou jour férié).', true);
+    const canPlaceSlot = (start, end, mode = null) => {
+        const paintMode = mode || alpine()?.paintMode || 'date';
+
+        if (isBlockedWeekend(start, allowWeekends)) {
+            setHint('Créneau non autorisé (week-end).', true);
+
+            return false;
+        }
+
+        if (isHoliday(start) && isPositiveAvailabilityMode(paintMode)) {
+            setHint(
+                `Jour férié en Haïti (${holidayLabel(start)}). Disponibilité positive impossible.`,
+                true
+            );
 
             return false;
         }
@@ -553,7 +574,9 @@ export function initAgentAvailabilityCalendar() {
     };
 
     const handleSlotActivate = (start, end, modeOverride = null) => {
-        if (!canPlaceSlot(start, end)) {
+        const mode = modeOverride || alpine()?.paintMode || 'date';
+
+        if (!canPlaceSlot(start, end, mode)) {
             return;
         }
 
@@ -671,7 +694,7 @@ export function initAgentAvailabilityCalendar() {
         firstDay: 0,
         height: 640,
         expandRows: true,
-        allDaySlot: true,
+        allDaySlot: false,
         nowIndicator: true,
         weekends: allowWeekends,
         scrollTime: toSlotTime(displayMinTime),
@@ -712,6 +735,10 @@ export function initAgentAvailabilityCalendar() {
             day: 'Jour',
             month: 'Mois',
         },
+        views: {
+            timeGridDay: { allDaySlot: false },
+            timeGridWeek: { allDaySlot: false },
+        },
         validRange: () => {
             const start = startOfLocalDay(new Date());
             const end = maxDateStr ? new Date(`${maxDateStr}T23:59:59`) : undefined;
@@ -733,8 +760,13 @@ export function initAgentAvailabilityCalendar() {
         slotLaneClassNames: holidayCellClassNames,
         selectAllow: (selection) => {
             const { start, end } = selection;
+            const paintMode = alpine()?.paintMode || 'date';
 
-            if (isBlockedWeekend(start, allowWeekends) || isHoliday(start)) {
+            if (isBlockedWeekend(start, allowWeekends)) {
+                return false;
+            }
+
+            if (isHoliday(start) && isPositiveAvailabilityMode(paintMode)) {
                 return false;
             }
 

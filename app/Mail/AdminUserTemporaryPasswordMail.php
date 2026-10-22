@@ -3,21 +3,27 @@
 namespace App\Mail;
 
 use App\Models\User;
+use App\Queue\ConfiguresQueueRetries;
 use Illuminate\Bus\Queueable;
+use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Mail\Mailable;
 use Illuminate\Mail\Mailables\Content;
 use Illuminate\Mail\Mailables\Envelope;
 use Illuminate\Queue\SerializesModels;
 
-class AdminUserTemporaryPasswordMail extends Mailable
+class AdminUserTemporaryPasswordMail extends Mailable implements ShouldQueue
 {
+    use ConfiguresQueueRetries;
     use Queueable, SerializesModels;
 
     public function __construct(
         public User $user,
         public string $temporaryPassword,
         public User $initiatedBy,
-    ) {}
+    ) {
+        $this->configureQueueRetries();
+        $this->afterCommit();
+    }
 
     public function envelope(): Envelope
     {

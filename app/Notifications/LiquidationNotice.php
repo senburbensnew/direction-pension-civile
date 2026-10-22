@@ -2,21 +2,22 @@
 
 namespace App\Notifications;
 
+use App\Queue\ConfiguresQueueRetries;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
 
-class LiquidationNotice extends Notification
+class LiquidationNotice extends Notification implements ShouldQueue
 {
+    use ConfiguresQueueRetries;
     use Queueable;
 
-    /**
-     * Create a new notification instance.
-     */
     public function __construct()
     {
-        //
+        $this->configureQueueRetries();
+
+        $this->afterCommit();
     }
 
     /**
@@ -35,9 +36,9 @@ class LiquidationNotice extends Notification
     public function toMail(object $notifiable): MailMessage
     {
         return (new MailMessage)
-                    ->line('The introduction to the notification.')
-                    ->action('Notification Action', url('/'))
-                    ->line('Thank you for using our application!');
+            ->line('The introduction to the notification.')
+            ->action('Notification Action', url('/'))
+            ->line('Thank you for using our application!');
     }
 
     /**

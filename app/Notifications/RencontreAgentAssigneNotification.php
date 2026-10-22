@@ -4,17 +4,23 @@ namespace App\Notifications;
 
 use App\Models\Demande;
 use App\Notifications\Concerns\UsesStandardChannels;
+use App\Queue\ConfiguresQueueRetries;
 use Illuminate\Bus\Queueable;
+use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
 
-class RencontreAgentAssigneNotification extends Notification
+class RencontreAgentAssigneNotification extends Notification implements ShouldQueue
 {
+    use ConfiguresQueueRetries;
     use Queueable;
     use UsesStandardChannels;
 
     public function __construct(public readonly Demande $demande)
     {
+        $this->configureQueueRetries();
+
+        $this->afterCommit();
     }
 
     public function via(object $notifiable): array

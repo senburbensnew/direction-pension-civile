@@ -108,8 +108,14 @@
                             'documents' => $documentsPreparer,
                             'modeLabel' => $isPhysique ? 'présentiel' : 'visioconférence',
                             'panelId' => 'rdv-' . $rdv->id,
+                            'showEnvoiHint' => $rdv->canUploadRencontreDocuments(),
                         ])
                     @endif
+
+                    @include('demandes.rencontre._documents-envoi-panel', [
+                        'demande' => $rdv,
+                        'panelId' => 'envoi-' . $rdv->id,
+                    ])
                 </li>
             @endforeach
         </ul>

@@ -94,12 +94,13 @@ class PasswordResetLinkController extends Controller
 
         if ($emailSent || $smsSent) {
             $notice = $this->successNotice($emailSent, $smsSent, $user);
+            $response = back()->with('status', __(Password::RESET_LINK_SENT));
 
             if ($notice !== null) {
-                return back()->with('password_reset_notice', $notice);
+                $response = $response->with('password_reset_notice', $notice);
             }
 
-            return back()->with('status', __(Password::RESET_LINK_SENT));
+            return $response;
         }
 
         if ($throttled) {

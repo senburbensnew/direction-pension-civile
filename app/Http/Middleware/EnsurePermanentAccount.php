@@ -52,6 +52,7 @@ class EnsurePermanentAccount
         'demandes.rencontre.store',
         'demandes.rencontre.physique',
         'demandes.rencontre.annuler',
+        'demandes.rencontre.documents',
         'demandes.rencontre.visio',
         'demandes.rencontre.visio.status',
     ];

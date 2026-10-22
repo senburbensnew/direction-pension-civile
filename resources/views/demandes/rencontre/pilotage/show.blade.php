@@ -1,7 +1,8 @@
 <x-app-layout>
     @php
         $data = $demande->data ?? [];
-        $carte = $demande->getFirstMedia('carte_pension');
+        $rdvDocumentGroups = app(\App\Services\RencontreMotifService::class)->documentGroupsForDemande($demande);
+        $hasRdvDocuments = collect($rdvDocumentGroups)->contains(fn ($g) => $g['items']->isNotEmpty());
         $rdvStatut = $rdvStatut ?? $demande->rencontreStatut();
         $rdvReservable = $rdvStatut->reservesSlot();
         $aCloturer = $demande->doitApparaitreCommeACloturer();
@@ -82,10 +83,31 @@
                     <div class="md:col-span-2"><dt class="text-gray-500">Lieu ou visio</dt><dd class="font-medium">{{ $data['lieu_rdv'] ?? ($demande->visio_token ? 'Lien sécurisé DPC' : '—') }}</dd></div>
                 @endunless
             </dl>
-            @if($carte)
-                <p class="mt-4 text-sm">
-                    <a href="{{ $demande->urlForMedia($carte) }}" target="_blank" class="text-navy font-semibold hover:underline">Voir la carte de pension jointe</a>
-                </p>
+            @if($hasRdvDocuments)
+                <div class="mt-5 border-t border-gray-100 pt-4">
+                    <p class="text-sm font-semibold text-gray-800 mb-3">Pièces jointes par le demandeur</p>
+                    <div class="space-y-3 text-sm">
+                        @foreach($rdvDocumentGroups as $group)
+                            @if($group['items']->isNotEmpty())
+                                <div>
+                                    <p class="text-gray-500">{{ $group['label'] }}</p>
+                                    <ul class="mt-1 space-y-1">
+                                        @foreach($group['items'] as $media)
+                                            <li>
+                                                <a href="{{ $demande->urlForMedia($media) }}"
+                                                   target="_blank"
+                                                   rel="noopener"
+                                                   class="text-navy font-medium hover:underline">
+                                                    {{ $media->file_name }}
+                                                </a>
+                                            </li>
+                                        @endforeach
+                                    </ul>
+                                </div>
+                            @endif
+                        @endforeach
+                    </div>
+                </div>
             @endif
             @if($visioPilotageOk)
                 <p class="mt-4">

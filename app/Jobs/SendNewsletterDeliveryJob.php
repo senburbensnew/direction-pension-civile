@@ -23,7 +23,7 @@ class SendNewsletterDeliveryJob implements ShouldQueue
 
     public function __construct(public readonly int $deliveryId)
     {
-        $this->tries = (int) config('newsletter.max_send_retries', 3);
+        $this->tries = (int) config('queue.max_tries', 5);
     }
 
     public function handle(NewsletterDispatchService $dispatch): void

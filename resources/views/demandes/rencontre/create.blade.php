@@ -83,6 +83,7 @@
 
                 <p class="text-sm text-gray-500 max-w-xl mt-2">
                     Quatre étapes : mode → motif et créneau → pièces → confirmation.
+                    Les créneaux sont planifiés avec le service Accueil et Formalités.
                 </p>
             </div>
 
@@ -104,28 +105,8 @@
                 MESSAGE ERREUR SESSION
             ====================================================== --}}
 
-            @if(session('error'))
-
-                <div class="bg-red-50 border border-red-200 text-red-800 rounded-lg px-4 py-3 text-sm">
-
-                    {{ session('error') }}
-
-                </div>
-
-            @endif
-
-
-            {{-- =====================================================
-                MESSAGE SUCCÈS + RÉCAP (affichés dans le conteneur centré)
-            ====================================================== --}}
-
             @if(session('rdv_recap'))
                 @include('demandes.rencontre._success-recap')
-            @elseif(session('success'))
-                <div class="flex items-start gap-3 rounded-lg border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-800">
-                    <i class="fa-solid fa-check-circle text-green-500 mt-0.5 shrink-0"></i>
-                    <p>{{ session('success') }}</p>
-                </div>
             @endif
 
 
@@ -251,11 +232,16 @@
                                 $rdvActifPhysique = ($rdvActifData['modalite'] ?? 'visio') === 'physique';
                             @endphp
 
-                            <div class="mt-4">
+                            <div class="mt-4 space-y-4">
                                 @include('demandes.rencontre._documents-preparer-panel', [
                                     'documents' => $rdvActifDocs,
                                     'modeLabel' => $rdvActifPhysique ? 'présentiel' : 'visioconférence',
                                     'panelId' => 'actif',
+                                    'showEnvoiHint' => $rdvActif->canUploadRencontreDocuments(),
+                                ])
+                                @include('demandes.rencontre._documents-envoi-panel', [
+                                    'demande' => $rdvActif,
+                                    'panelId' => 'actif-envoi',
                                 ])
                             </div>
 

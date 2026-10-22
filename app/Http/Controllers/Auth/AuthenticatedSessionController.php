@@ -2,12 +2,13 @@
 
 namespace App\Http\Controllers\Auth;
 
+use App\Enums\UserSessionEndReasonEnum;
+use App\Http\Controllers\Auth\Concerns\RedirectsAfterAuthentication;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Auth\LoginRequest;
-use App\Providers\RouteServiceProvider;
-use App\Enums\UserSessionEndReasonEnum;
 use App\Services\Admin\UserLoginStatisticsService;
 use App\Services\Admin\UserSessionEndService;
+use App\Services\LoginTwoFactorService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -15,6 +16,8 @@ use Illuminate\View\View;
 
 class AuthenticatedSessionController extends Controller
 {
+    use RedirectsAfterAuthentication;
+
     /**
      * Display the login view.
      */
@@ -26,26 +29,32 @@ class AuthenticatedSessionController extends Controller
     /**
      * Handle an incoming authentication request.
      */
-    public function store(LoginRequest $request, UserLoginStatisticsService $loginStats): RedirectResponse
-    {
+    public function store(
+        LoginRequest $request,
+        UserLoginStatisticsService $loginStats,
+        LoginTwoFactorService $twoFactor,
+    ): RedirectResponse {
+        $user = $request->validatedUser();
+
+        if ($twoFactor->requiresChallenge($user)) {
+            $twoFactor->beginChallenge(
+                $request,
+                $user,
+                $request->boolean('remember'),
+                (string) $request->input('login'),
+            );
+
+            return redirect()->route('login.two-factor');
+        }
+
         $request->authenticate();
 
         $request->session()->regenerate();
         $request->session()->forget('url.intended');
 
-        if ($request->user()) {
-            $loginStats->recordFromRequest($request->user()->id, $request);
-        }
+        $loginStats->recordFromRequest($user->id, $request);
 
-        if ($request->user()?->mustChangePassword()) {
-            return redirect()->route('password.required');
-        }
-
-        if ($request->user()?->hasRole('admin')) {
-            return redirect()->route('admin.dashboard.index');
-        }
-
-        return redirect()->to(RouteServiceProvider::HOME);
+        return $this->redirectAfterAuthentication($request);
     }
 
     /**
@@ -71,6 +80,6 @@ class AuthenticatedSessionController extends Controller
 
         $request->session()->regenerateToken();
 
-        return redirect(RouteServiceProvider::HOME);
+        return redirect()->route('login');
     }
 }

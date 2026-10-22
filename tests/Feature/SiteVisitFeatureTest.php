@@ -5,6 +5,8 @@ namespace Tests\Feature;
 use App\Models\SiteVisit;
 use App\Services\SiteVisitService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\DB;
 use Tests\TestCase;
 
 class SiteVisitFeatureTest extends TestCase
@@ -16,8 +18,8 @@ class SiteVisitFeatureTest extends TestCase
         parent::setUp();
 
         SiteVisit::query()->delete();
-        \Illuminate\Support\Facades\DB::table('site_visit_ips')->delete();
-        \Illuminate\Support\Facades\Cache::forget('site_visits.summary');
+        DB::table('site_visit_ips')->delete();
+        Cache::forget('site_visits.summary');
     }
 
     /** @test */
@@ -57,7 +59,7 @@ class SiteVisitFeatureTest extends TestCase
     /** @test */
     public function admin_and_bot_requests_are_not_counted(): void
     {
-        $this->withoutFollowingRedirects()->get('/admin/dashboard');
+        $this->get('/admin/dashboard', ['followRedirects' => false]);
         $this->withHeaders(['User-Agent' => 'Googlebot'])->get('/');
 
         $this->assertSame(0, SiteVisit::query()->sum('hits'));

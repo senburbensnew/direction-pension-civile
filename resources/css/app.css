@@ -506,6 +506,32 @@ select option {
     cursor: not-allowed;
 }
 
+.dpc-rdv-scheduler .fc-bg-event.dpc-rdv-holiday-bg,
+.dpc-agent-availability-scheduler .fc-bg-event.dpc-rdv-holiday-bg {
+    background-color: rgba(251, 191, 36, 0.28) !important;
+    opacity: 1;
+    cursor: not-allowed;
+}
+
+.dpc-rdv-scheduler .fc-timegrid-col.dpc-rdv-holiday .fc-timegrid-col-bg,
+.dpc-agent-availability-scheduler .fc-timegrid-col.dpc-rdv-holiday .fc-timegrid-col-bg,
+.dpc-rdv-scheduler .fc-col-header-cell.dpc-rdv-holiday,
+.dpc-agent-availability-scheduler .fc-col-header-cell.dpc-rdv-holiday {
+    background: repeating-linear-gradient(
+        -45deg,
+        #fffbeb,
+        #fffbeb 6px,
+        #fef3c7 6px,
+        #fef3c7 7px
+    );
+}
+
+.dpc-rdv-scheduler .fc-bg-event.dpc-rdv-holiday-bg .fc-event-title,
+.dpc-agent-availability-scheduler .fc-bg-event.dpc-rdv-holiday-bg .fc-event-title {
+    color: #92400e;
+    font-weight: 600;
+}
+
 .dpc-rdv-scheduler .fc-col-header-cell.fc-day-today {
     background: #f4f6f9;
 }
@@ -531,6 +557,38 @@ select option {
         #e5e7eb 4px,
         #e5e7eb 5px
     );
+}
+
+/* Légende agent disponibilités — alignée sur les couleurs du calendrier (.dpc-avail-*) */
+.rdv-legend-swatch--date {
+    background-color: #059669;
+    border-color: #047857;
+}
+
+.rdv-legend-swatch--recurring {
+    background-color: #173052;
+    border-color: #173052;
+}
+
+.rdv-legend-swatch--block-date {
+    background-color: #dc2626;
+    border-color: #b91c1c;
+}
+
+.rdv-legend-swatch--block-weekday {
+    background-color: #6d28d9;
+    border-color: #5b21b6;
+}
+
+.rdv-legend-swatch--holiday {
+    background: repeating-linear-gradient(
+        -45deg,
+        #fffbeb,
+        #fffbeb 4px,
+        #fef3c7 4px,
+        #fef3c7 5px
+    );
+    border-color: #fcd34d;
 }
 
 .rdv-legend-past {

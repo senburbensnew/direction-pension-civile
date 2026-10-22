@@ -13,11 +13,12 @@ return new class extends Migration
     {
         Schema::create('workflow_step_transitions', function (Blueprint $table) {
             $table->id();
-            // null = initial submission (dossier just submitted by citizen)
             $table->foreignId('from_step_id')->nullable()->constrained('workflow_steps')->cascadeOnDelete();
             $table->foreignId('to_step_id')->constrained('workflow_steps')->cascadeOnDelete();
             $table->string('action', 100);
             $table->boolean('is_urgent_only')->default(false);
+            $table->string('required_permission', 100)->nullable();
+            $table->json('guard_conditions')->nullable();
             $table->unsignedSmallInteger('ordre')->default(0);
             $table->timestamps();
 

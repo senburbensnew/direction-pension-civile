@@ -4,12 +4,15 @@ namespace App\Notifications;
 
 use App\Models\Demande;
 use App\Notifications\Concerns\UsesStandardChannels;
+use App\Queue\ConfiguresQueueRetries;
 use Illuminate\Bus\Queueable;
+use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
 
-class DemandeStatusChangedNotification extends Notification
+class DemandeStatusChangedNotification extends Notification implements ShouldQueue
 {
+    use ConfiguresQueueRetries;
     use Queueable;
     use UsesStandardChannels;
 
@@ -18,6 +21,9 @@ class DemandeStatusChangedNotification extends Notification
         public readonly string $newStatusCode,
         public readonly ?string $commentaire = null,
     ) {
+        $this->configureQueueRetries();
+
+        $this->afterCommit();
     }
 
     public function via(object $notifiable): array
@@ -27,18 +33,18 @@ class DemandeStatusChangedNotification extends Notification
 
     public function toMail(object $notifiable): MailMessage
     {
-        $url   = route('personal.request.show', $this->demande->id);
+        $url = route('personal.request.show', $this->demande->id);
         $label = $this->statusLabel();
 
         $mail = (new MailMessage)
-            ->subject('Mise à jour de votre demande — ' . $this->demande->code)
-            ->greeting('Bonjour ' . $notifiable->name . ',')
+            ->subject('Mise à jour de votre demande — '.$this->demande->code)
+            ->greeting('Bonjour '.$notifiable->name.',')
             ->line('Le statut de votre demande a été mis à jour.')
-            ->line('**Référence :** ' . $this->demande->code)
-            ->line('**Nouveau statut :** ' . $label);
+            ->line('**Référence :** '.$this->demande->code)
+            ->line('**Nouveau statut :** '.$label);
 
         if ($this->commentaire) {
-            $mail->line('**Message de l\'agent :** ' . $this->commentaire);
+            $mail->line('**Message de l\'agent :** '.$this->commentaire);
         }
 
         return $mail
@@ -56,41 +62,41 @@ class DemandeStatusChangedNotification extends Notification
     public function toArray(object $notifiable): array
     {
         return [
-            'demande_id'   => $this->demande->id,
+            'demande_id' => $this->demande->id,
             'demande_code' => $this->demande->code,
-            'title'        => $this->demande->title,
-            'status'       => $this->newStatusCode,
-            'message'      => 'Votre demande ' . $this->demande->code . ' : ' . $this->statusLabel(),
-            'commentaire'  => $this->commentaire,
-            'url'          => route('personal.request.show', $this->demande->id),
-            'icon'         => $this->statusIcon(),
+            'title' => $this->demande->title,
+            'status' => $this->newStatusCode,
+            'message' => 'Votre demande '.$this->demande->code.' : '.$this->statusLabel(),
+            'commentaire' => $this->commentaire,
+            'url' => route('personal.request.show', $this->demande->id),
+            'icon' => $this->statusIcon(),
         ];
     }
 
     private function statusLabel(): string
     {
         return match ($this->newStatusCode) {
-            'SOUMISE'           => 'Demande soumise et reçue',
-            'EN_TRAITEMENT'     => 'En cours de traitement',
-            'EN_COURS'          => 'En cours de traitement',
+            'SOUMISE' => 'Demande soumise et reçue',
+            'EN_TRAITEMENT' => 'En cours de traitement',
+            'EN_COURS' => 'En cours de traitement',
             'COMPLEMENT_REQUIS' => 'Complément d\'information requis',
-            'APPROUVEE'         => 'Approuvée',
-            'REJETEE'           => 'Rejetée',
-            'FINALISEE'         => 'Finalisée',
-            'ANNULEE'           => 'Annulée',
-            'TRANSFEREE'        => 'Transférée à un service',
-            'CLOTUREE'          => 'Clôturée',
-            default             => $this->newStatusCode,
+            'APPROUVEE' => 'Approuvée',
+            'REJETEE' => 'Rejetée',
+            'FINALISEE' => 'Finalisée',
+            'ANNULEE' => 'Annulée',
+            'TRANSFEREE' => 'Transférée à un service',
+            'CLOTUREE' => 'Clôturée',
+            default => $this->newStatusCode,
         };
     }
 
     private function statusIcon(): string
     {
         return match ($this->newStatusCode) {
-            'APPROUVEE'         => 'check-circle',
-            'REJETEE'           => 'x-circle',
+            'APPROUVEE' => 'check-circle',
+            'REJETEE' => 'x-circle',
             'COMPLEMENT_REQUIS' => 'alert-circle',
-            default             => 'info',
+            default => 'info',
         };
     }
 }

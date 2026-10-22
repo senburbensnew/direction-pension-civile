@@ -4,6 +4,7 @@ namespace App\Notifications;
 
 use App\Models\DemandeCreationCompte;
 use App\Notifications\Concerns\UsesStandardChannels;
+use App\Queue\ConfiguresQueueRetries;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Messages\MailMessage;
@@ -11,6 +12,7 @@ use Illuminate\Notifications\Notification;
 
 class DemandeCreationCompteRefuseeNotification extends Notification implements ShouldQueue
 {
+    use ConfiguresQueueRetries;
     use Queueable;
     use UsesStandardChannels;
 
@@ -18,6 +20,8 @@ class DemandeCreationCompteRefuseeNotification extends Notification implements S
         public readonly DemandeCreationCompte $demande,
         public readonly string $reason,
     ) {
+        $this->configureQueueRetries();
+
         $this->afterCommit();
     }
 

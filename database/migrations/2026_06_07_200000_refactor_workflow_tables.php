@@ -2,7 +2,6 @@
 
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
@@ -22,6 +21,7 @@ return new class extends Migration
             $table->enum('type', ['TRANSFERT', 'AVIS']);
             $table->foreignId('from_service_id')->nullable()->constrained('services')->nullOnDelete();
             $table->foreignId('to_service_id')->constrained('services');
+            $table->foreignId('to_step_id')->nullable()->constrained('workflow_steps')->nullOnDelete();
             $table->foreignId('initiated_by')->constrained('users');
             $table->text('commentaire')->nullable();
             $table->enum('statut', ['EN_ATTENTE', 'ACCEPTE', 'REJETE', 'EN_COURS', 'TERMINE'])
@@ -31,13 +31,6 @@ return new class extends Migration
             $table->foreignId('repondu_by')->nullable()->constrained('users')->nullOnDelete();
             $table->timestamps();
         });
-
-        $directionId = DB::table('services')->where('code', 'DIRECTION')->value('id');
-        if ($directionId) {
-            DB::table('demandes')
-                ->whereNull('current_service_id')
-                ->update(['current_service_id' => $directionId]);
-        }
     }
 
     public function down(): void

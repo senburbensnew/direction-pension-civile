@@ -16,6 +16,7 @@ return new class extends Migration
             $table->string('abbr');
             $table->string('nom');
             $table->string('ville');
+            $table->text('description')->nullable();
             $table->string('color')->default('blue');
             $table->unsignedSmallInteger('order')->default(0);
             $table->timestamps();

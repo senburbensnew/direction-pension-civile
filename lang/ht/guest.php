@@ -20,6 +20,13 @@ return [
         'no_account' => 'Ou poko gen kont ?',
         'show_password' => 'Montre modpas la',
         'hide_password' => 'Kache modpas la',
+        'two_factor_title' => 'Verifikasyon an de etap',
+        'two_factor_intro' => 'Antre kòd verifikasyon nou voye ba ou a.',
+        'two_factor_intro_email' => 'Yon kòd 6 chif voye nan :email.',
+        'two_factor_intro_sms' => 'Yon kòd 6 chif voye nan :phone.',
+        'two_factor_code_label' => 'Kòd verifikasyon',
+        'two_factor_submit' => 'Verifye epi konekte',
+        'two_factor_resend' => 'Voye kòd la ankò',
     ],
 
     'password' => [

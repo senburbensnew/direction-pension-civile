@@ -11,7 +11,7 @@ return new class extends Migration
         Schema::create('pension_mandats', function (Blueprint $table) {
             $table->id();
             $table->foreignId('user_id')->constrained()->cascadeOnDelete();
-            $table->foreignId('beneficiaire_id')->constrained()->cascadeOnDelete();
+            $table->foreignId('beneficiaire_id')->nullable()->constrained()->cascadeOnDelete();
             $table->string('type')->default('procuration');
             $table->string('status')->default('en_attente');
             $table->date('date_debut')->nullable();
@@ -22,10 +22,15 @@ return new class extends Migration
             $table->foreignId('validated_by')->nullable()->constrained('users')->nullOnDelete();
             $table->timestamp('validated_at')->nullable();
             $table->text('refusal_reason')->nullable();
+            $table->foreignId('demande_creation_compte_id')
+                ->nullable()
+                ->constrained('demande_creation_comptes')
+                ->nullOnDelete();
             $table->timestamps();
 
             $table->index(['user_id', 'status']);
             $table->index(['beneficiaire_id', 'status']);
+            $table->unique('demande_creation_compte_id');
         });
     }
 

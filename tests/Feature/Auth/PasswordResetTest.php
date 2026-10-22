@@ -3,8 +3,8 @@
 namespace Tests\Feature\Auth;
 
 use App\Models\User;
+use App\Notifications\Auth\QueuedResetPassword;
 use App\Services\SmsService;
-use Illuminate\Auth\Notifications\ResetPassword;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\Hash;
@@ -37,7 +37,7 @@ class PasswordResetTest extends TestCase
 
         $this->post('/forgot-password', ['login' => $user->email]);
 
-        Notification::assertSentTo($user, ResetPassword::class);
+        Notification::assertSentTo($user, QueuedResetPassword::class);
     }
 
     public function test_reset_password_link_can_be_requested_with_legacy_email_field(): void
@@ -48,7 +48,7 @@ class PasswordResetTest extends TestCase
 
         $this->post('/forgot-password', ['email' => $user->email]);
 
-        Notification::assertSentTo($user, ResetPassword::class);
+        Notification::assertSentTo($user, QueuedResetPassword::class);
     }
 
     public function test_reset_password_sends_sms_code_when_only_phone_on_file(): void
@@ -85,7 +85,7 @@ class PasswordResetTest extends TestCase
         $this->post('/forgot-password', ['login' => $user->email])
             ->assertSessionHas('status');
 
-        Notification::assertSentTo($user, ResetPassword::class);
+        Notification::assertSentTo($user, QueuedResetPassword::class);
     }
 
     public function test_reset_password_link_can_be_requested_with_nif_via_email(): void
@@ -97,7 +97,7 @@ class PasswordResetTest extends TestCase
         $this->post('/forgot-password', ['login' => '123-456-789-0'])
             ->assertSessionHas('status');
 
-        Notification::assertSentTo($user, ResetPassword::class);
+        Notification::assertSentTo($user, QueuedResetPassword::class);
     }
 
     public function test_reset_password_link_cannot_be_requested_with_username(): void
@@ -119,7 +119,7 @@ class PasswordResetTest extends TestCase
 
         $this->post('/forgot-password', ['login' => $user->email]);
 
-        Notification::assertSentTo($user, ResetPassword::class, function ($notification) {
+        Notification::assertSentTo($user, QueuedResetPassword::class, function ($notification) {
             $response = $this->get('/reset-password/'.$notification->token);
 
             $response->assertStatus(200);
@@ -136,7 +136,7 @@ class PasswordResetTest extends TestCase
 
         $this->post('/forgot-password', ['login' => $user->email]);
 
-        Notification::assertSentTo($user, ResetPassword::class, function ($notification) use ($user) {
+        Notification::assertSentTo($user, QueuedResetPassword::class, function ($notification) use ($user) {
             $response = $this->post('/reset-password', [
                 'token' => $notification->token,
                 'email' => $user->email,

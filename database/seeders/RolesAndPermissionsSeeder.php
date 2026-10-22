@@ -231,13 +231,44 @@ class RolesAndPermissionsSeeder extends Seeder
         return self::GUARD;
     }
 
+    /**
+     * @return array<string, string>
+     */
+    public static function roleDescriptions(): array
+    {
+        return config('roles_permissions_catalog.roles', []);
+    }
+
+    /**
+     * @return array<string, string>
+     */
+    public static function permissionDescriptions(): array
+    {
+        return config('roles_permissions_catalog.permissions', []);
+    }
+
+    public static function roleDescription(string $name): ?string
+    {
+        return self::roleDescriptions()[$name] ?? null;
+    }
+
+    public static function permissionDescription(string $name): ?string
+    {
+        return self::permissionDescriptions()[$name] ?? null;
+    }
+
     private function seedPermissions(): void
     {
         foreach (self::permissionNames() as $name) {
-            Permission::firstOrCreate([
-                'name' => $name,
-                'guard_name' => self::guard(),
-            ]);
+            Permission::updateOrCreate(
+                [
+                    'name' => $name,
+                    'guard_name' => self::guard(),
+                ],
+                [
+                    'description' => self::permissionDescription($name),
+                ]
+            );
         }
 
         app(PermissionRegistrar::class)->forgetCachedPermissions();
@@ -245,11 +276,16 @@ class RolesAndPermissionsSeeder extends Seeder
 
     private function seedRoles(): void
     {
-        foreach (self::allRoleNamesForSeeding() as $role) {
-            Role::firstOrCreate([
-                'name' => $role,
-                'guard_name' => self::guard(),
-            ]);
+        foreach (self::allRoleNamesForSeeding() as $roleName) {
+            Role::updateOrCreate(
+                [
+                    'name' => $roleName,
+                    'guard_name' => self::guard(),
+                ],
+                [
+                    'description' => self::roleDescription($roleName),
+                ]
+            );
         }
     }
 

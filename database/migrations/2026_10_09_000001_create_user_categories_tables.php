@@ -38,7 +38,6 @@ return new class extends Migration
         });
 
         $this->seedCategoriesFromConfig();
-        $this->backfillAssignments();
     }
 
     public function down(): void
@@ -64,85 +63,5 @@ return new class extends Migration
                 'updated_at' => $now,
             ]);
         }
-    }
-
-    private function backfillAssignments(): void
-    {
-        if (! Schema::hasColumn('users', 'user_type_id')) {
-            return;
-        }
-
-        $now = now();
-
-        $rows = DB::table('users')
-            ->join('user_types', 'users.user_type_id', '=', 'user_types.id')
-            ->whereNotNull('users.user_type_id')
-            ->select('users.id as user_id', 'user_types.name as category_code', 'users.service_id')
-            ->get();
-
-        foreach ($rows as $row) {
-            $code = $this->normalizeCategoryCode((string) $row->category_code);
-
-            if (! DB::table('user_categories')->where('code', $code)->exists()) {
-                continue;
-            }
-
-            DB::table('user_category_assignments')->insertOrIgnore([
-                'user_id' => $row->user_id,
-                'user_category_code' => $code,
-                'is_primary' => true,
-                'valid_from' => null,
-                'valid_until' => null,
-                'created_at' => $now,
-                'updated_at' => $now,
-            ]);
-        }
-
-        $personnelCode = 'personnel_dpc';
-
-        if (! DB::table('user_categories')->where('code', $personnelCode)->exists()) {
-            return;
-        }
-
-        $staffUserIds = DB::table('users')
-            ->whereNotNull('service_id')
-            ->pluck('id');
-
-        foreach ($staffUserIds as $userId) {
-            DB::table('user_category_assignments')->insertOrIgnore([
-                'user_id' => $userId,
-                'user_category_code' => $personnelCode,
-                'is_primary' => false,
-                'valid_from' => null,
-                'valid_until' => null,
-                'created_at' => $now,
-                'updated_at' => $now,
-            ]);
-
-            $hasPersonnel = DB::table('user_category_assignments')
-                ->where('user_id', $userId)
-                ->where('user_category_code', $personnelCode)
-                ->exists();
-
-            if ($hasPersonnel) {
-                DB::table('user_category_assignments')
-                    ->where('user_id', $userId)
-                    ->where('user_category_code', 'fonctionnaire')
-                    ->update(['is_primary' => false]);
-
-                DB::table('user_category_assignments')
-                    ->where('user_id', $userId)
-                    ->where('user_category_code', $personnelCode)
-                    ->update(['is_primary' => true]);
-            }
-        }
-    }
-
-    private function normalizeCategoryCode(string $name): string
-    {
-        return match ($name) {
-            'pensionne', 'fonctionnaire', 'institution', 'externe', 'personnel_dpc' => $name,
-            default => $name,
-        };
     }
 };

@@ -11,6 +11,7 @@ use App\Models\User;
 use App\Models\WorkflowStep;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Arr;
+use Illuminate\Support\Collection;
 use Illuminate\Validation\Rule;
 
 class RencontreMotifService
@@ -493,6 +494,147 @@ class RencontreMotifService
         $rules['doc_supplement.*'] = ['file', $supMimes, 'max:'.$supMaxKb];
 
         return $rules;
+    }
+
+    /**
+     * Règles de validation pour téléversement après soumission (tous optionnels, quotas restants).
+     *
+     * @return array<string, mixed>
+     */
+    public function postSubmissionDocumentValidationRules(Demande $demande): array
+    {
+        $motifKey = (string) ($demande->data['motif_key'] ?? '');
+
+        if ($motifKey === '' || ! array_key_exists($motifKey, config('rencontre.motifs', []))) {
+            return [];
+        }
+
+        $rules = [];
+        $docs = $this->documentsConfig($motifKey);
+
+        foreach ($docs['single'] as $key => $cfg) {
+            $field = "doc_{$key}";
+            $mimeRule = 'mimes:'.($cfg['mimes'] ?? 'pdf,jpg,jpeg,png');
+            $maxKb = (int) ($cfg['max_kb'] ?? 5120);
+
+            $rules[$field] = [
+                'nullable',
+                'file',
+                $mimeRule,
+                'max:'.$maxKb,
+            ];
+        }
+
+        foreach ($docs['multiple'] as $key => $cfg) {
+            $field = "doc_{$key}";
+            $mimeRule = 'mimes:'.($cfg['mimes'] ?? 'pdf,jpg,jpeg,png');
+            $maxKb = (int) ($cfg['max_kb'] ?? 5120);
+            $maxTotal = (int) ($cfg['max_files'] ?? 5);
+            $existing = $demande->getMedia($key)->count();
+            $remaining = max(0, $maxTotal - $existing);
+
+            $rules[$field] = ['nullable', 'array', 'max:'.$remaining];
+            $rules["{$field}.*"] = [
+                'file',
+                $mimeRule,
+                'max:'.$maxKb,
+            ];
+        }
+
+        $sup = config('rencontre.supplement', []);
+        $supCollection = (string) ($sup['collection'] ?? 'rdv_supplement');
+        $maxSupTotal = (int) ($sup['max_files'] ?? 10);
+        $supRemaining = max(0, $maxSupTotal - $demande->getMedia($supCollection)->count());
+        $supMimes = 'mimes:'.($sup['mimes'] ?? 'pdf,jpg,jpeg,png,doc,docx');
+        $supMaxKb = (int) ($sup['max_kb'] ?? 5120);
+
+        $rules['doc_supplement'] = ['nullable', 'array', 'max:'.$supRemaining];
+        $rules['doc_supplement.*'] = ['file', $supMimes, 'max:'.$supMaxKb];
+
+        return $rules;
+    }
+
+    /**
+     * Libellés et pièces déjà jointes pour affichage (motif + compléments).
+     *
+     * @return array<int, array{key: string, label: string, multiple: bool, max_files: int|null, items: Collection}>
+     */
+    public function documentGroupsForDemande(Demande $demande): array
+    {
+        $motifKey = (string) ($demande->data['motif_key'] ?? '');
+
+        if ($motifKey === '') {
+            return [];
+        }
+
+        $groups = [];
+        $docs = $this->documentsConfig($motifKey);
+
+        foreach ($docs['single'] as $key => $cfg) {
+            $media = $demande->getMedia($key);
+            $groups[] = [
+                'key' => $key,
+                'label' => $cfg['label'] ?? $key,
+                'multiple' => false,
+                'max_files' => 1,
+                'items' => $media,
+            ];
+        }
+
+        foreach ($docs['multiple'] as $key => $cfg) {
+            $groups[] = [
+                'key' => $key,
+                'label' => $cfg['label'] ?? $key,
+                'multiple' => true,
+                'max_files' => (int) ($cfg['max_files'] ?? 5),
+                'items' => $demande->getMedia($key),
+            ];
+        }
+
+        $sup = config('rencontre.supplement', []);
+        $supCollection = (string) ($sup['collection'] ?? 'rdv_supplement');
+
+        $groups[] = [
+            'key' => $supCollection,
+            'label' => (string) ($sup['label'] ?? 'Document complémentaire'),
+            'multiple' => true,
+            'max_files' => (int) ($sup['max_files'] ?? 10),
+            'items' => $demande->getMedia($supCollection),
+        ];
+
+        return $groups;
+    }
+
+    /**
+     * Champs de formulaire encore disponibles pour téléversement (quotas non atteints).
+     *
+     * @return array{single: array<string, array>, multiple: array<string, array>, supplement_remaining: int}
+     */
+    public function uploadableDocumentFields(Demande $demande): array
+    {
+        $motifKey = (string) ($demande->data['motif_key'] ?? '');
+        $docs = $this->documentsConfig($motifKey);
+
+        $single = $docs['single'];
+        $multiple = [];
+
+        foreach ($docs['multiple'] as $key => $cfg) {
+            $max = (int) ($cfg['max_files'] ?? 5);
+            if ($demande->getMedia($key)->count() < $max) {
+                $multiple[$key] = $cfg;
+            }
+        }
+
+        $sup = config('rencontre.supplement', []);
+        $supCollection = (string) ($sup['collection'] ?? 'rdv_supplement');
+        $maxSup = (int) ($sup['max_files'] ?? 10);
+        $supRemaining = max(0, $maxSup - $demande->getMedia($supCollection)->count());
+
+        return [
+            'single' => $single,
+            'multiple' => $multiple,
+            'supplement_remaining' => $supRemaining,
+        ];
     }
 
     /**

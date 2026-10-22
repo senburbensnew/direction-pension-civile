@@ -7,6 +7,7 @@ use App\Enums\BeneficiaireRelationEnum;
 use App\Mail\AdminUserTemporaryPasswordMail;
 use App\Models\Service;
 use App\Models\User;
+use App\Services\Account\UserCategoryRoleSyncService;
 use Database\Seeders\UserCategoriesSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Hash;
@@ -262,7 +263,7 @@ class AdminUserManagementTest extends TestCase
             'service_id' => $service->id,
         ]);
         $target->syncRoles([User::ROLE_AGENT_RDV]);
-        app(\App\Services\Account\UserCategoryRoleSyncService::class)
+        app(UserCategoryRoleSyncService::class)
             ->syncSingleCategory($target, 'personnel_dpc', syncRoles: false);
 
         $response = $this->actingAs($admin)->put(route('admin.users.update', $target), $this->identityFields([
@@ -328,7 +329,7 @@ class AdminUserManagementTest extends TestCase
         $this->assertTrue($target->must_change_password);
         $this->assertNotSame($oldHash, $target->password);
 
-        Mail::assertSent(AdminUserTemporaryPasswordMail::class, function (AdminUserTemporaryPasswordMail $mail) use ($target) {
+        Mail::assertQueued(AdminUserTemporaryPasswordMail::class, function (AdminUserTemporaryPasswordMail $mail) use ($target) {
             return $mail->hasTo($target->email)
                 && $mail->user->is($target->fresh())
                 && strlen($mail->temporaryPassword) >= 12

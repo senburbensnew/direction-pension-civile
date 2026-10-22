@@ -854,6 +854,8 @@ function initOneRdvScheduler(el) {
         },
 
         views: {
+            timeGridDay: { allDaySlot: false },
+            timeGridWeek: { allDaySlot: false },
             dayGridMonth: {
                 dayMaxEvents: 3,
                 moreLinkClick: 'day',

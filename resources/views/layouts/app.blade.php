@@ -85,32 +85,21 @@
                 </div>
 
                 <div class="flex items-center gap-2 sm:gap-3 flex-shrink-0">
-                    <div class="hidden sm:flex items-center gap-2">
+                    <div class="hidden sm:flex items-center gap-1.5 opacity-80 hover:opacity-100 transition-opacity">
                         @if (App::getLocale() !== 'fr')
-                            <a href="{{ route('locale', 'fr') }}" class="hover:opacity-75" title="Français">
-                                <img src="{{ asset('images/france-flag-icon.svg') }}" alt="" class="w-4 h-4 rounded-sm">
+                            <a href="{{ route('locale', 'fr') }}" class="rounded p-0.5 opacity-70 hover:opacity-100 transition-opacity" title="Français">
+                                <img src="{{ asset('images/france-flag-icon.svg') }}" alt="" class="w-3.5 h-3.5 rounded-sm">
                             </a>
                         @endif
                         @if (App::getLocale() !== 'ht')
-                            <a href="{{ route('locale', 'ht') }}" class="hover:opacity-75" title="Kreyòl">
-                                <img src="{{ asset('images/haiti-flag-icon.svg') }}" alt="" class="w-4 h-4 rounded-sm">
+                            <a href="{{ route('locale', 'ht') }}" class="rounded p-0.5 opacity-70 hover:opacity-100 transition-opacity" title="Kreyòl">
+                                <img src="{{ asset('images/haiti-flag-icon.svg') }}" alt="" class="w-3.5 h-3.5 rounded-sm">
                             </a>
                         @endif
                     </div>
 
                     @auth
-                        @php $portalUnread = auth()->user()->unreadNotifications()->count(); @endphp
-                        <a href="{{ route('notifications.index') }}"
-                           class="relative text-gray-500 hover:text-gray-700 p-1"
-                           title="Notifications">
-                            <i class="fas fa-bell text-lg"></i>
-                            @if($portalUnread > 0)
-                                <span class="absolute -top-0.5 -right-0.5 bg-red-500 text-white text-[10px] rounded-full min-w-[1rem] h-4 px-1 flex items-center justify-center leading-none">
-                                    {{ $portalUnread > 9 ? '9+' : $portalUnread }}
-                                </span>
-                            @endif
-                        </a>
-
+                        <x-notification-bell-dropdown theme="light" />
                         <x-user-account-dropdown theme="light" />
                     @endauth
 

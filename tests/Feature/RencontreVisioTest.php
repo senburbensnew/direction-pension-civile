@@ -4,6 +4,7 @@ namespace Tests\Feature;
 
 use App\Enums\TypeDemandeEnum;
 use App\Models\Demande;
+use App\Models\Service;
 use App\Models\User;
 use App\Models\WorkflowStep;
 use App\Services\RencontreVisioService;
@@ -20,6 +21,7 @@ class RencontreVisioTest extends TestCase
         parent::setUp();
         $this->seedRoles();
         $this->seedWorkflowSteps();
+        $this->seedServices();
     }
 
     private function makeVisioDemande(User $owner, User $agent, array $data = []): Demande
@@ -195,7 +197,7 @@ class RencontreVisioTest extends TestCase
 
         $owner = User::factory()->create();
         $agent = User::factory()->create([
-            'service_id' => \App\Models\Service::where('code', \App\Models\Service::FORMALITE)->value('id'),
+            'service_id' => Service::where('code', Service::FORMALITE)->value('id'),
         ]);
         $agent->assignRole(User::ROLE_AGENT_RDV);
 

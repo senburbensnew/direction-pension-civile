@@ -14,7 +14,11 @@ class DemandePolicy
 
     public function access(User $user, Demande $demande)
     {
-        return $user->service_id === $demande->current_service_id;
+        if ($demande->current_service_id === null || $user->service_id === null) {
+            return false;
+        }
+
+        return (int) $user->service_id === (int) $demande->current_service_id;
     }
 
     public function view(User $user, Demande $demande)

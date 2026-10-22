@@ -11,39 +11,37 @@ return new class extends Migration
         Schema::create('demande_creation_comptes', function (Blueprint $table) {
             $table->id();
             $table->string('code')->unique();
+            $table->string('idempotency_key', 64)->nullable()->unique();
             $table->string('user_type');
 
-            // Identité
             $table->string('firstname')->nullable();
             $table->string('lastname')->nullable();
             $table->string('name')->nullable();
 
-            // Coordonnées / identifiants de connexion
             $table->string('email')->nullable();
-            $table->string('username')->nullable()->unique();          // ← AJOUT
+            $table->string('username')->nullable()->unique();
             $table->string('telephone')->nullable()->unique();
             $table->string('adresse', 500)->nullable();
 
-            // Identifiants administratifs
             $table->string('nif')->nullable()->unique();
             $table->string('ninu')->nullable()->unique();
             $table->string('pension_code')->nullable()->unique();
 
-            // Mineur / représentant
             $table->boolean('is_mineur')->default(false);
+            $table->boolean('is_mandataire')->default(false);
+            $table->boolean('mandataire_est_pensionne')->default(false);
             $table->string('representant_lien')->nullable();
+            $table->boolean('representant_est_pensionne')->default(false);
             $table->string('piece_identite_representant_type')->nullable();
 
-            // Données OCR et vérification
             $table->json('pieces_identite')->nullable();
             $table->json('ocr_fields')->nullable();
-            $table->json('ocr_documents')->nullable();       // ← AJOUT
+            $table->json('ocr_documents')->nullable();
             $table->json('verification_mismatches')->nullable();
-            $table->json('submitted_payload')->nullable();   // ← AJOUT
+            $table->json('submitted_payload')->nullable();
 
-            // Décision / traitement
             $table->text('message')->nullable();
-            $table->text('refusal_reason')->nullable();      // ← AJOUT
+            $table->text('refusal_reason')->nullable();
             $table->timestamp('accepted_terms_at')->nullable();
             $table->string('status')->default('en_attente');
             $table->timestamp('soumise_at')->nullable();
@@ -54,7 +52,6 @@ return new class extends Migration
                 ->constrained('users')
                 ->nullOnDelete();
 
-            // Relations
             $table->foreignId('user_id')->nullable()->constrained()->nullOnDelete();
 
             $table->timestamps();

@@ -51,8 +51,8 @@ export function registerRdvBookingForm(Alpine) {
 
                     const code = this.motifServiceCodes[this.motif];
                     const byCode = {
-                        service_accueil_formalites: 'Service Formalités',
-                        service_formalite: 'Service Formalités',
+                        service_accueil_formalites: 'Accueil et Formalités',
+                        service_formalite: 'Accueil et Formalités',
                     };
 
                     return byCode[code] || label || '—';

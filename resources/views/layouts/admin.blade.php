@@ -229,7 +229,7 @@
             </div>
 
             {{-- Paramètres --}}
-            <div x-data="{ open: {{ request()->routeIs('admin.settings', 'admin.contact-parameters.*', 'admin.rdv-settings.*', 'admin.ocr.test*', 'admin.email.test*') ? 'true' : 'false' }} }">
+            <div x-data="{ open: {{ request()->routeIs('admin.settings', 'admin.contact-parameters.*', 'admin.rdv-settings.*', 'admin.ocr.test*', 'admin.email.test*', 'admin.sms.test*', 'admin.queue.*') ? 'true' : 'false' }} }">
                 <button @click="open = !open"
                     class="{{ $adminNavSection }} mt-2 w-full flex items-center justify-between cursor-pointer hover:text-slate-300 transition-colors">
                     <span>Paramètres</span>
@@ -248,6 +248,14 @@
                     <a href="{{ route('admin.email.test') }}"
                        class="{{ $adminNavLink(request()->routeIs('admin.email.test*')) }}">
                        <i class="fas fa-envelope"></i> Test e-mail
+                    </a>
+                    <a href="{{ route('admin.sms.test') }}"
+                       class="{{ $adminNavLink(request()->routeIs('admin.sms.test*')) }}">
+                       <i class="fas fa-sms"></i> Test SMS
+                    </a>
+                    <a href="{{ route('admin.queue.index') }}"
+                       class="{{ $adminNavLink(request()->routeIs('admin.queue.*')) }}">
+                       <i class="fas fa-layer-group"></i> File d’attente
                     </a>
                     <a href="{{ route('admin.contact-parameters.index') }}"
                        class="{{ $adminNavLink(request()->routeIs('admin.contact-parameters.*')) }}">
@@ -295,6 +303,16 @@
                     </span>
                 </button>
             </form>
+            <a href="{{ route('notifications.index') }}"
+                class="{{ $adminNavLink(request()->routeIs('notifications.*'), 'text-xs') }}">
+                <i class="fas fa-bell"></i> Mes notifications
+                @php $adminUnreadNotifications = Auth::user()->unreadNotifications()->count(); @endphp
+                @if($adminUnreadNotifications > 0)
+                    <span class="ml-auto bg-red-500 text-white text-xs rounded-full px-1.5 py-0.5 leading-none">
+                        {{ $adminUnreadNotifications > 9 ? '9+' : $adminUnreadNotifications }}
+                    </span>
+                @endif
+            </a>
             <a href="{{ route('profile.edit') }}"
                 class="{{ $adminNavLink(request()->routeIs('profile.*'), 'text-xs') }}">
                 <i class="fas fa-user-circle"></i> Mon profil
@@ -356,20 +374,7 @@
                         <span class="hidden sm:inline">Voir le site</span>
                     </a>
 
-                    {{-- Notifications bell --}}
-                    @php
-                        $bellCount = \App\Models\Contact::where('read', false)->count()
-                                   + Auth::user()->unreadNotifications->count();
-                    @endphp
-                    <a href="{{ route('admin.contacts.index') }}"
-                        class="relative text-gray-500 hover:text-gray-700">
-                        <i class="fas fa-bell text-lg"></i>
-                        @if($bellCount > 0)
-                            <span class="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-4 h-4 flex items-center justify-center leading-none">
-                                {{ $bellCount > 9 ? '9+' : $bellCount }}
-                            </span>
-                        @endif
-                    </a>
+                    <x-notification-bell-dropdown theme="light" />
                 </div>
             </div>
         </header>

@@ -21,8 +21,14 @@ class RoleController extends Controller
             ->paginate(15);
 
         $permissions = Permission::query()->orderBy('name')->get();
+        $permissionOptions = $this->permissionListboxOptions($permissions);
+        $assignedPermissions = array_values(array_filter((array) old('permissions', [])));
 
-        return view('admin.roles.index', compact('roles', 'permissions'));
+        return view('admin.roles.index', compact(
+            'roles',
+            'permissionOptions',
+            'assignedPermissions',
+        ));
     }
 
     /**
@@ -37,12 +43,14 @@ class RoleController extends Controller
                 'regex:/^[a-z][a-z0-9_]*$/',
                 'unique:roles,name',
             ],
+            'description' => ['nullable', 'string', 'max:2000'],
             'permissions' => ['nullable', 'array'],
             'permissions.*' => ['string', 'exists:permissions,name'],
         ]);
 
         $role = Role::create([
             'name' => strtolower(trim($validated['name'])),
+            'description' => blank($validated['description'] ?? null) ? null : trim($validated['description']),
             'guard_name' => 'web',
         ]);
 
@@ -67,12 +75,14 @@ class RoleController extends Controller
                 'regex:/^[a-z][a-z0-9_]*$/',
                 'unique:roles,name,'.$role->id,
             ],
+            'description' => ['nullable', 'string', 'max:2000'],
             'permissions' => ['nullable', 'array'],
             'permissions.*' => ['string', 'exists:permissions,name'],
         ]);
 
         $role->update([
             'name' => strtolower(trim($validated['name'])),
+            'description' => blank($validated['description'] ?? null) ? null : trim($validated['description']),
         ]);
 
         $role->syncPermissions($validated['permissions'] ?? []);
@@ -102,5 +112,22 @@ class RoleController extends Controller
         return redirect()
             ->route('admin.roles.index')
             ->with('success', 'Rôle supprimé avec succès.');
+    }
+
+    /**
+     * @param  \Illuminate\Support\Collection<int, Permission>  $permissions
+     * @return list<array{value: string, label: string, description: ?string}>
+     */
+    private function permissionListboxOptions($permissions): array
+    {
+        return $permissions->map(function (Permission $permission) {
+            $name = $permission->name;
+
+            return [
+                'value' => $name,
+                'label' => $name,
+                'description' => filled($permission->description) ? $permission->description : null,
+            ];
+        })->values()->all();
     }
 }

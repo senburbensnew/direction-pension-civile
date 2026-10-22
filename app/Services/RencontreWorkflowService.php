@@ -211,9 +211,26 @@ class RencontreWorkflowService
     ): Demande {
         $this->assertOpen($demande);
 
-        return $this->estActif($demande)
-            ? $demande->fresh()
-            : $this->valider($demande, $user);
+        if ($this->estActif($demande)) {
+            return $demande->fresh();
+        }
+
+        $statut = $this->statut($demande);
+
+        if (in_array($statut, [
+            RencontreStatutEnum::EN_COURS,
+            RencontreStatutEnum::ATTRIBUE,
+        ], true)) {
+            return $demande->fresh();
+        }
+
+        return $this->apply(
+            $demande,
+            RencontreStatutEnum::EN_COURS,
+            $user,
+            'EXAMINED',
+            'Demande prise en charge pour examen.'
+        );
     }
 
     /**
@@ -226,9 +243,23 @@ class RencontreWorkflowService
     ): Demande {
         $this->assertOpen($demande);
 
-        return $this->estActif($demande)
-            ? $demande->fresh()
-            : $this->valider($demande, $user);
+        if ($this->estActif($demande)) {
+            return $demande->fresh();
+        }
+
+        $statut = $this->statut($demande);
+
+        if ($statut === RencontreStatutEnum::ATTRIBUE) {
+            return $demande->fresh();
+        }
+
+        return $this->apply(
+            $demande,
+            RencontreStatutEnum::ATTRIBUE,
+            $user,
+            'ATTRIBUTED',
+            $commentaire ?: 'Créneau attribué.'
+        );
     }
 
     /**
@@ -355,7 +386,7 @@ class RencontreWorkflowService
 
         $statut = $report
             ? RencontreStatutEnum::REPORTE
-            : RencontreStatutEnum::ACTIF;
+            : RencontreStatutEnum::ATTRIBUE;
 
         $event = $report
             ? 'REPORTED'

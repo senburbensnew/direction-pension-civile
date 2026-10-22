@@ -22,10 +22,15 @@ return new class extends Migration
             $table->foreignId('validated_by')->nullable()->constrained('users')->nullOnDelete();
             $table->timestamp('validated_at')->nullable();
             $table->foreignId('user_beneficiaire_link_id')->nullable()->constrained('user_beneficiaire_links')->nullOnDelete();
+            $table->foreignId('demande_creation_compte_id')
+                ->nullable()
+                ->constrained('demande_creation_comptes', 'id', 'brd_dcc_id_foreign')
+                ->nullOnDelete();
             $table->timestamps();
 
             $table->index(['user_id', 'status']);
             $table->index(['beneficiaire_id', 'status']);
+            $table->unique('demande_creation_compte_id', 'brd_dcc_id_unique');
         });
     }
 

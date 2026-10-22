@@ -10,7 +10,6 @@
             {{ __('guest.login.welcome') }}
         </p>
     </div>
-
     <form method="POST" action="{{ route('login') }}" class="space-y-3.5">
         @csrf
         {{-- Identifiant --}}
@@ -51,7 +50,7 @@
                     autocomplete="username"
                     class="w-full py-2.5 border rounded-lg text-base focus:outline-none focus:ring-2 transition {{ $errors->has('login') ? 'border-red-400 focus:ring-red-400' : 'border-gray-300 focus:ring-blue-500 focus:border-blue-500' }}"
                     style="padding-left: 2.25rem; padding-right: 1rem;"
-                    placeholder="{{ __('messages.login_identifier_placeholder') }}"
+                    {{-- placeholder="{{ __('messages.login_identifier_placeholder') }}" --}}
                 >
             </div>
             <x-input-error :messages="$errors->get('login')" class="mt-1.5" />
@@ -88,7 +87,6 @@
                     autocomplete="current-password"
                     class="w-full py-2.5 border rounded-lg text-base focus:outline-none focus:ring-2 transition {{ $errors->has('password') ? 'border-red-400 focus:ring-red-400' : 'border-gray-300 focus:ring-blue-500 focus:border-blue-500' }}"
                     style="padding-left: 2.25rem; padding-right: 2.25rem;"
-                    placeholder="••••••••"
                 >
 
                 <button
@@ -106,6 +104,19 @@
 
             <x-input-error :messages="$errors->get('password')" class="mt-1.5" />
         </div>
+
+        {{-- Remember me --}}
+        <label for="remember" class="flex items-center gap-2 cursor-pointer select-none">
+            <input
+                id="remember"
+                type="checkbox"
+                name="remember"
+                value="1"
+                @checked(old('remember'))
+                class="h-4 w-4 rounded border-gray-300 text-[#173052] focus:ring-[#173052]/40"
+            >
+            <span class="text-sm text-gray-700">{{ __('messages.remember_me') }}</span>
+        </label>
 
         {{-- Submit --}}
         <button

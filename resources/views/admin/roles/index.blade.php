@@ -7,11 +7,7 @@
 @endsection
 
 @section('content')
-@php
-    $navLabels = config('portal_nav.permissions', []);
-    $navPermissionNames = array_keys($navLabels);
-@endphp
-<div class="space-y-4" x-data="{ showCreate: false, editRole: null, editName: '', editPermissions: [] }">
+<div class="space-y-4" x-data="{ showCreate: false, editRole: null, editName: '', editDescription: '' }">
 
     <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <div>
@@ -31,6 +27,7 @@
                 <tr>
                     <th class="px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide text-left">#</th>
                     <th class="px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide text-left">Rôle</th>
+                    <th class="px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide text-left">Description</th>
                     <th class="px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide text-left">Permissions</th>
                     <th class="px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide text-left">Utilisateurs</th>
                     <th class="px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide text-center">Actions</th>
@@ -47,10 +44,18 @@
                                 {{ $role->name }}
                             </span>
                         </td>
+                        <td class="px-4 py-3 max-w-xs">
+                            @if(filled($role->description))
+                                <p class="text-xs text-gray-600 line-clamp-2" title="{{ $role->description }}">{{ $role->description }}</p>
+                            @else
+                                <span class="text-xs text-gray-400 italic">—</span>
+                            @endif
+                        </td>
                         <td class="px-4 py-3">
                             <div class="flex flex-wrap gap-1">
                                 @forelse($role->permissions->take(5) as $permission)
-                                    <span class="text-xs px-2 py-0.5 bg-gray-100 text-gray-600 rounded-full">
+                                    <span class="text-xs px-2 py-0.5 bg-gray-100 text-gray-600 rounded-full"
+                                        @if(filled($permission->description)) title="{{ $permission->description }}" @endif>
                                         {{ $permission->name }}
                                     </span>
                                 @empty
@@ -70,7 +75,7 @@
                         <td class="px-4 py-3">
                             <div class="flex items-center justify-center gap-2">
                                 <button type="button"
-                                    @click="editRole = {{ $role->id }}; editName = @js($role->name); editPermissions = @js($role->permissions->pluck('name')->values())"
+                                    @click="editRole = {{ $role->id }}; editName = @js($role->name); editDescription = @js($role->description ?? '')"
                                     class="px-2 py-1 bg-blue-100 text-blue-700 hover:bg-blue-200 rounded text-xs font-medium">
                                     <i class="fas fa-pencil-alt"></i>
                                 </button>
@@ -88,7 +93,7 @@
                     </tr>
                 @empty
                     <tr>
-                        <td colspan="5" class="px-4 py-10 text-center text-gray-400">
+                        <td colspan="6" class="px-4 py-10 text-center text-gray-400">
                             <i class="fas fa-shield-alt text-3xl mb-2 block"></i>
                             Aucun rôle défini.
                         </td>
@@ -105,7 +110,7 @@
     {{-- Modal création --}}
     <div x-show="showCreate" x-cloak
          class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-        <div class="bg-white w-full max-w-lg rounded-xl shadow-xl p-6 max-h-[90vh] overflow-y-auto" @click.stop>
+        <div class="bg-white w-full max-w-2xl rounded-xl shadow-xl p-6 max-h-[90vh] overflow-y-auto" @click.stop>
             <h3 class="font-semibold text-gray-800 text-base mb-4">
                 <i class="fas fa-shield-alt mr-2 text-blue-500"></i> Créer un rôle
             </h3>
@@ -116,6 +121,7 @@
                         Nom du rôle <span class="text-red-500">*</span>
                     </label>
                     <input type="text" name="name" required autofocus
+                        value="{{ old('name') }}"
                         placeholder="ex: agent_support"
                         class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
                     <p class="text-xs text-gray-500 mt-1">Minuscules, chiffres et underscores (ex. agent_rdv).</p>
@@ -124,32 +130,24 @@
                     @enderror
                 </div>
                 <div class="mb-4">
-                    <p class="block text-sm font-medium text-gray-700 mb-2">Permissions</p>
-                    @if($navPermissionNames !== [])
-                        <p class="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">Menu portail</p>
-                        <div class="space-y-2 mb-3 max-h-36 overflow-y-auto border border-indigo-100 bg-indigo-50/40 rounded-lg p-3">
-                            @foreach($permissions->whereIn('name', $navPermissionNames) as $permission)
-                                <label class="flex items-center gap-2 text-sm text-gray-700 cursor-pointer">
-                                    <input type="checkbox" name="permissions[]" value="{{ $permission->name }}"
-                                        class="rounded border-gray-300 text-blue-600 focus:ring-blue-500">
-                                    <span class="text-xs">{{ $navLabels[$permission->name] ?? $permission->name }}</span>
-                                </label>
-                            @endforeach
-                        </div>
-                    @endif
-                    <p class="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">Autres permissions</p>
-                    <div class="space-y-2 max-h-48 overflow-y-auto border border-gray-200 rounded-lg p-3">
-                        @forelse($permissions->whereNotIn('name', $navPermissionNames) as $permission)
-                            <label class="flex items-center gap-2 text-sm text-gray-700 cursor-pointer">
-                                <input type="checkbox" name="permissions[]" value="{{ $permission->name }}"
-                                    class="rounded border-gray-300 text-blue-600 focus:ring-blue-500">
-                                <span class="text-xs">{{ $permission->name }}</span>
-                            </label>
-                        @empty
-                            <p class="text-xs text-gray-400 italic">Aucune permission disponible.</p>
-                        @endforelse
-                    </div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Description</label>
+                    <textarea name="description" rows="3" maxlength="2000"
+                        placeholder="Rôle réservé aux agents…"
+                        class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500">{{ old('description') }}</textarea>
+                    @error('description')
+                        <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
+                    @enderror
                 </div>
+                <x-form.dual-listbox
+                    name="permissions[]"
+                    label="Permissions"
+                    available-title="Permissions disponibles"
+                    selected-title="Permissions attribuées au rôle"
+                    hint="Sélectionnez une ou plusieurs permissions à gauche, puis utilisez les flèches pour les attribuer."
+                    :options="$permissionOptions"
+                    :selected="$assignedPermissions"
+                    class="mb-4"
+                />
                 <div class="flex justify-end gap-2">
                     <button type="button" @click="showCreate = false"
                         class="px-4 py-2 text-sm font-medium text-gray-600 hover:text-gray-800">
@@ -167,7 +165,7 @@
     {{-- Modal édition --}}
     <div x-show="editRole !== null" x-cloak
          class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-        <div class="bg-white w-full max-w-lg rounded-xl shadow-xl p-6 max-h-[90vh] overflow-y-auto" @click.stop>
+        <div class="bg-white w-full max-w-2xl rounded-xl shadow-xl p-6 max-h-[90vh] overflow-y-auto" @click.stop>
             <h3 class="font-semibold text-gray-800 text-base mb-4">
                 <i class="fas fa-pencil-alt mr-2 text-blue-500"></i> Modifier le rôle
             </h3>
@@ -183,32 +181,24 @@
                             class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
                     </div>
                     <div class="mb-4">
-                        <p class="block text-sm font-medium text-gray-700 mb-2">Permissions</p>
-                        @if($navPermissionNames !== [])
-                            <p class="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">Menu portail</p>
-                            <div class="space-y-2 mb-3 max-h-36 overflow-y-auto border border-indigo-100 bg-indigo-50/40 rounded-lg p-3">
-                                @foreach($permissions->whereIn('name', $navPermissionNames) as $permission)
-                                    <label class="flex items-center gap-2 text-sm text-gray-700 cursor-pointer">
-                                        <input type="checkbox" name="permissions[]" value="{{ $permission->name }}"
-                                            x-model="editPermissions"
-                                            class="rounded border-gray-300 text-blue-600 focus:ring-blue-500">
-                                        <span class="text-xs">{{ $navLabels[$permission->name] ?? $permission->name }}</span>
-                                    </label>
-                                @endforeach
-                            </div>
-                        @endif
-                        <p class="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">Autres permissions</p>
-                        <div class="space-y-2 max-h-48 overflow-y-auto border border-gray-200 rounded-lg p-3">
-                            @foreach($permissions->whereNotIn('name', $navPermissionNames) as $permission)
-                                <label class="flex items-center gap-2 text-sm text-gray-700 cursor-pointer">
-                                    <input type="checkbox" name="permissions[]" value="{{ $permission->name }}"
-                                        x-model="editPermissions"
-                                        class="rounded border-gray-300 text-blue-600 focus:ring-blue-500">
-                                    <span class="text-xs">{{ $permission->name }}</span>
-                                </label>
-                            @endforeach
-                        </div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Description</label>
+                        <textarea name="description" rows="3" maxlength="2000" x-model="editDescription"
+                            class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"></textarea>
                     </div>
+                    @foreach($roles as $role)
+                        <template x-if="editRole === {{ $role->id }}">
+                            <x-form.dual-listbox
+                                name="permissions[]"
+                                label="Permissions"
+                                available-title="Permissions disponibles"
+                                selected-title="Permissions attribuées au rôle"
+                                hint="Sélectionnez une ou plusieurs permissions à gauche, puis utilisez les flèches pour les attribuer."
+                                :options="$permissionOptions"
+                                :selected="$role->permissions->pluck('name')->values()->all()"
+                                class="mb-4"
+                            />
+                        </template>
+                    @endforeach
                     <div class="flex justify-end gap-2">
                         <button type="button" @click="editRole = null"
                             class="px-4 py-2 text-sm font-medium text-gray-600 hover:text-gray-800">

@@ -13,12 +13,23 @@ return new class extends Migration
     {
         Schema::create('workflow_steps', function (Blueprint $table) {
             $table->id();
-            $table->string('code')->unique();
+            $table->string('code');
             $table->string('nom');
             $table->string('description')->nullable();
             $table->foreignId('service_id')->nullable()->constrained('services')->nullOnDelete();
+            $table->string('type_demande')->nullable();
             $table->unsignedSmallInteger('ordre')->default(0);
+            $table->string('type_noeud')->default('intermediaire');
             $table->timestamps();
+
+            $table->unique(['code', 'type_demande'], 'workflow_steps_code_type_unique');
+        });
+
+        Schema::table('demandes', function (Blueprint $table) {
+            $table->foreignId('current_step_id')
+                ->nullable()
+                ->constrained('workflow_steps')
+                ->nullOnDelete();
         });
     }
 
@@ -27,6 +38,10 @@ return new class extends Migration
      */
     public function down(): void
     {
+        Schema::table('demandes', function (Blueprint $table) {
+            $table->dropConstrainedForeignId('current_step_id');
+        });
+
         Schema::dropIfExists('workflow_steps');
     }
 };

@@ -14,6 +14,7 @@ use App\Http\Controllers\DemandeRencontreController;
 use App\Http\Controllers\Formalites\BeneficiaireRelationManagementController;
 use App\Http\Controllers\Formalites\BeneficiaireRepresentationHubController;
 use App\Http\Controllers\Formalites\BeneficiaireRepresentationPieceController;
+use App\Http\Controllers\Formalites\FormaliteSuiviController;
 use App\Http\Controllers\Formalites\PensionMandatFormalitesController;
 use App\Http\Controllers\MonDemandeCreationCompteController;
 use App\Http\Controllers\NotificationController;
@@ -629,9 +630,9 @@ Route::get(
 
 Route::get(
     '/formalites/suivi',
-    [\App\Http\Controllers\Formalites\FormaliteSuiviController::class, 'index']
+    [FormaliteSuiviController::class, 'index']
 )->name('formalites.suivi.index')
-    ->middleware('role:'.implode('|', \App\Http\Controllers\Formalites\FormaliteSuiviController::accessRoles()));
+    ->middleware('role:'.implode('|', FormaliteSuiviController::accessRoles()));
 
 Route::prefix('formalites/pension-mandats')
     ->name('formalites.pension-mandats.')
@@ -846,7 +847,6 @@ Route::prefix('admin')
 
 Route::prefix('notifications')
     ->name('notifications.')
-    ->middleware('not.admin')
     ->group(function () {
 
         Route::get(

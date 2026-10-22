@@ -274,16 +274,6 @@
                             {{ __('messages.media_libraries') }}
                         </a>
                     </li>
-                    @auth
-                        @if(app(\App\Services\RencontreMotifService::class)->motifsForUser(auth()->user()) !== [])
-                    <li>
-                        <a href="{{ route('demandes.rencontre.create') }}"
-                            class="text-slate-600 block px-4 py-3 hover:bg-gray-100 transition-colors text-base truncate-text focus:outline-none focus:ring-2">
-                            {{ __('messages.appointment_request') }}
-                        </a>
-                    </li>
-                        @endif
-                    @endauth
                 </ul>
             </li>
 
@@ -306,19 +296,21 @@
                 @endrole
             @endauth
 
-            <!-- Simulateur de calcul -->
-            @auth
-                @if(! $isProvisionnel)
-                @canany(['can_view_pensionne_menu', 'can_view_institution_menu'])
-                    <li class="w-full md:w-auto border-b md:border-none">
-                        <a href="{{ route('simulateur-calcul') }}"
-                        class="block px-4 py-3 text-slate-600 hover:text-blue-600 text-base font-medium truncate-text focus:outline-none focus:ring-2">
-                            {{ __('messages.simulateur-calcul') }}
-                        </a>
-                    </li>
-                @endcanany
-                @endif
-            @endauth
+            <li class="w-full md:w-auto border-b md:border-none">
+                <a href="{{ route('simulateur-calcul') }}"
+                    class="block px-4 md:px-3 py-3 text-slate-700 hover:text-orange-500 text-base font-medium truncate-text focus:outline-none focus:ring-2">
+                    {{ __('messages.simulateur-calcul') }}
+                </a>
+            </li>
+
+            @if(! auth()->check() || ! $isInternalUser)
+                <li class="w-full md:w-auto border-b md:border-none">
+                    <a href="{{ route('demandes.rencontre.create') }}"
+                        class="block px-4 md:px-3 py-3 text-slate-700 hover:text-orange-500 text-base font-medium truncate-text focus:outline-none focus:ring-2">
+                        {{ __('messages.appointment_request') }}
+                    </a>
+                </li>
+            @endif
         </ul>
         </div>
     </nav>

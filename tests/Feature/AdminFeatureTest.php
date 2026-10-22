@@ -4,13 +4,17 @@ namespace Tests\Feature;
 
 use App\Enums\AccountStatusEnum;
 use App\Enums\TypeDemandeEnum;
+use App\Mail\AdminEmailTestMail;
 use App\Models\Service;
 use App\Models\User;
+use App\Models\UserCategory;
 use App\Models\WorkflowStep;
-use Database\Seeders\UserCategoriesSeeder;
 use App\Models\WorkflowStepTransition;
+use App\Services\Account\UserCategoryRoleSyncService;
+use App\Services\SmsService;
+use Database\Seeders\UserCategoriesSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use App\Mail\AdminEmailTestMail;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Mail;
 use Spatie\Permission\Models\Role;
 use Tests\TestCase;
@@ -67,6 +71,17 @@ class AdminFeatureTest extends TestCase
     }
 
     /** @test */
+    public function admin_can_access_personal_notifications_page(): void
+    {
+        $admin = $this->makeAdmin();
+
+        $this->actingAs($admin)
+            ->get(route('notifications.index'))
+            ->assertOk()
+            ->assertSee('Mes notifications', false);
+    }
+
+    /** @test */
     public function admin_can_send_email_test(): void
     {
         Mail::fake();
@@ -82,9 +97,82 @@ class AdminFeatureTest extends TestCase
             ->assertRedirect(route('admin.email.test'))
             ->assertSessionHas('success');
 
-        Mail::assertSent(AdminEmailTestMail::class, function (AdminEmailTestMail $mail) {
+        Mail::assertQueued(AdminEmailTestMail::class, function (AdminEmailTestMail $mail) {
             return $mail->hasTo('test@example.com');
         });
+    }
+
+    /** @test */
+    public function admin_can_access_sms_test_page(): void
+    {
+        $admin = $this->makeAdmin();
+
+        $this->actingAs($admin)
+            ->get(route('admin.sms.test'))
+            ->assertOk()
+            ->assertSee('Test d’envoi SMS', false);
+    }
+
+    /** @test */
+    public function admin_can_send_sms_test(): void
+    {
+        $this->mock(SmsService::class, function ($mock): void {
+            $mock->shouldReceive('sendTest')
+                ->once()
+                ->with('+50938123456', 'Corps du SMS.');
+        });
+
+        $admin = $this->makeAdmin();
+
+        config([
+            'services.twilio.account_sid' => 'AC'.str_repeat('a', 32),
+            'services.twilio.auth_token' => str_repeat('b', 32),
+            'services.twilio.from' => '+15551234567',
+        ]);
+
+        $this->actingAs($admin)
+            ->post(route('admin.sms.test.store'), [
+                'to' => '+50938123456',
+                'body' => 'Corps du SMS.',
+            ])
+            ->assertRedirect(route('admin.sms.test'))
+            ->assertSessionHas('success');
+    }
+
+    /** @test */
+    public function admin_can_access_queue_monitor(): void
+    {
+        config(['queue.default' => 'database']);
+
+        $admin = $this->makeAdmin();
+
+        $this->actingAs($admin)
+            ->get(route('admin.queue.index'))
+            ->assertOk()
+            ->assertSee('Jobs mail / SMS / notifications', false);
+    }
+
+    /** @test */
+    public function admin_queue_monitor_lists_pending_jobs(): void
+    {
+        config(['queue.default' => 'database']);
+
+        DB::table('jobs')->insert([
+            'queue' => 'default',
+            'payload' => json_encode(['displayName' => 'App\\Jobs\\SendSmsJob']),
+            'attempts' => 0,
+            'reserved_at' => null,
+            'available_at' => now()->timestamp,
+            'created_at' => now()->timestamp,
+        ]);
+
+        $admin = $this->makeAdmin();
+
+        $this->actingAs($admin)
+            ->get(route('admin.queue.index'))
+            ->assertOk()
+            ->assertSee('SendSmsJob', false)
+            ->assertSee('En attente', false);
     }
 
     /** @test */
@@ -135,7 +223,7 @@ class AdminFeatureTest extends TestCase
         $admin = $this->makeAdmin();
         $service = Service::first();
 
-        \App\Models\UserCategory::query()->create([
+        UserCategory::query()->create([
             'code' => 'agent_rdv',
             'label' => 'agent_rdv',
             'is_system' => false,
@@ -161,7 +249,7 @@ class AdminFeatureTest extends TestCase
 
         $this->assertSame(
             1,
-            \App\Models\UserCategory::query()->where('code', 'agent_rdv')->count(),
+            UserCategory::query()->where('code', 'agent_rdv')->count(),
             'La création ne doit pas ajouter une catégorie agent_rdv.'
         );
 
@@ -297,7 +385,7 @@ class AdminFeatureTest extends TestCase
             'service_id' => $service->id,
         ]);
         $target->syncRoles([User::ROLE_AGENT_RDV]);
-        app(\App\Services\Account\UserCategoryRoleSyncService::class)->syncSingleCategory($target, 'personnel_dpc', syncRoles: false);
+        app(UserCategoryRoleSyncService::class)->syncSingleCategory($target, 'personnel_dpc', syncRoles: false);
 
         $response = $this->actingAs($admin)->put(route('admin.users.update', $target), $this->identityFields([
             'name' => $target->name,

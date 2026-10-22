@@ -251,14 +251,17 @@ class UserController extends Controller
 
     /**
      * @param  \Illuminate\Support\Collection<int, Role>  $roles
-     * @return list<array{value: string, label: string}>
+     * @return list<array{value: string, label: string, description: ?string}>
      */
     private function roleListboxOptions($roles): array
     {
-        return $roles->map(fn (Role $role) => [
-            'value' => $role->name,
-            'label' => $role->name,
-        ])->values()->all();
+        return $roles->map(function (Role $role) {
+            return [
+                'value' => $role->name,
+                'label' => $role->name,
+                'description' => filled($role->description) ? $role->description : null,
+            ];
+        })->values()->all();
     }
 
     /**

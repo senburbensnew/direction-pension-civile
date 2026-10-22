@@ -22,17 +22,34 @@
     >
         <div class="flex-1 min-w-0">
             <p class="text-xs font-medium text-gray-500 mb-1">{{ $availableTitle }}</p>
-            <select
-                x-ref="availableList"
-                multiple
-                size="8"
-                @change="syncPickedAvailable()"
-                class="w-full rounded-lg border border-gray-200 bg-white px-2 py-1 text-sm text-gray-800 focus:border-indigo-400 focus:ring-2 focus:ring-indigo-400/30"
+            <div
+                class="h-48 max-w-full overflow-auto rounded-lg border border-gray-200 bg-white focus-within:border-indigo-400 focus-within:ring-2 focus-within:ring-indigo-400/30"
+                role="listbox"
+                aria-multiselectable="true"
             >
                 <template x-for="item in availableItems" :key="'av-' + item.value">
-                    <option :value="item.value" x-text="item.label"></option>
+                    <div
+                        role="option"
+                        @click="togglePick($event, 'available', item.value)"
+                        :aria-selected="isPicked('available', item.value)"
+                        :class="isPicked('available', item.value) ? 'bg-indigo-100 text-indigo-900' : 'hover:bg-gray-50'"
+                        class="flex items-center gap-2 px-2 py-1.5 cursor-pointer text-sm text-gray-800 min-w-max"
+                    >
+                        <span class="font-mono text-xs whitespace-nowrap" x-text="item.label"></span>
+                        <template x-if="item.description">
+                            <span
+                                class="inline-flex shrink-0 p-0.5"
+                                @click.stop
+                                @mouseenter="showInfoTooltip($event, item.description)"
+                                @mouseleave="hideInfoTooltip()"
+                            >
+                                <i class="fas fa-info-circle text-gray-400 hover:text-indigo-600 text-xs" aria-hidden="true"></i>
+                            </span>
+                        </template>
+                    </div>
                 </template>
-            </select>
+                <p x-show="availableItems.length === 0" class="px-2 py-3 text-xs text-gray-400 italic">Aucun élément.</p>
+            </div>
         </div>
 
         <div class="flex md:flex-col flex-row items-center justify-center gap-2 shrink-0 py-1">
@@ -60,22 +77,49 @@
 
         <div class="flex-1 min-w-0">
             <p class="text-xs font-medium text-gray-500 mb-1">{{ $selectedTitle }}</p>
-            <select
-                x-ref="assignedList"
-                multiple
-                size="8"
-                @change="syncPickedAssigned()"
-                class="w-full rounded-lg border border-gray-200 bg-white px-2 py-1 text-sm text-gray-800 focus:border-indigo-400 focus:ring-2 focus:ring-indigo-400/30"
+            <div
+                class="h-48 max-w-full overflow-auto rounded-lg border border-gray-200 bg-white focus-within:border-indigo-400 focus-within:ring-2 focus-within:ring-indigo-400/30"
+                role="listbox"
+                aria-multiselectable="true"
             >
                 <template x-for="item in assignedItems" :key="'as-' + item.value">
-                    <option :value="item.value" x-text="item.label"></option>
+                    <div
+                        role="option"
+                        @click="togglePick($event, 'assigned', item.value)"
+                        :aria-selected="isPicked('assigned', item.value)"
+                        :class="isPicked('assigned', item.value) ? 'bg-indigo-100 text-indigo-900' : 'hover:bg-gray-50'"
+                        class="flex items-center gap-2 px-2 py-1.5 cursor-pointer text-sm text-gray-800 min-w-max"
+                    >
+                        <span class="font-mono text-xs whitespace-nowrap" x-text="item.label"></span>
+                        <template x-if="item.description">
+                            <span
+                                class="inline-flex shrink-0 p-0.5"
+                                @click.stop
+                                @mouseenter="showInfoTooltip($event, item.description)"
+                                @mouseleave="hideInfoTooltip()"
+                            >
+                                <i class="fas fa-info-circle text-gray-400 hover:text-indigo-600 text-xs" aria-hidden="true"></i>
+                            </span>
+                        </template>
+                    </div>
                 </template>
-            </select>
+                <p x-show="assignedItems.length === 0" class="px-2 py-3 text-xs text-gray-400 italic">Aucun élément.</p>
+            </div>
         </div>
 
         <template x-for="value in assignedValues" :key="'input-' + value">
             <input type="hidden" name="{{ $name }}" :value="value">
         </template>
+
+        <div
+            x-show="tooltipVisible"
+            x-cloak
+            x-transition.opacity.duration.150ms
+            class="fixed z-[200] pointer-events-none rounded-md bg-gray-900 px-2 py-1.5 text-xs font-normal normal-case leading-snug text-white shadow-lg whitespace-normal"
+            :style="tooltipStyle"
+            x-text="tooltipText"
+            role="tooltip"
+        ></div>
     </div>
 
     @error(str_replace('[]', '', $name))

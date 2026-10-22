@@ -13,10 +13,26 @@ return new class extends Migration
     {
         Schema::create('services', function (Blueprint $table) {
             $table->id();
-            $table->string('code')->unique(); 
-            $table->string('nom');             
+            $table->string('code')->unique();
+            $table->string('nom');
             $table->text('description')->nullable();
+            $table->string('icon')->nullable();
+            $table->string('color')->nullable();
             $table->timestamps();
+        });
+
+        Schema::table('users', function (Blueprint $table) {
+            $table->foreignId('service_id')
+                ->nullable()
+                ->constrained()
+                ->nullOnDelete();
+        });
+
+        Schema::table('demandes', function (Blueprint $table) {
+            $table->foreignId('current_service_id')
+                ->nullable()
+                ->constrained('services')
+                ->nullOnDelete();
         });
     }
 
@@ -25,6 +41,14 @@ return new class extends Migration
      */
     public function down(): void
     {
+        Schema::table('demandes', function (Blueprint $table) {
+            $table->dropConstrainedForeignId('current_service_id');
+        });
+
+        Schema::table('users', function (Blueprint $table) {
+            $table->dropConstrainedForeignId('service_id');
+        });
+
         Schema::dropIfExists('services');
     }
 };

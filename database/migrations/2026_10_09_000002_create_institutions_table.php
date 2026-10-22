@@ -2,7 +2,6 @@
 
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
@@ -22,21 +21,14 @@ return new class extends Migration
             $table->index('statut');
         });
 
-        if (! Schema::hasColumn('users', 'institution_id')) {
-            Schema::table('users', function (Blueprint $table) {
-                $after = Schema::hasColumn('users', 'service_id') ? 'service_id' : 'address';
+        Schema::table('users', function (Blueprint $table) {
+            $table->foreignId('institution_id')
+                ->nullable()
+                ->constrained('institutions')
+                ->nullOnDelete();
 
-                $table->foreignId('institution_id')
-                    ->nullable()
-                    ->after($after)
-                    ->constrained('institutions')
-                    ->nullOnDelete();
-
-                $table->unique('institution_id');
-            });
-        }
-
-        $this->backfillInstitutionsFromUsers();
+            $table->unique('institution_id');
+        });
     }
 
     public function down(): void
@@ -48,42 +40,5 @@ return new class extends Migration
         });
 
         Schema::dropIfExists('institutions');
-    }
-
-    private function backfillInstitutionsFromUsers(): void
-    {
-        if (! Schema::hasTable('user_types') || ! Schema::hasColumn('users', 'user_type_id')) {
-            return;
-        }
-
-        $institutionTypeId = DB::table('user_types')->where('name', 'institution')->value('id');
-
-        if (! $institutionTypeId) {
-            return;
-        }
-
-        $now = now();
-
-        $institutionUsers = DB::table('users')
-            ->where('user_type_id', $institutionTypeId)
-            ->select('id', 'name', 'nif')
-            ->get();
-
-        foreach ($institutionUsers as $row) {
-            $institutionId = DB::table('institutions')->insertGetId([
-                'raison_sociale' => $row->name,
-                'sigle' => null,
-                'nif' => $row->nif,
-                'code' => null,
-                'statut' => 'actif',
-                'metadata' => null,
-                'created_at' => $now,
-                'updated_at' => $now,
-            ]);
-
-            DB::table('users')->where('id', $row->id)->update([
-                'institution_id' => $institutionId,
-            ]);
-        }
     }
 };

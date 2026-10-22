@@ -28,6 +28,9 @@
                     @endif
                     @if($showUploadNote ?? true)
                         Les fichiers déjà téléversés lors de la demande restent enregistrés dans votre dossier.
+                        @if($showEnvoiHint ?? false)
+                            Vous pouvez en ajouter ou en remplacer via le formulaire de pièces jointes ci-dessous.
+                        @endif
                     @endif
                 </p>
                 <ul class="mt-3 space-y-2">

@@ -11,12 +11,15 @@ return new class extends Migration
         Schema::create('rdv_agent_availabilities', function (Blueprint $table) {
             $table->id();
             $table->foreignId('user_id')->constrained()->cascadeOnDelete();
-            $table->unsignedTinyInteger('weekday'); // 1 = lundi … 5 = vendredi
+            $table->date('available_on')->nullable();
+            $table->unsignedTinyInteger('weekday');
             $table->time('start_time');
             $table->time('end_time');
+            $table->boolean('is_blocked')->default(false);
             $table->timestamps();
 
             $table->index(['user_id', 'weekday']);
+            $table->index(['user_id', 'available_on']);
         });
     }
 

@@ -5,12 +5,15 @@ namespace App\Notifications;
 use App\Models\Demande;
 use App\Models\Service;
 use App\Notifications\Concerns\UsesStandardChannels;
+use App\Queue\ConfiguresQueueRetries;
 use Illuminate\Bus\Queueable;
+use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
 
-class DemandeTransferredNotification extends Notification
+class DemandeTransferredNotification extends Notification implements ShouldQueue
 {
+    use ConfiguresQueueRetries;
     use Queueable;
     use UsesStandardChannels;
 
@@ -19,6 +22,9 @@ class DemandeTransferredNotification extends Notification
         public readonly Service $toService,
         public readonly ?string $commentaire = null,
     ) {
+        $this->configureQueueRetries();
+
+        $this->afterCommit();
     }
 
     public function via(object $notifiable): array
@@ -31,15 +37,15 @@ class DemandeTransferredNotification extends Notification
         $url = route('admin.demandes.show', $this->demande->id);
 
         $mail = (new MailMessage)
-            ->subject('Dossier transféré vers ' . $this->toService->nom . ' — ' . $this->demande->code)
-            ->greeting('Bonjour ' . $notifiable->name . ',')
+            ->subject('Dossier transféré vers '.$this->toService->nom.' — '.$this->demande->code)
+            ->greeting('Bonjour '.$notifiable->name.',')
             ->line('Un dossier vous a été transféré et nécessite votre attention.')
-            ->line('**Référence :** ' . $this->demande->code)
-            ->line('**Type :** ' . $this->demande->title)
-            ->line('**Transféré vers :** ' . $this->toService->nom);
+            ->line('**Référence :** '.$this->demande->code)
+            ->line('**Type :** '.$this->demande->title)
+            ->line('**Transféré vers :** '.$this->toService->nom);
 
         if ($this->commentaire) {
-            $mail->line('**Note :** ' . $this->commentaire);
+            $mail->line('**Note :** '.$this->commentaire);
         }
 
         return $mail
@@ -50,13 +56,13 @@ class DemandeTransferredNotification extends Notification
     public function toArray(object $notifiable): array
     {
         return [
-            'demande_id'   => $this->demande->id,
+            'demande_id' => $this->demande->id,
             'demande_code' => $this->demande->code,
-            'title'        => $this->demande->title,
-            'message'      => 'Dossier ' . $this->demande->code . ' transféré vers ' . $this->toService->nom,
-            'commentaire'  => $this->commentaire,
-            'url'          => route('admin.demandes.show', $this->demande->id),
-            'icon'         => 'arrow-right-circle',
+            'title' => $this->demande->title,
+            'message' => 'Dossier '.$this->demande->code.' transféré vers '.$this->toService->nom,
+            'commentaire' => $this->commentaire,
+            'url' => route('admin.demandes.show', $this->demande->id),
+            'icon' => 'arrow-right-circle',
         ];
     }
 }

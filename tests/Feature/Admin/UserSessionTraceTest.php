@@ -34,7 +34,7 @@ class UserSessionTraceTest extends TestCase
 
         $this->actingAs($user)
             ->post(route('logout'))
-            ->assertRedirect('/');
+            ->assertRedirect(route('login'));
 
         $this->assertDatabaseHas('user_session_end_events', [
             'user_id' => $user->id,

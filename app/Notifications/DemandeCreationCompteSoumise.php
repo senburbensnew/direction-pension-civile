@@ -4,18 +4,24 @@ namespace App\Notifications;
 
 use App\Models\DemandeCreationCompte;
 use App\Notifications\Concerns\UsesStandardChannels;
+use App\Queue\ConfiguresQueueRetries;
 use Illuminate\Bus\Queueable;
+use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
 
-class DemandeCreationCompteSoumise extends Notification
+class DemandeCreationCompteSoumise extends Notification implements ShouldQueue
 {
+    use ConfiguresQueueRetries;
     use Queueable;
     use UsesStandardChannels;
 
     public function __construct(
         public DemandeCreationCompte $demande
     ) {
+        $this->configureQueueRetries();
+
+        $this->afterCommit();
     }
 
     public function via(object $notifiable): array
@@ -67,8 +73,7 @@ class DemandeCreationCompteSoumise extends Notification
 
             'title' => 'Demande soumise',
 
-            'message' =>
-                'Votre demande de création de compte a bien été soumise. '
+            'message' => 'Votre demande de création de compte a bien été soumise. '
                 .'Elle est actuellement en attente de validation.',
 
             'created_at' => now()->toDateTimeString(),
@@ -78,8 +83,7 @@ class DemandeCreationCompteSoumise extends Notification
     public function toTwilio(object $notifiable): array
     {
         return [
-            'message' =>
-                'DPC : votre demande de création de compte a bien été soumise. '
+            'message' => 'DPC : votre demande de création de compte a bien été soumise. '
                 .'Référence : '.$this->reference().'.',
         ];
     }

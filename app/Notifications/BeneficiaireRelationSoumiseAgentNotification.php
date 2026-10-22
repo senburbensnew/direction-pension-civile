@@ -4,6 +4,7 @@ namespace App\Notifications;
 
 use App\Models\BeneficiaireRelationDemande;
 use App\Notifications\Concerns\UsesStandardChannels;
+use App\Queue\ConfiguresQueueRetries;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Messages\MailMessage;
@@ -11,11 +12,14 @@ use Illuminate\Notifications\Notification;
 
 class BeneficiaireRelationSoumiseAgentNotification extends Notification implements ShouldQueue
 {
+    use ConfiguresQueueRetries;
     use Queueable;
     use UsesStandardChannels;
 
     public function __construct(public readonly BeneficiaireRelationDemande $demande)
     {
+        $this->configureQueueRetries();
+
         $this->afterCommit();
     }
 

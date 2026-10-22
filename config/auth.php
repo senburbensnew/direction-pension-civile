@@ -114,4 +114,26 @@ return [
 
     'password_timeout' => env('PASSWORD_CONFIRM_TIMEOUT', 900),
 
+    /*
+    |--------------------------------------------------------------------------
+    | Personnel DPC password rotation
+    |--------------------------------------------------------------------------
+    |
+    | Users with the personnel_dpc category must change their password when it
+    | is older than this many days. Set to 0 to disable periodic rotation.
+    |
+    */
+
+    'password_max_age_days' => (int) env('PASSWORD_MAX_AGE_DAYS', 180),
+
+    /*
+    |--------------------------------------------------------------------------
+    | Personnel DPC and admin login two-factor authentication
+    |--------------------------------------------------------------------------
+    */
+
+    'two_factor' => [
+        'enabled' => env('AUTH_TWO_FACTOR_ENABLED', true),
+    ],
+
 ];

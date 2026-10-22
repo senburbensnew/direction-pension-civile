@@ -5,7 +5,9 @@ use App\Http\Controllers\Admin\ActiveSessionController;
 use App\Http\Controllers\Admin\EmailTestController;
 use App\Http\Controllers\Admin\NewsletterCampaignController;
 use App\Http\Controllers\Admin\NewsletterSubscriberController;
+use App\Http\Controllers\Admin\QueueMonitorController;
 use App\Http\Controllers\Admin\RdvSettingsController;
+use App\Http\Controllers\Admin\SmsTestController;
 use App\Http\Controllers\AdminController;
 use App\Http\Controllers\AdminDashboardController;
 use App\Http\Controllers\CarouselController;
@@ -374,6 +376,11 @@ Route::middleware(['auth', 'account.permanent'])->group(function () {
     )->name('demandes.rencontre.annuler');
 
     Route::post(
+        '/demande-rencontre/{demande}/documents',
+        [DemandeRencontreController::class, 'uploadDocuments']
+    )->name('demandes.rencontre.documents');
+
+    Route::post(
         '/demande-rencontre/{demande}/refuser',
         [DemandeRencontreController::class, 'refuser']
     )->name('demandes.rencontre.refuser');
@@ -592,6 +599,23 @@ Route::prefix('admin')
             '/email-test',
             [EmailTestController::class, 'store']
         )->name('email.test.store');
+
+        Route::get(
+            '/sms-test',
+            [SmsTestController::class, 'create']
+        )->name('sms.test');
+
+        Route::post(
+            '/sms-test',
+            [SmsTestController::class, 'store']
+        )->name('sms.test.store');
+
+        Route::get('/queue', [QueueMonitorController::class, 'index'])->name('queue.index');
+        Route::get('/queue/failed/{uuid}', [QueueMonitorController::class, 'showFailed'])->name('queue.failed.show');
+        Route::post('/queue/failed/{uuid}/retry', [QueueMonitorController::class, 'retryFailed'])->name('queue.failed.retry');
+        Route::delete('/queue/failed/{uuid}', [QueueMonitorController::class, 'forgetFailed'])->name('queue.failed.forget');
+        Route::post('/queue/failed/retry-all', [QueueMonitorController::class, 'retryAllFailed'])->name('queue.failed.retry-all');
+        Route::delete('/queue/pending/{id}', [QueueMonitorController::class, 'destroyPending'])->name('queue.pending.destroy');
 
         Route::post(
             '/toggle-maintenance',

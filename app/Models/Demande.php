@@ -9,6 +9,7 @@ use App\Enums\WorkflowStepTypeEnum;
 use App\Services\RencontreMotifService;
 use App\Support\Storage\UploadPaths;
 use Carbon\Carbon;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -786,7 +787,7 @@ class Demande extends Model implements HasMedia
     }
 
     /**
-     * @param  \Illuminate\Database\Eloquent\Builder<Demande>  $query
+     * @param  Builder<Demande>  $query
      */
     public function scopeWhereEffectiveRencontreStatut($query, RencontreStatutEnum|string $statut): void
     {
@@ -802,7 +803,7 @@ class Demande extends Model implements HasMedia
     /**
      * RDV non clos (statut métier non terminal).
      *
-     * @param  \Illuminate\Database\Eloquent\Builder<Demande>  $query
+     * @param  Builder<Demande>  $query
      */
     public function scopeWhereEffectiveRencontreStatutOpen($query): void
     {
@@ -829,7 +830,7 @@ class Demande extends Model implements HasMedia
     /**
      * RDV clos (réalisé, refusé, annulé, non honoré).
      *
-     * @param  \Illuminate\Database\Eloquent\Builder<Demande>  $query
+     * @param  Builder<Demande>  $query
      */
     public function scopeWhereEffectiveRencontreStatutClosed($query): void
     {
@@ -855,7 +856,7 @@ class Demande extends Model implements HasMedia
 
     /**
      * @param  list<RencontreStatutEnum|string>  $statuts
-     * @param  \Illuminate\Database\Eloquent\Builder<Demande>  $query
+     * @param  Builder<Demande>  $query
      */
     public function scopeWhereEffectiveRencontreStatutIn($query, array $statuts): void
     {
@@ -884,7 +885,7 @@ class Demande extends Model implements HasMedia
     }
 
     /**
-     * @param  \Illuminate\Database\Eloquent\Builder<Demande>  $query
+     * @param  Builder<Demande>  $query
      */
     protected static function applyEffectiveRencontreStatutConstraint($query, RencontreStatutEnum $statut): void
     {
@@ -1025,6 +1026,22 @@ class Demande extends Model implements HasMedia
         }
 
         return $this->isRencontreActif();
+    }
+
+    public function canUploadRencontreDocuments(
+        ?User $user = null
+    ): bool {
+        $user ??= auth()->user();
+
+        if (
+            ! $user
+            || ! $this->isRencontre()
+            || (int) $this->created_by !== (int) $user->id
+        ) {
+            return false;
+        }
+
+        return ! $this->rencontreStatut()->isRdvAnnule();
     }
 
     public function isRencontreActif(): bool

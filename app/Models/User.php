@@ -4,9 +4,10 @@ namespace App\Models;
 
 use App\Enums\AccountStatusEnum;
 use App\Enums\BeneficiaireRelationEnum;
+use App\Notifications\Auth\QueuedResetPassword;
 use App\Services\Account\UserCategoryResolver;
-use App\Services\PortalNavService;
 use App\Services\Pension\ActivePensionContext;
+use App\Services\PortalNavService;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
@@ -60,6 +61,7 @@ class User extends Authenticatable
         'phone',
         'password',
         'must_change_password',
+        'password_changed_at',
         'nif',
         'ninu',
         'service_id',
@@ -94,6 +96,7 @@ class User extends Authenticatable
         'birth_date' => 'date',
         'password' => 'hashed',
         'must_change_password' => 'boolean',
+        'password_changed_at' => 'datetime',
         'account_status' => AccountStatusEnum::class,
     ];
 
@@ -110,6 +113,12 @@ class User extends Authenticatable
         static::updating(function (self $user) {
             if ($user->isDirty('username') && filled($user->username)) {
                 $user->username = self::normalizeUsername((string) $user->username);
+            }
+        });
+
+        static::saving(function (self $user) {
+            if ($user->isDirty('password') && ! $user->isDirty('password_changed_at')) {
+                $user->password_changed_at = now();
             }
         });
     }
@@ -368,6 +377,11 @@ class User extends Authenticatable
         return str_starts_with($phone, '+') ? $phone : null;
     }
 
+    public function sendPasswordResetNotification(#[\SensitiveParameter] $token): void
+    {
+        $this->notify(new QueuedResetPassword($token));
+    }
+
     public static function maskEmailForDisplay(string $email): string
     {
         $email = trim($email);
@@ -478,6 +492,16 @@ class User extends Authenticatable
     public function hasCategory(string $code): bool
     {
         return $this->categoryResolver()->hasCategory($code);
+    }
+
+    public function isPersonnelDpc(): bool
+    {
+        return $this->hasCategory('personnel_dpc');
+    }
+
+    public function requiresLoginTwoFactor(): bool
+    {
+        return $this->isPersonnelDpc() || $this->hasRole('admin');
     }
 
     public function primaryCategoryCode(): ?string
@@ -646,7 +670,32 @@ class User extends Authenticatable
 
     public function mustChangePassword(): bool
     {
-        return (bool) $this->must_change_password;
+        if ((bool) $this->must_change_password) {
+            return true;
+        }
+
+        if (! $this->isPersonnelDpc()) {
+            return false;
+        }
+
+        return $this->isPasswordExpired();
+    }
+
+    public function isPasswordExpired(): bool
+    {
+        $maxDays = (int) config('auth.password_max_age_days', 0);
+
+        if ($maxDays <= 0) {
+            return false;
+        }
+
+        $changedAt = $this->password_changed_at ?? $this->created_at;
+
+        if ($changedAt === null) {
+            return true;
+        }
+
+        return $changedAt->copy()->addDays($maxDays)->isPast();
     }
 
     public function activateAccount(): void

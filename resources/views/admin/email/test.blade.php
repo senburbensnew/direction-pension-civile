@@ -17,13 +17,6 @@
             </p>
         </div>
 
-        @if(session('success'))
-            <div class="flex items-start gap-2 bg-green-50 border border-green-200 rounded-lg px-4 py-3 text-sm text-green-800">
-                <i class="fas fa-check-circle text-green-500 mt-0.5"></i>
-                <span>{{ session('success') }}</span>
-            </div>
-        @endif
-
         @if(!empty($error))
             <div class="bg-red-50 border border-red-200 text-red-800 rounded-lg px-4 py-3 text-sm">
                 <p class="font-medium mb-1">Échec de l’envoi</p>

@@ -12,11 +12,12 @@ return new class extends Migration
             $table->id();
             $table->string('title');
             $table->text('description')->nullable();
-            $table->string('type'); // image, video, audio, document
+            $table->string('type');
             $table->string('file_path')->nullable();
-            $table->string('url')->nullable(); // external URL (YouTube, etc.)
+            $table->string('url')->nullable();
             $table->unsignedSmallInteger('order_column')->default(0);
             $table->boolean('published')->default(true);
+            $table->boolean('is_featured')->default(false);
             $table->timestamps();
         });
     }

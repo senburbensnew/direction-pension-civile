@@ -2,7 +2,6 @@
 
 namespace App\Http\Controllers;
 
-use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Spatie\Permission\Models\Permission;
 
@@ -31,12 +30,14 @@ class PermissionController extends Controller
      */
     public function store(Request $request)
     {
-        $request->validate([
+        $validated = $request->validate([
             'name' => 'required|string|unique:permissions,name',
+            'description' => ['nullable', 'string', 'max:2000'],
         ]);
 
         Permission::create([
-            'name' => strtoupper(trim($request->name)),
+            'name' => trim($validated['name']),
+            'description' => blank($validated['description'] ?? null) ? null : trim($validated['description']),
             'guard_name' => 'web',
         ]);
 
@@ -58,12 +59,14 @@ class PermissionController extends Controller
      */
     public function update(Request $request, Permission $permission)
     {
-        $request->validate([
-            'name' => 'required|string|unique:permissions,name,' . $permission->id,
+        $validated = $request->validate([
+            'name' => 'required|string|unique:permissions,name,'.$permission->id,
+            'description' => ['nullable', 'string', 'max:2000'],
         ]);
 
         $permission->update([
-            'name' => strtoupper(trim($request->name)),
+            'name' => trim($validated['name']),
+            'description' => blank($validated['description'] ?? null) ? null : trim($validated['description']),
         ]);
 
         return redirect()

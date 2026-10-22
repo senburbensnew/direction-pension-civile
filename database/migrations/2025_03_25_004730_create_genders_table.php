@@ -14,9 +14,16 @@ class CreateGendersTable extends Migration
     public function up()
     {
         Schema::create('genders', function (Blueprint $table) {
-            $table->id(); // Auto-incrementing primary key
-            $table->string('name')->unique(); // Name of the gender (e.g., Male, Female, Other)
-            $table->timestamps(); // Created at & Updated at timestamps
+            $table->id();
+            $table->string('name')->unique();
+            $table->timestamps();
+        });
+
+        Schema::table('users', function (Blueprint $table) {
+            $table->foreignId('gender_id')
+                ->nullable()
+                ->constrained('genders')
+                ->restrictOnDelete();
         });
     }
 
@@ -27,6 +34,10 @@ class CreateGendersTable extends Migration
      */
     public function down()
     {
+        Schema::table('users', function (Blueprint $table) {
+            $table->dropConstrainedForeignId('gender_id');
+        });
+
         Schema::dropIfExists('genders');
     }
 }
