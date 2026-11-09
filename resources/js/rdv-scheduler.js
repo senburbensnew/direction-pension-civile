@@ -365,13 +365,63 @@ function bindLazyRdvScheduler(details, el) {
         }
 
         if (el.dataset.ready !== '1') {
-            initOneRdvScheduler(el);
+            void initOneRdvScheduler(el);
 
             return;
         }
 
         el._rdvCalendar?.updateSize();
     });
+}
+
+async function loadReservedSlotsByService(el) {
+    const embedded = readReservedByService(el);
+    const hasEmbedded = Object.keys(embedded).some(
+        (code) => Array.isArray(embedded[code]) && embedded[code].length > 0
+    );
+
+    if (hasEmbedded || el.dataset.reservedSlotsLoaded === '1') {
+        return embedded;
+    }
+
+    const slotsUrl = (el.dataset.reservedSlotsUrl || '').trim();
+
+    if (!slotsUrl) {
+        return embedded;
+    }
+
+    el.dataset.reservedSlotsLoaded = '1';
+    el.setAttribute('aria-busy', 'true');
+    el.classList.add('opacity-60', 'pointer-events-none');
+
+    try {
+        const response = await fetch(slotsUrl, {
+            headers: {
+                Accept: 'application/json',
+                'X-Requested-With': 'XMLHttpRequest',
+            },
+            credentials: 'same-origin',
+        });
+
+        if (!response.ok) {
+            return embedded;
+        }
+
+        const data = await response.json();
+
+        if (typeof data === 'object' && data !== null) {
+            el.dataset.reservedByService = JSON.stringify(data);
+
+            return data;
+        }
+    } catch {
+        /* agenda reste utilisable sans créneaux réservés */
+    } finally {
+        el.removeAttribute('aria-busy');
+        el.classList.remove('opacity-60', 'pointer-events-none');
+    }
+
+    return readReservedByService(el);
 }
 
 function isAgentAvailabilityScheduler(el) {
@@ -381,7 +431,9 @@ function isAgentAvailabilityScheduler(el) {
     );
 }
 
-export function initRdvScheduler() {
+export async function initRdvScheduler() {
+    const tasks = [];
+
     document.querySelectorAll('.dpc-rdv-scheduler').forEach((el) => {
         if (isAgentAvailabilityScheduler(el)) {
             return;
@@ -399,14 +451,18 @@ export function initRdvScheduler() {
             return;
         }
 
-        initOneRdvScheduler(el);
+        tasks.push(initOneRdvScheduler(el));
     });
+
+    await Promise.all(tasks);
 }
 
-function initOneRdvScheduler(el) {
+async function initOneRdvScheduler(el) {
     if (!el || el.dataset.ready === '1') {
         return;
     }
+
+    await loadReservedSlotsByService(el);
 
     const form = el.closest('form') || document;
 
@@ -1001,8 +1057,18 @@ function initOneRdvScheduler(el) {
         },
 
         datesSet: () => {
-            refreshHolidayEvents();
-            refreshPastBackground();
+            if (el.dataset.datesSetRefresh === '1') {
+                return;
+            }
+
+            el.dataset.datesSetRefresh = '1';
+
+            try {
+                refreshHolidayEvents();
+                refreshPastBackground();
+            } finally {
+                delete el.dataset.datesSetRefresh;
+            }
         },
 
         events: reservedEvents(),

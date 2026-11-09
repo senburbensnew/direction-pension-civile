@@ -29,6 +29,9 @@ class Kernel extends ConsoleKernel
         $schedule->command('rdv:rappels-veille')
             ->dailyAt((string) config('rdv.reminder.at', '08:00'));
 
+        // Rappels email / SMS / in-app 24 h et 30 min avant le créneau
+        $schedule->command('rdv:rappels-programmes')->everyMinute();
+
         $schedule->command('beneficiaire-relations:expire')->daily();
 
         $schedule->command('newsletter:dispatch-scheduled')->everyMinute();

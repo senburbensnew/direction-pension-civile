@@ -3,6 +3,11 @@
 namespace App\Http\Controllers;
 
 use App\Enums\TypeDemandeEnum;
+use App\Http\Requests\Admin\StoreFluxTypeRequest;
+use App\Http\Requests\Admin\StoreRequiredCircuitServiceRequest;
+use App\Http\Requests\Admin\StoreServiceSlaRequest;
+use App\Http\Requests\Admin\StoreStepTransitionRequest;
+use App\Http\Requests\Admin\UpdateStepTransitionRequest;
 use App\Models\Demande;
 use App\Models\RequiredCircuitService;
 use App\Models\Service;
@@ -15,7 +20,6 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Validation\Rule;
 
 class FluxTransitionController extends Controller
 {
@@ -93,27 +97,9 @@ class FluxTransitionController extends Controller
         ));
     }
 
-    public function storeType(Request $request)
+    public function storeType(StoreFluxTypeRequest $request)
     {
-        $knownCodes = $this->typeDemandeOptions()->pluck('value')->all();
-
-        $validated = $request->validate([
-            'type_code' => [
-                'required',
-                'string',
-                'max:50',
-                'regex:/^[A-Z0-9_]+$/',
-                'unique:types_demandes,code',
-                function (string $attribute, mixed $value, \Closure $fail) {
-                    if (TypeDemandeEnum::tryFrom($value)) {
-                        $fail('Ce code correspond déjà à un type de demande existant.');
-                    }
-                },
-            ],
-            'type_label' => ['required', 'string', 'max:150'],
-            'description' => ['nullable', 'string', 'max:500'],
-            'clone_from' => ['nullable', 'string', Rule::in(array_merge($knownCodes, ['__global__']))],
-        ]);
+        $validated = $request->validated();
 
         $code = strtoupper($validated['type_code']);
 
@@ -157,14 +143,24 @@ class FluxTransitionController extends Controller
         DB::transaction(function () use ($code) {
             $stepIds = WorkflowStep::where('type_demande', $code)->pluck('id');
             if ($stepIds->isNotEmpty()) {
-                StepRequiredDocument::whereIn('workflow_step_id', $stepIds)->delete();
-                WorkflowStep::whereIn('id', $stepIds)->delete();
+                StepRequiredDocument::destroy(
+                    StepRequiredDocument::whereIn('workflow_step_id', $stepIds)->pluck('id')->all()
+                );
+                WorkflowStep::destroy($stepIds->all());
             }
 
-            RequiredCircuitService::where('type_demande', $code)->delete();
-            ServiceSla::where('type_demande', $code)->delete();
-            StepRequiredDocument::where('type_demande', $code)->delete();
-            TypeDemande::where('code', $code)->delete();
+            RequiredCircuitService::destroy(
+                RequiredCircuitService::where('type_demande', $code)->pluck('id')->all()
+            );
+            ServiceSla::destroy(
+                ServiceSla::where('type_demande', $code)->pluck('id')->all()
+            );
+            StepRequiredDocument::destroy(
+                StepRequiredDocument::where('type_demande', $code)->pluck('id')->all()
+            );
+            TypeDemande::destroy(
+                TypeDemande::where('code', $code)->pluck('id')->all()
+            );
         });
 
         $fallback = $this->typeDemandeOptions()->first();
@@ -176,16 +172,8 @@ class FluxTransitionController extends Controller
 
     /* ── Step-transition CRUD ─────────────────────────────────────── */
 
-    public function storeStepTransition(Request $request)
+    public function storeStepTransition(StoreStepTransitionRequest $request)
     {
-        $request->validate([
-            'from_step_id' => 'nullable|exists:workflow_steps,id',
-            'to_step_id' => 'required|exists:workflow_steps,id|different:from_step_id',
-            'action' => 'required|string|max:100',
-            'is_urgent_only' => 'boolean',
-            'type_demande' => 'nullable|string|max:100',
-        ]);
-
         $from = $request->from_step_id ?: null;
 
         $toStep = WorkflowStep::findOrFail($request->to_step_id);
@@ -219,14 +207,8 @@ class FluxTransitionController extends Controller
         return $this->redirectToIndex($request)->with('success', 'Transition ajoutée.');
     }
 
-    public function updateStepTransition(Request $request, WorkflowStepTransition $stepTransition)
+    public function updateStepTransition(UpdateStepTransitionRequest $request, WorkflowStepTransition $stepTransition)
     {
-        $request->validate([
-            'action' => 'required|string|max:100',
-            'is_urgent_only' => 'boolean',
-            'type_demande' => 'nullable|string|max:100',
-        ]);
-
         $stepTransition->update([
             'action' => $request->action,
             'is_urgent_only' => $request->boolean('is_urgent_only'),
@@ -280,13 +262,8 @@ class FluxTransitionController extends Controller
 
     /* ── Required circuit services ────────────────────────────────── */
 
-    public function storeRequired(Request $request)
+    public function storeRequired(StoreRequiredCircuitServiceRequest $request)
     {
-        $request->validate([
-            'service_id' => 'required|exists:services,id',
-            'type_demande' => 'nullable|string|max:100',
-        ]);
-
         $exists = RequiredCircuitService::where('service_id', $request->service_id)
             ->where('type_demande', $request->type_demande ?: null)
             ->exists();
@@ -312,14 +289,8 @@ class FluxTransitionController extends Controller
 
     /* ── SLA ──────────────────────────────────────────────────────── */
 
-    public function storeSla(Request $request)
+    public function storeSla(StoreServiceSlaRequest $request)
     {
-        $request->validate([
-            'service_id' => 'required|exists:services,id',
-            'type_demande' => 'nullable|string|max:100',
-            'delai_jours' => 'required|integer|min:1|max:365',
-        ]);
-
         ServiceSla::updateOrCreate(
             ['service_id' => $request->service_id, 'type_demande' => $request->type_demande ?: null],
             ['delai_jours' => $request->delai_jours]

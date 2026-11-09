@@ -9,6 +9,7 @@ use App\Services\OCR\GoogleDocumentAiOcrService;
 use App\Services\OCR\GoogleVisionOcrService;
 use App\Services\OCR\OcrService;
 use App\Services\OCR\TesseractOcrService;
+use App\Support\DevDiagnostics;
 use App\Support\Storage\StructuredMediaPathGenerator;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Notification;
@@ -29,8 +30,11 @@ class AppServiceProvider extends ServiceProvider
 
     public function boot(): void
     {
+        DevDiagnostics::register();
+
         config([
             'media-library.path_generator' => StructuredMediaPathGenerator::class,
+            'media-library.media_model' => \App\Models\Media::class,
         ]);
 
         Notification::extend('twilio', fn () => $this->app->make(TwilioSmsChannel::class));

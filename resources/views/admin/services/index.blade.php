@@ -16,7 +16,7 @@
         </div>
         <button type="button" @click="showCreate = true"
             class="inline-flex items-center gap-1.5 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg transition-colors">
-            <i class="fas fa-plus"></i> Nouveau service
+            Nouveau service
         </button>
     </div>
 
@@ -26,7 +26,6 @@
                 <tr>
                     <th class="px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide text-left">#</th>
                     <th class="px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide text-left">Code</th>
-                    <th class="px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide text-left">Icône</th>
                     <th class="px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide text-left">Nom du service</th>
                     <th class="px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide text-left">Description</th>
                     <th class="px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide text-left">Agents affectés</th>
@@ -41,15 +40,6 @@
                                 {{ $service->code ?? '—' }}
                             </span>
                         </td>
-                        <td class="px-4 py-3">
-                            @if($service->icon)
-                            <span class="inline-flex items-center justify-center w-8 h-8 rounded-lg bg-{{ $service->color ?? 'gray' }}-100">
-                                <i class="fas {{ $service->icon }} text-{{ $service->color ?? 'gray' }}-600 text-sm"></i>
-                            </span>
-                            @else
-                            <span class="text-gray-300">—</span>
-                            @endif
-                        </td>
                         <td class="px-4 py-3 font-medium text-gray-800">
                             {{ $service->nom }}
                         </td>
@@ -57,19 +47,13 @@
                             {{ $service->description ?? '—' }}
                         </td>
                         <td class="px-4 py-3">
-                            <div class="flex items-center gap-1.5">
-                                <span class="w-6 h-6 rounded-full bg-teal-100 flex items-center justify-center">
-                                    <i class="fas fa-user text-teal-600 text-xs"></i>
-                                </span>
-                                <span class="text-sm font-medium text-gray-700">{{ $service->users->count() }}</span>
-                                <span class="text-xs text-gray-400">agent{{ $service->users->count() > 1 ? 's' : '' }}</span>
-                            </div>
+                            <span class="text-sm font-medium text-gray-700">{{ $service->users->count() }}</span>
+                            <span class="text-xs text-gray-400 ml-1">agent{{ $service->users->count() > 1 ? 's' : '' }}</span>
                         </td>
                     </tr>
                 @empty
                     <tr>
-                        <td colspan="6" class="px-4 py-10 text-center text-gray-400">
-                            <i class="fas fa-sitemap text-3xl mb-2 block"></i>
+                        <td colspan="5" class="px-4 py-10 text-center text-gray-400">
                             Aucun service défini.
                         </td>
                     </tr>
@@ -87,7 +71,7 @@
          class="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
         <div class="bg-white w-full max-w-lg rounded-xl shadow-xl p-6" @click.stop>
             <h3 class="font-semibold text-gray-800 text-base mb-4">
-                <i class="fas fa-sitemap mr-2 text-teal-500"></i> Nouveau service
+                Nouveau service
             </h3>
             <p class="text-sm text-gray-500 mb-4">
                 La création de services via l'interface est en cours de développement.

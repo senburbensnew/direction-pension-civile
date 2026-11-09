@@ -3,9 +3,10 @@
 namespace App\Http\Controllers;
 
 use App\Http\Controllers\Concerns\StoresOptimizedImages;
+use App\Http\Requests\Admin\ReorderPartenairesRequest;
+use App\Http\Requests\Admin\StorePartenaireRequest;
 use App\Models\Partenaire;
 use App\Support\Storage\UploadPaths;
-use Illuminate\Http\Request;
 
 class PartenaireController extends Controller
 {
@@ -23,16 +24,8 @@ class PartenaireController extends Controller
         return view('admin.partenaires.create');
     }
 
-    public function store(Request $request)
+    public function store(StorePartenaireRequest $request)
     {
-        $request->validate([
-            'name' => 'required|string|max:255',
-            'logo' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp,svg|max:2048',
-            'website_url' => 'nullable|url|max:255',
-            'active' => 'boolean',
-            'order' => 'nullable|integer|min:0',
-        ]);
-
         $data = [
             'name' => $request->name,
             'website_url' => $request->website_url,
@@ -55,16 +48,8 @@ class PartenaireController extends Controller
         return view('admin.partenaires.edit', compact('partenaire'));
     }
 
-    public function update(Request $request, Partenaire $partenaire)
+    public function update(StorePartenaireRequest $request, Partenaire $partenaire)
     {
-        $request->validate([
-            'name' => 'required|string|max:255',
-            'logo' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp,svg|max:2048',
-            'website_url' => 'nullable|url|max:255',
-            'active' => 'boolean',
-            'order' => 'nullable|integer|min:0',
-        ]);
-
         if ($request->hasFile('logo')) {
             $this->deleteOptimizedImage($partenaire->logo);
             $partenaire->logo = $this->storeOptimizedImage($request->file('logo'), UploadPaths::cms('partenaires'), 'partenaire');
@@ -81,11 +66,9 @@ class PartenaireController extends Controller
             ->with('success', 'Partenaire mis a jour.');
     }
 
-    public function reorder(Request $request)
+    public function reorder(ReorderPartenairesRequest $request)
     {
-        $request->validate(['order' => 'required|array', 'order.*' => 'integer|exists:partenaires,id']);
-
-        foreach ($request->order as $position => $id) {
+        foreach ($request->validated('order') as $position => $id) {
             Partenaire::where('id', $id)->update(['order' => $position + 1]);
         }
 

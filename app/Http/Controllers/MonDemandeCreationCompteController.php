@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\DemandeCreationCompte\UpdateMonDemandeCreationCompteRequest;
 use App\Models\DemandeCreationCompte;
 use App\Services\AccountCreation\DemandeCreationCompteOwnerUpdateService;
 use Illuminate\Http\Request;
@@ -26,24 +27,13 @@ class MonDemandeCreationCompteController extends Controller
         ]);
     }
 
-    public function update(Request $request)
+    public function update(UpdateMonDemandeCreationCompteRequest $request)
     {
         $demande = $this->resolveOwnedDemande($request);
 
-        $validated = $request->validate(
-            DemandeCreationCompteOwnerUpdateService::validationRules(),
-            [],
-            [
-                'firstname' => 'prénom',
-                'lastname' => 'nom',
-                'email' => 'adresse e-mail',
-                'telephone' => 'téléphone',
-                'adresse' => 'adresse',
-                'nif' => 'matricule fiscal (NIF)',
-                'ninu' => 'NINU',
-                'pension_code' => 'code pension',
-            ]
-        );
+        $validated = collect($request->validated())
+            ->except(['piece_identite', 'piece_identite_type'])
+            ->all();
 
         try {
             $this->ownerUpdate->update($demande, $request->user(), $validated);
@@ -83,10 +73,6 @@ class MonDemandeCreationCompteController extends Controller
         if (! isset($collections[$type])) {
             return;
         }
-
-        $request->validate([
-            'piece_identite' => 'required|file|mimes:jpg,jpeg,png,webp,pdf|max:5120',
-        ]);
 
         $demande
             ->addMediaFromRequest('piece_identite')

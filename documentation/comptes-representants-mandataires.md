@@ -22,7 +22,7 @@ L’accès au portail pension (`User::hasPensionPortalAccess()`) est accordé si
 2. Fournir **acte de naissance** du mineur et **pièce d’identité du représentant**.
 3. Indiquer le lien (`père`, `mère`, `tuteur`) et, si besoin, cocher **« Je suis aussi pensionné titulaire »**.
 4. Le **code pension** est **facultatif** à l’inscription (complément possible avant le RDV). S’il est saisi, il doit être celui du **pensionné mineur** (concordance avec l’acte de naissance), jamais celui du représentant.
-5. Soumission → **compte provisoire** (identité = représentant) → **prise de RDV** au Service Formalités (motif **« formalités et mandats »**, en ligne ou présentiel).
+5. Soumission → **compte provisoire** (identité = représentant) → **prise de RDV** au service **Accueil et Formalités** (motif **« formalités et mandats »**, en ligne ou présentiel).
 6. Sans RDV **réalisé**, le dossier ne peut pas être accepté par les agents formalités.
 
 ### Système
@@ -46,7 +46,7 @@ Pour une personne qui **n’est pas** titulaire mais agit avec **procuration / d
 1. **`GET /demande-compte`** — profil **« Mandataire d’un pensionné »**.
 2. Pièce d’identité du **mandataire** + **formulaire de désignation signé** (PDF ou image).
 3. **Code pension du pensionné mandant** (facultatif pour l’instant ; vérifié dans la base de référence s’il est saisi — pas le code du mandataire, même s’il est aussi titulaire).
-4. Même enchaînement : compte **provisoire** → **RDV Service Formalités** (motif **« formalités et mandats »**) → acceptation du compte par les agents formalités.
+4. Même enchaînement : compte **provisoire** → **RDV Accueil et Formalités** (motif **« formalités et mandats »**) → acceptation du compte par les agents formalités.
 5. Sans RDV **réalisé**, le dossier de compte ne peut pas être accepté.
 
 À la soumission, un enregistrement **`pension_mandats`** est créé en statut **`en_attente`**, lié au dossier DCC via **`demande_creation_compte_id`** (sans lien bénéficiaire actif tant que le mandat n’est pas approuvé). Une demande parallèle via **`/compte/mandats`** pour le même code est bloquée tant que ce dossier est en cours.

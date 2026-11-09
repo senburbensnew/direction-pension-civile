@@ -288,8 +288,13 @@
                 </thead>
                 <tbody class="divide-y divide-gray-100">
                     @forelse($subjects as $subject)
-                        <tr class="{{ $subject->is_active ? '' : 'bg-gray-50' }}">
-                            <td class="px-5 py-3 font-medium text-gray-800">{{ $subject->label }}</td>
+                        <tr class="{{ $subject->trashed() ? 'bg-gray-50/80 opacity-75' : ($subject->is_active ? '' : 'bg-gray-50') }}">
+                            <td class="px-5 py-3 font-medium text-gray-800">
+                                {{ $subject->label }}
+                                @if ($subject->trashed())
+                                    <span class="ml-1 text-xs text-gray-500">(archivé)</span>
+                                @endif
+                            </td>
                             <td class="px-5 py-3 text-center text-gray-500">{{ $subject->position }}</td>
                             <td class="px-5 py-3 text-center">
                                 @if($subject->allows_custom)
@@ -305,24 +310,24 @@
                             </td>
                             <td class="px-5 py-3">
                                 <div class="flex items-center justify-center gap-2">
-                                    <form action="{{ route('admin.contact-subjects.toggle', $subject) }}" method="POST">
-                                        @csrf
-                                        <button type="submit" title="{{ $subject->is_active ? 'Masquer' : 'Afficher' }}"
-                                            class="px-2 py-1 rounded text-xs font-medium {{ $subject->is_active ? 'bg-yellow-100 text-yellow-700 hover:bg-yellow-200' : 'bg-green-100 text-green-700 hover:bg-green-200' }}">
-                                            <i class="fa-solid {{ $subject->is_active ? 'fa-eye-slash' : 'fa-eye' }}"></i>
+                                    @unless ($subject->trashed())
+                                        <form action="{{ route('admin.contact-subjects.toggle', $subject) }}" method="POST">
+                                            @csrf
+                                            <button type="submit" title="{{ $subject->is_active ? 'Masquer' : 'Afficher' }}"
+                                                class="px-2 py-1 rounded text-xs font-medium {{ $subject->is_active ? 'bg-yellow-100 text-yellow-700 hover:bg-yellow-200' : 'bg-green-100 text-green-700 hover:bg-green-200' }}">
+                                                <i class="fa-solid {{ $subject->is_active ? 'fa-eye-slash' : 'fa-eye' }}"></i>
+                                            </button>
+                                        </form>
+                                        <button type="button" @click="openEdit({{ $subject->toJson() }})"
+                                            class="px-2 py-1 bg-blue-100 text-blue-700 hover:bg-blue-200 rounded text-xs font-medium">
+                                            <i class="fa-solid fa-pencil"></i>
                                         </button>
-                                    </form>
-                                    <button type="button" @click="openEdit({{ $subject->toJson() }})"
-                                        class="px-2 py-1 bg-blue-100 text-blue-700 hover:bg-blue-200 rounded text-xs font-medium">
-                                        <i class="fa-solid fa-pencil"></i>
-                                    </button>
-                                    <form action="{{ route('admin.contact-subjects.destroy', $subject) }}" method="POST"
-                                        onsubmit="return confirm('Retirer ce sujet de la liste ?')">
-                                        @csrf @method('DELETE')
-                                        <button type="submit" class="px-2 py-1 bg-red-100 text-red-700 hover:bg-red-200 rounded text-xs font-medium">
-                                            <i class="fa-solid fa-trash"></i>
-                                        </button>
-                                    </form>
+                                    @endunless
+                                    <x-admin.model-deletion-form
+                                        :action="route('admin.contact-subjects.destroy', $subject)"
+                                        :model="$subject"
+                                        confirm="Archiver ce sujet ? Il restera visible ici et pourra être restauré."
+                                    />
                                 </div>
                             </td>
                         </tr>

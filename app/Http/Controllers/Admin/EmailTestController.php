@@ -3,9 +3,9 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Admin\StoreEmailTestRequest;
 use App\Mail\AdminEmailTestMail;
 use Illuminate\Http\RedirectResponse;
-use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\View\View;
 use Throwable;
@@ -17,17 +17,9 @@ class EmailTestController extends Controller
         return view('admin.email.test', $this->viewData());
     }
 
-    public function store(Request $request): RedirectResponse|View
+    public function store(StoreEmailTestRequest $request): RedirectResponse|View
     {
-        $validated = $request->validate([
-            'to' => ['required', 'email', 'max:255'],
-            'subject' => ['required', 'string', 'max:255'],
-            'body' => ['nullable', 'string', 'max:5000'],
-        ], [
-            'to.required' => 'Indiquez une adresse de destination.',
-            'to.email' => 'L’adresse de destination n’est pas valide.',
-            'subject.required' => 'Indiquez un objet.',
-        ]);
+        $validated = $request->validated();
 
         $body = filled($validated['body'] ?? null)
             ? (string) $validated['body']
@@ -61,11 +53,14 @@ class EmailTestController extends Controller
         $mailer = config('mail.default');
         $from = config('mail.from');
 
+        $mailerConfig = config('mail.mailers.'.$mailer);
+
         return [
             'mailer' => $mailer,
             'fromAddress' => is_array($from) ? ($from['address'] ?? null) : null,
             'fromName' => is_array($from) ? ($from['name'] ?? null) : null,
-            'smtpHost' => config('mail.mailers.smtp.host'),
+            'smtpHost' => is_array($mailerConfig) ? ($mailerConfig['host'] ?? null) : null,
+            'mailpitUrl' => env('MAILPIT_URL', 'http://127.0.0.1:8025'),
             'to' => old('to', auth()->user()?->email),
             'subject' => old('subject', 'Test e-mail — Direction Pension Civile'),
             'body' => old('body', ''),

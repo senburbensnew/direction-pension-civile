@@ -155,7 +155,9 @@ class NewsletterSubscriptionService
             return $this->subscribe($email, $request, consentSource: 'resubscribe');
         }
 
-        NewsletterSuppression::query()->where('email', $email)->delete();
+        NewsletterSuppression::destroy(
+            NewsletterSuppression::query()->where('email', $email)->pluck('id')->all()
+        );
 
         return $this->subscribe(
             $email,

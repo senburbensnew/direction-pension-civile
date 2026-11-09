@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Models\User;
+use App\Support\DevDiagnostics;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Hash;
 
@@ -44,6 +45,10 @@ class PasswordResetSmsService
         );
 
         Cache::put($throttleKey, true, now()->addSeconds(self::ISSUE_THROTTLE_SECONDS));
+
+        DevDiagnostics::logOtp('password_reset_sms', $code, [
+            'user_id' => $user->id,
+        ]);
 
         $this->sms->send(
             $phone,

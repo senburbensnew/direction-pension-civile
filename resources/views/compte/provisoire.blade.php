@@ -45,13 +45,13 @@
                                 Votre accès en ligne est limité. Consultez le motif du refus et les coordonnées de la Direction si vous avez des questions.
                             @elseif(($openingProfile ?? 'titulaire') === 'mandataire')
                                 Votre compte mandataire est <strong class="font-semibold text-white">provisoire</strong>.
-                                Prenez un rendez-vous au <strong class="font-semibold text-white">Service Formalités</strong> (formalités et mandats) pour valider votre dossier.
+                                Prenez un rendez-vous au <strong class="font-semibold text-white">Accueil et Formalités</strong> (formalités et mandats) pour valider votre dossier.
                             @elseif(($openingProfile ?? 'titulaire') === 'representant')
                                 Votre compte représentant est <strong class="font-semibold text-white">provisoire</strong>.
-                                Prenez un rendez-vous au <strong class="font-semibold text-white">Service Formalités</strong> (formalités et mandats) pour valider votre dossier.
+                                Prenez un rendez-vous au <strong class="font-semibold text-white">Accueil et Formalités</strong> (formalités et mandats) pour valider votre dossier.
                             @else
                                 Votre compte est <strong class="font-semibold text-white">provisoire</strong>.
-                                Les services complets seront disponibles après un rendez-vous et la validation par le Service Formalités.
+                                Les services complets seront disponibles après un rendez-vous et la validation par le Accueil et Formalités.
                             @endif
                         </p>
                     </div>
@@ -154,7 +154,7 @@
                                 {{ $rdvSummary['modalite'] }}
                                 ·
                             @endif
-                            Service Formalités
+                            Accueil et Formalités
                             @if($rdvSummary['label'])
                                 · <span class="font-medium">{{ $rdvSummary['label'] }}</span>
                             @endif

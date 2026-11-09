@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\Admin\StoreGlossaireTermRequest;
 use App\Models\GlossaireTerm;
 use Illuminate\Http\Request;
 
@@ -40,16 +41,9 @@ class GlossaireController extends Controller
         return view('admin.glossaire.index', compact('terms', 'categories'));
     }
 
-    public function store(Request $request)
+    public function store(StoreGlossaireTermRequest $request)
     {
-        $data = $request->validate([
-            'term'         => 'required|string|max:200',
-            'definition'   => 'required|string',
-            'category'     => 'required|string|max:100',
-            'icon'         => 'nullable|string|max:50',
-            'order_column' => 'nullable|integer|min:0',
-            'published'    => 'nullable|boolean',
-        ]);
+        $data = $request->validated();
         $data['published']    = $request->boolean('published', true);
         $data['icon']         = $data['icon'] ?? 'fa-book';
         $data['order_column'] = $data['order_column'] ?? 0;
@@ -58,16 +52,9 @@ class GlossaireController extends Controller
         return back()->with('success', 'Terme ajouté.');
     }
 
-    public function update(Request $request, GlossaireTerm $glossaireTerm)
+    public function update(StoreGlossaireTermRequest $request, GlossaireTerm $glossaireTerm)
     {
-        $data = $request->validate([
-            'term'         => 'required|string|max:200',
-            'definition'   => 'required|string',
-            'category'     => 'required|string|max:100',
-            'icon'         => 'nullable|string|max:50',
-            'order_column' => 'nullable|integer|min:0',
-            'published'    => 'nullable|boolean',
-        ]);
+        $data = $request->validated();
         $data['published']    = $request->boolean('published', true);
         $data['icon']         = $data['icon'] ?? 'fa-book';
         $data['order_column'] = $data['order_column'] ?? 0;

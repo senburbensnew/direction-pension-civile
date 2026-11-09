@@ -2,6 +2,8 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\IncludesTrashedInAdmin;
+
 use App\Enums\AccountStatusEnum;
 use App\Enums\BeneficiaireRelationEnum;
 use App\Notifications\Auth\QueuedResetPassword;
@@ -9,6 +11,7 @@ use App\Services\Account\UserCategoryResolver;
 use App\Services\Pension\ActivePensionContext;
 use App\Services\PortalNavService;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -21,7 +24,8 @@ use Spatie\Permission\Traits\HasRoles;
 
 class User extends Authenticatable
 {
-    use HasApiTokens, HasFactory, HasRoles, Notifiable;
+    use HasApiTokens, HasFactory, HasRoles, Notifiable, SoftDeletes;
+    use IncludesTrashedInAdmin;
 
     public const ROLE_DIRECTEUR = 'directeur';
 
@@ -120,6 +124,12 @@ class User extends Authenticatable
             if ($user->isDirty('password') && ! $user->isDirty('password_changed_at')) {
                 $user->password_changed_at = now();
             }
+        });
+
+        static::deleting(function (self $user) {
+            DemandeCreationCompte::query()
+                ->where('user_id', $user->id)
+                ->update(['user_id' => null]);
         });
     }
 
@@ -366,7 +376,7 @@ class User extends Authenticatable
         return self::findByTelephone($phone) !== null;
     }
 
-    public function routeNotificationForTwilio(): ?string
+    public function storedPhone(): ?string
     {
         $phone = preg_replace('/\s+/', '', trim((string) ($this->phone ?? ''))) ?? '';
 
@@ -375,6 +385,11 @@ class User extends Authenticatable
         }
 
         return str_starts_with($phone, '+') ? $phone : null;
+    }
+
+    public function routeNotificationForTwilio(): ?string
+    {
+        return $this->storedPhone();
     }
 
     public function sendPasswordResetNotification(#[\SensitiveParameter] $token): void

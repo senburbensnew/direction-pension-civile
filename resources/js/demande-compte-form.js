@@ -340,6 +340,8 @@ function demandeCompteForm(initial) {
          * ======================================================== */
 
         init() {
+            this.$el.dataset.alpineReady = 'true';
+
             if ((initial.ocrDocuments || []).length) {
                 this.ocrDocuments = initial.ocrDocuments.map(
                     (doc) => this.hydrateDoc(doc)

@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\MediathequeItemRequest;
 use App\Models\MediathequeItem;
 use App\Support\Storage\UploadPaths;
 use Illuminate\Http\Request;
@@ -37,9 +38,9 @@ class MediathequeController extends Controller
         return view('admin.mediatheque.index', compact('items', 'types'));
     }
 
-    public function store(Request $request)
+    public function store(MediathequeItemRequest $request)
     {
-        $data = $this->validated($request);
+        $data = $request->validated();
         $data['published'] = $request->boolean('published', true);
         $data['is_featured'] = $request->boolean('is_featured');
         $data['order_column'] = $data['order_column'] ?? 0;
@@ -61,9 +62,9 @@ class MediathequeController extends Controller
         return back()->with('success', 'Élément ajouté à la médiathèque.');
     }
 
-    public function update(Request $request, MediathequeItem $mediathequeItem)
+    public function update(MediathequeItemRequest $request, MediathequeItem $mediathequeItem)
     {
-        $data = $this->validated($request);
+        $data = $request->validated();
         $data['published'] = $request->boolean('published', true);
         $data['is_featured'] = $request->boolean('is_featured');
         $data['order_column'] = $data['order_column'] ?? 0;
@@ -105,17 +106,4 @@ class MediathequeController extends Controller
         return back()->with('success', $mediathequeItem->published ? 'Publié.' : 'Dépublié.');
     }
 
-    private function validated(Request $request): array
-    {
-        return $request->validate([
-            'title' => 'required|string|max:300',
-            'description' => 'nullable|string',
-            'type' => 'required|string|in:image,video,audio,document',
-            'file' => 'nullable|file|max:51200',
-            'url' => 'nullable|url|max:500',
-            'order_column' => 'nullable|integer|min:0',
-            'published' => 'nullable|boolean',
-            'is_featured' => 'nullable|boolean',
-        ]);
-    }
 }

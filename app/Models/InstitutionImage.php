@@ -2,11 +2,18 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\IncludesTrashedInAdmin;
+
+use Illuminate\Database\Eloquent\SoftDeletes;
+
 use App\Support\PublicMedia;
 use Illuminate\Database\Eloquent\Model;
 
 class InstitutionImage extends Model
 {
+    use SoftDeletes;
+    use IncludesTrashedInAdmin;
+
     protected $fillable = ['title', 'image', 'order', 'active'];
 
     protected $casts = ['active' => 'boolean'];
@@ -32,5 +39,13 @@ class InstitutionImage extends Model
     public function scopeOrdered($query)
     {
         return $query->orderBy('order')->orderBy('created_at');
+    }
+
+    /**
+     * @return \Illuminate\Database\Eloquent\Collection<int, self>
+     */
+    public static function activeOrdered()
+    {
+        return static::query()->active()->ordered()->get();
     }
 }

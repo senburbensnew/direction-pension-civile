@@ -7,12 +7,33 @@ use Illuminate\Contracts\Validation\ValidationRule;
 
 class Nif implements ValidationRule
 {
-    private const REGEX = '/^\d{3}-\d{3}-\d{3}-\d{1}$/';
+    /** @see validate() */
+    public const PATTERN = '/^\d{3}-\d{3}-\d{3}-\d{1}$/';
+
+    public const HTML_PATTERN = '\d{3}-\d{3}-\d{3}-\d{1}';
+
+    public static function isValid(mixed $value): bool
+    {
+        if (blank($value)) {
+            return false;
+        }
+
+        return (bool) preg_match(self::PATTERN, (string) $value);
+    }
+
+    public static function formatMessage(): string
+    {
+        return __('messages.nif_invalid_format');
+    }
 
     public function validate(string $attribute, mixed $value, Closure $fail): void
     {
-        if (!preg_match(self::REGEX, $value)) {
-            $fail('Le :attribute doit être un NIF valide (format 000-000-000-0).');
+        if (blank($value)) {
+            return;
+        }
+
+        if (! self::isValid($value)) {
+            $fail(self::formatMessage());
         }
     }
 }

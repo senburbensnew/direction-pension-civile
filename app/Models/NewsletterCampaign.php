@@ -2,6 +2,10 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\IncludesTrashedInAdmin;
+
+use Illuminate\Database\Eloquent\SoftDeletes;
+
 use App\Enums\NewsletterCampaignStatusEnum;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -12,6 +16,8 @@ use Spatie\Activitylog\Traits\LogsActivity;
 
 class NewsletterCampaign extends Model
 {
+    use SoftDeletes;
+    use IncludesTrashedInAdmin;
     use HasFactory;
     use LogsActivity;
 

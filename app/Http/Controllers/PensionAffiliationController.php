@@ -2,11 +2,10 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\StorePensionAffiliationRequest;
+use App\Http\Requests\UpdatePensionAffiliationDescriptionRequest;
 use App\Models\AffiliationPension;
 use App\Models\Beneficiaire;
-use App\Models\User;
-use App\Rules\CodePension;
-use App\Rules\PensionnaireReferenceExists;
 use App\Services\Pension\ActivePensionContext;
 use App\Services\Pension\BeneficiaireProvisioningService;
 use Illuminate\Http\RedirectResponse;
@@ -41,20 +40,9 @@ class PensionAffiliationController extends Controller
         ]);
     }
 
-    public function store(Request $request, BeneficiaireProvisioningService $provisioning): RedirectResponse
+    public function store(StorePensionAffiliationRequest $request, BeneficiaireProvisioningService $provisioning): RedirectResponse
     {
-        $validated = $request->validate([
-            'beneficiaire_id' => ['required', 'integer', 'exists:beneficiaires,id'],
-            'code_pension' => [
-                'required',
-                'string',
-                new CodePension(),
-                new PensionnaireReferenceExists(),
-            ],
-            'is_primary' => ['sometimes', 'boolean'],
-            'loc_description' => $this->descriptionRules(),
-        ]);
-
+        $validated = $request->validated();
         $validated['loc_description'] = trim($validated['loc_description']);
 
         $user = $request->user();
@@ -104,11 +92,9 @@ class PensionAffiliationController extends Controller
         return back()->with('success', 'Code pension ajouté.');
     }
 
-    public function updateDescription(Request $request, AffiliationPension $affiliation): RedirectResponse
+    public function updateDescription(UpdatePensionAffiliationDescriptionRequest $request, AffiliationPension $affiliation): RedirectResponse
     {
-        $validated = $request->validate([
-            'loc_description' => $this->descriptionRules(),
-        ]);
+        $validated = $request->validated();
 
         $user = $request->user();
         $context = ActivePensionContext::for($user);
@@ -219,11 +205,4 @@ class PensionAffiliationController extends Controller
         ]);
     }
 
-    /**
-     * @return list<string|\Illuminate\Contracts\Validation\ValidationRule>
-     */
-    private function descriptionRules(): array
-    {
-        return ['required', 'string', 'max:255', 'regex:/\S/'];
-    }
 }

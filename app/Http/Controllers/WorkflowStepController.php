@@ -2,24 +2,16 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\Admin\StoreWorkflowStepRequest;
+use App\Http\Requests\Admin\UpdateWorkflowStepRequest;
 use App\Models\WorkflowStep;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 
 class WorkflowStepController extends Controller
 {
-    public function store(Request $request)
+    public function store(StoreWorkflowStepRequest $request)
     {
-        $request->validate([
-            'code'         => ['required', 'string', 'max:80', 'regex:/^[A-Z0-9_]+$/'],
-            'service_id'   => ['nullable', 'exists:services,id'],
-            'type_demande' => ['nullable', 'string', 'max:100'],
-            'nom'          => ['required', 'string', 'max:150'],
-            'description'  => ['nullable', 'string', 'max:500'],
-            'ordre'        => ['required', 'integer', 'min:0'],
-            'type_noeud'   => ['required', 'string', 'in:initial,intermediaire,terminal'],
-        ]);
-
         $type = $request->type_demande ?: null;
         $code = strtoupper($request->code);
 
@@ -64,17 +56,9 @@ class WorkflowStepController extends Controller
             ->with('success', "Nœud « {$workflowStep->nom} » ajouté au circuit.");
     }
 
-    public function update(Request $request, WorkflowStep $workflowStep)
+    public function update(UpdateWorkflowStepRequest $request, WorkflowStep $workflowStep)
     {
         abort_if($workflowStep->isInitial(), 403, 'Cet état système ne peut pas être modifié.');
-        $request->validate([
-            'nom'          => ['required', 'string', 'max:150'],
-            'service_id'   => ['nullable', 'exists:services,id'],
-            'description'  => ['nullable', 'string', 'max:500'],
-            'ordre'        => ['required', 'integer', 'min:0'],
-            'type_noeud'   => ['required', 'string', 'in:initial,intermediaire,terminal'],
-            'type_demande' => ['nullable', 'string', 'max:100'],
-        ]);
 
         $workflowStep->update([
             'nom'         => $request->nom,

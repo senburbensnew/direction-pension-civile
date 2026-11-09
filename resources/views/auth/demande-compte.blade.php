@@ -133,6 +133,18 @@
             display: none !important;
         }
 
+        [data-dpc-demande-compte-form]:not([data-alpine-ready]) [data-wizard-nav] button {
+            pointer-events: none;
+        }
+
+        [data-dpc-demande-compte-form]:not([data-alpine-ready]) [data-wizard-step-panel][data-active="false"] {
+            display: none !important;
+        }
+
+        .dpc-profile-hint {
+            min-height: 1.25rem;
+        }
+
         /* ============================================================
          * SCROLL ANCHOR POUR LES ERREURS
          * ============================================================ */
@@ -500,42 +512,39 @@
              ============================================================ --}}
 
         <ol class="compte-steps" aria-label="{{ __('guest.account_request.steps_aria') }}">
-            <template x-for="(item, index) in visibleSteps" :key="item.id">
+            @foreach ($wizardSteps as $index => $item)
+                @php
+                    $stepId = (int) ($item['id'] ?? 0);
+                    $isCurrent = $stepId === $initialStep;
+                    $isComplete = $stepId < $initialStep;
+                @endphp
                 <li
-                    class="compte-step"
-                    :class="{ 'is-complete': item.id < step, 'is-current': item.id === step }"
+                    class="compte-step {{ $isComplete ? 'is-complete' : '' }} {{ $isCurrent ? 'is-current' : '' }}"
+                    x-bind:class="{ 'is-complete': {{ $stepId }} < step, 'is-current': {{ $stepId }} === step }"
                 >
                     <button
                         type="button"
                         class="compte-step-btn"
-                        @click="goTo(item.id)"
-                        :disabled="item.id > step"
-                        :aria-current="item.id === step ? 'step' : null"
+                        @click="goTo({{ $stepId }})"
+                        x-bind:disabled="{{ $stepId }} > step"
+                        x-bind:aria-current="{{ $stepId }} === step ? 'step' : null"
                     >
                         <span class="compte-step-dot">
                             <i
-                                x-show="item.id < step"
+                                x-show="{{ $stepId }} < step"
+                                x-cloak
                                 class="fas fa-check text-[11px]"
                             ></i>
 
-                            <span
-                                x-show="item.id >= step"
-                                x-text="index + 1"
-                            ></span>
+                            <span x-show="{{ $stepId }} >= step">{{ $index + 1 }}</span>
                         </span>
 
-                        <span
-                            class="compte-step-label"
-                            x-text="item.label"
-                        ></span>
+                        <span class="compte-step-label">{{ $item['label'] ?? '' }}</span>
 
-                        <span
-                            class="compte-step-caption"
-                            x-text="item.caption"
-                        ></span>
+                        <span class="compte-step-caption">{{ $item['caption'] ?? '' }}</span>
                     </button>
                 </li>
-            </template>
+            @endforeach
         </ol>
 
         {{-- ============================================================
@@ -574,6 +583,8 @@
 
             <div
                 x-show="step === 1"
+                data-wizard-step-panel
+                data-active="{{ $initialStep === 1 ? 'true' : 'false' }}"
                 class="space-y-5"
             >
                 <!-- <div class="flex items-start gap-3 border-b border-gray-200 pb-3">
@@ -600,16 +611,18 @@
                                 type="radio"
                                 class="rounded-full border-gray-300 text-indigo-600 focus:ring-indigo-400"
                                 value="titulaire"
+                                @checked($accountProfile === 'titulaire')
                                 x-model="accountProfile"
                                 @change="applyAccountProfile()"
                             >
                             <span>{{ __('guest.account_request.profile_titulaire') }}</span>
                         </label>
-                        <!-- <label class="inline-flex items-center gap-2 cursor-pointer text-sm text-gray-700">
+                        <label class="inline-flex items-center gap-2 cursor-pointer text-sm text-gray-700">
                             <input
                                 type="radio"
                                 class="rounded-full border-gray-300 text-indigo-600 focus:ring-indigo-400"
                                 value="mineur"
+                                @checked($accountProfile === 'mineur')
                                 x-model="accountProfile"
                                 @change="applyAccountProfile()"
                             >
@@ -620,14 +633,18 @@
                                 type="radio"
                                 class="rounded-full border-gray-300 text-indigo-600 focus:ring-indigo-400"
                                 value="mandataire"
+                                @checked($accountProfile === 'mandataire')
                                 x-model="accountProfile"
                                 @change="applyAccountProfile()"
                             >
                             <span>{{ __('guest.account_request.profile_mandataire') }}</span>
-                        </label> -->
+                        </label>
                     </div>
-                    <p class="text-xs text-gray-500">
-                        <span x-show="accountProfile === 'titulaire'" x-text="ui.profile_titulaire_hint"></span>
+                    <p class="text-xs text-gray-500 dpc-profile-hint">
+                        <span
+                            x-show="accountProfile === 'titulaire'"
+                            x-text="ui.profile_titulaire_hint"
+                        >{{ __('guest.account_request.profile_titulaire_hint') }}</span>
                         <span x-show="accountProfile === 'mineur'" x-cloak x-text="ui.profile_mineur_hint"></span>
                         <span x-show="accountProfile === 'mandataire'" x-cloak x-text="ui.profile_mandataire_hint"></span>
                         <span x-show="isMineur || isMandataire" x-cloak role="status">
@@ -640,9 +657,26 @@
                             </a>
                         </span>
                     </p>
-                    <input type="hidden" name="is_mineur" id="is_mineur" :value="isMineur ? '1' : '0'">
-                    <input type="hidden" name="is_mandataire" id="is_mandataire" :value="isMandataire ? '1' : '0'">
-                    <input type="hidden" name="user_type" :value="userType">
+                    <input
+                        type="hidden"
+                        name="is_mineur"
+                        id="is_mineur"
+                        value="{{ $isMineur ? '1' : '0' }}"
+                        :value="isMineur ? '1' : '0'"
+                    >
+                    <input
+                        type="hidden"
+                        name="is_mandataire"
+                        id="is_mandataire"
+                        value="{{ $isMandataire ? '1' : '0' }}"
+                        :value="isMandataire ? '1' : '0'"
+                    >
+                    <input
+                        type="hidden"
+                        name="user_type"
+                        value="{{ $userType }}"
+                        :value="userType"
+                    >
                 </fieldset>
 
                 {{-- ====================================================
@@ -651,13 +685,18 @@
 
                 <div
                     x-show="!isMineur"
-                    x-cloak
                     class="compte-document-card required space-y-4"
                 >
                     <div>
-                        <h4 class="text-sm font-semibold text-gray-800" x-text="isMandataire ? ui.doc_mandataire_title : ui.doc_pensionne_title"></h4>
+                        <h4 class="text-sm font-semibold text-gray-800">
+                            <span x-text="isMandataire ? ui.doc_mandataire_title : ui.doc_pensionne_title">
+                                {{ $isMandataire ? __('guest.account_request.doc_mandataire_title') : __('guest.account_request.doc_pensionne_title') }}
+                            </span>
+                        </h4>
                         <p class="text-xs text-gray-500 mt-1">
-                            <span x-show="!isMandataire" x-text="ui.doc_upload_hint"></span>
+                            <span x-show="!isMandataire" x-text="ui.doc_upload_hint">
+                                {{ __('guest.account_request.doc_upload_hint') }}
+                            </span>
                             <span x-show="isMandataire" x-cloak x-text="ui.doc_mandataire_account"></span>
                         </p>
                     </div>
@@ -952,6 +991,8 @@
             <div
                 x-show="step === 2"
                 x-cloak
+                data-wizard-step-panel
+                data-active="{{ $initialStep === 2 ? 'true' : 'false' }}"
                 class="space-y-5"
             >
                 <div class="flex items-start gap-3 border-b border-gray-200 pb-3">
@@ -1112,6 +1153,8 @@
             <div
                 x-show="step === 3"
                 x-cloak
+                data-wizard-step-panel
+                data-active="{{ $initialStep === 3 ? 'true' : 'false' }}"
                 class="space-y-5"
             >
                 <div class="flex items-start gap-3 border-b border-gray-200 pb-3">
@@ -1423,6 +1466,8 @@
             <div
                 x-show="step === 4"
                 x-cloak
+                data-wizard-step-panel
+                data-active="{{ $initialStep === 4 ? 'true' : 'false' }}"
                 class="space-y-5"
             >
                 <div class="flex items-start gap-3 border-b border-gray-200 pb-3">
@@ -1753,11 +1798,12 @@
                  NAVIGATION
                  ============================================================ --}}
 
-            <div class="flex gap-2">
+            <div class="flex gap-2" data-wizard-nav>
 
                 <button
                     type="button"
                     x-show="step > 1"
+                    x-cloak
                     @click="prev()"
                     :disabled="busy || isSubmitting()"
                     class="flex-1 py-2.5 px-4 border border-gray-300 text-gray-700 font-semibold text-sm rounded-lg hover:bg-gray-50 transition-colors disabled:opacity-50"
@@ -1769,16 +1815,19 @@
                 <button
                     type="button"
                     x-show="step < 4"
+                    @if($initialStep >= 4)
+                        x-cloak
+                    @endif
                     @click="next()"
                     :disabled="busy"
                     class="flex-1 py-2.5 px-4 bg-[#173052] hover:bg-orange-600 text-white font-semibold text-sm rounded-lg transition-colors disabled:opacity-50"
                 >
-                    <span x-show="!busy">
+                    <span x-show="!busy" @if($initialStep >= 4) x-cloak @endif>
                         {{ __('guest.account_request.next') }}
                         <i class="fas fa-arrow-right ml-2"></i>
                     </span>
 
-                    <span x-show="busy">
+                    <span x-show="busy" x-cloak>
                         <i class="fas fa-spinner fa-spin mr-2"></i>
                         <span x-text="busyLabel"></span>
                     </span>
@@ -1787,6 +1836,7 @@
                 <button
                     type="submit"
                     x-show="step === 4"
+                    x-cloak
                     :disabled="isSubmitting()"
                     class="flex-1 inline-flex items-center justify-center gap-2 py-2.5 px-4 min-w-[150px] bg-navy text-white font-semibold text-sm rounded-lg hover:opacity-90 transition disabled:opacity-40 disabled:cursor-not-allowed"
                 >

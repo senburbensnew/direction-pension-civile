@@ -2,12 +2,19 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\IncludesTrashedInAdmin;
+
+use Illuminate\Database\Eloquent\SoftDeletes;
+
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\MorphTo;
 
 class BeneficiaireRelationEvent extends Model
 {
+    use SoftDeletes;
+    use IncludesTrashedInAdmin;
+
     protected $fillable = [
         'subject_type',
         'subject_id',

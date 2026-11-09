@@ -2,12 +2,18 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\IncludesTrashedInAdmin;
+
+use Illuminate\Database\Eloquent\SoftDeletes;
+
 use App\Support\PublicMedia;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
 class ActualiteImage extends Model
 {
+    use SoftDeletes;
+    use IncludesTrashedInAdmin;
     use HasFactory;
 
     protected $fillable = [

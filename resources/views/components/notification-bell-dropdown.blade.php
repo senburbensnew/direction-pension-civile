@@ -1,10 +1,11 @@
 @props([
     'theme' => 'light',
+    'unreadCount' => null,
 ])
 
 @auth
     @php
-        $unreadCount = auth()->user()->unreadNotifications()->count();
+        $unreadCount = $unreadCount ?? auth()->user()->unreadNotifications()->count();
         $bellNotifications = auth()->user()->notifications()->latest()->take(8)->get();
         $triggerClass = $theme === 'dark'
             ? 'relative text-white hover:text-orange-400 transition-colors focus:outline-none p-1'

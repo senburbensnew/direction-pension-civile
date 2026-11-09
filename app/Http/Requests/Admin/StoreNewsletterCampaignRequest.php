@@ -9,12 +9,12 @@ class StoreNewsletterCampaignRequest extends FormRequest
 {
     public function authorize(): bool
     {
-        return $this->user()?->hasRole('admin') ?? false;
+        return true;
     }
 
     public function rules(): array
     {
-        $locales = config('newsletter.locales', ['fr', 'en', 'ht']);
+        $locales = config('newsletter.locales', ['fr', 'ht']);
         $groups = array_keys(config('newsletter.audience_groups', []));
         $topics = array_keys(config('newsletter.preference_topics', []));
 
@@ -46,4 +46,5 @@ class StoreNewsletterCampaignRequest extends FormRequest
             'click_tracking_enabled' => $this->boolean('click_tracking_enabled'),
         ]);
     }
+
 }

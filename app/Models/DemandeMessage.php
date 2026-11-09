@@ -2,12 +2,19 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\IncludesTrashedInAdmin;
+
+use Illuminate\Database\Eloquent\SoftDeletes;
+
 use Database\Seeders\RolesAndPermissionsSeeder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class DemandeMessage extends Model
 {
+    use SoftDeletes;
+    use IncludesTrashedInAdmin;
+
     protected $fillable = [
         'demande_id',
         'sender_id',

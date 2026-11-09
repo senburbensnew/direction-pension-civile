@@ -40,10 +40,6 @@
             <div class="value">{{ $contact->subjectLabel() }}</div>
         </div>
         <div class="row">
-            <div class="label">Destinataire</div>
-            <div class="value">{{ $contact->destinataireLabel() }}</div>
-        </div>
-        <div class="row">
             <div class="label">Message</div>
             <div class="value message-value">{{ $contact->message }}</div>
         </div>

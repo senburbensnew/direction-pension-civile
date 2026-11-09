@@ -2,16 +2,15 @@
 
 namespace App\Http\Controllers\Formalites;
 
-use App\Enums\BeneficiaireLinkPermissionEnum;
 use App\Enums\BeneficiaireLinkStatusEnum;
 use App\Enums\BeneficiaireRelationEnum;
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Formalites\ApproveBeneficiaireRelationDemandeRequest;
+use App\Http\Requests\Formalites\RefuseBeneficiaireRelationDemandeRequest;
 use App\Models\BeneficiaireRelationDemande;
 use App\Models\UserBeneficiaireLink;
 use App\Services\Pension\BeneficiaireRelationService;
 use Illuminate\Http\RedirectResponse;
-use Illuminate\Http\Request;
-use Illuminate\Validation\Rule;
 
 class BeneficiaireRelationManagementController extends Controller
 {
@@ -33,12 +32,9 @@ class BeneficiaireRelationManagementController extends Controller
         return view('formalites.beneficiaire-relations.index', compact('demandes', 'activeLinks'));
     }
 
-    public function approve(Request $request, BeneficiaireRelationDemande $demande): RedirectResponse
+    public function approve(ApproveBeneficiaireRelationDemandeRequest $request, BeneficiaireRelationDemande $demande): RedirectResponse
     {
-        $validated = $request->validate([
-            'permissions' => ['nullable', 'array', 'min:1'],
-            'permissions.*' => ['string', Rule::in(array_column(BeneficiaireLinkPermissionEnum::cases(), 'value'))],
-        ]);
+        $validated = $request->validated();
 
         $permissions = filled($validated['permissions'] ?? null)
             ? array_values($validated['permissions'])
@@ -49,11 +45,9 @@ class BeneficiaireRelationManagementController extends Controller
         return back()->with('success', 'Relation approuvée.');
     }
 
-    public function refuse(Request $request, BeneficiaireRelationDemande $demande): RedirectResponse
+    public function refuse(RefuseBeneficiaireRelationDemandeRequest $request, BeneficiaireRelationDemande $demande): RedirectResponse
     {
-        $validated = $request->validate([
-            'refusal_reason' => ['required', 'string', 'min:5', 'max:2000'],
-        ]);
+        $validated = $request->validated();
 
         app(BeneficiaireRelationService::class)->refuse(
             $demande,

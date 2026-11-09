@@ -2,10 +2,12 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\Admin\ReorderCarouselsRequest;
+use App\Http\Requests\Admin\StoreCarouselRequest;
+use App\Http\Requests\Admin\UpdateCarouselRequest;
 use App\Models\Carousel;
 use App\Services\ImageStorageService;
 use App\Support\Storage\UploadPaths;
-use Illuminate\Http\Request;
 
 class CarouselController extends Controller
 {
@@ -21,24 +23,8 @@ class CarouselController extends Controller
         return view('admin.carousel.create');
     }
 
-    public function store(Request $request)
+    public function store(StoreCarouselRequest $request)
     {
-        $request->validate([
-            'title' => 'nullable|string|max:255',
-            'description' => 'nullable|string',
-            'image' => 'required|image|mimes:jpeg,png,jpg,gif|max:4096',
-            'link' => ['nullable', 'string', 'max:255', 'regex:/^(https?:\/\/\S+|\/[^\s]*)$/i'],
-            'cta_label' => 'nullable|string|max:60',
-            'overlay_position' => 'nullable|string',
-            'text_size' => 'nullable|string|in:sm,md,lg,xl',
-            'text_color' => 'nullable|string|max:20',
-            'text_styles' => 'nullable|array',
-            'text_styles.*' => 'in:bold,italic,underline,uppercase',
-            'font_family' => 'nullable|string|in:sans,serif,playfair,oswald,condensed',
-            'status' => 'boolean',
-            'order' => 'nullable|integer|min:0',
-        ]);
-
         $imagePath = app(ImageStorageService::class)->storeUploadedImage(
             $request->file('image'),
             UploadPaths::cms('carousel'),
@@ -68,24 +54,8 @@ class CarouselController extends Controller
         return view('admin.carousel.edit', compact('carousel'));
     }
 
-    public function update(Request $request, Carousel $carousel)
+    public function update(UpdateCarouselRequest $request, Carousel $carousel)
     {
-        $request->validate([
-            'title' => 'nullable|string|max:255',
-            'description' => 'nullable|string',
-            'image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:4096',
-            'link' => ['nullable', 'string', 'max:255', 'regex:/^(https?:\/\/\S+|\/[^\s]*)$/i'],
-            'cta_label' => 'nullable|string|max:60',
-            'overlay_position' => 'nullable|string',
-            'text_size' => 'nullable|string|in:sm,md,lg,xl',
-            'text_color' => 'nullable|string|max:20',
-            'text_styles' => 'nullable|array',
-            'text_styles.*' => 'in:bold,italic,underline,uppercase',
-            'font_family' => 'nullable|string|in:sans,serif,playfair,oswald,condensed',
-            'status' => 'boolean',
-            'order' => 'nullable|integer|min:0',
-        ]);
-
         if ($request->hasFile('image')) {
             app(ImageStorageService::class)->deleteWithVariants($carousel->image);
             $carousel->image = app(ImageStorageService::class)->storeUploadedImage(
@@ -112,11 +82,9 @@ class CarouselController extends Controller
         return redirect()->route('admin.carousels.index')->with('success', 'Carousel slide updated successfully.');
     }
 
-    public function reorder(Request $request)
+    public function reorder(ReorderCarouselsRequest $request)
     {
-        $request->validate(['order' => 'required|array', 'order.*' => 'integer|exists:carousels,id']);
-
-        foreach ($request->order as $position => $id) {
+        foreach ($request->validated('order') as $position => $id) {
             Carousel::where('id', $id)->update(['order' => $position + 1]);
         }
 

@@ -14,6 +14,7 @@ use App\Models\Service;
 use App\Models\TypeDemande;
 use App\Models\User;
 use App\Models\WorkflowStep;
+use App\Http\Requests\RepondreComplementDemandeRequest;
 use App\Notifications\DemandeComplementSoumisNotification;
 use App\Services\DemandeWorkflowService;
 use App\Services\PersonalDemandeCatalog;
@@ -38,7 +39,11 @@ class PersonalController extends Controller
      */
     private function resolveServiceId(): ?int
     {
-        $user = auth()->user();
+        $user = $this->currentUser();
+
+        if ($user === null) {
+            return null;
+        }
 
         if ($user->service_id) {
             return $user->service_id;
@@ -133,16 +138,10 @@ class PersonalController extends Controller
     /**
      * Réponse de l'usager à une demande de complément.
      */
-    public function repondreComplement(Request $request, Demande $demande)
+    public function repondreComplement(RepondreComplementDemandeRequest $request, Demande $demande)
     {
         abort_unless($demande->created_by === auth()->id(), 403);
         abort_unless($demande->needsComplement(), 403, 'Cette action n\'est disponible que pour les demandes en complément requis.');
-
-        $request->validate([
-            'message' => 'required|string|max:3000',
-            'documents' => 'nullable|array|max:10',
-            'documents.*' => 'file|max:5120|mimes:pdf,jpg,jpeg,png,doc,docx',
-        ]);
 
         DB::transaction(function () use ($demande, $request) {
             $soumiseStepId = WorkflowStep::idForCode('SOUMISE');
@@ -215,9 +214,8 @@ class PersonalController extends Controller
             ],
         ];
 
-        $currentUser = auth()->user();
-        $isAgentRdvOnly = $currentUser?->hasRole('agent_rdv')
-            && ! $currentUser->hasAnyRole(RolesAndPermissionsSeeder::adminOrDirectionRoles());
+        $currentUser = $this->currentUser();
+        $isAgentRdvOnly = $this->isAgentRdvOnly($currentUser);
 
         $folderStats[0]['count'] = $this->rencontreCorbeilleQuery(
             $serviceId,
@@ -253,7 +251,7 @@ class PersonalController extends Controller
 
         /*
         |--------------------------------------------------------------------------
-        | Appels de rappel — veille des rencontres
+        | Veille des rencontres
         |--------------------------------------------------------------------------
         |
         | Réservé aux agents RDV : leurs rendez-vous du lendemain à rappeler.
@@ -262,17 +260,17 @@ class PersonalController extends Controller
 
         $appelsVeille = collect();
         $demandesComptePending = collect();
-        $user = auth()->user();
+        $user = $this->currentUser();
 
-        if ($user?->hasRole(User::ROLE_AGENT_RDV)) {
+        if ($user !== null && $user->hasRole(User::ROLE_AGENT_RDV)) {
             $reminders = app(RencontreReminderService::class);
             $appelsVeille = $reminders->appointmentsOnForAgent(
                 $reminders->reminderDate(),
-                (int) $user->id
+                $user->id
             );
         }
 
-        if ($user?->hasAnyRole(['admin', User::ROLE_AGENT_FORMALITES])) {
+        if ($user !== null && $user->hasAnyRole(['admin', User::ROLE_AGENT_FORMALITES])) {
             $demandesComptePending = DemandeCreationCompte::query()
                 ->where('status', DemandeCreationCompte::STATUS_EN_ATTENTE)
                 ->latest()
@@ -312,7 +310,7 @@ class PersonalController extends Controller
 
     public function showRequest($id)
     {
-        $user = auth()->user();
+        $user = $this->currentUser();
 
         $requestModel = Demande::with([
             'affectations.toService',
@@ -341,7 +339,7 @@ class PersonalController extends Controller
 
         $workflowService = app(DemandeWorkflowService::class);
 
-        $transferOptions = $workflowService->availableTransferOptions($requestModel, auth()->user());
+        $transferOptions = $workflowService->availableTransferOptions($requestModel, $user);
         $allowedServices = $transferOptions
             ->map(fn ($opt) => (object) ['id' => $opt->service_id, 'nom' => $opt->service_nom])
             ->values();
@@ -408,11 +406,12 @@ class PersonalController extends Controller
             ? $availability->canValidate($user)
             : (bool) $user?->hasRole(User::ROLE_AGENT_RDV);
 
-        $isAgentRdvOnly = $user?->hasAnyRole([
-            User::ROLE_AGENT_RDV,
-            User::ROLE_AGENT_FORMALITES,
-            'service_accueil_formalites',
-        ])
+        $isAgentRdvOnly = $user !== null
+            && $user->hasAnyRole([
+                User::ROLE_AGENT_RDV,
+                User::ROLE_AGENT_FORMALITES,
+                'service_accueil_formalites',
+            ])
             && ! $user->hasAnyRole(RolesAndPermissionsSeeder::adminOrDirectionRoles());
 
         $rdvAgentMode = $isAgentRdvOnly && $requestModel->isRencontre();
@@ -455,8 +454,14 @@ class PersonalController extends Controller
             $motifKey = (string) ($requestModel->data['motif_key'] ?? '');
             $motifServiceCodes = app(RencontreMotifService::class)->motifServiceCodes();
 
+            $defaultService = $motifServiceCodes[$motifKey] ?? Service::FORMALITE;
+
             $rdvScheduler = [
-                'reservedSlotsByService' => $availability->unavailableSlotsByServiceCode(),
+                'reservedSlotsByService' => [],
+                'reservedSlotsFetchUrl' => route(
+                    'demandes.rencontre.dossier-reserved-slots',
+                    $requestModel
+                ),
                 'holidayEvents' => $availability->holidayEvents(
                     now()->startOfDay(),
                     now()->copy()->addMonths(6)->endOfDay()
@@ -469,7 +474,7 @@ class PersonalController extends Controller
                     ],
                     $availability->calendarDisplayWindow()
                 ),
-                'defaultService' => $motifServiceCodes[$motifKey] ?? Service::FORMALITE,
+                'defaultService' => $defaultService,
                 'allowWeekends' => $availability->allowsWeekends(),
                 'bookingDaysLabel' => $availability->bookingDaysLabel(),
                 'bookingHoursLabel' => $availability->bookingHoursLabel(),
@@ -532,9 +537,8 @@ class PersonalController extends Controller
 
         abort_unless(isset($folders[$folder]), 404);
 
-        $currentUser = auth()->user();
-        $isAgentRdvOnly = $currentUser?->hasRole('agent_rdv')
-            && ! $currentUser->hasAnyRole(RolesAndPermissionsSeeder::adminOrDirectionRoles());
+        $currentUser = $this->currentUser();
+        $isAgentRdvOnly = $this->isAgentRdvOnly($currentUser);
 
         $closedOnly = $folder === 'clotures';
 
@@ -628,5 +632,22 @@ class PersonalController extends Controller
         if ($isAgentRdvOnly && $currentUser) {
             $query->where('data->agent_id', $currentUser->id);
         }
+    }
+
+    private function currentUser(): ?User
+    {
+        $user = auth()->user();
+
+        return $user instanceof User ? $user : null;
+    }
+
+    private function isAgentRdvOnly(?User $user): bool
+    {
+        if ($user === null) {
+            return false;
+        }
+
+        return $user->hasRole('agent_rdv')
+            && ! $user->hasAnyRole(RolesAndPermissionsSeeder::adminOrDirectionRoles());
     }
 }

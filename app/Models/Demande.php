@@ -2,6 +2,10 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\IncludesTrashedInAdmin;
+
+use Illuminate\Database\Eloquent\SoftDeletes;
+
 use App\Enums\CategorieDossierEnum;
 use App\Enums\RencontreStatutEnum;
 use App\Enums\TypeDemandeEnum;
@@ -22,6 +26,8 @@ use Spatie\MediaLibrary\MediaCollections\Models\Media;
 
 class Demande extends Model implements HasMedia
 {
+    use SoftDeletes;
+    use IncludesTrashedInAdmin;
     use HasFactory;
     use InteractsWithMedia;
     use LogsActivity;

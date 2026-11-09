@@ -2,6 +2,10 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\IncludesTrashedInAdmin;
+
+use Illuminate\Database\Eloquent\SoftDeletes;
+
 use App\Enums\BeneficiaireLinkPermissionEnum;
 use App\Enums\BeneficiaireLinkStatusEnum;
 use App\Enums\BeneficiaireRelationEnum;
@@ -10,6 +14,9 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class UserBeneficiaireLink extends Model
 {
+    use SoftDeletes;
+    use IncludesTrashedInAdmin;
+
     protected $fillable = [
         'user_id',
         'beneficiaire_id',

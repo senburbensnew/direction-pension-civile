@@ -2,6 +2,10 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\IncludesTrashedInAdmin;
+
+use Illuminate\Database\Eloquent\SoftDeletes;
+
 use App\Support\PublicMedia;
 use App\Support\Storage\UploadPaths;
 use Illuminate\Database\Eloquent\Model;
@@ -9,6 +13,9 @@ use Illuminate\Support\Facades\Storage;
 
 class MediathequeItem extends Model
 {
+    use SoftDeletes;
+    use IncludesTrashedInAdmin;
+
     protected $fillable = [
         'title', 'description', 'type', 'file_path', 'url',
         'order_column', 'published', 'is_featured',

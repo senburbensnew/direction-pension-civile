@@ -79,6 +79,6 @@ return [
         'prestations' => 'Prestations et services',
     ],
 
-    'locales' => ['fr', 'en', 'ht'],
+    'locales' => ['fr', 'ht'],
 
 ];

@@ -84,7 +84,7 @@ return [
 
     /*
     | Décision sur une demande de création de compte (compte provisoire) :
-    | déclenchée après un RDV réalisé pour un motif du service Formalités —
+    | déclenchée après un RDV réalisé pour un motif du service Accueil et Formalités —
     | pas de motif RDV dédié « ouverture de compte ».
     */
     'account_decision' => [

@@ -2,13 +2,17 @@
 
 namespace App\Services;
 
+use App\Enums\RencontreRappelTimingEnum;
 use App\Enums\TypeDemandeEnum;
 use App\Models\Demande;
 use App\Models\User;
 use App\Models\WorkflowStep;
 use App\Notifications\RappelRencontreAppelNotification;
+use App\Notifications\RappelRencontreProgrammeNotification;
 use Carbon\Carbon;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Notification;
 
 class RencontreReminderService
 {
@@ -109,5 +113,135 @@ class RencontreReminderService
             ->whereNotIn('data->rdv_statut', \App\Enums\RencontreStatutEnum::terminalValues())
             ->orderBy('data->heure_souhaitee')
             ->get();
+    }
+
+    public function dispatchScheduledReminders(?Carbon $now = null): int
+    {
+        $now = $now ?? now();
+        $count = 0;
+
+        foreach (RencontreRappelTimingEnum::cases() as $timing) {
+            foreach ($this->dueForScheduledReminder($timing, $now) as $demande) {
+                $notification = new RappelRencontreProgrammeNotification($demande, $timing);
+
+                $this->notifyAssignedAgent($demande, $notification);
+                $this->notifyBooker($demande, $notification);
+
+                $sentKey = $timing->sentAtDataKey();
+                $demande->update([
+                    'data' => array_merge($demande->data ?? [], [
+                        $sentKey => $now->toIso8601String(),
+                    ]),
+                ]);
+
+                $count++;
+            }
+        }
+
+        return $count;
+    }
+
+    /**
+     * @return Collection<int, Demande>
+     */
+    public function dueForScheduledReminder(RencontreRappelTimingEnum $timing, ?Carbon $now = null): Collection
+    {
+        $now = $now ?? now();
+        $tolerance = max(1, (int) config('rdv.scheduled_reminders.tolerance_minutes', 1));
+        $target = $now->copy()->addMinutes($timing->leadMinutes());
+        $windowStart = $target->copy()->subMinutes($tolerance);
+        $windowEnd = $target->copy()->addMinutes($tolerance);
+        $sentKey = $timing->sentAtDataKey();
+
+        return $this->eligibleUpcomingRencontres($now)
+            ->filter(function (Demande $demande) use ($windowStart, $windowEnd, $sentKey) {
+                if (filled($demande->data[$sentKey] ?? null)) {
+                    return false;
+                }
+
+                $at = $demande->rencontreScheduledAt();
+
+                return $at !== null
+                    && $at->gte($windowStart)
+                    && $at->lte($windowEnd);
+            })
+            ->values();
+    }
+
+    /**
+     * @return Collection<int, Demande>
+     */
+    private function eligibleUpcomingRencontres(Carbon $now): Collection
+    {
+        return $this->rencontreBaseQuery()
+            ->get()
+            ->filter(function (Demande $demande) use ($now) {
+                if ($demande->rencontreStatut()->isTerminal()) {
+                    return false;
+                }
+
+                $at = $demande->rencontreScheduledAt();
+
+                return $at !== null && $at->gt($now);
+            })
+            ->values();
+    }
+
+    private function rencontreBaseQuery(): Builder
+    {
+        $cancelledIds = WorkflowStep::query()
+            ->whereIn('code', ['REJETEE', 'ANNULEE'])
+            ->pluck('id');
+
+        return Demande::query()
+            ->where('type', TypeDemandeEnum::DEMANDE_RENCONTRE->value)
+            ->when(
+                $cancelledIds->isNotEmpty(),
+                fn (Builder $query) => $query->where(function (Builder $query) use ($cancelledIds) {
+                    $query->whereNull('current_step_id')
+                        ->orWhereNotIn('current_step_id', $cancelledIds);
+                })
+            );
+    }
+
+    private function notifyAssignedAgent(Demande $demande, RappelRencontreProgrammeNotification $notification): void
+    {
+        $agentId = (int) ($demande->data['agent_id'] ?? 0);
+        if ($agentId <= 0) {
+            return;
+        }
+
+        User::find($agentId)?->notify($notification);
+    }
+
+    private function notifyBooker(Demande $demande, RappelRencontreProgrammeNotification $notification): void
+    {
+        $booker = $demande->user;
+        if ($booker instanceof User) {
+            $booker->notify($notification);
+
+            return;
+        }
+
+        $data = $demande->data ?? [];
+        $email = trim((string) ($data['email'] ?? ''));
+        $phone = preg_replace('/\s+/', '', trim((string) ($data['telephone'] ?? '')));
+
+        if (! filled($email) && ! filled($phone)) {
+            return;
+        }
+
+        if (filled($phone) && ! filled($email)) {
+            Notification::route('twilio', $phone)->notify($notification);
+
+            return;
+        }
+
+        $routes = Notification::route('mail', $email);
+        if (filled($phone)) {
+            $routes->route('twilio', $phone);
+        }
+
+        $routes->notify($notification);
     }
 }

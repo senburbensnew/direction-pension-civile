@@ -15,8 +15,13 @@ class EnsurePensionContext
         $user = $request->user();
 
         if ($user && $user->canAccessFullServices()) {
+            $user->loadMissing([
+                'beneficiaireLinks.beneficiaire.affiliations',
+                'pensionMandats.beneficiaire.affiliations',
+            ]);
+
             app(BeneficiaireProvisioningService::class)->ensureForUser($user);
-            ActivePensionContext::for($user->fresh())->ensureDefaults();
+            ActivePensionContext::for($user)->ensureDefaults();
         }
 
         return $next($request);

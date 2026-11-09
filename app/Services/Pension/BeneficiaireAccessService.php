@@ -21,10 +21,9 @@ class BeneficiaireAccessService
      */
     public function grantingLinksFor(User $user): Collection
     {
-        return UserBeneficiaireLink::query()
-            ->where('user_id', $user->id)
-            ->with('beneficiaire.affiliations')
-            ->get()
+        $user->loadMissing(['beneficiaireLinks.beneficiaire.affiliations']);
+
+        return $user->beneficiaireLinks
             ->filter(fn (UserBeneficiaireLink $link) => $this->linkGrantsAccess($link));
     }
 
@@ -33,12 +32,11 @@ class BeneficiaireAccessService
      */
     public function activeMandatsFor(User $user): Collection
     {
-        return PensionMandat::query()
-            ->where('user_id', $user->id)
-            ->where('status', PensionMandatStatusEnum::ACTIF->value)
-            ->with('beneficiaire.affiliations')
-            ->get()
-            ->filter(fn (PensionMandat $mandat) => $mandat->isCurrentlyActive());
+        $user->loadMissing(['pensionMandats.beneficiaire.affiliations']);
+
+        return $user->pensionMandats
+            ->filter(fn (PensionMandat $mandat) => $mandat->status === PensionMandatStatusEnum::ACTIF
+                && $mandat->isCurrentlyActive());
     }
 
     /**

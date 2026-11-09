@@ -49,19 +49,18 @@
                             @if($heure)
                                 à {{ $heure }}
                             @endif
-                            @if(!empty($data['agent_nom']))
-                                · {{ $data['agent_nom'] }} (Formalités)
-                            @endif
                             @if($isPhysique && !empty($data['lieu_rdv']))
                                 · {{ $data['lieu_rdv'] }}
                             @endif
                         </p>
-                        <p class="text-xs mt-1">
-                            <span class="px-2 py-0.5 rounded-full font-medium {{ $rdvStatut->badgeClass() }}">{{ $status }}</span>
-                        </p>
+                        @if($rdvStatut !== \App\Enums\RencontreStatutEnum::ACTIF)
+                            <p class="text-xs mt-1">
+                                <span class="px-2 py-0.5 rounded-full font-medium {{ $rdvStatut->badgeClass() }}">{{ $status }}</span>
+                            </p>
+                        @endif
                         @if($rdvStatut === \App\Enums\RencontreStatutEnum::ACTIF && !empty($data['confirmation']))
                             <p class="text-xs text-gray-500 mt-2">
-                                Confirmé — {{ $data['confirmation']['service'] ?? 'Formalités' }}
+                                Confirmé — {{ $data['confirmation']['service'] ?? 'Accueil et Formalités' }}
                                 @if(!empty($data['confirmation']['lieu']))
                                     · {{ $data['confirmation']['lieu'] }}
                                 @endif

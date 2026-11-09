@@ -59,37 +59,41 @@
             </thead>
             <tbody>
                 @forelse($items as $item)
-                    <tr class="border-b border-gray-100 last:border-0 hover:bg-gray-50">
+                    <tr class="border-b border-gray-100 last:border-0 hover:bg-gray-50 {{ $item->trashed() ? 'bg-gray-50/80 opacity-75' : '' }}">
                         <td class="px-4 py-3 font-medium text-gray-800 max-w-xs">
                             {{ Str::limit($item->question, 80) }}
                         </td>
                         <td class="px-4 py-3 text-gray-500 text-xs">{{ $item->category }}</td>
                         <td class="px-4 py-3 text-center text-gray-400 text-xs">{{ $item->order_column }}</td>
                         <td class="px-4 py-3 text-center">
-                            <span class="text-xs font-medium px-2 py-0.5 rounded-full {{ $item->published ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-600' }}">
-                                {{ $item->published ? 'Publié' : 'Masqué' }}
-                            </span>
+                            @if ($item->trashed())
+                                <span class="text-xs font-medium px-2 py-0.5 rounded-full bg-amber-100 text-amber-800">Archivé</span>
+                            @else
+                                <span class="text-xs font-medium px-2 py-0.5 rounded-full {{ $item->published ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-600' }}">
+                                    {{ $item->published ? 'Publié' : 'Masqué' }}
+                                </span>
+                            @endif
                         </td>
                         <td class="px-4 py-3">
                             <div class="flex items-center justify-center gap-2">
-                                <form action="{{ route('admin.faq.toggle', $item) }}" method="POST">
-                                    @csrf
-                                    <button type="submit" title="{{ $item->published ? 'Masquer' : 'Publier' }}"
-                                        class="px-2 py-1 rounded text-xs font-medium {{ $item->published ? 'bg-yellow-100 text-yellow-700 hover:bg-yellow-200' : 'bg-green-100 text-green-700 hover:bg-green-200' }}">
-                                        <i class="fas {{ $item->published ? 'fa-eye-slash' : 'fa-eye' }}"></i>
+                                @unless ($item->trashed())
+                                    <form action="{{ route('admin.faq.toggle', $item) }}" method="POST">
+                                        @csrf
+                                        <button type="submit" title="{{ $item->published ? 'Masquer' : 'Publier' }}"
+                                            class="px-2 py-1 rounded text-xs font-medium {{ $item->published ? 'bg-yellow-100 text-yellow-700 hover:bg-yellow-200' : 'bg-green-100 text-green-700 hover:bg-green-200' }}">
+                                            <i class="fas {{ $item->published ? 'fa-eye-slash' : 'fa-eye' }}"></i>
+                                        </button>
+                                    </form>
+                                    <button @click="openEdit({{ $item->toJson() }})"
+                                        class="px-2 py-1 bg-blue-100 text-blue-700 hover:bg-blue-200 rounded text-xs font-medium">
+                                        <i class="fas fa-pencil-alt"></i>
                                     </button>
-                                </form>
-                                <button @click="openEdit({{ $item->toJson() }})"
-                                    class="px-2 py-1 bg-blue-100 text-blue-700 hover:bg-blue-200 rounded text-xs font-medium">
-                                    <i class="fas fa-pencil-alt"></i>
-                                </button>
-                                <form action="{{ route('admin.faq.destroy', $item) }}" method="POST"
-                                    onsubmit="return confirm('Supprimer cette question ?')">
-                                    @csrf @method('DELETE')
-                                    <button type="submit" class="px-2 py-1 bg-red-100 text-red-700 hover:bg-red-200 rounded text-xs font-medium">
-                                        <i class="fas fa-trash"></i>
-                                    </button>
-                                </form>
+                                @endunless
+                                <x-admin.model-deletion-form
+                                    :action="route('admin.faq.destroy', $item)"
+                                    :model="$item"
+                                    confirm="Archiver cette question ? Elle restera visible ici et pourra être restaurée."
+                                />
                             </div>
                         </td>
                     </tr>

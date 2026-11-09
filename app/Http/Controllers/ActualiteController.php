@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\Admin\StoreActualiteRequest;
+use App\Http\Requests\Admin\UpdateActualiteRequest;
 use App\Models\Actualite;
 use App\Services\ImageStorageService;
 use App\Support\Storage\UploadPaths;
@@ -53,19 +55,9 @@ class ActualiteController extends Controller
         return view('admin.actualites.create');
     }
 
-    public function store(Request $request)
+    public function store(StoreActualiteRequest $request)
     {
-        $validated = $request->validate([
-            'title' => 'required|string|max:255',
-            'description' => 'nullable|string',
-            'content_text' => 'nullable|string',
-            'category' => 'nullable|string|max:255',
-            'posted_in' => 'nullable|string|max:255',
-            'published' => 'nullable|boolean',
-
-            'images' => 'nullable|array',
-            'images.*' => 'image|mimes:jpg,jpeg,png,webp|max:2048',
-        ]);
+        $validated = $request->validated();
 
         DB::beginTransaction();
 
@@ -140,20 +132,8 @@ class ActualiteController extends Controller
     }
 
     // Update the specified resource in storage
-    public function update(Request $request, $id)
+    public function update(UpdateActualiteRequest $request, $id)
     {
-        $request->validate([
-            'title' => 'required|string|max:255',
-            'description' => 'required|string',
-            'content_text' => 'required|string',
-            'category' => 'nullable|string|max:255',
-            'posted_in' => 'nullable|string|max:255',
-            'published' => 'nullable|boolean',
-            'images.*' => 'nullable|image|mimes:jpg,jpeg,png,webp|max:2048', // validate each uploaded image
-            'delete_images' => 'nullable|array', // array of image IDs to delete
-            'delete_images.*' => 'integer|exists:actualite_images,id',
-        ]);
-
         $actualite = Actualite::findOrFail($id);
 
         // Update main fields

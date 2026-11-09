@@ -8,7 +8,7 @@ Le parcours remplace l’inscription directe classique pour les **pensionnés** 
 |---------|------|
 | `app/Models/DemandeCreationCompte.php` | Dossier métier (`en_attente` → `acceptee` / `refusee`), pièces jointes (Spatie Media), historique |
 | `app/Models/User.php` avec `account_status = provisoire` | Compte créé **dès la soumission**, accès limité jusqu’à validation |
-| `app/Models/Demande.php` type `DEMANDE_RENCONTRE` | Rendez-vous **demande_formalites_mandats** (Service Formalités), prérequis à la décision agent |
+| `app/Models/Demande.php` type `DEMANDE_RENCONTRE` | Rendez-vous **demande_formalites_mandats** (service **Accueil et Formalités**, code `service_accueil_formalites`), prérequis à la décision agent |
 
 ```mermaid
 sequenceDiagram
@@ -29,7 +29,7 @@ sequenceDiagram
     Ctrl->>DB: transaction User provisoire + DemandeCreationCompte
     Ctrl->>User: Auth::login
     Ctrl-->>Public: redirect demandes.rencontre.create
-    Public->>RDV: prise RDV Formalités (ex. mandats)
+    Public->>RDV: prise RDV Accueil et Formalités (ex. mandats)
     Agent->>RDV: marquer REALISE
     RDV->>DB: historique EVENT_RDV_REALISE
     Agent->>Review: accepter ou refuser
@@ -81,15 +81,15 @@ sequenceDiagram
 
 ---
 
-## 3. Rendez-vous Formalités (obligatoire avant décision)
+## 3. Rendez-vous Accueil et Formalités (obligatoire avant décision)
 
 Il n’existe **pas** de motif RDV dédié « ouverture de compte » : le demandeur provisoire prend le **même** rendez-vous que les autres usagers (ex. `demande_formalites_mandats` dans `config/rencontre.php`). Lors du RDV, l’agent peut en profiter pour **approuver ou refuser** le compte, en plus des formalités habituelles.
 
-- **Réservation en ligne** : `config/rencontre.php` → `portal_bookable` (par défaut : motifs du service Formalités uniquement).
-- **Décision compte** : motifs du service Formalités (`RencontreMotifService::motifKeysEligibleForAccountDecision()`), plus clés legacy (`account_decision.legacy_motif_keys`).
+- **Réservation en ligne** : `config/rencontre.php` → `portal_bookable` (par défaut : motifs du service Accueil et Formalités uniquement).
+- **Décision compte** : motifs du service Accueil et Formalités (`RencontreMotifService::motifKeysEligibleForAccountDecision()`), plus clés legacy (`account_decision.legacy_motif_keys`).
 - **Plusieurs RDV** : la décision s’appuie sur le RDV **réalisé** le plus récent ; l’affichage privilégie un RDV **en cours** s’il existe (`rendezVousPourDecisionCompte()`).
 
-**Condition métier** (`DemandeCreationCompte::canBeDecided()`) : DCC `en_attente` **et** RDV Formalités marqué **réalisé** (`hasRendezVousRealise()`).
+**Condition métier** (`DemandeCreationCompte::canBeDecided()`) : DCC `en_attente` **et** RDV au service Accueil et Formalités marqué **réalisé** (`hasRendezVousRealise()`).
 
 Quand un agent marque le RDV **`REALISE`**, `app/Services/RencontreWorkflowService.php` enregistre `EVENT_RDV_REALISE` sur l’historique du dossier compte (si le demandeur est encore provisoire et la demande `en_attente`).
 

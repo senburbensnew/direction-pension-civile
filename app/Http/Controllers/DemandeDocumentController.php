@@ -2,20 +2,15 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\StoreDemandeDocumentRequest;
 use App\Models\Demande;
-use Illuminate\Http\Request;
 use Spatie\MediaLibrary\MediaCollections\Models\Media;
 
 class DemandeDocumentController extends Controller
 {
-    public function store(Request $request, Demande $demande)
+    public function store(StoreDemandeDocumentRequest $request, Demande $demande)
     {
         abort_if($demande->created_by !== auth()->id(), 403);
-
-        $request->validate([
-            'files' => 'required|array|min:1|max:10',
-            'files.*' => 'file|mimes:pdf,jpg,jpeg,png,webp|max:5120',
-        ]);
 
         foreach ($request->file('files') as $file) {
             $demande->addMedia($file)

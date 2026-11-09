@@ -3,8 +3,8 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Admin\UpdateRdvSettingsRequest;
 use App\Services\RencontreAvailabilityService;
-use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
@@ -23,13 +23,9 @@ class RdvSettingsController extends Controller
         ]);
     }
 
-    public function update(Request $request, RencontreAvailabilityService $availability)
+    public function update(UpdateRdvSettingsRequest $request, RencontreAvailabilityService $availability)
     {
-        $validated = $request->validate([
-            'allow_weekends' => ['nullable', 'boolean'],
-            'booking_start' => ['required', 'date_format:H:i'],
-            'booking_end' => ['required', 'regex:/^([01]\d|2[0-3]):[0-5]\d$|^24:00$/'],
-        ]);
+        $validated = $request->validated();
 
         $start = $availability->normalizeBookingTime($validated['booking_start']);
         $end = $availability->normalizeBookingTime($validated['booking_end']);

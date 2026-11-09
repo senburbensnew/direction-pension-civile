@@ -2,12 +2,18 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\IncludesTrashedInAdmin;
+
+use Illuminate\Database\Eloquent\SoftDeletes;
+
 use App\Models\User;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 
 class DemandeHistory extends Model
 {
+    use SoftDeletes;
+    use IncludesTrashedInAdmin;
     use HasFactory;
 
     protected $fillable = [

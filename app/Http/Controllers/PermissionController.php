@@ -2,8 +2,9 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Http\Request;
-use Spatie\Permission\Models\Permission;
+use App\Http\Requests\Admin\StorePermissionRequest;
+use App\Http\Requests\Admin\UpdatePermissionRequest;
+use App\Models\Permission;
 
 class PermissionController extends Controller
 {
@@ -28,12 +29,9 @@ class PermissionController extends Controller
     /**
      * Enregistrer une permission
      */
-    public function store(Request $request)
+    public function store(StorePermissionRequest $request)
     {
-        $validated = $request->validate([
-            'name' => 'required|string|unique:permissions,name',
-            'description' => ['nullable', 'string', 'max:2000'],
-        ]);
+        $validated = $request->validated();
 
         Permission::create([
             'name' => trim($validated['name']),
@@ -57,12 +55,9 @@ class PermissionController extends Controller
     /**
      * Mettre à jour la permission
      */
-    public function update(Request $request, Permission $permission)
+    public function update(UpdatePermissionRequest $request, Permission $permission)
     {
-        $validated = $request->validate([
-            'name' => 'required|string|unique:permissions,name,'.$permission->id,
-            'description' => ['nullable', 'string', 'max:2000'],
-        ]);
+        $validated = $request->validated();
 
         $permission->update([
             'name' => trim($validated['name']),

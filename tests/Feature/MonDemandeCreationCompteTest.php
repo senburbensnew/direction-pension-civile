@@ -161,7 +161,7 @@ class MonDemandeCreationCompteTest extends TestCase
         $this->actingAs($user)
             ->get(route('compte.provisoire'))
             ->assertOk()
-            ->assertSee('Service Formalités')
+            ->assertSee('Accueil et Formalités')
             ->assertSee('Prendre rendez-vous');
     }
 

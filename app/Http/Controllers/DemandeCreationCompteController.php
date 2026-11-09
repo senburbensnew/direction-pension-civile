@@ -8,14 +8,11 @@ use App\Helpers\CodeGeneratorService;
 use App\Models\AffiliationPension;
 use App\Models\DemandeCreationCompte;
 use App\Models\DemandeCreationCompteHistory;
-use App\Models\PensionnaireReference;
+use App\Http\Requests\DemandeCreationCompte\ExtractDemandeCreationCompteOcrRequest;
+use App\Http\Requests\DemandeCreationCompte\StoreDemandeCreationCompteRequest;
 use App\Models\User;
 use App\Notifications\DemandeCreationCompteSoumise;
-use App\Rules\CodePension;
-use App\Rules\Nif;
-use App\Rules\Ninu;
 use App\Rules\PensionnaireReferenceExists;
-use App\Rules\Telephone;
 use App\Services\Account\ProvisionalAccountProfileService;
 use App\Services\AccountCreation\IdentityVerificationService;
 use App\Services\Pension\BeneficiaireProvisioningService;
@@ -29,8 +26,6 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Validation\Rules\Password;
-use Illuminate\Validation\ValidationException;
 
 class DemandeCreationCompteController extends Controller
 {
@@ -158,73 +153,6 @@ class DemandeCreationCompteController extends Controller
         ];
     }
 
-    /**
-     * Si la personne est aussi pensionné titulaire, le code saisi doit être celui
-     * du pensionné représenté / mandant, pas le sien (concordance ref. ↔ pièce du mandataire/représentant).
-     */
-    private function assertPensionCodeIsNotProxyOwnTitulaireCode(
-        Request $request,
-        string $code,
-        bool $isMineur,
-        bool $isMandataire,
-        \Closure $fail,
-    ): void {
-        $alsoTitulaire = ($isMineur && $request->boolean('representant_est_pensionne'))
-            || ($isMandataire && $request->boolean('mandataire_est_pensionne'));
-
-        if (! $alsoTitulaire) {
-            return;
-        }
-
-        $ref = PensionnaireReference::query()
-            ->whereRaw('UPPER(TRIM(PENSIONNAIRE_ID)) = ?', [strtoupper(trim($code))])
-            ->first();
-
-        if (! $ref) {
-            return;
-        }
-
-        $raw = $request->input('ocr_documents_json');
-        $ocrDocuments = [];
-
-        if (is_string($raw) && trim($raw) !== '') {
-            $decoded = json_decode($raw, true);
-            if (is_array($decoded)) {
-                $ocrDocuments = $decoded;
-            }
-        }
-
-        $provisioning = app(BeneficiaireProvisioningService::class);
-        $matcher = new PensionnaireReferenceExists;
-
-        $proxyKey = $isMineur ? 'piece_identite_representant' : 'piece_identite';
-        $proxyFields = $provisioning->fieldsFromDocument($ocrDocuments, $proxyKey);
-
-        if (! $matcher->rowMatchesIdentity(
-            $ref,
-            $proxyFields['nom'] ?? null,
-            $proxyFields['prenom'] ?? null,
-        )) {
-            return;
-        }
-
-        if ($isMineur) {
-            $minorFields = $provisioning->fieldsFromDocument($ocrDocuments, 'acte_naissance');
-            if ($matcher->rowMatchesIdentity(
-                $ref,
-                $minorFields['nom'] ?? null,
-                $minorFields['prenom'] ?? null,
-            )) {
-                return;
-            }
-        }
-
-        $fail(
-            'Indiquez le code pension du pensionné concerné (mineur ou personne mandante), '
-            .'pas votre code de titulaire.'
-        );
-    }
-
     private function pensionCodeAvailability(string $value): array
     {
         if ($value === '') {
@@ -264,70 +192,9 @@ class DemandeCreationCompteController extends Controller
     /**
      * Endpoint OCR appelé depuis l'étape 1 → étape 2.
      */
-    public function extractOcr(Request $request)
+    public function extractOcr(ExtractDemandeCreationCompteOcrRequest $request)
     {
         $isMineur = $request->boolean('is_mineur');
-
-        $request->validate(
-            [
-                'is_mineur' => ['nullable', 'boolean'],
-
-                'piece_identite_type' => [
-                    $isMineur ? 'nullable' : 'required',
-                    'nullable',
-                    'in:permis,passeport,cin,matricule_fiscal',
-                ],
-
-                'piece_identite' => [
-                    $isMineur ? 'nullable' : 'required',
-                    'nullable',
-                    'file',
-                    'mimes:jpg,jpeg,png,webp,pdf',
-                    'max:5120',
-                ],
-
-                'acte_naissance' => [
-                    $isMineur ? 'required' : 'nullable',
-                    'nullable',
-                    'file',
-                    'mimes:jpg,jpeg,png,webp,pdf',
-                    'max:5120',
-                ],
-
-                'representant_lien' => [
-                    $isMineur ? 'required' : 'nullable',
-                    'nullable',
-                    'in:pere,mere,tuteur',
-                ],
-
-                'piece_identite_representant_type' => [
-                    $isMineur ? 'required' : 'nullable',
-                    'nullable',
-                    'in:permis,passeport,cin',
-                ],
-
-                'piece_identite_representant' => [
-                    $isMineur ? 'required' : 'nullable',
-                    'nullable',
-                    'file',
-                    'mimes:jpg,jpeg,png,webp,pdf',
-                    'max:5120',
-                ],
-            ],
-            [
-                'required' => 'Le champ « :attribute » est obligatoire.',
-                'mimes' => 'Le fichier « :attribute » doit être une image (JPG, PNG, WEBP) ou un PDF.',
-                'in' => 'La valeur sélectionnée pour « :attribute » est invalide.',
-            ],
-            [
-                'piece_identite_type' => 'type de pièce d’identité',
-                'piece_identite' => 'pièce d’identité du pensionné',
-                'acte_naissance' => 'acte de naissance du pensionné mineur',
-                'representant_lien' => 'lien du représentant',
-                'piece_identite_representant_type' => 'type de pièce d’identité du représentant',
-                'piece_identite_representant' => 'pièce d’identité du représentant',
-            ]
-        );
 
         $files = $isMineur
             ? [
@@ -408,20 +275,9 @@ class DemandeCreationCompteController extends Controller
         );
     }
 
-    public function store(Request $request)
+    public function store(StoreDemandeCreationCompteRequest $request)
     {
-        /* ── Validation ── */
-        try {
-            $validated = $this->validateDemande($request, requireTerms: true);
-        } catch (ValidationException $e) {
-            if ($this->requestsJsonResponse($request)) {
-                return response()->json([
-                    'message' => 'Certains champs sont invalides.',
-                    'errors' => $e->errors(),
-                ], 422);
-            }
-            throw $e;
-        }
+        $validated = $request->validated();
 
         $this->resolveDemandeUserType($request, $validated);
 
@@ -436,7 +292,7 @@ class DemandeCreationCompteController extends Controller
          * ============================================================ */
         $idempotencyKey = trim((string) $request->input('idempotency_key', ''));
 
-        if ($this->requestsJsonResponse($request) && $idempotencyKey === '') {
+        if ($request->expectsDemandeJsonResponse() && $idempotencyKey === '') {
             return response()->json([
                 'message' => 'Rechargez la page, puis soumettez à nouveau.',
                 'errors' => [
@@ -464,7 +320,7 @@ class DemandeCreationCompteController extends Controller
                     return $this->redirectToRdv($request, $existing, 'idempotency_hit');
                 }
 
-                if ($this->requestsJsonResponse($request)) {
+                if ($request->expectsDemandeJsonResponse()) {
                     return response()->json([
                         'message' => 'Une soumission est déjà en cours. Patientez quelques secondes.',
                     ], 429);
@@ -715,8 +571,12 @@ class DemandeCreationCompteController extends Controller
         return $this->redirectToRdv($request, $demande, 'created');
     }
 
-    private function requestsJsonResponse(Request $request): bool
+    private function requestsJsonResponse(Request|StoreDemandeCreationCompteRequest $request): bool
     {
+        if ($request instanceof StoreDemandeCreationCompteRequest) {
+            return $request->expectsDemandeJsonResponse();
+        }
+
         return $request->expectsJson()
             || $request->ajax()
             || $request->wantsJson()
@@ -789,13 +649,6 @@ class DemandeCreationCompteController extends Controller
 
         $rdvCreateUrl = route('demandes.rencontre.create', absolute: true);
 
-        if (! str_starts_with($url, $rdvCreateUrl)) {
-            $request->session()->flash(
-                'success',
-                'Votre demande a été enregistrée. Prenez rendez-vous pour finaliser l’ouverture de votre compte.'
-            );
-        }
-
         if ($this->requestsJsonResponse($request)) {
             return response()->json([
                 'ok' => true,
@@ -806,7 +659,16 @@ class DemandeCreationCompteController extends Controller
             ], 200);
         }
 
-        return redirect()->to($url);
+        $redirect = redirect()->to($url);
+
+        if (! str_starts_with($url, $rdvCreateUrl)) {
+            $redirect->with(
+                'success',
+                'Votre demande a été enregistrée. Prenez rendez-vous pour finaliser l’ouverture de votre compte.'
+            );
+        }
+
+        return $redirect;
     }
 
     private function postSubmitRedirectUrl(User $user): string
@@ -968,231 +830,6 @@ class DemandeCreationCompteController extends Controller
         }
 
         return false;
-    }
-
-    /**
-     * Validation complète de la demande.
-     */
-    private function validateDemande(
-        Request $request,
-        bool $requireTerms
-    ): array {
-        $isMandataire = $request->boolean('is_mandataire');
-        $isMineur = $request->boolean('is_mineur') && ! $isMandataire;
-
-        $fileRule = 'required|file|mimes:jpg,jpeg,png,webp,pdf|max:5120';
-
-        $rules = [
-            'idempotency_key' => ['nullable', 'string', 'max:64'],
-            'user_type' => 'required|in:pensionne,externe',
-
-            'is_mandataire' => [
-                'sometimes',
-                'boolean',
-            ],
-
-            'nif' => array_merge(
-                $isMineur ? ['nullable'] : ['required'],
-                [
-                    'string',
-                    new Nif,
-                    function (string $attribute, mixed $value, \Closure $fail) {
-                        if (blank($value)) {
-                            return;
-                        }
-
-                        if (
-                            User::nifExists($value) ||
-                            DemandeCreationCompte::pendingDigitsMatch(
-                                'nif',
-                                User::normalizeDigits($value)
-                            )
-                        ) {
-                            $fail('Ce NIF est déjà utilisé.');
-                        }
-                    },
-                ]
-            ),
-
-            'ninu' => [
-                'nullable',
-                'string',
-                new Ninu,
-                function (string $attribute, mixed $value, \Closure $fail) {
-                    if (
-                        User::ninuExists($value) ||
-                        DemandeCreationCompte::pendingDigitsMatch(
-                            'ninu',
-                            User::normalizeDigits($value)
-                        )
-                    ) {
-                        $fail('Ce NINU est déjà utilisé.');
-                    }
-                },
-            ],
-
-            'pension_code' => array_merge(
-                ['nullable'],
-                [
-                    'string',
-                    new CodePension,
-                    new PensionnaireReferenceExists,
-                    function (string $attribute, mixed $value, \Closure $fail) use ($isMandataire, $isMineur, $request) {
-                        if (blank($value)) {
-                            return;
-                        }
-
-                        // Représentant / mandataire : code du pensionné concerné (pas « déjà pris » comme pour un titulaire).
-                        if ($isMandataire || $isMineur) {
-                            $this->assertPensionCodeIsNotProxyOwnTitulaireCode(
-                                $request,
-                                (string) $value,
-                                $isMineur,
-                                $isMandataire,
-                                $fail
-                            );
-
-                            return;
-                        }
-
-                        if (
-                            AffiliationPension::codeExists($value) ||
-                            DemandeCreationCompte::pendingDigitsMatch(
-                                'pension_code',
-                                User::normalizeDigits($value)
-                            )
-                        ) {
-                            $fail('Ce code pension est déjà utilisé.');
-                        }
-                    },
-                ]
-            ),
-
-            'telephone' => [
-                'required',
-                'string',
-                new Telephone,
-                function (string $attribute, mixed $value, \Closure $fail) {
-                    if (
-                        User::telephoneExists($value) ||
-                        DemandeCreationCompte::pendingTelephoneExists($value)
-                    ) {
-                        $fail('Ce numéro de téléphone est déjà utilisé.');
-                    }
-                },
-            ],
-
-            'email' => [
-                'nullable',
-                'email',
-                'max:255',
-                function (string $attribute, mixed $value, \Closure $fail) {
-                    if (
-                        filled($value) &&
-                        is_string($value) &&
-                        User::emailExists($value)
-                    ) {
-                        $fail('Cette adresse e-mail est déjà utilisée.');
-                    }
-                },
-            ],
-
-            'adresse' => [
-                'required',
-                'filled',
-                'string',
-                'max:500',
-            ],
-
-            'is_mineur' => [
-                'sometimes',
-                'boolean',
-            ],
-
-            'piece_identite_type' => $isMineur
-                ? 'nullable'
-                : 'required|in:permis,passeport,cin,matricule_fiscal',
-
-            'piece_identite' => $isMineur
-                ? 'nullable'
-                : $fileRule,
-
-            'acte_naissance' => $isMineur
-                ? $fileRule
-                : 'nullable',
-
-            'representant_lien' => $isMineur
-                ? 'required|in:pere,mere,tuteur'
-                : 'nullable',
-
-            'representant_est_pensionne' => $isMineur
-                ? 'sometimes|boolean'
-                : 'nullable',
-
-            'piece_identite_representant_type' => $isMineur
-                ? 'required|in:permis,passeport,cin'
-                : 'nullable',
-
-            'piece_identite_representant' => $isMineur
-                ? $fileRule
-                : 'nullable',
-
-            'mandat_designation' => $isMandataire
-                ? $fileRule
-                : 'nullable',
-
-            'mandataire_est_pensionne' => $isMandataire
-                ? 'sometimes|boolean'
-                : 'nullable',
-
-            'ocr_documents_json' => [
-                'nullable',
-                'string',
-                'max:524288',
-            ],
-        ];
-
-        if ($requireTerms) {
-            $rules['password'] = [
-                'required',
-                'string',
-                'min:8',
-                'max:72',
-                Password::defaults(),
-            ];
-
-            $rules['accept_terms'] = 'accepted';
-        }
-
-        return $request->validate(
-            $rules,
-            [
-                'required' => 'Le champ « :attribute » est obligatoire.',
-                'accepted' => 'Vous devez accepter les :attribute.',
-                'mimes' => 'Le fichier « :attribute » doit être une image (JPG, PNG, WEBP) ou un PDF.',
-                'email' => 'Le champ « :attribute » doit être une adresse e-mail valide.',
-                'min' => 'Le champ « :attribute » doit contenir au moins :min caractères.',
-            ],
-            [
-                'user_type' => 'type de compte',
-                'nif' => 'matricule fiscal (NIF)',
-                'ninu' => 'NINU',
-                'pension_code' => 'code pension',
-                'telephone' => 'numéro de téléphone',
-                'email' => 'adresse e-mail',
-                'adresse' => 'adresse actuelle',
-                'is_mineur' => 'pensionné mineur',
-                'piece_identite_type' => 'type de pièce d’identité',
-                'piece_identite' => 'pièce d’identité du pensionné',
-                'acte_naissance' => 'acte de naissance du pensionné mineur',
-                'representant_lien' => 'lien du représentant',
-                'piece_identite_representant_type' => 'type de pièce d’identité du représentant',
-                'piece_identite_representant' => 'pièce d’identité du représentant',
-                'mandat_designation' => 'formulaire de désignation du mandataire',
-                'password' => 'mot de passe',
-                'accept_terms' => 'conditions d’utilisation et politique de confidentialité',
-            ]
-        );
     }
 
     /**

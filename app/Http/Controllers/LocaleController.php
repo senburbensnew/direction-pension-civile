@@ -10,7 +10,7 @@ class LocaleController extends Controller
 {
     public function switch($locale)
     {
-        $supportedLocales = config('app.supported_locales', ['en']);
+        $supportedLocales = config('app.supported_locales', ['fr', 'ht']);
         
         if (!in_array($locale, $supportedLocales)) {
             abort(400, 'Unsupported locale');

@@ -3,11 +3,11 @@
 namespace App\Http\Controllers;
 
 use App\Enums\TypeDemandeEnum;
+use App\Http\Requests\Admin\StoreOcrTestRequest;
 use App\Services\OCR\DocumentExtractor;
 use App\Services\OCR\Exceptions\OcrException;
 use App\Services\OCR\GoogleDocumentAiOcrService;
 use App\Services\OCR\OcrService;
-use Illuminate\Http\Request;
 use Illuminate\View\View;
 
 class OcrTestController extends Controller
@@ -29,15 +29,8 @@ class OcrTestController extends Controller
         ]);
     }
 
-    public function store(Request $request): View
+    public function store(StoreOcrTestRequest $request): View
     {
-        $request->validate([
-            'document' => 'required|file|mimes:jpg,jpeg,png,webp,pdf|max:5120',
-        ], [
-            'document.required' => 'Choisissez un fichier à analyser.',
-            'document.mimes' => 'Formats acceptés : JPG, PNG, WEBP ou PDF.',
-        ]);
-
         $text = '';
         $fields = [];
         $error = null;

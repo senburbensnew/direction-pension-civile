@@ -17,6 +17,15 @@
     x-on:resize.window="if (window.innerWidth >= 1024) sidebarOpen = false"
     class="bg-gray-100 font-sans antialiased">
 
+    @auth
+        @php
+            $authUnreadNotificationCount = Auth::user()->unreadNotifications()->count();
+            if (! isset($adminUnreadContactCount)) {
+                $adminUnreadContactCount = \App\Models\Contact::where('read', false)->count();
+            }
+        @endphp
+    @endauth
+
     <!-- Overlay (mobile) -->
     <div
         x-show="sidebarOpen"
@@ -216,9 +225,8 @@
                     <a href="{{ route('admin.contacts.index') }}"
                        class="{{ $adminNavLink(request()->routeIs('admin.contacts.*')) }}">
                        <i class="fas fa-envelope"></i> Messages
-                       @php $unread = \App\Models\Contact::where('read', false)->count(); @endphp
-                       @if($unread > 0)
-                           <span class="ml-auto bg-red-500 text-white text-xs rounded-full px-1.5 py-0.5 leading-none">{{ $unread }}</span>
+                       @if(($adminUnreadContactCount ?? 0) > 0)
+                           <span class="ml-auto bg-red-500 text-white text-xs rounded-full px-1.5 py-0.5 leading-none">{{ $adminUnreadContactCount > 9 ? '9+' : $adminUnreadContactCount }}</span>
                        @endif
                     </a>
                     <a href="{{ route('admin.newsletter.admin.index') }}"
@@ -306,10 +314,9 @@
             <a href="{{ route('notifications.index') }}"
                 class="{{ $adminNavLink(request()->routeIs('notifications.*'), 'text-xs') }}">
                 <i class="fas fa-bell"></i> Mes notifications
-                @php $adminUnreadNotifications = Auth::user()->unreadNotifications()->count(); @endphp
-                @if($adminUnreadNotifications > 0)
+                @if(($authUnreadNotificationCount ?? 0) > 0)
                     <span class="ml-auto bg-red-500 text-white text-xs rounded-full px-1.5 py-0.5 leading-none">
-                        {{ $adminUnreadNotifications > 9 ? '9+' : $adminUnreadNotifications }}
+                        {{ $authUnreadNotificationCount > 9 ? '9+' : $authUnreadNotificationCount }}
                     </span>
                 @endif
             </a>
@@ -345,7 +352,7 @@
     </aside>
 
     <!-- Main -->
-    <div id="main" class="flex min-h-screen flex-col lg:ml-60">
+    <div id="main" class="flex min-h-screen min-w-0 flex-col lg:ml-60">
 
         {{-- Top bar --}}
         <header class="bg-white border-b border-gray-200 sticky top-0 z-30">
@@ -374,13 +381,13 @@
                         <span class="hidden sm:inline">Voir le site</span>
                     </a>
 
-                    <x-notification-bell-dropdown theme="light" />
+                    <x-notification-bell-dropdown theme="light" :unread-count="$authUnreadNotificationCount ?? 0" />
                 </div>
             </div>
         </header>
 
         {{-- Page content --}}
-        <main class="flex-1 p-4 sm:p-6">
+        <main class="flex-1 min-w-0 overflow-x-hidden p-4 sm:p-6">
             @yield('content')
         </main>
     </div>

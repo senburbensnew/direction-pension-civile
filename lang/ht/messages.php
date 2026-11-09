@@ -10,6 +10,12 @@ return [
     'format_hint_telephone' => 'Fòma entènasyonal ak endikatif peyi a (egzanp +50938123456).',
     'telephone_invalid_format' => 'Nimewo telefòn lan dwe nan fòma entènasyonal ak endikatif peyi a (egzanp +50938123456, +33612345678 oswa +14161234567).',
     'format_hint_nif' => '000-000-000-0.',
+    'nif_invalid_format' => 'NIF la dwe nan fòma 000-000-000-0.',
+    'format_hint_ninu' => '10 chif, san tirè.',
+    'ninu_invalid_format' => 'NINU a dwe gen egzakteman 10 chif, san tirè.',
+    'admin_user_username_format' => 'Lèt, chif, pwen, tirè ak underscores sèlman (3 a 50 karaktè).',
+    'admin_user_password_hint' => 'Omwen 8 karaktè.',
+    'admin_user_password_mismatch' => 'Modpas yo pa matche.',
     'format_hint_pension_code' => '7-XXXXX (egzanp 7-JM183) oswa 8-XXXXX (egzanp 8-34321).',
     'pension_code_invalid_format' => 'Kòd pansyon an dwe nan fòma 7-XXXXX (5 karaktè alfanumerik, egzanp 7-JM183) oswa 8-XXXXX (5 chif, egzanp 8-34321).',
     'pension_context_title' => 'Kontèks travay',
@@ -43,7 +49,6 @@ return [
     'login_two_factor_code_resent' => 'Yo voye yon nouvo kòd.',
     'login_two_factor_resend_throttled' => 'Tanpri tann anvan ou mande yon lòt kòd.',
     'send_reset_link' => 'Voye lyen reyinisializasyon an',
-    'register' => 'Enskri',
     'request_account' => 'Mande yon kont',
 
     // Navbar

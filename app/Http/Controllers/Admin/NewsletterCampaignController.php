@@ -3,7 +3,9 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Admin\ScheduleNewsletterCampaignRequest;
 use App\Http\Requests\Admin\StoreNewsletterCampaignRequest;
+use App\Http\Requests\Admin\TestNewsletterCampaignRequest;
 use App\Models\Newsletter;
 use App\Models\NewsletterCampaign;
 use App\Notifications\NewsletterCampaignNotification;
@@ -74,10 +76,8 @@ class NewsletterCampaignController extends Controller
             ->with('success', 'Brouillon dupliqué.');
     }
 
-    public function test(Request $request, NewsletterCampaign $campaign)
+    public function test(TestNewsletterCampaignRequest $request, NewsletterCampaign $campaign)
     {
-        $request->validate(['test_email' => ['required', 'email']]);
-
         $stub = new Newsletter([
             'email' => $request->test_email,
             'unsubscribe_token' => Newsletter::generateToken(),
@@ -120,7 +120,11 @@ class NewsletterCampaignController extends Controller
         $action = $request->input('action', 'save');
 
         if ($action === 'schedule') {
-            $request->validate(['scheduled_at' => ['required', 'date', 'after:now']]);
+            ScheduleNewsletterCampaignRequest::createFrom($request)
+                ->setContainer(app())
+                ->setRedirector(app('redirect'))
+                ->validateResolved();
+
             $campaigns->schedule($campaign, $request->date('scheduled_at'), auth()->id());
 
             return redirect()

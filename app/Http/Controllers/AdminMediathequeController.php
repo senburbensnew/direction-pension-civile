@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Http\Controllers\Concerns\StoresOptimizedImages;
+use App\Http\Requests\Admin\AdminMediathequeItemRequest;
 use App\Models\MediathequeItem;
 use App\Support\Storage\UploadPaths;
 use Illuminate\Http\Request;
@@ -26,18 +27,8 @@ class AdminMediathequeController extends Controller
         return view('admin.mediatheque.create');
     }
 
-    public function store(Request $request)
+    public function store(AdminMediathequeItemRequest $request)
     {
-        $request->validate([
-            'title' => 'required|string|max:255',
-            'description' => 'nullable|string',
-            'type' => 'required|in:image,video,audio,document',
-            'file' => 'nullable|file|max:51200',
-            'url' => 'nullable|url|max:500',
-            'order_column' => 'nullable|integer|min:0',
-            'published' => 'boolean',
-        ]);
-
         $filePath = null;
         if ($request->hasFile('file')) {
             $filePath = $this->storeMediathequeFile($request->file('file'), $request->type);
@@ -62,18 +53,8 @@ class AdminMediathequeController extends Controller
         return view('admin.mediatheque.edit', ['item' => $mediathequeItem]);
     }
 
-    public function update(Request $request, MediathequeItem $mediathequeItem)
+    public function update(AdminMediathequeItemRequest $request, MediathequeItem $mediathequeItem)
     {
-        $request->validate([
-            'title' => 'required|string|max:255',
-            'description' => 'nullable|string',
-            'type' => 'required|in:image,video,audio,document',
-            'file' => 'nullable|file|max:51200',
-            'url' => 'nullable|url|max:500',
-            'order_column' => 'nullable|integer|min:0',
-            'published' => 'boolean',
-        ]);
-
         if ($request->hasFile('file')) {
             $this->deleteMediathequeFile($mediathequeItem);
             $mediathequeItem->file_path = $this->storeMediathequeFile($request->file('file'), $request->type);

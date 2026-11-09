@@ -24,15 +24,7 @@
 @endphp
 
 <div class="py-10">
-    <div class="site-gutter space-y-8">
-
-        <div class="text-center">
-            <span class="text-xs font-bold text-orange-500 uppercase tracking-widest">Nous joindre</span>
-            <h1 class="text-4xl font-bold text-navy mt-2 mb-3">Contact</h1>
-            <p class="text-gray-700">
-                Notre équipe est à votre disposition pour vous accompagner.
-            </p>
-        </div>
+    <div class="site-gutter space-y-10">
 
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
             <section class="bg-white border border-gray-200 card-shadow p-6 sm:p-8">
@@ -53,14 +45,6 @@
                         </div>
                     </div>
                     <div class="flex items-start gap-3">
-                        <span class="text-navy mt-0.5 shrink-0"><i class="fa-solid fa-phone" aria-hidden="true"></i></span>
-                        <div>
-                            <h3 class="text-base font-semibold text-navy mb-0.5">Numéro de contact</h3>
-                            <p class="text-gray-700 text-base">{{ $contact['contact_phone'] ?? '' }}</p>
-                            <p class="text-gray-700 text-base mt-0.5">{{ $contact['contact_hours'] ?? '' }}</p>
-                        </div>
-                    </div>
-                    <div class="flex items-start gap-3">
                         <span class="text-navy mt-0.5 shrink-0"><i class="fa-solid fa-envelope" aria-hidden="true"></i></span>
                         <div>
                             <h3 class="text-base font-semibold text-navy mb-0.5">Adresse e-mail</h3>
@@ -69,6 +53,21 @@
                             </a>
                         </div>
                     </div>
+                </div>
+
+                <div class="mt-8 pt-6 border-t border-gray-200">
+                    <h3 class="text-lg font-bold text-navy mb-1">Numéros de contact</h3>
+                    <p class="text-gray-600 text-sm mb-4">Lignes téléphoniques par type de demande.</p>
+                    <ul class="divide-y divide-gray-200 border border-gray-200 text-sm">
+                        @foreach($phoneLines as $line)
+                            <li class="flex flex-col gap-1 px-3 py-2.5 sm:flex-row sm:items-start sm:justify-between sm:gap-4">
+                                <span class="text-gray-700 leading-snug">{{ $line['label'] }}</span>
+                                <a href="tel:{{ $line['phone'] }}" class="text-navy font-semibold whitespace-nowrap hover:text-orange-500 shrink-0">
+                                    {{ $line['display'] }}
+                                </a>
+                            </li>
+                        @endforeach
+                    </ul>
                 </div>
 
                 <div class="mt-8 pt-6 border-t border-gray-200">
@@ -167,36 +166,7 @@
                         </div>
                     </div>
 
-                    <div class="grid grid-cols-1 gap-5 md:grid-cols-2">
-                        <div>
-                            <label for="destinataire" class="block text-base font-medium text-gray-700 mb-2">Destinataire <span class="text-red-500">*</span></label>
-                            <div class="relative">
-                                <select id="destinataire" name="destinataire" required
-                                    class="{{ $inputClass('destinataire') }} pr-10 appearance-none">
-                                    <option value="" disabled {{ old('destinataire') ? '' : 'selected' }}>Sélectionnez un destinataire</option>
-                                    <optgroup label="Services">
-                                        @foreach($services as $service)
-                                            <option value="{{ \App\Models\Contact::destinataireKey('service', $service->code) }}"
-                                                {{ old('destinataire') === \App\Models\Contact::destinataireKey('service', $service->code) ? 'selected' : '' }}>
-                                                {{ $service->nom }}
-                                            </option>
-                                        @endforeach
-                                    </optgroup>
-                                    <optgroup label="Directions départementales">
-                                        @foreach($directions as $dir)
-                                            <option value="{{ \App\Models\Contact::destinataireKey('direction', $dir->abbr) }}"
-                                                {{ old('destinataire') === \App\Models\Contact::destinataireKey('direction', $dir->abbr) ? 'selected' : '' }}>
-                                                {{ $dir->nom }} ({{ $dir->abbr }})
-                                            </option>
-                                        @endforeach
-                                    </optgroup>
-                                </select>
-                                <div class="absolute inset-y-0 right-0 flex items-center pr-3.5 pointer-events-none text-gray-400">
-                                    <i class="fa-solid fa-chevron-down text-[11px]" aria-hidden="true"></i>
-                                </div>
-                            </div>
-                        </div>
-                        <div>
+                    <div>
                             <label for="subject" class="block text-base font-medium text-gray-700 mb-2">Sujet <span class="text-red-500">*</span></label>
                             <div class="relative">
                                 <select id="subject" name="subject" required x-model="subject"
@@ -219,7 +189,6 @@
                                     placeholder="Ex. : demande d’information sur le PRAP"
                                     class="{{ $inputClass('custom_subject') }}">
                             </div>
-                        </div>
                     </div>
 
                     <div>
@@ -228,10 +197,11 @@
                             <span class="text-xs text-gray-500" x-text="`${message.length} / ${maxMessage}`"></span>
                         </div>
                         <textarea id="message" name="message" rows="5" required
+                            minlength="10"
                             maxlength="{{ \App\Models\Contact::MESSAGE_MAX_LENGTH }}"
                             x-model="message"
                             class="{{ $inputClass('message') }} resize-none">{{ old('message') }}</textarea>
-                        <p class="text-xs text-gray-400 mt-1">Maximum {{ \App\Models\Contact::MESSAGE_MAX_LENGTH }} caractères.</p>
+                        <p class="text-xs text-gray-400 mt-1">Entre 10 et {{ \App\Models\Contact::MESSAGE_MAX_LENGTH }} caractères.</p>
                     </div>
 
                     <button type="submit"
@@ -242,26 +212,6 @@
                 </form>
             </section>
         </div>
-
-        <section class="bg-white border border-gray-200 card-shadow p-6 sm:p-8">
-            <div class="flex items-center gap-3 mb-2">
-                <span class="text-3xl text-navy flex items-center justify-center shrink-0">
-                    <i class="fa-solid fa-phone-volume" aria-hidden="true"></i>
-                </span>
-                <h2 class="text-xl font-bold text-navy">Numéros des services</h2>
-            </div>
-            <p class="text-gray-700 text-base mb-6">Voici les numéros de téléphone des différents services de la DPC.</p>
-            <ul class="divide-y divide-gray-200 border border-gray-200">
-                @foreach($servicePhones as $line)
-                    <li class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1 sm:gap-6 px-4 py-3">
-                        <span class="text-gray-700">{{ $line['label'] }}</span>
-                        <a href="tel:{{ $line['phone'] }}" class="text-navy font-semibold whitespace-nowrap hover:text-orange-500">
-                            {{ $line['display'] }}
-                        </a>
-                    </li>
-                @endforeach
-            </ul>
-        </section>
 
         <section class="bg-white border border-gray-200 card-shadow p-6 sm:p-8">
             <div class="flex items-center gap-3 mb-2">
@@ -279,18 +229,18 @@
             </div>
         </section>
 
-        <section>
+        <section class="bg-white border border-gray-200 card-shadow p-6 sm:p-8">
             <div class="flex items-center gap-3 mb-2">
                 <span class="text-3xl text-navy flex items-center justify-center shrink-0">
                     <i class="fa-solid fa-building-columns" aria-hidden="true"></i>
                 </span>
                 <h2 class="text-xl font-bold text-navy">Nos Directions Départementales</h2>
             </div>
-            <p class="text-gray-700 text-base mb-5">Retrouvez nos représentations régionales de la Direction de la Pension Civile.</p>
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+            <p class="text-gray-700 text-base mb-6">Retrouvez nos représentations régionales de la Direction de la Pension Civile.</p>
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 @foreach($directions as $dir)
                     <a href="{{ route('directions.show', $dir) }}"
-                       class="bg-white p-6 border border-gray-200 card-shadow block hover:border-navy/30 transition">
+                       class="bg-slate-50 p-6 border border-gray-200 block hover:border-navy/30 hover:bg-orange-50/40 transition">
                         <div class="flex items-start gap-3">
                             <span class="text-xl text-navy mt-0.5 shrink-0"><i class="fa-solid fa-map-pin" aria-hidden="true"></i></span>
                             <div>
@@ -303,18 +253,18 @@
             </div>
         </section>
 
-        <section>
-            <div class="flex items-center gap-3 mb-2">
+        <section class="bg-white border border-gray-200 card-shadow p-6 sm:p-8">
+            <div class="flex items-center gap-3 mb-3">
                 <span class="text-3xl text-navy flex items-center justify-center shrink-0">
                     <i class="fa-solid fa-sitemap" aria-hidden="true"></i>
                 </span>
                 <h2 class="text-xl font-bold text-navy">Nos Services</h2>
             </div>
-            <p class="text-gray-700 text-base mb-5">Les différents services opérationnels de la DPC / MEF.</p>
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+            <p class="text-gray-700 text-base mb-6">Les différents services opérationnels de la DPC / MEF.</p>
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 @foreach($services as $service)
                     <a href="{{ route('services.show', $service) }}"
-                       class="bg-white p-6 border border-gray-200 card-shadow block hover:border-navy/30 transition">
+                       class="bg-slate-50 p-6 border border-gray-200 block hover:border-navy/30 hover:bg-orange-50/40 transition">
                         <div class="flex items-start gap-3">
                             <span class="text-xl text-navy mt-0.5 shrink-0"><i class="fa-solid {{ $service->icon ?? 'fa-building' }}" aria-hidden="true"></i></span>
                             <div>

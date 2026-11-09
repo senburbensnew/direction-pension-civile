@@ -8,6 +8,7 @@ use App\Models\DemandeHistory;
 use App\Models\DemandeInteraction;
 use App\Models\DemandeMessage;
 use App\Models\Service;
+use App\Models\User;
 use App\Models\WorkflowStep;
 use App\Notifications\DemandeStatusChangedNotification;
 use App\Notifications\DemandeTransferredNotification;
@@ -16,6 +17,14 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Demande\AffecterDemandeServicesRequest;
+use App\Http\Requests\Demande\AnnotateDemandeRequest;
+use App\Http\Requests\Demande\AssignDemandeAgentRequest;
+use App\Http\Requests\Demande\DemandeDirectionMotifRequest;
+use App\Http\Requests\Demande\RefuserReceptionDemandeRequest;
+use App\Http\Requests\Demande\RequestDemandeComplementRequest;
+use App\Http\Requests\Demande\RepondreDemandeAffectationRequest;
+use App\Http\Requests\Demande\UpdateDemandeStatusRequest;
 use App\Http\Requests\TransfertDemandeRequest;
 
 class DemandeManagementController extends Controller
@@ -28,7 +37,7 @@ class DemandeManagementController extends Controller
 
     public function edit(Demande $demande)
     {
-        activity('demande')->performedOn($demande)->causedBy(auth()->user())->log('viewed');
+        activity('demande')->performedOn($demande)->causedBy($this->authenticatedUser())->log('viewed');
 
         $requiredConditions = $this->buildRequiredConditions($demande);
 
@@ -58,13 +67,8 @@ class DemandeManagementController extends Controller
             ])->all();
     }
 
-    public function updateStatus(Request $request, Demande $demande)
+    public function updateStatus(UpdateDemandeStatusRequest $request, Demande $demande)
     {
-        $request->validate([
-            'etat'        => 'required|string',
-            'commentaire' => 'nullable|string',
-        ]);
-
         DB::transaction(function () use ($demande, $request) {
             $stepId = WorkflowStep::idForCode($request->etat);
             if ($stepId) $demande->update(['current_step_id' => $stepId]);
@@ -93,22 +97,22 @@ class DemandeManagementController extends Controller
         return redirect()->back()->with('success', 'État mis à jour');
     }
 
-    public function annotate(Request $request, Demande $demande)
+    public function annotate(AnnotateDemandeRequest $request, Demande $demande)
     {
-        abort_unless(auth()->user()->isDirection(), 403, 'Seule la Direction peut annoter un dossier.');
+        abort_unless($this->authenticatedUser()->isDirection(), 403, 'Seule la Direction peut annoter un dossier.');
         abort_if($demande->isClosed(), 403, 'Ce dossier est clôturé et ne peut plus être modifié.');
 
         abort_if(
             $demande->interactions()
                 ->where('type', DemandeInteraction::TYPE_AVIS)
-                ->where('to_service_id', auth()->user()->service_id)
+                ->where('to_service_id', $this->authenticatedUser()->service_id)
                 ->where('statut', DemandeInteraction::STATUT_EN_ATTENTE)
                 ->exists(),
             403,
             'Votre service est en mode consultation pour ce dossier. Soumettez votre avis avant toute autre action.'
         );
 
-        $actingServiceIds = AgentDelegation::actingServiceIds(auth()->id(), auth()->user()->service_id ?? 0);
+        $actingServiceIds = AgentDelegation::actingServiceIds(auth()->id(), $this->authenticatedUser()->service_id ?? 0);
         abort_if(
             $demande->interactions()
                 ->where('type', DemandeInteraction::TYPE_TRANSFERT)
@@ -118,10 +122,6 @@ class DemandeManagementController extends Controller
             403,
             'Confirmez d\'abord la réception de ce dossier avant de l\'annoter.'
         );
-
-        $request->validate([
-            'annotation' => 'required|string|max:2000',
-        ]);
 
         $isFirstAnnotation = !$demande->isAnnotated();
 
@@ -148,7 +148,7 @@ class DemandeManagementController extends Controller
         if ($isFirstAnnotation) {
             try {
                 $dispatched = app(DemandeWorkflowService::class)
-                    ->dispatchToSecretariatAfterAnnotation($demande, auth()->user());
+                    ->dispatchToSecretariatAfterAnnotation($demande, $this->authenticatedUser());
             } catch (\Throwable $e) {
                 Log::error('annotate: dispatch Secrétariat failed', ['error' => $e->getMessage()]);
             }
@@ -177,21 +177,21 @@ class DemandeManagementController extends Controller
         return redirect()->back()->with('success', 'Dossier annoté avec succès.');
     }
 
-    public function requestComplement(Request $request, Demande $demande)
+    public function requestComplement(RequestDemandeComplementRequest $request, Demande $demande)
     {
         abort_if($demande->isClosed(), 403, 'Ce dossier est clôturé et ne peut plus être modifié.');
 
         abort_if(
             $demande->interactions()
                 ->where('type', DemandeInteraction::TYPE_AVIS)
-                ->where('to_service_id', auth()->user()->service_id)
+                ->where('to_service_id', $this->authenticatedUser()->service_id)
                 ->where('statut', DemandeInteraction::STATUT_EN_ATTENTE)
                 ->exists(),
             403,
             'Votre service est en mode consultation pour ce dossier. Soumettez votre avis avant toute autre action.'
         );
 
-        $actingServiceIds = AgentDelegation::actingServiceIds(auth()->id(), auth()->user()->service_id ?? 0);
+        $actingServiceIds = AgentDelegation::actingServiceIds(auth()->id(), $this->authenticatedUser()->service_id ?? 0);
         abort_if(
             $demande->interactions()
                 ->where('type', DemandeInteraction::TYPE_TRANSFERT)
@@ -201,10 +201,6 @@ class DemandeManagementController extends Controller
             403,
             'Confirmez d\'abord la réception de ce dossier avant de demander un complément.'
         );
-
-        $request->validate([
-            'message' => 'required|string|max:3000',
-        ]);
 
         DB::transaction(function () use ($demande, $request) {
             $complementStepId = WorkflowStep::idForCode('COMPLEMENT_REQUIS');
@@ -256,7 +252,7 @@ class DemandeManagementController extends Controller
         abort_if(
             $demande->interactions()
                 ->where('type', DemandeInteraction::TYPE_AVIS)
-                ->where('to_service_id', auth()->user()->service_id)
+                ->where('to_service_id', $this->authenticatedUser()->service_id)
                 ->where('statut', DemandeInteraction::STATUT_EN_ATTENTE)
                 ->exists(),
             403,
@@ -272,7 +268,7 @@ class DemandeManagementController extends Controller
             'Des avis sont encore en attente. Tous les services consultés doivent soumettre leur avis avant tout transfert.'
         );
 
-        $actingServiceIds = AgentDelegation::actingServiceIds(auth()->id(), auth()->user()->service_id ?? 0);
+        $actingServiceIds = AgentDelegation::actingServiceIds(auth()->id(), $this->authenticatedUser()->service_id ?? 0);
         abort_if(
             $demande->interactions()
                 ->where('type', DemandeInteraction::TYPE_TRANSFERT)
@@ -285,7 +281,7 @@ class DemandeManagementController extends Controller
 
         $toService = Service::findOrFail($request->service_id);
 
-        $allowedIds = $workflowService->availableTransferOptions($demande, auth()->user())
+        $allowedIds = $workflowService->availableTransferOptions($demande, $this->authenticatedUser())
             ->pluck('service_id')
             ->all();
         abort_unless(
@@ -294,9 +290,9 @@ class DemandeManagementController extends Controller
             'Destination non autorisée selon le circuit de traitement défini pour ce dossier.'
         );
 
-        $workflowService->transfer($demande, $toService, auth()->user(), $request->commentaire);
+        $workflowService->transfer($demande, $toService, $this->authenticatedUser(), $request->commentaire);
 
-        activity('demande')->performedOn($demande)->causedBy(auth()->user())
+        activity('demande')->performedOn($demande)->causedBy($this->authenticatedUser())
             ->withProperties(['to_service' => $toService->nom, 'commentaire' => $request->commentaire])
             ->log('transferred');
 
@@ -313,7 +309,7 @@ class DemandeManagementController extends Controller
 
     public function accepterReception(Request $request, DemandeInteraction $interaction, DemandeWorkflowService $workflowService)
     {
-        $user = auth()->user();
+        $user = $this->authenticatedUser();
         $actingServiceIds = $user->service_id
             ? AgentDelegation::actingServiceIds($user->id, $user->service_id)
             : [];
@@ -326,16 +322,14 @@ class DemandeManagementController extends Controller
 
         $workflowService->accepterReception($interaction, $user);
 
-        activity('demande')->performedOn($interaction->demande)->causedBy(auth()->user())->log('reception_accepted');
+        activity('demande')->performedOn($interaction->demande)->causedBy($this->authenticatedUser())->log('reception_accepted');
 
         return redirect()->back()->with('success', 'Réception confirmée. Le dossier est maintenant en cours de traitement.');
     }
 
-    public function refuserReception(Request $request, DemandeInteraction $interaction, DemandeWorkflowService $workflowService)
+    public function refuserReception(RefuserReceptionDemandeRequest $request, DemandeInteraction $interaction, DemandeWorkflowService $workflowService)
     {
-        $request->validate(['motif' => 'nullable|string|max:1000']);
-
-        $user = auth()->user();
+        $user = $this->authenticatedUser();
         $actingServiceIds = $user->service_id
             ? AgentDelegation::actingServiceIds($user->id, $user->service_id)
             : [];
@@ -348,7 +342,7 @@ class DemandeManagementController extends Controller
 
         $workflowService->refuserReception($interaction, $user, $request->motif);
 
-        activity('demande')->performedOn($interaction->demande)->causedBy(auth()->user())
+        activity('demande')->performedOn($interaction->demande)->causedBy($this->authenticatedUser())
             ->withProperties(['motif' => $request->motif])
             ->log('reception_refused');
 
@@ -387,7 +381,7 @@ class DemandeManagementController extends Controller
 
     public function approuver(Demande $demande)
     {
-        abort_unless(auth()->user()->isDirection(), 403);
+        abort_unless($this->authenticatedUser()->isDirection(), 403);
 
         abort_if(
             $demande->created_by === auth()->id(),
@@ -442,7 +436,7 @@ class DemandeManagementController extends Controller
 
     public function cloturer(Demande $demande)
     {
-        abort_unless(auth()->user()->isDirection(), 403);
+        abort_unless($this->authenticatedUser()->isDirection(), 403);
 
         abort_if(
             $demande->created_by === auth()->id(),
@@ -495,10 +489,9 @@ class DemandeManagementController extends Controller
         return redirect()->back()->with('success', 'Dossier clôturé.');
     }
 
-    public function rejeter(Request $request, Demande $demande)
+    public function rejeter(DemandeDirectionMotifRequest $request, Demande $demande)
     {
-        abort_unless(auth()->user()->isDirection(), 403);
-        $request->validate(['motif' => 'nullable|string|max:2000']);
+        abort_unless($this->authenticatedUser()->isDirection(), 403);
 
         abort_if(
             $demande->interactions()->where('type', DemandeInteraction::TYPE_AVIS)->where('statut', DemandeInteraction::STATUT_EN_ATTENTE)->exists(),
@@ -531,10 +524,9 @@ class DemandeManagementController extends Controller
         return redirect()->back()->with('success', 'Dossier rejeté.');
     }
 
-    public function annuler(Request $request, Demande $demande)
+    public function annuler(DemandeDirectionMotifRequest $request, Demande $demande)
     {
-        abort_unless(auth()->user()->isDirection(), 403);
-        $request->validate(['motif' => 'nullable|string|max:2000']);
+        abort_unless($this->authenticatedUser()->isDirection(), 403);
 
         abort_if(
             $demande->interactions()->where('type', DemandeInteraction::TYPE_AVIS)->where('statut', DemandeInteraction::STATUT_EN_ATTENTE)->exists(),
@@ -567,12 +559,10 @@ class DemandeManagementController extends Controller
         return redirect()->back()->with('success', 'Dossier annulé.');
     }
 
-    public function rouvrir(Request $request, Demande $demande)
+    public function rouvrir(DemandeDirectionMotifRequest $request, Demande $demande)
     {
-        abort_unless(auth()->user()->isDirection(), 403);
+        abort_unless($this->authenticatedUser()->isDirection(), 403);
         abort_unless($demande->isClosed(), 422, 'Ce dossier n\'est pas clôturé.');
-
-        $request->validate(['motif' => 'nullable|string|max:2000']);
 
         $soumiseStepId = WorkflowStep::idForCode('SOUMISE');
         $directionId   = Service::where('code', Service::DIRECTION)->value('id');
@@ -594,40 +584,30 @@ class DemandeManagementController extends Controller
         return redirect()->back()->with('success', 'Dossier réouvert avec succès.');
     }
 
-    public function affecterServices(Request $request, Demande $demande, DemandeWorkflowService $workflowService)
+    public function affecterServices(AffecterDemandeServicesRequest $request, Demande $demande, DemandeWorkflowService $workflowService)
     {
         abort_if($demande->isClosed(), 403, 'Ce dossier est clôturé et ne peut plus être modifié.');
 
-        $request->validate([
-            'service_ids'   => 'required|array|min:1',
-            'service_ids.*' => 'integer|exists:services,id',
-        ]);
+        $workflowService->affecterServices($demande, $request->service_ids, $this->authenticatedUser());
 
-        $workflowService->affecterServices($demande, $request->service_ids, auth()->user());
-
-        activity('demande')->performedOn($demande)->causedBy(auth()->user())
+        activity('demande')->performedOn($demande)->causedBy($this->authenticatedUser())
             ->withProperties(['service_ids' => $request->service_ids])
             ->log('affectation_created');
 
         return redirect()->back()->with('success', 'Dossier affecté à ' . count($request->service_ids) . ' service(s) pour avis.');
     }
 
-    public function repondreAffectation(Request $request, DemandeInteraction $interaction, DemandeWorkflowService $workflowService)
+    public function repondreAffectation(RepondreDemandeAffectationRequest $request, DemandeInteraction $interaction, DemandeWorkflowService $workflowService)
     {
-        $request->validate([
-            'avis'   => 'nullable|string|max:3000',
-            'statut' => 'required|in:EN_COURS,TERMINE,REJETE',
-        ]);
-
         abort_unless(
-            auth()->user()->service_id === $interaction->to_service_id,
+            $this->authenticatedUser()->service_id === $interaction->to_service_id,
             403,
             'Seul le service affecté peut soumettre un avis.'
         );
 
-        $workflowService->repondreAffectation($interaction, auth()->user(), $request->avis, $request->statut);
+        $workflowService->repondreAffectation($interaction, $this->authenticatedUser(), $request->avis, $request->statut);
 
-        activity('demande')->performedOn($interaction->demande)->causedBy(auth()->user())
+        activity('demande')->performedOn($interaction->demande)->causedBy($this->authenticatedUser())
             ->withProperties(['statut' => $request->statut])
             ->log('affectation_responded');
 
@@ -639,14 +619,9 @@ class DemandeManagementController extends Controller
         return redirect()->back()->with('success', 'Avis mis à jour.');
     }
 
-    public function assignerAgent(Request $request, Demande $demande, DemandeWorkflowService $workflowService)
+    public function assignerAgent(AssignDemandeAgentRequest $request, Demande $demande, DemandeWorkflowService $workflowService)
     {
-        $request->validate([
-            'user_id' => ['required', 'exists:users,id'],
-            'note'    => ['nullable', 'string', 'max:500'],
-        ]);
-
-        $agent = \App\Models\User::findOrFail($request->user_id);
+        $agent = User::findOrFail($request->user_id);
 
         abort_if(
             $demande->current_service_id && $agent->service_id !== $demande->current_service_id,
@@ -654,12 +629,21 @@ class DemandeManagementController extends Controller
             "L'agent ne fait pas partie du service courant du dossier."
         );
 
-        $workflowService->assignerAgent($demande, $agent, auth()->user(), $request->note);
+        $workflowService->assignerAgent($demande, $agent, $this->authenticatedUser(), $request->note);
 
-        activity('demande')->performedOn($demande)->causedBy(auth()->user())
+        activity('demande')->performedOn($demande)->causedBy($this->authenticatedUser())
             ->withProperties(['agent' => $agent->name])
             ->log('agent_assigned');
 
         return redirect()->back()->with('success', "Dossier affecté à {$agent->name}.");
+    }
+
+    private function authenticatedUser(): User
+    {
+        $user = auth()->user();
+
+        abort_unless($user instanceof User, 403);
+
+        return $user;
     }
 }

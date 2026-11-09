@@ -2,8 +2,8 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\Admin\UpdateContactParametersRequest;
 use App\Models\ContactSubject;
-use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
 class ContactParameterController extends Controller
@@ -24,19 +24,9 @@ class ContactParameterController extends Controller
         return view('admin.contact-parameters.index', compact('params', 'subjects'));
     }
 
-    public function update(Request $request)
+    public function update(UpdateContactParametersRequest $request)
     {
-        $data = $request->validate([
-            'contact_address'  => 'required|string|max:255',
-            'contact_phone'    => 'required|string|max:50',
-            'contact_hours'    => 'required|string|max:100',
-            'contact_email'    => 'required|email|max:255',
-            'contact_map_url'  => 'nullable|string|max:2000',
-            'social_facebook'  => 'nullable|url|max:255',
-            'social_twitter'   => 'nullable|url|max:255',
-            'social_linkedin'  => 'nullable|url|max:255',
-            'social_youtube'   => 'nullable|url|max:255',
-        ]);
+        $data = $request->validated();
 
         foreach ($data as $name => $value) {
             DB::table('parameters')->updateOrInsert(

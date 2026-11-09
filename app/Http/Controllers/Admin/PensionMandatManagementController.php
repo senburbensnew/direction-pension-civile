@@ -7,6 +7,8 @@ use App\Enums\BeneficiaireRelationEnum;
 use App\Enums\PensionMandatStatusEnum;
 use App\Enums\TypeDemandeEnum;
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Admin\ApprovePensionMandatRequest;
+use App\Http\Requests\Admin\RefusePensionMandatRequest;
 use App\Models\BeneficiaireRelationEvent;
 use App\Models\PensionMandat;
 use App\Models\User;
@@ -32,7 +34,7 @@ class PensionMandatManagementController extends Controller
         return view('admin.pension-mandats.index', compact('mandats', 'demandeTypeChoices'));
     }
 
-    public function approve(Request $request, PensionMandat $mandat): RedirectResponse
+    public function approve(ApprovePensionMandatRequest $request, PensionMandat $mandat): RedirectResponse
     {
         if (! $mandat->beneficiaire_id && $mandat->demandeCreationCompte) {
             app(PensionMandatService::class)->syncBeneficiaireFromDemandeCreationCompte(
@@ -47,12 +49,7 @@ class PensionMandatManagementController extends Controller
             ]);
         }
 
-        $validated = $request->validate([
-            'allowed_demande_types' => ['nullable', 'array'],
-            'allowed_demande_types.*' => ['string', 'max:64'],
-            'allowed_pension_codes' => ['nullable', 'array'],
-            'allowed_pension_codes.*' => ['string', 'max:32'],
-        ]);
+        $validated = $request->validated();
 
         /** @var User $reviewer */
         $reviewer = $request->user();
@@ -110,11 +107,9 @@ class PensionMandatManagementController extends Controller
         return back()->with('success', 'Mandat approuvé.');
     }
 
-    public function refuse(Request $request, PensionMandat $mandat): RedirectResponse
+    public function refuse(RefusePensionMandatRequest $request, PensionMandat $mandat): RedirectResponse
     {
-        $validated = $request->validate([
-            'refusal_reason' => ['required', 'string', 'min:5', 'max:2000'],
-        ]);
+        $validated = $request->validated();
 
         /** @var User $reviewer */
         $reviewer = $request->user();

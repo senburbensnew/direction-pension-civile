@@ -27,619 +27,189 @@ use App\Http\Controllers\RdvAgentAvailabilityController;
 use App\Models\User;
 use Illuminate\Support\Facades\Route;
 
-Route::get(
-    '/compte/provisoire',
-    CompteProvisoireController::class
-)->name('compte.provisoire');
-
-Route::get(
-    '/mon-compte/demande-creation',
-    [MonDemandeCreationCompteController::class, 'show']
-)->name('compte.demande.show');
-
-Route::match(
-    ['put', 'patch'],
-    '/mon-compte/demande-creation',
-    [MonDemandeCreationCompteController::class, 'update']
-)->name('compte.demande.update');
-
 /*
 |--------------------------------------------------------------------------
-| Profile (compte actif uniquement)
+| AUTHENTICATED APP ROUTES
+|--------------------------------------------------------------------------
+| Included from routes/web.php (middleware web, auth, account.permanent).
 |--------------------------------------------------------------------------
 */
 
-Route::middleware(['permanent.account', 'pension.context'])->group(function () {
-    Route::get(
-        '/profile',
-        [ProfileController::class, 'edit']
-    )->name('profile.edit');
+Route::get('/compte/provisoire', CompteProvisoireController::class)->name('compte.provisoire');
 
-    Route::patch(
-        '/profile/profile-photo',
-        [ProfileController::class, 'updateProfilePhoto']
-    )->name('profile.profile-photo.update');
-
-    Route::patch(
-        '/compte/contexte-pension',
-        [PensionContextController::class, 'update']
-    )->name('compte.pension-context.update');
-
-    Route::middleware('password.confirm')->group(function () {
-        Route::patch(
-            '/profile',
-            [ProfileController::class, 'update']
-        )->name('profile.update');
-
-        Route::delete(
-            '/profile',
-            [ProfileController::class, 'destroy']
-        )->name('profile.destroy');
-
-        Route::post(
-            '/compte/codes-pension',
-            [PensionAffiliationController::class, 'store']
-        )->name('compte.affiliations.store');
-
-        Route::delete(
-            '/compte/codes-pension/{affiliation}',
-            [PensionAffiliationController::class, 'destroy']
-        )->name('compte.affiliations.destroy');
-
-        Route::patch(
-            '/compte/codes-pension/{affiliation}/principal',
-            [PensionAffiliationController::class, 'setPrimary']
-        )->name('compte.affiliations.set-primary');
-
-        Route::patch(
-            '/compte/codes-pension/{affiliation}/description',
-            [PensionAffiliationController::class, 'updateDescription']
-        )->name('compte.affiliations.update-description');
-
-        Route::post(
-            '/compte/mandats',
-            [PensionMandatController::class, 'store']
-        )->name('compte.mandats.store');
-    });
-
-    Route::get(
-        '/compte/codes-pension',
-        [PensionAffiliationController::class, 'index']
-    )->name('compte.affiliations.index');
-
-    Route::get(
-        '/compte/mandats',
-        [PensionMandatController::class, 'index']
-    )->name('compte.mandats.index');
-
-    Route::get(
-        '/compte/beneficiaires',
-        [BeneficiaireEspaceController::class, 'index']
-    )->name('compte.beneficiaires.index');
-
-    Route::get(
-        '/compte/beneficiaires/{beneficiaire}/contexte',
-        [PensionContextController::class, 'activate']
-    )->name('compte.beneficiaires.context');
-
-    Route::get(
-        '/compte/relations/demander',
-        [BeneficiaireRelationDemandeController::class, 'create']
-    )->name('compte.relations.create');
-
-    Route::post(
-        '/compte/relations/demander',
-        [BeneficiaireRelationDemandeController::class, 'store']
-    )->name('compte.relations.store');
+Route::prefix('mon-compte/demande-creation')->name('compte.demande.')->controller(MonDemandeCreationCompteController::class)->group(function () {
+    Route::get('/', 'show')->name('show');
+    Route::match(['put', 'patch'], '/', 'update')->name('update');
 });
 
-/*
-|--------------------------------------------------------------------------
-| Personal dashboard
-|--------------------------------------------------------------------------
-*/
+Route::middleware(['permanent.account', 'pension.context'])->group(function () {
+    Route::controller(ProfileController::class)->group(function () {
+        Route::get('/profile', 'edit')->name('profile.edit');
+        Route::patch('/profile/profile-photo', 'updateProfilePhoto')->name('profile.profile-photo.update');
+    });
 
-Route::prefix('personal')
-    ->name('personal.')
-    ->middleware('not.admin')
-    ->group(function () {
-        Route::get(
-            '/',
-            [PersonalController::class, 'index']
-        )->name('index');
+    Route::patch('/compte/contexte-pension', [PensionContextController::class, 'update'])->name('compte.pension-context.update');
 
-        Route::get(
-            '/dashboard',
-            [PersonalController::class, 'dashboard']
-        )->name('dashboard');
+    Route::middleware('password.confirm')->group(function () {
+        Route::controller(ProfileController::class)->group(function () {
+            Route::patch('/profile', 'update')->name('profile.update');
+            Route::delete('/profile', 'destroy')->name('profile.destroy');
+        });
 
-        Route::get(
-            '/requestsDashboard',
-            [PersonalController::class, 'requestsDashboard']
-        )->name('requests-dashboard');
-
-        Route::get(
-            '/dashboard-corbeille',
-            [PersonalController::class, 'requestsDashboardCorbeille']
-        )->name('requests-dashboard-corbeille');
-
-        Route::middleware('corbeille.access')
-            ->group(function () {
-                Route::get(
-                    '/corbeille',
-                    [PersonalController::class, 'corbeille']
-                )->name('cart');
-
-                Route::get(
-                    '/corbeille/folder',
-                    [PersonalController::class, 'corbeilleByFolder']
-                )->name('cart.folder');
+        Route::prefix('compte')->name('compte.')->group(function () {
+            Route::controller(PensionAffiliationController::class)->group(function () {
+                Route::post('/codes-pension', 'store')->name('affiliations.store');
+                Route::delete('/codes-pension/{affiliation}', 'destroy')->name('affiliations.destroy');
+                Route::patch('/codes-pension/{affiliation}/principal', 'setPrimary')->name('affiliations.set-primary');
+                Route::patch('/codes-pension/{affiliation}/description', 'updateDescription')->name('affiliations.update-description');
             });
 
-        Route::prefix('request')->group(function () {
-            Route::get(
-                '/{id}',
-                [PersonalController::class, 'showRequest']
-            )->name('request.show');
-
-            Route::get(
-                '/auth/{id}',
-                [
-                    PersonalController::class,
-                    'showRequestForAuthenticatedUser',
-                ]
-            )->name(
-                'request.authenticated-user-request.show'
-            );
+            Route::post('/mandats', [PensionMandatController::class, 'store'])->name('mandats.store');
         });
     });
 
-/*
-|--------------------------------------------------------------------------
-| Demandes — création
-|--------------------------------------------------------------------------
-*/
+    Route::get('/compte/codes-pension', [PensionAffiliationController::class, 'index'])->name('compte.affiliations.index');
+    Route::get('/compte/mandats', [PensionMandatController::class, 'index'])->name('compte.mandats.index');
+    Route::get('/compte/beneficiaires', [BeneficiaireEspaceController::class, 'index'])->name('compte.beneficiaires.index');
+    Route::get('/compte/beneficiaires/{beneficiaire}/contexte', [PensionContextController::class, 'activate'])->name('compte.beneficiaires.context');
 
-Route::prefix('demandes')
-    ->name('demandes.')
-    ->middleware(['not.admin', 'permanent.account', 'pension.context'])
-    ->group(function () {
+    Route::prefix('compte/relations')->name('compte.relations.')->controller(BeneficiaireRelationDemandeController::class)->group(function () {
+        Route::get('/demander', 'create')->name('create');
+        Route::post('/demander', 'store')->name('store');
+    });
+});
 
-        /*
-        |--------------------------------------------------------------------------
-        | Pensionné
-        |--------------------------------------------------------------------------
-        */
+Route::prefix('personal')->name('personal.')->middleware('not.admin')->controller(PersonalController::class)->group(function () {
+    Route::get('/', 'index')->name('index');
+    Route::get('/dashboard', 'dashboard')->name('dashboard');
+    Route::get('/requestsDashboard', 'requestsDashboard')->name('requests-dashboard');
+    Route::get('/dashboard-corbeille', 'requestsDashboardCorbeille')->name('requests-dashboard-corbeille');
 
-        Route::prefix('virements')
-            ->name('virements.')
-            ->controller(DemandeController::class)
-            ->group(function () {
-                Route::get(
-                    '/create/{demandeId?}',
-                    'createDemandeVirement'
-                )->name('create');
-
-                Route::post(
-                    '/',
-                    'storeDemandeVirement'
-                )->name('store');
-            });
-
-        Route::prefix('attestations')
-            ->name('attestations.')
-            ->controller(DemandeController::class)
-            ->group(function () {
-                Route::get(
-                    '/create/{demandeId?}',
-                    'createDemandeAttestation'
-                )->name('create');
-
-                Route::post(
-                    '/',
-                    'storeDemandeAttestation'
-                )->name('store');
-            });
-
-        Route::prefix('transfert-cheque')
-            ->name('transfert-cheque.')
-            ->controller(DemandeController::class)
-            ->group(function () {
-                Route::get(
-                    '/create/{demandeId?}',
-                    'createDemandeTransfertCheque'
-                )->name('create');
-
-                Route::post(
-                    '/',
-                    'storeDemandeTransfertCheque'
-                )->name('store');
-            });
-
-        Route::prefix('arret-paiement')
-            ->name('arret-paiement.')
-            ->controller(DemandeController::class)
-            ->group(function () {
-                Route::get(
-                    '/create/{demandeId?}',
-                    'createDemandeArretPaiement'
-                )->name('create');
-
-                Route::post(
-                    '/',
-                    'storeDemandeArretPaiement'
-                )->name('store');
-            });
-
-        Route::prefix('demande-reinsertion')
-            ->name('demande-reinsertion.')
-            ->controller(DemandeController::class)
-            ->group(function () {
-                Route::get(
-                    '/create/{demandeId?}',
-                    'createDemandeReinsertion'
-                )->name('create');
-
-                Route::post(
-                    '/',
-                    'storeDemandeReinsertion'
-                )->name('store');
-            });
-
-        Route::prefix('demande-arret-virement')
-            ->name('demande-arret-virement.')
-            ->controller(DemandeController::class)
-            ->group(function () {
-                Route::get(
-                    '/create/{demandeId?}',
-                    'createDemandeArretVirement'
-                )->name('create');
-
-                Route::post(
-                    '/',
-                    'storeDemandeArretVirement'
-                )->name('store');
-            });
-
-        Route::prefix('preuve-existence')
-            ->name('preuve-existence.')
-            ->controller(DemandeController::class)
-            ->group(function () {
-                Route::get(
-                    '/create/{demandeId?}',
-                    'createPreuveExistence'
-                )->name('create');
-
-                Route::post(
-                    '/',
-                    'storePreuveExistence'
-                )->name('store');
-            });
-
-        Route::prefix('mise-a-jour')
-            ->name('mise-a-jour.')
-            ->controller(DemandeMiseAJourController::class)
-            ->group(function () {
-                Route::get(
-                    '/create',
-                    'create'
-                )->name('create');
-
-                Route::post(
-                    '/',
-                    'store'
-                )->name('store');
-            });
-
-        Route::prefix('pension-pensionne')
-            ->name('pension-pensionne.')
-            ->controller(DemandeController::class)
-            ->group(function () {
-                Route::get(
-                    '/create/{demandeId?}',
-                    'createDemandePensionPensionne'
-                )->name('create');
-
-                Route::post(
-                    '/',
-                    'storeDemandePensionPensionne'
-                )->name('store');
-            });
-
-        /*
-        |--------------------------------------------------------------------------
-        | Fonctionnaire
-        |--------------------------------------------------------------------------
-        */
-
-        Route::prefix('demande-etat-carriere')
-            ->name('demande-etat-carriere.')
-            ->controller(DemandeController::class)
-            ->group(function () {
-                Route::get(
-                    '/create/{demandeId?}',
-                    'createDemandeEtatCarriere'
-                )->name('create');
-
-                Route::post(
-                    '/',
-                    'storeDemandeEtatCarriere'
-                )->name('store');
-            });
-
-        /*
-        |--------------------------------------------------------------------------
-        | Institution
-        |--------------------------------------------------------------------------
-        */
-
-        Route::prefix('demande-adhesion')
-            ->name('demande-adhesion.')
-            ->controller(DemandeController::class)
-            ->group(function () {
-                Route::get(
-                    '/create/{demandeId?}',
-                    'createDemandeAdhesion'
-                )->name('create');
-
-                Route::post(
-                    '/',
-                    'storeDemandeAdhesion'
-                )->name('store');
-            });
-
-        /*
-        |--------------------------------------------------------------------------
-        | Pension
-        |--------------------------------------------------------------------------
-        */
-
-        Route::get(
-            '/demande-pension',
-            [
-                DemandeController::class,
-                'showDemandesPensionPage',
-            ]
-        )->name('demande-pension.index');
-
-        Route::prefix('demande-pension-standard')
-            ->name('demande-pension-standard.')
-            ->controller(DemandeController::class)
-            ->group(function () {
-                Route::get(
-                    '/create/{demandeId?}',
-                    'createDemandePensionStandard'
-                )->name('create');
-
-                Route::post(
-                    '/',
-                    'storeDemandePensionStandard'
-                )->name('store');
-            });
-
-        Route::prefix('demande-pension-reversion')
-            ->name('demande-pension-reversion.')
-            ->controller(DemandeController::class)
-            ->group(function () {
-                Route::get(
-                    '/create/{demandeId?}',
-                    'createDemandePensionReversion'
-                )->name('create');
-
-                Route::post(
-                    '/',
-                    'storeDemandePensionReversion'
-                )->name('store');
-            });
-
-        Route::delete(
-            '/{demande}',
-            [
-                DemandeController::class,
-                'destroyDemande',
-            ]
-        )->middleware('password.confirm')->name('destroy');
+    Route::middleware('corbeille.access')->group(function () {
+        Route::get('/corbeille', 'corbeille')->name('cart');
+        Route::get('/corbeille/folder', 'corbeilleByFolder')->name('cart.folder');
     });
 
-/*
-|--------------------------------------------------------------------------
-| Demande actions
-|--------------------------------------------------------------------------
-*/
+    Route::prefix('request')->name('request.')->group(function () {
+        Route::get('/{id}', 'showRequest')->name('show');
+        Route::get('/auth/{id}', 'showRequestForAuthenticatedUser')->name('authenticated-user-request.show');
+    });
+});
 
-Route::prefix('demandes')
-    ->middleware('not.admin')
-    ->group(function () {
-
-        Route::post(
-            '/{demande}/documents',
-            [
-                DemandeDocumentController::class,
-                'store',
-            ]
-        )->name('demandedocument.store');
-
-        Route::delete(
-            '/documents/{media}',
-            [
-                DemandeDocumentController::class,
-                'destroy',
-            ]
-        )->name('demandedocument.destroy');
-
-        Route::get(
-            '/{demande}/pdf',
-            [
-                DemandePdfController::class,
-                'download',
-            ]
-        )->name('demande.pdf');
-
-        Route::get(
-            '/{demande}/print',
-            [
-                DemandePdfController::class,
-                'print',
-            ]
-        )->name('demande.print');
-
-        Route::middleware('password.confirm')->group(function () {
-            Route::post(
-                '/{demande}/annotation',
-                [
-                    DemandeManagementController::class,
-                    'annotate',
-                ]
-            )->name('demande.annotate');
-
-            Route::post(
-                '/{demande}/complement',
-                [
-                    DemandeManagementController::class,
-                    'requestComplement',
-                ]
-            )->name('demande.complement');
-
-            Route::post(
-                '/{demande}/repondre-complement',
-                [
-                    PersonalController::class,
-                    'repondreComplement',
-                ]
-            )->name('demande.repondre-complement');
-
-            Route::post(
-                '/transfert',
-                [
-                    DemandeManagementController::class,
-                    'transfererDemande',
-                ]
-            )->name('demande.transfert');
-        });
+Route::prefix('demandes')->name('demandes.')->middleware(['not.admin', 'permanent.account', 'pension.context'])->group(function () {
+    Route::prefix('virements')->name('virements.')->controller(DemandeController::class)->group(function () {
+        Route::get('/create/{demandeId?}', 'createDemandeVirement')->name('create');
+        Route::post('/', 'storeDemandeVirement')->name('store');
     });
 
-/*
-|--------------------------------------------------------------------------
-| Workflow reception
-|--------------------------------------------------------------------------
-*/
-
-Route::prefix('admin')
-    ->name('admin.')
-    ->middleware(['corbeille.access', 'password.confirm'])
-    ->group(function () {
-
-        Route::post(
-            '/interactions/{interaction}/accepter',
-            [
-                DemandeManagementController::class,
-                'accepterReception',
-            ]
-        )->name('interactions.accepter');
-
-        Route::post(
-            '/interactions/{interaction}/refuser',
-            [
-                DemandeManagementController::class,
-                'refuserReception',
-            ]
-        )->name('interactions.refuser');
-
-        Route::post(
-            '/demandes/{demande}/affecter',
-            [
-                DemandeManagementController::class,
-                'affecterServices',
-            ]
-        )->name('demandes.affecter');
-
-        Route::post(
-            '/interactions/{interaction}/repondre',
-            [
-                DemandeManagementController::class,
-                'repondreAffectation',
-            ]
-        )->name('interactions.repondre');
-
-        Route::post(
-            '/demandes/{demande}/assigner-agent',
-            [
-                DemandeManagementController::class,
-                'assignerAgent',
-            ]
-        )->name('demandes.assigner-agent');
+    Route::prefix('attestations')->name('attestations.')->controller(DemandeController::class)->group(function () {
+        Route::get('/create/{demandeId?}', 'createDemandeAttestation')->name('create');
+        Route::post('/', 'storeDemandeAttestation')->name('store');
     });
 
-/*
-|--------------------------------------------------------------------------
-| Account creation requests — Formalités
-|--------------------------------------------------------------------------
-*/
-
-Route::prefix('formalites/comptes-demandes')
-    ->name('formalites.comptes-demandes.')
-    ->middleware('role:'.User::ROLE_AGENT_FORMALITES)
-    ->group(function () {
-
-        Route::get(
-            '/',
-            [
-                DemandeCreationCompteManagementController::class,
-                'index',
-            ]
-        )->name('index');
-
-        Route::get(
-            '/{demandeCreationCompte}',
-            [
-                DemandeCreationCompteManagementController::class,
-                'show',
-            ]
-        )->name('show');
-
-        Route::get(
-            '/{demandeCreationCompte}/pieces/{media}',
-            [
-                DemandeCreationCompteManagementController::class,
-                'piece',
-            ]
-        )->name('piece');
-
-        Route::post(
-            '/{demandeCreationCompte}/accepter',
-            [
-                DemandeCreationCompteManagementController::class,
-                'accepter',
-            ]
-        )->name('accepter');
-
-        Route::post(
-            '/{demandeCreationCompte}/refuser',
-            [
-                DemandeCreationCompteManagementController::class,
-                'refuser',
-            ]
-        )->name('refuser');
+    Route::prefix('transfert-cheque')->name('transfert-cheque.')->controller(DemandeController::class)->group(function () {
+        Route::get('/create/{demandeId?}', 'createDemandeTransfertCheque')->name('create');
+        Route::post('/', 'storeDemandeTransfertCheque')->name('store');
     });
 
-Route::get(
-    '/formalites/representations',
-    [BeneficiaireRepresentationHubController::class, 'index']
-)->name('formalites.representations.index')
-    ->middleware(['role_or_permission:pension_mandats.view|beneficiaire_relations.view']);
+    Route::prefix('arret-paiement')->name('arret-paiement.')->controller(DemandeController::class)->group(function () {
+        Route::get('/create/{demandeId?}', 'createDemandeArretPaiement')->name('create');
+        Route::post('/', 'storeDemandeArretPaiement')->name('store');
+    });
 
-Route::get(
-    '/formalites/suivi',
-    [FormaliteSuiviController::class, 'index']
-)->name('formalites.suivi.index')
-    ->middleware('role:'.implode('|', FormaliteSuiviController::accessRoles()));
+    Route::prefix('demande-reinsertion')->name('demande-reinsertion.')->controller(DemandeController::class)->group(function () {
+        Route::get('/create/{demandeId?}', 'createDemandeReinsertion')->name('create');
+        Route::post('/', 'storeDemandeReinsertion')->name('store');
+    });
 
-Route::prefix('formalites/pension-mandats')
-    ->name('formalites.pension-mandats.')
-    ->middleware(['role_or_permission:pension_mandats.view'])
-    ->group(function () {
-        Route::get('/{mandat}/pieces/{media}', [BeneficiaireRepresentationPieceController::class, 'mandatPiece'])
-            ->name('piece');
+    Route::prefix('demande-arret-virement')->name('demande-arret-virement.')->controller(DemandeController::class)->group(function () {
+        Route::get('/create/{demandeId?}', 'createDemandeArretVirement')->name('create');
+        Route::post('/', 'storeDemandeArretVirement')->name('store');
+    });
+
+    Route::prefix('preuve-existence')->name('preuve-existence.')->controller(DemandeController::class)->group(function () {
+        Route::get('/create/{demandeId?}', 'createPreuveExistence')->name('create');
+        Route::post('/', 'storePreuveExistence')->name('store');
+    });
+
+    Route::prefix('mise-a-jour')->name('mise-a-jour.')->controller(DemandeMiseAJourController::class)->group(function () {
+        Route::get('/create', 'create')->name('create');
+        Route::post('/', 'store')->name('store');
+    });
+
+    Route::prefix('pension-pensionne')->name('pension-pensionne.')->controller(DemandeController::class)->group(function () {
+        Route::get('/create/{demandeId?}', 'createDemandePensionPensionne')->name('create');
+        Route::post('/', 'storeDemandePensionPensionne')->name('store');
+    });
+
+    Route::prefix('demande-etat-carriere')->name('demande-etat-carriere.')->controller(DemandeController::class)->group(function () {
+        Route::get('/create/{demandeId?}', 'createDemandeEtatCarriere')->name('create');
+        Route::post('/', 'storeDemandeEtatCarriere')->name('store');
+    });
+
+    Route::prefix('demande-adhesion')->name('demande-adhesion.')->controller(DemandeController::class)->group(function () {
+        Route::get('/create/{demandeId?}', 'createDemandeAdhesion')->name('create');
+        Route::post('/', 'storeDemandeAdhesion')->name('store');
+    });
+
+    Route::get('/demande-pension', [DemandeController::class, 'showDemandesPensionPage'])->name('demande-pension.index');
+
+    Route::prefix('demande-pension-standard')->name('demande-pension-standard.')->controller(DemandeController::class)->group(function () {
+        Route::get('/create/{demandeId?}', 'createDemandePensionStandard')->name('create');
+        Route::post('/', 'storeDemandePensionStandard')->name('store');
+    });
+
+    Route::prefix('demande-pension-reversion')->name('demande-pension-reversion.')->controller(DemandeController::class)->group(function () {
+        Route::get('/create/{demandeId?}', 'createDemandePensionReversion')->name('create');
+        Route::post('/', 'storeDemandePensionReversion')->name('store');
+    });
+
+    Route::delete('/{demande}', [DemandeController::class, 'destroyDemande'])
+        ->middleware('password.confirm')
+        ->name('destroy');
+});
+
+Route::prefix('demandes')->middleware('not.admin')->group(function () {
+    Route::post('/{demande}/documents', [DemandeDocumentController::class, 'store'])->name('demandedocument.store');
+    Route::delete('/documents/{media}', [DemandeDocumentController::class, 'destroy'])->name('demandedocument.destroy');
+    Route::get('/{demande}/pdf', [DemandePdfController::class, 'download'])->name('demande.pdf');
+    Route::get('/{demande}/print', [DemandePdfController::class, 'print'])->name('demande.print');
+
+    Route::middleware('password.confirm')->group(function () {
+        Route::post('/{demande}/annotation', [DemandeManagementController::class, 'annotate'])->name('demande.annotate');
+        Route::post('/{demande}/complement', [DemandeManagementController::class, 'requestComplement'])->name('demande.complement');
+        Route::post('/{demande}/repondre-complement', [PersonalController::class, 'repondreComplement'])->name('demande.repondre-complement');
+        Route::post('/transfert', [DemandeManagementController::class, 'transfererDemande'])->name('demande.transfert');
+    });
+});
+
+Route::prefix('admin')->name('admin.')->middleware(['corbeille.access', 'password.confirm', 'admin.include_soft_deleted'])->controller(DemandeManagementController::class)->group(function () {
+    Route::post('/interactions/{interaction}/accepter', 'accepterReception')->name('interactions.accepter');
+    Route::post('/interactions/{interaction}/refuser', 'refuserReception')->name('interactions.refuser');
+    Route::post('/demandes/{demande}/affecter', 'affecterServices')->name('demandes.affecter');
+    Route::post('/interactions/{interaction}/repondre', 'repondreAffectation')->name('interactions.repondre');
+    Route::post('/demandes/{demande}/assigner-agent', 'assignerAgent')->name('demandes.assigner-agent');
+});
+
+Route::prefix('formalites/comptes-demandes')->name('formalites.comptes-demandes.')->middleware('role:'.User::ROLE_AGENT_FORMALITES)->controller(DemandeCreationCompteManagementController::class)->group(function () {
+    Route::get('/', 'index')->name('index');
+    Route::get('/{demandeCreationCompte}', 'show')->name('show');
+    Route::get('/{demandeCreationCompte}/pieces/{media}', 'piece')->name('piece');
+    Route::post('/{demandeCreationCompte}/accepter', 'accepter')->name('accepter');
+    Route::post('/{demandeCreationCompte}/refuser', 'refuser')->name('refuser');
+});
+
+Route::prefix('formalites')->name('formalites.')->group(function () {
+    Route::get('/representations', [BeneficiaireRepresentationHubController::class, 'index'])
+        ->name('representations.index')
+        ->middleware(['role_or_permission:pension_mandats.view|beneficiaire_relations.view']);
+
+    Route::get('/suivi', [FormaliteSuiviController::class, 'index'])
+        ->name('suivi.index')
+        ->middleware('role:'.implode('|', FormaliteSuiviController::accessRoles()));
+
+    Route::prefix('pension-mandats')->name('pension-mandats.')->middleware(['role_or_permission:pension_mandats.view'])->group(function () {
+        Route::get('/{mandat}/pieces/{media}', [BeneficiaireRepresentationPieceController::class, 'mandatPiece'])->name('piece');
         Route::get('/', [PensionMandatFormalitesController::class, 'index'])->name('index');
         Route::post('/{mandat}/approve', [PensionMandatManagementController::class, 'approve'])
             ->middleware('role_or_permission:pension_mandats.approuver')
@@ -652,12 +222,8 @@ Route::prefix('formalites/pension-mandats')
             ->name('revoke');
     });
 
-Route::prefix('formalites/beneficiaire-relations')
-    ->name('formalites.beneficiaire-relations.')
-    ->middleware(['role_or_permission:admin|beneficiaire_relations.view'])
-    ->group(function () {
-        Route::get('/demandes/{demande}/pieces/{media}', [BeneficiaireRepresentationPieceController::class, 'relationPiece'])
-            ->name('piece');
+    Route::prefix('beneficiaire-relations')->name('beneficiaire-relations.')->middleware(['role_or_permission:admin|beneficiaire_relations.view'])->group(function () {
+        Route::get('/demandes/{demande}/pieces/{media}', [BeneficiaireRepresentationPieceController::class, 'relationPiece'])->name('piece');
         Route::get('/', [BeneficiaireRelationManagementController::class, 'index'])->name('index');
         Route::post('/demandes/{demande}/approve', [BeneficiaireRelationManagementController::class, 'approve'])
             ->middleware('role_or_permission:admin|beneficiaire_relations.approuver')
@@ -669,208 +235,40 @@ Route::prefix('formalites/beneficiaire-relations')
             ->middleware('role_or_permission:admin|beneficiaire_relations.revoquer')
             ->name('revoke-link');
     });
+});
 
-/*
-|--------------------------------------------------------------------------
-| Pilotage des rendez-vous
-|--------------------------------------------------------------------------
-|
-| Les agents voient les demandes selon leur accès à la corbeille.
-| Le contrôleur détermine ensuite le service responsable et
-| l'agent de rendez-vous.
-|
-*/
-
-Route::prefix('pilotage-rendez-vous')
-    ->name('rencontres.pilotage.')
-    ->middleware('corbeille.access')
-    ->group(function () {
-
-        Route::get(
-            '/',
-            [
-                DemandeRencontreController::class,
-                'index',
-            ]
-        )->name('index');
-
-        Route::get(
-            '/disponibilites',
-            [
-                RdvAgentAvailabilityController::class,
-                'edit',
-            ]
-        )->name('disponibilites.edit');
-
-        Route::post(
-            '/disponibilites',
-            [
-                RdvAgentAvailabilityController::class,
-                'update',
-            ]
-        )->name('disponibilites.update');
-
-        Route::get(
-            '/{demande}',
-            [
-                DemandeRencontreController::class,
-                'show',
-            ]
-        )->name('show');
-
-        Route::post(
-            '/{demande}/examiner',
-            [
-                DemandeRencontreController::class,
-                'examiner',
-            ]
-        )->name('examiner');
-
-        Route::post(
-            '/{demande}/attribuer',
-            [
-                DemandeRencontreController::class,
-                'attribuer',
-            ]
-        )->name('attribuer');
-
-        Route::post(
-            '/{demande}/proposer-creneau',
-            [
-                DemandeRencontreController::class,
-                'proposerCreneau',
-            ]
-        )->name('proposer-creneau');
-
-        Route::post(
-            '/{demande}/accepter',
-            [
-                DemandeRencontreController::class,
-                'accepter',
-            ]
-        )->name('accepter');
-
-        Route::post(
-            '/{demande}/refuser',
-            [
-                DemandeRencontreController::class,
-                'refuser',
-            ]
-        )->name('refuser');
-
-        Route::post(
-            '/{demande}/clore',
-            [
-                DemandeRencontreController::class,
-                'clore',
-            ]
-        )->name('clore');
-
-        Route::post(
-            '/{demande}/suite',
-            [
-                DemandeRencontreController::class,
-                'enregistrerSuite',
-            ]
-        )->name('suite');
-
-        Route::post(
-            '/{demande}/confirmer-identite',
-            [
-                DemandeRencontreController::class,
-                'confirmerIdentite',
-            ]
-        )->name('confirmer-identite');
-
-        Route::post(
-            '/{demande}/reattribuer-agent',
-            [
-                DemandeRencontreController::class,
-                'reattribuerAgent',
-            ]
-        )->name('reattribuer');
+Route::prefix('pilotage-rendez-vous')->name('rencontres.pilotage.')->middleware('corbeille.access')->group(function () {
+    Route::prefix('disponibilites')->name('disponibilites.')->controller(RdvAgentAvailabilityController::class)->group(function () {
+        Route::get('/', 'edit')->name('edit');
+        Route::post('/', 'update')->name('update');
     });
 
-/*
-|--------------------------------------------------------------------------
-| Décision finale — Direction ou admin
-|--------------------------------------------------------------------------
-*/
-
-Route::prefix('admin')
-    ->name('admin.')
-    ->middleware([
-        'auth',
-        'role:admin|directeur|assistant_directeur',
-        'password.confirm',
-    ])
-    ->group(function () {
-
-        Route::post(
-            '/demandes/{demande}/approuver',
-            [
-                DemandeManagementController::class,
-                'approuver',
-            ]
-        )->name('demandes.approuver');
-
-        Route::post(
-            '/demandes/{demande}/cloturer',
-            [
-                DemandeManagementController::class,
-                'cloturer',
-            ]
-        )->name('demandes.cloturer');
-
-        Route::post(
-            '/demandes/{demande}/rejeter',
-            [
-                DemandeManagementController::class,
-                'rejeter',
-            ]
-        )->name('demandes.rejeter');
-
-        Route::post(
-            '/demandes/{demande}/rouvrir',
-            [
-                DemandeManagementController::class,
-                'rouvrir',
-            ]
-        )->name('demandes.rouvrir');
+    Route::controller(DemandeRencontreController::class)->group(function () {
+        Route::get('/', 'index')->name('index');
+        Route::get('/{demande}', 'show')->name('show');
+        Route::post('/{demande}/examiner', 'examiner')->name('examiner');
+        Route::post('/{demande}/attribuer', 'attribuer')->name('attribuer');
+        Route::post('/{demande}/proposer-creneau', 'proposerCreneau')->name('proposer-creneau');
+        Route::post('/{demande}/accepter', 'accepter')->name('accepter');
+        Route::post('/{demande}/refuser', 'refuser')->name('refuser');
+        Route::post('/{demande}/clore', 'clore')->name('clore');
+        Route::post('/{demande}/suite', 'enregistrerSuite')->name('suite');
+        Route::post('/{demande}/confirmer-identite', 'confirmerIdentite')->name('confirmer-identite');
+        Route::post('/{demande}/reattribuer-agent', 'reattribuerAgent')->name('reattribuer');
     });
+});
 
-/*
-|--------------------------------------------------------------------------
-| Notifications
-|--------------------------------------------------------------------------
-*/
+Route::prefix('admin')->name('admin.')->middleware(['auth', 'role:admin|directeur|assistant_directeur', 'password.confirm', 'admin.include_soft_deleted'])->controller(DemandeManagementController::class)->group(function () {
+    Route::post('/demandes/{demande}/approuver', 'approuver')->name('demandes.approuver');
+    Route::post('/demandes/{demande}/cloturer', 'cloturer')->name('demandes.cloturer');
+    Route::post('/demandes/{demande}/rejeter', 'rejeter')->name('demandes.rejeter');
+    Route::post('/demandes/{demande}/rouvrir', 'rouvrir')->name('demandes.rouvrir');
+});
 
-Route::prefix('notifications')
-    ->name('notifications.')
-    ->group(function () {
-
-        Route::get(
-            '/',
-            [NotificationController::class, 'index']
-        )->name('index');
-
-        Route::post(
-            '/{id}/mark-read',
-            [NotificationController::class, 'markAsRead']
-        )->name('markAsRead');
-
-        Route::get(
-            '/{id}/open',
-            [NotificationController::class, 'open']
-        )->name('open');
-
-        Route::post(
-            '/mark-all-read',
-            [NotificationController::class, 'markAllAsRead']
-        )->name('markAllAsRead');
-
-        Route::delete(
-            '/{id}',
-            [NotificationController::class, 'destroy']
-        )->name('destroy');
-    });
+Route::prefix('notifications')->name('notifications.')->controller(NotificationController::class)->group(function () {
+    Route::get('/', 'index')->name('index');
+    Route::post('/{id}/mark-read', 'markAsRead')->name('markAsRead');
+    Route::get('/{id}/open', 'open')->name('open');
+    Route::post('/mark-all-read', 'markAllAsRead')->name('markAllAsRead');
+    Route::delete('/{id}', 'destroy')->name('destroy');
+});

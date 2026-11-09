@@ -80,4 +80,41 @@
         </select>
         @error('gender_id')<p class="text-red-500 text-xs mt-1">{{ $message }}</p>@enderror
     </div>
+    <div>
+        <label class="block text-xs font-medium text-gray-600 mb-1">Date de naissance</label>
+        <input
+            type="date"
+            name="birth_date"
+            value="{{ old('birth_date', $identityUser?->birth_date?->format('Y-m-d')) }}"
+            max="{{ now()->subDay()->format('Y-m-d') }}"
+            class="{{ $field('birth_date') }}"
+        >
+        @error('birth_date')<p class="text-red-500 text-xs mt-1">{{ $message }}</p>@enderror
+    </div>
+    <div>
+        <label class="block text-xs font-medium text-gray-600 mb-1">État civil</label>
+        <select name="civil_status_id" class="{{ $field('civil_status_id') }}">
+            <option value="">— Non renseigné —</option>
+            @foreach($civilStatuses as $civilStatus)
+                <option value="{{ $civilStatus->id }}"
+                    {{ (string) old('civil_status_id', $identityUser?->civil_status_id ?? '') === (string) $civilStatus->id ? 'selected' : '' }}>
+                    {{ ucfirst($civilStatus->name) }}
+                </option>
+            @endforeach
+        </select>
+        @error('civil_status_id')<p class="text-red-500 text-xs mt-1">{{ $message }}</p>@enderror
+    </div>
+    <div class="sm:col-span-2">
+        <label class="block text-xs font-medium text-gray-600 mb-1">Adresse</label>
+        <input
+            type="text"
+            name="address"
+            value="{{ old('address', $identityUser?->address) }}"
+            autocomplete="street-address"
+            maxlength="500"
+            class="{{ $field('address') }}"
+            placeholder="Rue, commune, département…"
+        >
+        @error('address')<p class="text-red-500 text-xs mt-1">{{ $message }}</p>@enderror
+    </div>
 </div>

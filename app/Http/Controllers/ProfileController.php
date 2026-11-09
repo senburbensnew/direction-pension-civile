@@ -117,7 +117,7 @@ class ProfileController extends Controller
 
         Auth::guard('web')->logout();
 
-        $user->delete();
+        $user->forceDelete();
 
         $request->session()->invalidate();
         $request->session()->regenerateToken();

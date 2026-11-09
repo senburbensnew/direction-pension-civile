@@ -12,8 +12,8 @@ use App\Notifications\BeneficiaireRelationRevokedNotification;
 use App\Notifications\BeneficiaireRelationSoumiseAgentNotification;
 use App\Notifications\BeneficiaireRelationSoumiseNotification;
 use Illuminate\Support\Collection;
-use Spatie\Permission\Models\Permission;
-use Spatie\Permission\Models\Role;
+use App\Models\Permission;
+use App\Models\Role;
 
 class BeneficiaireRelationNotifier
 {

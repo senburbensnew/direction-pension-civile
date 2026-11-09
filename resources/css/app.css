@@ -872,6 +872,29 @@ select option {
     }
 }
 
+/* Portail : largeur sidebar + marge contenu alignées sur data-collapsed */
+@media (min-width: 1024px) {
+    body.site-public[data-collapsed='true'] #portal-sidebar {
+        width: 4.25rem !important;
+    }
+
+    body.site-public[data-collapsed='true'] #portal-main {
+        margin-left: 4.25rem !important;
+        width: calc(100% - 4.25rem) !important;
+        max-width: calc(100% - 4.25rem) !important;
+    }
+
+    body.site-public[data-collapsed='false'] #portal-sidebar {
+        width: 15rem !important;
+    }
+
+    body.site-public[data-collapsed='false'] #portal-main {
+        margin-left: 15rem !important;
+        width: calc(100% - 15rem) !important;
+        max-width: calc(100% - 15rem) !important;
+    }
+}
+
 /* Fiche dossier agent — sobre / institutionnel (sans arrondis) */
 @layer components {
     .dossier-page .dossier-header,
@@ -1008,6 +1031,25 @@ select option {
 
     .dossier-table td {
         @apply px-5 py-4 align-top;
+    }
+
+    .dpc-users-table-load-bar {
+        @apply relative h-0.5 overflow-hidden bg-gray-100/90;
+    }
+
+    .dpc-users-table-load-bar::after {
+        content: '';
+        @apply absolute inset-y-0 w-2/5 bg-gradient-to-r from-transparent via-[#0f2340] to-transparent;
+        animation: dpc-users-table-load-slide 1.15s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+    }
+
+    @keyframes dpc-users-table-load-slide {
+        0% {
+            transform: translateX(-120%);
+        }
+        100% {
+            transform: translateX(320%);
+        }
     }
 }
 

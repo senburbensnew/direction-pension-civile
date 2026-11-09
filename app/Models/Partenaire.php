@@ -2,11 +2,18 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\IncludesTrashedInAdmin;
+
+use Illuminate\Database\Eloquent\SoftDeletes;
+
 use App\Support\PublicMedia;
 use Illuminate\Database\Eloquent\Model;
 
 class Partenaire extends Model
 {
+    use SoftDeletes;
+    use IncludesTrashedInAdmin;
+
     protected $fillable = ['name', 'logo', 'website_url', 'order', 'active'];
 
     protected $casts = ['active' => 'boolean'];

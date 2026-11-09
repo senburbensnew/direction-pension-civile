@@ -1,5 +1,8 @@
 compiled.php
 config.php
+telescope_last_log.php
+*_probe*.php
+null_offset_test.php
 down
 events.scanned.php
 maintenance.php

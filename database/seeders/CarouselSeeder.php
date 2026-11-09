@@ -11,7 +11,7 @@ class CarouselSeeder extends Seeder
     {
         $slides = [
             [
-                'title' => 'Direction de la Pension Civile',
+                'title' => '',
                 'description' => null,
                 'image' => 'cms/carousel/KEV_6804.jpg',
                 'link' => null,
@@ -19,7 +19,7 @@ class CarouselSeeder extends Seeder
                 'order' => 1,
             ],
             [
-                'title' => 'Direction de la Pension Civile',
+                'title' => '',
                 'description' => null,
                 'image' => 'cms/carousel/KEV_7157.jpg',
                 'link' => null,
@@ -27,7 +27,7 @@ class CarouselSeeder extends Seeder
                 'order' => 2,
             ],
             [
-                'title' => 'Direction de la Pension Civile',
+                'title' => '',
                 'description' => null,
                 'image' => 'cms/carousel/KEV_7055.jpg',
                 'link' => null,
@@ -35,7 +35,7 @@ class CarouselSeeder extends Seeder
                 'order' => 3,
             ],
             [
-                'title' => 'Direction de la Pension Civile',
+                'title' => '',
                 'description' => null,
                 'image' => 'cms/carousel/KEV_7043.jpg',
                 'link' => null,

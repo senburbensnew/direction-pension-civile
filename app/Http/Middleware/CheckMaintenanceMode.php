@@ -70,7 +70,6 @@ class CheckMaintenanceMode
             // Authentification (connexion admin pendant la maintenance)
             || $request->is('login')
             || $request->is('logout')
-            || $request->is('register')
             || $request->is('forgot-password')
             || $request->is('reset-password')
             || $request->is('reset-password/*')

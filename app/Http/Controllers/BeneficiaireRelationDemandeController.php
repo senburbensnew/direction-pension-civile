@@ -3,10 +3,9 @@
 namespace App\Http\Controllers;
 
 use App\Enums\BeneficiaireRelationEnum;
-use App\Rules\CodePension;
+use App\Http\Requests\StoreBeneficiaireRelationDemandeRequest;
 use App\Services\Pension\BeneficiaireRelationService;
 use Illuminate\Http\RedirectResponse;
-use Illuminate\Http\Request;
 
 class BeneficiaireRelationDemandeController extends Controller
 {
@@ -23,14 +22,9 @@ class BeneficiaireRelationDemandeController extends Controller
         return view('compte.beneficiaires.create-relation', compact('relationChoices'));
     }
 
-    public function store(Request $request): RedirectResponse
+    public function store(StoreBeneficiaireRelationDemandeRequest $request): RedirectResponse
     {
-        $validated = $request->validate([
-            'code_pension' => ['required', 'string', new CodePension],
-            'type_relation' => ['required', 'string', 'in:pere,mere,tuteur'],
-            'motif' => ['nullable', 'string', 'max:2000'],
-            'justificatif' => ['required', 'file', 'mimes:pdf,jpg,jpeg,png', 'max:5120'],
-        ]);
+        $validated = $request->validated();
 
         $type = BeneficiaireRelationEnum::from($validated['type_relation']);
 

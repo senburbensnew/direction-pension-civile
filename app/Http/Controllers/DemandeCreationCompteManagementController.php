@@ -2,17 +2,22 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\DemandeCreationCompte\AcceptDemandeCreationCompteRequest;
+use App\Http\Requests\DemandeCreationCompte\RefuseDemandeCreationCompteRequest;
 use App\Models\DemandeCreationCompte;
 use App\Models\User;
 use App\Services\AccountCreation\DemandeCreationCompteReviewService;
+use App\Support\Storage\InteractsWithFilesystemAdapter;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Storage;
+use Illuminate\Pagination\AbstractPaginator;
 use Illuminate\Validation\ValidationException;
 use Spatie\MediaLibrary\MediaCollections\Models\Media;
 use Symfony\Component\HttpFoundation\Response;
 
 class DemandeCreationCompteManagementController extends Controller
 {
+    use InteractsWithFilesystemAdapter;
+
     public function __construct(private DemandeCreationCompteReviewService $review) {}
 
     public function index(Request $request)
@@ -42,7 +47,10 @@ class DemandeCreationCompteManagementController extends Controller
             });
         }
 
-        $demandes = $query->paginate(20)->withQueryString();
+        $demandes = $query->paginate(20);
+        if ($demandes instanceof AbstractPaginator) {
+            $demandes->withQueryString();
+        }
 
         return view($this->viewName('index'), [
             'demandes' => $demandes,
@@ -77,15 +85,16 @@ class DemandeCreationCompteManagementController extends Controller
             404
         );
 
-        $disk = Storage::disk($media->disk);
+        $relativePath = $media->getPathRelativeToRoot();
+        $disk = $this->filesystemAdapter($media->disk);
 
-        abort_unless($disk->exists($media->getPathRelativeToRoot()), 404);
+        abort_unless($disk->exists($relativePath), 404);
 
         $disposition = $request->boolean('inline') ? 'inline' : 'attachment';
         $filename = str_replace('"', '', $media->file_name);
 
         return response()->file(
-            $disk->path($media->getPathRelativeToRoot()),
+            $disk->path($relativePath),
             [
                 'Content-Type' => $media->mime_type ?: 'application/octet-stream',
                 'Content-Disposition' => $disposition.'; filename="'.$filename.'"',
@@ -93,16 +102,11 @@ class DemandeCreationCompteManagementController extends Controller
         );
     }
 
-    public function accepter(Request $request, DemandeCreationCompte $demandeCreationCompte)
+    public function accepter(AcceptDemandeCreationCompteRequest $request, DemandeCreationCompte $demandeCreationCompte)
     {
         abort_unless($this->canDecide(), 403);
 
-        $validated = $request->validate([
-            'firstname' => 'nullable|string|max:255',
-            'lastname' => 'nullable|string|max:255',
-            'email' => 'nullable|email|max:255',
-            'password' => 'nullable|string|min:8|max:72',
-        ]);
+        $validated = $request->validated();
 
         try {
             $result = $this->review->accept($demandeCreationCompte, $request->user(), $validated);
@@ -117,13 +121,11 @@ class DemandeCreationCompteManagementController extends Controller
             ->with('success', "Demande acceptée. Compte de {$user->displayName()} ({$user->email}).");
     }
 
-    public function refuser(Request $request, DemandeCreationCompte $demandeCreationCompte)
+    public function refuser(RefuseDemandeCreationCompteRequest $request, DemandeCreationCompte $demandeCreationCompte)
     {
         abort_unless($this->canDecide(), 403);
 
-        $validated = $request->validate([
-            'refusal_reason' => 'required|string|min:5|max:1000',
-        ]);
+        $validated = $request->validated();
 
         try {
             $this->review->refuse($demandeCreationCompte, $request->user(), $validated['refusal_reason']);

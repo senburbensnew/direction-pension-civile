@@ -3,15 +3,14 @@
 namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Auth\ResetPasswordWithCodeRequest;
 use App\Models\User;
-use App\Rules\Telephone;
 use App\Services\PasswordResetSmsService;
 use Illuminate\Auth\Events\PasswordReset;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
-use Illuminate\Validation\Rules;
 use Illuminate\View\View;
 
 class ResetPasswordWithCodeController extends Controller
@@ -21,23 +20,8 @@ class ResetPasswordWithCodeController extends Controller
         return view('auth.reset-password-code');
     }
 
-    public function store(Request $request, PasswordResetSmsService $smsReset): RedirectResponse
+    public function store(ResetPasswordWithCodeRequest $request, PasswordResetSmsService $smsReset): RedirectResponse
     {
-        $request->validate([
-            'login' => [
-                'required',
-                'string',
-                function (string $attribute, mixed $value, \Closure $fail): void {
-                    $value = trim((string) $value);
-                    if ($value !== '' && str_starts_with($value, '+')) {
-                        (new Telephone)->validate($attribute, $value, $fail);
-                    }
-                },
-            ],
-            'code' => ['required', 'string', 'digits:6'],
-            'password' => ['required', 'confirmed', Rules\Password::defaults()],
-        ]);
-
         $user = User::findForLogin(trim((string) $request->input('login')));
 
         if (! $user || ! $smsReset->verifyCode($user, (string) $request->input('code'))) {

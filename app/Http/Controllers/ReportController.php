@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\StoreReportRequest;
 use App\Models\Report;
+use App\Support\Storage\InteractsWithFilesystemAdapter;
 use App\Support\Storage\UploadPaths;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
@@ -11,9 +12,11 @@ use Illuminate\Support\Facades\Storage;
 
 class ReportController extends Controller
 {
+    use InteractsWithFilesystemAdapter;
+
     public function __construct()
     {
-        $this->middleware('auth')->except(['index', 'show', 'download']);
+        $this->middleware('auth')->except(['index', 'show', 'download', 'view']);
         // pour les actions d'administration, tu peux utiliser middleware role:admin
     }
 
@@ -141,14 +144,26 @@ class ReportController extends Controller
             $this->authorize('view', $report);
         }
 
-        $disk = Storage::disk(UploadPaths::publicDisk());
         $path = $report->file_path;
+        $disk = $this->publicDiskAdapter();
 
-        if (! $disk->exists($path)) {
-            abort(404);
-        }
+        abort_unless($disk->exists($path), 404);
 
         return $disk->download($path, $report->file_name);
+    }
+
+    public function view(Report $report)
+    {
+        if ($report->status === 'draft') {
+            $this->authorize('view', $report);
+        }
+
+        $path = $report->file_path;
+        $disk = $this->publicDiskAdapter();
+
+        abort_unless($disk->exists($path), 404);
+
+        return $disk->response($path);
     }
 
     // basculer published / draft — action rapide

@@ -7,10 +7,6 @@ use App\Models\DemandeCreationCompteHistory;
 use App\Models\User;
 use App\Services\Pension\BeneficiaireProvisioningService;
 use App\Services\Pension\PensionMandatService;
-use App\Rules\CodePension;
-use App\Rules\Nif;
-use App\Rules\Ninu;
-use App\Rules\Telephone;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 
@@ -111,18 +107,4 @@ class DemandeCreationCompteOwnerUpdateService
         }
     }
 
-    /** @return array<string, mixed> */
-    public static function validationRules(): array
-    {
-        return [
-            'firstname' => 'nullable|string|max:255',
-            'lastname' => 'nullable|string|max:255',
-            'email' => 'nullable|email|max:255',
-            'telephone' => ['required', 'string', new Telephone],
-            'adresse' => 'required|string|max:500',
-            'nif' => ['nullable', 'string', new Nif],
-            'ninu' => ['nullable', 'string', new Ninu],
-            'pension_code' => ['nullable', 'string', new CodePension],
-        ];
-    }
 }

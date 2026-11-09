@@ -2,11 +2,18 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\IncludesTrashedInAdmin;
+
+use Illuminate\Database\Eloquent\SoftDeletes;
+
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class AnneeFiscale extends Model
 {
+    use SoftDeletes;
+    use IncludesTrashedInAdmin;
+
     protected $table = 'annees_fiscales';
     
     protected $fillable = [

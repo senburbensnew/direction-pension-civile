@@ -39,10 +39,10 @@
                                 {{ $fromName ? "{$fromName} " : '' }}&lt;{{ $fromAddress ?? '—' }}&gt;
                             </dd>
                         </div>
-                        @if($mailer === 'smtp' && $smtpHost)
+                        @if(in_array($mailer, ['smtp', 'mailpit'], true) && $smtpHost)
                             <div>
                                 <dt class="text-xs font-medium text-gray-500 uppercase tracking-wide">Serveur SMTP</dt>
-                                <dd class="mt-0.5">{{ $smtpHost }}</dd>
+                                <dd class="mt-0.5">{{ $smtpHost }}@if($mailer === 'mailpit' && !empty($mailpitUrl)) <span class="text-gray-500">(Mailpit)</span>@endif</dd>
                             </div>
                         @endif
                     </dl>
@@ -50,6 +50,18 @@
                         <p class="text-amber-800 bg-amber-50 border border-amber-100 rounded-lg px-3 py-2 text-xs leading-relaxed">
                             Le driver <strong>log</strong> n’envoie pas de vrai e-mail : consultez
                             <code class="text-[11px]">storage/logs/laravel.log</code>.
+                        </p>
+                    @endif
+                    @if($mailer === 'mail')
+                        <p class="text-amber-800 bg-amber-50 border border-amber-100 rounded-lg px-3 py-2 text-xs leading-relaxed">
+                            En local, le driver <strong>mail</strong> n’envoie pas de vrai e-mail : consultez
+                            <code class="text-[11px]">storage/logs/mail-dev.log</code>.
+                        </p>
+                    @endif
+                    @if($mailer === 'mailpit' && !empty($mailpitUrl))
+                        <p class="text-amber-800 bg-amber-50 border border-amber-100 rounded-lg px-3 py-2 text-xs leading-relaxed">
+                            Les messages sont piégés dans <strong>Mailpit</strong>, pas envoyés sur Internet :
+                            <a href="{{ $mailpitUrl }}" target="_blank" rel="noopener noreferrer" class="underline font-medium">{{ $mailpitUrl }}</a>
                         </p>
                     @endif
                 </div>

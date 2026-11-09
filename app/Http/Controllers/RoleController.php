@@ -2,9 +2,10 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Http\Request;
-use Spatie\Permission\Models\Permission;
-use Spatie\Permission\Models\Role;
+use App\Http\Requests\Admin\StoreRoleRequest;
+use App\Http\Requests\Admin\UpdateRoleRequest;
+use App\Models\Permission;
+use App\Models\Role;
 use Spatie\Permission\PermissionRegistrar;
 
 class RoleController extends Controller
@@ -34,19 +35,9 @@ class RoleController extends Controller
     /**
      * Enregistrer un rôle
      */
-    public function store(Request $request)
+    public function store(StoreRoleRequest $request)
     {
-        $validated = $request->validate([
-            'name' => [
-                'required',
-                'string',
-                'regex:/^[a-z][a-z0-9_]*$/',
-                'unique:roles,name',
-            ],
-            'description' => ['nullable', 'string', 'max:2000'],
-            'permissions' => ['nullable', 'array'],
-            'permissions.*' => ['string', 'exists:permissions,name'],
-        ]);
+        $validated = $request->validated();
 
         $role = Role::create([
             'name' => strtolower(trim($validated['name'])),
@@ -66,19 +57,9 @@ class RoleController extends Controller
     /**
      * Mettre à jour le rôle
      */
-    public function update(Request $request, Role $role)
+    public function update(UpdateRoleRequest $request, Role $role)
     {
-        $validated = $request->validate([
-            'name' => [
-                'required',
-                'string',
-                'regex:/^[a-z][a-z0-9_]*$/',
-                'unique:roles,name,'.$role->id,
-            ],
-            'description' => ['nullable', 'string', 'max:2000'],
-            'permissions' => ['nullable', 'array'],
-            'permissions.*' => ['string', 'exists:permissions,name'],
-        ]);
+        $validated = $request->validated();
 
         $role->update([
             'name' => strtolower(trim($validated['name'])),

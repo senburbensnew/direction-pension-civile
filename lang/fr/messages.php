@@ -10,6 +10,12 @@ return [
     'format_hint_telephone' => 'Format international avec indicatif (ex. +50938123456).',
     'telephone_invalid_format' => 'Le numéro de téléphone doit être au format international avec indicatif pays (ex. +50938123456, +33612345678 ou +14161234567).',
     'format_hint_nif' => '000-000-000-0.',
+    'nif_invalid_format' => 'Le NIF doit être au format 000-000-000-0.',
+    'format_hint_ninu' => '10 chiffres, sans tiret.',
+    'ninu_invalid_format' => 'Le NINU doit comporter 10 chiffres, sans tiret.',
+    'admin_user_username_format' => 'Lettres, chiffres, points, tirets et underscores uniquement (3 à 50 caractères).',
+    'admin_user_password_hint' => 'Au moins 8 caractères.',
+    'admin_user_password_mismatch' => 'Les mots de passe ne correspondent pas.',
     'format_hint_pension_code' => '7-XXXXX (ex. 7-JM183) ou 8-XXXXX (ex. 8-34321).',
     'pension_code_invalid_format' => 'Le code pension doit être au format 7-XXXXX (5 caractères alphanumériques, ex. 7-JM183) ou 8-XXXXX (5 chiffres, ex. 8-34321).',
     'pension_context_title' => 'Contexte de travail',
@@ -43,7 +49,6 @@ return [
     'login_two_factor_code_resent' => 'Un nouveau code a été envoyé.',
     'login_two_factor_resend_throttled' => 'Veuillez patienter avant de demander un nouveau code.',
     'send_reset_link' => 'Envoyer le lien de réinitialisation',
-    'register' => "S'inscrire",
     'request_account' => 'Demander un compte',
 
     // Navbar
@@ -205,7 +210,7 @@ return [
     'created_on' => 'Créé le',
 
     // Contact info bar
-    'opening_hours' => "Horaires d'ouverture : Lun - Ven 8.00 am - 4.00 pm",
+    'opening_hours' => 'Lun–Ven : 8h00 - 16h00',
     'call_on' => 'Appeler sur : :phone',
     'service_phones' => 'Numéros des services',
     'service_phones_intro' => 'Voici les numéros de téléphone des différents services de la DPC.',

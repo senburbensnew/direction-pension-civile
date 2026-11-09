@@ -20,11 +20,7 @@ class SetLocale
         }
 
         App::setLocale($locale);
-
-        // Sync session if not set
-        if (!Session::has('locale')) {
-            Session::put('locale', $locale);
-        }
+        Session::put('locale', $locale);
 
         return $next($request);
     }

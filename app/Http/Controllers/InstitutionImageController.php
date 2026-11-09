@@ -3,9 +3,11 @@
 namespace App\Http\Controllers;
 
 use App\Http\Controllers\Concerns\StoresOptimizedImages;
+use App\Http\Requests\Admin\ReorderInstitutionImagesRequest;
+use App\Http\Requests\Admin\StoreInstitutionImageRequest;
+use App\Http\Requests\Admin\UpdateInstitutionImageRequest;
 use App\Models\InstitutionImage;
 use App\Support\Storage\UploadPaths;
-use Illuminate\Http\Request;
 
 class InstitutionImageController extends Controller
 {
@@ -23,15 +25,8 @@ class InstitutionImageController extends Controller
         return view('admin.institution-images.create');
     }
 
-    public function store(Request $request)
+    public function store(StoreInstitutionImageRequest $request)
     {
-        $request->validate([
-            'title' => 'nullable|string|max:255',
-            'image' => 'required|image|mimes:jpeg,png,jpg,gif,webp|max:4096',
-            'active' => 'boolean',
-            'order' => 'nullable|integer|min:0',
-        ]);
-
         $path = $this->storeOptimizedImage($request->file('image'), UploadPaths::cms('institution'), 'institution');
 
         InstitutionImage::create([
@@ -50,15 +45,8 @@ class InstitutionImageController extends Controller
         return view('admin.institution-images.edit', compact('institutionImage'));
     }
 
-    public function update(Request $request, InstitutionImage $institutionImage)
+    public function update(UpdateInstitutionImageRequest $request, InstitutionImage $institutionImage)
     {
-        $request->validate([
-            'title' => 'nullable|string|max:255',
-            'image' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:4096',
-            'active' => 'boolean',
-            'order' => 'nullable|integer|min:0',
-        ]);
-
         if ($request->hasFile('image')) {
             $this->deleteOptimizedImage($institutionImage->image);
             $institutionImage->image = $this->storeOptimizedImage($request->file('image'), UploadPaths::cms('institution'), 'institution');
@@ -74,11 +62,9 @@ class InstitutionImageController extends Controller
             ->with('success', 'Image mise a jour.');
     }
 
-    public function reorder(Request $request)
+    public function reorder(ReorderInstitutionImagesRequest $request)
     {
-        $request->validate(['order' => 'required|array', 'order.*' => 'integer|exists:institution_images,id']);
-
-        foreach ($request->order as $position => $id) {
+        foreach ($request->validated('order') as $position => $id) {
             InstitutionImage::where('id', $id)->update(['order' => $position + 1]);
         }
 

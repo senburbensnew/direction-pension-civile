@@ -8,7 +8,7 @@ use App\Models\User;
 use App\Notifications\PensionMandatSoumisAgentNotification;
 use App\Notifications\PensionMandatSoumisNotification;
 use Illuminate\Support\Collection;
-use Spatie\Permission\Models\Role;
+use App\Models\Role;
 
 class PensionMandatNotifier
 {

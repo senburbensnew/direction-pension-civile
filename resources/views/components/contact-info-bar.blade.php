@@ -6,6 +6,9 @@
         .' '.$now->format('d').' '
         .$months[$now->month - 1]
         .' '.$now->format('Y, H:i:s');
+    $contactEmail = trim((string) (\Illuminate\Support\Facades\DB::table('parameters')
+        ->where('name', 'contact_email')
+        ->value('value') ?? 'dpc.info@mef.gouv.ht'));
     $servicePhones = config('contact.service_phones', []);
     $opensUp = $borderType === 'top';
 @endphp
@@ -22,10 +25,10 @@
 
             <span class="hidden 2xl:inline opacity-50" aria-hidden="true">|</span>
 
-            <a href="mailto:dpc.info@mef.gouv.ht"
+            <a href="mailto:{{ $contactEmail }}"
                class="inline-flex items-center justify-center gap-1.5 whitespace-nowrap hover:text-orange-400 transition-colors">
                 <i class="fas fa-envelope text-xs" aria-hidden="true"></i>
-                <span>dpc.info@mef.gouv.ht</span>
+                <span>{{ $contactEmail }}</span>
             </a>
 
             <span class="hidden 2xl:inline opacity-50" aria-hidden="true">|</span>

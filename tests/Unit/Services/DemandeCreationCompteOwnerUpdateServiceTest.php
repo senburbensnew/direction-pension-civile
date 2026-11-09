@@ -147,7 +147,7 @@ class DemandeCreationCompteOwnerUpdateServiceTest extends TestCase
     /** @test */
     public function validation_rules_expose_expected_fields(): void
     {
-        $rules = DemandeCreationCompteOwnerUpdateService::validationRules();
+        $rules = (new \App\Http\Requests\DemandeCreationCompte\UpdateMonDemandeCreationCompteRequest)->rules();
 
         $this->assertArrayHasKey('telephone', $rules);
         $this->assertArrayHasKey('adresse', $rules);

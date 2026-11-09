@@ -13,7 +13,16 @@ use App\Models\DirectionDepartementale;
 use App\Models\Formalite;
 use App\Models\Service;
 use App\Models\User;
-use App\Rules\Telephone;
+use App\Http\Requests\DemandeRencontre\AnnulerDemandeRencontreRequest;
+use App\Http\Requests\DemandeRencontre\AttribuerDemandeRencontreRequest;
+use App\Http\Requests\DemandeRencontre\CloreDemandeRencontreRequest;
+use App\Http\Requests\DemandeRencontre\EnregistrerFormaliteDemandeRencontreRequest;
+use App\Http\Requests\DemandeRencontre\EnregistrerSuiteDemandeRencontreRequest;
+use App\Http\Requests\DemandeRencontre\ProposerCreneauDemandeRencontreRequest;
+use App\Http\Requests\DemandeRencontre\ReattribuerAgentDemandeRencontreRequest;
+use App\Http\Requests\DemandeRencontre\RefuserDemandeRencontreRequest;
+use App\Http\Requests\DemandeRencontre\StoreDemandeRencontreRequest;
+use App\Http\Requests\DemandeRencontre\UploadDemandeRencontreDocumentsRequest;
 use App\Services\DemandeWorkflowService;
 use App\Services\RencontreAvailabilityService;
 use App\Services\RencontreMotifService;
@@ -25,6 +34,7 @@ use Database\Seeders\RolesAndPermissionsSeeder;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Pagination\AbstractPaginator;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 
@@ -47,7 +57,7 @@ class DemandeRencontreController extends Controller
     {
         $user = $request->user();
 
-        abort_unless($user, 401);
+        abort_if($user === null, 401);
 
         abort_unless(
             $this->motifsService->userCanBookPortalRencontre($user),
@@ -71,6 +81,48 @@ class DemandeRencontreController extends Controller
         );
     }
 
+    public function bookingReservedSlots(Request $request): JsonResponse
+    {
+        $user = $request->user();
+
+        abort_if($user === null, 401);
+
+        abort_unless(
+            $this->motifsService->userCanBookPortalRencontre($user),
+            403
+        );
+
+        $userMotifs = $this->motifsService->motifsForUser($user);
+
+        $motifServiceCodes = array_intersect_key(
+            $this->motifsService->motifServiceCodes(),
+            $userMotifs
+        );
+
+        return response()->json(
+            $this->availability->unavailableSlotsForServiceCodes(
+                array_values(array_unique($motifServiceCodes))
+            )
+        );
+    }
+
+    public function dossierReservedSlots(Request $request, Demande $demande): JsonResponse
+    {
+        $this->authorizeRdvAgent($demande, $request->user());
+
+        $motifKey = (string) ($demande->data['motif_key'] ?? '');
+        $motifServiceCodes = $this->motifsService->motifServiceCodes();
+        $serviceCode = (string) (
+            $demande->data['service_code']
+            ?? $motifServiceCodes[$motifKey]
+            ?? Service::FORMALITE
+        );
+
+        return response()->json(
+            $this->availability->unavailableSlotsForServiceCodes([$serviceCode])
+        );
+    }
+
     private function bookingViewData(Request $request): array
     {
         $user = $request->user();
@@ -82,8 +134,17 @@ class DemandeRencontreController extends Controller
             $userMotifs
         );
 
+        $motifServiceCodeList = array_values(array_unique($motifServiceCodes));
+
+        $servicesByCode = Service::query()
+            ->whereIn('code', $motifServiceCodeList)
+            ->get()
+            ->keyBy('code');
+
         return [
-            'reservedSlotsByService' => $this->availability->unavailableSlotsByServiceCode(),
+            'reservedSlotsByService' => [],
+
+            'reservedSlotsFetchUrl' => route('demandes.rencontre.booking-reserved-slots'),
 
             'holidayEvents' => $this->availability->holidayEvents(
                 now()->startOfDay(),
@@ -134,19 +195,21 @@ class DemandeRencontreController extends Controller
                 $this->availability->calendarDisplayWindow()
             ),
 
-            'bookingAgentsReadyByServiceCode' => Service::query()
-                ->orderBy('id')
-                ->get()
-                ->mapWithKeys(fn (Service $service) => [
-                    $service->code => $this->availability->hasBookingAgents($service),
+            'bookingAgentsReadyByServiceCode' => collect($motifServiceCodeList)
+                ->mapWithKeys(fn (string $code) => [
+                    $code => $servicesByCode->has($code)
+                        && $this->availability->hasBookingAgents($servicesByCode->get($code)),
                 ])
                 ->all(),
 
             'motifPrepareHints' => collect(
                 config('rencontre.motifs', [])
-            )->mapWithKeys(fn ($cfg, $key) => [
-                $key => $cfg['prepare'] ?? [],
-            ])->all(),
+            )
+                ->only(array_keys($userMotifs))
+                ->mapWithKeys(fn ($cfg, $key) => [
+                    $key => $cfg['prepare'] ?? [],
+                ])
+                ->all(),
 
             'supplementConfig' => config('rencontre.supplement', []),
 
@@ -230,9 +293,7 @@ class DemandeRencontreController extends Controller
             'prenom' => $prenom,
             'nom' => $nom,
             'email' => $user->email ?? '',
-            'telephone' => $user->telephone
-                ?? $user->phone
-                ?? '',
+            'telephone' => $user->storedPhone() ?? '',
         ];
     }
 
@@ -242,68 +303,11 @@ class DemandeRencontreController extends Controller
     |--------------------------------------------------------------------------
     */
 
-    public function store(Request $request)
+    public function store(StoreDemandeRencontreRequest $request)
     {
         $user = $request->user();
 
-        abort_unless($user, 401);
-
-        abort_unless(
-            $this->motifsService->userCanBookPortalRencontre($user),
-            403,
-            'Accès réservé aux pensionnés, mandataires et représentants légaux.'
-        );
-
-        if ($this->activeAppointment($user)) {
-            throw ValidationException::withMessages([
-                'date_souhaitee' => 'Un rendez-vous est déjà en cours. Annulez-le avant d’en prendre un autre.',
-            ]);
-        }
-
-        $motifKey = (string) $request->input('motif', '');
-
-        $validated = $request->validate(array_merge([
-            'motif' => $this->motifsService->motifValidationRuleForUser($user),
-
-            'modalite' => [
-                'required',
-                'in:physique,visio',
-            ],
-
-            'date_souhaitee' => [
-                'required',
-                'date',
-                'after_or_equal:today',
-            ],
-
-            'heure_souhaitee' => [
-                'required',
-                'date_format:H:i',
-            ],
-
-            'lieu_rdv' => [
-                'required_if:modalite,physique',
-                'nullable',
-                'string',
-                'max:255',
-            ],
-
-            'telephone' => [
-                'nullable',
-                new Telephone,
-            ],
-
-            'message' => [
-                'nullable',
-                'string',
-                'max:5000',
-            ],
-
-            'confirmation_lu_accepte' => [
-                'required',
-                'accepted',
-            ],
-        ], $this->motifsService->documentValidationRules($motifKey, $user)));
+        $validated = $request->validated();
 
         if (! $this->availability->isBookableDate(
             $validated['date_souhaitee']
@@ -423,9 +427,7 @@ class DemandeRencontreController extends Controller
                     ),
 
                     'telephone' => $validated['telephone']
-                        ?? $user->telephone
-                        ?? $user->phone
-                        ?? null,
+                        ?? $user->storedPhone(),
 
                     'message' => $validated['message'] ?? null,
 
@@ -482,6 +484,8 @@ class DemandeRencontreController extends Controller
         $modalite = (string) ($data['modalite'] ?? '');
         $isPhysique = $modalite === 'physique';
 
+        $this->availability->forgetUnavailableSlotsCache($service);
+
         return redirect()
             ->route('demandes.rencontre.create')
             ->with(
@@ -509,7 +513,7 @@ class DemandeRencontreController extends Controller
     */
 
     public function uploadDocuments(
-        Request $request,
+        UploadDemandeRencontreDocumentsRequest $request,
         Demande $demande
     ) {
         abort_unless($demande->isRencontre(), 404);
@@ -524,10 +528,6 @@ class DemandeRencontreController extends Controller
         $motifKey = (string) ($demande->data['motif_key'] ?? '');
 
         abort_if($motifKey === '', 422, 'Motif du rendez-vous introuvable.');
-
-        $validated = $request->validate(
-            $this->motifsService->postSubmissionDocumentValidationRules($demande)
-        );
 
         $uploadedDocs = [];
 
@@ -569,7 +569,7 @@ class DemandeRencontreController extends Controller
     */
 
     public function annuler(
-        Request $request,
+        AnnulerDemandeRencontreRequest $request,
         Demande $demande
     ) {
         abort_unless(
@@ -584,19 +584,21 @@ class DemandeRencontreController extends Controller
             403
         );
 
-        $validated = $request->validate([
-            'motif' => [
-                'nullable',
-                'string',
-                'max:1000',
-            ],
-        ]);
+        $validated = $request->validated();
 
         $this->rdvWorkflow->annuler(
             $demande,
             $user,
             $validated['motif'] ?? null
         );
+
+        $serviceId = (int) (($demande->data ?? [])['service_id'] ?? 0);
+        if ($serviceId > 0) {
+            $service = Service::query()->find($serviceId);
+            if ($service) {
+                $this->availability->forgetUnavailableSlotsCache($service);
+            }
+        }
 
         return back()->with(
             'success',
@@ -766,7 +768,7 @@ class DemandeRencontreController extends Controller
     }
 
     public function enregistrerFormalite(
-        Request $request,
+        EnregistrerFormaliteDemandeRencontreRequest $request,
         Demande $demande
     ) {
         $this->assertFormaliteAccessible($demande, $request->user());
@@ -788,18 +790,7 @@ class DemandeRencontreController extends Controller
 
         $this->assertFormaliteEnregistrable($demande);
 
-        $validated = $request->validate([
-            'annee_fiscale_id' => [
-                'required',
-                'integer',
-                'exists:annees_fiscales,id',
-            ],
-            'commentaire' => [
-                'nullable',
-                'string',
-                'max:2000',
-            ],
-        ]);
+        $validated = $request->validated();
 
         $owner = $demande->user ?? User::find($demande->created_by);
         $service = $demande->service;
@@ -941,16 +932,17 @@ class DemandeRencontreController extends Controller
 
         $this->scopePilotageListForUser($query, $user);
 
-        $demandes = $query
-            ->paginate(20)
-            ->withQueryString();
+        $demandes = $query->paginate(20);
+        if ($demandes instanceof AbstractPaginator) {
+            $demandes->withQueryString();
 
-        $align = app(RencontreStatutAlignmentService::class);
-        $demandes->setCollection(
-            $demandes->getCollection()->map(
-                fn (Demande $demande) => $align->alignAfterFormalite($demande, $user)
-            )
-        );
+            $align = app(RencontreStatutAlignmentService::class);
+            $demandes->setCollection(
+                $demandes->getCollection()->map(
+                    fn (Demande $demande) => $align->alignAfterFormalite($demande, $user)
+                )
+            );
+        }
 
         $appelsVeille = collect();
         if ($user?->hasRole(User::ROLE_AGENT_RDV)) {
@@ -1316,7 +1308,7 @@ class DemandeRencontreController extends Controller
     */
 
     public function attribuer(
-        Request $request,
+        AttribuerDemandeRencontreRequest $request,
         Demande $demande
     ) {
         $this->authorizeRdvAgent(
@@ -1326,13 +1318,7 @@ class DemandeRencontreController extends Controller
 
         $this->assertNotTerminal($demande);
 
-        $validated = $request->validate([
-            'commentaire' => [
-                'nullable',
-                'string',
-                'max:2000',
-            ],
-        ]);
+        $validated = $request->validated();
 
         $this->rdvWorkflow->attribuer(
             $demande,
@@ -1359,7 +1345,7 @@ class DemandeRencontreController extends Controller
     */
 
     public function proposerCreneau(
-        Request $request,
+        ProposerCreneauDemandeRencontreRequest $request,
         Demande $demande
     ) {
         $this->authorizeRdvAgent(
@@ -1369,33 +1355,7 @@ class DemandeRencontreController extends Controller
 
         $this->assertNotTerminal($demande);
 
-        $validated = $request->validate([
-            'date_souhaitee' => [
-                'required',
-                'date',
-            ],
-
-            'heure_souhaitee' => [
-                'required',
-                'date_format:H:i',
-            ],
-
-            'agent_id' => [
-                'nullable',
-                'integer',
-            ],
-
-            'lieu_rdv' => [
-                'nullable',
-                'string',
-                'max:255',
-            ],
-
-            'report' => [
-                'nullable',
-                'boolean',
-            ],
-        ]);
+        $validated = $request->validated();
 
         $service = $this->responsibleServiceForDemande(
             $demande
@@ -1520,7 +1480,7 @@ class DemandeRencontreController extends Controller
     */
 
     public function refuser(
-        Request $request,
+        RefuserDemandeRencontreRequest $request,
         Demande $demande
     ) {
         $user = $request->user();
@@ -1541,18 +1501,7 @@ class DemandeRencontreController extends Controller
 
         $this->assertNotTerminal($demande);
 
-        $request->merge([
-            'commentaire' => $request->input('commentaire')
-                ?: $request->input('motif'),
-        ]);
-
-        $validated = $request->validate([
-            'commentaire' => [
-                'required',
-                'string',
-                'max:2000',
-            ],
-        ]);
+        $validated = $request->validated();
 
         $this->rdvWorkflow->apply(
             $demande,
@@ -1593,7 +1542,7 @@ class DemandeRencontreController extends Controller
     */
 
     public function clore(
-        Request $request,
+        CloreDemandeRencontreRequest $request,
         Demande $demande
     ) {
         $this->authorizeRdvAgent(
@@ -1603,18 +1552,7 @@ class DemandeRencontreController extends Controller
 
         $this->assertNotTerminal($demande);
 
-        $validated = $request->validate([
-            'statut' => [
-                'required',
-                'in:realise,non_honore',
-            ],
-
-            'commentaire' => [
-                'nullable',
-                'string',
-                'max:2000',
-            ],
-        ]);
+        $validated = $request->validated();
 
         $statut = RencontreStatutEnum::from(
             $validated['statut']
@@ -1650,7 +1588,7 @@ class DemandeRencontreController extends Controller
     */
 
     public function reattribuerAgent(
-        Request $request,
+        ReattribuerAgentDemandeRencontreRequest $request,
         Demande $demande
     ) {
         abort_unless(
@@ -1669,19 +1607,7 @@ class DemandeRencontreController extends Controller
 
         $service = $this->responsibleServiceForDemande($demande);
 
-        $validated = $request->validate([
-            'agent_id' => [
-                'required',
-                'integer',
-                'exists:users,id',
-            ],
-
-            'commentaire' => [
-                'nullable',
-                'string',
-                'max:2000',
-            ],
-        ]);
+        $validated = $request->validated();
 
         $agent = User::findOrFail($validated['agent_id']);
 
@@ -1751,7 +1677,7 @@ class DemandeRencontreController extends Controller
     */
 
     public function enregistrerSuite(
-        Request $request,
+        EnregistrerSuiteDemandeRencontreRequest $request,
         Demande $demande
     ) {
         $this->authorizeRdvAgent(
@@ -1759,13 +1685,7 @@ class DemandeRencontreController extends Controller
             $request->user()
         );
 
-        $validated = $request->validate([
-            'suite' => [
-                'required',
-                'string',
-                'max:5000',
-            ],
-        ]);
+        $validated = $request->validated();
 
         $this->rdvWorkflow->apply(
             $demande,

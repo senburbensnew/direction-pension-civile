@@ -13,7 +13,7 @@ return [
     |
     */
 
-    'default' => env('MAIL_MAILER', 'smtp'),
+    'default' => env('MAIL_MAILER', env('APP_ENV') === 'local' ? 'mailpit' : 'smtp'),
 
     /*
     |--------------------------------------------------------------------------
@@ -75,6 +75,28 @@ return [
             'channel' => env('MAIL_LOG_CHANNEL'),
         ],
 
+        /*
+        | Mailpit (local) : piège les e-mails — UI sur MAILPIT_URL (défaut :8025).
+        */
+        'mailpit' => [
+            'transport' => 'smtp',
+            'host' => env('MAILPIT_HOST', '127.0.0.1'),
+            'port' => env('MAILPIT_PORT', 1025),
+            'encryption' => null,
+            'username' => null,
+            'password' => null,
+            'timeout' => null,
+            'local_domain' => env('MAIL_EHLO_DOMAIN'),
+        ],
+
+        /*
+        | Alternative local : storage/logs/mail-dev.log (MAIL_MAILER=mail).
+        */
+        'mail' => [
+            'transport' => 'log',
+            'channel' => 'dev_mail',
+        ],
+
         'array' => [
             'transport' => 'array',
         ],
@@ -111,6 +133,14 @@ return [
         'address' => env('MAIL_FROM_ADDRESS', 'hello@example.com'),
         'name' => env('MAIL_FROM_NAME', 'Example'),
     ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Contact Form Inbox
+    |--------------------------------------------------------------------------
+    */
+
+    'contact_address' => env('CONTACT_EMAIL', env('MAIL_FROM_ADDRESS', 'hello@example.com')),
 
     /*
     |--------------------------------------------------------------------------

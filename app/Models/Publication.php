@@ -2,6 +2,10 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\IncludesTrashedInAdmin;
+
+use Illuminate\Database\Eloquent\SoftDeletes;
+
 use App\Support\Storage\CmsPathResolver;
 use App\Support\Storage\UploadPaths;
 use Illuminate\Database\Eloquent\Model;
@@ -9,6 +13,9 @@ use Illuminate\Support\Facades\Storage;
 
 class Publication extends Model
 {
+    use SoftDeletes;
+    use IncludesTrashedInAdmin;
+
     protected $fillable = ['title', 'description', 'type', 'file_path', 'url', 'order_column', 'published'];
 
     protected $casts = ['published' => 'boolean'];

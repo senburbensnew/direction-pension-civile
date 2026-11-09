@@ -53,7 +53,7 @@
         ['label' => 'home.tel_assurance', 'tel' => '+50947912006', 'display' => '+(509) 4791-2006'],
     ];
 
-    $homeDirections = \App\Models\DirectionDepartementale::ordered()->get();
+    $homeDirections = \App\Models\DirectionDepartementale::orderedList();
 
     $accueilCalendar = [
         ['day' => 'home.accueil_day_lundi', 'letters' => 'A, B, C, D, E'],

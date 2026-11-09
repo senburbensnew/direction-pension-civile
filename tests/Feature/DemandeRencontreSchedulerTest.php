@@ -138,7 +138,6 @@ class DemandeRencontreSchedulerTest extends TestCase
             ->assertDontSee('Finalisation de la création de compte')
             ->assertSee('Service responsable')
             ->assertSee('Formalités')
-            ->assertSee('Recommandé')
             ->assertSee('jours fériés')
             ->assertSee('id="dpc-rdv-scheduler"', false)
             ->assertSee('name="date_souhaitee"', false)
@@ -189,8 +188,15 @@ class DemandeRencontreSchedulerTest extends TestCase
         $this->actingAs($user)
             ->get(route('demandes.rencontre.create'))
             ->assertOk()
-            ->assertSee('data-reserved-by-service', false)
-            ->assertSee($takenDate, false);
+            ->assertSee('data-reserved-slots-url', false);
+
+        $this->actingAs($user)
+            ->getJson(route('demandes.rencontre.booking-reserved-slots'))
+            ->assertOk()
+            ->assertJsonPath(
+                'service_accueil_formalites',
+                fn ($slots) => is_array($slots) && in_array("{$takenDate} 14:00", $slots, true)
+            );
     }
 
     public function test_store_rejects_an_already_reserved_slot_for_the_same_agent(): void
@@ -514,5 +520,39 @@ class DemandeRencontreSchedulerTest extends TestCase
             ]))
             ->assertRedirect(route('demandes.rencontre.create'))
             ->assertSessionHas('success');
+    }
+
+    public function test_agent_dossier_exposes_async_reserved_slots_for_report_scheduler(): void
+    {
+        $this->seedWorkflowSteps();
+        $owner = $this->makePensionne();
+        $agent = $this->makeFormalitesAgent();
+        $service = $this->formalitesService();
+
+        $demande = $this->createRencontreDemande($owner, [
+            'date_souhaitee' => now()->next('Wednesday')->toDateString(),
+            'heure_souhaitee' => '14:00',
+            'modalite' => 'visio',
+            'agent_id' => $agent->id,
+            'service_code' => $service->code,
+            'rdv_statut' => RencontreStatutEnum::ACTIF->value,
+        ], 'ACTIF');
+
+        $demande->update([
+            'current_service_id' => $service->id,
+        ]);
+
+        $slotsUrl = route('demandes.rencontre.dossier-reserved-slots', $demande);
+
+        $this->actingAsConfirmed($agent)
+            ->get(route('personal.request.show', $demande->id))
+            ->assertOk()
+            ->assertSee('data-reserved-slots-url', false)
+            ->assertSee($slotsUrl, false);
+
+        $this->actingAsConfirmed($agent)
+            ->getJson($slotsUrl)
+            ->assertOk()
+            ->assertJsonStructure([$service->code => []]);
     }
 }

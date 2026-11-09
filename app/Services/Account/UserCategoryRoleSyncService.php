@@ -40,15 +40,17 @@ class UserCategoryRoleSyncService
             }
 
             /** @var UserCategoryAssignment $assignment */
-            $assignment = UserCategoryAssignment::query()->updateOrCreate(
-                [
-                    'user_id' => $user->id,
-                    'user_category_code' => $code,
-                ],
-                [
-                    'is_primary' => $primary,
-                ]
-            );
+            $assignment = UserCategoryAssignment::withTrashed()->firstOrNew([
+                'user_id' => $user->id,
+                'user_category_code' => $code,
+            ]);
+
+            if ($assignment->trashed()) {
+                $assignment->restore();
+            }
+
+            $assignment->fill(['is_primary' => $primary]);
+            $assignment->save();
 
             if ($syncRoles) {
                 $this->syncDefaultRolesForCategory($user, $code);
@@ -65,10 +67,13 @@ class UserCategoryRoleSyncService
         }
 
         DB::transaction(function () use ($user, $code, $syncRoles) {
-            UserCategoryAssignment::query()
-                ->where('user_id', $user->id)
-                ->where('user_category_code', '!=', $code)
-                ->delete();
+            UserCategoryAssignment::destroy(
+                UserCategoryAssignment::query()
+                    ->where('user_id', $user->id)
+                    ->where('user_category_code', '!=', $code)
+                    ->pluck('id')
+                    ->all()
+            );
 
             $this->assignCategory($user, $code, primary: true, syncRoles: $syncRoles);
         });
@@ -101,10 +106,13 @@ class UserCategoryRoleSyncService
         }
 
         DB::transaction(function () use ($user, $codes, $primaryCode) {
-            UserCategoryAssignment::query()
-                ->where('user_id', $user->id)
-                ->whereNotIn('user_category_code', $codes)
-                ->delete();
+            UserCategoryAssignment::destroy(
+                UserCategoryAssignment::query()
+                    ->where('user_id', $user->id)
+                    ->whereNotIn('user_category_code', $codes)
+                    ->pluck('id')
+                    ->all()
+            );
 
             foreach ($codes as $code) {
                 $this->assignCategory($user, $code, $code === $primaryCode, true);

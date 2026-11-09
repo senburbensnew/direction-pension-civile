@@ -35,7 +35,7 @@ class SiteVisitService
             DB::table('site_visits')->where('visited_on', $today)->increment('visitors');
         }
 
-        Cache::forget('site_visits.summary');
+        $this->refreshSummaryCacheAfterRecord((bool) $inserted);
     }
 
     /**
@@ -81,14 +81,44 @@ class SiteVisitService
             });
     }
 
-    protected function ensureDayRow(string $today): void
+    protected function refreshSummaryCache(): void
     {
-        if (DB::table('site_visits')->where('visited_on', $today)->exists()) {
+        $today = now()->toDateString();
+        $todayRow = DB::table('site_visits')->where('visited_on', $today)->first();
+
+        Cache::put('site_visits.summary', [
+            'total_hits' => (int) DB::table('site_visits')->sum('hits'),
+            'today_hits' => (int) ($todayRow?->hits ?? 0),
+            'total_visitors' => (int) DB::table('site_visits')->sum('visitors'),
+            'today_visitors' => (int) ($todayRow?->visitors ?? 0),
+        ], 60);
+    }
+
+    protected function refreshSummaryCacheAfterRecord(bool $newVisitor): void
+    {
+        $cached = Cache::get('site_visits.summary');
+
+        if (! is_array($cached)) {
+            $this->refreshSummaryCache();
+
             return;
         }
 
+        $cached['total_hits'] = (int) ($cached['total_hits'] ?? 0) + 1;
+        $cached['today_hits'] = (int) ($cached['today_hits'] ?? 0) + 1;
+
+        if ($newVisitor) {
+            $cached['total_visitors'] = (int) ($cached['total_visitors'] ?? 0) + 1;
+            $cached['today_visitors'] = (int) ($cached['today_visitors'] ?? 0) + 1;
+        }
+
+        Cache::put('site_visits.summary', $cached, 60);
+    }
+
+    protected function ensureDayRow(string $today): void
+    {
         try {
-            DB::table('site_visits')->insert([
+            DB::table('site_visits')->insertOrIgnore([
                 'visited_on' => $today,
                 'hits' => 0,
                 'visitors' => 0,

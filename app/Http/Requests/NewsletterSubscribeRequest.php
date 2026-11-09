@@ -14,7 +14,7 @@ class NewsletterSubscribeRequest extends FormRequest
 
     public function rules(): array
     {
-        $locales = config('newsletter.locales', ['fr', 'en', 'ht']);
+        $locales = config('newsletter.locales', ['fr', 'ht']);
         $groups = array_keys(config('newsletter.audience_groups', []));
 
         return [

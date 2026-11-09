@@ -16,6 +16,9 @@ use Illuminate\Validation\Rule;
 
 class RencontreMotifService
 {
+    /** @var array<int, bool> */
+    private array $portalBookCache = [];
+
     /**
      * Liste des motifs disponibles pour une demande de rendez-vous.
      *
@@ -59,19 +62,26 @@ class RencontreMotifService
             return false;
         }
 
-        if ($this->userIsPensionne($user)) {
-            return true;
+        $userId = (int) $user->getKey();
+        if (array_key_exists($userId, $this->portalBookCache)) {
+            return $this->portalBookCache[$userId];
         }
 
+        if ($this->userIsPensionne($user)) {
+            return $this->portalBookCache[$userId] = true;
+        }
+
+        $user->loadMissing(['beneficiaireLinks', 'pensionMandats']);
+
         if ($this->userIsMandataire($user)) {
-            return true;
+            return $this->portalBookCache[$userId] = true;
         }
 
         if ($this->userIsRepresentantLegal($user)) {
-            return true;
+            return $this->portalBookCache[$userId] = true;
         }
 
-        return $this->userHasPendingDemandeCreationCompte($user);
+        return $this->portalBookCache[$userId] = $this->userHasPendingDemandeCreationCompte($user);
     }
 
     private function userIsPensionne(User $user): bool
@@ -81,18 +91,28 @@ class RencontreMotifService
 
     private function userIsMandataire(User $user): bool
     {
-        if ($user->beneficiaireLinks()
-            ->where('relation', BeneficiaireRelationEnum::MANDATAIRE->value)
-            ->exists()) {
+        $mandataireRelation = BeneficiaireRelationEnum::MANDATAIRE->value;
+
+        if ($user->relationLoaded('beneficiaireLinks')) {
+            if ($user->beneficiaireLinks->contains('relation', $mandataireRelation)) {
+                return true;
+            }
+        } elseif ($user->beneficiaireLinks()->where('relation', $mandataireRelation)->exists()) {
             return true;
         }
 
-        return $user->pensionMandats()
-            ->whereIn('status', [
-                PensionMandatStatusEnum::ACTIF->value,
-                PensionMandatStatusEnum::EN_ATTENTE->value,
-            ])
-            ->exists();
+        $activeStatuses = [
+            PensionMandatStatusEnum::ACTIF->value,
+            PensionMandatStatusEnum::EN_ATTENTE->value,
+        ];
+
+        if ($user->relationLoaded('pensionMandats')) {
+            return $user->pensionMandats->contains(
+                fn ($mandat) => in_array($mandat->status, $activeStatuses, true)
+            );
+        }
+
+        return $user->pensionMandats()->whereIn('status', $activeStatuses)->exists();
     }
 
     private function userIsRepresentantLegal(User $user): bool
@@ -104,6 +124,12 @@ class RencontreMotifService
                 fn (BeneficiaireRelationEnum $relation) => $relation->isRepresentative()
             )
         );
+
+        if ($user->relationLoaded('beneficiaireLinks')) {
+            return $user->beneficiaireLinks->contains(
+                fn ($link) => in_array($link->relation, $relations, true)
+            );
+        }
 
         return $user->beneficiaireLinks()->whereIn('relation', $relations)->exists();
     }
@@ -233,7 +259,7 @@ class RencontreMotifService
     {
         return [
             Service::LIQUIDATION => 'Service de Liquidation',
-            Service::FORMALITE => 'Service Formalités',
+            Service::FORMALITE => 'Accueil et Formalités',
             Service::COMPTABILITE => 'Service de la Comptabilité / Paiement',
             Service::ADMINISTRATIF => 'Service Administratif / Base de données',
             Service::CONTROLE_PLACEMENT => 'Service de Contrôle',
@@ -271,8 +297,8 @@ class RencontreMotifService
         $service = $this->resolve($motif, $user);
 
         if ($service) {
-            return $this->serviceLabels()[$service->code]
-                ?? $service->nom
+            return $service->nom
+                ?? $this->serviceLabels()[$service->code]
                 ?? '—';
         }
 
@@ -321,9 +347,13 @@ class RencontreMotifService
 
     private function lookupServiceByCode(string $code): ?Service
     {
-        $service = Service::query()
+        $service = Service::withTrashed()
             ->where('code', $code)
             ->first();
+
+        if ($service?->trashed()) {
+            $service->restore();
+        }
 
         if ($service) {
             return $service;
@@ -339,11 +369,15 @@ class RencontreMotifService
             $catalogCode = $canonical;
             $codes = array_values(array_unique(array_merge([$canonical], $aliases)));
 
-            $service = Service::query()
+            $service = Service::withTrashed()
                 ->whereIn('code', $codes)
                 ->first();
 
             if ($service) {
+                if ($service->trashed()) {
+                    $service->restore();
+                }
+
                 return $service;
             }
 
@@ -361,14 +395,22 @@ class RencontreMotifService
             return null;
         }
 
-        return Service::query()->firstOrCreate(
-            ['code' => $code],
-            [
-                'nom' => $entry['nom'] ?? $code,
-                'description' => $entry['resume'] ?? null,
-                'icon' => $entry['icon'] ?? null,
-            ]
-        );
+        $service = Service::withTrashed()->firstWhere('code', $code);
+
+        if ($service) {
+            if ($service->trashed()) {
+                $service->restore();
+            }
+
+            return $service;
+        }
+
+        return Service::query()->create([
+            'code' => $code,
+            'nom' => $entry['nom'] ?? $code,
+            'description' => $entry['resume'] ?? null,
+            'icon' => $entry['icon'] ?? null,
+        ]);
     }
 
     public function hasMotif(string $motif): bool

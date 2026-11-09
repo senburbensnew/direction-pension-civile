@@ -2,11 +2,18 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\IncludesTrashedInAdmin;
+
+use Illuminate\Database\Eloquent\SoftDeletes;
+
 use App\Enums\WorkflowStepTypeEnum;
 use Illuminate\Database\Eloquent\Model;
 
 class WorkflowStep extends Model
 {
+    use SoftDeletes;
+    use IncludesTrashedInAdmin;
+
     protected $fillable = [
         'code',
         'nom',

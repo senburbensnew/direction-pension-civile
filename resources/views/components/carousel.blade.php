@@ -46,10 +46,10 @@
     @mouseleave="restartAuto()"
     @touchstart.passive="onTouchStart($event)"
     @touchend.passive="onTouchEnd($event)"
-    class="hero-carousel relative overflow-hidden w-full"
+    class="hero-carousel relative overflow-visible w-full"
 >
     {{-- Slides --}}
-    <div x-ref="wrapper" class="relative w-full h-full">
+    <div x-ref="wrapper" class="relative w-full h-full overflow-hidden">
         {{ $slot }}
     </div>
 
@@ -72,7 +72,7 @@
     </button>
 
     {{-- Dot indicators --}}
-    <div class="hero-dots absolute bottom-4 left-1/2 -translate-x-1/2 z-30 flex items-center gap-2 rounded-full bg-black/40 backdrop-blur-sm px-3 py-1.5">
+    <div class="hero-dots absolute bottom-4 left-1/2 -translate-x-1/2 z-40 flex items-center gap-2 rounded-full bg-black/40 backdrop-blur-sm px-3 py-1.5">
         <template x-for="i in total" :key="i">
             <button
                 type="button"

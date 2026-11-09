@@ -12,7 +12,7 @@ class AutoSlideCarousel extends Component
 
     public function __construct()
     {
-        $this->images = InstitutionImage::active()->ordered()->get()
+        $this->images = InstitutionImage::activeOrdered()
             ->map(fn ($img) => [
                 'src' => PublicMedia::componentSrc($img->image),
                 'display' => $img->imageUrl(),

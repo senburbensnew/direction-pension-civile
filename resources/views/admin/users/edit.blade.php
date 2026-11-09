@@ -107,51 +107,10 @@
                 <i class="fas fa-envelope text-indigo-500 text-sm w-4 text-center"></i>
                 <span class="text-xs font-semibold text-gray-600 uppercase tracking-wider">Contact &amp; accès</span>
             </div>
-            <div class="p-5 grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div>
-                    <label class="block text-xs font-medium text-gray-600 mb-1">
-                        Adresse e-mail <span class="text-red-500">*</span>
-                    </label>
-                    <input type="email" name="email" value="{{ old('email', $user->email) }}" required
-                        class="{{ $field('email') }}">
-                    @error('email')<p class="text-red-500 text-xs mt-1">{{ $message }}</p>@enderror
-                </div>
-                <div>
-                    <label class="block text-xs font-medium text-gray-600 mb-1">Nom d’utilisateur</label>
-                    <input type="text" name="username" value="{{ old('username', $user->username) }}"
-                        class="{{ $field('username') }}" placeholder="jean.dupont" autocomplete="username">
-                    @error('username')<p class="text-red-500 text-xs mt-1">{{ $message }}</p>@enderror
-                </div>
-                <div>
-                    <x-telephone-input
-                        name="phone"
-                        :value="$user->phone"
-                        label="Téléphone"
-                        :required="true"
-                        label-class="block text-xs font-medium text-gray-600 mb-1"
-                        hint-class="text-xs text-gray-500 mt-1"
-                        error-class="text-red-500 text-xs mt-1"
-                        client-error-class="text-red-500 text-xs mt-1"
-                        :input-class="$field('phone')"
-                    />
-                </div>
-                <div></div>
-                <div>
-                    <label class="block text-xs font-medium text-gray-600 mb-1">
-                        Nouveau mot de passe
-                        <span class="text-gray-400 font-normal">(laisser vide pour ne pas changer)</span>
-                    </label>
-                    <input type="password" name="password" minlength="8"
-                        class="{{ $field('password') }}" placeholder="Min. 8 caractères">
-                    @error('password')<p class="text-red-500 text-xs mt-1">{{ $message }}</p>@enderror
-                </div>
-                <div>
-                    <label class="block text-xs font-medium text-gray-600 mb-1">Confirmer le mot de passe</label>
-                    <input type="password" name="password_confirmation"
-                        class="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-400"
-                        placeholder="Répétez le mot de passe">
-                </div>
-            </div>
+            @include('admin.users._contact-access', [
+                'user' => $user,
+                'passwordRequired' => false,
+            ])
         </div>
 
         {{-- Profil système --}}
@@ -223,22 +182,16 @@
                     :options="$roleOptions"
                     :selected="$assignedRoles"
                 />
-                <div>
-                    <label class="block text-xs font-medium text-gray-600 mb-1">NIF</label>
-                    <input type="text" name="nif" value="{{ old('nif', $user->nif) }}"
-                        class="{{ $field('nif') }}" placeholder="123-456-789-0"
-                        pattern="\d{3}-\d{3}-\d{3}-\d{1}" title="Format 000-000-000-0">
-                    <p class="text-xs text-gray-400 mt-1">Format : 000-000-000-0</p>
-                    @error('nif')<p class="text-red-500 text-xs mt-1">{{ $message }}</p>@enderror
-                </div>
-                <div>
-                    <label class="block text-xs font-medium text-gray-600 mb-1">NINU</label>
-                    <input type="text" name="ninu" value="{{ old('ninu', $user->ninu) }}"
-                        class="{{ $field('ninu') }}" placeholder="1148519577"
-                        pattern="\d{10}" inputmode="numeric" title="10 chiffres, sans tiret">
-                    <p class="text-xs text-gray-400 mt-1">10 chiffres, sans tiret.</p>
-                    @error('ninu')<p class="text-red-500 text-xs mt-1">{{ $message }}</p>@enderror
-                </div>
+                <x-form.dual-listbox
+                    name="permissions[]"
+                    label="Permissions directes"
+                    available-title="Permissions disponibles"
+                    selected-title="Permissions attribuées directement à l'utilisateur"
+                    hint="En plus des permissions héritées des rôles. Utile pour accorder ou retirer un droit ponctuel sans modifier un rôle."
+                    :options="$permissionOptions"
+                    :selected="$assignedDirectPermissions"
+                />
+                @include('admin.users._nif-ninu-fields', ['user' => $user])
             </div>
         </div>
 

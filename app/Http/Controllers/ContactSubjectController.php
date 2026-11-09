@@ -2,14 +2,15 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\Admin\StoreContactSubjectRequest;
 use App\Models\ContactSubject;
 use Illuminate\Http\Request;
 
 class ContactSubjectController extends Controller
 {
-    public function store(Request $request)
+    public function store(StoreContactSubjectRequest $request)
     {
-        $data = $this->validated($request);
+        $data = $request->validated();
         $data['slug'] = ContactSubject::uniqueSlug($data['label']);
         $data['is_active'] = $request->boolean('is_active', true);
         $data['allows_custom'] = $request->boolean('allows_custom');
@@ -20,9 +21,9 @@ class ContactSubjectController extends Controller
         return back()->with('success', 'Sujet ajouté à la liste.');
     }
 
-    public function update(Request $request, ContactSubject $contactSubject)
+    public function update(StoreContactSubjectRequest $request, ContactSubject $contactSubject)
     {
-        $data = $this->validated($request);
+        $data = $request->validated();
         $data['is_active'] = $request->boolean('is_active', true);
         $data['allows_custom'] = $request->boolean('allows_custom');
         $data['position'] = $data['position'] ?? $contactSubject->position;
@@ -32,11 +33,9 @@ class ContactSubjectController extends Controller
         return back()->with('success', 'Sujet mis à jour.');
     }
 
-    public function destroy(ContactSubject $contactSubject)
+    public function destroy(Request $request, ContactSubject $contactSubject)
     {
-        $contactSubject->delete();
-
-        return back()->with('success', 'Sujet retiré de la liste.');
+        return back()->with('success', $this->adminDelete($contactSubject, $request));
     }
 
     public function toggle(ContactSubject $contactSubject)
@@ -48,13 +47,4 @@ class ContactSubjectController extends Controller
             : 'Sujet masqué du formulaire.');
     }
 
-    private function validated(Request $request): array
-    {
-        return $request->validate([
-            'label' => 'required|string|max:150',
-            'position' => 'nullable|integer|min:0',
-            'is_active' => 'nullable|boolean',
-            'allows_custom' => 'nullable|boolean',
-        ]);
-    }
 }

@@ -129,9 +129,9 @@ class CompteProvisoireController extends Controller
         string $openingProfile = 'titulaire',
     ): array {
         $rdvHintPending = match ($openingProfile) {
-            'mandataire' => 'Prenez rendez-vous au Service Formalités (motif formalités et mandats) pour valider votre compte mandataire.',
-            'representant' => 'Prenez rendez-vous au Service Formalités (motif formalités et mandats) avec vos pièces et l’acte du mineur.',
-            default => 'Prenez rendez-vous au Service Formalités pour finaliser l’ouverture de votre compte.',
+            'mandataire' => 'Prenez rendez-vous au Accueil et Formalités (motif formalités et mandats) pour valider votre compte mandataire.',
+            'representant' => 'Prenez rendez-vous au Accueil et Formalités (motif formalités et mandats) avec vos pièces et l’acte du mineur.',
+            default => 'Prenez rendez-vous au Accueil et Formalités pour finaliser l’ouverture de votre compte.',
         };
         if ($isRefused) {
             return [
@@ -167,7 +167,7 @@ class CompteProvisoireController extends Controller
                 'hint' => $rdvRealise
                     ? 'Rendez-vous marqué comme réalisé.'
                     : ($hasRdvActif
-                        ? 'Votre créneau est réservé — présentez-vous au Service Formalités avec vos pièces.'
+                        ? 'Votre créneau est réservé — présentez-vous au Accueil et Formalités avec vos pièces.'
                         : $rdvHintPending),
                 'state' => $rdvRealise ? 'done' : ($hasRdvActif ? 'current' : ($submitted ? 'current' : 'upcoming')),
             ],
@@ -175,7 +175,7 @@ class CompteProvisoireController extends Controller
                 'key' => 'review',
                 'title' => 'Validation du compte',
                 'hint' => $rdvRealise
-                    ? 'Le Service Formalités examine votre dossier après le rendez-vous.'
+                    ? 'Le Accueil et Formalités examine votre dossier après le rendez-vous.'
                     : 'Disponible une fois le rendez-vous réalisé.',
                 'state' => $rdvRealise ? 'current' : 'upcoming',
             ],

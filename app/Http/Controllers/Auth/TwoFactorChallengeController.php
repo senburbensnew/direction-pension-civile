@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Auth\Concerns\RedirectsAfterAuthentication;
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Auth\TwoFactorChallengeRequest;
 use App\Models\User;
 use App\Services\Admin\UserLoginStatisticsService;
 use App\Services\LoginTwoFactorService;
@@ -42,7 +43,7 @@ class TwoFactorChallengeController extends Controller
     }
 
     public function store(
-        Request $request,
+        TwoFactorChallengeRequest $request,
         LoginTwoFactorService $twoFactor,
         UserLoginStatisticsService $loginStats,
     ): RedirectResponse {
@@ -51,10 +52,6 @@ class TwoFactorChallengeController extends Controller
         if (! $user) {
             return redirect()->route('login');
         }
-
-        $request->validate([
-            'code' => ['required', 'string', 'regex:/^\d{6}$/'],
-        ]);
 
         $this->ensureCodeAttemptIsNotRateLimited($request, $user);
 

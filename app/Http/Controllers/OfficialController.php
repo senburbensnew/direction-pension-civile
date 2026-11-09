@@ -3,9 +3,10 @@
 namespace App\Http\Controllers;
 
 use App\Http\Controllers\Concerns\StoresOptimizedImages;
+use App\Http\Requests\Admin\StoreOfficialRequest;
+use App\Http\Requests\Admin\UpdateOfficialRequest;
 use App\Models\Official;
 use App\Support\Storage\UploadPaths;
-use Illuminate\Http\Request;
 
 class OfficialController extends Controller
 {
@@ -34,20 +35,9 @@ class OfficialController extends Controller
         return view('admin.officials.form', ['official' => new Official]);
     }
 
-    public function store(Request $request)
+    public function store(StoreOfficialRequest $request)
     {
-        $data = $request->validate([
-            'slug' => 'required|string|max:100|unique:officials,slug|regex:/^[a-z0-9\-]+$/',
-            'role' => 'required|string|max:255',
-            'nom' => 'required|string|max:255',
-            'sexe' => 'required|in:M,F',
-            'photo' => 'nullable|image|mimes:jpeg,png,jpg,webp|max:4096',
-            'biographie' => 'nullable|string',
-            'discours' => 'nullable|string',
-            'citation' => 'nullable|string|max:500',
-            'order' => 'nullable|integer|min:0',
-            'active' => 'boolean',
-        ]);
+        $data = $request->validated();
 
         if ($request->hasFile('photo')) {
             $data['photo'] = $this->storeOptimizedImage($request->file('photo'), UploadPaths::cms('officials'), 'official');
@@ -69,19 +59,9 @@ class OfficialController extends Controller
         return view('admin.officials.form', compact('official'));
     }
 
-    public function update(Request $request, Official $official)
+    public function update(UpdateOfficialRequest $request, Official $official)
     {
-        $data = $request->validate([
-            'role' => 'required|string|max:255',
-            'nom' => 'required|string|max:255',
-            'sexe' => 'required|in:M,F',
-            'photo' => 'nullable|image|mimes:jpeg,png,jpg,webp|max:4096',
-            'biographie' => 'nullable|string',
-            'discours' => 'nullable|string',
-            'citation' => 'nullable|string|max:500',
-            'order' => 'nullable|integer|min:0',
-            'active' => 'boolean',
-        ]);
+        $data = $request->validated();
 
         if ($request->hasFile('photo')) {
             $this->deleteOptimizedImage($official->photo);

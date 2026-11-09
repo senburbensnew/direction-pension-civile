@@ -76,10 +76,10 @@ export function initExistenceProof() {
             const newDateInput = newRow.querySelector('input[type="date"]');
             if (newDateInput && window.flatpickr) {
                 flatpickr(newDateInput, {
-                    locale:     document.documentElement.lang === 'en' ? 'default' : window.French,
+                    locale:     window.French,
                     dateFormat: 'Y-m-d',
                     altInput:   true,
-                    altFormat:  document.documentElement.lang === 'en' ? 'm/d/Y' : 'd/m/Y',
+                    altFormat:  'd/m/Y',
                     allowInput: true,
                 });
             }

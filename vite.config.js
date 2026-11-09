@@ -3,6 +3,10 @@ import laravel from 'laravel-vite-plugin';
 import Inspect from 'vite-plugin-inspect';
 
 export default defineConfig(({ command }) => ({
+    build: {
+        // vis-timeline, cytoscape, pdfjs : chunks déjà chargés à la demande (pages ciblées).
+        chunkSizeWarningLimit: 600,
+    },
     server: {
         host: '127.0.0.1',
         hmr: {
@@ -16,16 +20,10 @@ export default defineConfig(({ command }) => ({
                 'resources/js/app.js',
                 'resources/js/admin/officials-form.js',
                 'resources/js/admin/flux-transitions-index.js',
-                'resources/js/admin/faq-index.js',
-                'resources/js/admin/glossaire-index.js',
-                'resources/js/admin/mediatheque-index.js',
-                'resources/js/admin/publications-index.js',
-                'resources/js/admin/contact-parameters-index.js',
                 'resources/js/admin/drag-reorder-grid.js',
                 'resources/js/admin/documents-upload.js',
                 'resources/js/pages/mediatheque-public.js',
                 'resources/js/pages/glossaire-public.js',
-                'resources/js/pages/auth-register.js',
                 'resources/js/pages/auth-profile-photo.js',
                 'resources/js/pages/simulateur-calcul.js',
                 'resources/js/pages/institution-demande-adhesion.js',

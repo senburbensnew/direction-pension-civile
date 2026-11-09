@@ -16,7 +16,7 @@ use Database\Seeders\UserCategoriesSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Mail;
-use Spatie\Permission\Models\Role;
+use App\Models\Role;
 use Tests\TestCase;
 use Tests\Traits\SeedsRequiredData;
 
@@ -543,8 +543,8 @@ class AdminFeatureTest extends TestCase
         ]));
         $response->assertSessionHas('success');
 
-        $this->assertDatabaseMissing('types_demandes', ['code' => 'DEMANDE_CERTIFICAT']);
-        $this->assertDatabaseMissing('workflow_steps', [
+        $this->assertSoftDeleted('types_demandes', ['code' => 'DEMANDE_CERTIFICAT']);
+        $this->assertSoftDeleted('workflow_steps', [
             'code' => 'SOUMISE',
             'type_demande' => 'DEMANDE_CERTIFICAT',
         ]);
@@ -609,7 +609,7 @@ class AdminFeatureTest extends TestCase
             ->delete(route('admin.flux-transitions.step-transitions.destroy', $transition));
 
         $response->assertRedirect();
-        $this->assertModelMissing($transition);
+        $this->assertSoftDeleted($transition);
     }
 
     /** @test */
@@ -719,7 +719,7 @@ class AdminFeatureTest extends TestCase
 
         $response->assertRedirect(route('admin.roles.index'));
         $response->assertSessionHas('success');
-        $this->assertDatabaseMissing('roles', ['name' => 'empty_role']);
+        $this->assertSoftDeleted('roles', ['name' => 'empty_role']);
     }
 
     /** @test */

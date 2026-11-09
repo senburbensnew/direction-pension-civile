@@ -417,6 +417,123 @@ class DemandeCreationCompteTest extends TestCase
     }
 
     /** @test */
+    public function ajax_store_returns_json_422_when_validation_fails(): void
+    {
+        $this->postJson(route('demandes.compte.store'), [
+            'idempotency_key' => 'test-ajax-invalid',
+            'user_type' => 'pensionne',
+        ])
+            ->assertStatus(422)
+            ->assertJsonPath('message', 'Certains champs sont invalides.')
+            ->assertJsonStructure(['errors' => ['telephone', 'nif', 'adresse', 'password', 'accept_terms']]);
+    }
+
+    /** @test */
+    public function ajax_store_requires_idempotency_key_for_json_submission(): void
+    {
+        Storage::fake('public');
+        Storage::fake(config('uploads.disks.private', 'private'));
+
+        $this->postJson(route('demandes.compte.store'), [
+            'user_type' => 'pensionne',
+            'telephone' => '+509 22 00 0010',
+            'nif' => '123-456-789-0',
+            'adresse' => '12, rue Capois, Port-au-Prince',
+            'piece_identite_type' => 'cin',
+            'piece_identite' => UploadedFile::fake()->image('cin.jpg', 800, 600),
+            'password' => 'password123',
+            'accept_terms' => '1',
+        ])
+            ->assertStatus(422)
+            ->assertJsonPath('errors.idempotency_key.0', 'Rechargez la page, puis soumettez à nouveau.');
+
+        $this->assertDatabaseCount('demande_creation_comptes', 0);
+    }
+
+    /** @test */
+    public function ajax_store_replay_with_same_idempotency_key_does_not_create_second_demande(): void
+    {
+        Storage::fake('public');
+        Storage::fake(config('uploads.disks.private', 'private'));
+
+        $idempotencyKey = 'idem-replay-'.uniqid();
+        $headers = [
+            'Accept' => 'application/json',
+            'X-Requested-With' => 'XMLHttpRequest',
+        ];
+
+        $base = [
+            'idempotency_key' => $idempotencyKey,
+            'user_type' => 'pensionne',
+            'telephone' => '+509 22 00 0012',
+            'nif' => '123-456-789-0',
+            'adresse' => '12, rue Capois, Port-au-Prince',
+            'piece_identite_type' => 'cin',
+            'password' => 'password123',
+            'accept_terms' => '1',
+        ];
+
+        $this->post(route('demandes.compte.store'), array_merge($base, [
+            'piece_identite' => UploadedFile::fake()->image('cin-a.jpg', 800, 600),
+        ]), $headers)
+            ->assertOk()
+            ->assertJsonPath('ok', true)
+            ->assertJsonPath('reason', 'created')
+            ->assertJsonPath('already_exists', false);
+
+        $demandeId = DemandeCreationCompte::query()->value('id');
+        $this->assertNotNull($demandeId);
+
+        $this->post(route('demandes.compte.store'), array_merge($base, [
+            'telephone' => '+509 22 00 0018',
+            'nif' => '987-654-321-0',
+            'piece_identite' => UploadedFile::fake()->image('cin-b.jpg', 800, 600),
+        ]), $headers)
+            ->assertOk()
+            ->assertJsonPath('ok', true)
+            ->assertJsonPath('reason', 'idempotency_hit')
+            ->assertJsonPath('already_exists', true)
+            ->assertJsonPath('demande_id', $demandeId);
+
+        $this->assertSame(1, DemandeCreationCompte::count());
+    }
+
+    /** @test */
+    public function mandataire_est_pensionne_cannot_submit_own_titulaire_pension_code_for_mandant(): void
+    {
+        Storage::fake('public');
+        Storage::fake(config('uploads.disks.private', 'private'));
+
+        $this->seedPensionReference('8-35002', 'MARTIN', 'PAUL');
+
+        $this->from(route('demandes.compte.create'))
+            ->post(route('demandes.compte.store'), [
+                'user_type' => 'pensionne',
+                'telephone' => '+509 38123460',
+                'nif' => '123-456-789-8',
+                'pension_code' => '8-35002',
+                'adresse' => 'Delmas 35',
+                'is_mandataire' => '1',
+                'mandataire_est_pensionne' => '1',
+                'piece_identite_type' => 'passeport',
+                'piece_identite' => UploadedFile::fake()->image('passeport.jpg', 800, 600),
+                'mandat_designation' => UploadedFile::fake()->create('mandat.pdf', 100, 'application/pdf'),
+                'password' => 'password123',
+                'accept_terms' => '1',
+                'ocr_documents_json' => json_encode([
+                    [
+                        'key' => 'piece_identite',
+                        'fields' => ['nom' => 'MARTIN', 'prenom' => 'PAUL'],
+                    ],
+                ]),
+            ])
+            ->assertRedirect(route('demandes.compte.create'))
+            ->assertSessionHasErrors('pension_code');
+
+        $this->assertDatabaseCount('demande_creation_comptes', 0);
+    }
+
+    /** @test */
     public function guest_can_submit_a_minor_pensionne_account_request(): void
     {
         Storage::fake('public');
@@ -720,6 +837,139 @@ class DemandeCreationCompteTest extends TestCase
             ->assertSessionHasErrors('email');
 
         $this->assertDatabaseCount('demande_creation_comptes', 0);
+    }
+
+    /** @test */
+    public function guest_cannot_reuse_telephone_from_another_pending_demande(): void
+    {
+        Storage::fake('public');
+        Storage::fake(config('uploads.disks.private', 'private'));
+
+        $this->post(route('demandes.compte.store'), [
+            'user_type' => 'pensionne',
+            'telephone' => '+509 22 00 0088',
+            'nif' => '123-456-789-8',
+            'adresse' => '12, rue Capois, Port-au-Prince',
+            'piece_identite_type' => 'cin',
+            'piece_identite' => UploadedFile::fake()->image('cin-first.jpg', 800, 600),
+            'password' => 'password123',
+            'accept_terms' => '1',
+        ])->assertRedirect($this->redirectAfterDemandeCompteSubmit());
+
+        $this->from(route('demandes.compte.create'))
+            ->post(route('demandes.compte.store'), [
+                'user_type' => 'pensionne',
+                'telephone' => '+509 22 00 0088',
+                'nif' => '987-654-321-0',
+                'adresse' => 'Autre adresse',
+                'piece_identite_type' => 'cin',
+                'piece_identite' => UploadedFile::fake()->image('cin-second.jpg', 800, 600),
+                'password' => 'password456',
+                'accept_terms' => '1',
+            ])
+            ->assertRedirect(route('demandes.compte.create'))
+            ->assertSessionHasErrors('telephone');
+
+        $this->assertSame(1, DemandeCreationCompte::count());
+    }
+
+    /** @test */
+    public function guest_cannot_use_an_existing_telephone(): void
+    {
+        Storage::fake('public');
+        Storage::fake(config('uploads.disks.private', 'private'));
+
+        User::factory()->create(['phone' => '+50938112233']);
+
+        $this->from(route('demandes.compte.create'))
+            ->post(route('demandes.compte.store'), [
+                'user_type' => 'pensionne',
+                'telephone' => '+509 38 11 22 33',
+                'nif' => '123-456-789-0',
+                'adresse' => '12, rue Capois, Port-au-Prince',
+                'piece_identite_type' => 'cin',
+                'piece_identite' => UploadedFile::fake()->image('cin.jpg', 800, 600),
+                'password' => 'password123',
+                'accept_terms' => '1',
+            ])
+            ->assertRedirect(route('demandes.compte.create'))
+            ->assertSessionHasErrors('telephone');
+
+        $this->assertDatabaseCount('demande_creation_comptes', 0);
+    }
+
+    /** @test */
+    public function guest_cannot_use_an_existing_ninu(): void
+    {
+        Storage::fake('public');
+        Storage::fake(config('uploads.disks.private', 'private'));
+
+        User::factory()->create(['ninu' => '1122334455']);
+
+        $this->from(route('demandes.compte.create'))
+            ->post(route('demandes.compte.store'), [
+                'user_type' => 'pensionne',
+                'telephone' => '+509 22 00 0014',
+                'nif' => '123-456-789-0',
+                'ninu' => '1122334455',
+                'adresse' => '12, rue Capois, Port-au-Prince',
+                'piece_identite_type' => 'cin',
+                'piece_identite' => UploadedFile::fake()->image('cin.jpg', 800, 600),
+                'password' => 'password123',
+                'accept_terms' => '1',
+            ])
+            ->assertRedirect(route('demandes.compte.create'))
+            ->assertSessionHasErrors('ninu');
+
+        $this->assertDatabaseCount('demande_creation_comptes', 0);
+    }
+
+    /** @test */
+    public function guest_cannot_submit_invalid_ninu_format(): void
+    {
+        Storage::fake('public');
+        Storage::fake(config('uploads.disks.private', 'private'));
+
+        $this->from(route('demandes.compte.create'))
+            ->post(route('demandes.compte.store'), [
+                'user_type' => 'pensionne',
+                'telephone' => '+509 22 00 0015',
+                'nif' => '123-456-789-0',
+                'ninu' => '12-345-678-9',
+                'adresse' => '12, rue Capois, Port-au-Prince',
+                'piece_identite_type' => 'cin',
+                'piece_identite' => UploadedFile::fake()->image('cin.jpg', 800, 600),
+                'password' => 'password123',
+                'accept_terms' => '1',
+            ])
+            ->assertRedirect(route('demandes.compte.create'))
+            ->assertSessionHasErrors('ninu');
+
+        $this->assertDatabaseCount('demande_creation_comptes', 0);
+    }
+
+    /** @test */
+    public function guest_can_submit_with_optional_valid_ninu(): void
+    {
+        Storage::fake('public');
+        Storage::fake(config('uploads.disks.private', 'private'));
+
+        $this->post(route('demandes.compte.store'), [
+            'user_type' => 'pensionne',
+            'telephone' => '+509 22 00 0016',
+            'nif' => '123-456-789-0',
+            'ninu' => '9988776655',
+            'adresse' => '12, rue Capois, Port-au-Prince',
+            'piece_identite_type' => 'cin',
+            'piece_identite' => UploadedFile::fake()->image('cin.jpg', 800, 600),
+            'password' => 'password123',
+            'accept_terms' => '1',
+        ])->assertRedirect($this->redirectAfterDemandeCompteSubmit());
+
+        $this->assertDatabaseHas('demande_creation_comptes', [
+            'ninu' => '9988776655',
+            'status' => DemandeCreationCompte::STATUS_EN_ATTENTE,
+        ]);
     }
 
     /** @test */

@@ -2,6 +2,10 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\IncludesTrashedInAdmin;
+
+use Illuminate\Database\Eloquent\SoftDeletes;
+
 use App\Enums\RencontreStatutEnum;
 use App\Services\RencontreMotifService;
 use Illuminate\Database\Eloquent\Model;
@@ -14,6 +18,8 @@ use Spatie\MediaLibrary\MediaCollections\Models\Media;
 
 class DemandeCreationCompte extends Model implements HasMedia
 {
+    use SoftDeletes;
+    use IncludesTrashedInAdmin;
     use InteractsWithMedia;
 
     public const STATUS_EN_ATTENTE = 'en_attente';
@@ -170,7 +176,7 @@ class DemandeCreationCompte extends Model implements HasMedia
     }
 
     /**
-     * RDV Formalités à afficher (suivi compte) : en cours prioritaire, sinon le plus récent éligible.
+     * RDV Accueil et Formalités à afficher (suivi compte) : en cours prioritaire, sinon le plus récent éligible.
      */
     public function rendezVousPourDecisionCompte(): ?Demande
     {
@@ -270,7 +276,7 @@ class DemandeCreationCompte extends Model implements HasMedia
         return static::query()
             ->where('status', self::STATUS_EN_ATTENTE)
             ->whereRaw(
-                "REPLACE(REPLACE(REPLACE(COALESCE({$column}, ''), '-', ''), ' ', ''), '.', '') = ?",
+                "REPLACE(REPLACE(REPLACE(REPLACE(COALESCE({$column}, ''), '-', ''), ' ', ''), '.', ''), '+', '') = ?",
                 [$digits]
             )
             ->exists();

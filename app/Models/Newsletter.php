@@ -2,6 +2,10 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\IncludesTrashedInAdmin;
+
+use Illuminate\Database\Eloquent\SoftDeletes;
+
 use App\Enums\NewsletterSubscriberStatusEnum;
 use App\Support\Newsletter\NewsletterEmailNormalizer;
 use Illuminate\Database\Eloquent\Builder;
@@ -11,6 +15,9 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Newsletter extends Model
 {
+    use SoftDeletes;
+    use IncludesTrashedInAdmin;
+
     protected $fillable = [
         'email',
         'status',

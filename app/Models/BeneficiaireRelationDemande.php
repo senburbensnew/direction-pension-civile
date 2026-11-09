@@ -2,6 +2,10 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\IncludesTrashedInAdmin;
+
+use Illuminate\Database\Eloquent\SoftDeletes;
+
 use App\Enums\BeneficiaireRelationDemandeStatusEnum;
 use App\Enums\BeneficiaireRelationEnum;
 use Illuminate\Database\Eloquent\Model;
@@ -11,6 +15,8 @@ use Spatie\MediaLibrary\InteractsWithMedia;
 
 class BeneficiaireRelationDemande extends Model implements HasMedia
 {
+    use SoftDeletes;
+    use IncludesTrashedInAdmin;
     use InteractsWithMedia;
 
     protected $fillable = [

@@ -54,17 +54,6 @@ return [
         'notice' => 'Tanpri mete yon nouvo modpas pou aksede nan espas ou.',
     ],
 
-    'register' => [
-        'title' => 'Kreye yon kont',
-        'intro' => 'Ranpli enfòmasyon ki anba yo pou enskri.',
-        'who_are_you' => 'Ki moun ou ye ?',
-        'institution_name' => 'Non enstitisyon an',
-        'lastname' => 'Non',
-        'firstname' => 'Non (yo)',
-        'already_have' => 'Ou deja gen yon kont ?',
-        'sign_in' => 'Konekte',
-    ],
-
     'confirm_password' => [
         'title' => 'Konfime modpas ou',
         'intro' => 'Sa se yon zòn sekirize. Tanpri konfime modpas ou anvan ou kontinye.',

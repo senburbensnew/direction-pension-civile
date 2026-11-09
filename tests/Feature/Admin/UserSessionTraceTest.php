@@ -7,7 +7,7 @@ use App\Models\User;
 use App\Models\UserLoginEvent;
 use App\Models\UserSessionEndEvent;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Spatie\Permission\Models\Role;
+use App\Models\Role;
 use Tests\TestCase;
 
 class UserSessionTraceTest extends TestCase

@@ -173,6 +173,6 @@ class DemandeCreationCompteFrontendTest extends TestCase
             ->get(route('compte.provisoire'))
             ->assertOk()
             ->assertSee('Prendre rendez-vous', false)
-            ->assertSee('Service Formalités', false);
+            ->assertSee('Accueil et Formalités', false);
     }
 }

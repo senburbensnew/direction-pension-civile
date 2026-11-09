@@ -1105,6 +1105,41 @@ class RencontreAvailabilityService
         $from ??= now()->startOfDay();
         $to ??= now()->copy()->addWeeks(8)->endOfDay();
 
+        $cacheKey = sprintf(
+            'rdv_unavailable_slots:%s:%s:%s',
+            $service->code,
+            $from->toDateString(),
+            $to->toDateString()
+        );
+
+        return Cache::remember(
+            $cacheKey,
+            60,
+            fn () => $this->computeUnavailableSlotsForService($service, $from, $to)
+        );
+    }
+
+    public function forgetUnavailableSlotsCache(Service $service): void
+    {
+        $from = now()->startOfDay();
+        $to = now()->copy()->addWeeks(8)->endOfDay();
+
+        Cache::forget(sprintf(
+            'rdv_unavailable_slots:%s:%s:%s',
+            $service->code,
+            $from->toDateString(),
+            $to->toDateString()
+        ));
+    }
+
+    /**
+     * @return array<int, string>
+     */
+    private function computeUnavailableSlotsForService(
+        Service $service,
+        Carbon $from,
+        Carbon $to
+    ): array {
         $bookingAgents = $this->bookingAgents($service);
 
         if ($bookingAgents->isEmpty()) {
@@ -1434,6 +1469,29 @@ class RencontreAvailabilityService
         foreach (Service::query()->orderBy('id')->get() as $service) {
             $byCode[$service->code] =
                 $this->unavailableSlotsForService($service);
+        }
+
+        return $byCode;
+    }
+
+    /**
+     * Créneaux indisponibles pour une liste de codes service (formulaire portail).
+     *
+     * @param  array<int, string>  $serviceCodes
+     * @return array<string, array<int, string>>
+     */
+    public function unavailableSlotsForServiceCodes(array $serviceCodes): array
+    {
+        $codes = array_values(array_unique(array_filter($serviceCodes)));
+
+        if ($codes === []) {
+            return [];
+        }
+
+        $byCode = [];
+
+        foreach (Service::query()->whereIn('code', $codes)->orderBy('id')->get() as $service) {
+            $byCode[$service->code] = $this->unavailableSlotsForService($service);
         }
 
         return $byCode;

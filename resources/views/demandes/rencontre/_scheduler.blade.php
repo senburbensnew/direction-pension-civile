@@ -128,6 +128,9 @@
         data-display-min-time="{{ $displayMin }}"
         data-display-max-time="{{ $displayMax }}"
         data-reserved-by-service='@json($reservedSlotsByService ?? [])'
+        @if(!empty($reservedSlotsFetchUrl))
+        data-reserved-slots-url="{{ $reservedSlotsFetchUrl }}"
+        @endif
         data-holidays='@json($holidayEvents ?? [])'
         data-allow-weekends="{{ $allowWeekends ? '1' : '0' }}"
         data-booking-days-label="{{ $bookingDaysLabel }}"

@@ -2,6 +2,10 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\IncludesTrashedInAdmin;
+
+use Illuminate\Database\Eloquent\SoftDeletes;
+
 use App\Enums\PensionMandatStatusEnum;
 use App\Enums\PensionMandatTypeEnum;
 use App\Enums\TypeDemandeEnum;
@@ -13,6 +17,8 @@ use Spatie\MediaLibrary\InteractsWithMedia;
 
 class PensionMandat extends Model implements HasMedia
 {
+    use SoftDeletes;
+    use IncludesTrashedInAdmin;
     use InteractsWithMedia;
 
     protected $fillable = [

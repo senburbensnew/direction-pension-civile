@@ -15,7 +15,7 @@ export async function loadPageFeatures() {
 
     if (document.querySelector('.dpc-rdv-scheduler')) {
         const { initRdvScheduler } = await import('../rdv-scheduler.js');
-        initRdvScheduler();
+        await initRdvScheduler();
     }
 
     if (document.querySelector('[data-dpc-home-graphs]')) {

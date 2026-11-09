@@ -5,9 +5,9 @@ namespace App\Services\Pension;
 use App\Enums\BeneficiaireLinkPermissionEnum;
 use App\Enums\BeneficiaireLinkStatusEnum;
 use App\Enums\BeneficiaireRelationEnum;
-use App\Enums\PensionMandatStatusEnum;
 use App\Models\AffiliationPension;
 use App\Models\Beneficiaire;
+use App\Models\BeneficiaireRelationDemande;
 use App\Models\DemandeCreationCompte;
 use App\Models\PensionMandat;
 use App\Models\PensionnaireReference;
@@ -19,11 +19,14 @@ class BeneficiaireProvisioningService
 {
     public function ensureForUser(User $user): ?Beneficiaire
     {
-        if (UserBeneficiaireLink::query()->where('user_id', $user->id)->exists()) {
-            return UserBeneficiaireLink::query()
-                ->where('user_id', $user->id)
-                ->where('relation', BeneficiaireRelationEnum::SELF->value)
-                ->first()?->beneficiaire;
+        $user->loadMissing('beneficiaireLinks.beneficiaire');
+
+        if ($user->beneficiaireLinks->isNotEmpty()) {
+            $selfLink = $user->beneficiaireLinks->first(
+                fn (UserBeneficiaireLink $link) => $link->relation === BeneficiaireRelationEnum::SELF
+            );
+
+            return $selfLink?->beneficiaire;
         }
 
         if (! $user->hasCategory('pensionne') && ! $user->hasRole('pensionne')) {
@@ -201,7 +204,7 @@ class BeneficiaireProvisioningService
      */
     private function findMinorRepresentativeContext(User $user, DemandeCreationCompte $demande): ?array
     {
-        $relationDemande = \App\Models\BeneficiaireRelationDemande::query()
+        $relationDemande = BeneficiaireRelationDemande::query()
             ->where('demande_creation_compte_id', $demande->id)
             ->with(['beneficiaire', 'link'])
             ->first();

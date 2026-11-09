@@ -2,50 +2,111 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\Admin\StoreUserRequest;
+use App\Http\Requests\Admin\UpdateUserRequest;
+use App\Models\CivilStatus;
 use App\Models\Gender;
 use App\Models\Institution;
 use App\Models\Service;
 use App\Models\User;
 use App\Models\UserCategory;
-use App\Rules\Nif;
-use App\Rules\Ninu;
-use App\Rules\Telephone;
 use App\Services\Account\AdminUserPasswordResetService;
 use App\Services\Account\InstitutionAccountService;
 use App\Services\Account\UserCategoryRoleSyncService;
 use App\Services\Admin\ActiveSessionService;
+use App\Services\Admin\AdminUserColumnCatalog;
 use App\Services\Admin\UserLoginStatisticsService;
 use App\Services\Pension\BeneficiaireProvisioningService;
 use Database\Seeders\RolesAndPermissionsSeeder;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
-use Illuminate\Validation\Rule;
+use Illuminate\Pagination\AbstractPaginator;
+use Illuminate\Support\Collection;
 use Illuminate\Validation\ValidationException;
-use Spatie\Permission\Models\Role;
+use Symfony\Component\HttpFoundation\StreamedResponse;
+use App\Models\Permission;
+use App\Models\Role;
+use Spatie\Permission\PermissionRegistrar;
 
 class UserController extends Controller
 {
     public function index(Request $request)
     {
-        $query = User::with(['roles', 'service', 'categoryAssignments.category', 'institution']);
+        $columnCatalog = app(AdminUserColumnCatalog::class);
+        $selectedColumns = $columnCatalog->resolveFromRequest($request);
 
-        if ($request->filled('q')) {
-            $query->where(function ($q) use ($request) {
-                $q->where('name', 'like', '%'.$request->q.'%')
-                    ->orWhere('email', 'like', '%'.$request->q.'%')
-                    ->orWhere('username', 'like', '%'.$request->q.'%');
-            });
+        $users = $this->sortedUsersQuery($request)->paginate(15);
+        if ($users instanceof AbstractPaginator) {
+            $users->withQueryString();
         }
 
-        if ($request->filled('role')) {
-            $query->role($request->role);
-        }
+        $requestedSort = $request->string('sort')->toString();
+        $requestedDirection = $request->input('dir', 'asc') === 'desc' ? 'desc' : 'asc';
+        $requestedSort = ($requestedSort !== '' && $columnCatalog->isSortable($requestedSort))
+            ? $requestedSort
+            : null;
 
-        $users = $query->paginate(15);
+        $activeSort = $columnCatalog->resolveActiveSort($selectedColumns, $requestedSort, $requestedDirection);
+        $sortColumn = $activeSort['sort_explicit'] ? $activeSort['sort_column'] : null;
+        $sortDirection = $activeSort['sort_direction'];
+        $displaySortColumn = $activeSort['sort_column'];
+        $displaySortDirection = $activeSort['sort_direction'];
+        $columnDefaultDirections = $columnCatalog->defaultDirectionsByKey();
         $roles = Role::orderBy('name')->get();
         $sessionCounts = app(ActiveSessionService::class)->authenticatedCountsByUserId();
         $sessionsManageable = app(ActiveSessionService::class)->isManageable();
 
-        return view('admin.users.index', compact('users', 'roles', 'sessionCounts', 'sessionsManageable'));
+        return view('admin.users.index', compact(
+            'users',
+            'roles',
+            'sessionCounts',
+            'sessionsManageable',
+            'columnCatalog',
+            'selectedColumns',
+            'sortColumn',
+            'sortDirection',
+            'displaySortColumn',
+            'displaySortDirection',
+            'columnDefaultDirections',
+        ));
+    }
+
+    public function export(Request $request): StreamedResponse
+    {
+        $columnCatalog = app(AdminUserColumnCatalog::class);
+        $selectedColumns = $columnCatalog->resolveFromRequest($request);
+        $filename = 'utilisateurs-'.date('Y-m-d').'.csv';
+
+        $headers = [
+            'Content-Type' => 'text/csv; charset=UTF-8',
+            'Content-Disposition' => 'attachment; filename="'.$filename.'"',
+        ];
+
+        $callback = function () use ($request, $columnCatalog, $selectedColumns) {
+            $handle = fopen('php://output', 'w');
+            fprintf($handle, chr(0xEF).chr(0xBB).chr(0xBF));
+            fputcsv(
+                $handle,
+                array_map(fn (string $key) => $columnCatalog->label($key), $selectedColumns),
+            );
+
+            $this->sortedUsersQuery($request)
+                ->chunk(200, function ($users) use ($handle, $columnCatalog, $selectedColumns) {
+                    foreach ($users as $user) {
+                        fputcsv(
+                            $handle,
+                            array_map(
+                                fn (string $key) => $columnCatalog->exportValue($user, $key),
+                                $selectedColumns,
+                            ),
+                        );
+                    }
+                });
+
+            fclose($handle);
+        };
+
+        return response()->stream($callback, 200, $headers);
     }
 
     public function create()
@@ -53,45 +114,44 @@ class UserController extends Controller
         $roles = Role::orderBy('name')->get();
         $services = Service::orderBy('nom')->get();
         $genders = Gender::orderBy('name')->get();
+        $civilStatuses = CivilStatus::orderBy('name')->get();
         $categories = UserCategory::orderedForAdmin();
         $institutions = Institution::query()
             ->whereDoesntHave('loginUser')
             ->orderBy('raison_sociale')
             ->get();
 
+        $permissions = Permission::orderBy('name')->get();
         $roleOptions = $this->roleListboxOptions($roles);
+        $permissionOptions = $this->permissionListboxOptions($permissions);
         $assignedRoles = array_values(array_filter((array) old('roles', [])));
+        $assignedDirectPermissions = array_values(array_filter((array) old('permissions', [])));
 
         return view('admin.users.create', compact(
             'roles',
             'services',
             'genders',
+            'civilStatuses',
             'categories',
             'institutions',
             'roleOptions',
+            'permissionOptions',
             'assignedRoles',
+            'assignedDirectPermissions',
         ));
     }
 
-    public function store(Request $request)
+    public function store(StoreUserRequest $request)
     {
-        $this->mergeDefaultDisplayName($request);
-
-        $validated = $request->validate(array_merge(
-            $this->userFormValidationRules($request),
-            ['password' => 'required|string|min:8|confirmed'],
-        ));
+        $validated = $request->normalizedValidated();
 
         $roles = array_values(array_unique(array_filter($validated['roles'] ?? [])));
-        unset($validated['roles'], $validated['primary_category']);
+        $directPermissions = array_values(array_unique(array_filter($validated['permissions'] ?? [])));
+        unset($validated['roles'], $validated['permissions'], $validated['primary_category']);
 
         if (empty($validated['username'])) {
             unset($validated['username']);
         }
-
-        $this->normalizeValidatedUserFields($validated);
-
-        $this->validateRolesServiceRequirement($roles, $validated['service_id'] ?? null);
 
         $validated['must_change_password'] = true;
 
@@ -100,6 +160,9 @@ class UserController extends Controller
         if ($roles !== []) {
             $user->syncRoles($roles);
         }
+
+        $user->syncPermissions($directPermissions);
+        app(PermissionRegistrar::class)->forgetCachedPermissions();
 
         $this->syncAccountCategories($user, $request, $roles);
 
@@ -120,11 +183,13 @@ class UserController extends Controller
 
     public function edit(User $user)
     {
-        $user->load(['categoryAssignments', 'roles', 'institution']);
+        $user->load(['categoryAssignments', 'roles', 'permissions', 'institution']);
 
         $roles = Role::orderBy('name')->get();
+        $permissions = Permission::orderBy('name')->get();
         $services = Service::orderBy('nom')->get();
         $genders = Gender::orderBy('name')->get();
+        $civilStatuses = CivilStatus::orderBy('name')->get();
         $categories = UserCategory::orderedForAdmin();
         $institutions = Institution::query()
             ->where(function ($query) use ($user) {
@@ -149,13 +214,19 @@ class UserController extends Controller
             ?? $user->categoryAssignments->first()?->user_category_code;
         $accountCategory = old('primary_category', $storedPrimary);
         $roleOptions = $this->roleListboxOptions($roles);
+        $permissionOptions = $this->permissionListboxOptions($permissions);
         $assignedRoles = array_values(array_filter((array) old('roles', $user->roles->pluck('name')->all())));
+        $assignedDirectPermissions = array_values(array_filter((array) old(
+            'permissions',
+            $user->permissions->pluck('name')->all(),
+        )));
 
         return view('admin.users.edit', compact(
             'user',
             'roles',
             'services',
             'genders',
+            'civilStatuses',
             'categories',
             'institutions',
             'userActiveSessions',
@@ -163,21 +234,19 @@ class UserController extends Controller
             'connectionTimeline',
             'accountCategory',
             'roleOptions',
+            'permissionOptions',
             'assignedRoles',
+            'assignedDirectPermissions',
         ));
     }
 
-    public function update(Request $request, User $user)
+    public function update(UpdateUserRequest $request, User $user)
     {
-        $this->mergeDefaultDisplayName($request);
-
-        $validated = $request->validate(array_merge(
-            $this->userFormValidationRules($request, $user),
-            ['password' => 'nullable|string|min:8|confirmed'],
-        ));
+        $validated = $request->normalizedValidated();
 
         $roles = array_values(array_unique(array_filter($validated['roles'] ?? [])));
-        unset($validated['roles'], $validated['primary_category']);
+        $directPermissions = array_values(array_unique(array_filter($validated['permissions'] ?? [])));
+        unset($validated['roles'], $validated['permissions'], $validated['primary_category']);
 
         if (empty($validated['password'])) {
             unset($validated['password']);
@@ -189,13 +258,11 @@ class UserController extends Controller
             unset($validated['username']);
         }
 
-        $this->normalizeValidatedUserFields($validated);
-
-        $this->validateRolesServiceRequirement($roles, $validated['service_id'] ?? null);
-
         $user->update($validated);
 
         $user->syncRoles($roles);
+        $user->syncPermissions($directPermissions);
+        app(PermissionRegistrar::class)->forgetCachedPermissions();
 
         $this->syncAccountCategories($user, $request, $roles);
 
@@ -249,8 +316,49 @@ class UserController extends Controller
         return back()->with('success', "Le compte de {$user->name} a été {$label}.");
     }
 
+    private function filteredUsersQuery(Request $request): Builder
+    {
+        $query = User::query()
+            ->with(['roles', 'service', 'categoryAssignments.category', 'institution', 'gender', 'civilStatus']);
+
+        if ($request->filled('q')) {
+            $search = (string) $request->input('q');
+            $query->where(function ($q) use ($search) {
+                $q->where('name', 'like', '%'.$search.'%')
+                    ->orWhere('email', 'like', '%'.$search.'%')
+                    ->orWhere('username', 'like', '%'.$search.'%');
+            });
+        }
+
+        if ($request->filled('role')) {
+            $query->role((string) $request->input('role'));
+        }
+
+        return $query;
+    }
+
+    private function sortedUsersQuery(Request $request): Builder
+    {
+        $query = $this->filteredUsersQuery($request);
+        $columnCatalog = app(AdminUserColumnCatalog::class);
+        $sort = $request->string('sort')->toString();
+        $direction = $request->input('dir', 'asc') === 'desc' ? 'desc' : 'asc';
+
+        $selectedColumns = $columnCatalog->resolveFromRequest($request);
+        $requestedSort = ($sort !== '' && $columnCatalog->isSortable($sort)) ? $sort : null;
+        $activeSort = $columnCatalog->resolveActiveSort($selectedColumns, $requestedSort, $direction);
+
+        $columnCatalog->applySort(
+            $query,
+            $activeSort['sort_column'],
+            $activeSort['sort_direction'],
+        );
+
+        return $query;
+    }
+
     /**
-     * @param  \Illuminate\Support\Collection<int, Role>  $roles
+     * @param  Collection<int, Role>  $roles
      * @return list<array{value: string, label: string, description: ?string}>
      */
     private function roleListboxOptions($roles): array
@@ -265,153 +373,18 @@ class UserController extends Controller
     }
 
     /**
-     * @return array<string, mixed>
+     * @param  Collection<int, Permission>  $permissions
+     * @return list<array{value: string, label: string, description: ?string}>
      */
-    private function userFormValidationRules(Request $request, ?User $user = null): array
+    private function permissionListboxOptions($permissions): array
     {
-        $categoryCodes = array_keys(config('account_categories.categories', []));
-        $userId = $user?->id;
-
-        return [
-            'name' => 'required|string|max:255',
-            'firstname' => 'required|string|max:255',
-            'lastname' => 'required|string|max:255',
-            'email' => [
-                'required',
-                'string',
-                'email',
-                'max:255',
-                Rule::unique('users', 'email')->ignore($userId),
-            ],
-            'username' => [
-                'nullable',
-                'string',
-                'min:3',
-                'max:50',
-                'regex:/^[A-Za-z0-9._-]+$/',
-                Rule::unique('users', 'username')->ignore($userId),
-            ],
-            'phone' => [
-                'required',
-                'string',
-                'max:20',
-                new Telephone,
-                function (string $attribute, mixed $value, \Closure $fail) use ($userId): void {
-                    if (blank($value)) {
-                        return;
-                    }
-
-                    $existing = User::findByTelephone((string) $value);
-                    if ($existing !== null && $existing->id !== $userId) {
-                        $fail('Ce numéro de téléphone est déjà utilisé.');
-                    }
-                },
-            ],
-            'roles' => 'nullable|array',
-            'roles.*' => 'string|exists:roles,name',
-            'service_id' => 'nullable|integer|exists:services,id',
-            'gender_id' => 'required|integer|exists:genders,id',
-            'primary_category' => ['nullable', 'string', Rule::in($categoryCodes)],
-            'institution_id' => [
-                Rule::requiredIf(fn () => $request->input('primary_category') === 'institution'),
-                'nullable',
-                'integer',
-                Rule::exists('institutions', 'id'),
-                Rule::unique('users', 'institution_id')->ignore($userId),
-            ],
-            'nif' => [
-                'nullable',
-                'string',
-                'max:20',
-                new Nif,
-                function (string $attribute, mixed $value, \Closure $fail) use ($userId): void {
-                    if (blank($value)) {
-                        return;
-                    }
-
-                    $existing = User::findByNif((string) $value);
-                    if ($existing !== null && $existing->id !== $userId) {
-                        $fail('Ce NIF est déjà utilisé.');
-                    }
-                },
-            ],
-            'ninu' => [
-                'nullable',
-                'string',
-                'max:20',
-                new Ninu,
-                function (string $attribute, mixed $value, \Closure $fail) use ($userId): void {
-                    if (blank($value)) {
-                        return;
-                    }
-
-                    $existing = User::findByNinu((string) $value);
-                    if ($existing !== null && $existing->id !== $userId) {
-                        $fail('Ce NINU est déjà utilisé.');
-                    }
-                },
-            ],
-        ];
-    }
-
-    /**
-     * @param  array<string, mixed>  $validated
-     */
-    private function normalizeValidatedUserFields(array &$validated): void
-    {
-        if (isset($validated['phone']) && is_string($validated['phone'])) {
-            $validated['phone'] = Telephone::normalize($validated['phone']);
-        }
-
-        foreach (['nif', 'ninu'] as $field) {
-            if (blank($validated[$field] ?? null)) {
-                $validated[$field] = null;
-            }
-        }
-    }
-
-    private function mergeDefaultDisplayName(Request $request): void
-    {
-        if ($request->filled('name')) {
-            return;
-        }
-
-        $composed = $this->composeDisplayName(
-            $request->input('firstname'),
-            $request->input('lastname'),
-        );
-
-        if ($composed !== '') {
-            $request->merge(['name' => $composed]);
-        }
-    }
-
-    private function composeDisplayName(mixed $firstname, mixed $lastname): string
-    {
-        return trim(implode(' ', array_filter([
-            is_string($firstname) ? trim($firstname) : '',
-            is_string($lastname) ? trim($lastname) : '',
-        ], fn (string $part) => $part !== '')));
-    }
-
-    /**
-     * @param  list<string>  $roles
-     */
-    private function validateRolesServiceRequirement(array $roles, mixed $serviceId): void
-    {
-        if ($roles === []) {
-            return;
-        }
-
-        $requiresService = RolesAndPermissionsSeeder::rolesRequiringService();
-
-        foreach ($roles as $role) {
-            if (in_array($role, $requiresService, true) && blank($serviceId)) {
-                throw ValidationException::withMessages([
-                    'service_id' => 'Ce rôle exige un service de rattachement.',
-                ]);
-            }
-        }
+        return $permissions->map(function (Permission $permission) {
+            return [
+                'value' => $permission->name,
+                'label' => $permission->name,
+                'description' => filled($permission->description) ? $permission->description : null,
+            ];
+        })->values()->all();
     }
 
     /**

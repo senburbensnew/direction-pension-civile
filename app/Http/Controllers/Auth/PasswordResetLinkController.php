@@ -3,8 +3,8 @@
 namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Auth\PasswordResetLinkRequest;
 use App\Models\User;
-use App\Rules\Telephone;
 use App\Services\PasswordResetSmsService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -27,25 +27,8 @@ class PasswordResetLinkController extends Controller
      *
      * @throws ValidationException
      */
-    public function store(Request $request, PasswordResetSmsService $smsReset): RedirectResponse
+    public function store(PasswordResetLinkRequest $request, PasswordResetSmsService $smsReset): RedirectResponse
     {
-        if (! $request->filled('login') && $request->filled('email')) {
-            $request->merge(['login' => $request->input('email')]);
-        }
-
-        $request->validate([
-            'login' => [
-                'required',
-                'string',
-                function (string $attribute, mixed $value, \Closure $fail): void {
-                    $value = trim((string) $value);
-                    if ($value !== '' && str_starts_with($value, '+')) {
-                        (new Telephone)->validate($attribute, $value, $fail);
-                    }
-                },
-            ],
-        ]);
-
         $login = trim((string) $request->input('login'));
         $user = User::findForLogin($login);
 

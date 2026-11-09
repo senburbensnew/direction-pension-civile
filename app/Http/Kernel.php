@@ -4,16 +4,18 @@ namespace App\Http;
 
 use App\Http\Middleware\Authenticate;
 use App\Http\Middleware\CheckMaintenanceMode;
-use App\Http\Middleware\PersistSessionRequestMetadata;
 use App\Http\Middleware\CorbeilleAccess;
+use App\Http\Middleware\EagerLoadAuthenticatedUser;
 use App\Http\Middleware\EncryptCookies;
 use App\Http\Middleware\EnsureAccountFullyActive;
+use App\Http\Middleware\IncludeSoftDeletedInAdmin;
 use App\Http\Middleware\EnsureNotAdmin;
 use App\Http\Middleware\EnsurePasswordChanged;
 use App\Http\Middleware\EnsurePensionContext;
 use App\Http\Middleware\EnsurePensionPortalAccess;
 use App\Http\Middleware\EnsurePermanentAccount;
 use App\Http\Middleware\MergeFormUploadStash;
+use App\Http\Middleware\PersistSessionRequestMetadata;
 use App\Http\Middleware\PreventRequestsDuringMaintenance;
 use App\Http\Middleware\RecordSiteVisit;
 use App\Http\Middleware\RedirectIfAuthenticated;
@@ -79,6 +81,7 @@ class Kernel extends HttpKernel
             SubstituteBindings::class,
             SetLocale::class,
             CheckMaintenanceMode::class,
+            EagerLoadAuthenticatedUser::class,
             RecordSiteVisit::class,
             MergeFormUploadStash::class,
             EnsurePasswordChanged::class,
@@ -116,6 +119,7 @@ class Kernel extends HttpKernel
         'permission' => PermissionMiddleware::class,
         'role_or_permission' => RoleOrPermissionMiddleware::class,
         'corbeille.access' => CorbeilleAccess::class,
+        'admin.include_soft_deleted' => IncludeSoftDeletedInAdmin::class,
         'not.admin' => EnsureNotAdmin::class,
         'account.full' => EnsureAccountFullyActive::class,
         'account.permanent' => EnsurePermanentAccount::class,

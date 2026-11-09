@@ -16,18 +16,25 @@
 <body
     x-data="{
         sidebarOpen: false,
-        sidebarCollapsed: true,
-        init() {
+        sidebarCollapsed: (() => {
             try {
-                if (window.innerWidth >= 1024 && localStorage.getItem('portal-sidebar-collapsed') === '0') {
-                    this.sidebarCollapsed = false;
+                if (window.innerWidth >= 1024) {
+                    if (localStorage.getItem('portal-sidebar-expanded') === '1') {
+                        return false;
+                    }
                 }
             } catch (e) {}
-        },
+            return true;
+        })(),
         toggleCollapse() {
             this.sidebarCollapsed = ! this.sidebarCollapsed;
             try {
-                localStorage.setItem('portal-sidebar-collapsed', this.sidebarCollapsed ? '1' : '0');
+                localStorage.removeItem('portal-sidebar-collapsed');
+                if (this.sidebarCollapsed) {
+                    localStorage.removeItem('portal-sidebar-expanded');
+                } else {
+                    localStorage.setItem('portal-sidebar-expanded', '1');
+                }
             } catch (e) {}
         },
     }"
@@ -35,6 +42,27 @@
     x-on:resize.window="if (window.innerWidth >= 1024) sidebarOpen = false"
     :data-collapsed="sidebarCollapsed ? 'true' : 'false'"
     class="group/body site-public w-full min-h-dvh font-sans antialiased bg-[#e6ebf1] text-gray-800 overflow-x-hidden">
+
+    <script>
+        (function () {
+            var collapsed = true;
+            try {
+                if (window.innerWidth >= 1024) {
+                    collapsed = localStorage.getItem('portal-sidebar-expanded') !== '1';
+                }
+            } catch (e) {}
+            document.currentScript.parentElement.setAttribute(
+                'data-collapsed',
+                collapsed ? 'true' : 'false'
+            );
+        })();
+    </script>
+
+    @auth
+        @php
+            $authUnreadNotificationCount = Auth::user()->unreadNotifications()->count();
+        @endphp
+    @endauth
 
     <noscript>
         <div class="fixed inset-0 z-[10001] flex items-center justify-center bg-black/80">
@@ -55,18 +83,18 @@
 
     <aside
         id="portal-sidebar"
-        class="fixed inset-y-0 left-0 z-50 flex w-60 flex-col bg-[#0f2340] shadow-lg transition-all duration-200 ease-out"
+        class="fixed inset-y-0 left-0 z-50 flex w-60 flex-col bg-[#0f2340] shadow-lg max-lg:transition-transform max-lg:duration-200 max-lg:ease-out overflow-x-hidden"
         :class="[
             sidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0',
-            sidebarCollapsed ? 'lg:w-[4.25rem]' : 'lg:w-60',
+            sidebarCollapsed ? 'lg:!w-[4.25rem]' : 'lg:!w-60',
         ]">
         @include('layouts.partials.app-sidebar')
     </aside>
 
     <div
         id="portal-main"
-        class="flex flex-col min-h-dvh min-w-0 bg-white transition-[margin] duration-200"
-        :class="sidebarCollapsed ? 'lg:ml-[4.25rem]' : 'lg:ml-60'">
+        class="flex flex-col min-h-dvh min-w-0 max-w-full bg-white"
+        :class="sidebarCollapsed ? 'lg:!ml-[4.25rem]' : 'lg:!ml-60'">
 
         <header class="bg-white border-b border-gray-200 sticky top-0 z-30">
             <div class="flex items-start sm:items-center justify-between gap-3 px-4 py-3">
@@ -99,7 +127,7 @@
                     </div>
 
                     @auth
-                        <x-notification-bell-dropdown theme="light" />
+                        <x-notification-bell-dropdown theme="light" :unread-count="$authUnreadNotificationCount ?? 0" />
                         <x-user-account-dropdown theme="light" />
                     @endauth
 
@@ -116,7 +144,7 @@
             $portalMainWide = request()->routeIs('demandes.rencontre.visio');
         @endphp
         <main @class([
-            'flex-1 w-full min-w-0 min-h-0 pb-10',
+            'flex-1 w-full min-w-0 pb-10',
             'max-w-none px-3 sm:px-5 lg:px-6' => $portalMainWide,
         ])>
             {{ $slot }}

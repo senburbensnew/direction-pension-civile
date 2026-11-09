@@ -2,11 +2,18 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\IncludesTrashedInAdmin;
+
+use Illuminate\Database\Eloquent\SoftDeletes;
+
 use App\Support\PublicMedia;
 use Illuminate\Database\Eloquent\Model;
 
 class Official extends Model
 {
+    use SoftDeletes;
+    use IncludesTrashedInAdmin;
+
     protected $fillable = [
         'slug', 'role', 'nom', 'sexe', 'photo',
         'biographie', 'discours', 'citation', 'order', 'active',

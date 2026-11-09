@@ -22,7 +22,7 @@
 
 @section('content')
     <div class="home-page">
-        <section class="w-full overflow-hidden">
+        <section class="w-full relative">
             <x-carousel>
                 <div class="swiper-slide">
                     <div class="hero-accueil w-full h-full grid grid-cols-1 md:grid-cols-2 items-center">
@@ -418,7 +418,7 @@
         {{-- ═══════════════════════════════════════
             NOTRE INSTITUTION EN IMAGES
         ════════════════════════════════════════ --}}
-        @if(\App\Models\InstitutionImage::active()->exists())
+        @if(\App\Models\InstitutionImage::activeOrdered()->isNotEmpty())
         <section class="py-16 md:py-20 bg-white">
             <div class="site-gutter">
                 <x-home-heading :kicker="__('home.institution_images_kicker')" :title="__('home.institution_images_title')" :intro="__('home.institution_images_intro')" />
@@ -430,9 +430,9 @@
         {{-- ═══════════════════════════════════════
             NEWSLETTER
         ════════════════════════════════════════ --}}
-        <section class="py-16 bg-navy">
+        <section class="home-newsletter-section py-16 md:py-20 bg-navy bg-motif-dots">
             <div class="site-gutter">
-                <div class="w-full rounded-[1.75rem] border border-white/10 bg-white/5 px-6 py-10 md:px-12 md:py-12 text-center backdrop-blur-sm">
+                <div class="mx-auto w-full max-w-2xl rounded-[1.75rem] border border-white/10 bg-white/5 px-6 py-10 md:px-10 md:py-12 text-center backdrop-blur-sm shadow-lg shadow-black/10">
                     <x-home-heading tone="light" :kicker="__('home.newsletter_kicker')" :title="__('home.newsletter_title')" :intro="__('home.newsletter_intro')" />
                     <form method="POST" action="{{ route('newsletter.souscription') }}"
                         class="mx-auto flex max-w-md flex-col gap-3 sm:flex-row">

@@ -10,6 +10,12 @@
 @section('content')
 @php
     $subjectLabel = $contact->subjectLabel();
+    $statusBadge = match ($contact->status) {
+        \App\Models\Contact::STATUS_NOUVEAU => 'bg-orange-100 text-orange-800',
+        \App\Models\Contact::STATUS_EN_COURS => 'bg-blue-100 text-blue-800',
+        \App\Models\Contact::STATUS_TRAITE => 'bg-gray-100 text-gray-600',
+        default => 'bg-gray-100 text-gray-600',
+    };
 @endphp
 <div class="w-full space-y-4">
 
@@ -41,9 +47,14 @@
                     </p>
                 @endif
             </div>
-            <span class="px-2.5 py-1 bg-gray-100 text-gray-600 rounded-full text-xs font-medium flex-shrink-0">
-                {{ $subjectLabel }}
-            </span>
+            <div class="flex flex-col items-end gap-2 flex-shrink-0">
+                <span class="inline-flex px-2.5 py-1 rounded-full text-xs font-medium {{ $statusBadge }}">
+                    {{ $contact->statusLabel() }}
+                </span>
+                <span class="px-2.5 py-1 bg-gray-100 text-gray-600 rounded-full text-xs font-medium">
+                    {{ $subjectLabel }}
+                </span>
+            </div>
         </div>
 
         {{-- Message body --}}
@@ -52,7 +63,7 @@
         </div>
 
         {{-- Actions --}}
-        <div class="px-6 py-3 bg-gray-50 border-t border-gray-100 flex items-center gap-3">
+        <div class="px-6 py-3 bg-gray-50 border-t border-gray-100 flex items-center gap-3 flex-wrap">
             @php
                 $replySubject = rawurlencode('Re: Contact DPC — ' . $subjectLabel);
                 $replyBody = rawurlencode("Bonjour {$contact->first_name},\n\n\n\n---\nMessage original du {$contact->created_at->format('d/m/Y à H:i')} :\n{$contact->message}");
@@ -61,6 +72,26 @@
                 class="inline-flex items-center gap-1.5 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg transition-colors">
                 <i class="fas fa-reply"></i> Répondre par email
             </a>
+
+            @if($contact->status !== \App\Models\Contact::STATUS_EN_COURS)
+                <form action="{{ route('admin.contacts.markEnCours', $contact->id) }}" method="POST">
+                    @csrf
+                    <button type="submit"
+                        class="inline-flex items-center gap-1.5 px-4 py-2 bg-blue-100 hover:bg-blue-200 text-blue-800 text-sm font-medium rounded-lg transition-colors">
+                        <i class="fas fa-spinner"></i> En cours
+                    </button>
+                </form>
+            @endif
+
+            @if($contact->status !== \App\Models\Contact::STATUS_TRAITE)
+                <form action="{{ route('admin.contacts.markTraite', $contact->id) }}" method="POST">
+                    @csrf
+                    <button type="submit"
+                        class="inline-flex items-center gap-1.5 px-4 py-2 bg-green-100 hover:bg-green-200 text-green-800 text-sm font-medium rounded-lg transition-colors">
+                        <i class="fas fa-check"></i> Traité
+                    </button>
+                </form>
+            @endif
 
             <form action="{{ route('admin.contacts.destroy', $contact->id) }}" method="POST"
                 onsubmit="return confirm('Supprimer ce message ?')">

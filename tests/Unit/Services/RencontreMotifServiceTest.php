@@ -41,14 +41,14 @@ class RencontreMotifServiceTest extends TestCase
         );
 
         $this->assertSame(
-            'Service Formalités',
+            'Accueil et Formalités',
             $service->motifServiceLabels()['demande_formalites_mandats'] ?? null
         );
 
         Service::query()->where('code', Service::FORMALITE)->delete();
 
         $this->assertSame(
-            'Service Formalités',
+            'Accueil et Formalités',
             $service->serviceLabelForMotif('demande_formalites_mandats')
         );
 

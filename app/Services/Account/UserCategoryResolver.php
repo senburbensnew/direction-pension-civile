@@ -9,6 +9,9 @@ use Illuminate\Support\Collection;
 
 class UserCategoryResolver
 {
+    /** @var Collection<int, UserCategoryAssignment>|null */
+    private ?Collection $activeAssignmentsCache = null;
+
     public function __construct(
         private readonly ?User $user,
     ) {}
@@ -23,13 +26,24 @@ class UserCategoryResolver
      */
     public function activeAssignments(): Collection
     {
-        if (! $this->user) {
-            return collect();
+        if ($this->activeAssignmentsCache !== null) {
+            return $this->activeAssignmentsCache;
         }
 
-        return $this->user->categoryAssignments()
-            ->with('category')
-            ->get()
+        if (! $this->user) {
+            return $this->activeAssignmentsCache = collect();
+        }
+
+        if ($this->user->relationLoaded('categoryAssignments')) {
+            $this->user->categoryAssignments->loadMissing('category');
+            $assignments = $this->user->categoryAssignments;
+        } else {
+            $assignments = $this->user->categoryAssignments()
+                ->with('category')
+                ->get();
+        }
+
+        return $this->activeAssignmentsCache = $assignments
             ->filter(fn (UserCategoryAssignment $assignment) => $assignment->isActive())
             ->values();
     }

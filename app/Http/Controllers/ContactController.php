@@ -2,24 +2,24 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\StoreContactRequest;
 use App\Models\Contact;
-use App\Notifications\ContactFormReceivedNotification;
 use App\Models\ContactSubject;
 use App\Models\DirectionDepartementale;
 use App\Models\Service;
-use App\Rules\Telephone;
+use App\Notifications\ContactFormAcknowledgmentNotification;
+use App\Notifications\ContactFormReceivedNotification;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Notification;
-use Illuminate\Validation\Rule;
 
 class ContactController extends Controller
 {
     public function index()
     {
         $params = DB::table('parameters')
-            ->whereIn('name', ['contact_address','contact_phone','contact_hours','contact_email','contact_map_url','social_facebook','social_twitter','social_linkedin','social_youtube'])
+            ->whereIn('name', ['contact_address', 'contact_phone', 'contact_hours', 'contact_email', 'contact_map_url', 'social_facebook', 'social_twitter', 'social_linkedin', 'social_youtube'])
             ->pluck('value', 'name');
 
         $subjects = ContactSubject::active()->ordered()->get();
@@ -27,51 +27,41 @@ class ContactController extends Controller
         $services = Service::publicOrdered();
 
         return view('contact.index', [
-            'contact'       => $params,
-            'directions'    => $directions,
-            'services'      => $services,
-            'subjects'      => $subjects,
-            'servicePhones' => config('contact.service_phones', []),
+            'contact' => $params,
+            'directions' => $directions,
+            'services' => $services,
+            'subjects' => $subjects,
+            'phoneLines' => config('contact.service_phones', []),
         ]);
     }
 
-    public function store(Request $request)
+    public function store(StoreContactRequest $request)
     {
-        $subjects = ContactSubject::active()->ordered()->get();
-        $customSlugs = $subjects->where('allows_custom', true)->pluck('slug')->values()->all();
-        $destinataireKeys = $this->destinataireKeys();
-
-        $validated = $request->validate([
-            'first_name'     => 'required|string|max:100',
-            'last_name'      => 'required|string|max:100',
-            'email'          => 'required|email|max:255',
-            'telephone'      => ['required', 'string', 'max:20', new Telephone()],
-            'subject'        => ['required', Rule::in($subjects->pluck('slug'))],
-            'custom_subject' => ['nullable', 'string', 'max:150', Rule::requiredIf(in_array($request->input('subject'), $customSlugs, true))],
-            'destinataire'   => ['required', 'string', Rule::in($destinataireKeys)],
-            'message'        => 'required|string|max:' . Contact::MESSAGE_MAX_LENGTH,
-        ], [
-            'destinataire.required' => 'Veuillez sélectionner un destinataire.',
-            'destinataire.in'       => 'Le destinataire sélectionné n’est pas valide.',
-            'message.max'           => 'Le message ne peut pas dépasser :max caractères.',
+        $contact = Contact::create([
+            ...$request->validatedForStorage(),
+            'status' => Contact::STATUS_NOUVEAU,
+            'read' => false,
         ]);
 
-        if (in_array($validated['subject'], $customSlugs, true)) {
-            $validated['subject'] = trim($validated['custom_subject']);
-        }
-        unset($validated['custom_subject']);
-
-        $contact = Contact::create($validated);
-
         try {
-            Notification::route('mail', config('mail.from.address'))
+            Notification::route('mail', config('mail.contact_address'))
                 ->notify(new ContactFormReceivedNotification($contact));
         } catch (\Throwable $e) {
             Log::error('ContactMail failed', ['error' => $e->getMessage()]);
         }
 
+        try {
+            Notification::route('mail', $contact->email)
+                ->notify(new ContactFormAcknowledgmentNotification($contact));
+        } catch (\Throwable $e) {
+            Log::error('ContactAcknowledgmentMail failed', [
+                'contact_id' => $contact->id,
+                'error' => $e->getMessage(),
+            ]);
+        }
+
         return redirect()->route('contact')
-            ->with('success', 'Votre message a été envoyé avec succès. Nous vous répondrons dans les plus brefs délais.');
+            ->with('success', 'Votre message a été enregistré. Merci d’avoir contacté la DPC.');
     }
 
     // ── Admin ──────────────────────────────────────────────────────────────────
@@ -82,73 +72,63 @@ class ContactController extends Controller
 
         if ($request->filled('q')) {
             $query->where(function ($q) use ($request) {
-                $q->where('first_name', 'like', '%' . $request->q . '%')
-                  ->orWhere('last_name',  'like', '%' . $request->q . '%')
-                  ->orWhere('email',      'like', '%' . $request->q . '%')
-                  ->orWhere('telephone',  'like', '%' . $request->q . '%');
+                $q->where('first_name', 'like', '%'.$request->q.'%')
+                    ->orWhere('last_name', 'like', '%'.$request->q.'%')
+                    ->orWhere('email', 'like', '%'.$request->q.'%')
+                    ->orWhere('telephone', 'like', '%'.$request->q.'%');
             });
         }
 
-        if ($request->filled('status')) {
-            $query->where('read', $request->status === 'read');
+        if ($request->filled('status') && in_array($request->status, Contact::STATUSES, true)) {
+            $query->where('status', $request->status);
         }
 
-        if ($request->filled('destinataire')) {
-            $query->where('destinataire', $request->destinataire);
-        }
-
-        $contacts  = $query->latest()->paginate(20);
-        $unreadCount = Contact::where('read', false)->count();
+        $contacts = $query->latest()->paginate(20);
+        $nouveauCount = Contact::where('status', Contact::STATUS_NOUVEAU)->count();
         $subjectLabels = ContactSubject::query()->pluck('label', 'slug');
 
-        return view('admin.contacts.index', compact('contacts', 'unreadCount', 'subjectLabels'));
+        return view('admin.contacts.index', compact('contacts', 'nouveauCount', 'subjectLabels'));
     }
 
     public function adminShow(Contact $contact)
     {
-        if (!$contact->read) {
-            $contact->update(['read' => true]);
+        if ($contact->status === Contact::STATUS_NOUVEAU) {
+            $contact->transitionTo(Contact::STATUS_EN_COURS);
         }
 
         return view('admin.contacts.show', compact('contact'));
     }
 
-    public function markRead(Contact $contact)
+    public function markEnCours(Contact $contact)
     {
-        $contact->update(['read' => true]);
-        return back()->with('success', 'Message marqué comme lu.');
+        $contact->transitionTo(Contact::STATUS_EN_COURS);
+
+        return back()->with('success', 'Message marqué comme en cours.');
     }
 
-    public function markUnread(Contact $contact)
+    public function markTraite(Contact $contact)
     {
-        $contact->update(['read' => false]);
-        return back();
+        $contact->transitionTo(Contact::STATUS_TRAITE);
+
+        return back()->with('success', 'Message marqué comme traité.');
     }
 
-    public function markAllRead()
+    public function markAllTraite()
     {
-        Contact::where('read', false)->update(['read' => true]);
-        return back()->with('success', 'Tous les messages marqués comme lus.');
+        Contact::query()
+            ->whereIn('status', [Contact::STATUS_NOUVEAU, Contact::STATUS_EN_COURS])
+            ->update([
+                'status' => Contact::STATUS_TRAITE,
+                'read' => true,
+            ]);
+
+        return back()->with('success', 'Tous les messages ont été marqués comme traités.');
     }
 
     public function adminDestroy(Contact $contact)
     {
         $contact->delete();
+
         return back()->with('success', 'Message supprimé.');
-    }
-
-    /**
-     * @return list<string>
-     */
-    private function destinataireKeys(): array
-    {
-        $serviceKeys = collect(Service::publicCodes())
-            ->map(fn (string $code) => Contact::destinataireKey('service', $code));
-
-        $directionKeys = DirectionDepartementale::query()
-            ->pluck('abbr')
-            ->map(fn (string $abbr) => Contact::destinataireKey('direction', $abbr));
-
-        return $serviceKeys->merge($directionKeys)->values()->all();
     }
 }

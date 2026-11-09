@@ -2,6 +2,10 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\IncludesTrashedInAdmin;
+
+use Illuminate\Database\Eloquent\SoftDeletes;
+
 use App\Support\PublicMedia;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -9,6 +13,8 @@ use Illuminate\Support\Facades\Storage;
 
 class Report extends Model
 {
+    use SoftDeletes;
+    use IncludesTrashedInAdmin;
     use HasFactory;
 
     protected $fillable = [

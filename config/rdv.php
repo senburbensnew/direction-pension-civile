@@ -43,6 +43,13 @@ return [
         'channel'       => 'appel_telephonique',
     ],
 
+    /** Rappels automatiques 24 h et 30 min avant le créneau (email, SMS si configuré, notification in-app). */
+    'scheduled_reminders' => [
+        'enabled' => env('RDV_SCHEDULED_REMINDERS_ENABLED', true),
+        /** Fenêtre ± N minutes autour du moment cible (commande planifiée chaque minute). */
+        'tolerance_minutes' => 1,
+    ],
+
     /*
     | Rotation et équilibrage entre agents (même règles à la réservation,
     | à la proposition de créneau et à la réattribution par le responsable).

@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Enums\LoginTwoFactorChannelEnum;
 use App\Mail\LoginTwoFactorCodeMail;
 use App\Models\User;
+use App\Support\DevDiagnostics;
 use App\Support\LoginTwoFactorSession;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
@@ -65,6 +66,11 @@ class LoginTwoFactorService
         );
 
         Cache::put($throttleKey, true, now()->addSeconds(self::ISSUE_THROTTLE_SECONDS));
+
+        DevDiagnostics::logOtp('login_two_factor', $code, [
+            'user_id' => $user->id,
+            'channel' => $channel->value,
+        ]);
 
         if ($channel === LoginTwoFactorChannelEnum::Email) {
             Mail::to($user->email)->send(new LoginTwoFactorCodeMail($code));

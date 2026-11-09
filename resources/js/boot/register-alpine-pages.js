@@ -6,11 +6,6 @@ export async function registerAlpinePageComponents() {
     if (!Alpine) {
         return;
     }
-    if (document.querySelector('[data-dpc-demande-compte-form]')) {
-        const { registerDemandeCompteForm } = await import('../demande-compte-form.js');
-        registerDemandeCompteForm(Alpine);
-    }
-
     if (document.querySelector('[data-rdv-booking-form]')) {
         const { registerRdvBookingForm } = await import('../pages/rdv-booking-form.js');
         registerRdvBookingForm(Alpine);
@@ -44,5 +39,10 @@ export async function registerAlpinePageComponents() {
     if (document.querySelector('[data-contact-subjects-config]')) {
         const { registerContactSubjectsAdmin } = await import('../admin/contact-parameters-index.js');
         registerContactSubjectsAdmin(Alpine);
+    }
+
+    if (document.querySelector('[data-admin-users-index]')) {
+        const { registerAdminUsersIndex } = await import('../admin/users-index.js');
+        registerAdminUsersIndex(Alpine);
     }
 }

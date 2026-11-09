@@ -5,6 +5,7 @@ namespace Tests\Feature;
 use App\Enums\AccountStatusEnum;
 use App\Enums\BeneficiaireRelationEnum;
 use App\Mail\AdminUserTemporaryPasswordMail;
+use App\Models\CivilStatus;
 use App\Models\Service;
 use App\Models\User;
 use App\Services\Account\UserCategoryRoleSyncService;
@@ -51,6 +52,65 @@ class AdminUserManagementTest extends TestCase
         $user->assignRole('admin');
 
         return $user;
+    }
+
+    public function test_admin_can_export_users_csv(): void
+    {
+        $admin = $this->makeAdmin();
+        User::factory()->create([
+            'email' => 'export-csv@example.com',
+            'name' => 'Utilisateur Export',
+        ]);
+
+        $response = $this->actingAs($admin)->get(route('admin.users.export'));
+
+        $response->assertOk();
+        $response->assertHeader(
+            'content-disposition',
+            'attachment; filename="utilisateurs-'.date('Y-m-d').'.csv"'
+        );
+        $this->assertStringContainsString('export-csv@example.com', $response->streamedContent());
+        $this->assertStringContainsString('Utilisateur Export', $response->streamedContent());
+    }
+
+    public function test_admin_export_users_includes_selected_columns(): void
+    {
+        $admin = $this->makeAdmin();
+        User::factory()->create([
+            'email' => 'nif-export@example.com',
+            'nif' => self::VALID_NIF,
+        ]);
+
+        $response = $this->actingAs($admin)->get(route('admin.users.export', [
+            'columns' => ['user_summary', 'nif'],
+        ]));
+
+        $response->assertOk();
+        $content = $response->streamedContent();
+        $this->assertStringContainsString('NIF', $content);
+        $this->assertStringContainsString(self::VALID_NIF, $content);
+        $this->assertStringNotContainsString('Type de compte', $content);
+    }
+
+    public function test_admin_export_users_respects_search_filter(): void
+    {
+        $admin = $this->makeAdmin();
+        User::factory()->create(['email' => 'included@example.com', 'name' => 'Included User']);
+        User::factory()->create(['email' => 'excluded@example.com', 'name' => 'Excluded User']);
+
+        $response = $this->actingAs($admin)->get(route('admin.users.export', ['q' => 'included@']));
+
+        $response->assertOk();
+        $content = $response->streamedContent();
+        $this->assertStringContainsString('included@example.com', $content);
+        $this->assertStringNotContainsString('excluded@example.com', $content);
+    }
+
+    public function test_non_admin_cannot_export_users(): void
+    {
+        $user = User::factory()->create();
+
+        $this->actingAs($user)->get(route('admin.users.export'))->assertForbidden();
     }
 
     public function test_admin_can_open_create_and_edit_user_forms(): void
@@ -252,6 +312,34 @@ class AdminUserManagementTest extends TestCase
         $this->assertDatabaseMissing('users', ['email' => 'agent-no-service@example.com']);
     }
 
+    public function test_admin_can_save_identity_fields_including_civil_status(): void
+    {
+        $admin = $this->makeAdmin();
+        $civilStatus = CivilStatus::query()->create([
+            'name' => 'célibataire',
+            'description' => '',
+        ]);
+        $target = User::factory()->create([
+            'birth_date' => null,
+            'civil_status_id' => null,
+            'address' => null,
+        ]);
+
+        $this->actingAs($admin)->put(route('admin.users.update', $target), $this->identityFields([
+            'name' => $target->name,
+            'email' => $target->email,
+            'phone' => self::VALID_PHONE,
+            'birth_date' => '1990-05-20',
+            'civil_status_id' => $civilStatus->id,
+            'address' => '12 rue Capois, Port-au-Prince',
+        ]))->assertRedirect(route('admin.users.edit', $target));
+
+        $target->refresh();
+        $this->assertSame('1990-05-20', $target->birth_date?->format('Y-m-d'));
+        $this->assertSame($civilStatus->id, $target->civil_status_id);
+        $this->assertSame('12 rue Capois, Port-au-Prince', $target->address);
+    }
+
     public function test_admin_can_update_user_profile_and_roles(): void
     {
         $admin = $this->makeAdmin();
@@ -286,6 +374,32 @@ class AdminUserManagementTest extends TestCase
         $this->assertSame('9988776655', $target->ninu);
         $this->assertTrue($target->hasRole(User::ROLE_AGENT_FORMALITES));
         $this->assertFalse($target->hasRole(User::ROLE_AGENT_RDV));
+    }
+
+    public function test_admin_can_assign_and_sync_direct_permissions_on_user(): void
+    {
+        $admin = $this->makeAdmin();
+        $target = User::factory()->create();
+
+        $this->actingAs($admin)->put(route('admin.users.update', $target), $this->identityFields([
+            'name' => $target->name,
+            'email' => $target->email,
+            'phone' => self::VALID_PHONE,
+            'permissions' => ['can_view_dashboard'],
+        ]))->assertRedirect(route('admin.users.edit', $target));
+
+        $target->refresh();
+        $this->assertTrue($target->hasDirectPermission('can_view_dashboard'));
+
+        $this->actingAs($admin)->put(route('admin.users.update', $target), $this->identityFields([
+            'name' => $target->name,
+            'email' => $target->email,
+            'phone' => self::VALID_PHONE,
+            'permissions' => [],
+        ]))->assertRedirect(route('admin.users.edit', $target));
+
+        $target->refresh();
+        $this->assertFalse($target->hasDirectPermission('can_view_dashboard'));
     }
 
     public function test_admin_update_with_new_password_sets_must_change_password(): void

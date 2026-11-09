@@ -112,6 +112,8 @@ class DirectionDepartementaleSeeder extends Seeder
             DirectionDepartementale::updateOrCreate(['abbr' => $data['abbr']], $data);
         }
 
-        DirectionDepartementale::whereNotIn('abbr', array_column($directions, 'abbr'))->delete();
+        DirectionDepartementale::destroy(
+            DirectionDepartementale::whereNotIn('abbr', array_column($directions, 'abbr'))->pluck('id')->all()
+        );
     }
 }

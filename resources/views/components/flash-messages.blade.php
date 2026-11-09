@@ -9,7 +9,9 @@
         'password-updated' => 'Mot de passe mis à jour avec succès.',
     ];
     $statusKey = session('status');
-    $statusMessage = is_string($statusKey) ? ($statusMessages[$statusKey] ?? null) : null;
+    $statusMessage = (is_string($statusKey) && $statusKey !== '' && array_key_exists($statusKey, $statusMessages))
+        ? $statusMessages[$statusKey]
+        : null;
 @endphp
 
 @if(session('success'))

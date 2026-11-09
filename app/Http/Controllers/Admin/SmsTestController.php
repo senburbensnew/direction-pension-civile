@@ -3,10 +3,11 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Admin\StoreSmsTestRequest;
+use App\Models\User;
 use App\Rules\Telephone;
 use App\Services\SmsService;
 use Illuminate\Http\RedirectResponse;
-use Illuminate\Http\Request;
 use Illuminate\View\View;
 use RuntimeException;
 use Throwable;
@@ -20,14 +21,9 @@ class SmsTestController extends Controller
         return view('admin.sms.test', $this->viewData());
     }
 
-    public function store(Request $request): RedirectResponse|View
+    public function store(StoreSmsTestRequest $request): RedirectResponse|View
     {
-        $validated = $request->validate([
-            'to' => ['required', 'string', 'max:20', new Telephone],
-            'body' => ['nullable', 'string', 'max:1600'],
-        ], [
-            'to.required' => 'Indiquez un numéro de destination.',
-        ]);
+        $validated = $request->validated();
 
         $to = Telephone::normalize($validated['to']);
         $body = filled($validated['body'] ?? null)
@@ -67,6 +63,11 @@ class SmsTestController extends Controller
     private function viewData(): array
     {
         $summary = SmsService::configurationSummary();
+        $user = auth()->user();
+        $defaultTo = '+509';
+        if ($user instanceof User) {
+            $defaultTo = $user->routeNotificationForTwilio() ?? $defaultTo;
+        }
 
         return [
             'driver' => $summary['driver'],
@@ -74,7 +75,7 @@ class SmsTestController extends Controller
             'from' => $summary['from'],
             'notificationsSmsEnabled' => (bool) config('notifications.sms_enabled'),
             'providerConfigured' => SmsService::isProviderConfigured(),
-            'to' => old('to', auth()->user()?->routeNotificationForTwilio() ?? '+509'),
+            'to' => old('to', $defaultTo),
             'body' => old('body', ''),
             'error' => null,
         ];

@@ -24,7 +24,7 @@
                 <i class="fa-solid fa-phone" aria-hidden="true"></i>
             </span>
             <div>
-                <h2 class="text-sm font-bold text-sky-950">Appels de rappel — veille des rencontres</h2>
+                <h2 class="text-sm font-bold text-sky-950">Veille des rencontres</h2>
                 <p class="text-xs text-sky-800/70 mt-0.5">
                     RDV du <strong class="font-semibold">{{ $veilleDate }}</strong>
                     · contacter l’usager la veille du rendez-vous planifié.

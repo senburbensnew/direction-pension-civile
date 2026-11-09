@@ -4,10 +4,11 @@ namespace App\Http\Controllers;
 
 use App\Enums\PensionMandatStatusEnum;
 use App\Enums\PensionMandatTypeEnum;
+use App\Http\Requests\StorePensionMandatRequest;
 use App\Models\Beneficiaire;
 use App\Models\PensionMandat;
-use App\Rules\CodePension;
 use App\Services\Pension\BeneficiaireProvisioningService;
+use App\Services\Pension\PensionMandatNotifier;
 use App\Services\Pension\PensionMandatService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -40,30 +41,9 @@ class PensionMandatController extends Controller
         ));
     }
 
-    public function store(Request $request): RedirectResponse
+    public function store(StorePensionMandatRequest $request): RedirectResponse
     {
-        $typeValues = array_map(
-            fn (PensionMandatTypeEnum $case) => $case->value,
-            PensionMandatTypeEnum::cases(),
-        );
-
-        $validated = $request->validate([
-            'beneficiaire_firstname' => ['required', 'string', 'max:120'],
-            'beneficiaire_lastname' => ['required', 'string', 'max:120'],
-            'beneficiaire_nif' => ['nullable', 'string', 'max:32'],
-            'code_pension' => ['required', 'string', new CodePension()],
-            'type_mandat' => ['required', 'string', 'in:'.implode(',', $typeValues)],
-            'type_autre_precision' => [
-                'nullable',
-                'string',
-                'max:120',
-                'required_if:type_mandat,autre',
-            ],
-            'date_debut' => ['required', 'date'],
-            'date_fin' => ['required', 'date', 'after_or_equal:date_debut'],
-            'notes' => ['nullable', 'string', 'max:2000'],
-            'mandat_document' => ['required', 'file', 'mimes:pdf,jpg,jpeg,png', 'max:5120'],
-        ]);
+        $validated = $request->validated();
 
         $resolvedType = PensionMandatTypeEnum::storedType(
             $validated['type_mandat'],
@@ -82,9 +62,7 @@ class PensionMandatController extends Controller
 
         app(PensionMandatService::class)->assertCanSubmitMandat($user, $validated['code_pension']);
 
-        $mandat = null;
-
-        DB::transaction(function () use ($validated, $user, $request, $resolvedType, &$mandat) {
+        $mandat = DB::transaction(function () use ($validated, $user, $request, $resolvedType): PensionMandat {
             $beneficiaire = Beneficiaire::create([
                 'firstname' => $validated['beneficiaire_firstname'],
                 'lastname' => $validated['beneficiaire_lastname'],
@@ -112,9 +90,13 @@ class PensionMandatController extends Controller
                 $mandat->addMediaFromRequest('mandat_document')
                     ->toMediaCollection('mandat_document');
             }
+
+            return $mandat;
         });
 
-        app(\App\Services\Pension\PensionMandatNotifier::class)->notifySubmitted($mandat->fresh());
+        $mandat->refresh();
+
+        app(PensionMandatNotifier::class)->notifySubmitted($mandat);
 
         return redirect()
             ->route('compte.mandats.index')

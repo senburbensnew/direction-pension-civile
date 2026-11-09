@@ -19,7 +19,7 @@ use App\Services\Pension\ActivePensionContext;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Notification;
-use Spatie\Permission\Models\Role;
+use App\Models\Role;
 use Tests\TestCase;
 use Tests\Traits\SeedsRequiredData;
 

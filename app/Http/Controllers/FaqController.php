@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\Admin\StoreFaqItemRequest;
 use App\Models\FaqItem;
 use Illuminate\Http\Request;
 
@@ -40,15 +41,9 @@ class FaqController extends Controller
         return view('admin.faq.index', compact('items', 'categories'));
     }
 
-    public function store(Request $request)
+    public function store(StoreFaqItemRequest $request)
     {
-        $data = $request->validate([
-            'question'     => 'required|string|max:500',
-            'answer'       => 'required|string',
-            'category'     => 'required|string|max:100',
-            'order_column' => 'nullable|integer|min:0',
-            'published'    => 'nullable|boolean',
-        ]);
+        $data = $request->validated();
         $data['published']    = $request->boolean('published', true);
         $data['order_column'] = $data['order_column'] ?? 0;
 
@@ -56,15 +51,9 @@ class FaqController extends Controller
         return back()->with('success', 'Question ajoutée.');
     }
 
-    public function update(Request $request, FaqItem $faqItem)
+    public function update(StoreFaqItemRequest $request, FaqItem $faqItem)
     {
-        $data = $request->validate([
-            'question'     => 'required|string|max:500',
-            'answer'       => 'required|string',
-            'category'     => 'required|string|max:100',
-            'order_column' => 'nullable|integer|min:0',
-            'published'    => 'nullable|boolean',
-        ]);
+        $data = $request->validated();
         $data['published']    = $request->boolean('published', true);
         $data['order_column'] = $data['order_column'] ?? 0;
 
@@ -72,10 +61,9 @@ class FaqController extends Controller
         return back()->with('success', 'Question mise à jour.');
     }
 
-    public function destroy(FaqItem $faqItem)
+    public function destroy(Request $request, FaqItem $faqItem)
     {
-        $faqItem->delete();
-        return back()->with('success', 'Question supprimée.');
+        return back()->with('success', $this->adminDelete($faqItem, $request));
     }
 
     public function togglePublish(FaqItem $faqItem)

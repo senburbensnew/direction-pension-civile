@@ -2,11 +2,17 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\IncludesTrashedInAdmin;
+
+use Illuminate\Database\Eloquent\SoftDeletes;
+
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
 class Actualite extends Model
 {
+    use SoftDeletes;
+    use IncludesTrashedInAdmin;
     use HasFactory;
 
     protected $fillable = [
@@ -15,11 +21,11 @@ class Actualite extends Model
         'content_text',
         'category',
         'posted_in',
-        'published', // ✅ replaced published_at
+        'published',
     ];
 
     protected $casts = [
-        'published' => 'boolean', // ✅ ensures true/false
+        'published' => 'boolean',
     ];
 
     /**

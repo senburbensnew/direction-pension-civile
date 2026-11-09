@@ -4,7 +4,7 @@ namespace Tests\Concerns;
 
 use App\Models\User;
 use App\Services\Pension\BeneficiaireProvisioningService;
-use Spatie\Permission\Models\Role;
+use App\Models\Role;
 
 trait CreatesPensionneUsers
 {

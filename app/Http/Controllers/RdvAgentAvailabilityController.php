@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\UpdateRdvAgentAvailabilityRequest;
 use App\Models\RdvAgentAvailability;
 use App\Services\RencontreAvailabilityService;
 use Carbon\Carbon;
@@ -69,7 +70,7 @@ class RdvAgentAvailabilityController extends Controller
     }
 
     public function update(
-        Request $request,
+        UpdateRdvAgentAvailabilityRequest $request,
         RencontreAvailabilityService $availability
     ) {
         $user = $request->user();
@@ -79,28 +80,7 @@ class RdvAgentAvailabilityController extends Controller
             403
         );
 
-        $minDate = now()->toDateString();
-        $maxDate = now()->addMonths(6)->toDateString();
-        $maxWeekday = $availability->allowsWeekends() ? 7 : 5;
-
-        $validated = $request->validate([
-            'recurring' => ['nullable', 'array'],
-            'recurring.*.weekday' => ['required', 'integer', 'between:1,'.$maxWeekday],
-            'recurring.*.start_time' => ['required', 'date_format:H:i'],
-            'recurring.*.end_time' => ['required', 'date_format:H:i'],
-
-            'dates' => ['nullable', 'array'],
-            'dates.*.available_on' => ['required', 'date', 'after_or_equal:'.$minDate, 'before_or_equal:'.$maxDate],
-            'dates.*.start_time' => ['required', 'date_format:H:i'],
-            'dates.*.end_time' => ['required', 'date_format:H:i'],
-
-            'blocks' => ['nullable', 'array'],
-            'blocks.*.available_on' => ['nullable', 'date', 'after_or_equal:'.$minDate, 'before_or_equal:'.$maxDate],
-            'blocks.*.weekday' => ['nullable', 'integer', 'between:1,'.$maxWeekday],
-            'blocks.*.start_time' => ['nullable', 'date_format:H:i'],
-            'blocks.*.end_time' => ['nullable', 'date_format:H:i'],
-            'blocks.*.all_day' => ['nullable', 'boolean'],
-        ]);
+        $validated = $request->validated();
 
         $payload = [];
 
@@ -219,9 +199,9 @@ class RdvAgentAvailabilityController extends Controller
         }
 
         DB::transaction(function () use ($user, $payload) {
-            RdvAgentAvailability::query()
-                ->where('user_id', $user->id)
-                ->delete();
+            RdvAgentAvailability::destroy(
+                RdvAgentAvailability::query()->where('user_id', $user->id)->pluck('id')->all()
+            );
 
             foreach ($payload as $row) {
                 RdvAgentAvailability::create([

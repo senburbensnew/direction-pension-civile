@@ -91,7 +91,7 @@ class DemandeCreationCompteReviewServiceTest extends TestCase
         $demande = $this->makePendingTitulaireDemande();
         $userId = $demande->user_id;
         $this->attachRealisedFormalitesRendezVous($demande);
-        User::query()->whereKey($userId)->delete();
+        User::destroy($userId);
         $demande = $demande->fresh();
         $reviewer = $this->makeFormalitesReviewer();
 

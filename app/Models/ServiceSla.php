@@ -2,11 +2,18 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\IncludesTrashedInAdmin;
+
+use Illuminate\Database\Eloquent\SoftDeletes;
+
 use App\Enums\TypeDemandeEnum;
 use Illuminate\Database\Eloquent\Model;
 
 class ServiceSla extends Model
 {
+    use SoftDeletes;
+    use IncludesTrashedInAdmin;
+
     protected $table = 'service_sla';
 
     protected $fillable = ['service_id', 'type_demande', 'delai_jours'];

@@ -3,7 +3,7 @@
 namespace App\Services\Account;
 
 use App\Models\User;
-use Spatie\Permission\Models\Role;
+use App\Models\Role;
 
 /**
  * Détermine catégories et rôles portail à la création d'un compte provisoire.

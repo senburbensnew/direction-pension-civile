@@ -24,8 +24,8 @@ use App\Services\Pension\BeneficiaireRelationService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Notification;
-use Spatie\Permission\Models\Permission;
-use Spatie\Permission\Models\Role;
+use App\Models\Permission;
+use App\Models\Role;
 use Tests\TestCase;
 use Tests\Traits\SeedsRequiredData;
 

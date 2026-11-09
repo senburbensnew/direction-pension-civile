@@ -4,11 +4,13 @@ namespace App\Http\Controllers\Admin;
 
 use App\Enums\NewsletterSubscriberStatusEnum;
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Admin\ImportNewsletterSubscribersRequest;
 use App\Models\Newsletter;
 use App\Models\NewsletterCampaign;
 use App\Models\NewsletterSuppression;
 use App\Services\Newsletter\NewsletterImportService;
 use Illuminate\Http\Request;
+use Illuminate\Pagination\AbstractPaginator;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class NewsletterSubscriberController extends Controller
@@ -18,22 +20,25 @@ class NewsletterSubscriberController extends Controller
         $query = Newsletter::query()->with('user');
 
         if ($request->filled('q')) {
-            $query->where('email', 'like', '%'.$request->q.'%');
+            $query->where('email', 'like', '%'.$request->string('q').'%');
         }
 
         if ($request->filled('status')) {
-            $query->where('status', $request->status);
+            $query->where('status', $request->string('status'));
         }
 
         if ($request->filled('locale')) {
-            $query->where('locale', $request->locale);
+            $query->where('locale', $request->string('locale'));
         }
 
         if ($request->filled('audience_group')) {
-            $query->where('audience_group', $request->audience_group);
+            $query->where('audience_group', $request->string('audience_group'));
         }
 
-        $subscribers = $query->latest()->paginate(25)->withQueryString();
+        $subscribers = $query->latest()->paginate(25);
+        if ($subscribers instanceof AbstractPaginator) {
+            $subscribers->withQueryString();
+        }
         $total = Newsletter::count();
         $confirmed = Newsletter::query()->mailable()->count();
         $pending = Newsletter::query()->where('status', NewsletterSubscriberStatusEnum::Pending)->count();
@@ -57,13 +62,8 @@ class NewsletterSubscriberController extends Controller
         return view('admin.newsletter.import');
     }
 
-    public function import(Request $request, NewsletterImportService $importService)
+    public function import(ImportNewsletterSubscribersRequest $request, NewsletterImportService $importService)
     {
-        $request->validate([
-            'file' => ['required', 'file', 'mimes:csv,txt', 'max:5120'],
-            'require_consent' => ['nullable', 'boolean'],
-        ]);
-
         $result = $importService->importCsv(
             $request->file('file'),
             requireConsentColumn: $request->boolean('require_consent', true),

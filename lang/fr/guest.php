@@ -54,17 +54,6 @@ return [
         'notice' => 'Veuillez définir un nouveau mot de passe pour accéder à votre espace.',
     ],
 
-    'register' => [
-        'title' => 'Créer un compte',
-        'intro' => 'Remplissez les informations ci-dessous pour vous inscrire.',
-        'who_are_you' => 'Qui êtes-vous ?',
-        'institution_name' => 'Nom de l\'institution',
-        'lastname' => 'Nom',
-        'firstname' => 'Prénom(s)',
-        'already_have' => 'Vous avez déjà un compte ?',
-        'sign_in' => 'Se connecter',
-    ],
-
     'confirm_password' => [
         'title' => 'Confirmez votre mot de passe',
         'intro' => 'Il s\'agit d\'une zone sécurisée. Veuillez confirmer votre mot de passe avant de continuer.',

@@ -81,10 +81,6 @@
                     Demande de rendez-vous
                 </h1>
 
-                <p class="text-sm text-gray-500 max-w-xl mt-2">
-                    Quatre étapes : mode → motif et créneau → pièces → confirmation.
-                    Les créneaux sont planifiés avec le service Accueil et Formalités.
-                </p>
             </div>
 
 
@@ -149,166 +145,11 @@
 
 
             @if($rdvActif ?? null)
-
-                {{-- =================================================
-                    RENDEZ-VOUS ACTIF
-                ================================================== --}}
-
-                <section class="bg-amber-50 border border-amber-200 card-shadow p-6 sm:p-8">
-
-                    <div class="flex items-start gap-3">
-
-                        <i class="fa-solid fa-circle-exclamation text-amber-600 mt-0.5 shrink-0"></i>
-
-                        <div class="flex-1">
-
-                            <p class="font-semibold text-navy">
-                                Un rendez-vous est déjà en cours
-                            </p>
-
-                            <p class="text-sm text-gray-700 mt-1">
-
-                                Vous ne pouvez pas en prendre un autre tant que votre rendez-vous en cours n’est pas annulé.
-
-                            </p>
-
-
-                            {{-- Détails du RDV actif --}}
-
-                            <div class="mt-3 text-sm text-gray-700 space-y-1">
-
-                                <p>
-
-                                    <span class="font-medium">
-                                        Date :
-                                    </span>
-
-                                    {{ $rdvActif->data['date_souhaitee'] ?? '—' }}
-
-                                    à
-
-                                    {{ \App\Models\Demande::normalizeRencontreTime($rdvActif->data['heure_souhaitee'] ?? null) ?? '—' }}
-
-                                </p>
-
-
-                                @if(($rdvActif->data['modalite'] ?? '') === 'visio')
-
-                                    <p>
-
-                                        <span class="font-medium">
-                                            Mode :
-                                        </span>
-
-                                        Visioconférence
-
-                                    </p>
-
-                                @elseif(!empty($rdvActif->data['lieu_rdv']))
-
-                                    <p>
-
-                                        <span class="font-medium">
-                                            Lieu :
-                                        </span>
-
-                                        {{ $rdvActif->data['lieu_rdv'] }}
-
-                                    </p>
-
-                                @endif
-
-                            </div>
-
-                            @php
-                                $rdvActifData = $rdvActif->data ?? [];
-                                $rdvActifDocs = $rdvActifData['documents_a_preparer'] ?? [];
-                                if ($rdvActifDocs === [] && ! empty($rdvActifData['motif_key'])) {
-                                    $rdvActifDocs = app(\App\Services\RencontreMotifService::class)->prepareHints(
-                                        (string) $rdvActifData['motif_key'],
-                                        (string) ($rdvActifData['modalite'] ?? 'visio')
-                                    );
-                                }
-                                $rdvActifPhysique = ($rdvActifData['modalite'] ?? 'visio') === 'physique';
-                            @endphp
-
-                            <div class="mt-4 space-y-4">
-                                @include('demandes.rencontre._documents-preparer-panel', [
-                                    'documents' => $rdvActifDocs,
-                                    'modeLabel' => $rdvActifPhysique ? 'présentiel' : 'visioconférence',
-                                    'panelId' => 'actif',
-                                    'showEnvoiHint' => $rdvActif->canUploadRencontreDocuments(),
-                                ])
-                                @include('demandes.rencontre._documents-envoi-panel', [
-                                    'demande' => $rdvActif,
-                                    'panelId' => 'actif-envoi',
-                                ])
-                            </div>
-
-
-                            {{-- Actions --}}
-
-                            @php
-                                $visioServiceActif = app(\App\Services\RencontreVisioService::class);
-                                $visioActifCanJoin = ($rdvActif->data['modalite'] ?? '') === 'visio'
-                                    && filled($rdvActif->visio_token)
-                                    && $visioServiceActif->canAccess(auth()->user(), $rdvActif);
-                                $visioActifStatus = $visioActifCanJoin
-                                    ? $visioServiceActif->status($rdvActif)
-                                    : null;
-                            @endphp
-
-                            <div class="mt-4 flex flex-wrap items-center gap-3">
-
-                                @if($visioActifCanJoin && $visioActifStatus === 'actif')
-                                    <a href="{{ $rdvActif->visioPageUrl('create') }}"
-                                    class="inline-flex items-center gap-2 px-4 py-2 bg-navy text-white text-sm font-semibold rounded-lg hover:bg-orange-600 transition">
-                                        <i class="fa-solid fa-video"></i>
-                                        Rejoindre la visioconférence
-                                    </a>
-                                @elseif($visioActifCanJoin && $visioActifStatus === 'en_attente')
-                                    <span class="text-sm text-amber-800 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2">
-                                        Visio ouverte à partir du
-                                        {{ $visioServiceActif->opensAt($rdvActif)?->format('d/m/Y à H:i') ?? '—' }}
-                                    </span>
-                                @elseif($visioActifCanJoin)
-                                    <span class="text-sm text-gray-500">Lien de visioconférence expiré.</span>
-                                @endif
-
-                                @if(!$rdvActif->rencontreStatut()->isTerminal())
-
-                                    <form
-                                        action="{{ route('demandes.rencontre.annuler', $rdvActif) }}"
-                                        method="POST"
-                                        onsubmit="return confirm('Confirmez-vous l’annulation de ce rendez-vous ?');"
-                                        class="inline"
-                                    >
-
-                                        @csrf
-
-                                        <button
-                                            type="submit"
-                                            class="inline-flex items-center gap-2 px-4 py-2 bg-red-600 text-white text-sm font-semibold rounded-lg hover:bg-red-700 transition"
-                                        >
-
-                                            <i class="fa-solid fa-xmark"></i>
-
-                                            Annuler ce rendez-vous
-
-                                        </button>
-
-                                    </form>
-
-                                @endif
-
-                            </div>
-
-                        </div>
-
-                    </div>
-
-                </section>
-
+                <p class="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-950">
+                    <span class="font-semibold">Un rendez-vous est déjà en cours.</span>
+                    Utilisez le bloc « Mes rendez-vous » ci-dessus pour le lien visio, les pièces à préparer ou l’annulation.
+                    Le formulaire ci-dessous reste fermé tant que ce rendez-vous n’est pas annulé ou terminé.
+                </p>
             @else
 
                 @php
@@ -464,10 +305,6 @@
 
                                             Visioconférence
 
-                                            <!-- <span class="text-xs font-bold uppercase tracking-wide text-green-700 bg-green-50 px-2 py-0.5 rounded-full">
-                                                Recommandé
-                                            </span> -->
-
                                         </span>
 
                                         <span class="block text-sm text-gray-600 mt-1">
@@ -540,7 +377,7 @@
                         x-show="modalite"
                         x-cloak
                         class="dpc-accordion bg-white border border-gray-200 card-shadow"
-                        open
+                        @if($detailsHasError) open @endif
                         @toggle="if ($el.open) window.dispatchEvent(new Event('resize'))"
                     >
 
@@ -612,9 +449,16 @@
                                     </p>
                                 @enderror
 
+                                @php
+                                    $initialMotifKey = old('motif', $defaultMotif ?? '');
+                                    $initialServiceLabel = $initialMotifKey !== ''
+                                        ? ($motifServices[$initialMotifKey] ?? '')
+                                        : '';
+                                @endphp
+
                                 <p
                                     x-show="motif"
-                                    x-cloak
+                                    @unless($initialMotifKey !== '') x-cloak @endunless
                                     class="mt-2 text-sm text-navy"
                                 >
 
@@ -623,7 +467,7 @@
                                     <span
                                         class="font-semibold"
                                         x-text="serviceLabel()"
-                                    ></span>
+                                    >{{ $initialServiceLabel }}</span>
 
                                 </p>
 
@@ -767,13 +611,6 @@
                         class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 pt-2"
                     >
 
-                        <p
-                            x-show="!accepte"
-                            x-cloak
-                            class="text-sm text-gray-500"
-                        >
-                            Cochez la confirmation dans l’étape 4 pour activer l’envoi.
-                        </p>
                         <p
                             x-show="accepte && (!dateSouhaitee || !heureSouhaitee)"
                             x-cloak

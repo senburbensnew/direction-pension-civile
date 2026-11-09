@@ -7,12 +7,17 @@ import { initMenubar } from './components/menubar.js';
 import Alpine from 'alpinejs';
 import flatpickr from 'flatpickr';
 import { French } from 'flatpickr/dist/l10n/fr.js';
+import { registerDemandeCompteForm } from './demande-compte-form.js';
 
 window.Alpine = Alpine;
 window.flatpickr = flatpickr;
 window.French = French;
 
 document.addEventListener('alpine:init', () => {
+    if (document.querySelector('[data-dpc-demande-compte-form]')) {
+        registerDemandeCompteForm(Alpine);
+    }
+
     Alpine.data('searchableSelect', (config) => ({
         open: false,
         query: '',
@@ -65,9 +70,8 @@ document.addEventListener('alpine:init', () => {
 // Locale → { flatpickr locale, display format shown to user }
 // The hidden input always submits Y-m-d (what Laravel expects).
 const LOCALE_CONFIG = {
-    fr: { locale: French,  altFormat: 'd/m/Y' },
-    ht: { locale: French,  altFormat: 'd/m/Y' }, // Haitian Creole uses the same format
-    en: { locale: 'default', altFormat: 'm/d/Y' },
+    fr: { locale: French, altFormat: 'd/m/Y' },
+    ht: { locale: French, altFormat: 'd/m/Y' },
 };
 
 function initDatepickers() {
@@ -204,6 +208,10 @@ function initUiWidgets() {
 }
 
 async function boot() {
+    if (document.querySelector('[data-dpc-demande-compte-form]')) {
+        registerDemandeCompteForm(Alpine);
+    }
+
     await registerAlpinePageComponents();
     Alpine.start();
     initUiWidgets();

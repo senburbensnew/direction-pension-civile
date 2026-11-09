@@ -2,7 +2,7 @@
 <div class="bg-[#173052] bg-motif-dots py-6 text-white border-t-[3px] border-orange-500">
     @php
         $footerServices = \App\Models\Service::publicOrdered();
-        $footerDirections = \App\Models\DirectionDepartementale::ordered()->get();
+        $footerDirections = \App\Models\DirectionDepartementale::orderedList();
     @endphp
     <div class="site-gutter grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-8 lg:gap-10 items-start">
         <div>

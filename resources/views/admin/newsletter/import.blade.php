@@ -5,7 +5,7 @@
 @section('content')
 <div class="max-w-xl mx-auto bg-white border border-gray-200 rounded-xl p-6 space-y-4">
     <h1 class="text-lg font-bold text-gray-800">Importer des abonnés (CSV)</h1>
-    <p class="text-sm text-gray-600">Colonnes requises : <code>email</code>, <code>consent</code> (oui/1/true). Optionnel : <code>locale</code>, <code>audience_group</code>.</p>
+    <p class="text-sm text-gray-600">Colonnes requises : <code>email</code>, <code>consent</code> (oui/1/true). Optionnel : <code>locale</code> (<code>fr</code> ou <code>ht</code>), <code>audience_group</code>.</p>
 
     <form method="POST" action="{{ route('admin.newsletter.import.store') }}" enctype="multipart/form-data" class="space-y-4">
         @csrf
