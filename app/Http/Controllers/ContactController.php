@@ -44,8 +44,20 @@ class ContactController extends Controller
         ]);
 
         try {
-            Notification::route('mail', config('mail.contact_address'))
-                ->notify(new ContactFormReceivedNotification($contact));
+            $recipients = collect(config('mail.contact_form_recipients', []))
+                ->filter(fn ($email) => filled($email))
+                ->map(fn ($email) => trim((string) $email))
+                ->unique(fn ($email) => strtolower($email))
+                ->values();
+
+            if ($recipients->isEmpty()) {
+                Log::warning('ContactMail skipped: no recipients configured');
+            } else {
+                $notification = new ContactFormReceivedNotification($contact);
+                foreach ($recipients as $email) {
+                    Notification::route('mail', $email)->notify($notification);
+                }
+            }
         } catch (\Throwable $e) {
             Log::error('ContactMail failed', ['error' => $e->getMessage()]);
         }

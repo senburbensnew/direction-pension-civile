@@ -138,7 +138,19 @@ return [
     |--------------------------------------------------------------------------
     | Contact Form Inbox
     |--------------------------------------------------------------------------
+    |
+    | contact_form_recipients : destinataires du message staff (ContactFormReceived).
+    | CONTACT_FORM_RECIPIENTS : liste séparée par des virgules qui remplace les défauts.
+    | contact_address : conservé pour compatibilité (première boîte par défaut).
+    |
     */
+
+    'contact_form_recipients' => filled(env('CONTACT_FORM_RECIPIENTS'))
+        ? array_values(array_filter(array_map('trim', explode(',', env('CONTACT_FORM_RECIPIENTS')))))
+        : [
+            'directionpensioncivile@gmail.com',
+            'christina.suffrin@mef.gouv.ht',
+        ],
 
     'contact_address' => env('CONTACT_EMAIL', env('MAIL_FROM_ADDRESS', 'hello@example.com')),
 

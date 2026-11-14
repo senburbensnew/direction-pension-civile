@@ -53,6 +53,13 @@ class ContactFormTest extends TestCase
     {
         Notification::fake();
 
+        config([
+            'mail.contact_form_recipients' => [
+                'inbox-a@example.com',
+                'inbox-b@example.com',
+            ],
+        ]);
+
         $this->get('/contact')->assertOk();
 
         $this->from('/contact')->post('/contact', $this->payload([
@@ -80,7 +87,10 @@ class ContactFormTest extends TestCase
             'status' => Contact::STATUS_NOUVEAU,
         ]);
 
-        Notification::assertSentOnDemand(ContactFormReceivedNotification::class);
+        $this->assertContactReceivedNotificationSentToInboxes([
+            'inbox-a@example.com',
+            'inbox-b@example.com',
+        ]);
         Notification::assertSentOnDemand(ContactFormAcknowledgmentNotification::class);
     }
 
@@ -168,6 +178,13 @@ class ContactFormTest extends TestCase
     {
         Notification::fake();
 
+        config([
+            'mail.contact_form_recipients' => [
+                'inbox-a@example.com',
+                'inbox-b@example.com',
+            ],
+        ]);
+
         $this->from('/contact')->post('/contact', $this->payload())
             ->assertRedirect('/contact')
             ->assertSessionHas('success');
@@ -180,7 +197,10 @@ class ContactFormTest extends TestCase
             'read' => false,
         ]);
 
-        Notification::assertSentOnDemand(ContactFormReceivedNotification::class);
+        $this->assertContactReceivedNotificationSentToInboxes([
+            'inbox-a@example.com',
+            'inbox-b@example.com',
+        ]);
         Notification::assertSentOnDemand(ContactFormAcknowledgmentNotification::class);
     }
 
@@ -357,5 +377,19 @@ class ContactFormTest extends TestCase
             'subject' => 'pension',
             'message' => 'Bonjour, j’ai une question sur ma pension.',
         ], $overrides);
+    }
+
+    private function assertContactReceivedNotificationSentToInboxes(array $inboxes): void
+    {
+        Notification::assertSentOnDemandTimes(ContactFormReceivedNotification::class, count($inboxes));
+
+        foreach ($inboxes as $inbox) {
+            Notification::assertSentOnDemand(
+                ContactFormReceivedNotification::class,
+                function ($notification, array $channels, $notifiable) use ($inbox): bool {
+                    return strtolower(trim((string) data_get($notifiable, 'routes.mail'))) === strtolower(trim($inbox));
+                }
+            );
+        }
     }
 }
