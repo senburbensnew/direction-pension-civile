@@ -32,7 +32,7 @@ class NewsletterConfirmSubscriptionNotification extends Notification implements 
 
         return (new MailMessage)
             ->subject(__('newsletter.confirm_email_subject'))
-            ->markdown('emails.newsletter-confirm', [
+            ->markdown('mail.newsletter-confirm', [
                 'subscriber' => $this->subscriber,
                 'confirmUrl' => $url,
             ]);

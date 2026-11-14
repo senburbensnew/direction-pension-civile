@@ -32,7 +32,7 @@ class AdminEmailTestMail extends Mailable implements ShouldQueue
     public function content(): Content
     {
         return new Content(
-            text: 'mail.admin-email-test',
+            markdown: 'mail.admin-email-test',
             with: [
                 'bodyText' => $this->bodyText,
             ],

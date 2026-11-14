@@ -4,14 +4,6 @@ function bootDocumentsUpload() {
     const uploadButton = document.getElementById('upload-button');
     const fileNameEl = document.getElementById('file-name');
     const spinner = document.getElementById('loading-spinner');
-    const successToast = document.getElementById('toast-success');
-
-    if (successToast) {
-        setTimeout(() => {
-            successToast.style.display = 'none';
-        }, 5000);
-    }
-
     if (!fileInput || !uploadButton) {
         return;
     }

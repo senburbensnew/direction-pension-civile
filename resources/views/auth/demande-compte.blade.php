@@ -452,6 +452,8 @@
             </p>
         </div>
 
+        @include('auth.partials.account-creation-rdv-notice', ['variant' => 'full'])
+
         {{-- ============================================================
              RÉSUMÉ GLOBAL DES ERREURS (visible à toutes les étapes)
              ============================================================ --}}

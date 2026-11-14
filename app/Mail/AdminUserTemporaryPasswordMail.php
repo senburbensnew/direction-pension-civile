@@ -35,7 +35,7 @@ class AdminUserTemporaryPasswordMail extends Mailable implements ShouldQueue
     public function content(): Content
     {
         return new Content(
-            text: 'mail.admin-user-temporary-password',
+            markdown: 'mail.admin-user-temporary-password',
             with: [
                 'displayName' => $this->user->displayName(),
                 'email' => $this->user->email,

@@ -18,6 +18,7 @@ return [
         'title' => 'Connexion',
         'welcome' => 'Bienvenue. Veuillez vous identifier pour continuer.',
         'no_account' => 'Pas encore de compte ?',
+        'account_rdv_notice' => 'Pour obtenir un compte, déposez une demande en ligne puis prenez rendez-vous à l’Accueil et Formalités pour finaliser l’ouverture.',
         'show_password' => 'Afficher le mot de passe',
         'hide_password' => 'Masquer le mot de passe',
         'two_factor_title' => 'Vérification en deux étapes',
@@ -73,6 +74,8 @@ return [
 
     'account_request' => [
         'title' => 'Demande de création de compte',
+        'rdv_notice_title' => 'Avant de commencer',
+        'rdv_notice' => 'Après l’envoi de ce formulaire, un compte provisoire vous sera ouvert. Pour finaliser votre demande de création de compte, vous devez prendre un rendez-vous à l’Accueil et Formalités (en présentiel ou en visioconférence). Votre accès complet ne sera activé qu’après ce rendez-vous et la validation de votre dossier par la Direction.',
         'step_label' => 'Étape',
         'steps_aria' => 'Étapes du formulaire',
         'errors_plural' => 'erreurs à corriger',

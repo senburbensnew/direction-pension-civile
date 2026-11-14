@@ -13,7 +13,7 @@ class AdminEmailTestMailTest extends TestCase
         $mailable = new AdminEmailTestMail('Corps du test', 'Sujet test');
 
         $this->assertSame('Sujet test', $mailable->envelope()->subject);
-        $this->assertSame('mail.admin-email-test', $mailable->content()->text);
+        $this->assertSame('mail.admin-email-test', $mailable->content()->markdown);
         $this->assertSame('Corps du test', $mailable->content()->with['bodyText']);
     }
 }

@@ -46,7 +46,8 @@ class PensionnaireReferenceExists implements ValidationRule, DataAwareRule
         $candidates = $this->findByCode($code);
 
         if ($candidates->isEmpty()) {
-            $fail("Le code pension « {$code} » n'existe pas dans la base de référence.");
+            $fail(__('messages.pension_code_not_in_reference', ['code' => $code]));
+
             return;
         }
 
@@ -81,17 +82,23 @@ class PensionnaireReferenceExists implements ValidationRule, DataAwareRule
         if ($this->strictNameMatch) {
             $details = [];
 
-            if (filled($nom))    { $details[] = "nom « {$nom} »"; }
-            if (filled($prenom)) { $details[] = "prénom « {$prenom} »"; }
+            if (filled($nom)) {
+                $details[] = __('messages.pension_code_identity_nom', ['value' => $nom]);
+            }
+            if (filled($prenom)) {
+                $details[] = __('messages.pension_code_identity_prenom', ['value' => $prenom]);
+            }
 
-            $suffix = $details !== []
-                ? ' pour le ' . implode(' et le ', $details) . ' fourni(e)s'
+            $identitySuffix = $details !== []
+                ? __('messages.pension_code_identity_mismatch_suffix', [
+                    'details' => implode(__('messages.pension_code_identity_joiner'), $details),
+                ])
                 : '';
 
-            $fail(
-                "Le code pension « {$code} » existe dans la base de référence "
-                . "mais ne correspond pas au{$suffix}."
-            );
+            $fail(__('messages.pension_code_identity_mismatch', [
+                'code' => $code,
+                'identity' => $identitySuffix,
+            ]));
         }
     }
 

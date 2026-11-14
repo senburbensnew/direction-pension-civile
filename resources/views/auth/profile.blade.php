@@ -38,7 +38,7 @@
 
 <x-portal-page bottom="pb-10" class="space-y-8">
         @if ($profileFormError)
-            <x-portal-toast type="error" :message="$profileFormError" />
+            <x-toast type="error" :message="$profileFormError" />
         @endif
 
         <section class="bg-white border border-gray-200 card-shadow p-6 sm:p-8">

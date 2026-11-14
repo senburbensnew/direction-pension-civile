@@ -3,6 +3,7 @@
     'type' => 'success',
     'duration' => 6000,
     'position' => 'top-20',
+    'portal' => true,
 ])
 
 @php
@@ -14,6 +15,10 @@
         'warning' => [
             'wrap' => 'bg-amber-50 border-amber-300 text-amber-950',
             'icon' => 'fa-triangle-exclamation text-amber-500',
+        ],
+        'info' => [
+            'wrap' => 'bg-sky-50 border-sky-300 text-sky-950',
+            'icon' => 'fa-circle-info text-sky-500',
         ],
         default => [
             'wrap' => 'bg-green-50 border-green-300 text-green-900',
@@ -34,15 +39,18 @@
     x-transition:leave-end="opacity-0"
     x-init="window.setTimeout(() => { show = false }, {{ (int) $duration }})"
     @class([
-        'fixed right-4 left-4 sm:left-auto z-[100] max-w-md sm:max-w-sm pointer-events-none',
-        $position,
+        'z-[100] max-w-md sm:max-w-sm' => ! $portal,
+        'fixed right-4 left-4 sm:left-auto z-[100] max-w-md sm:max-w-sm pointer-events-none' => $portal,
+        $position => $portal,
     ])
     role="alert"
     aria-live="polite"
+    {{ $attributes }}
 >
     <div @class([
-        'pointer-events-auto flex items-start gap-3 border rounded-lg px-4 py-3 text-sm shadow-lg card-shadow',
+        'flex items-start gap-3 border rounded-lg px-4 py-3 text-sm shadow-lg card-shadow',
         $styles['wrap'],
+        'pointer-events-auto' => $portal,
     ])>
         <i @class(['fa-solid flex-shrink-0 mt-0.5', $styles['icon']]) aria-hidden="true"></i>
         <div class="flex-1 min-w-0 leading-snug">

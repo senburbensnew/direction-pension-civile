@@ -15,7 +15,7 @@
 @endphp
 
 @if(session('success'))
-    <x-portal-toast type="success" :message="session('success')" :position="$position">
+    <x-toast type="success" :message="session('success')" :position="$position">
         @if(session('created_password'))
             <p class="font-mono text-sm mt-1.5">
                 Mot de passe provisoire :
@@ -25,19 +25,19 @@
                 Communiquez-le au demandeur (affichage unique sur cette page).
             </p>
         @endif
-    </x-portal-toast>
+    </x-toast>
 @elseif($statusMessage)
-    <x-portal-toast type="success" :message="$statusMessage" :position="$position" />
+    <x-toast type="success" :message="$statusMessage" :position="$position" />
 @endif
 
 @if(session('error'))
-    <x-portal-toast type="error" :message="session('error')" :position="$position" />
+    <x-toast type="error" :message="session('error')" :position="$position" />
 @endif
 
 @if(session('warning'))
-    <x-portal-toast type="warning" :message="session('warning')" :position="$position" />
+    <x-toast type="warning" :message="session('warning')" :position="$position" />
 @endif
 
 @if(session('info'))
-    <x-portal-toast type="success" :message="session('info')" :position="$position" />
+    <x-toast type="success" :message="session('info')" :position="$position" />
 @endif

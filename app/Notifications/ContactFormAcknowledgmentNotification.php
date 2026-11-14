@@ -31,6 +31,6 @@ class ContactFormAcknowledgmentNotification extends Notification implements Shou
     {
         return (new MailMessage)
             ->subject('Accusé de réception — Direction de la Pension Civile')
-            ->view('emails.contact-acknowledgment', ['contact' => $this->contact]);
+            ->markdown('mail.contact-acknowledgment', ['contact' => $this->contact]);
     }
 }

@@ -18,6 +18,7 @@ return [
         'title' => 'Koneksyon',
         'welcome' => 'Byenveni. Tanpri idantifye w pou kontinye.',
         'no_account' => 'Ou poko gen kont ?',
+        'account_rdv_notice' => 'Pou gen yon kont, depoze yon demann sou entènèt, epi pran yon randevou nan Sèvis Akèy ak Fòmalite pou finalize ouvèti kont la.',
         'show_password' => 'Montre modpas la',
         'hide_password' => 'Kache modpas la',
         'two_factor_title' => 'Verifikasyon an de etap',
@@ -73,6 +74,8 @@ return [
 
     'account_request' => [
         'title' => 'Demann pou kreye kont',
+        'rdv_notice_title' => 'Anvan ou kòmanse',
+        'rdv_notice' => 'Apre w fin voye fòmilè sa a, y ap louvri yon kont pwovizwa pou ou. Pou finalize demann pou kreye kont ou, ou dwe pran yon randevou nan Sèvis Akèy ak Fòmalite (an pèsòn oswa an vizyokonferans). Aksè konplè w la ap aktive sèlman apre randevou sa a ak validasyon dosye w pa Direksyon an.',
         'step_label' => 'Etap',
         'steps_aria' => 'Etap fòmilè a',
         'errors_plural' => 'erè pou korije',

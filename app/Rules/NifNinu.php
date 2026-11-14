@@ -7,13 +7,31 @@ use Illuminate\Contracts\Validation\ValidationRule;
 
 class NifNinu implements ValidationRule
 {
+    /** @see validate() */
+    public const PATTERN = '/^\d{3}-\d{3}-\d{3}-\d{1}$/';
+
+    public static function isValid(mixed $value): bool
+    {
+        if (blank($value)) {
+            return false;
+        }
+
+        return (bool) preg_match(self::PATTERN, (string) $value);
+    }
+
+    public static function formatMessage(): string
+    {
+        return __('messages.nif_ninu_invalid_format');
+    }
+
     public function validate(string $attribute, mixed $value, Closure $fail): void
     {
-        $nifRegex  = '/^\d{3}-\d{3}-\d{3}-\d{1}$/';
-        $ninuRegex = '/^\d{3}-\d{3}-\d{3}-\d{1}$/';
+        if (blank($value)) {
+            return;
+        }
 
-        if (!preg_match($nifRegex, $value) && !preg_match($ninuRegex, $value)) {
-            $fail('Le :attribute doit être un NIF ou un NINU valide (ex: 123-456-789-0).');
+        if (! self::isValid($value)) {
+            $fail(self::formatMessage());
         }
     }
 }

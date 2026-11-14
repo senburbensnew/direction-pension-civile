@@ -128,6 +128,8 @@
         </button>
 
         {{-- Création de compte --}}
+        @include('auth.partials.account-creation-rdv-notice', ['variant' => 'compact'])
+
         <p class="text-center text-sm text-gray-500">
             {{ __('guest.login.no_account') }}
             <a

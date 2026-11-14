@@ -63,7 +63,7 @@ class StorePreuveExistenceRequest extends FormRequest
     {
         return [
             'required' => 'Ce champ est obligatoire.',
-            'annee_fiscale.regex' => 'Le format doit être YYYY/YYYY (ex: 2025/2026).',
+            'annee_fiscale.regex' => AnneeFiscale::invalidFormatMessage(),
         ];
     }
 }

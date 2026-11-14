@@ -32,6 +32,6 @@ class ContactFormReceivedNotification extends Notification implements ShouldQueu
         return (new MailMessage)
             ->replyTo([$this->contact->email])
             ->subject('[Contact] '.$this->contact->subjectLabel())
-            ->view('emails.contact', ['contact' => $this->contact]);
+            ->markdown('mail.contact-received', ['contact' => $this->contact]);
     }
 }

@@ -17,6 +17,7 @@ class AdminUserTemporaryPasswordMailTest extends TestCase
         $mailable = new AdminUserTemporaryPasswordMail($user, 'Temp#123', $initiator);
 
         $this->assertStringContainsString('mot de passe', $mailable->envelope()->subject);
+        $this->assertSame('mail.admin-user-temporary-password', $mailable->content()->markdown);
         $this->assertSame('Temp#123', $mailable->content()->with['temporaryPassword']);
         $this->assertSame(route('login'), $mailable->content()->with['loginUrl']);
     }

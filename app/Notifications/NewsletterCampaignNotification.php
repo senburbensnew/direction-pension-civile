@@ -39,7 +39,7 @@ class NewsletterCampaignNotification extends Notification implements ShouldQueue
         $message = (new MailMessage)
             ->from($fromAddress, $fromName)
             ->subject($this->campaign->subject)
-            ->view('emails.newsletter', [
+            ->markdown('mail.newsletter-campaign', [
                 'campaign' => $this->campaign,
                 'subscriber' => $this->subscriber,
                 'delivery' => $this->delivery,
